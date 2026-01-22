@@ -1,0 +1,187 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 16px;
+    line-height: 1.7;
+    color: #1a1a1a;
+    background: #fafafa;
+    -webkit-font-smoothing: antialiased;
+}
+
+.container {
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 80px 24px;
+}
+
+/* Header */
+header {
+    margin-bottom: 48px;
+}
+
+.profile-photo {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-bottom: 24px;
+    filter: grayscale(10%);
+}
+
+h1 {
+    font-size: 28px;
+    font-weight: 600;
+    letter-spacing: -0.5px;
+    margin-bottom: 8px;
+}
+
+.tagline {
+    color: #666;
+    font-size: 15px;
+    letter-spacing: 0.5px;
+}
+
+/* Bio */
+.bio {
+    margin-bottom: 48px;
+}
+
+.bio p {
+    margin-bottom: 16px;
+    color: #333;
+}
+
+.bio p:last-child {
+    margin-bottom: 0;
+}
+
+/* Sections */
+section {
+    margin-bottom: 48px;
+}
+
+h2 {
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #999;
+    margin-bottom: 24px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #eee;
+}
+
+/* Projects */
+.project {
+    margin-bottom: 28px;
+}
+
+.project:last-child {
+    margin-bottom: 0;
+}
+
+.project h3 {
+    font-size: 17px;
+    font-weight: 500;
+    margin-bottom: 4px;
+}
+
+.project h3 a {
+    color: #1a1a1a;
+    text-decoration: none;
+    border-bottom: 1px solid #ccc;
+    transition: border-color 0.2s;
+}
+
+.project h3 a:hover {
+    border-color: #1a1a1a;
+}
+
+.project-meta {
+    font-size: 13px;
+    color: #888;
+    margin-bottom: 6px;
+}
+
+.project p:last-child {
+    color: #555;
+    font-size: 15px;
+}
+
+/* Reading */
+.reading-list {
+    display: grid;
+    gap: 24px;
+}
+
+.reading-group h3 {
+    font-size: 14px;
+    font-weight: 500;
+    color: #666;
+    margin-bottom: 8px;
+}
+
+.reading-group ul {
+    list-style: none;
+}
+
+.reading-group li {
+    font-size: 15px;
+    color: #333;
+    padding: 4px 0;
+}
+
+.reading-group em {
+    font-style: italic;
+}
+
+/* Footer */
+footer {
+    padding-top: 32px;
+    border-top: 1px solid #eee;
+}
+
+.location {
+    font-size: 14px;
+    color: #888;
+    margin-bottom: 16px;
+}
+
+.links {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+}
+
+.links a {
+    font-size: 14px;
+    color: #1a1a1a;
+    text-decoration: none;
+    border-bottom: 1px solid #ddd;
+    transition: border-color 0.2s;
+}
+
+.links a:hover {
+    border-color: #1a1a1a;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+    .container {
+        padding: 48px 20px;
+    }
+
+    h1 {
+        font-size: 24px;
+    }
+
+    .profile-photo {
+        width: 100px;
+        height: 100px;
+    }
+}
