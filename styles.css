@@ -67,14 +67,10 @@ h1 {
     margin-bottom: 0;
 }
 
-.footnote-ref {
-    border-bottom: 1px dotted #999;
-}
-
 .footnote {
-    font-size: 13px;
+    font-size: 11px;
     font-style: italic;
-    color: #777;
+    color: #888;
     margin-top: 24px;
 }
 
