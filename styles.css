@@ -56,6 +56,13 @@ h1 {
     color: #333;
 }
 
+.bio p:first-child {
+    font-size: 19px;
+    font-weight: 500;
+    color: #1a1a1a;
+    letter-spacing: -0.3px;
+}
+
 .bio p:last-child {
     margin-bottom: 0;
 }
@@ -111,6 +118,22 @@ h2 {
 .project p:last-child {
     color: #555;
     font-size: 15px;
+}
+
+.project-highlight {
+    margin-top: 10px;
+    font-size: 14px;
+    color: #444;
+    padding: 12px 16px;
+    background: linear-gradient(135deg, #f8f9fa 0%, #fff 100%);
+    border-left: 3px solid #1a1a1a;
+    border-radius: 0 4px 4px 0;
+}
+
+.highlight-metric {
+    font-weight: 600;
+    color: #1a1a1a;
+    letter-spacing: -0.2px;
 }
 
 /* Reading */
