@@ -143,6 +143,39 @@ h2 {
     letter-spacing: -0.2px;
 }
 
+/* Study */
+.study-item h3 {
+    font-size: 17px;
+    font-weight: 500;
+    margin-bottom: 4px;
+}
+
+.study-meta {
+    font-size: 13px;
+    color: #888;
+    margin-bottom: 8px;
+}
+
+.study-item p {
+    color: #555;
+    font-size: 15px;
+    margin-bottom: 16px;
+}
+
+.study-photos {
+    display: flex;
+    gap: 12px;
+    margin-top: 16px;
+}
+
+.study-photos img {
+    width: calc(33.333% - 8px);
+    height: 140px;
+    object-fit: cover;
+    border-radius: 4px;
+    filter: grayscale(10%);
+}
+
 /* Reading */
 .reading-list {
     display: grid;
