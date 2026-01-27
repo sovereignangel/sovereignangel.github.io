@@ -10,20 +10,22 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+    <nav class="side-nav">
+        <a href="#" data-section="bio" class="active">About</a>
+        <a href="#" data-section="projects">Projects</a>
+        <a href="#" data-section="study">Study</a>
+        <a href="#" data-section="blog">Blog</a>
+        <a href="#" data-section="reading">Reading</a>
+    </nav>
+
     <div class="container">
         <header>
             <img src="Main.jpeg" alt="Lori Corpuz" class="profile-photo">
             <h1>Lori Corpuz</h1>
             <p class="tagline">Emergence · AI · Markets · Mind</p>
-            <nav class="section-nav">
-                <a href="#projects">Projects</a>
-                <a href="#study">Study</a>
-                <a href="#blog">Blog</a>
-                <a href="#reading">Reading</a>
-            </nav>
         </header>
 
-        <section class="bio">
+        <section id="bio" class="bio section active">
             <p>I build systems that find alpha where others see noise.</p>
             <p>My work lives at the intersection of AI, markets, and cognition. I design tools that surface latent structure*—in EEG signals, options flow, prediction markets, and human behavior—treating intelligence as a dynamical process, not a static trait.</p>
             <p>Track record: $220M+ raised across startups. 0→1 product underpinning a $15B revenue line. Built conviction across venture capital, hedge funds, investment banks, and early-stage startups—each layer sharpening the next. Now building and investing at the frontier of emergence.</p>
@@ -32,7 +34,7 @@
             <p class="footnote">*Latent structure: patterns that exist but aren't immediately visible.</p>
         </section>
 
-        <section id="projects" class="projects">
+        <section id="projects" class="projects section">
             <h2>Projects</h2>
             <div class="project">
                 <h3><a href="https://armstrong.loricorpuz.com">Options Analytics Dashboard</a></h3>
@@ -67,7 +69,7 @@
             </div>
         </section>
 
-        <section id="study" class="study">
+        <section id="study" class="study section">
             <h2>Study</h2>
             <div class="study-item">
                 <h3><a href="https://introtodeeplearning.com/">MIT 6.S191 — Deep Learning</a></h3>
@@ -81,12 +83,12 @@
             </div>
         </section>
 
-        <section id="blog" class="blog">
+        <section id="blog" class="blog section">
             <h2>Blog</h2>
             <p class="coming-soon">Coming soon</p>
         </section>
 
-        <section id="reading" class="reading">
+        <section id="reading" class="reading section">
             <h2>Reading</h2>
             <div class="reading-list">
                 <div class="reading-group">
@@ -123,5 +125,24 @@
             </div>
         </footer>
     </div>
+
+    <script>
+        document.querySelectorAll('.side-nav a').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const sectionId = link.dataset.section;
+
+                // Update active nav link
+                document.querySelectorAll('.side-nav a').forEach(a => a.classList.remove('active'));
+                link.classList.add('active');
+
+                // Show selected section, hide others
+                document.querySelectorAll('.section').forEach(section => {
+                    section.classList.remove('active');
+                });
+                document.getElementById(sectionId).classList.add('active');
+            });
+        });
+    </script>
 </body>
 </html>
