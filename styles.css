@@ -46,6 +46,25 @@ h1 {
     letter-spacing: 0.5px;
 }
 
+.section-nav {
+    display: flex;
+    gap: 24px;
+    margin-top: 24px;
+    padding-top: 16px;
+    border-top: 1px solid #eee;
+}
+
+.section-nav a {
+    font-size: 14px;
+    color: #666;
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.section-nav a:hover {
+    color: #1a1a1a;
+}
+
 /* Bio */
 .bio {
     margin-bottom: 48px;
@@ -185,6 +204,13 @@ h2 {
     object-fit: cover;
     border-radius: 4px;
     filter: grayscale(10%);
+}
+
+/* Blog */
+.coming-soon {
+    font-size: 14px;
+    color: #888;
+    font-style: italic;
 }
 
 /* Reading */
