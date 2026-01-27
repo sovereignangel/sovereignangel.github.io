@@ -150,6 +150,17 @@ h2 {
     margin-bottom: 4px;
 }
 
+.study-item h3 a {
+    color: #1a1a1a;
+    text-decoration: none;
+    border-bottom: 1px solid #ccc;
+    transition: border-color 0.2s;
+}
+
+.study-item h3 a:hover {
+    border-color: #1a1a1a;
+}
+
 .study-meta {
     font-size: 13px;
     color: #888;
