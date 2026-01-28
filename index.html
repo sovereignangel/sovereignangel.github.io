@@ -131,19 +131,32 @@
                     section.classList.remove('active');
                 });
                 document.getElementById(sectionId).classList.add('active');
+
+                // Reset sub-tabs to default when switching main sections
+                const activeSection = document.getElementById(sectionId);
+                const subTabs = activeSection.querySelectorAll('.sub-tabs a');
+                const subContents = activeSection.querySelectorAll('.subtab-content');
+
+                if (subTabs.length > 0) {
+                    subTabs.forEach(a => a.classList.remove('active'));
+                    subTabs[0].classList.add('active');
+                    subContents.forEach(c => c.classList.remove('active'));
+                    subContents[0].classList.add('active');
+                }
             });
         });
 
-        // Sub-tabs within Outputs
+        // Sub-tabs (scoped to parent section)
         document.querySelectorAll('.sub-tabs a').forEach(link => {
             link.addEventListener('click', (e) => {
                 e.preventDefault();
                 const subtabId = link.dataset.subtab;
+                const parentSection = link.closest('.section');
 
-                document.querySelectorAll('.sub-tabs a').forEach(a => a.classList.remove('active'));
+                parentSection.querySelectorAll('.sub-tabs a').forEach(a => a.classList.remove('active'));
                 link.classList.add('active');
 
-                document.querySelectorAll('.subtab-content').forEach(content => {
+                parentSection.querySelectorAll('.subtab-content').forEach(content => {
                     content.classList.remove('active');
                 });
                 document.getElementById(subtabId).classList.add('active');
