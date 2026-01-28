@@ -11,11 +11,9 @@
 </head>
 <body>
     <nav class="side-nav">
-        <a href="#" data-section="bio" class="active">About</a>
-        <a href="#" data-section="projects">Projects</a>
-        <a href="#" data-section="study">Study</a>
-        <a href="#" data-section="blog">Blog</a>
-        <a href="#" data-section="reading">Reading</a>
+        <a href="#" data-section="about" class="active">About</a>
+        <a href="#" data-section="inputs">Inputs</a>
+        <a href="#" data-section="outputs">Outputs</a>
     </nav>
 
     <div class="container">
@@ -25,8 +23,9 @@
             <p class="tagline">Emergence · AI · Markets · Mind</p>
         </header>
 
-        <section id="bio" class="bio section active">
-            <p>I build systems that find alpha where others see noise.</p>
+        <!-- ABOUT -->
+        <section id="about" class="section active">
+            <p class="bio-lead">I build systems that find alpha where others see noise.</p>
             <p>My work lives at the intersection of AI, markets, and cognition. I design tools that surface latent structure*—in EEG signals, options flow, prediction markets, and human behavior—treating intelligence as a dynamical process, not a static trait.</p>
             <p>Track record: $220M+ raised across startups. 0→1 product underpinning a $15B revenue line. Built conviction across venture capital, hedge funds, investment banks, and early-stage startups—each layer sharpening the next. Now building and investing at the frontier of emergence.</p>
             <p>I train rigor through deep learning and reinforcement learning, and train the mind through the Kadampa Buddhist lineage. Both disciplines sharpen the same skill: seeing what's actually there.</p>
@@ -34,43 +33,10 @@
             <p class="footnote">*Latent structure: patterns that exist but aren't immediately visible.</p>
         </section>
 
-        <section id="projects" class="projects section">
-            <h2>Projects</h2>
-            <div class="project">
-                <h3><a href="https://armstrong.loricorpuz.com">Options Analytics Dashboard</a></h3>
-                <p class="project-meta">F&F Investors</p>
-                <p>A decision-intelligence platform that fuses market data, analyst signals, and options pricing to surface asymmetric trades.</p>
-                <p class="project-highlight"><span class="highlight-metric">10x returns</span> over 2 years live. Currently backtesting to 2012.</p>
-            </div>
-            <div class="project">
-                <h3>Neurostack</h3>
-                <p class="project-meta">EEG, N=1</p>
-                <p>A multimodal biosensing dashboard designed to make latent cognitive representations observable, reproducible, and learnable.</p>
-            </div>
-            <div class="project">
-                <h3>Career Development Agent</h3>
-                <p class="project-meta">AI Agent</p>
-                <p>An AI that scores job-resume fit, surfaces skill gaps, generates micro-projects to close them, and maps your fastest path to higher compensation.</p>
-            </div>
-            <div class="project">
-                <h3>Back of the Napkin</h3>
-                <p class="project-meta">AI Platform</p>
-                <p>An AI-powered platform that helps entrepreneurs rapidly validate, refine, and launch business ideas through real-time data, expert insights, and automated market analysis.</p>
-            </div>
-            <div class="project">
-                <h3>Prediction Markets</h3>
-                <p class="project-meta">Coming soon</p>
-                <p>Applied intelligence systems for extracting signal, belief dynamics, and edge from collective forecasts.</p>
-            </div>
-            <div class="project">
-                <h3>Scientific Frontier Daily</h3>
-                <p class="project-meta">Coming soon</p>
-                <p>A daily synthesis of ideas at the edge of science, AI, mind, and markets—compressed for signal, not noise.</p>
-            </div>
-        </section>
+        <!-- INPUTS -->
+        <section id="inputs" class="section">
+            <p class="section-intro">What I'm studying, reading, and researching—the raw material that shapes how I think.</p>
 
-        <section id="study" class="study section">
-            <h2>Study</h2>
             <div class="study-item">
                 <h3><a href="https://introtodeeplearning.com/">MIT 6.S191 — Deep Learning</a></h3>
                 <p class="study-meta">2nd Place, Final Project Competition · Jan 9, 2026</p>
@@ -81,37 +47,56 @@
                     <img src="MITDL4.jpg" alt="MIT Deep Learning">
                 </div>
             </div>
+
+            <h2>Reading & Research</h2>
+            <div class="notion-embed">
+                <iframe src="https://v2-embednotion.com/05e6e3266d28400482e4705b569620c0"></iframe>
+            </div>
         </section>
 
-        <section id="blog" class="blog section">
-            <h2>Blog</h2>
-            <p class="coming-soon">Coming soon</p>
-        </section>
+        <!-- OUTPUTS -->
+        <section id="outputs" class="section">
+            <div class="sub-tabs">
+                <a href="#" data-subtab="projects" class="active">Projects</a>
+                <a href="#" data-subtab="blog">Blog</a>
+            </div>
 
-        <section id="reading" class="reading section">
-            <h2>Reading</h2>
-            <div class="reading-list">
-                <div class="reading-group">
-                    <h3>Currently</h3>
-                    <ul>
-                        <li><em>The New Eight Steps to Happiness</em></li>
-                        <li><em>Be Love Now</em></li>
-                    </ul>
+            <div id="projects" class="subtab-content active">
+                <div class="project">
+                    <h3><a href="https://armstrong.loricorpuz.com">Options Analytics Dashboard</a></h3>
+                    <p class="project-meta">F&F Investors</p>
+                    <p>A decision-intelligence platform that fuses market data, analyst signals, and options pricing to surface asymmetric trades.</p>
+                    <p class="project-highlight"><span class="highlight-metric">10x returns</span> over 2 years live. Currently backtesting to 2012.</p>
                 </div>
-                <div class="reading-group">
-                    <h3>Recently</h3>
-                    <ul>
-                        <li><em>How to Understand Your Mind</em></li>
-                    </ul>
+                <div class="project">
+                    <h3>Neurostack</h3>
+                    <p class="project-meta">EEG, N=1</p>
+                    <p>A multimodal biosensing dashboard designed to make latent cognitive representations observable, reproducible, and learnable.</p>
                 </div>
-                <div class="reading-group">
-                    <h3>Queue</h3>
-                    <ul>
-                        <li><em>Options Volatility & Pricing</em></li>
-                        <li><em>Deep Learning</em></li>
-                        <li><em>The Mind's I</em></li>
-                    </ul>
+                <div class="project">
+                    <h3>Career Development Agent</h3>
+                    <p class="project-meta">AI Agent</p>
+                    <p>An AI that scores job-resume fit, surfaces skill gaps, generates micro-projects to close them, and maps your fastest path to higher compensation.</p>
                 </div>
+                <div class="project">
+                    <h3>Back of the Napkin</h3>
+                    <p class="project-meta">AI Platform</p>
+                    <p>An AI-powered platform that helps entrepreneurs rapidly validate, refine, and launch business ideas through real-time data, expert insights, and automated market analysis.</p>
+                </div>
+                <div class="project">
+                    <h3>Prediction Markets</h3>
+                    <p class="project-meta">Coming soon</p>
+                    <p>Applied intelligence systems for extracting signal, belief dynamics, and edge from collective forecasts.</p>
+                </div>
+                <div class="project">
+                    <h3>Scientific Frontier Daily</h3>
+                    <p class="project-meta">Coming soon</p>
+                    <p>A daily synthesis of ideas at the edge of science, AI, mind, and markets—compressed for signal, not noise.</p>
+                </div>
+            </div>
+
+            <div id="blog" class="subtab-content">
+                <p class="coming-soon">Coming soon</p>
             </div>
         </section>
 
@@ -127,20 +112,35 @@
     </div>
 
     <script>
+        // Main nav tabs
         document.querySelectorAll('.side-nav a').forEach(link => {
             link.addEventListener('click', (e) => {
                 e.preventDefault();
                 const sectionId = link.dataset.section;
 
-                // Update active nav link
                 document.querySelectorAll('.side-nav a').forEach(a => a.classList.remove('active'));
                 link.classList.add('active');
 
-                // Show selected section, hide others
                 document.querySelectorAll('.section').forEach(section => {
                     section.classList.remove('active');
                 });
                 document.getElementById(sectionId).classList.add('active');
+            });
+        });
+
+        // Sub-tabs within Outputs
+        document.querySelectorAll('.sub-tabs a').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const subtabId = link.dataset.subtab;
+
+                document.querySelectorAll('.sub-tabs a').forEach(a => a.classList.remove('active'));
+                link.classList.add('active');
+
+                document.querySelectorAll('.subtab-content').forEach(content => {
+                    content.classList.remove('active');
+                });
+                document.getElementById(subtabId).classList.add('active');
             });
         });
     </script>
