@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 52 52" fill="none">
+  <!-- Manifold curves -->
+  <path d="M8 38 Q16 28, 22 32 T34 26" stroke="#3d3d3d" stroke-width="2.5" fill="none" stroke-linecap="round" opacity="0.8"/>
+  <path d="M6 44 Q14 32, 20 38 T32 30" stroke="#3d3d3d" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.4"/>
+  <!-- You are here dot -->
+  <circle cx="8" cy="38" r="3" fill="#d4736a"/>
+  <!-- Pencil angled -->
+  <g transform="rotate(-45 38 14)">
+    <rect x="24" y="11" width="20" height="6" fill="#f7c948" stroke="#d4a832" stroke-width="0.5"/>
+    <rect x="44" y="11" width="4" height="6" fill="#b8b8b8"/>
+    <rect x="48" y="11.5" width="3" height="5" rx="0.5" fill="#d4736a"/>
+    <polygon points="24,11 24,17 20,14" fill="#c9a87c"/>
+    <polygon points="20,14 22,12.5 22,15.5" fill="#3d3d3d"/>
+  </g>
+</svg>

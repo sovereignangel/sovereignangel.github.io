@@ -196,6 +196,13 @@ h2 {
     transition: border-color 0.2s;
 }
 
+.project-logo {
+    height: 20px;
+    width: auto;
+    margin-right: 8px;
+    vertical-align: middle;
+}
+
 .project h3 a:hover {
     border-color: #1a1a1a;
 }
