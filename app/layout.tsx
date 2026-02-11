@@ -35,7 +35,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={`${inter.variable} ${crimson.variable} ${ibmPlex.variable}`}>
-      <body className="font-sans text-[#1a1a1a] bg-[#fafafa] antialiased min-h-screen relative">
+      <body className="font-sans text-[#1a1a1a] bg-transparent antialiased min-h-screen relative">
         {children}
       </body>
     </html>
