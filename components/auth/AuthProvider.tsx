@@ -31,24 +31,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    const unsubscribe = onAuthChange(async (firebaseUser) => {
+    const unsubscribe = onAuthChange((firebaseUser) => {
       setUser(firebaseUser)
+      // Stop blocking on loading immediately — let the page render
+      setLoading(false)
       if (firebaseUser) {
-        try {
-          const userProfile = await getOrCreateUser(
-            firebaseUser.uid,
-            firebaseUser.email || '',
-            firebaseUser.displayName || '',
-            firebaseUser.photoURL || ''
-          )
-          setProfile(userProfile)
-        } catch {
-          setProfile(null)
-        }
+        // Fetch profile in background — page renders with user but profile=null briefly
+        getOrCreateUser(
+          firebaseUser.uid,
+          firebaseUser.email || '',
+          firebaseUser.displayName || '',
+          firebaseUser.photoURL || ''
+        ).then(setProfile).catch(() => setProfile(null))
       } else {
         setProfile(null)
       }
-      setLoading(false)
     })
     return unsubscribe
   }, [])
