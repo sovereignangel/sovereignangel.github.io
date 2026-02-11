@@ -69,6 +69,8 @@ export interface DailyLog {
   trainingType: TrainingType
   relationalBoundary: string
   bodyFelt: BodyFelt
+  todayFocus: string
+  todayOneAction: string
   createdAt: Timestamp
   updatedAt: Timestamp
 }
