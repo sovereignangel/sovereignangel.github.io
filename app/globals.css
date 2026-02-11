@@ -35,13 +35,13 @@ body::after {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(250, 250, 250, 0.75);
+  background: rgba(250, 250, 250, 0.38);
   z-index: -1;
 }
 
 /* Thesis Engine pages get warmer Armstrong cream overlay */
 body.thesis-active::after {
-  background: rgba(245, 241, 234, 0.92);
+  background: rgba(245, 241, 234, 0.46);
 }
 
 /* Custom scrollbar (Armstrong style) */
