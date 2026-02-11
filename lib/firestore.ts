@@ -13,7 +13,7 @@ import {
   serverTimestamp,
 } from 'firebase/firestore'
 import { db } from './firebase'
-import type { DailyLog, Signal, Project, WeeklySynthesis, UserProfile, FocusSession } from './types'
+import type { DailyLog, Signal, Project, WeeklySynthesis, UserProfile, FocusSession, GarminMetrics } from './types'
 import { SEED_PROJECTS, DEFAULT_SETTINGS } from './constants'
 
 // ─── USER ────────────────────────────────────────────────────────────────
@@ -238,4 +238,23 @@ export async function getTodayFocusSessions(uid: string): Promise<FocusSession[]
   const q = query(ref, where('startTime', '>=', startOfDay), where('startTime', '<=', endOfDay))
   const snap = await getDocs(q)
   return snap.docs.map(d => ({ id: d.id, ...d.data() }) as FocusSession)
+}
+
+// ─── GARMIN METRICS ─────────────────────────────────────────────────────
+
+export async function getGarminMetrics(uid: string, date: string): Promise<GarminMetrics | null> {
+  const ref = doc(db, 'users', uid, 'garmin_metrics', date)
+  const snap = await getDoc(ref)
+  return snap.exists() ? { id: snap.id, ...snap.data() } as GarminMetrics : null
+}
+
+export async function getRecentGarminMetrics(uid: string, days: number = 7): Promise<GarminMetrics[]> {
+  const startDate = new Date()
+  startDate.setDate(startDate.getDate() - days)
+  const startStr = startDate.toISOString().split('T')[0]
+
+  const ref = collection(db, 'users', uid, 'garmin_metrics')
+  const q = query(ref, where('date', '>=', startStr), orderBy('date', 'desc'))
+  const snap = await getDocs(q)
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }) as GarminMetrics)
 }

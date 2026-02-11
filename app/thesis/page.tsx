@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/components/auth/AuthProvider'
-import { getDailyLog, getRecentDailyLogs } from '@/lib/firestore'
+import { getDailyLog, getRecentDailyLogs, getRecentGarminMetrics } from '@/lib/firestore'
 import { todayString, getLast7Days } from '@/lib/formatters'
-import type { DailyLog } from '@/lib/types'
+import type { DailyLog, GarminMetrics } from '@/lib/types'
 import DailyThesisBanner from '@/components/thesis/DailyThesisBanner'
 import NervousSystemTrends from '@/components/thesis/NervousSystemTrends'
 import TwentyFourHourBanner from '@/components/thesis/TwentyFourHourBanner'
@@ -14,6 +14,7 @@ export default function ThesisDashboard() {
   const { user, profile } = useAuth()
   const [todayLog, setTodayLog] = useState<DailyLog | null>(null)
   const [recentLogs, setRecentLogs] = useState<DailyLog[]>([])
+  const [garminMetrics, setGarminMetrics] = useState<GarminMetrics[]>([])
   const today = todayString()
   const last7 = getLast7Days()
 
@@ -21,6 +22,7 @@ export default function ThesisDashboard() {
     if (!user) return
     getDailyLog(user.uid, today).then(setTodayLog)
     getRecentDailyLogs(user.uid, 7).then(setRecentLogs)
+    getRecentGarminMetrics(user.uid, 7).then(setGarminMetrics)
   }, [user, today])
 
   const isSpiked = todayLog?.nervousSystemState === 'spiked'
@@ -89,7 +91,7 @@ export default function ThesisDashboard() {
         {/* Right: Trends */}
         <div className="lg:col-span-2">
           <div className="bg-paper border border-rule rounded-sm p-5">
-            <NervousSystemTrends logs={recentLogs} dates={last7} />
+            <NervousSystemTrends logs={recentLogs} dates={last7} garminMetrics={garminMetrics} />
           </div>
         </div>
       </div>

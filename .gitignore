@@ -6,3 +6,8 @@ node_modules/
 out/
 *.glb
 .DS_Store
+
+# Garmin sync secrets
+scripts/.env
+scripts/garmin_tokens/
+scripts/firebase-service-account.json
