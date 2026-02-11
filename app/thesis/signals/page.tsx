@@ -106,24 +106,20 @@ export default function SignalsPage() {
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-2.5">
-          <div>
+        <div>
+          <div className="flex items-center gap-1.5">
             <h2 className="font-serif text-[20px] font-bold text-ink tracking-tight">Signals</h2>
-            <p className="font-serif text-[12px] italic text-ink-muted mt-1">
-              {signals.length} captured
-            </p>
+            <button
+              onClick={() => setShowSourceGuide(true)}
+              className="w-[15px] h-[15px] rounded-full border border-ink-faint text-ink-muted hover:border-navy hover:text-navy flex items-center justify-center transition-colors"
+              title="Signal source guide"
+            >
+              <span className="font-serif text-[9px] italic leading-none">i</span>
+            </button>
           </div>
-          <button
-            onClick={() => setShowSourceGuide(!showSourceGuide)}
-            className={`w-[22px] h-[22px] rounded-full border flex items-center justify-center transition-colors mt-[-2px] ${
-              showSourceGuide
-                ? 'border-navy bg-navy text-paper'
-                : 'border-ink-faint text-ink-muted hover:border-navy hover:text-navy'
-            }`}
-            title="Signal source guide"
-          >
-            <span className="font-serif text-[12px] italic leading-none">i</span>
-          </button>
+          <p className="font-serif text-[12px] italic text-ink-muted mt-1">
+            {signals.length} captured
+          </p>
         </div>
         <button
           onClick={() => setShowForm(!showForm)}
@@ -133,53 +129,66 @@ export default function SignalsPage() {
         </button>
       </div>
 
-      {/* Signal Source Guide */}
+      {/* Signal Source Guide Modal */}
       {showSourceGuide && (
-        <div className="bg-paper border border-rule rounded-sm mb-6 overflow-hidden">
-          <div className="px-5 py-4 border-b border-rule-light">
-            <p className="font-serif text-[11px] font-semibold uppercase tracking-[1px] text-ink">
-              What Signals Move &Phi;<sub>I</sub>?
-            </p>
-            <p className="font-serif text-[11px] italic text-ink-muted mt-1 leading-relaxed">
-              A signal only increases Generative Intelligence if it passes one filter:
-              <span className="font-semibold text-ink"> &ldquo;Does this change what I build or who I ask this week?&rdquo;</span>
-              {' '}If no &mdash; it&apos;s consumption, not signal capture.
-            </p>
-          </div>
-
-          <div className="px-5 py-4 space-y-5">
-            {SIGNAL_SOURCES.map((tier) => (
-              <div key={tier.tier}>
-                <div className="flex items-baseline gap-2 mb-2.5">
-                  <span className={`font-mono text-[11px] font-semibold ${tier.color}`}>{tier.tier}</span>
-                  <span className="font-serif text-[12px] font-semibold text-ink">{tier.label}</span>
-                  <span className="font-serif text-[10px] italic text-ink-muted">&mdash; {tier.desc}</span>
-                </div>
-                <div className="space-y-1.5">
-                  {tier.sources.map((src) => (
-                    <div key={src.name} className={`${tier.bg} border border-rule-light/60 rounded-sm px-3.5 py-2.5 flex items-start gap-3`}>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-sans text-[12px] font-medium text-ink leading-snug">{src.name}</p>
-                        <p className="font-sans text-[10px] text-ink-muted mt-0.5">{src.why}</p>
-                      </div>
-                      <div className="flex-shrink-0 text-right">
-                        <p className="font-serif text-[9px] italic uppercase tracking-wide text-red-ink/70">Ruin mode</p>
-                        <p className="font-sans text-[10px] text-ink-light leading-snug">{src.ruin}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+          <div className="absolute inset-0 bg-ink/40" onClick={() => setShowSourceGuide(false)} />
+          <div className="relative bg-paper border border-rule rounded-sm w-full max-w-[540px] max-h-[85vh] overflow-y-auto shadow-lg">
+            <div className="sticky top-0 bg-paper px-5 py-4 border-b border-rule-light flex items-start justify-between z-10">
+              <div>
+                <p className="font-serif text-[11px] font-semibold uppercase tracking-[1px] text-ink">
+                  What Signals Move &Phi;<sub>I</sub>?
+                </p>
+                <p className="font-serif text-[11px] italic text-ink-muted mt-1 leading-relaxed">
+                  A signal only increases Generative Intelligence if it passes one filter:
+                  <span className="font-semibold text-ink"> &ldquo;Does this change what I build or who I ask this week?&rdquo;</span>
+                  {' '}If no &mdash; it&apos;s consumption, not signal capture.
+                </p>
               </div>
-            ))}
-          </div>
+              <button
+                onClick={() => setShowSourceGuide(false)}
+                className="text-ink-muted hover:text-ink transition-colors ml-3 mt-0.5 flex-shrink-0"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
 
-          <div className="px-5 py-3 border-t border-rule-light bg-cream/40">
-            <p className="font-serif text-[10px] italic text-ink-muted leading-relaxed">
-              <span className="font-semibold text-ink">Cadence:</span>{' '}
-              Daily (&lt;5 min) &mdash; your own analytics + 1-2 curated feeds.{' '}
-              Weekly (30 min) &mdash; research digest, competitor scan, macro check.{' '}
-              Real-time &mdash; customer quotes, market anomalies, &ldquo;that&apos;s broken&rdquo; moments.
-            </p>
+            <div className="px-5 py-4 space-y-5">
+              {SIGNAL_SOURCES.map((tier) => (
+                <div key={tier.tier}>
+                  <div className="flex items-baseline gap-2 mb-2.5">
+                    <span className={`font-mono text-[11px] font-semibold ${tier.color}`}>{tier.tier}</span>
+                    <span className="font-serif text-[12px] font-semibold text-ink">{tier.label}</span>
+                    <span className="font-serif text-[10px] italic text-ink-muted">&mdash; {tier.desc}</span>
+                  </div>
+                  <div className="space-y-1.5">
+                    {tier.sources.map((src) => (
+                      <div key={src.name} className={`${tier.bg} border border-rule-light/60 rounded-sm px-3.5 py-2.5 flex items-start gap-3`}>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-sans text-[12px] font-medium text-ink leading-snug">{src.name}</p>
+                          <p className="font-sans text-[10px] text-ink-muted mt-0.5">{src.why}</p>
+                        </div>
+                        <div className="flex-shrink-0 text-right">
+                          <p className="font-serif text-[9px] italic uppercase tracking-wide text-red-ink/70">Ruin mode</p>
+                          <p className="font-sans text-[10px] text-ink-light leading-snug">{src.ruin}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="px-5 py-3 border-t border-rule-light bg-cream/40">
+              <p className="font-serif text-[10px] italic text-ink-muted leading-relaxed">
+                <span className="font-semibold text-ink">Cadence:</span>{' '}
+                Daily (&lt;5 min) &mdash; your own analytics + 1-2 curated feeds.{' '}
+                Weekly (30 min) &mdash; research digest, competitor scan, macro check.{' '}
+                Real-time &mdash; customer quotes, market anomalies, &ldquo;that&apos;s broken&rdquo; moments.
+              </p>
+            </div>
           </div>
         </div>
       )}
