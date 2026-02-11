@@ -3,10 +3,12 @@
 import { useState } from 'react'
 import Image from 'next/image'
 import { useAuth } from './AuthProvider'
+import RewardProofModal from '@/components/thesis/RewardProofModal'
 
 export default function UserMenu() {
   const { user, signOut } = useAuth()
   const [showMenu, setShowMenu] = useState(false)
+  const [showProof, setShowProof] = useState(false)
 
   if (!user) return null
 
@@ -37,7 +39,14 @@ export default function UserMenu() {
       {showMenu && (
         <>
           <div className="fixed inset-0 z-10" onClick={() => setShowMenu(false)} />
-          <div className="absolute right-0 top-full mt-2 bg-paper border border-rule rounded-sm shadow-sm z-20 min-w-[140px]">
+          <div className="absolute right-0 top-full mt-2 bg-paper border border-rule rounded-sm shadow-sm z-20 min-w-[180px]">
+            <button
+              onClick={() => { setShowProof(true); setShowMenu(false) }}
+              className="w-full text-left px-4 py-2.5 font-serif text-[12px] text-ink-light hover:bg-cream transition-colors flex items-center gap-2 border-b border-rule-light"
+            >
+              <span className="font-mono text-[11px] text-navy font-semibold">g*</span>
+              <span>Reward Function</span>
+            </button>
             <button
               onClick={() => { signOut(); setShowMenu(false) }}
               className="w-full text-left px-4 py-2.5 font-serif text-[12px] text-ink-light hover:bg-cream transition-colors"
@@ -47,6 +56,8 @@ export default function UserMenu() {
           </div>
         </>
       )}
+
+      {showProof && <RewardProofModal onClose={() => setShowProof(false)} />}
     </div>
   )
 }
