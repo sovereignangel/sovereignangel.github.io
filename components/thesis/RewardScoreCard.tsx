@@ -62,7 +62,7 @@ export default function RewardScoreCard({ todayLog, recentLogs, dates }: RewardS
         <h3 className="font-serif text-[11px] font-semibold uppercase tracking-[1px] text-ink">
           Reward Score
         </h3>
-        <span className="font-mono text-[9px] text-ink-faint">
+        <span className="font-mono text-[11px] text-ink-muted">
           g* &middot; today
         </span>
       </div>

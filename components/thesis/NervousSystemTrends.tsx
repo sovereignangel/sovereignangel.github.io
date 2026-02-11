@@ -23,14 +23,14 @@ export default function NervousSystemTrends({ logs, dates, garminMetrics = [] }:
       {/* Sleep — use Garmin sleep score if available, fall back to manual hours */}
       <div>
         <div className="flex items-baseline gap-1.5 mb-2">
-          <p className="font-serif text-[10px] italic uppercase tracking-wide text-ink-muted">
+          <p className="font-serif text-[10px] italic uppercase tracking-wide text-ink-light">
             {hasGarmin ? 'Sleep Score' : 'Sleep Consistency'}
           </p>
           {hasGarmin && (
-            <span className="font-mono text-[8px] text-ink-faint">garmin</span>
+            <span className="font-mono text-[8px] text-ink-muted">garmin</span>
           )}
         </div>
-        <div className="flex gap-1 items-end h-12">
+        <div className="flex gap-1 items-end">
           {dates.map((date) => {
             const garmin = garminMap.get(date)
             const log = logMap.get(date)
@@ -47,7 +47,7 @@ export default function NervousSystemTrends({ logs, dates, garminMetrics = [] }:
                       style={{ height: `${heightPct}%` }}
                     />
                   </div>
-                  {score > 0 && <span className="font-mono text-[8px] text-ink-light">{score}</span>}
+                  {score > 0 && <span className="font-mono text-[8px] text-ink">{score}</span>}
                   <span className="font-mono text-[8px] text-ink-muted">{dayOfWeekShort(date).charAt(0)}</span>
                 </div>
               )
@@ -77,10 +77,10 @@ export default function NervousSystemTrends({ logs, dates, garminMetrics = [] }:
       {hasGarmin && (
         <div>
           <div className="flex items-baseline gap-1.5 mb-2">
-            <p className="font-serif text-[10px] italic uppercase tracking-wide text-ink-muted">HRV (RMSSD)</p>
-            <span className="font-mono text-[8px] text-ink-faint">regulation capacity</span>
+            <p className="font-serif text-[10px] italic uppercase tracking-wide text-ink-light">HRV (RMSSD)</p>
+            <span className="font-mono text-[8px] text-ink-muted">regulation capacity</span>
           </div>
-          <div className="flex gap-1 items-end h-12">
+          <div className="flex gap-1 items-end">
             {dates.map((date) => {
               const garmin = garminMap.get(date)
               const hrv = garmin?.hrvRmssd || 0
@@ -95,7 +95,7 @@ export default function NervousSystemTrends({ logs, dates, garminMetrics = [] }:
                       style={{ height: `${heightPct}%` }}
                     />
                   </div>
-                  {hrv > 0 && <span className="font-mono text-[8px] text-ink-light">{Math.round(hrv)}</span>}
+                  {hrv > 0 && <span className="font-mono text-[8px] text-ink">{Math.round(hrv)}</span>}
                   <span className="font-mono text-[8px] text-ink-muted">{dayOfWeekShort(date).charAt(0)}</span>
                 </div>
               )
@@ -108,10 +108,10 @@ export default function NervousSystemTrends({ logs, dates, garminMetrics = [] }:
       {hasGarmin && (
         <div>
           <div className="flex items-baseline gap-1.5 mb-2">
-            <p className="font-serif text-[10px] italic uppercase tracking-wide text-ink-muted">Body Battery</p>
-            <span className="font-mono text-[8px] text-ink-faint">capacity to act</span>
+            <p className="font-serif text-[10px] italic uppercase tracking-wide text-ink-light">Body Battery</p>
+            <span className="font-mono text-[8px] text-ink-muted">capacity to act</span>
           </div>
-          <div className="flex gap-1 items-end h-12">
+          <div className="flex gap-1 items-end">
             {dates.map((date) => {
               const garmin = garminMap.get(date)
               const log = logMap.get(date)
@@ -128,17 +128,17 @@ export default function NervousSystemTrends({ logs, dates, garminMetrics = [] }:
                       style={{ height: `${heightPct}%` }}
                     />
                   </div>
-                  {bb > 0 && <span className="font-mono text-[8px] text-ink-light">{bb}</span>}
+                  {bb > 0 && <span className="font-mono text-[8px] text-ink">{bb}</span>}
                   <div className={`w-2 h-2 rounded-full ${feltColor}`} title={felt || 'no log'} />
                   <span className="font-mono text-[8px] text-ink-muted">{dayOfWeekShort(date).charAt(0)}</span>
                 </div>
               )
             })}
           </div>
-          <div className="flex items-center gap-1.5 mt-1.5">
-            <span className="font-mono text-[7px] text-ink-faint">bar = garmin peak</span>
-            <span className="font-mono text-[7px] text-ink-faint">&middot;</span>
-            <span className="font-mono text-[7px] text-ink-faint">dot = how body felt</span>
+          <div className="flex items-center gap-1.5 mt-2">
+            <span className="font-mono text-[8px] text-ink-muted">bar = garmin peak</span>
+            <span className="font-mono text-[8px] text-ink-muted">&middot;</span>
+            <span className="font-mono text-[8px] text-ink-muted">dot = how body felt</span>
           </div>
         </div>
       )}
@@ -147,8 +147,8 @@ export default function NervousSystemTrends({ logs, dates, garminMetrics = [] }:
       {hasGarmin && (
         <div>
           <div className="flex items-baseline gap-1.5 mb-2">
-            <p className="font-serif text-[10px] italic uppercase tracking-wide text-ink-muted">Stress / Resting HR</p>
-            <span className="font-mono text-[8px] text-ink-faint">g(s&#x1D708;) gate</span>
+            <p className="font-serif text-[10px] italic uppercase tracking-wide text-ink-light">Stress / Resting HR</p>
+            <span className="font-mono text-[8px] text-ink-muted">g(s&#x1D708;) gate</span>
           </div>
           <div className="flex gap-2 items-center">
             {dates.map((date) => {
@@ -161,7 +161,7 @@ export default function NervousSystemTrends({ logs, dates, garminMetrics = [] }:
               return (
                 <div key={date} className="flex flex-col items-center gap-1">
                   <div className={`w-3 h-3 rounded-full ${stressColor}`} />
-                  {rhr > 0 && <span className="font-mono text-[8px] text-ink-light">{rhr}</span>}
+                  {rhr > 0 && <span className="font-mono text-[8px] text-ink">{rhr}</span>}
                   <span className="font-mono text-[8px] text-ink-muted">{dayOfWeekShort(date).charAt(0)}</span>
                 </div>
               )
@@ -172,7 +172,7 @@ export default function NervousSystemTrends({ logs, dates, garminMetrics = [] }:
 
       {/* Emotional Volatility (manual) */}
       <div>
-        <p className="font-serif text-[10px] italic uppercase tracking-wide text-ink-muted mb-2">Emotional State</p>
+        <p className="font-serif text-[10px] italic uppercase tracking-wide text-ink-light mb-2">Emotional State</p>
         <div className="flex gap-2 items-center">
           {dates.map((date) => {
             const log = logMap.get(date)
@@ -190,7 +190,7 @@ export default function NervousSystemTrends({ logs, dates, garminMetrics = [] }:
 
       {/* Shipping Cadence */}
       <div>
-        <p className="font-serif text-[10px] italic uppercase tracking-wide text-ink-muted mb-2">Shipping Cadence</p>
+        <p className="font-serif text-[10px] italic uppercase tracking-wide text-ink-light mb-2">Shipping Cadence</p>
         <div className="flex gap-2 items-center">
           {dates.map((date) => {
             const log = logMap.get(date)
@@ -209,8 +209,8 @@ export default function NervousSystemTrends({ logs, dates, garminMetrics = [] }:
 
       {/* Revenue Asks */}
       <div>
-        <p className="font-serif text-[10px] italic uppercase tracking-wide text-ink-muted mb-2">Revenue Asks</p>
-        <div className="flex gap-1 items-end h-8">
+        <p className="font-serif text-[10px] italic uppercase tracking-wide text-ink-light mb-2">Revenue Asks</p>
+        <div className="flex gap-1 items-end">
           {dates.map((date) => {
             const log = logMap.get(date)
             const asks = log?.revenueAsksCount || 0
@@ -229,7 +229,7 @@ export default function NervousSystemTrends({ logs, dates, garminMetrics = [] }:
             )
           })}
         </div>
-        <div className="mt-1 h-px bg-gold/30" style={{ position: 'relative', top: '-12px' }} />
+        <div className="mt-2 h-px bg-gold/30" />
       </div>
     </div>
   )
