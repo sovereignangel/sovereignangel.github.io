@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import UserMenu from '@/components/auth/UserMenu'
+import RewardProofModal from '@/components/thesis/RewardProofModal'
 import { format } from 'date-fns'
 
 const navItems = [
@@ -40,6 +41,7 @@ function TermCard({
 export default function ThesisNav() {
   const pathname = usePathname()
   const [showProof, setShowProof] = useState(false)
+  const [showFullProof, setShowFullProof] = useState(false)
   const popoverRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -59,23 +61,23 @@ export default function ThesisNav() {
         {/* Top row */}
         <div className="flex items-center justify-between py-3">
           <div className="flex items-baseline gap-3">
-            <h1 className="font-serif text-[22px] font-bold text-ink tracking-tight">
+            <h1 className="font-serif text-[28px] font-bold text-ink tracking-tight">
               Thesis Engine
             </h1>
 
             {/* Equation inline — Armstrong style */}
-            <div className="hidden sm:flex items-baseline gap-1.5 relative" ref={popoverRef}>
-              <span className="font-serif text-[12px] italic text-ink-muted tracking-tight">
+            <div className="hidden sm:flex items-baseline gap-1 relative" ref={popoverRef}>
+              <span className="font-serif text-[14px] italic text-ink-muted tracking-tight">
                 g* = 𝔼[log GE + log ĠI + log ĠVC + log κ + log 𝒪] &minus; 𝓕 + Θ
               </span>
 
-              {/* Info circle */}
+              {/* Info circle — superscript position */}
               <button
                 onClick={() => setShowProof(!showProof)}
-                className="w-4 h-4 rounded-full border border-ink-faint text-ink-muted hover:border-navy hover:text-navy transition-colors flex items-center justify-center shrink-0 ml-0.5"
+                className="w-3 h-3 rounded-full border border-ink-faint text-ink-muted hover:border-navy hover:text-navy transition-colors flex items-center justify-center shrink-0 -translate-y-2"
                 title="View proof"
               >
-                <span className="font-serif text-[9px] italic leading-none">i</span>
+                <span className="font-serif text-[7px] italic leading-none">i</span>
               </button>
 
               {/* Proof popover */}
@@ -108,6 +110,13 @@ export default function ThesisNav() {
                         The nervous system gate g(s<sub>ν</sub>) modulates all terms — decisions while spiked are discounted toward zero.
                       </p>
                     </div>
+
+                    <button
+                      onClick={() => { setShowFullProof(true); setShowProof(false) }}
+                      className="mt-3 w-full text-center py-2 border border-navy/20 rounded-sm font-serif text-[11px] text-navy hover:bg-navy-bg transition-colors cursor-pointer"
+                    >
+                      Click for mathematical proof →
+                    </button>
                   </div>
                 </div>
               )}
@@ -144,6 +153,8 @@ export default function ThesisNav() {
           })}
         </nav>
       </div>
+
+      {showFullProof && <RewardProofModal onClose={() => setShowFullProof(false)} />}
     </header>
   )
 }
