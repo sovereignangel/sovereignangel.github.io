@@ -8,6 +8,7 @@ import type { DailyLog } from '@/lib/types'
 import DailyThesisBanner from '@/components/thesis/DailyThesisBanner'
 import NervousSystemTrends from '@/components/thesis/NervousSystemTrends'
 import TwentyFourHourBanner from '@/components/thesis/TwentyFourHourBanner'
+import RewardEquationBanner from '@/components/thesis/RewardEquationBanner'
 import Link from 'next/link'
 
 export default function ThesisDashboard() {
@@ -28,6 +29,8 @@ export default function ThesisDashboard() {
 
   return (
     <div>
+      <RewardEquationBanner />
+
       {isSpiked && <TwentyFourHourBanner />}
 
       {shipsThisWeek === 0 && recentLogs.length > 0 && (

@@ -23,10 +23,6 @@ export default function ThesisNav() {
         {/* Top row */}
         <div className="flex items-center justify-between py-3">
           <div className="flex items-center gap-4">
-            <Link href="/" className="font-serif text-[11px] italic text-ink-muted hover:text-ink transition-colors no-underline">
-              loricorpuz.com
-            </Link>
-            <span className="text-rule">|</span>
             <h1 className="font-serif text-[22px] font-bold text-ink tracking-tight">
               Thesis Engine
             </h1>
