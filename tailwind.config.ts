@@ -8,8 +8,8 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        cream: 'rgba(245, 241, 234, 0.85)',
-        paper: 'rgba(250, 248, 244, 0.90)',
+        cream: 'rgba(245, 241, 234, 0.70)',
+        paper: 'rgba(250, 248, 244, 0.75)',
         ink: '#2a2522',
         'ink-light': '#5c5550',
         'ink-muted': '#9a928a',
