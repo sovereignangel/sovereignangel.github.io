@@ -1,0 +1,4 @@
+garminconnect>=0.2.19
+firebase-admin>=6.0.0
+garth>=0.4.0
+python-dotenv>=1.0.0
