@@ -129,10 +129,11 @@ export const NERVOUS_SYSTEM_TRIGGERS = [
 ]
 
 export const TRAINING_TYPES = [
-  { value: 'vo2', label: 'VO2 training' },
   { value: 'strength', label: 'Strength' },
+  { value: 'yoga', label: 'Yoga' },
+  { value: 'vo2', label: 'VO2 Max' },
+  { value: 'zone2', label: 'Zone 2' },
   { value: 'rest', label: 'Rest' },
-  { value: 'none', label: 'None' },
 ]
 
 export const REVENUE_STREAM_TYPES = [
@@ -161,3 +162,41 @@ export const PROJECT_HEALTH_OPTIONS = [
   { value: 'stalled', label: 'Stalled' },
   { value: 'accelerating', label: 'Accelerating' },
 ]
+
+// ─── REWARD COMPUTATION ─────────────────────────────────────────────────
+
+export const THESIS_PILLARS = [
+  { value: 'ai' as const, label: 'AI' },
+  { value: 'markets' as const, label: 'Markets' },
+  { value: 'mind' as const, label: 'Mind' },
+]
+
+export const NERVOUS_SYSTEM_GATE: Record<string, number> = {
+  regulated: 1.0,
+  slightly_spiked: 0.7,
+  spiked: 0.3,
+}
+
+export const TRAINING_SCORE: Record<string, number> = {
+  strength: 1.0,
+  yoga: 0.8,
+  vo2: 1.0,
+  zone2: 0.9,
+  rest: 0.5,
+  none: 0.2,
+}
+
+export const BODY_FELT_SCORE: Record<string, number> = {
+  open: 1.0,
+  neutral: 0.6,
+  tense: 0.2,
+}
+
+export const NS_STATE_ENERGY_SCORE: Record<string, number> = {
+  regulated: 1.0,
+  slightly_spiked: 0.5,
+  spiked: 0.1,
+}
+
+// Floor to avoid log(0) = -infinity (ruin avoidance)
+export const REWARD_FLOOR = 0.05

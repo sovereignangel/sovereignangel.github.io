@@ -8,10 +8,16 @@ import {
 import { auth } from './firebase'
 
 const googleProvider = new GoogleAuthProvider()
+googleProvider.addScope('https://www.googleapis.com/auth/calendar.readonly')
 
 const ALLOWED_EMAILS = (process.env.NEXT_PUBLIC_ALLOWED_EMAILS || '').split(',').map(e => e.trim())
 
-export async function signInWithGoogle(): Promise<User | null> {
+export interface SignInResult {
+  user: User
+  calendarAccessToken: string | null
+}
+
+export async function signInWithGoogle(): Promise<SignInResult | null> {
   const result = await signInWithPopup(auth, googleProvider)
   const user = result.user
 
@@ -20,7 +26,10 @@ export async function signInWithGoogle(): Promise<User | null> {
     throw new Error('Access restricted to authorized users.')
   }
 
-  return user
+  const credential = GoogleAuthProvider.credentialFromResult(result)
+  const calendarAccessToken = credential?.accessToken || null
+
+  return { user, calendarAccessToken }
 }
 
 export async function signOutUser(): Promise<void> {

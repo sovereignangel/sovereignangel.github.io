@@ -104,7 +104,7 @@ export default function NervousSystemTrends({ logs, dates, garminMetrics = [] }:
         </div>
       )}
 
-      {/* Garmin: Body Battery */}
+      {/* Body Battery — Garmin objective + bodyFelt qualitative */}
       {hasGarmin && (
         <div>
           <div className="flex items-baseline gap-1.5 mb-2">
@@ -114,9 +114,12 @@ export default function NervousSystemTrends({ logs, dates, garminMetrics = [] }:
           <div className="flex gap-1 items-end h-12">
             {dates.map((date) => {
               const garmin = garminMap.get(date)
+              const log = logMap.get(date)
               const bb = garmin?.bodyBattery || 0
               const heightPct = bb > 0 ? bb : 5
               const color = bb >= 60 ? 'bg-green-ink' : bb >= 30 ? 'bg-amber-ink' : bb > 0 ? 'bg-red-ink' : 'bg-rule-light'
+              const felt = log?.bodyFelt
+              const feltColor = felt === 'open' ? 'bg-green-ink' : felt === 'tense' ? 'bg-red-ink' : felt === 'neutral' ? 'bg-amber-ink' : 'bg-rule-light'
               return (
                 <div key={date} className="flex-1 flex flex-col items-center gap-1">
                   <div className="w-full relative" style={{ height: '48px' }}>
@@ -126,10 +129,16 @@ export default function NervousSystemTrends({ logs, dates, garminMetrics = [] }:
                     />
                   </div>
                   {bb > 0 && <span className="font-mono text-[8px] text-ink-light">{bb}</span>}
+                  <div className={`w-2 h-2 rounded-full ${feltColor}`} title={felt || 'no log'} />
                   <span className="font-mono text-[8px] text-ink-muted">{dayOfWeekShort(date).charAt(0)}</span>
                 </div>
               )
             })}
+          </div>
+          <div className="flex items-center gap-1.5 mt-1.5">
+            <span className="font-mono text-[7px] text-ink-faint">bar = garmin peak</span>
+            <span className="font-mono text-[7px] text-ink-faint">&middot;</span>
+            <span className="font-mono text-[7px] text-ink-faint">dot = how body felt</span>
           </div>
         </div>
       )}

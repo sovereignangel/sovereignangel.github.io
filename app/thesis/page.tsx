@@ -7,6 +7,7 @@ import { todayString, getLast7Days } from '@/lib/formatters'
 import type { DailyLog, GarminMetrics } from '@/lib/types'
 import DailyThesisBanner from '@/components/thesis/DailyThesisBanner'
 import NervousSystemTrends from '@/components/thesis/NervousSystemTrends'
+import RewardScoreCard from '@/components/thesis/RewardScoreCard'
 import TwentyFourHourBanner from '@/components/thesis/TwentyFourHourBanner'
 import Link from 'next/link'
 
@@ -43,6 +44,12 @@ export default function ThesisDashboard() {
       <DailyThesisBanner
         focusHoursActual={todayLog?.focusHoursActual || 0}
         focusHoursTarget={profile?.settings?.focusHoursPerDay || 6}
+      />
+
+      <RewardScoreCard
+        todayLog={todayLog}
+        recentLogs={recentLogs}
+        dates={last7}
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">

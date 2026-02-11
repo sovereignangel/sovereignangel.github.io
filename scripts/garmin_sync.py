@@ -59,7 +59,9 @@ class HealthSnapshot:
     steps: Optional[int] = None
     activeCalories: Optional[int] = None
     stressLevel: Optional[int] = None
-    bodyBattery: Optional[int] = None
+    bodyBattery: Optional[int] = None         # morning peak (capacity to act)
+    bodyBatteryCharged: Optional[int] = None  # energy gained (from sleep/rest)
+    bodyBatteryDrained: Optional[int] = None  # energy spent (activity/stress)
 
     # Respiratory
     respirationRate: Optional[float] = None
@@ -166,7 +168,13 @@ class GarminClient:
         try:
             bb_data = self.client.get_body_battery(date_str)
             if bb_data and len(bb_data) > 0:
-                snapshot.bodyBattery = bb_data[0].get("chargedValue")
+                day = bb_data[0]
+                snapshot.bodyBatteryCharged = day.get("charged")
+                snapshot.bodyBatteryDrained = day.get("drained")
+                # Morning peak = highest value in the array (capacity you started with)
+                values = day.get("bodyBatteryValuesArray", [])
+                if values:
+                    snapshot.bodyBattery = max(v[1] for v in values if v[1] is not None)
         except Exception:
             pass
 

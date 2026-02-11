@@ -2,7 +2,7 @@ import { Timestamp } from 'firebase/firestore'
 
 export type NervousSystemState = 'regulated' | 'slightly_spiked' | 'spiked'
 export type BodyFelt = 'open' | 'neutral' | 'tense'
-export type TrainingType = 'vo2' | 'strength' | 'rest' | 'none'
+export type TrainingType = 'strength' | 'yoga' | 'vo2' | 'zone2' | 'rest' | 'none'
 export type RevenueStreamType = 'recurring' | 'one_time' | 'organic'
 export type SignalType = 'problem' | 'market' | 'research' | 'arbitrage'
 export type SignalStatus = 'open' | 'testing' | 'shipped' | 'archived'
@@ -10,6 +10,7 @@ export type ProjectStatus = 'spine' | 'pre_launch' | 'backup' | 'archived' | 'op
 export type ProjectHealth = 'on_track' | 'stalled' | 'accelerating'
 export type MarketSignalType = 'customer_complaint' | 'competitor_move' | 'tech_shift' | 'price_opportunity' | 'distribution'
 export type ThesisConnection = 'ai' | 'markets' | 'mind'
+export type ThesisPillar = 'ai' | 'markets' | 'mind'
 export type NervousSystemTrigger = 'ambiguous_commitment' | 'unseen' | 'stalled_momentum' | 'validation_drop' | 'other'
 
 export interface UserSettings {
@@ -41,6 +42,23 @@ export interface Problem {
   brokenWhy: string
 }
 
+export interface RewardComponents {
+  ge: number           // Generative Energy [0, 1]
+  gi: number           // Intelligence Growth Rate [0, 1]
+  gvc: number          // Value Creation Rate [0, 1]
+  kappa: number        // Capture Ratio [0, 1]
+  optionality: number  // Optionality [0, 1] (placeholder)
+  fragmentation: number // Fragmentation Tax [0, 1] (placeholder)
+  theta: number        // Thesis Coherence [0, 1]
+  gate: number         // Nervous System Gate [0.3, 1.0]
+}
+
+export interface RewardScore {
+  score: number              // Final scalar [0, 10]
+  components: RewardComponents
+  computedAt: string         // ISO timestamp
+}
+
 export interface DailyLog {
   id?: string
   date: string
@@ -67,10 +85,16 @@ export interface DailyLog {
   automationOpportunity: string
   sleepHours: number
   trainingType: TrainingType
+  trainingTypes: TrainingType[]
+  vo2Intervals: number[]
+  zone2Distance: number
+  calendarFocusHours: number | null
   relationalBoundary: string
   bodyFelt: BodyFelt
   todayFocus: string
   todayOneAction: string
+  pillarsTouched: ThesisPillar[]
+  rewardScore: RewardScore | null
   createdAt: Timestamp
   updatedAt: Timestamp
 }
@@ -175,6 +199,8 @@ export interface GarminMetrics {
   activeCalories: number | null
   stressLevel: number | null
   bodyBattery: number | null
+  bodyBatteryCharged: number | null
+  bodyBatteryDrained: number | null
   respirationRate: number | null
   spo2: number | null
   syncedAt: Timestamp
