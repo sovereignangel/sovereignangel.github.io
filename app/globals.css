@@ -1,0 +1,51 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  line-height: 1.7;
+}
+
+/* Porsche background image */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: url('/porsche.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  z-index: -2;
+}
+
+/* Transparent color overlay */
+body::after {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(250, 250, 250, 0.75);
+  z-index: -1;
+}
+
+/* Thesis Engine pages get warmer Armstrong cream overlay */
+body.thesis-active::after {
+  background: rgba(245, 241, 234, 0.92);
+}
+
+/* Custom scrollbar (Armstrong style) */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #c8c0b8; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #9a928a; }
