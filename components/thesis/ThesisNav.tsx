@@ -13,7 +13,6 @@ const navItems = [
   { href: '/thesis/projects', label: 'Projects' },
   { href: '/thesis/signals', label: 'Signals' },
   { href: '/thesis/weekly', label: 'Weekly' },
-  { href: '/thesis/settings', label: 'Settings' },
 ]
 
 function TermCard({
