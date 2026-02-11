@@ -22,11 +22,53 @@ const SIGNAL_TYPES: { value: SignalType; label: string }[] = [
   { value: 'research', label: 'Research' },
 ]
 
+const SIGNAL_SOURCES = [
+  {
+    tier: 'Tier 1',
+    label: 'Action-Proximate',
+    desc: 'Directly reduces uncertainty about what to build or sell next',
+    color: 'text-green-ink',
+    bg: 'bg-green-bg',
+    sources: [
+      { name: 'Customer conversations & support tickets', why: 'Ground truth on pain — unfiltered', ruin: 'None — always signal' },
+      { name: 'Competitor changelogs & pricing moves', why: 'Reveals what the market actually pays for', ruin: 'Obsessing over competitors instead of shipping' },
+      { name: 'Revenue data (yours + public comps)', why: 'Calibrates willingness-to-pay', ruin: 'Vanity metrics vs. actual conversion' },
+      { name: 'Distribution channel analytics', why: 'Where attention actually flows', ruin: 'Chasing platforms instead of building' },
+    ],
+  },
+  {
+    tier: 'Tier 2',
+    label: 'Model-Sharpening',
+    desc: 'Improves the slope of your world model — you see further',
+    color: 'text-navy',
+    bg: 'bg-navy-bg',
+    sources: [
+      { name: 'Blog posts from calibrated thinkers', why: 'Borrow calibrated world models', ruin: 'Consumption disguised as learning' },
+      { name: 'Research summaries (not full papers)', why: 'Frontier signal at low time cost', ruin: 'Rabbit holes with no test attached' },
+      { name: 'Macro & market data (rates, flows, vol)', why: 'Context for Armstrong + fund thesis', ruin: 'Analysis paralysis' },
+      { name: 'Tech trend reports (not hype cycles)', why: 'Spot picks-and-shovels opportunities', ruin: 'Trend-chasing without conviction' },
+    ],
+  },
+  {
+    tier: 'Tier 3',
+    label: 'Optionality-Expanding',
+    desc: 'Creates cheap call options on future moves',
+    color: 'text-gold',
+    bg: 'bg-gold-bg',
+    sources: [
+      { name: 'Job market signals (who hires for what, at what price)', why: 'Calibrates your market value + spots gaps', ruin: 'Distraction from building' },
+      { name: 'Funding & deal flow signals', why: 'Deep Tech Fund context', ruin: 'Premature fund-brain' },
+      { name: 'Community & network signals (who builds what)', why: 'Collaboration and distribution opportunities', ruin: 'Social media as proxy for work' },
+    ],
+  },
+]
+
 export default function SignalsPage() {
   const { user } = useAuth()
   const [signals, setSignals] = useState<Signal[]>([])
   const [filter, setFilter] = useState('all')
   const [showForm, setShowForm] = useState(false)
+  const [showSourceGuide, setShowSourceGuide] = useState(false)
   const [formType, setFormType] = useState<SignalType>('arbitrage')
   const [formData, setFormData] = useState<Partial<Signal>>({})
 
@@ -64,11 +106,24 @@ export default function SignalsPage() {
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <div>
-          <h2 className="font-serif text-[20px] font-bold text-ink tracking-tight">Signals</h2>
-          <p className="font-serif text-[12px] italic text-ink-muted mt-1">
-            {signals.length} captured
-          </p>
+        <div className="flex items-center gap-2.5">
+          <div>
+            <h2 className="font-serif text-[20px] font-bold text-ink tracking-tight">Signals</h2>
+            <p className="font-serif text-[12px] italic text-ink-muted mt-1">
+              {signals.length} captured
+            </p>
+          </div>
+          <button
+            onClick={() => setShowSourceGuide(!showSourceGuide)}
+            className={`w-[22px] h-[22px] rounded-full border flex items-center justify-center transition-colors mt-[-2px] ${
+              showSourceGuide
+                ? 'border-navy bg-navy text-paper'
+                : 'border-ink-faint text-ink-muted hover:border-navy hover:text-navy'
+            }`}
+            title="Signal source guide"
+          >
+            <span className="font-serif text-[12px] italic leading-none">i</span>
+          </button>
         </div>
         <button
           onClick={() => setShowForm(!showForm)}
@@ -77,6 +132,57 @@ export default function SignalsPage() {
           {showForm ? 'Cancel' : '+ Add Signal'}
         </button>
       </div>
+
+      {/* Signal Source Guide */}
+      {showSourceGuide && (
+        <div className="bg-paper border border-rule rounded-sm mb-6 overflow-hidden">
+          <div className="px-5 py-4 border-b border-rule-light">
+            <p className="font-serif text-[11px] font-semibold uppercase tracking-[1px] text-ink">
+              What Signals Move &Phi;<sub>I</sub>?
+            </p>
+            <p className="font-serif text-[11px] italic text-ink-muted mt-1 leading-relaxed">
+              A signal only increases Generative Intelligence if it passes one filter:
+              <span className="font-semibold text-ink"> &ldquo;Does this change what I build or who I ask this week?&rdquo;</span>
+              {' '}If no &mdash; it&apos;s consumption, not signal capture.
+            </p>
+          </div>
+
+          <div className="px-5 py-4 space-y-5">
+            {SIGNAL_SOURCES.map((tier) => (
+              <div key={tier.tier}>
+                <div className="flex items-baseline gap-2 mb-2.5">
+                  <span className={`font-mono text-[11px] font-semibold ${tier.color}`}>{tier.tier}</span>
+                  <span className="font-serif text-[12px] font-semibold text-ink">{tier.label}</span>
+                  <span className="font-serif text-[10px] italic text-ink-muted">&mdash; {tier.desc}</span>
+                </div>
+                <div className="space-y-1.5">
+                  {tier.sources.map((src) => (
+                    <div key={src.name} className={`${tier.bg} border border-rule-light/60 rounded-sm px-3.5 py-2.5 flex items-start gap-3`}>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-sans text-[12px] font-medium text-ink leading-snug">{src.name}</p>
+                        <p className="font-sans text-[10px] text-ink-muted mt-0.5">{src.why}</p>
+                      </div>
+                      <div className="flex-shrink-0 text-right">
+                        <p className="font-serif text-[9px] italic uppercase tracking-wide text-red-ink/70">Ruin mode</p>
+                        <p className="font-sans text-[10px] text-ink-light leading-snug">{src.ruin}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="px-5 py-3 border-t border-rule-light bg-cream/40">
+            <p className="font-serif text-[10px] italic text-ink-muted leading-relaxed">
+              <span className="font-semibold text-ink">Cadence:</span>{' '}
+              Daily (&lt;5 min) &mdash; your own analytics + 1-2 curated feeds.{' '}
+              Weekly (30 min) &mdash; research digest, competitor scan, macro check.{' '}
+              Real-time &mdash; customer quotes, market anomalies, &ldquo;that&apos;s broken&rdquo; moments.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Signal Form */}
       {showForm && (
