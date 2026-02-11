@@ -1,5 +1,6 @@
 'use client'
 
+import { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import UserMenu from '@/components/auth/UserMenu'
@@ -14,18 +15,103 @@ const navItems = [
   { href: '/thesis/settings', label: 'Settings' },
 ]
 
+function TermCard({
+  symbol,
+  label,
+  desc,
+  color,
+}: {
+  symbol: string
+  label: string
+  desc: string
+  color: string
+}) {
+  return (
+    <div className="flex items-start gap-2">
+      <span className={`font-mono text-[13px] font-semibold ${color} shrink-0 w-6`}>{symbol}</span>
+      <div>
+        <p className="font-serif text-[10px] font-semibold uppercase tracking-[0.5px] text-ink">{label}</p>
+        <p className="font-sans text-[10px] text-ink-muted leading-snug">{desc}</p>
+      </div>
+    </div>
+  )
+}
+
 export default function ThesisNav() {
   const pathname = usePathname()
+  const [showProof, setShowProof] = useState(false)
+  const popoverRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!showProof) return
+    const handler = (e: MouseEvent) => {
+      if (popoverRef.current && !popoverRef.current.contains(e.target as Node)) {
+        setShowProof(false)
+      }
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [showProof])
 
   return (
     <header className="bg-paper border-b-2 border-ink">
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         {/* Top row */}
         <div className="flex items-center justify-between py-3">
-          <div className="flex items-center gap-4">
+          <div className="flex items-baseline gap-3">
             <h1 className="font-serif text-[22px] font-bold text-ink tracking-tight">
               Thesis Engine
             </h1>
+
+            {/* Equation inline — Armstrong style */}
+            <div className="hidden sm:flex items-baseline gap-1.5 relative" ref={popoverRef}>
+              <span className="font-serif text-[12px] italic text-ink-muted tracking-tight">
+                g* = 𝔼[log GE + log ĠI + log ĠVC + log κ + log 𝒪] &minus; 𝓕 + Θ
+              </span>
+
+              {/* Info circle */}
+              <button
+                onClick={() => setShowProof(!showProof)}
+                className="w-4 h-4 rounded-full border border-ink-faint text-ink-muted hover:border-navy hover:text-navy transition-colors flex items-center justify-center shrink-0 ml-0.5"
+                title="View proof"
+              >
+                <span className="font-serif text-[9px] italic leading-none">i</span>
+              </button>
+
+              {/* Proof popover */}
+              {showProof && (
+                <div className="absolute top-full left-0 mt-2 w-[420px] bg-paper border border-rule rounded-sm shadow-lg z-50">
+                  <div className="px-5 py-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <p className="font-serif text-[10px] font-semibold uppercase tracking-[1px] text-ink">
+                        Generative Reward Function
+                      </p>
+                      <span className="font-mono text-[9px] text-ink-faint tracking-wide">
+                        Kelly-Ergodic Formulation
+                      </span>
+                    </div>
+
+                    <div className="space-y-2.5 mb-4">
+                      <TermCard symbol="GE" label="Generative Energy" desc="Capacity to act without aversion" color="text-green-ink" />
+                      <TermCard symbol="ĠI" label="Intelligence Growth" desc="Rate of model improvement" color="text-navy" />
+                      <TermCard symbol="ĠVC" label="Value Creation Rate" desc="Externalized output growth" color="text-navy" />
+                      <TermCard symbol="κ" label="Capture Ratio" desc="Value retained / value created" color="text-gold" />
+                      <TermCard symbol="𝒪" label="Optionality" desc="Convexity of future payoff" color="text-ink-light" />
+                      <TermCard symbol="𝓕" label="Fragmentation" desc="KL divergence from thesis allocation" color="text-red-ink" />
+                      <TermCard symbol="Θ" label="Thesis Coherence" desc="det[AI, Markets, Mind] volume" color="text-navy" />
+                    </div>
+
+                    <div className="pt-3 border-t border-rule-light">
+                      <p className="font-serif text-[10px] italic text-ink-muted leading-relaxed">
+                        Multiplicative dynamics → maximize time-average log-growth rate.
+                        If any component hits zero, log(0) = −∞. Ruin avoidance is primary.
+                        The nervous system gate g(s<sub>ν</sub>) modulates all terms — decisions while spiked are discounted toward zero.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="flex items-center gap-4">
