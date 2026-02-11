@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Image from 'next/image'
+import Link from 'next/link'
 import { useAuth } from './AuthProvider'
 import RewardProofModal from '@/components/thesis/RewardProofModal'
 
@@ -47,6 +48,13 @@ export default function UserMenu() {
               <span className="font-mono text-[11px] text-navy font-semibold">g*</span>
               <span>Reward Function</span>
             </button>
+            <Link
+              href="/thesis/settings"
+              onClick={() => setShowMenu(false)}
+              className="block w-full text-left px-4 py-2.5 font-serif text-[12px] text-ink-light hover:bg-cream transition-colors no-underline border-b border-rule-light"
+            >
+              Settings
+            </Link>
             <button
               onClick={() => { signOut(); setShowMenu(false) }}
               className="w-full text-left px-4 py-2.5 font-serif text-[12px] text-ink-light hover:bg-cream transition-colors"
