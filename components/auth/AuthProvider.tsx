@@ -11,8 +11,10 @@ interface AuthContextValue {
   profile: UserProfile | null
   loading: boolean
   error: string | null
+  calendarAccessToken: string | null
   signIn: () => Promise<void>
   signOut: () => Promise<void>
+  refreshCalendarToken: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextValue>({
@@ -20,8 +22,10 @@ const AuthContext = createContext<AuthContextValue>({
   profile: null,
   loading: true,
   error: null,
+  calendarAccessToken: null,
   signIn: async () => {},
   signOut: async () => {},
+  refreshCalendarToken: async () => {},
 })
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -29,6 +33,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [calendarAccessToken, setCalendarAccessToken] = useState<string | null>(null)
 
   useEffect(() => {
     const unsubscribe = onAuthChange((firebaseUser) => {
@@ -53,19 +58,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signIn = async () => {
     setError(null)
     try {
-      await signInWithGoogle()
+      const result = await signInWithGoogle()
+      if (result?.calendarAccessToken) {
+        setCalendarAccessToken(result.calendarAccessToken)
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Sign in failed')
+    }
+  }
+
+  const refreshCalendarToken = async () => {
+    try {
+      const result = await signInWithGoogle()
+      if (result?.calendarAccessToken) {
+        setCalendarAccessToken(result.calendarAccessToken)
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Calendar sync failed')
     }
   }
 
   const signOut = async () => {
     await signOutUser()
     setProfile(null)
+    setCalendarAccessToken(null)
   }
 
   return (
-    <AuthContext.Provider value={{ user, profile, loading, error, signIn, signOut }}>
+    <AuthContext.Provider value={{ user, profile, loading, error, calendarAccessToken, signIn, signOut, refreshCalendarToken }}>
       {children}
     </AuthContext.Provider>
   )
