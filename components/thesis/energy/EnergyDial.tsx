@@ -15,8 +15,8 @@ export default function EnergyDial() {
   return (
     <div className="h-full flex flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between mb-2">
-        <h3 className="font-serif text-[11px] font-semibold uppercase tracking-[1px] text-ink">
+      <div className="flex items-center justify-between mb-1">
+        <h3 className="font-serif text-[10px] font-semibold uppercase tracking-[1px] text-ink">
           Morning Check-In
         </h3>
         <span className="font-mono text-[9px] text-ink-muted">
@@ -24,21 +24,21 @@ export default function EnergyDial() {
         </span>
       </div>
 
-      <div className="bg-paper border border-rule rounded-sm p-3 flex-1 overflow-y-auto space-y-2.5">
+      <div className="bg-paper border border-rule rounded-sm p-2 flex-1 overflow-y-auto space-y-1.5">
         {isSpiked && <TwentyFourHourBanner />}
 
         {/* Sleep + Body + NS State */}
-        <div className="grid grid-cols-[auto_1fr_1fr] gap-3 items-start">
+        <div className="grid grid-cols-[auto_1fr_1fr] gap-2 items-start">
           <div>
-            <label className="font-serif text-[9px] italic uppercase tracking-wide text-ink-muted block mb-1">
+            <label className="font-serif text-[8px] italic uppercase tracking-wide text-ink-muted block mb-0.5">
               Sleep
               {garminData && !sleepOverride && (
-                <span className="ml-1 font-mono text-[7px] text-green-ink bg-green-bg px-1 py-0.5 rounded-sm">garmin</span>
+                <span className="ml-1 font-mono text-[7px] text-green-ink bg-green-bg px-0.5 rounded-sm">garmin</span>
               )}
             </label>
             {garminData && !sleepOverride ? (
               <div className="flex items-center gap-1">
-                <span className="font-mono text-[14px] font-semibold text-ink">{log.sleepHours || '—'}h</span>
+                <span className="font-mono text-[12px] font-semibold text-ink">{log.sleepHours || '—'}h</span>
                 <button onClick={() => setSleepOverride(true)} className="font-mono text-[7px] text-ink-muted hover:text-ink underline">edit</button>
               </div>
             ) : (
@@ -46,15 +46,15 @@ export default function EnergyDial() {
                 type="number"
                 value={log.sleepHours || ''}
                 onChange={(e) => updateField('sleepHours', parseFloat(e.target.value) || 0)}
-                className="w-16 font-mono text-[12px] bg-cream border border-rule rounded-sm px-1.5 py-1 focus:outline-none focus:border-navy"
+                className="w-14 font-mono text-[11px] bg-cream border border-rule rounded-sm px-1 py-0.5 focus:outline-none focus:border-navy"
                 step="0.5"
                 placeholder="0"
               />
             )}
           </div>
           <div>
-            <label className="font-serif text-[9px] italic uppercase tracking-wide text-ink-muted block mb-1">Body</label>
-            <div className="flex gap-1">
+            <label className="font-serif text-[8px] italic uppercase tracking-wide text-ink-muted block mb-0.5">Body</label>
+            <div className="flex gap-0.5">
               {(['open', 'neutral', 'tense'] as BodyFelt[]).map((state) => {
                 const styles = {
                   open: { active: 'bg-green-ink text-paper border-green-ink', label: 'Open' },
@@ -65,7 +65,7 @@ export default function EnergyDial() {
                   <button
                     key={state}
                     onClick={() => updateField('bodyFelt', state)}
-                    className={`font-serif text-[9px] font-medium px-2 py-0.5 rounded-sm border transition-colors ${
+                    className={`font-serif text-[8px] font-medium px-1.5 py-0.5 rounded-sm border transition-colors ${
                       log.bodyFelt === state ? styles[state].active : 'bg-transparent text-ink-light border-rule hover:border-ink-faint'
                     }`}
                   >
@@ -76,8 +76,8 @@ export default function EnergyDial() {
             </div>
           </div>
           <div>
-            <label className="font-serif text-[9px] italic uppercase tracking-wide text-ink-muted block mb-1">NS State</label>
-            <div className="flex gap-1">
+            <label className="font-serif text-[8px] italic uppercase tracking-wide text-ink-muted block mb-0.5">NS State</label>
+            <div className="flex gap-0.5">
               {(['regulated', 'slightly_spiked', 'spiked'] as NervousSystemState[]).map((state) => {
                 const styles = {
                   regulated: { active: 'bg-green-ink text-paper border-green-ink', label: 'Reg' },
@@ -88,7 +88,7 @@ export default function EnergyDial() {
                   <button
                     key={state}
                     onClick={() => updateField('nervousSystemState', state)}
-                    className={`font-serif text-[9px] font-medium px-2 py-0.5 rounded-sm border transition-colors ${
+                    className={`font-serif text-[8px] font-medium px-1.5 py-0.5 rounded-sm border transition-colors ${
                       log.nervousSystemState === state ? styles[state].active : 'bg-transparent text-ink-light border-rule hover:border-ink-faint'
                     }`}
                   >
@@ -102,13 +102,13 @@ export default function EnergyDial() {
 
         {/* Training */}
         <div>
-          <label className="font-serif text-[9px] italic uppercase tracking-wide text-ink-muted block mb-1">Training</label>
-          <div className="flex gap-1 flex-wrap">
+          <label className="font-serif text-[8px] italic uppercase tracking-wide text-ink-muted block mb-0.5">Training</label>
+          <div className="flex gap-0.5 flex-wrap">
             {TRAINING_TYPES.map((t) => (
               <button
                 key={t.value}
                 onClick={() => toggleTraining(t.value as TrainingType)}
-                className={`font-serif text-[9px] font-medium px-2 py-0.5 rounded-sm border transition-colors ${
+                className={`font-serif text-[8px] font-medium px-1.5 py-0.5 rounded-sm border transition-colors ${
                   trainingTypes.includes(t.value as TrainingType)
                     ? 'bg-navy text-paper border-navy'
                     : 'bg-transparent text-ink-light border-rule hover:border-ink-faint'
@@ -122,11 +122,11 @@ export default function EnergyDial() {
 
         {/* Conditional: VO2 + Zone2 */}
         {(hasVo2 || hasZone2) && (
-          <div className="flex gap-3 flex-wrap">
+          <div className="flex gap-2 flex-wrap">
             {hasVo2 && (
               <div>
-                <label className="font-serif text-[8px] italic uppercase tracking-wide text-ink-muted block mb-1">VO2 (mph)</label>
-                <div className="flex gap-1">
+                <label className="font-serif text-[8px] italic uppercase tracking-wide text-ink-muted block mb-0.5">VO2 (mph)</label>
+                <div className="flex gap-0.5">
                   {[0, 1, 2, 3].map((i) => (
                     <input
                       key={i}
@@ -137,7 +137,7 @@ export default function EnergyDial() {
                         intervals[i] = parseFloat(e.target.value) || 0
                         updateField('vo2Intervals', intervals)
                       }}
-                      className="w-11 font-mono text-[11px] bg-cream border border-rule rounded-sm px-1 py-0.5 text-center focus:outline-none focus:border-navy"
+                      className="w-10 font-mono text-[10px] bg-cream border border-rule rounded-sm px-0.5 py-0.5 text-center focus:outline-none focus:border-navy"
                       step="0.1"
                       placeholder={`I${i + 1}`}
                     />
@@ -147,12 +147,12 @@ export default function EnergyDial() {
             )}
             {hasZone2 && (
               <div>
-                <label className="font-serif text-[8px] italic uppercase tracking-wide text-ink-muted block mb-1">Zone 2 (mi)</label>
+                <label className="font-serif text-[8px] italic uppercase tracking-wide text-ink-muted block mb-0.5">Zone 2 (mi)</label>
                 <input
                   type="number"
                   value={log.zone2Distance || ''}
                   onChange={(e) => updateField('zone2Distance', parseFloat(e.target.value) || 0)}
-                  className="w-14 font-mono text-[11px] bg-cream border border-rule rounded-sm px-1 py-0.5 text-center focus:outline-none focus:border-navy"
+                  className="w-12 font-mono text-[10px] bg-cream border border-rule rounded-sm px-0.5 py-0.5 text-center focus:outline-none focus:border-navy"
                   step="0.1"
                 />
               </div>
@@ -162,13 +162,13 @@ export default function EnergyDial() {
 
         {/* Conditional: NS Trigger + Relational */}
         {(log.nervousSystemState === 'slightly_spiked' || log.nervousSystemState === 'spiked') && (
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-2 gap-1.5">
             <div>
-              <label className="font-serif text-[9px] italic uppercase tracking-wide text-ink-muted block mb-1">Trigger</label>
+              <label className="font-serif text-[8px] italic uppercase tracking-wide text-ink-muted block mb-0.5">Trigger</label>
               <select
                 value={log.nervousSystemTrigger || ''}
                 onChange={(e) => updateField('nervousSystemTrigger', e.target.value)}
-                className="w-full font-sans text-[11px] bg-cream border border-rule rounded-sm px-1.5 py-1 focus:outline-none focus:border-navy"
+                className="w-full font-sans text-[10px] bg-cream border border-rule rounded-sm px-1 py-0.5 focus:outline-none focus:border-navy"
               >
                 <option value="">Select...</option>
                 {NERVOUS_SYSTEM_TRIGGERS.map((t) => (
@@ -177,12 +177,12 @@ export default function EnergyDial() {
               </select>
             </div>
             <div>
-              <label className="font-serif text-[9px] italic uppercase tracking-wide text-ink-muted block mb-1">Boundary</label>
+              <label className="font-serif text-[8px] italic uppercase tracking-wide text-ink-muted block mb-0.5">Boundary</label>
               <input
                 type="text"
                 value={log.relationalBoundary || ''}
                 onChange={(e) => updateField('relationalBoundary', e.target.value)}
-                className="w-full font-sans text-[11px] bg-cream border border-rule rounded-sm px-1.5 py-1 focus:outline-none focus:border-navy"
+                className="w-full font-sans text-[10px] bg-cream border border-rule rounded-sm px-1 py-0.5 focus:outline-none focus:border-navy"
                 placeholder="Name or set..."
               />
             </div>
@@ -191,12 +191,12 @@ export default function EnergyDial() {
 
         {log.nervousSystemState === 'regulated' && (
           <div>
-            <label className="font-serif text-[9px] italic uppercase tracking-wide text-ink-muted block mb-1">Relational Ask / Boundary</label>
+            <label className="font-serif text-[8px] italic uppercase tracking-wide text-ink-muted block mb-0.5">Relational Ask / Boundary</label>
             <input
               type="text"
               value={log.relationalBoundary || ''}
               onChange={(e) => updateField('relationalBoundary', e.target.value)}
-              className="w-full font-sans text-[11px] bg-cream border border-rule rounded-sm px-1.5 py-1 focus:outline-none focus:border-navy"
+              className="w-full font-sans text-[10px] bg-cream border border-rule rounded-sm px-1 py-0.5 focus:outline-none focus:border-navy"
               placeholder="Anything to name or set today..."
             />
           </div>
