@@ -10,11 +10,13 @@ const RewardTrajectoryChart = dynamic(
 )
 
 const COMPONENT_BARS = [
-  { key: 'GE', field: 'ge' as const, color: 'bg-green-ink', label: 'Generative Energy' },
-  { key: 'ĠI', field: 'gi' as const, color: 'bg-navy', label: 'Intelligence Growth' },
-  { key: 'ĠVC', field: 'gvc' as const, color: 'bg-navy-light', label: 'Value Creation' },
-  { key: 'κ', field: 'kappa' as const, color: 'bg-gold', label: 'Capture Ratio' },
-  { key: 'Θ', field: 'theta' as const, color: 'bg-navy', label: 'Thesis Coherence' },
+  { key: 'GE', field: 'ge' as const, color: 'bg-green-ink', label: 'Generative Energy', invert: false },
+  { key: 'ĠI', field: 'gi' as const, color: 'bg-navy', label: 'Intelligence Growth', invert: false },
+  { key: 'ĠVC', field: 'gvc' as const, color: 'bg-navy-light', label: 'Value Creation', invert: false },
+  { key: 'κ', field: 'kappa' as const, color: 'bg-gold', label: 'Capture Ratio', invert: false },
+  { key: '𝒪', field: 'optionality' as const, color: 'bg-ink-light', label: 'Optionality', invert: false },
+  { key: 'Θ', field: 'theta' as const, color: 'bg-navy', label: 'Thesis Coherence', invert: false },
+  { key: '𝓕', field: 'fragmentation' as const, color: 'bg-red-ink', label: 'Fragmentation', invert: true },
 ]
 
 export default function CoherenceGauge() {
@@ -26,7 +28,7 @@ export default function CoherenceGauge() {
 
   const logMap = new Map(recentLogs.map(l => [l.date, l]))
   const chartData = dates.map(date => ({
-    date: dayOfWeekShort(date).charAt(0),
+    date: dayOfWeekShort(date).slice(0, 2),
     score: logMap.get(date)?.rewardScore?.score ?? null,
   }))
   const hasTrajectoryData = chartData.some(d => d.score !== null)
@@ -83,20 +85,24 @@ export default function CoherenceGauge() {
             {/* Component bars */}
             {components && (
               <div className="space-y-1.5">
-                {COMPONENT_BARS.map(bar => (
-                  <div key={bar.key} className="flex items-center gap-2">
-                    <span className="font-mono text-[9px] text-ink-muted w-6 shrink-0 text-right">{bar.key}</span>
-                    <div className="flex-1 h-2 bg-rule-light rounded-sm overflow-hidden">
-                      <div
-                        className={`h-full ${bar.color} rounded-sm transition-all`}
-                        style={{ width: `${components[bar.field] * 100}%` }}
-                      />
+                {COMPONENT_BARS.map(bar => {
+                  const rawVal = components[bar.field]
+                  const displayVal = bar.invert ? 1 - rawVal : rawVal
+                  return (
+                    <div key={bar.key} className="flex items-center gap-2">
+                      <span className="font-mono text-[9px] text-ink-muted w-6 shrink-0 text-right">{bar.key}</span>
+                      <div className="flex-1 h-2 bg-rule-light rounded-sm overflow-hidden">
+                        <div
+                          className={`h-full ${bar.color} rounded-sm transition-all`}
+                          style={{ width: `${displayVal * 100}%` }}
+                        />
+                      </div>
+                      <span className="font-mono text-[8px] text-ink-light w-6 text-right">
+                        {(displayVal * 100).toFixed(0)}
+                      </span>
                     </div>
-                    <span className="font-mono text-[8px] text-ink-light w-6 text-right">
-                      {(components[bar.field] * 100).toFixed(0)}
-                    </span>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             )}
 

@@ -18,8 +18,12 @@ export function dateFull(dateStr: string): string {
   return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
 }
 
+function localDateString(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
 export function todayString(): string {
-  return new Date().toISOString().split('T')[0]
+  return localDateString(new Date())
 }
 
 export function weekStartDate(date: Date = new Date()): string {
@@ -27,11 +31,11 @@ export function weekStartDate(date: Date = new Date()): string {
   const day = d.getDay()
   const diff = d.getDate() - day + (day === 0 ? -6 : 1)
   d.setDate(diff)
-  return d.toISOString().split('T')[0]
+  return localDateString(d)
 }
 
 export function dayOfWeekShort(dateStr: string): string {
-  const d = new Date(dateStr)
+  const d = new Date(dateStr + 'T12:00:00')
   return d.toLocaleDateString('en-US', { weekday: 'short' })
 }
 
@@ -40,7 +44,7 @@ export function getLast7Days(): string[] {
   for (let i = 6; i >= 0; i--) {
     const d = new Date()
     d.setDate(d.getDate() - i)
-    days.push(d.toISOString().split('T')[0])
+    days.push(localDateString(d))
   }
   return days
 }

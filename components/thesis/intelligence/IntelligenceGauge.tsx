@@ -56,7 +56,7 @@ const SIGNAL_SOURCES = [
   },
 ]
 
-export default function IntelligenceGauge() {
+export default function IntelligenceGauge({ refreshKey = 0 }: { refreshKey?: number }) {
   const { user } = useAuth()
   const { log } = useDailyLogContext()
   const [signals, setSignals] = useState<Signal[]>([])
@@ -66,7 +66,7 @@ export default function IntelligenceGauge() {
   useEffect(() => {
     if (!user) return
     getSignals(user.uid, filter).then(setSignals)
-  }, [user, filter])
+  }, [user, filter, refreshKey])
 
   const handleStatusChange = async (signalId: string, status: SignalStatus) => {
     if (!user) return

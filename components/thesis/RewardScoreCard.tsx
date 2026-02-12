@@ -20,6 +20,7 @@ const COMPONENT_BARS = [
   { key: 'ĠI', field: 'gi' as const, color: 'bg-navy', label: 'Intelligence Growth' },
   { key: 'ĠVC', field: 'gvc' as const, color: 'bg-navy-light', label: 'Value Creation' },
   { key: 'κ', field: 'kappa' as const, color: 'bg-gold', label: 'Capture Ratio' },
+  { key: 'ĠD', field: 'gd' as const, color: 'bg-blue-600', label: 'Generative Discovery' },
   { key: 'Θ', field: 'theta' as const, color: 'bg-navy', label: 'Thesis Coherence' },
 ]
 
@@ -31,7 +32,7 @@ export default function RewardScoreCard({ todayLog, recentLogs, dates }: RewardS
   // Build 7-day trajectory data
   const logMap = new Map(recentLogs.map(l => [l.date, l]))
   const chartData = dates.map(date => ({
-    date: dayOfWeekShort(date).charAt(0),
+    date: dayOfWeekShort(date).slice(0, 2),
     score: logMap.get(date)?.rewardScore?.score ?? null,
   }))
 
