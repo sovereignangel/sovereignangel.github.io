@@ -105,7 +105,7 @@ export default function IntelligenceGauge() {
           }`}>
             {giScore != null ? (giScore * 100).toFixed(0) : '—'}
           </span>
-          <span className="font-mono text-[10px] text-ink-faint">{signals.length} signals</span>
+          <span className="font-mono text-[11px] text-ink-faint">{signals.length} signals</span>
         </div>
       </div>
 
@@ -115,7 +115,7 @@ export default function IntelligenceGauge() {
           <button
             key={f.value}
             onClick={() => setFilter(f.value)}
-            className={`font-serif text-[9px] font-medium px-2 py-1 rounded-sm border transition-colors ${
+            className={`font-serif text-[11px] font-medium px-2 py-1 rounded-sm border transition-colors ${
               filter === f.value
                 ? 'text-navy border-navy bg-navy-bg'
                 : 'text-ink-light border-rule hover:border-ink-faint'
@@ -129,7 +129,7 @@ export default function IntelligenceGauge() {
       {/* Scrollable signal list */}
       <div className="flex-1 overflow-y-auto space-y-2 bg-paper border border-rule rounded-sm p-2">
         {signals.length === 0 && (
-          <p className="font-serif text-[11px] italic text-ink-muted text-center py-4">
+          <p className="font-serif text-[13px] italic text-ink-muted text-center py-4">
             No signals yet. Capture what you notice.
           </p>
         )}
@@ -144,20 +144,20 @@ export default function IntelligenceGauge() {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1.5 mb-0.5">
                   {signal.signalType === 'arbitrage' && signal.revenuePotential > 0 && (
-                    <span className="font-mono text-[11px] font-semibold text-gold">{signal.revenuePotential}/10</span>
+                    <span className="font-mono text-[12px] font-semibold text-gold">{signal.revenuePotential}/10</span>
                   )}
-                  <span className="font-serif text-[8px] uppercase tracking-wide text-ink-muted">{signal.signalType}</span>
+                  <span className="font-serif text-[10px] uppercase tracking-wide text-ink-muted">{signal.signalType}</span>
                 </div>
-                <h4 className="font-sans text-[12px] font-medium text-ink leading-snug">{signal.title}</h4>
+                <h4 className="font-sans text-[13px] font-medium text-ink leading-snug">{signal.title}</h4>
                 {signal.actionThisWeek && (
-                  <p className="font-sans text-[10px] text-navy mt-0.5">Action: {signal.actionThisWeek}</p>
+                  <p className="font-sans text-[12px] text-navy mt-0.5">Action: {signal.actionThisWeek}</p>
                 )}
               </div>
               <div className="flex items-center gap-1 shrink-0">
                 <select
                   value={signal.status}
                   onChange={(e) => handleStatusChange(signal.id!, e.target.value as SignalStatus)}
-                  className="font-sans text-[9px] bg-cream border border-rule rounded-sm px-1 py-0.5 focus:outline-none focus:border-navy"
+                  className="font-sans text-[11px] bg-cream border border-rule rounded-sm px-1 py-0.5 focus:outline-none focus:border-navy"
                 >
                   {SIGNAL_STATUS_OPTIONS.map((s) => (
                     <option key={s.value} value={s.value}>{s.label}</option>
@@ -165,7 +165,7 @@ export default function IntelligenceGauge() {
                 </select>
                 <button
                   onClick={() => handleDelete(signal.id!)}
-                  className="font-sans text-[11px] text-ink-muted hover:text-red-ink transition-colors px-0.5"
+                  className="font-sans text-[12px] text-ink-muted hover:text-red-ink transition-colors px-0.5"
                 >
                   &times;
                 </button>
