@@ -2,10 +2,10 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '@/components/auth/AuthProvider'
-import { getDailyLog, saveDailyLog, getGarminMetrics, getRecentDailyLogs, getRecentGarminMetrics } from '@/lib/firestore'
+import { getDailyLog, saveDailyLog, getGarminMetrics, getRecentDailyLogs, getRecentGarminMetrics, getProjects } from '@/lib/firestore'
 import { fetchFocusHours } from '@/lib/calendar'
 import { todayString, getLast7Days } from '@/lib/formatters'
-import type { DailyLog, TrainingType, GarminMetrics } from '@/lib/types'
+import type { DailyLog, TrainingType, GarminMetrics, Project } from '@/lib/types'
 import type { NervousSystemState, BodyFelt, RevenueStreamType } from '@/lib/types'
 import { computeReward } from '@/lib/reward'
 
@@ -42,6 +42,8 @@ const defaultLog: Partial<DailyLog> = {
   todayFocus: '',
   todayOneAction: '',
   pillarsTouched: [],
+  actionType: null,
+  yesterdayOutcome: '',
   rewardScore: null,
 }
 
@@ -63,6 +65,7 @@ export interface DailyLogContextValue {
   // Shared 7-day data
   recentLogs: DailyLog[]
   garminMetrics: GarminMetrics[]
+  projects: Project[]
   dates: string[]
   loading: boolean
 }
@@ -78,6 +81,7 @@ export function useDailyLog(): DailyLogContextValue {
   const [calendarSyncing, setCalendarSyncing] = useState(false)
   const [recentLogs, setRecentLogs] = useState<DailyLog[]>([])
   const [garminMetrics, setGarminMetrics] = useState<GarminMetrics[]>([])
+  const [projects, setProjects] = useState<Project[]>([])
   const [loading, setLoading] = useState(true)
 
   const dates = getLast7Days()
@@ -107,14 +111,26 @@ export function useDailyLog(): DailyLogContextValue {
       }),
       getRecentDailyLogs(user.uid, 7).then(setRecentLogs),
       getRecentGarminMetrics(user.uid, 7).then(setGarminMetrics),
+      getProjects(user.uid).then(setProjects),
     ]).finally(() => setLoading(false))
   }, [user, logDate])
 
   const save = useCallback(async (updates: Partial<DailyLog>) => {
     if (!user) return
     const newLog = { ...log, ...updates }
-    const rewardScore = computeReward(newLog, profile?.settings)
-    const logWithReward = { ...newLog, rewardScore }
+    const rewardScore = computeReward(newLog, profile?.settings, { recentLogs, projects })
+
+    // Compute day-over-day delta from yesterday's score
+    const yesterday = new Date()
+    yesterday.setDate(yesterday.getDate() - 1)
+    const yesterdayDate = yesterday.toISOString().split('T')[0]
+    const yesterdayLog = recentLogs.find(l => l.date === yesterdayDate)
+    const delta = yesterdayLog?.rewardScore?.score != null
+      ? Math.round((rewardScore.score - yesterdayLog.rewardScore.score) * 10) / 10
+      : null
+    const rewardWithDelta = { ...rewardScore, delta }
+
+    const logWithReward = { ...newLog, rewardScore: rewardWithDelta }
     setLog(logWithReward)
     setSaving(true)
     await saveDailyLog(user.uid, logDate, logWithReward)
@@ -125,7 +141,7 @@ export function useDailyLog(): DailyLogContextValue {
       const filtered = prev.filter(l => l.date !== logDate)
       return [...filtered, logWithReward as DailyLog].sort((a, b) => a.date.localeCompare(b.date))
     })
-  }, [user, logDate, log, profile])
+  }, [user, logDate, log, profile, recentLogs, projects])
 
   const updateField = useCallback((field: string, value: unknown) => {
     save({ [field]: value })
@@ -183,6 +199,7 @@ export function useDailyLog(): DailyLogContextValue {
     syncCalendar,
     recentLogs,
     garminMetrics,
+    projects,
     dates,
     loading,
   }

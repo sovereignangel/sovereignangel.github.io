@@ -13,7 +13,9 @@ export default function OutputDial() {
         <h3 className="font-serif text-[11px] font-semibold uppercase tracking-[1px] text-ink">
           Execution
         </h3>
-        <span className="font-mono text-[9px] text-ink-muted">
+        <span className={`font-mono text-[9px] px-1.5 py-0.5 rounded-sm transition-colors ${
+          saving ? 'text-ink-muted' : lastSaved ? 'text-green-ink bg-green-ink/10' : 'text-ink-muted'
+        }`}>
           {saving ? 'Saving...' : lastSaved ? `Saved ${lastSaved}` : ''}
         </span>
       </div>
@@ -69,6 +71,16 @@ export default function OutputDial() {
           <h4 className="font-serif text-[9px] font-semibold uppercase tracking-[1px] text-ink mb-2">
             Yesterday&apos;s Execution
           </h4>
+          <div className="mb-2">
+            <label className="font-serif text-[8px] italic uppercase tracking-wide text-ink-muted block mb-0.5">Yesterday&apos;s Outcome</label>
+            <input
+              type="text"
+              value={(log as Record<string, unknown>).yesterdayOutcome as string || ''}
+              onChange={(e) => updateField('yesterdayOutcome', e.target.value)}
+              className="w-full font-sans text-[11px] bg-cream border border-rule rounded-sm px-2 py-1 focus:outline-none focus:border-navy"
+              placeholder="What happened as a result of yesterday's action?"
+            />
+          </div>
           <div className="grid grid-cols-4 gap-2">
             <div>
               <label className="font-serif text-[8px] italic uppercase tracking-wide text-ink-muted block mb-0.5">

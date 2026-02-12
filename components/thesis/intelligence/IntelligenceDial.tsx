@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useAuth } from '@/components/auth/AuthProvider'
-import { saveSignal, getSignals } from '@/lib/firestore'
+import { saveSignal } from '@/lib/firestore'
 import { useDailyLogContext } from '@/components/thesis/DailyLogProvider'
 import type { Signal, SignalType, ThesisPillar } from '@/lib/types'
 import { MARKET_SIGNAL_TYPES, THESIS_PILLARS } from '@/lib/constants'
@@ -14,7 +14,7 @@ const SIGNAL_TYPES: { value: SignalType; label: string }[] = [
   { value: 'research', label: 'Res' },
 ]
 
-export default function IntelligenceDial() {
+export default function IntelligenceDial({ onSignalSaved }: { onSignalSaved?: () => void }) {
   const { user } = useAuth()
   const { log, updateField, saving, lastSaved } = useDailyLogContext()
   const [formType, setFormType] = useState<SignalType>('arbitrage')
@@ -27,6 +27,7 @@ export default function IntelligenceDial() {
     await saveSignal(user.uid, { ...formData, signalType: formType })
     setFormData({})
     setSignalSaving(false)
+    onSignalSaved?.()
   }
 
   return (

@@ -22,7 +22,7 @@ export default function RewardProofModal({ onClose }: RewardProofModalProps) {
               Generative Reward Function
             </h2>
             <p className="font-serif text-[10px] italic text-ink-muted mt-0.5">
-              Kelly-Ergodic Formulation &middot; Mathematical Proof
+              Systematic Self-Assessment Scorecard
             </p>
           </div>
           <button
@@ -37,6 +37,15 @@ export default function RewardProofModal({ onClose }: RewardProofModalProps) {
 
         {/* Content */}
         <div className="px-6 py-5 space-y-6">
+
+          {/* Honest framing note */}
+          <div className="bg-cream/60 border border-rule-light rounded-sm px-4 py-3 mb-6">
+            <p className="font-sans text-[11px] text-ink-light leading-relaxed">
+              This is a structured daily scorecard using multiplicative scoring.
+              It is not reinforcement learning &mdash; there is no learned policy or state transitions.
+              The mathematical language describes the aspiration; the implementation is a disciplined self-assessment tool.
+            </p>
+          </div>
 
           {/* Section 1: Core Equation */}
           <ProofSection title="I. The Core Equation">

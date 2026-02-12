@@ -1,7 +1,7 @@
 'use client'
 
 import { useDailyLogContext } from '@/components/thesis/DailyLogProvider'
-import type { NervousSystemState, BodyFelt, TrainingType } from '@/lib/types'
+import type { NervousSystemState, BodyFelt, TrainingType, ActionType } from '@/lib/types'
 import { NERVOUS_SYSTEM_TRIGGERS, TRAINING_TYPES } from '@/lib/constants'
 import TwentyFourHourBanner from '@/components/thesis/TwentyFourHourBanner'
 
@@ -19,7 +19,9 @@ export default function EnergyDial() {
         <h3 className="font-serif text-[10px] font-semibold uppercase tracking-[1px] text-ink">
           Morning Check-In
         </h3>
-        <span className="font-mono text-[9px] text-ink-muted">
+        <span className={`font-mono text-[9px] px-1.5 py-0.5 rounded-sm transition-colors ${
+          saving ? 'text-ink-muted' : lastSaved ? 'text-green-ink bg-green-ink/10' : 'text-ink-muted'
+        }`}>
           {saving ? 'Saving...' : lastSaved ? `Saved ${lastSaved}` : ''}
         </span>
       </div>
@@ -27,76 +29,96 @@ export default function EnergyDial() {
       <div className="bg-paper border border-rule rounded-sm p-2 flex-1 overflow-y-auto space-y-1.5">
         {isSpiked && <TwentyFourHourBanner />}
 
-        {/* Sleep + Body + NS State */}
-        <div className="grid grid-cols-[auto_1fr_1fr] gap-2 items-start">
-          <div>
-            <label className="font-serif text-[8px] italic uppercase tracking-wide text-ink-muted block mb-0.5">
-              Sleep
-              {garminData && !sleepOverride && (
-                <span className="ml-1 font-mono text-[7px] text-green-ink bg-green-bg px-0.5 rounded-sm">garmin</span>
-              )}
-            </label>
+        {/* Action Type - Compact */}
+        <div className="flex gap-0.5 flex-wrap">
+          {([
+            { value: 'ship', label: 'Ship' },
+            { value: 'ask', label: 'Ask' },
+            { value: 'signal', label: 'Signal' },
+            { value: 'regulate', label: 'Reg' },
+            { value: 'explore', label: 'Exp' },
+            { value: 'compound', label: 'Comp' },
+          ] as { value: ActionType; label: string }[]).map((action) => (
+            <button
+              key={action.value}
+              onClick={() => updateField('actionType', log.actionType === action.value ? null : action.value)}
+              className={`font-serif text-[7px] font-medium px-1 py-0.5 rounded-sm border transition-colors ${
+                log.actionType === action.value
+                  ? 'bg-navy text-paper border-navy'
+                  : 'bg-transparent text-ink-light border-rule hover:border-ink-faint'
+              }`}
+            >
+              {action.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Sleep + Body + NS State - Ultra Compact */}
+        <div className="grid grid-cols-[auto_auto_1fr] gap-1.5 items-center">
+          {/* Sleep */}
+          <div className="flex items-center gap-1">
+            <span className="font-serif text-[7px] text-ink-muted">Sleep</span>
             {garminData && !sleepOverride ? (
-              <div className="flex items-center gap-1">
-                <span className="font-mono text-[12px] font-semibold text-ink">{log.sleepHours || '—'}h</span>
-                <button onClick={() => setSleepOverride(true)} className="font-mono text-[7px] text-ink-muted hover:text-ink underline">edit</button>
-              </div>
+              <>
+                <span className="font-mono text-[10px] font-semibold text-ink">{log.sleepHours || '—'}h</span>
+                <span className="font-mono text-[6px] text-green-ink">garmin</span>
+              </>
             ) : (
               <input
                 type="number"
                 value={log.sleepHours || ''}
                 onChange={(e) => updateField('sleepHours', parseFloat(e.target.value) || 0)}
-                className="w-14 font-mono text-[11px] bg-cream border border-rule rounded-sm px-1 py-0.5 focus:outline-none focus:border-navy"
+                className="w-10 font-mono text-[9px] bg-cream border border-rule rounded-sm px-0.5 py-0.5 text-center focus:outline-none focus:border-navy"
                 step="0.5"
                 placeholder="0"
               />
             )}
           </div>
-          <div>
-            <label className="font-serif text-[8px] italic uppercase tracking-wide text-ink-muted block mb-0.5">Body</label>
-            <div className="flex gap-0.5">
-              {(['open', 'neutral', 'tense'] as BodyFelt[]).map((state) => {
-                const styles = {
-                  open: { active: 'bg-green-ink text-paper border-green-ink', label: 'Open' },
-                  neutral: { active: 'bg-amber-ink text-paper border-amber-ink', label: 'Neut' },
-                  tense: { active: 'bg-red-ink text-paper border-red-ink', label: 'Tense' },
-                }
-                return (
-                  <button
-                    key={state}
-                    onClick={() => updateField('bodyFelt', state)}
-                    className={`font-serif text-[8px] font-medium px-1.5 py-0.5 rounded-sm border transition-colors ${
-                      log.bodyFelt === state ? styles[state].active : 'bg-transparent text-ink-light border-rule hover:border-ink-faint'
-                    }`}
-                  >
-                    {styles[state].label}
-                  </button>
-                )
-              })}
-            </div>
+
+          {/* Body */}
+          <div className="flex items-center gap-0.5">
+            <span className="font-serif text-[7px] text-ink-muted">Body</span>
+            {(['open', 'neutral', 'tense'] as BodyFelt[]).map((state) => {
+              const styles = {
+                open: { active: 'bg-green-ink text-paper border-green-ink', icon: '○' },
+                neutral: { active: 'bg-amber-ink text-paper border-amber-ink', icon: '–' },
+                tense: { active: 'bg-red-ink text-paper border-red-ink', icon: '×' },
+              }
+              return (
+                <button
+                  key={state}
+                  onClick={() => updateField('bodyFelt', state)}
+                  className={`font-mono text-[7px] font-bold w-4 h-4 rounded-sm border transition-colors flex items-center justify-center ${
+                    log.bodyFelt === state ? styles[state].active : 'bg-transparent text-ink-light border-rule hover:border-ink-faint'
+                  }`}
+                >
+                  {styles[state].icon}
+                </button>
+              )
+            })}
           </div>
-          <div>
-            <label className="font-serif text-[8px] italic uppercase tracking-wide text-ink-muted block mb-0.5">NS State</label>
-            <div className="flex gap-0.5">
-              {(['regulated', 'slightly_spiked', 'spiked'] as NervousSystemState[]).map((state) => {
-                const styles = {
-                  regulated: { active: 'bg-green-ink text-paper border-green-ink', label: 'Reg' },
-                  slightly_spiked: { active: 'bg-amber-ink text-paper border-amber-ink', label: 'Slight' },
-                  spiked: { active: 'bg-red-ink text-paper border-red-ink', label: 'Spike' },
-                }
-                return (
-                  <button
-                    key={state}
-                    onClick={() => updateField('nervousSystemState', state)}
-                    className={`font-serif text-[8px] font-medium px-1.5 py-0.5 rounded-sm border transition-colors ${
-                      log.nervousSystemState === state ? styles[state].active : 'bg-transparent text-ink-light border-rule hover:border-ink-faint'
-                    }`}
-                  >
-                    {styles[state].label}
-                  </button>
-                )
-              })}
-            </div>
+
+          {/* NS State */}
+          <div className="flex items-center gap-0.5">
+            <span className="font-serif text-[7px] text-ink-muted">NS</span>
+            {(['regulated', 'slightly_spiked', 'spiked'] as NervousSystemState[]).map((state) => {
+              const styles = {
+                regulated: { active: 'bg-green-ink text-paper border-green-ink', icon: '●' },
+                slightly_spiked: { active: 'bg-amber-ink text-paper border-amber-ink', icon: '◐' },
+                spiked: { active: 'bg-red-ink text-paper border-red-ink', icon: '◯' },
+              }
+              return (
+                <button
+                  key={state}
+                  onClick={() => updateField('nervousSystemState', state)}
+                  className={`font-mono text-[7px] font-bold w-4 h-4 rounded-sm border transition-colors flex items-center justify-center ${
+                    log.nervousSystemState === state ? styles[state].active : 'bg-transparent text-ink-light border-rule hover:border-ink-faint'
+                  }`}
+                >
+                  {styles[state].icon}
+                </button>
+              )
+            })}
           </div>
         </div>
 
@@ -201,6 +223,39 @@ export default function EnergyDial() {
             />
           </div>
         )}
+
+        {/* Discovery Tracking */}
+        <div className="border-t border-rule pt-1.5 mt-1.5">
+          <label className="font-serif text-[8px] italic uppercase tracking-wide text-ink-muted block mb-0.5">Discovery</label>
+          <div className="grid grid-cols-3 gap-2">
+            <div>
+              <label className="font-serif text-[7px] text-ink-muted block mb-0.5">Conversations</label>
+              <input
+                type="number"
+                value={log.discoveryConversationsCount || 0}
+                onChange={(e) => updateField('discoveryConversationsCount', parseInt(e.target.value) || 0)}
+                className="w-full font-mono text-[11px] bg-cream border border-rule rounded-sm px-1 py-0.5 text-center focus:outline-none focus:border-navy"
+                min="0"
+                placeholder="0"
+              />
+            </div>
+            <div>
+              <label className="font-serif text-[7px] text-ink-muted block mb-0.5">Insights</label>
+              <div className="font-mono text-[11px] text-ink-muted bg-cream border border-rule rounded-sm px-1 py-0.5 text-center">
+                {log.insightsExtracted || 0}
+              </div>
+            </div>
+            <div>
+              <label className="font-serif text-[7px] text-ink-muted block mb-0.5">Signals</label>
+              <div className="font-mono text-[11px] text-ink-muted bg-cream border border-rule rounded-sm px-1 py-0.5 text-center">
+                {log.externalSignalsReviewed || 0}
+              </div>
+            </div>
+          </div>
+          <p className="font-sans text-[7px] text-ink-muted mt-0.5 italic">
+            Insights & Signals auto-tracked from Intelligence tab
+          </p>
+        </div>
       </div>
     </div>
   )

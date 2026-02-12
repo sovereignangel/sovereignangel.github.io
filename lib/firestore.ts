@@ -13,7 +13,7 @@ import {
   serverTimestamp,
 } from 'firebase/firestore'
 import { db } from './firebase'
-import type { DailyLog, Signal, Project, WeeklySynthesis, UserProfile, FocusSession, GarminMetrics } from './types'
+import type { DailyLog, Signal, Project, WeeklySynthesis, UserProfile, FocusSession, GarminMetrics, Conversation, Contact, ExternalSignal, DailyReport } from './types'
 import { SEED_PROJECTS, DEFAULT_SETTINGS } from './constants'
 
 // ─── USER ────────────────────────────────────────────────────────────────
@@ -263,4 +263,153 @@ export async function getRecentGarminMetrics(uid: string, days: number = 7): Pro
   const q = query(ref, where('date', '>=', startStr), orderBy('date', 'desc'))
   const snap = await getDocs(q)
   return snap.docs.map(d => ({ id: d.id, ...d.data() }) as GarminMetrics)
+}
+
+// ─── CONVERSATIONS ──────────────────────────────────────────────────────
+
+export async function getConversation(uid: string, conversationId: string): Promise<Conversation | null> {
+  const ref = doc(db, 'users', uid, 'conversations', conversationId)
+  const snap = await getDoc(ref)
+  return snap.exists() ? { id: snap.id, ...snap.data() } as Conversation : null
+}
+
+export async function getConversations(uid: string, limit: number = 10): Promise<Conversation[]> {
+  const ref = collection(db, 'users', uid, 'conversations')
+  const q = query(ref, orderBy('createdAt', 'desc'))
+  const snap = await getDocs(q)
+  return snap.docs.slice(0, limit).map(d => ({ id: d.id, ...d.data() }) as Conversation)
+}
+
+export async function saveConversation(uid: string, data: Partial<Conversation>): Promise<string> {
+  const ref = doc(collection(db, 'users', uid, 'conversations'))
+  await setDoc(ref, {
+    ...data,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  })
+  return ref.id
+}
+
+export async function updateConversation(uid: string, conversationId: string, data: Partial<Conversation>): Promise<void> {
+  const ref = doc(db, 'users', uid, 'conversations', conversationId)
+  await updateDoc(ref, { ...data, updatedAt: serverTimestamp() })
+}
+
+export async function deleteConversation(uid: string, conversationId: string): Promise<void> {
+  const ref = doc(db, 'users', uid, 'conversations', conversationId)
+  await deleteDoc(ref)
+}
+
+// ─── CONTACTS ───────────────────────────────────────────────────────────
+
+export async function getContact(uid: string, contactId: string): Promise<Contact | null> {
+  const ref = doc(db, 'users', uid, 'contacts', contactId)
+  const snap = await getDoc(ref)
+  return snap.exists() ? { id: snap.id, ...snap.data() } as Contact : null
+}
+
+export async function getContactByName(uid: string, name: string): Promise<Contact | null> {
+  const ref = collection(db, 'users', uid, 'contacts')
+  const q = query(ref, where('name', '==', name))
+  const snap = await getDocs(q)
+  return snap.empty ? null : { id: snap.docs[0].id, ...snap.docs[0].data() } as Contact
+}
+
+export async function getAllContacts(uid: string): Promise<Contact[]> {
+  const ref = collection(db, 'users', uid, 'contacts')
+  const q = query(ref, orderBy('lastConversationDate', 'desc'))
+  const snap = await getDocs(q)
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }) as Contact)
+}
+
+export async function saveContact(uid: string, data: Partial<Contact>): Promise<string> {
+  const ref = doc(collection(db, 'users', uid, 'contacts'))
+  await setDoc(ref, {
+    ...data,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  })
+  return ref.id
+}
+
+export async function updateContact(uid: string, contactId: string, data: Partial<Contact>): Promise<void> {
+  const ref = doc(db, 'users', uid, 'contacts', contactId)
+  await updateDoc(ref, { ...data, updatedAt: serverTimestamp() })
+}
+
+export async function deleteContact(uid: string, contactId: string): Promise<void> {
+  const ref = doc(db, 'users', uid, 'contacts', contactId)
+  await deleteDoc(ref)
+}
+
+// ─── EXTERNAL SIGNALS ───────────────────────────────────────────────────
+
+export async function getExternalSignal(uid: string, signalId: string): Promise<ExternalSignal | null> {
+  const ref = doc(db, 'users', uid, 'external_signals', signalId)
+  const snap = await getDoc(ref)
+  return snap.exists() ? { id: snap.id, ...snap.data() } as ExternalSignal : null
+}
+
+export async function getExternalSignalsByStatus(uid: string, status: string): Promise<ExternalSignal[]> {
+  const ref = collection(db, 'users', uid, 'external_signals')
+  const q = query(ref, where('status', '==', status), orderBy('relevanceScore', 'desc'))
+  const snap = await getDocs(q)
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }) as ExternalSignal)
+}
+
+export async function getTodaysExternalSignals(uid: string): Promise<ExternalSignal[]> {
+  const today = new Date().toISOString().split('T')[0]
+  const ref = collection(db, 'users', uid, 'external_signals')
+  const q = query(ref, where('status', '==', 'inbox'), orderBy('relevanceScore', 'desc'))
+  const snap = await getDocs(q)
+
+  // Filter to only today's signals
+  const signals = snap.docs.map(d => ({ id: d.id, ...d.data() }) as ExternalSignal)
+  return signals.filter(s => {
+    const signalDate = s.createdAt?.toDate?.()
+    if (!signalDate) return false
+    return signalDate.toISOString().split('T')[0] === today
+  })
+}
+
+export async function saveExternalSignal(uid: string, data: Partial<ExternalSignal>): Promise<string> {
+  const ref = doc(collection(db, 'users', uid, 'external_signals'))
+  await setDoc(ref, {
+    ...data,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  })
+  return ref.id
+}
+
+export async function updateExternalSignal(uid: string, signalId: string, data: Partial<ExternalSignal>): Promise<void> {
+  const ref = doc(db, 'users', uid, 'external_signals', signalId)
+  await updateDoc(ref, { ...data, updatedAt: serverTimestamp() })
+}
+
+export async function deleteExternalSignal(uid: string, signalId: string): Promise<void> {
+  const ref = doc(db, 'users', uid, 'external_signals', signalId)
+  await deleteDoc(ref)
+}
+
+// ─── DAILY REPORTS ──────────────────────────────────────────────────────
+
+export async function getDailyReport(uid: string, date: string): Promise<DailyReport | null> {
+  const ref = doc(db, 'users', uid, 'daily_reports', date)
+  const snap = await getDoc(ref)
+  return snap.exists() ? { id: snap.id, ...snap.data() } as DailyReport : null
+}
+
+export async function saveDailyReport(uid: string, date: string, data: Partial<DailyReport>): Promise<void> {
+  const ref = doc(db, 'users', uid, 'daily_reports', date)
+  await setDoc(ref, {
+    date,
+    ...data,
+    createdAt: serverTimestamp(),
+  })
+}
+
+export async function markDailyReportAsReviewed(uid: string, date: string): Promise<void> {
+  const ref = doc(db, 'users', uid, 'daily_reports', date)
+  await updateDoc(ref, { reviewed: true })
 }

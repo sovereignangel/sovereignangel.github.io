@@ -12,6 +12,10 @@ export type MarketSignalType = 'customer_complaint' | 'competitor_move' | 'tech_
 export type ThesisConnection = 'ai' | 'markets' | 'mind'
 export type ThesisPillar = 'ai' | 'markets' | 'mind'
 export type NervousSystemTrigger = 'ambiguous_commitment' | 'unseen' | 'stalled_momentum' | 'validation_drop' | 'other'
+export type ActionType = 'ship' | 'ask' | 'signal' | 'regulate' | 'explore' | 'compound'
+export type ConversationType = 'customer_discovery' | 'investor' | 'partnership' | 'advisor' | 'other'
+export type ExternalSignalSource = 'rss_feed' | 'blog' | 'hacker_news' | 'manual'
+export type ExternalSignalStatus = 'inbox' | 'reviewed' | 'converted' | 'archived'
 
 export interface UserSettings {
   dailyReminder: string
@@ -48,6 +52,7 @@ export interface RewardComponents {
   gvc: number          // Value Creation Rate [0, 1]
   kappa: number        // Capture Ratio [0, 1]
   optionality: number  // Optionality [0, 1] (placeholder)
+  gd: number           // Generative Discovery [0, 1]
   fragmentation: number // Fragmentation Tax [0, 1] (placeholder)
   theta: number        // Thesis Coherence [0, 1]
   gate: number         // Nervous System Gate [0.3, 1.0]
@@ -55,6 +60,7 @@ export interface RewardComponents {
 
 export interface RewardScore {
   score: number              // Final scalar [0, 10]
+  delta: number | null       // Day-over-day score change
   components: RewardComponents
   computedAt: string         // ISO timestamp
 }
@@ -94,6 +100,11 @@ export interface DailyLog {
   todayFocus: string
   todayOneAction: string
   pillarsTouched: ThesisPillar[]
+  actionType: ActionType | null
+  yesterdayOutcome: string
+  discoveryConversationsCount: number
+  insightsExtracted: number
+  externalSignalsReviewed: number
   rewardScore: RewardScore | null
   createdAt: Timestamp
   updatedAt: Timestamp
@@ -119,6 +130,9 @@ export interface Signal {
   actionThisWeek: string
   relevantToThesis: boolean
   status: SignalStatus
+  sourceType?: 'manual' | 'conversation' | 'external_signal'
+  sourceId?: string
+  sourceContactId?: string
   createdAt: Timestamp
   updatedAt: Timestamp
 }
@@ -204,4 +218,93 @@ export interface GarminMetrics {
   respirationRate: number | null
   spo2: number | null
   syncedAt: Timestamp
+}
+
+export interface TransitionRecord {
+  date: string
+  state: RewardComponents
+  action: ActionType
+  reward: number
+  nextState: RewardComponents
+  delta: number
+}
+
+// Discovery & Signal Aggregation Types
+
+export interface Conversation {
+  id?: string
+  title: string
+  date: string
+  participants: string[]
+  transcriptText: string
+  durationMinutes: number
+  conversationType: ConversationType
+
+  // AI-extracted insights
+  processInsights: string[]
+  featureIdeas: string[]
+  actionItems: string[]
+  valueSignals: string[]
+
+  // Metadata
+  aiProcessed: boolean
+  aiProcessedAt?: Timestamp
+  linkedSignalIds: string[]
+  linkedProjectId?: string
+
+  createdAt: Timestamp
+  updatedAt: Timestamp
+}
+
+export interface Contact {
+  id?: string
+  name: string
+  lastConversationDate: string
+  notes?: string
+
+  createdAt: Timestamp
+  updatedAt: Timestamp
+}
+
+export interface ExternalSignal {
+  id?: string
+  title: string
+  source: ExternalSignalSource
+  sourceUrl: string
+  sourceName: string
+
+  content: string
+  publishedAt: string
+
+  // AI relevance scoring
+  relevanceScore: number
+  thesisPillars: ThesisPillar[]
+  aiSummary: string
+
+  // Conversion tracking
+  convertedToSignal: boolean
+  linkedSignalId?: string
+
+  status: ExternalSignalStatus
+
+  createdAt: Timestamp
+  updatedAt: Timestamp
+}
+
+export interface DailyReport {
+  id?: string
+  date: string
+
+  // Aggregated content
+  topExternalSignals: string[]
+  newConversations: string[]
+  reconnectSuggestions: string[]
+
+  // AI digest
+  aiSummary: string
+
+  // Status
+  reviewed: boolean
+
+  createdAt: Timestamp
 }

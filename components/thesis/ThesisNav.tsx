@@ -57,6 +57,7 @@ export default function ThesisNav() {
 
   const reward = log.rewardScore
   const score = reward?.score ?? null
+  const delta = reward?.delta ?? null
   const c = reward?.components
 
   useEffect(() => {
@@ -99,6 +100,11 @@ export default function ThesisNav() {
                 <span className={`font-mono text-[16px] font-bold ${scoreColor}`}>
                   {score !== null ? score.toFixed(1) : '—'}
                 </span>
+                {delta !== null && (
+                  <span className={`font-mono text-[10px] ${delta >= 0 ? 'text-green-ink' : 'text-red-ink'}`}>
+                    {delta >= 0 ? '+' : ''}{delta.toFixed(1)}
+                  </span>
+                )}
               </span>
 
               <div className="w-px h-4 bg-rule" />
@@ -127,7 +133,7 @@ export default function ThesisNav() {
                         Generative Reward Function
                       </p>
                       <span className="font-mono text-[9px] text-ink-faint tracking-wide">
-                        Kelly-Ergodic Formulation
+                        Multiplicative Scorecard
                       </span>
                     </div>
 
