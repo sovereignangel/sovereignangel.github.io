@@ -164,11 +164,16 @@ export default function ThesisNav() {
             </div>
           </div>
 
-          <div className="flex items-center gap-4">
-            <span className="font-serif text-[11px] italic text-ink-muted hidden sm:inline">
-              {format(new Date(), 'MMMM d, yyyy')}
-            </span>
-            <UserMenu />
+          <div className="flex flex-col items-end gap-0.5">
+            <div className="flex items-center gap-4">
+              <span className="font-serif text-[11px] italic text-ink-muted hidden sm:inline">
+                {format(new Date(), 'MMMM d, yyyy')}
+              </span>
+              <UserMenu />
+            </div>
+            <p className="font-mono text-[9px] text-ink-faint hidden sm:block">
+              g* = 𝔼[log GE + log ĠI + log ĠVC + log κ + log 𝒪] − 𝓕 + Θ
+            </p>
           </div>
         </div>
 
