@@ -15,11 +15,53 @@ const SIGNAL_FILTERS = [
   { value: 'archived', label: 'Arch' },
 ]
 
+const SIGNAL_SOURCES = [
+  {
+    tier: 'Tier 1',
+    label: 'Action-Proximate',
+    desc: 'Directly reduces uncertainty about what to build or sell next',
+    color: 'text-green-ink',
+    bg: 'bg-green-bg',
+    sources: [
+      { name: 'Customer conversations & support tickets', why: 'Ground truth on pain — unfiltered', ruin: 'None — always signal' },
+      { name: 'Competitor changelogs & pricing moves', why: 'Reveals what the market actually pays for', ruin: 'Obsessing over competitors instead of shipping' },
+      { name: 'Revenue data (yours + public comps)', why: 'Calibrates willingness-to-pay', ruin: 'Vanity metrics vs. actual conversion' },
+      { name: 'Distribution channel analytics', why: 'Where attention actually flows', ruin: 'Chasing platforms instead of building' },
+    ],
+  },
+  {
+    tier: 'Tier 2',
+    label: 'Model-Sharpening',
+    desc: 'Improves the slope of your world model — you see further',
+    color: 'text-navy',
+    bg: 'bg-navy-bg',
+    sources: [
+      { name: 'Blog posts from calibrated thinkers', why: 'Borrow calibrated world models', ruin: 'Consumption disguised as learning' },
+      { name: 'Research summaries (not full papers)', why: 'Frontier signal at low time cost', ruin: 'Rabbit holes with no test attached' },
+      { name: 'Macro & market data (rates, flows, vol)', why: 'Context for Armstrong + fund thesis', ruin: 'Analysis paralysis' },
+      { name: 'Tech trend reports (not hype cycles)', why: 'Spot picks-and-shovels opportunities', ruin: 'Trend-chasing without conviction' },
+    ],
+  },
+  {
+    tier: 'Tier 3',
+    label: 'Optionality-Expanding',
+    desc: 'Creates cheap call options on future moves',
+    color: 'text-gold',
+    bg: 'bg-gold-bg',
+    sources: [
+      { name: 'Job market signals (who hires for what, at what price)', why: 'Calibrates your market value + spots gaps', ruin: 'Distraction from building' },
+      { name: 'Funding & deal flow signals', why: 'Deep Tech Fund context', ruin: 'Premature fund-brain' },
+      { name: 'Community & network signals (who builds what)', why: 'Collaboration and distribution opportunities', ruin: 'Social media as proxy for work' },
+    ],
+  },
+]
+
 export default function IntelligenceGauge() {
   const { user } = useAuth()
   const { log } = useDailyLogContext()
   const [signals, setSignals] = useState<Signal[]>([])
   const [filter, setFilter] = useState('all')
+  const [showSourceGuide, setShowSourceGuide] = useState(false)
 
   useEffect(() => {
     if (!user) return
@@ -44,9 +86,18 @@ export default function IntelligenceGauge() {
     <div className="h-full flex flex-col">
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
-        <h3 className="font-serif text-[11px] font-semibold uppercase tracking-[1px] text-ink">
-          Signal Library
-        </h3>
+        <div className="flex items-center gap-1.5">
+          <h3 className="font-serif text-[11px] font-semibold uppercase tracking-[1px] text-ink">
+            Signal Library
+          </h3>
+          <button
+            onClick={() => setShowSourceGuide(true)}
+            className="w-[15px] h-[15px] rounded-full border border-ink-faint text-ink-muted hover:border-navy hover:text-navy flex items-center justify-center transition-colors"
+            title="Signal source guide"
+          >
+            <span className="font-serif text-[9px] italic leading-none">i</span>
+          </button>
+        </div>
         <div className="flex items-center gap-2">
           <span className="font-mono text-[9px] text-ink-muted">ĠI</span>
           <span className={`font-mono text-[14px] font-bold ${
@@ -123,6 +174,70 @@ export default function IntelligenceGauge() {
           </div>
         ))}
       </div>
+
+      {/* Signal Source Guide Modal */}
+      {showSourceGuide && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+          <div className="absolute inset-0 bg-ink/40" onClick={() => setShowSourceGuide(false)} />
+          <div className="relative bg-paper border border-rule rounded-sm w-full max-w-[540px] max-h-[85vh] overflow-y-auto shadow-lg">
+            <div className="sticky top-0 bg-paper px-5 py-4 border-b border-rule-light flex items-start justify-between z-10">
+              <div>
+                <p className="font-serif text-[11px] font-semibold uppercase tracking-[1px] text-ink">
+                  What Signals Move &#x3A6;<sub>I</sub>?
+                </p>
+                <p className="font-serif text-[11px] italic text-ink-muted mt-1 leading-relaxed">
+                  A signal only increases Generative Intelligence if it passes one filter:
+                  <span className="font-semibold text-ink"> &ldquo;Does this change what I build or who I ask this week?&rdquo;</span>
+                  {' '}If no &mdash; it&apos;s consumption, not signal capture.
+                </p>
+              </div>
+              <button
+                onClick={() => setShowSourceGuide(false)}
+                className="text-ink-muted hover:text-ink transition-colors ml-3 mt-0.5 flex-shrink-0"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="px-5 py-4 space-y-5">
+              {SIGNAL_SOURCES.map((tier) => (
+                <div key={tier.tier}>
+                  <div className="flex items-baseline gap-2 mb-2.5">
+                    <span className={`font-mono text-[11px] font-semibold ${tier.color}`}>{tier.tier}</span>
+                    <span className="font-serif text-[12px] font-semibold text-ink">{tier.label}</span>
+                    <span className="font-serif text-[10px] italic text-ink-muted">&mdash; {tier.desc}</span>
+                  </div>
+                  <div className="space-y-1.5">
+                    {tier.sources.map((src) => (
+                      <div key={src.name} className={`${tier.bg} border border-rule-light/60 rounded-sm px-3.5 py-2.5 flex items-start gap-3`}>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-sans text-[12px] font-medium text-ink leading-snug">{src.name}</p>
+                          <p className="font-sans text-[10px] text-ink-muted mt-0.5">{src.why}</p>
+                        </div>
+                        <div className="flex-shrink-0 text-right">
+                          <p className="font-serif text-[9px] italic uppercase tracking-wide text-red-ink/70">Ruin mode</p>
+                          <p className="font-sans text-[10px] text-ink-light leading-snug">{src.ruin}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="px-5 py-3 border-t border-rule-light bg-cream/40">
+              <p className="font-serif text-[10px] italic text-ink-muted leading-relaxed">
+                <span className="font-semibold text-ink">Cadence:</span>{' '}
+                Daily (&lt;5 min) &mdash; your own analytics + 1-2 curated feeds.{' '}
+                Weekly (30 min) &mdash; research digest, competitor scan, macro check.{' '}
+                Real-time &mdash; customer quotes, market anomalies, &ldquo;that&apos;s broken&rdquo; moments.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
