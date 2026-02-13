@@ -17,34 +17,34 @@ export default function IntelligencePage() {
     <div className="h-full grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-4">
       {/* Left Panel: Tabbed Sections */}
       <div className="flex flex-col gap-4">
-        {/* Tab Navigation */}
-        <div className="flex gap-2 border-b border-neutral-200">
+        {/* Tab Navigation - Armstrong Style */}
+        <div className="flex gap-4 border-b border-rule pb-2">
           <button
             onClick={() => setActiveTab('signals')}
-            className={`px-4 py-2 text-sm font-medium transition-colors ${
+            className={`font-serif text-[16px] transition-colors py-2 ${
               activeTab === 'signals'
-                ? 'border-b-2 border-blue-600 text-blue-600'
-                : 'text-neutral-600 hover:text-neutral-900'
+                ? 'text-burgundy font-semibold border-b-2 border-burgundy'
+                : 'text-ink-muted hover:text-ink'
             }`}
           >
             Signal Library
           </button>
           <button
             onClick={() => setActiveTab('conversations')}
-            className={`px-4 py-2 text-sm font-medium transition-colors ${
+            className={`font-serif text-[16px] transition-colors py-2 ${
               activeTab === 'conversations'
-                ? 'border-b-2 border-blue-600 text-blue-600'
-                : 'text-neutral-600 hover:text-neutral-900'
+                ? 'text-burgundy font-semibold border-b-2 border-burgundy'
+                : 'text-ink-muted hover:text-ink'
             }`}
           >
             Conversations
           </button>
           <button
             onClick={() => setActiveTab('external')}
-            className={`px-4 py-2 text-sm font-medium transition-colors ${
+            className={`font-serif text-[16px] transition-colors py-2 ${
               activeTab === 'external'
-                ? 'border-b-2 border-blue-600 text-blue-600'
-                : 'text-neutral-600 hover:text-neutral-900'
+                ? 'text-burgundy font-semibold border-b-2 border-burgundy'
+                : 'text-ink-muted hover:text-ink'
             }`}
           >
             External Signals
