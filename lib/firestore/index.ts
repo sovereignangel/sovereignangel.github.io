@@ -1,0 +1,14 @@
+// Barrel export for all firestore modules
+// This allows existing imports to continue working unchanged
+
+export * from './users'
+export * from './daily-logs'
+export * from './signals'
+export * from './projects'
+export * from './weekly-synthesis'
+export * from './focus-sessions'
+export * from './garmin'
+export * from './conversations'
+export * from './contacts'
+export * from './external-signals'
+export * from './daily-reports'

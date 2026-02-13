@@ -1,0 +1,87 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { getAuth } from 'firebase-admin/auth'
+import { adminDb } from '@/lib/firebase-admin'
+import { ExternalSignal, Signal, SignalType } from '@/lib/types'
+import { Timestamp } from 'firebase-admin/firestore'
+
+// POST /api/external-signals/convert
+// Convert an external signal to a user signal
+export async function POST(request: NextRequest) {
+  try {
+    // Authenticate user
+    const authHeader = request.headers.get('authorization')
+    if (!authHeader?.startsWith('Bearer ')) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const token = authHeader.split('Bearer ')[1]
+    const decodedToken = await getAuth().verifyIdToken(token)
+    const uid = decodedToken.uid
+
+    // Parse request body
+    const body = await request.json()
+    const { externalSignalId, signalType, customTitle, customDescription } = body
+
+    if (!externalSignalId) {
+      return NextResponse.json({ error: 'Missing externalSignalId' }, { status: 400 })
+    }
+
+    // Fetch external signal
+    const externalSignalRef = adminDb
+      .collection('users')
+      .doc(uid)
+      .collection('external_signals')
+      .doc(externalSignalId)
+
+    const externalSignalDoc = await externalSignalRef.get()
+    if (!externalSignalDoc.exists) {
+      return NextResponse.json({ error: 'External signal not found' }, { status: 404 })
+    }
+
+    const externalSignal = externalSignalDoc.data() as ExternalSignal
+
+    // Create new signal from external signal
+    const newSignal: Partial<Signal> = {
+      title: customTitle || externalSignal.title,
+      description: customDescription || `${externalSignal.aiSummary}\n\nSource: ${externalSignal.sourceUrl}`,
+      signalType: (signalType as SignalType) || 'research',
+      source: externalSignal.sourceName,
+      sourceUrl: externalSignal.sourceUrl,
+      thesisPillars: externalSignal.thesisPillars,
+      thesisConnection: externalSignal.aiSummary,
+      actionTaken: false,
+      impactLevel: 'low', // User can update later
+      dateLogged: new Date().toISOString().split('T')[0],
+      sourceType: 'external_signal',
+      sourceId: externalSignalId,
+      createdAt: Timestamp.now(),
+      updatedAt: Timestamp.now(),
+    }
+
+    // Save signal
+    const signalRef = await adminDb
+      .collection('users')
+      .doc(uid)
+      .collection('signals')
+      .add(newSignal)
+
+    // Update external signal to mark as converted
+    await externalSignalRef.update({
+      convertedToSignal: true,
+      linkedSignalId: signalRef.id,
+      status: 'converted',
+      updatedAt: Timestamp.now(),
+    })
+
+    return NextResponse.json({
+      success: true,
+      signalId: signalRef.id,
+    })
+  } catch (error) {
+    console.error('Error converting external signal:', error)
+    return NextResponse.json(
+      { error: 'Failed to convert external signal' },
+      { status: 500 }
+    )
+  }
+}

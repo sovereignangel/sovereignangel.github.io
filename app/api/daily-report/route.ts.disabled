@@ -1,0 +1,105 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { getAuth } from 'firebase-admin/auth'
+import { adminDb } from '@/lib/firebase-admin'
+import { DailyReport, ExternalSignal, Conversation, Contact } from '@/lib/types'
+
+// GET /api/daily-report?date=YYYY-MM-DD
+// Fetch daily report with all related data
+export async function GET(request: NextRequest) {
+  try {
+    // Authenticate user
+    const authHeader = request.headers.get('authorization')
+    if (!authHeader?.startsWith('Bearer ')) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const token = authHeader.split('Bearer ')[1]
+    const decodedToken = await getAuth().verifyIdToken(token)
+    const uid = decodedToken.uid
+
+    // Get date from query params (default to today)
+    const url = new URL(request.url)
+    const date = url.searchParams.get('date') || new Date().toISOString().split('T')[0]
+
+    // Fetch daily report
+    const reportRef = adminDb
+      .collection('users')
+      .doc(uid)
+      .collection('daily_reports')
+      .doc(date)
+
+    const reportDoc = await reportRef.get()
+    if (!reportDoc.exists) {
+      return NextResponse.json({ error: 'Report not found' }, { status: 404 })
+    }
+
+    const report = { id: reportDoc.id, ...reportDoc.data() } as DailyReport
+
+    // Fetch top external signals
+    const externalSignals: ExternalSignal[] = []
+    if (report.topExternalSignals && report.topExternalSignals.length > 0) {
+      const signalPromises = report.topExternalSignals.map((signalId) =>
+        adminDb
+          .collection('users')
+          .doc(uid)
+          .collection('external_signals')
+          .doc(signalId)
+          .get()
+      )
+      const signalDocs = await Promise.all(signalPromises)
+      signalDocs.forEach((doc) => {
+        if (doc.exists) {
+          externalSignals.push({ id: doc.id, ...doc.data() } as ExternalSignal)
+        }
+      })
+    }
+
+    // Fetch new conversations
+    const conversations: Conversation[] = []
+    if (report.newConversations && report.newConversations.length > 0) {
+      const convoPromises = report.newConversations.map((convoId) =>
+        adminDb
+          .collection('users')
+          .doc(uid)
+          .collection('conversations')
+          .doc(convoId)
+          .get()
+      )
+      const convoDocs = await Promise.all(convoPromises)
+      convoDocs.forEach((doc) => {
+        if (doc.exists) {
+          conversations.push({ id: doc.id, ...doc.data() } as Conversation)
+        }
+      })
+    }
+
+    // Fetch reconnect suggestions
+    const reconnectContacts: Contact[] = []
+    if (report.reconnectSuggestions && report.reconnectSuggestions.length > 0) {
+      const contactPromises = report.reconnectSuggestions.map((contactId) =>
+        adminDb
+          .collection('users')
+          .doc(uid)
+          .collection('contacts')
+          .doc(contactId)
+          .get()
+      )
+      const contactDocs = await Promise.all(contactPromises)
+      contactDocs.forEach((doc) => {
+        if (doc.exists) {
+          reconnectContacts.push({ id: doc.id, ...doc.data() } as Contact)
+        }
+      })
+    }
+
+    return NextResponse.json({
+      report,
+      externalSignals,
+      conversations,
+      reconnectContacts,
+    })
+  } catch (error) {
+    console.error('Error fetching daily report:', error)
+    return NextResponse.json({ error: 'Failed to fetch daily report' }, { status: 500 })
+  }
+}

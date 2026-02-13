@@ -1,0 +1,86 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { adminDb } from '@/lib/firebase-admin'
+import { Contact } from '@/lib/types'
+
+// GET /api/cron/relationship-scan
+// Runs daily at 6:00 AM to identify contacts to reconnect with
+// This is a lightweight job - just date math, no AI
+export async function GET(request: NextRequest) {
+  try {
+    // Verify cron secret (security measure)
+    const authHeader = request.headers.get('authorization')
+    if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    console.log('Starting relationship reconnect scan for all users...')
+
+    // Fetch all users
+    const usersSnapshot = await adminDb.collection('users').get()
+
+    let totalSuggestionsCreated = 0
+    const userResults = []
+
+    const today = new Date()
+    const RECONNECT_THRESHOLD_DAYS = 60 // Suggest reconnect if >60 days
+
+    for (const userDoc of usersSnapshot.docs) {
+      const uid = userDoc.id
+
+      try {
+        // Fetch all contacts for this user
+        const contactsSnapshot = await adminDb
+          .collection('users')
+          .doc(uid)
+          .collection('contacts')
+          .get()
+
+        const reconnectSuggestions: string[] = []
+
+        contactsSnapshot.forEach((contactDoc) => {
+          const contact = contactDoc.data() as Contact
+          const lastConversationDate = new Date(contact.lastConversationDate)
+          const daysSince = Math.floor(
+            (today.getTime() - lastConversationDate.getTime()) / (1000 * 60 * 60 * 24)
+          )
+
+          if (daysSince >= RECONNECT_THRESHOLD_DAYS) {
+            reconnectSuggestions.push(contactDoc.id)
+          }
+        })
+
+        totalSuggestionsCreated += reconnectSuggestions.length
+        userResults.push({
+          uid,
+          reconnectSuggestions: reconnectSuggestions.length,
+          contactIds: reconnectSuggestions,
+        })
+
+        console.log(`Found ${reconnectSuggestions.length} reconnect suggestions for user ${uid}`)
+      } catch (error) {
+        console.error(`Error scanning relationships for user ${uid}:`, error)
+        userResults.push({ uid, error: (error as Error).message })
+      }
+    }
+
+    console.log(
+      `Relationship scan complete. Total reconnect suggestions: ${totalSuggestionsCreated}`
+    )
+
+    return NextResponse.json({
+      success: true,
+      totalSuggestionsCreated,
+      userResults,
+      timestamp: new Date().toISOString(),
+    })
+  } catch (error) {
+    console.error('Error in relationship scan cron:', error)
+    return NextResponse.json(
+      {
+        error: 'Failed to scan relationships',
+        message: (error as Error).message,
+      },
+      { status: 500 }
+    )
+  }
+}

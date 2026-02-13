@@ -1,0 +1,154 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { adminDb } from '@/lib/firebase-admin'
+import { ExternalSignal, Conversation, Contact } from '@/lib/types'
+import { generateDailyReportSummary } from '@/lib/ai-extraction'
+import { Timestamp } from 'firebase-admin/firestore'
+
+// GET /api/cron/generate-daily-report
+// Runs daily at 6:15 AM (after RSS aggregation completes)
+// Generates AI summary of yesterday's activity
+export async function GET(request: NextRequest) {
+  try {
+    // Verify cron secret (security measure)
+    const authHeader = request.headers.get('authorization')
+    if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    console.log('Starting daily report generation for all users...')
+
+    // Fetch all users
+    const usersSnapshot = await adminDb.collection('users').get()
+
+    let totalReportsCreated = 0
+    const userResults = []
+
+    const today = new Date().toISOString().split('T')[0]
+    const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+    const RECONNECT_THRESHOLD_DAYS = 60
+
+    for (const userDoc of usersSnapshot.docs) {
+      const uid = userDoc.id
+      const userData = userDoc.data()
+
+      try {
+        // 1. Get top 5 external signals from today (sorted by relevance)
+        const signalsSnapshot = await adminDb
+          .collection('users')
+          .doc(uid)
+          .collection('external_signals')
+          .where('status', '==', 'inbox')
+          .orderBy('relevanceScore', 'desc')
+          .limit(5)
+          .get()
+
+        const topSignals: ExternalSignal[] = []
+        const topSignalIds: string[] = []
+
+        signalsSnapshot.forEach((doc) => {
+          topSignals.push(doc.data() as ExternalSignal)
+          topSignalIds.push(doc.id)
+        })
+
+        // 2. Get yesterday's conversations
+        const conversationsSnapshot = await adminDb
+          .collection('users')
+          .doc(uid)
+          .collection('conversations')
+          .where('date', '==', yesterday)
+          .get()
+
+        const yesterdayConversations: Conversation[] = []
+        const conversationIds: string[] = []
+
+        conversationsSnapshot.forEach((doc) => {
+          yesterdayConversations.push(doc.data() as Conversation)
+          conversationIds.push(doc.id)
+        })
+
+        // 3. Get reconnect suggestions (contacts >60 days)
+        const contactsSnapshot = await adminDb
+          .collection('users')
+          .doc(uid)
+          .collection('contacts')
+          .get()
+
+        const reconnectContacts: Contact[] = []
+        const reconnectIds: string[] = []
+
+        const todayDate = new Date()
+
+        contactsSnapshot.forEach((doc) => {
+          const contact = doc.data() as Contact
+          const lastConversationDate = new Date(contact.lastConversationDate)
+          const daysSince = Math.floor(
+            (todayDate.getTime() - lastConversationDate.getTime()) / (1000 * 60 * 60 * 24)
+          )
+
+          if (daysSince >= RECONNECT_THRESHOLD_DAYS) {
+            reconnectContacts.push(contact)
+            reconnectIds.push(doc.id)
+          }
+        })
+
+        // 4. Generate AI summary with Gemini
+        const userThesis =
+          userData.thesis ||
+          'I am an AI-native builder who spots market inefficiencies at the intersection of AI + capital markets, ships solutions rapidly through public learning, captures value through products and capital leverage.'
+
+        const aiSummary = await generateDailyReportSummary(
+          userThesis,
+          topSignals,
+          yesterdayConversations,
+          reconnectContacts
+        )
+
+        // 5. Save daily report
+        const reportRef = adminDb.collection('users').doc(uid).collection('daily_reports').doc(today)
+
+        await reportRef.set({
+          date: today,
+          topExternalSignals: topSignalIds,
+          newConversations: conversationIds,
+          reconnectSuggestions: reconnectIds,
+          aiSummary,
+          reviewed: false,
+          createdAt: Timestamp.now(),
+        })
+
+        totalReportsCreated++
+        userResults.push({
+          uid,
+          signalsCount: topSignals.length,
+          conversationsCount: yesterdayConversations.length,
+          reconnectCount: reconnectContacts.length,
+        })
+
+        console.log(
+          `Created daily report for user ${uid}: ${topSignals.length} signals, ${yesterdayConversations.length} conversations, ${reconnectContacts.length} reconnects`
+        )
+      } catch (error) {
+        console.error(`Error generating daily report for user ${uid}:`, error)
+        userResults.push({ uid, error: (error as Error).message })
+      }
+    }
+
+    console.log(`Daily report generation complete. Total reports created: ${totalReportsCreated}`)
+
+    return NextResponse.json({
+      success: true,
+      totalReportsCreated,
+      userResults,
+      timestamp: new Date().toISOString(),
+    })
+  } catch (error) {
+    console.error('Error in daily report generation cron:', error)
+    return NextResponse.json(
+      {
+        error: 'Failed to generate daily reports',
+        message: (error as Error).message,
+      },
+      { status: 500 }
+    )
+  }
+}

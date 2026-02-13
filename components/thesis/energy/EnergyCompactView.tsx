@@ -156,7 +156,7 @@ function TodayStatusCard({ log, geScore, gateValue, garminData, updateField }: a
               key={action.value}
               onClick={() => {
                 const newModes = isSelected
-                  ? currentModes.filter(m => m !== action.value)
+                  ? currentModes.filter((m: string) => m !== action.value)
                   : [...currentModes, action.value]
                 updateField('actionType', newModes)
               }}

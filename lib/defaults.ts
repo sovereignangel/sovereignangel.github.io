@@ -1,0 +1,46 @@
+import type { DailyLog, NervousSystemState, BodyFelt, RevenueStreamType, TrainingType } from './types'
+
+/**
+ * Default values for new DailyLog entries.
+ * Single source of truth - used by both firestore.ts and useDailyLog.ts
+ */
+export const DEFAULT_DAILY_LOG: Partial<DailyLog> = {
+  spineProject: 'Armstrong',
+  focusHoursTarget: 6,
+  focusHoursActual: 0,
+  whatShipped: '',
+  revenueAsksCount: 0,
+  revenueAsksList: [],
+  publicIteration: false,
+  problems: [{ problem: '', painPoint: '', solution: '', brokenWhy: '' }],
+  problemSelected: '',
+  daysSinceLastOutput: 0,
+  feedbackLoopClosed: false,
+  revenueSignal: 0,
+  speedOverPerfection: false,
+  nervousSystemState: 'regulated' as NervousSystemState,
+  nervousSystemTrigger: '',
+  twentyFourHourRuleApplied: false,
+  cleanRequestRelease: '',
+  noEmotionalTexting: true,
+  revenueThisSession: 0,
+  revenueStreamType: 'one_time' as RevenueStreamType,
+  automationOpportunity: '',
+  sleepHours: 0,
+  trainingType: 'none' as TrainingType,
+  trainingTypes: [],
+  vo2Intervals: [0, 0, 0, 0],
+  zone2Distance: 0,
+  calendarFocusHours: null,
+  relationalBoundary: '',
+  bodyFelt: 'neutral' as BodyFelt,
+  todayFocus: '',
+  todayOneAction: '',
+  pillarsTouched: [],
+  actionType: null,
+  yesterdayOutcome: '',
+  discoveryConversationsCount: 0,
+  insightsExtracted: 0,
+  externalSignalsReviewed: 0,
+  rewardScore: null,
+}
