@@ -43,7 +43,7 @@ export interface DailyLog {
   todayFocus: string
   todayOneAction: string
   pillarsTouched: ThesisPillar[]
-  actionType: ActionType | null
+  actionType: ActionType[] | ActionType | null
   yesterdayOutcome: string
   discoveryConversationsCount: number
   insightsExtracted: number

@@ -37,7 +37,7 @@ export const DEFAULT_DAILY_LOG: Partial<DailyLog> = {
   todayFocus: '',
   todayOneAction: '',
   pillarsTouched: [],
-  actionType: null,
+  actionType: [],
   yesterdayOutcome: '',
   discoveryConversationsCount: 0,
   insightsExtracted: 0,
