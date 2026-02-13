@@ -9,7 +9,7 @@ import TwentyFourHourBanner from '@/components/thesis/TwentyFourHourBanner'
 export default function EnergyCompactView() {
   const {
     log, updateField, saving, lastSaved,
-    garminData, sleepOverride, setSleepOverride,
+    garminData,
     isSpiked, trainingTypes, hasVo2, hasZone2, toggleTraining,
     recentLogs, garminMetrics, dates,
   } = useDailyLogContext()
@@ -42,8 +42,6 @@ export default function EnergyCompactView() {
           geScore={geScore}
           gateValue={gateValue}
           garminData={garminData}
-          sleepOverride={sleepOverride}
-          setSleepOverride={setSleepOverride}
           updateField={updateField}
         />
 
@@ -78,7 +76,7 @@ export default function EnergyCompactView() {
   )
 }
 
-function TodayStatusCard({ log, geScore, gateValue, garminData, sleepOverride, setSleepOverride, updateField }: any) {
+function TodayStatusCard({ log, geScore, gateValue, garminData, updateField }: any) {
   return (
     <div className="bg-white border border-rule rounded-sm p-3">
       <div className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-2 pb-1.5 border-b-2 border-rule">
@@ -113,25 +111,13 @@ function TodayStatusCard({ log, geScore, gateValue, garminData, sleepOverride, s
       <div className="flex justify-between items-center mb-1.5">
         <span className="font-sans text-[11px] text-ink-muted">
           Sleep
-          {garminData && !sleepOverride && (
+          {garminData && (
             <span className="ml-1 font-mono text-[7px] text-green-ink bg-green-bg px-0.5 rounded-sm">G</span>
           )}
         </span>
-        {garminData && !sleepOverride ? (
-          <div className="flex items-center gap-1">
-            <span className="font-mono text-[11px] font-semibold text-ink">{log.sleepHours || '—'}h</span>
-            <button onClick={() => setSleepOverride(true)} className="font-mono text-[7px] text-ink-muted hover:text-ink underline">edit</button>
-          </div>
-        ) : (
-          <input
-            type="number"
-            value={log.sleepHours || ''}
-            onChange={(e) => updateField('sleepHours', parseFloat(e.target.value) || 0)}
-            className="w-12 font-mono text-[11px] bg-cream border border-rule rounded-sm px-1 py-0.5 text-right focus:outline-none focus:border-burgundy"
-            step="0.5"
-            placeholder="0"
-          />
-        )}
+        <span className="font-mono text-[11px] font-semibold text-ink">
+          {log.sleepHours ? `${log.sleepHours}h` : '—'}
+        </span>
       </div>
 
       {/* Body Felt */}
@@ -160,19 +146,30 @@ function TodayStatusCard({ log, geScore, gateValue, garminData, sleepOverride, s
           { value: 'regulate', label: 'Regulate' },
           { value: 'explore', label: 'Explore' },
           { value: 'compound', label: 'Compound' },
-        ] as { value: ActionType; label: string }[]).map((action) => (
-          <button
-            key={action.value}
-            onClick={() => updateField('actionType', log.actionType === action.value ? null : action.value)}
-            className={`font-serif text-[8px] font-medium px-1.5 py-0.5 rounded-sm border transition-colors ${
-              log.actionType === action.value
-                ? 'bg-burgundy text-paper border-burgundy'
-                : 'bg-transparent text-ink-light border-rule hover:border-ink-faint'
-            }`}
-          >
-            {action.label}
-          </button>
-        ))}
+        ] as { value: ActionType; label: string }[]).map((action) => {
+          // Support both single value (old) and array (new)
+          const currentModes = Array.isArray(log.actionType) ? log.actionType : (log.actionType ? [log.actionType] : [])
+          const isSelected = currentModes.includes(action.value)
+
+          return (
+            <button
+              key={action.value}
+              onClick={() => {
+                const newModes = isSelected
+                  ? currentModes.filter(m => m !== action.value)
+                  : [...currentModes, action.value]
+                updateField('actionType', newModes)
+              }}
+              className={`font-serif text-[8px] font-medium px-1.5 py-0.5 rounded-sm border transition-colors ${
+                isSelected
+                  ? 'bg-burgundy text-paper border-burgundy'
+                  : 'bg-transparent text-ink-light border-rule hover:border-ink-faint'
+              }`}
+            >
+              {action.label}
+            </button>
+          )
+        })}
       </div>
     </div>
   )
