@@ -219,34 +219,153 @@ function MyComponent() {
 2. Document change in [REWARD_FUNCTION_ROADMAP.md](REWARD_FUNCTION_ROADMAP.md)
 3. Consider: Does this require backfilling old scores?
 
-## Styling Conventions
+## CRITICAL: Armstrong Brand Strategy (ENFORCE ALWAYS)
 
-### Tailwind Classes
+**Reference:** See `THESIS_ENGINE_BRAND_STRATEGY.md` for full philosophy.
 
-- **Typography**: Use `font-mono` for metrics, `font-serif` for headers
-- **Sizing**: Font sizes in `[Xpx]` format (e.g., `text-[11px]`)
-- **Colors**: Custom color system via Tailwind config
-  - `text-ink` / `text-ink-muted` / `text-ink-faint` for text
-  - `bg-paper` / `bg-canvas` for backgrounds
-  - `border-rule` / `border-rule-light` for borders
-  - Colored backgrounds: `bg-green-bg` + `text-green-ink`
+### Design System (NON-NEGOTIABLE)
 
-### Component Structure
+**Color Palette:**
+```typescript
+// ONLY THESE COLORS - NEVER use blue-600, neutral-200, etc.
+burgundy      // #7c2d2d - Active states, headers, accents
+ink           // #2a2522 - Primary text
+ink-muted     // #9a928a - Secondary text, labels
+ink-faint     // #c8c0b8 - Disabled, placeholders
+rule          // #d8d0c8 - Borders
+rule-light    // #e8e2da - Subtle dividers
+paper         // #faf8f4 - Cards, surfaces
+cream         // #f5f1ea - Page background
+
+// Status colors (functional only)
+green-ink     // #2d5f3f - Good/success
+amber-ink     // #8a6d2f - Warning/watch
+red-ink       // #8c2d2d - Alert/error
+green-bg      // #2d5f3f08 - Green background (8% opacity)
+amber-bg      // #8a6d2f08 - Amber background
+burgundy-bg   // #7c2d2d08 - Burgundy background
+```
+
+**Typography Scale:**
+```typescript
+// Headers (serif, uppercase, burgundy)
+text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy  // Section headers
+text-[11px] font-semibold uppercase tracking-[0.5px] text-burgundy  // Subsection headers
+text-[16px] font-serif                                              // Tab navigation
+
+// Labels (sans, muted)
+text-[11px] text-ink-muted  // Primary labels
+text-[10px] text-ink-muted  // Secondary labels
+text-[9px] text-ink-muted   // Tertiary labels
+
+// Values (mono, ink or status color)
+text-[11px] font-semibold text-ink         // Primary values
+text-[10px] font-medium text-ink           // Secondary values
+text-[9px] text-ink-muted                  // Meta info
+text-[8px] text-ink-muted                  // Badges, chips
+```
+
+**Spacing (Compact, Not Loose):**
+```typescript
+gap-3     // Card grid gaps
+gap-1     // Button groups
+p-3       // Card padding
+py-2 px-2 // Button padding (tight)
+mb-1.5    // Vertical rhythm between elements
+```
+
+**Borders & Corners:**
+```typescript
+rounded-sm      // ONLY squared corners (2px radius)
+border-rule     // 1px solid rule color
+border-2        // Only for header dividers
+```
+
+### ❌ VIOLATIONS TO AVOID
+
+**NEVER use these (common mistakes):**
+```typescript
+// ❌ WRONG - Generic blue/neutral colors
+text-blue-600, bg-blue-100, border-blue-600
+text-neutral-900, bg-neutral-50, border-neutral-200
+
+// ❌ WRONG - Rounded pills
+rounded-full, rounded-lg
+
+// ❌ WRONG - Loose spacing
+px-4 py-2, gap-4
+
+// ❌ WRONG - Generic font sizes
+text-sm, text-lg, text-base
+
+// ❌ WRONG - Generic font families (without explicit class)
+<h2 className="text-lg font-semibold">  // Missing font-serif!
+```
+
+**✅ CORRECT Armstrong Pattern:**
+```typescript
+// ✅ Header
+<h2 className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy">
+  Section Title
+</h2>
+
+// ✅ Button (active/inactive)
+<button className={`font-serif text-[9px] font-medium px-2 py-1 rounded-sm border ${
+  active
+    ? 'bg-burgundy text-paper border-burgundy'
+    : 'bg-transparent text-ink-muted border-rule hover:border-ink-faint'
+}`}>
+  Label
+</button>
+
+// ✅ Card
+<div className="bg-white border border-rule rounded-sm p-3">
+  {/* Content */}
+</div>
+
+// ✅ Pillar badges
+<span className="font-mono text-[8px] uppercase px-1.5 py-0.5 rounded-sm border bg-burgundy-bg text-burgundy border-burgundy/20">
+  AI
+</span>
+```
+
+### Component Structure Pattern
 
 ```typescript
-// Gauge pattern
-<div className="h-full flex flex-col">
-  <div className="flex items-center justify-between mb-3">
-    <h3 className="font-serif text-[11px] font-semibold uppercase tracking-[1px]">
-      Title
-    </h3>
-    <span className="font-mono text-[16px]">Score: {score}</span>
-  </div>
-  <div className="bg-paper border border-rule rounded-sm p-3 flex-1">
-    {/* Content */}
+// Armstrong 3-column layout (Energy tab)
+<div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+  <div className="bg-white border border-rule rounded-sm p-3">
+    <div className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-2 pb-1.5 border-b-2 border-rule">
+      Card Title
+    </div>
+    {/* Card content */}
   </div>
 </div>
+
+// Armstrong sub-navigation (Intelligence tab)
+<div className="flex gap-4 border-b border-rule pb-2">
+  <button className={`font-serif text-[16px] py-2 transition-colors ${
+    active
+      ? 'text-burgundy font-semibold border-b-2 border-burgundy'
+      : 'text-ink-muted hover:text-ink'
+  }`}>
+    Tab Name
+  </button>
+</div>
 ```
+
+### Before Committing ANY Component:
+
+**Run this checklist:**
+- [ ] No `text-blue-*` or `bg-blue-*` classes
+- [ ] No `text-neutral-*` or `bg-neutral-*` classes
+- [ ] No `rounded-full` or `rounded-lg` (only `rounded-sm`)
+- [ ] Headers use `font-serif text-[13px] uppercase text-burgundy`
+- [ ] Active states use `bg-burgundy text-paper`
+- [ ] Spacing uses `gap-1` to `gap-3`, `p-3`, `py-2`
+- [ ] All font sizes explicit (`text-[Xpx]`), never generic (`text-sm`)
+
+**If you violate ANY of these, the component is OFF-BRAND and must be fixed.**
 
 ## Data Flow Best Practices
 
