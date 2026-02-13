@@ -38,19 +38,29 @@ export default function EnergyDial() {
             { value: 'regulate', label: 'Regulate' },
             { value: 'explore', label: 'Explore' },
             { value: 'compound', label: 'Compound' },
-          ] as { value: ActionType; label: string }[]).map((action) => (
-            <button
-              key={action.value}
-              onClick={() => updateField('actionType', log.actionType === action.value ? null : action.value)}
-              className={`font-serif text-[9px] font-medium px-1.5 py-0.5 rounded-sm border transition-colors ${
-                log.actionType === action.value
-                  ? 'bg-navy !text-neutral-100 border-navy'
-                  : 'bg-transparent text-ink-light border-rule hover:border-ink-faint'
-              }`}
-            >
-              {action.label}
-            </button>
-          ))}
+          ] as { value: ActionType; label: string }[]).map((action) => {
+            const currentModes = Array.isArray(log.actionType) ? log.actionType : (log.actionType ? [log.actionType] : [])
+            const isSelected = currentModes.includes(action.value)
+
+            return (
+              <button
+                key={action.value}
+                onClick={() => {
+                  const newModes = isSelected
+                    ? currentModes.filter((m: string) => m !== action.value)
+                    : [...currentModes, action.value]
+                  updateField('actionType', newModes)
+                }}
+                className={`font-serif text-[9px] font-medium px-1.5 py-0.5 rounded-sm border transition-colors ${
+                  isSelected
+                    ? 'bg-navy !text-neutral-100 border-navy'
+                    : 'bg-transparent text-ink-light border-rule hover:border-ink-faint'
+                }`}
+              >
+                {action.label}
+              </button>
+            )
+          })}
         </div>
 
         {/* Sleep + Body + NS State - Ultra Compact */}
