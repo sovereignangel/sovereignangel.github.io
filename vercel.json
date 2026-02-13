@@ -1,0 +1,16 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/aggregate-signals",
+      "schedule": "0 6 * * *"
+    },
+    {
+      "path": "/api/cron/relationship-scan",
+      "schedule": "0 6 * * *"
+    },
+    {
+      "path": "/api/cron/generate-daily-report",
+      "schedule": "15 6 * * *"
+    }
+  ]
+}

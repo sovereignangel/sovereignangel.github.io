@@ -1,0 +1,89 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { adminDb } from '@/lib/firebase-admin'
+import { fetchAndScoreSignals, DEFAULT_RSS_FEEDS } from '@/lib/rss-aggregator'
+import { Timestamp } from 'firebase-admin/firestore'
+
+// GET /api/cron/aggregate-signals
+// Runs daily at 6:00 AM to fetch and score RSS feeds
+// This should be triggered by Vercel Cron or external scheduler
+export async function GET(request: NextRequest) {
+  try {
+    // Verify cron secret (security measure)
+    const authHeader = request.headers.get('authorization')
+    if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    console.log('Starting RSS aggregation for all users...')
+
+    // Fetch all users who have enabled RSS aggregation
+    // For now, aggregate for all users (you can add a settings toggle later)
+    const usersSnapshot = await adminDb.collection('users').get()
+
+    let totalSignalsCreated = 0
+    const userResults = []
+
+    for (const userDoc of usersSnapshot.docs) {
+      const uid = userDoc.id
+      const userData = userDoc.data()
+
+      // Skip users who have disabled RSS (if setting exists)
+      if (userData.rssEnabled === false) {
+        continue
+      }
+
+      try {
+        // Use user's custom thesis or default
+        const userThesis =
+          userData.thesis ||
+          'I am an AI-native builder who spots market inefficiencies at the intersection of AI + capital markets, ships solutions rapidly through public learning, captures value through products and capital leverage.'
+
+        // Fetch and score signals using Gemini
+        const scoredSignals = await fetchAndScoreSignals(DEFAULT_RSS_FEEDS, userThesis)
+
+        // Save top 10 to external_signals collection
+        const externalSignalsRef = adminDb
+          .collection('users')
+          .doc(uid)
+          .collection('external_signals')
+
+        let savedCount = 0
+        for (const signal of scoredSignals.slice(0, 10)) {
+          await externalSignalsRef.add({
+            ...signal,
+            status: 'inbox',
+            convertedToSignal: false,
+            createdAt: Timestamp.now(),
+            updatedAt: Timestamp.now(),
+          })
+          savedCount++
+        }
+
+        totalSignalsCreated += savedCount
+        userResults.push({ uid, signalsCreated: savedCount })
+        console.log(`Created ${savedCount} signals for user ${uid}`)
+      } catch (error) {
+        console.error(`Error aggregating signals for user ${uid}:`, error)
+        userResults.push({ uid, error: (error as Error).message })
+      }
+    }
+
+    console.log(`RSS aggregation complete. Total signals created: ${totalSignalsCreated}`)
+
+    return NextResponse.json({
+      success: true,
+      totalSignalsCreated,
+      userResults,
+      timestamp: new Date().toISOString(),
+    })
+  } catch (error) {
+    console.error('Error in RSS aggregation cron:', error)
+    return NextResponse.json(
+      {
+        error: 'Failed to aggregate signals',
+        message: (error as Error).message,
+      },
+      { status: 500 }
+    )
+  }
+}

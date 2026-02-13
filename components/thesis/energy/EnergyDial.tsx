@@ -35,16 +35,16 @@ export default function EnergyDial() {
             { value: 'ship', label: 'Ship' },
             { value: 'ask', label: 'Ask' },
             { value: 'signal', label: 'Signal' },
-            { value: 'regulate', label: 'Reg' },
-            { value: 'explore', label: 'Exp' },
-            { value: 'compound', label: 'Comp' },
+            { value: 'regulate', label: 'Regulate' },
+            { value: 'explore', label: 'Explore' },
+            { value: 'compound', label: 'Compound' },
           ] as { value: ActionType; label: string }[]).map((action) => (
             <button
               key={action.value}
               onClick={() => updateField('actionType', log.actionType === action.value ? null : action.value)}
-              className={`font-serif text-[7px] font-medium px-1 py-0.5 rounded-sm border transition-colors ${
+              className={`font-serif text-[9px] font-medium px-1.5 py-0.5 rounded-sm border transition-colors ${
                 log.actionType === action.value
-                  ? 'bg-navy text-paper border-navy'
+                  ? 'bg-navy !text-neutral-100 border-navy'
                   : 'bg-transparent text-ink-light border-rule hover:border-ink-faint'
               }`}
             >
@@ -132,7 +132,7 @@ export default function EnergyDial() {
                 onClick={() => toggleTraining(t.value as TrainingType)}
                 className={`font-serif text-[8px] font-medium px-1.5 py-0.5 rounded-sm border transition-colors ${
                   trainingTypes.includes(t.value as TrainingType)
-                    ? 'bg-navy text-paper border-navy'
+                    ? 'bg-navy !text-neutral-100 border-navy'
                     : 'bg-transparent text-ink-light border-rule hover:border-ink-faint'
                 }`}
               >
