@@ -19,13 +19,44 @@ interface BookMeta {
   description: string
 }
 
-async function archiveFetch(url: string): Promise<Response> {
+async function proxyFetch(url: string): Promise<Response> {
   const res = await fetch(`/api/archive-proxy?url=${encodeURIComponent(url)}`)
   if (!res.ok) {
     const body = await res.json().catch(() => ({ error: 'Request failed' }))
-    throw new Error(body.error || `Proxy returned ${res.status}`)
+    const err = new Error(body.error || `Proxy returned ${res.status}`)
+    ;(err as any).status = res.status
+    throw err
   }
   return res
+}
+
+async function searchGutenberg(title: string): Promise<{ text: string; meta: { title: string; author: string; gutenbergId: number } } | null> {
+  try {
+    const searchRes = await proxyFetch(`https://gutendex.com/books/?search=${encodeURIComponent(title)}`)
+    const data = await searchRes.json()
+    if (!data.results || data.results.length === 0) return null
+
+    const book = data.results[0]
+    const textUrl = book.formats?.['text/plain; charset=utf-8']
+      || book.formats?.['text/plain']
+      || book.formats?.['text/plain; charset=us-ascii']
+
+    if (!textUrl) return null
+
+    const textRes = await proxyFetch(textUrl)
+    const text = await textRes.text()
+
+    return {
+      text,
+      meta: {
+        title: book.title || title,
+        author: book.authors?.[0]?.name || 'Unknown Author',
+        gutenbergId: book.id,
+      },
+    }
+  } catch {
+    return null
+  }
 }
 
 export default function BookSpeechReader() {
@@ -122,7 +153,7 @@ export default function BookSpeechReader() {
     return trimmed
   }
 
-  const recordTransform = async (meta: { bookId: string; bookTitle: string; bookAuthor: string; sourceType: 'archive' | 'paste' }) => {
+  const recordTransform = async (meta: { bookId: string; bookTitle: string; bookAuthor: string; sourceType: 'archive' | 'gutenberg' | 'paste' }) => {
     try {
       await saveAudioTransform({
         operatorName: operatorName.trim() || 'Anonymous',
@@ -136,6 +167,26 @@ export default function BookSpeechReader() {
     }
   }
 
+  const loadBookText = (bookText: string, title: string, creator: string, sourceId: string, source: 'archive' | 'gutenberg' | 'paste') => {
+    const cleaned = bookText
+      .replace(/\f/g, '\n\n')
+      .replace(/\r\n/g, '\n')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim()
+
+    if (cleaned.length < 50) {
+      throw new Error('Extracted text is insufficient. Try pasting the source material manually.')
+    }
+
+    setText(cleaned)
+    setDisplayText(cleaned)
+    setMode('reading')
+    setCurrentParagraph(0)
+    setBookMeta({ title, creator, date: '', description: '' })
+
+    recordTransform({ bookId: sourceId, bookTitle: title, bookAuthor: creator, sourceType: source })
+  }
+
   const fetchBook = async () => {
     if (!bookId.trim()) return
     setLoading(true)
@@ -145,7 +196,8 @@ export default function BookSpeechReader() {
     const id = extractId(bookId)
 
     try {
-      const metaRes = await archiveFetch(`https://archive.org/metadata/${id}`)
+      // Step 1: Get metadata from archive.org
+      const metaRes = await proxyFetch(`https://archive.org/metadata/${id}`)
       const meta = await metaRes.json()
 
       if (!meta.metadata) throw new Error('Source not found on Internet Archive. Verify the identifier and retry.')
@@ -153,12 +205,7 @@ export default function BookSpeechReader() {
       const title = meta.metadata?.title || id
       const creator = meta.metadata?.creator || 'Unknown Author'
 
-      setBookMeta({
-        title,
-        creator,
-        date: meta.metadata?.date || '',
-        description: meta.metadata?.description || '',
-      })
+      setBookMeta({ title, creator, date: meta.metadata?.date || '', description: meta.metadata?.description || '' })
 
       const files = meta.files || []
       const textFile =
@@ -172,26 +219,35 @@ export default function BookSpeechReader() {
         )
       }
 
-      const textUrl = `https://archive.org/download/${id}/${encodeURIComponent(textFile.name)}`
-      const textRes = await archiveFetch(textUrl)
-
-      const bookText = await textRes.text()
-      const cleaned = bookText
-        .replace(/\f/g, '\n\n')
-        .replace(/\r\n/g, '\n')
-        .replace(/\n{3,}/g, '\n\n')
-        .trim()
-
-      if (cleaned.length < 50) {
-        throw new Error('Extracted text is insufficient. Try pasting the source material manually.')
+      // Step 2: Try fetching text from archive.org
+      try {
+        const textUrl = `https://archive.org/download/${id}/${encodeURIComponent(textFile.name)}`
+        const textRes = await proxyFetch(textUrl)
+        const bookText = await textRes.text()
+        loadBookText(bookText, title, creator, id, 'archive')
+        return
+      } catch (archiveErr) {
+        // If 403 (restricted/lending-only), fall through to Gutenberg
+        if ((archiveErr as any).status !== 403 && (archiveErr as any).message !== 'restricted') {
+          throw archiveErr
+        }
+        // Fall through to Gutenberg search
       }
 
-      setText(cleaned)
-      setDisplayText(cleaned)
-      setMode('reading')
-      setCurrentParagraph(0)
+      // Step 3: Archive.org restricted — try Project Gutenberg
+      setError('') // clear any intermediate error
+      const gutResult = await searchGutenberg(title)
 
-      await recordTransform({ bookId: id, bookTitle: title, bookAuthor: creator, sourceType: 'archive' })
+      if (gutResult) {
+        loadBookText(gutResult.text, gutResult.meta.title, gutResult.meta.author, `gutenberg-${gutResult.meta.gutenbergId}`, 'gutenberg')
+        return
+      }
+
+      // Step 4: Neither source had it
+      throw new Error(
+        `"${title}" is restricted on Internet Archive (lending-only) and not available on Project Gutenberg. ` +
+        'Borrow it on archive.org, then copy & paste the text below.'
+      )
     } catch (err) {
       setError(
         (err as Error).message ||

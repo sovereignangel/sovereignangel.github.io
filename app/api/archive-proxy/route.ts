@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 
+const ALLOWED_HOSTS = ['archive.org', 'gutenberg.org', 'gutendex.com']
+
 export async function GET(req: NextRequest) {
   const url = req.nextUrl.searchParams.get('url')
 
@@ -9,8 +11,8 @@ export async function GET(req: NextRequest) {
 
   try {
     const parsed = new URL(url)
-    if (!parsed.hostname.endsWith('archive.org')) {
-      return NextResponse.json({ error: 'Only archive.org URLs are allowed' }, { status: 403 })
+    if (!ALLOWED_HOSTS.some(h => parsed.hostname === h || parsed.hostname.endsWith(`.${h}`))) {
+      return NextResponse.json({ error: 'Domain not allowed' }, { status: 403 })
     }
   } catch {
     return NextResponse.json({ error: 'Invalid URL' }, { status: 400 })
@@ -19,10 +21,11 @@ export async function GET(req: NextRequest) {
   try {
     const response = await fetch(url)
     if (!response.ok) {
-      return NextResponse.json(
-        { error: `Upstream returned ${response.status}` },
-        { status: response.status }
-      )
+      const status = response.status
+      const errorMsg = status === 403
+        ? 'restricted'
+        : `Upstream returned ${status}`
+      return NextResponse.json({ error: errorMsg }, { status })
     }
 
     const contentType = response.headers.get('content-type') || 'application/octet-stream'
@@ -37,7 +40,7 @@ export async function GET(req: NextRequest) {
     })
   } catch (err) {
     return NextResponse.json(
-      { error: (err as Error).message || 'Failed to fetch from archive.org' },
+      { error: (err as Error).message || 'Failed to fetch' },
       { status: 502 }
     )
   }
