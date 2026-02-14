@@ -2,7 +2,10 @@
 
 import { useState } from 'react'
 import Image from 'next/image'
+import dynamic from 'next/dynamic'
 import SubTabs from './SubTabs'
+
+const BookSpeechReader = dynamic(() => import('./BookSpeechReader'), { ssr: false })
 
 export default function InputsSection() {
   const [activeTab, setActiveTab] = useState('classes')
@@ -13,6 +16,7 @@ export default function InputsSection() {
         tabs={[
           { id: 'classes', label: 'Classes' },
           { id: 'content', label: 'Content' },
+          { id: 'audio', label: 'Audio Transform' },
         ]}
         activeTab={activeTab}
         onTabChange={setActiveTab}
@@ -73,6 +77,12 @@ export default function InputsSection() {
             src="https://v2-embednotion.com/1cc74dadd2774eb2a53eb5f57279f6e7"
             className="w-[142%] h-[850px] border-none origin-top-left scale-[0.7]"
           />
+        </div>
+      )}
+
+      {activeTab === 'audio' && (
+        <div className="mt-4 -mx-6">
+          <BookSpeechReader />
         </div>
       )}
     </section>
