@@ -1,0 +1,22 @@
+07:00:03 [INFO] Authenticated with saved tokens
+07:00:05 [INFO] Wrote 2026-02-13 to Firestore
+
+--- 2026-02-13 ---
+  restingHeartRate: 53
+  steps: 7406
+  activeCalories: 671.0
+  stressLevel: 75
+  bodyBattery: 14
+  bodyBatteryCharged: 0
+  bodyBatteryDrained: 9
+07:00:02 [INFO] Authenticated with saved tokens
+07:00:04 [INFO] Wrote 2026-02-14 to Firestore
+
+--- 2026-02-14 ---
+  restingHeartRate: 53
+  steps: 17
+  activeCalories: 0.0
+  stressLevel: 23
+  bodyBattery: 5
+  bodyBatteryCharged: 1
+  bodyBatteryDrained: 0
