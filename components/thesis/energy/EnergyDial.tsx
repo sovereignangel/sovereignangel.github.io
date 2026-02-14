@@ -53,7 +53,7 @@ export default function EnergyDial() {
                 }}
                 className={`font-serif text-[9px] font-medium px-1.5 py-0.5 rounded-sm border transition-colors ${
                   isSelected
-                    ? 'bg-navy !text-neutral-100 border-navy'
+                    ? 'bg-navy text-paper border-navy'
                     : 'bg-transparent text-ink-light border-rule hover:border-ink-faint'
                 }`}
               >
@@ -142,7 +142,7 @@ export default function EnergyDial() {
                 onClick={() => toggleTraining(t.value as TrainingType)}
                 className={`font-serif text-[8px] font-medium px-1.5 py-0.5 rounded-sm border transition-colors ${
                   trainingTypes.includes(t.value as TrainingType)
-                    ? 'bg-navy !text-neutral-100 border-navy'
+                    ? 'bg-navy text-paper border-navy'
                     : 'bg-transparent text-ink-light border-rule hover:border-ink-faint'
                 }`}
               >
