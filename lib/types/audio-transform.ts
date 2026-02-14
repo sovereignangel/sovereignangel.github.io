@@ -5,6 +5,6 @@ export interface AudioTransform {
   bookId: string
   bookTitle: string
   bookAuthor: string
-  sourceType: 'archive' | 'paste'
+  sourceType: 'archive' | 'gutenberg' | 'paste'
   createdAt: any
 }
