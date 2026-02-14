@@ -36,17 +36,23 @@ export default function ConversationInbox() {
   }
 
   if (loading) {
-    return <div className="p-8 text-center text-neutral-500">Loading conversations...</div>
+    return (
+      <div className="p-8 text-center">
+        <span className="font-serif text-[11px] italic text-ink-muted">Loading conversations...</span>
+      </div>
+    )
   }
 
   return (
-    <div className="space-y-4">
-      {/* Header */}
+    <div className="space-y-3">
+      {/* Header - Armstrong Style */}
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-neutral-900">Conversation Insights</h2>
+        <h2 className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy">
+          Conversation Insights
+        </h2>
         <button
           onClick={() => setShowUploadModal(true)}
-          className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+          className="font-serif text-[10px] font-medium px-2 py-1 bg-burgundy text-paper border border-burgundy rounded-sm hover:bg-burgundy-light transition-colors"
         >
           Upload Transcript
         </button>
@@ -54,38 +60,38 @@ export default function ConversationInbox() {
 
       {/* Conversations List */}
       {conversations.length === 0 ? (
-        <div className="bg-neutral-50 border border-neutral-200 rounded-lg p-8 text-center">
-          <p className="text-neutral-600 mb-4">No conversations yet</p>
+        <div className="bg-paper border border-rule rounded-sm p-6 text-center">
+          <p className="font-sans text-[11px] text-ink-muted mb-3">No conversations yet</p>
           <button
             onClick={() => setShowUploadModal(true)}
-            className="text-blue-600 hover:text-blue-700 font-medium"
+            className="font-mono text-[10px] text-burgundy hover:text-burgundy-light font-medium"
           >
-            Upload your first conversation →
+            Upload first conversation →
           </button>
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-2">
           {conversations.map((convo) => (
             <div
               key={convo.id}
-              className="bg-white border border-neutral-200 rounded-lg p-4 hover:border-neutral-300 transition-colors"
+              className="bg-white border border-rule rounded-sm p-3 hover:border-burgundy/30 transition-colors"
             >
               {/* Conversation Header */}
-              <div className="flex items-start justify-between mb-2">
-                <div>
-                  <h3 className="font-medium text-neutral-900">{convo.title}</h3>
-                  <p className="text-sm text-neutral-500">
-                    {convo.date} • {convo.participants.join(', ')} • {convo.conversationType}
+              <div className="flex items-start justify-between mb-1.5">
+                <div className="flex-1">
+                  <h3 className="font-sans text-[11px] font-semibold text-ink">{convo.title}</h3>
+                  <p className="font-mono text-[9px] text-ink-muted">
+                    {convo.date} · {convo.participants.join(', ')} · {convo.conversationType}
                   </p>
                 </div>
                 <span
-                  className={`px-2 py-1 text-xs rounded ${
+                  className={`font-mono text-[8px] uppercase px-1.5 py-0.5 rounded-sm border ${
                     convo.aiProcessed
-                      ? 'bg-green-100 text-green-700'
-                      : 'bg-yellow-100 text-yellow-700'
+                      ? 'bg-green-bg text-green-ink border-green-ink/20'
+                      : 'bg-amber-bg text-amber-ink border-amber-ink/20'
                   }`}
                 >
-                  {convo.aiProcessed ? 'Processed' : 'Processing...'}
+                  {convo.aiProcessed ? 'Done' : 'Processing'}
                 </span>
               </div>
 
@@ -93,26 +99,26 @@ export default function ConversationInbox() {
               {convo.aiProcessed && (
                 <button
                   onClick={() => setExpandedConvo(expandedConvo === convo.id ? null : convo.id!)}
-                  className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                  className="font-mono text-[9px] text-burgundy hover:text-burgundy-light font-medium transition-colors"
                 >
-                  {expandedConvo === convo.id ? '↑ Hide Insights' : '↓ View Extracted Insights'}
+                  {expandedConvo === convo.id ? '↑ Hide' : '↓ View Insights'}
                 </button>
               )}
 
               {/* Expanded Insights */}
               {expandedConvo === convo.id && convo.aiProcessed && (
-                <div className="mt-4 space-y-3 border-t border-neutral-100 pt-4">
+                <div className="mt-2 space-y-2 border-t border-rule-light pt-2">
                   {/* Process Insights */}
                   {convo.processInsights.length > 0 && (
                     <div>
-                      <h4 className="text-sm font-semibold text-neutral-700 mb-2">
-                        Process Insights
+                      <h4 className="font-serif text-[10px] font-semibold uppercase tracking-wide text-burgundy mb-1">
+                        Process
                       </h4>
-                      <ul className="space-y-1">
+                      <ul className="space-y-0.5">
                         {convo.processInsights.map((insight, i) => (
-                          <li key={i} className="text-sm text-neutral-600 flex items-start gap-2">
-                            <span className="text-neutral-400">•</span>
-                            <span>{insight}</span>
+                          <li key={i} className="font-sans text-[10px] text-ink flex items-start gap-1.5">
+                            <span className="text-ink-muted mt-0.5">•</span>
+                            <span className="flex-1">{insight}</span>
                           </li>
                         ))}
                       </ul>
@@ -122,14 +128,14 @@ export default function ConversationInbox() {
                   {/* Feature Ideas */}
                   {convo.featureIdeas.length > 0 && (
                     <div>
-                      <h4 className="text-sm font-semibold text-neutral-700 mb-2">
-                        Feature Ideas
+                      <h4 className="font-serif text-[10px] font-semibold uppercase tracking-wide text-burgundy mb-1">
+                        Features
                       </h4>
-                      <ul className="space-y-1">
+                      <ul className="space-y-0.5">
                         {convo.featureIdeas.map((idea, i) => (
-                          <li key={i} className="text-sm text-neutral-600 flex items-start gap-2">
-                            <span className="text-neutral-400">•</span>
-                            <span>{idea}</span>
+                          <li key={i} className="font-sans text-[10px] text-ink flex items-start gap-1.5">
+                            <span className="text-ink-muted mt-0.5">•</span>
+                            <span className="flex-1">{idea}</span>
                           </li>
                         ))}
                       </ul>
@@ -139,14 +145,14 @@ export default function ConversationInbox() {
                   {/* Action Items */}
                   {convo.actionItems.length > 0 && (
                     <div>
-                      <h4 className="text-sm font-semibold text-neutral-700 mb-2">
-                        Action Items
+                      <h4 className="font-serif text-[10px] font-semibold uppercase tracking-wide text-burgundy mb-1">
+                        Actions
                       </h4>
-                      <ul className="space-y-1">
+                      <ul className="space-y-0.5">
                         {convo.actionItems.map((action, i) => (
-                          <li key={i} className="text-sm text-neutral-600 flex items-start gap-2">
-                            <span className="text-neutral-400">☐</span>
-                            <span>{action}</span>
+                          <li key={i} className="font-sans text-[10px] text-ink flex items-start gap-1.5">
+                            <span className="text-ink-muted mt-0.5">☐</span>
+                            <span className="flex-1">{action}</span>
                           </li>
                         ))}
                       </ul>
@@ -156,14 +162,14 @@ export default function ConversationInbox() {
                   {/* Value Signals */}
                   {convo.valueSignals.length > 0 && (
                     <div>
-                      <h4 className="text-sm font-semibold text-neutral-700 mb-2">
-                        Value Signals
+                      <h4 className="font-serif text-[10px] font-semibold uppercase tracking-wide text-burgundy mb-1">
+                        Value
                       </h4>
-                      <ul className="space-y-1">
+                      <ul className="space-y-0.5">
                         {convo.valueSignals.map((signal, i) => (
-                          <li key={i} className="text-sm text-neutral-600 flex items-start gap-2">
-                            <span className="text-neutral-400">$</span>
-                            <span>{signal}</span>
+                          <li key={i} className="font-sans text-[10px] text-green-ink flex items-start gap-1.5">
+                            <span className="mt-0.5">$</span>
+                            <span className="flex-1">{signal}</span>
                           </li>
                         ))}
                       </ul>
