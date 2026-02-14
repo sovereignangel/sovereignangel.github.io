@@ -1,14 +1,16 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback, CSSProperties } from 'react'
+import { saveAudioTransform, getRecentAudioTransforms } from '@/lib/firestore'
+import type { AudioTransform } from '@/lib/types'
 
-const SAMPLE_TEXT = `This is a sample passage to test the reader. You can replace this by entering an Internet Archive book identifier above, or by pasting your own text below.
+const SAMPLE_TEXT = `This is a diagnostic passage to verify the distillation engine is functioning correctly.
 
-The Internet Archive is a non-profit library of millions of free books, movies, software, music, websites, and more. Founded in 1996, it has grown to become one of the largest digital libraries in the world.
+Radical transparency requires that you surface what you really think, even when it's uncomfortable. The goal is not to be right — it's to find what's true, and to do that as quickly as possible.
 
-To use this reader with an Internet Archive book, find a book on archive.org, copy its identifier from the URL (the part after /details/), and paste it in the field above. The reader will attempt to fetch the plain text version of the book.
+Every decision is a bet. The quality of your decisions improves when you systematically collect evidence, stress-test your reasoning against reality, and update your mental models based on outcomes rather than ego.
 
-Alternatively, you can paste any text directly into the text area below and use the speech controls to have it read aloud to you.`
+Pain plus reflection equals progress. Most people let pain stop them. The ones who succeed use it as a signal — an invitation to recalibrate and grow.`
 
 interface BookMeta {
   title: string
@@ -17,8 +19,19 @@ interface BookMeta {
   description: string
 }
 
+async function archiveFetch(url: string): Promise<Response> {
+  const res = await fetch(`/api/archive-proxy?url=${encodeURIComponent(url)}`)
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({ error: 'Request failed' }))
+    throw new Error(body.error || `Proxy returned ${res.status}`)
+  }
+  return res
+}
+
 export default function BookSpeechReader() {
   const [bookId, setBookId] = useState('')
+  const [operatorName, setOperatorName] = useState('')
+  const [investmentThesis, setInvestmentThesis] = useState('')
   const [text, setText] = useState('')
   const [displayText, setDisplayText] = useState('')
   const [paragraphs, setParagraphs] = useState<string[]>([])
@@ -33,6 +46,8 @@ export default function BookSpeechReader() {
   const [bookMeta, setBookMeta] = useState<BookMeta | null>(null)
   const [mode, setMode] = useState<'input' | 'reading'>('input')
   const [progress, setProgress] = useState(0)
+  const [ledger, setLedger] = useState<AudioTransform[]>([])
+  const [ledgerLoading, setLedgerLoading] = useState(true)
 
   const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null)
   const paragraphRefs = useRef<(HTMLParagraphElement | null)[]>([])
@@ -80,6 +95,14 @@ export default function BookSpeechReader() {
     return () => { synth.onvoiceschanged = null }
   }, [])
 
+  // Load ledger
+  useEffect(() => {
+    getRecentAudioTransforms(20)
+      .then(setLedger)
+      .catch(() => {})
+      .finally(() => setLedgerLoading(false))
+  }, [])
+
   // Parse paragraphs
   useEffect(() => {
     if (displayText) {
@@ -99,29 +122,18 @@ export default function BookSpeechReader() {
     return trimmed
   }
 
-  const proxyFetch = async (url: string) => {
-    const proxies = [
-      (u: string) => `https://corsproxy.io/?${encodeURIComponent(u)}`,
-      (u: string) => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
-    ]
-
-    let lastError: Error | undefined
+  const recordTransform = async (meta: { bookId: string; bookTitle: string; bookAuthor: string; sourceType: 'archive' | 'paste' }) => {
     try {
-      const res = await fetch(url, { mode: 'cors' })
-      if (res.ok) return res
+      await saveAudioTransform({
+        operatorName: operatorName.trim() || 'Anonymous',
+        investmentThesis: investmentThesis.trim(),
+        ...meta,
+      })
+      const updated = await getRecentAudioTransforms(20)
+      setLedger(updated)
     } catch {
-      // Direct failed, try proxies
+      // Non-blocking — don't fail the reading experience
     }
-
-    for (const makeProxy of proxies) {
-      try {
-        const res = await fetch(makeProxy(url))
-        if (res.ok) return res
-      } catch (e) {
-        lastError = e as Error
-      }
-    }
-    throw lastError || new Error('All fetch attempts failed')
   }
 
   const fetchBook = async () => {
@@ -133,14 +145,17 @@ export default function BookSpeechReader() {
     const id = extractId(bookId)
 
     try {
-      const metaRes = await proxyFetch(`https://archive.org/metadata/${id}`)
+      const metaRes = await archiveFetch(`https://archive.org/metadata/${id}`)
       const meta = await metaRes.json()
 
-      if (!meta.metadata) throw new Error('Book not found on Internet Archive. Check the ID and try again.')
+      if (!meta.metadata) throw new Error('Source not found on Internet Archive. Verify the identifier and retry.')
+
+      const title = meta.metadata?.title || id
+      const creator = meta.metadata?.creator || 'Unknown Author'
 
       setBookMeta({
-        title: meta.metadata?.title || id,
-        creator: meta.metadata?.creator || 'Unknown Author',
+        title,
+        creator,
         date: meta.metadata?.date || '',
         description: meta.metadata?.description || '',
       })
@@ -153,12 +168,12 @@ export default function BookSpeechReader() {
 
       if (!textFile) {
         throw new Error(
-          'No plain text version available for this book. Try a different edition, or copy the text from the Archive\'s web reader and paste it below.'
+          'No extractable text found for this source. Try a different edition, or paste raw text directly below.'
         )
       }
 
       const textUrl = `https://archive.org/download/${id}/${encodeURIComponent(textFile.name)}`
-      const textRes = await proxyFetch(textUrl)
+      const textRes = await archiveFetch(textUrl)
 
       const bookText = await textRes.text()
       const cleaned = bookText
@@ -168,28 +183,37 @@ export default function BookSpeechReader() {
         .trim()
 
       if (cleaned.length < 50) {
-        throw new Error('The text file appears to be empty or very short. Try pasting text manually.')
+        throw new Error('Extracted text is insufficient. Try pasting the source material manually.')
       }
 
       setText(cleaned)
       setDisplayText(cleaned)
       setMode('reading')
       setCurrentParagraph(0)
+
+      await recordTransform({ bookId: id, bookTitle: title, bookAuthor: creator, sourceType: 'archive' })
     } catch (err) {
       setError(
         (err as Error).message ||
-          'Failed to fetch book. This may be due to browser restrictions. Try pasting text manually.'
+          'Extraction failed. This may be a network constraint. Try pasting text directly.'
       )
     } finally {
       setLoading(false)
     }
   }
 
-  const loadPastedText = () => {
+  const loadPastedText = async () => {
     if (text.trim()) {
       setDisplayText(text)
       setMode('reading')
       setCurrentParagraph(0)
+
+      await recordTransform({
+        bookId: 'manual-paste',
+        bookTitle: text.slice(0, 60).replace(/\n/g, ' ').trim() + '…',
+        bookAuthor: operatorName.trim() || 'Anonymous',
+        sourceType: 'paste',
+      })
     }
   }
 
@@ -304,12 +328,18 @@ export default function BookSpeechReader() {
   }, [])
 
   const rateLabel = (r: number) => {
-    if (r <= 0.5) return 'Slow'
-    if (r <= 0.8) return 'Relaxed'
-    if (r <= 1.0) return 'Normal'
-    if (r <= 1.5) return 'Brisk'
-    if (r <= 2.0) return 'Fast'
-    return 'Rapid'
+    if (r <= 0.5) return 'Deliberate'
+    if (r <= 0.8) return 'Measured'
+    if (r <= 1.0) return 'Standard'
+    if (r <= 1.5) return 'Accelerated'
+    if (r <= 2.0) return 'Intensive'
+    return 'Maximum'
+  }
+
+  const formatDate = (ts: any) => {
+    if (!ts) return ''
+    const d = ts.toDate ? ts.toDate() : new Date(ts)
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
   }
 
   // INPUT MODE
@@ -327,20 +357,46 @@ export default function BookSpeechReader() {
               <path d="M18 30 L22 30" stroke="#8B6F47" strokeWidth="1.5" />
             </svg>
           </div>
-          <h1 style={styles.title}>Spoken Archive</h1>
+          <h1 style={styles.title}>Principle Distillation Engine</h1>
           <p style={styles.subtitle}>
-            Turn any Internet Archive book into a listening experience
+            Convert raw text into internalized principles through auditory processing
           </p>
 
+          {/* Operator identification */}
           <div style={styles.inputGroup}>
-            <label style={styles.label}>Internet Archive Book ID or URL</label>
+            <label style={styles.label}>Operator</label>
+            <input
+              style={styles.input}
+              type="text"
+              value={operatorName}
+              onChange={(e) => setOperatorName(e.target.value)}
+              placeholder="Your name"
+            />
+          </div>
+
+          <div style={styles.inputGroup}>
+            <label style={styles.label}>Investment Thesis</label>
+            <textarea
+              style={{ ...styles.textarea, minHeight: 60 }}
+              value={investmentThesis}
+              onChange={(e) => setInvestmentThesis(e.target.value)}
+              placeholder="Why does this text matter to your development? What principle are you extracting?"
+              rows={2}
+            />
+          </div>
+
+          <div style={styles.sectionDivider} />
+
+          {/* Archive fetch */}
+          <div style={styles.inputGroup}>
+            <label style={styles.label}>Source — Internet Archive ID or URL</label>
             <div style={styles.fetchRow}>
               <input
                 style={styles.input}
                 type="text"
                 value={bookId}
                 onChange={(e) => setBookId(e.target.value)}
-                placeholder="e.g. alice_in_wonderland or https://archive.org/details/..."
+                placeholder="e.g. thinkandgrowric00hill or https://archive.org/details/..."
                 onKeyDown={(e) => e.key === 'Enter' && fetchBook()}
               />
               <button
@@ -354,7 +410,7 @@ export default function BookSpeechReader() {
                 {loading ? (
                   <span style={styles.spinner} />
                 ) : (
-                  'Fetch'
+                  'Extract'
                 )}
               </button>
             </div>
@@ -368,7 +424,7 @@ export default function BookSpeechReader() {
           </div>
 
           <div style={styles.divider}>
-            <span style={styles.dividerText}>or paste text directly</span>
+            <span style={styles.dividerText}>or paste source material directly</span>
           </div>
 
           <div style={styles.inputGroup}>
@@ -376,7 +432,7 @@ export default function BookSpeechReader() {
               style={styles.textarea}
               value={text}
               onChange={(e) => setText(e.target.value)}
-              placeholder="Paste any text here — a book chapter, article, essay, or anything you'd like read aloud..."
+              placeholder="Paste any text here — a book chapter, memo, research paper, or anything you want to distill into principles..."
               rows={8}
             />
             <button
@@ -387,7 +443,7 @@ export default function BookSpeechReader() {
               onClick={loadPastedText}
               disabled={!text.trim()}
             >
-              Start Reading
+              Begin Distillation
             </button>
           </div>
 
@@ -399,8 +455,41 @@ export default function BookSpeechReader() {
               setMode('reading')
             }}
           >
-            Try with sample text
+            Run diagnostic with sample text
           </button>
+
+          {/* Distillation Ledger */}
+          <div style={styles.ledgerSection}>
+            <div style={styles.ledgerHeader}>
+              <span style={styles.ledgerTitle}>Distillation Ledger</span>
+              <span style={styles.ledgerCount}>{ledger.length} entries</span>
+            </div>
+            {ledgerLoading ? (
+              <p style={styles.ledgerEmpty}>Loading...</p>
+            ) : ledger.length === 0 ? (
+              <p style={styles.ledgerEmpty}>No distillations recorded yet. Begin your first extraction above.</p>
+            ) : (
+              <div style={styles.ledgerList}>
+                {ledger.map((entry) => (
+                  <div key={entry.id} style={styles.ledgerEntry}>
+                    <div style={styles.ledgerEntryTop}>
+                      <span style={styles.ledgerBookTitle}>{entry.bookTitle}</span>
+                      <span style={styles.ledgerDate}>{formatDate(entry.createdAt)}</span>
+                    </div>
+                    {entry.bookAuthor && entry.sourceType === 'archive' && (
+                      <span style={styles.ledgerAuthor}>{entry.bookAuthor}</span>
+                    )}
+                    <div style={styles.ledgerEntryBottom}>
+                      <span style={styles.ledgerOperator}>{entry.operatorName}</span>
+                      {entry.investmentThesis && (
+                        <span style={styles.ledgerThesis}>— {entry.investmentThesis}</span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     )
@@ -414,7 +503,7 @@ export default function BookSpeechReader() {
       {/* Header */}
       <div style={styles.header}>
         <button style={styles.backBtn} onClick={() => { stop(); setMode('input') }}>
-          &larr; Back
+          &larr; Return to Library
         </button>
         {bookMeta && (
           <div style={styles.headerMeta}>
@@ -482,7 +571,7 @@ export default function BookSpeechReader() {
 
           {/* Playback */}
           <div style={styles.playbackRow}>
-            <button style={styles.skipBtn} onClick={skipBack} title="Previous paragraph">
+            <button style={styles.skipBtn} onClick={skipBack} title="Previous principle">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M6 6h2v12H6zm3.5 6l8.5 6V6z" />
               </svg>
@@ -508,7 +597,7 @@ export default function BookSpeechReader() {
               </button>
             )}
 
-            <button style={styles.skipBtn} onClick={skipForward} title="Next paragraph">
+            <button style={styles.skipBtn} onClick={skipForward} title="Next principle">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z" />
               </svg>
@@ -538,7 +627,7 @@ export default function BookSpeechReader() {
           </div>
 
           <div style={styles.paraInfo}>
-            Paragraph {currentParagraph + 1} of {paragraphs.length}
+            Processing principle {currentParagraph + 1} of {paragraphs.length}
           </div>
         </div>
       </div>
@@ -601,17 +690,24 @@ const styles: Record<string, CSSProperties> = {
   },
   inputGroup: {
     width: '100%',
-    marginBottom: 8,
+    marginBottom: 12,
   },
   label: {
     display: 'block',
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: 600,
     color: '#6B5D4E',
     marginBottom: 6,
     textTransform: 'uppercase',
-    letterSpacing: '0.08em',
+    letterSpacing: '0.1em',
     fontFamily: "'system-ui', sans-serif",
+  },
+  sectionDivider: {
+    width: '100%',
+    height: 1,
+    background: '#C9B99A',
+    margin: '20px 0',
+    opacity: 0.5,
   },
   fetchRow: {
     display: 'flex',
@@ -628,6 +724,8 @@ const styles: Record<string, CSSProperties> = {
     color: '#3D2E1F',
     outline: 'none',
     transition: 'border-color 0.2s',
+    width: '100%',
+    boxSizing: 'border-box' as const,
   },
   fetchBtn: {
     padding: '12px 20px',
@@ -713,7 +811,7 @@ const styles: Record<string, CSSProperties> = {
     outline: 'none',
     resize: 'vertical',
     lineHeight: 1.7,
-    boxSizing: 'border-box',
+    boxSizing: 'border-box' as const,
   },
   loadBtn: {
     marginTop: 10,
@@ -740,6 +838,93 @@ const styles: Record<string, CSSProperties> = {
     borderRadius: 6,
     cursor: 'pointer',
     transition: 'all 0.2s',
+  },
+
+  // Ledger
+  ledgerSection: {
+    width: '100%',
+    marginTop: 36,
+    borderTop: '2px solid #C9B99A',
+    paddingTop: 20,
+  },
+  ledgerHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'baseline',
+    marginBottom: 14,
+  },
+  ledgerTitle: {
+    fontSize: 11,
+    fontWeight: 600,
+    color: '#6B5D4E',
+    textTransform: 'uppercase',
+    letterSpacing: '0.1em',
+    fontFamily: 'system-ui, sans-serif',
+  },
+  ledgerCount: {
+    fontSize: 11,
+    color: '#9A8B7A',
+    fontFamily: 'system-ui, sans-serif',
+  },
+  ledgerEmpty: {
+    fontSize: 13,
+    color: '#9A8B7A',
+    fontStyle: 'italic',
+    textAlign: 'center',
+    padding: '16px 0',
+  },
+  ledgerList: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 10,
+  },
+  ledgerEntry: {
+    padding: '10px 14px',
+    background: 'rgba(255,255,255,0.5)',
+    borderRadius: 6,
+    borderLeft: '3px solid #C9B99A',
+  },
+  ledgerEntryTop: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'baseline',
+    marginBottom: 2,
+  },
+  ledgerBookTitle: {
+    fontSize: 14,
+    fontWeight: 600,
+    color: '#2C1D0E',
+    fontFamily: "'Playfair Display', Georgia, serif",
+  },
+  ledgerDate: {
+    fontSize: 11,
+    color: '#9A8B7A',
+    fontFamily: 'system-ui, sans-serif',
+    flexShrink: 0,
+    marginLeft: 8,
+  },
+  ledgerAuthor: {
+    fontSize: 12,
+    color: '#7A6B5A',
+    display: 'block',
+    marginBottom: 4,
+  },
+  ledgerEntryBottom: {
+    fontSize: 12,
+    color: '#6B5D4E',
+    lineHeight: 1.5,
+  },
+  ledgerOperator: {
+    fontWeight: 600,
+    fontFamily: 'system-ui, sans-serif',
+    fontSize: 11,
+    textTransform: 'uppercase',
+    letterSpacing: '0.05em',
+  },
+  ledgerThesis: {
+    fontStyle: 'italic',
+    marginLeft: 4,
+    color: '#7A6B5A',
   },
 
   // Reading page
@@ -928,7 +1113,7 @@ const styles: Record<string, CSSProperties> = {
     fontFamily: 'system-ui, sans-serif',
     color: '#6B5D4E',
     fontWeight: 600,
-    minWidth: 90,
+    minWidth: 110,
     fontVariantNumeric: 'tabular-nums',
   },
   slider: {

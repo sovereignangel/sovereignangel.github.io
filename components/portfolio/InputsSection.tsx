@@ -16,7 +16,7 @@ export default function InputsSection() {
         tabs={[
           { id: 'classes', label: 'Classes' },
           { id: 'content', label: 'Content' },
-          { id: 'audio', label: 'Audio Transform' },
+          { id: 'audio', label: 'Principle Distillation' },
         ]}
         activeTab={activeTab}
         onTabChange={setActiveTab}
