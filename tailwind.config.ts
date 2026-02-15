@@ -28,6 +28,8 @@ const config: Config = {
         'red-bg': 'rgba(140, 45, 45, 0.03)',
         'amber-ink': '#8a6d2f',
         'amber-bg': 'rgba(138, 109, 47, 0.03)',
+        burgundy: '#7c2d2d',
+        'burgundy-bg': 'rgba(124, 45, 45, 0.08)',
       },
       fontFamily: {
         serif: ['var(--font-crimson)', 'Georgia', 'serif'],
