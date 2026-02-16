@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Process Daily Reflections from Wave.ai
  * Analyzes voice transcripts to extract insights, patterns, and coherence metrics

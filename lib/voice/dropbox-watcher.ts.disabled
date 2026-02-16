@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Dropbox Folder Watcher
  * Monitors Wave.ai transcript folder and processes new files automatically

@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Master ETL Sync Function
  * Orchestrates all daily data syncs

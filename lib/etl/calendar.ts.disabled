@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Google Calendar API ETL
  * Syncs color-coded time allocation from calendar events

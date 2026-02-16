@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Groq LLM Client
  * Uses Llama 3.1 70B for all intelligence processing
