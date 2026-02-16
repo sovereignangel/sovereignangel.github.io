@@ -219,7 +219,7 @@ export default function BookSpeechReader() {
         )
       }
 
-      // Step 2: Try fetching text from archive.org
+      // Step 2: Try direct text download from archive.org
       try {
         const textUrl = `https://archive.org/download/${id}/${encodeURIComponent(textFile.name)}`
         const textRes = await proxyFetch(textUrl)
@@ -227,26 +227,37 @@ export default function BookSpeechReader() {
         loadBookText(bookText, title, creator, id, 'archive')
         return
       } catch (archiveErr) {
-        // If 403 (restricted/lending-only), fall through to Gutenberg
         if ((archiveErr as any).status !== 403 && (archiveErr as any).message !== 'restricted') {
           throw archiveErr
         }
-        // Fall through to Gutenberg search
+        // Direct download blocked — try BookReader text API
       }
 
-      // Step 3: Archive.org restricted — try Project Gutenberg
-      setError('') // clear any intermediate error
-      const gutResult = await searchGutenberg(title)
+      // Step 3: Use BookReader page-by-page text extraction (works for lending-only)
+      setError('')
+      try {
+        const readerRes = await fetch(`/api/archive-text?id=${encodeURIComponent(id)}`)
+        if (readerRes.ok) {
+          const data = await readerRes.json()
+          if (data.text && data.text.length > 50) {
+            loadBookText(data.text, data.title || title, data.creator || creator, id, 'archive')
+            return
+          }
+        }
+      } catch {
+        // Fall through to Gutenberg
+      }
 
+      // Step 4: Try Project Gutenberg
+      const gutResult = await searchGutenberg(title)
       if (gutResult) {
         loadBookText(gutResult.text, gutResult.meta.title, gutResult.meta.author, `gutenberg-${gutResult.meta.gutenbergId}`, 'gutenberg')
         return
       }
 
-      // Step 4: Neither source had it
+      // Step 5: All sources exhausted
       throw new Error(
-        `"${title}" is restricted on Internet Archive (lending-only) and not available on Project Gutenberg. ` +
-        'Borrow it on archive.org, then copy & paste the text below.'
+        `"${title}" could not be extracted from any source. Try pasting the text manually below.`
       )
     } catch (err) {
       setError(
