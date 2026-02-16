@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Stripe API ETL
  * Syncs daily revenue metrics: MRR, ARR, subscriptions, customers

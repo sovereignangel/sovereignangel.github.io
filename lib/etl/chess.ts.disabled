@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Chess.com API ETL
  * Syncs daily chess progress: ratings, games, puzzles, accuracy

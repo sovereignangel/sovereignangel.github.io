@@ -11,9 +11,16 @@
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
     "@hookform/resolvers": "^3.9.1",
+    "@octokit/rest": "^22.0.1",
+    "@supabase/supabase-js": "^2.95.3",
     "@types/mapbox-gl": "^3.4.1",
     "date-fns": "^3.6.0",
+    "dropbox": "^10.34.0",
     "firebase": "^10.14.1",
+    "firebase-admin": "^13.6.1",
+    "garmin-connect": "^1.6.2",
+    "googleapis": "^171.4.0",
+    "groq-sdk": "^0.37.0",
     "lucide-react": "^0.469.0",
     "mapbox-gl": "^3.18.1",
     "next": "^14.2.21",
@@ -22,6 +29,7 @@
     "react-hook-form": "^7.54.2",
     "recharts": "^2.15.0",
     "rss-parser": "^3.13.0",
+    "stripe": "^20.3.1",
     "zod": "^3.24.1"
   },
   "devDependencies": {

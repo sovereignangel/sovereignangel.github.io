@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * GitHub API ETL
  * Syncs daily coding activity: commits, PRs, issues, lines changed
