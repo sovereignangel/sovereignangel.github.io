@@ -2,10 +2,7 @@
 
 import { useState } from 'react'
 import { useAuth } from '@/components/auth/AuthProvider'
-import { extractInsightsFromTranscript } from '@/lib/ai-extraction'
-import { saveConversation, saveContact, getContactByName } from '@/lib/firestore'
 import { ConversationType } from '@/lib/types'
-import { Timestamp } from 'firebase/firestore'
 
 interface ConversationUploadModalProps {
   onClose: () => void
@@ -39,54 +36,33 @@ export default function ConversationUploadModal({
         .map((p) => p.trim())
         .filter((p) => p.length > 0)
 
-      // Extract insights with Gemini
-      const insights = await extractInsightsFromTranscript(
-        formData.transcriptText,
-        formData.conversationType,
-        participantNames
-      )
+      // Call server-side API route to process conversation
+      const response = await fetch('/api/conversations/process', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          uid: user.uid,
+          title: formData.title,
+          date: formData.date,
+          participants: participantNames,
+          conversationType: formData.conversationType,
+          transcriptText: formData.transcriptText,
+          linkedProjectId: formData.linkedProjectId || null,
+        }),
+      })
 
-      // Create/update contacts for participants
-      for (const name of participantNames) {
-        const existing = await getContactByName(user.uid, name)
-        if (existing) {
-          // Update last conversation date
-          await saveContact(user.uid, {
-            ...existing,
-            lastConversationDate: formData.date,
-          })
-        } else {
-          // Create new contact
-          await saveContact(user.uid, {
-            name,
-            lastConversationDate: formData.date,
-            notes: '',
-          })
-        }
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.details || 'Failed to process conversation')
       }
 
-      // Save conversation with extracted insights
-      await saveConversation(user.uid, {
-        title: formData.title,
-        date: formData.date,
-        participants: participantNames,
-        transcriptText: formData.transcriptText,
-        durationMinutes: 0, // Could calculate from transcript length
-        conversationType: formData.conversationType,
-        processInsights: insights.processInsights,
-        featureIdeas: insights.featureIdeas,
-        actionItems: insights.actionItems,
-        valueSignals: insights.valueSignals,
-        aiProcessed: true,
-        aiProcessedAt: Timestamp.now(),
-        linkedSignalIds: [],
-        linkedProjectId: formData.linkedProjectId || undefined,
-      })
+      const result = await response.json()
+      console.log('Conversation processed successfully:', result)
 
       onUploaded()
     } catch (error) {
       console.error('Error uploading conversation:', error)
-      alert('Error processing conversation. Please try again.')
+      alert(`Error processing conversation: ${error instanceof Error ? error.message : 'Please try again.'}`)
     }
     setLoading(false)
   }
