@@ -1,8 +1,14 @@
 'use client'
 
 import { useState } from 'react'
+import dynamic from 'next/dynamic'
 import Image from 'next/image'
 import SubTabs from './SubTabs'
+
+const FunRouteBuilder = dynamic(() => import('./FunRouteBuilder'), {
+  ssr: false,
+  loading: () => <p className="text-sm text-[#888] italic">Loading route builder...</p>,
+})
 
 const projects = [
   {
@@ -69,6 +75,7 @@ export default function OutputsSection() {
         tabs={[
           { id: 'projects', label: 'Projects' },
           { id: 'blog', label: 'Blog' },
+          { id: 'fun', label: 'Fun' },
         ]}
         activeTab={activeTab}
         onTabChange={setActiveTab}
@@ -118,6 +125,10 @@ export default function OutputsSection() {
 
       {activeTab === 'blog' && (
         <p className="text-sm text-[#888] italic">Coming soon</p>
+      )}
+
+      {activeTab === 'fun' && (
+        <FunRouteBuilder />
       )}
     </section>
   )

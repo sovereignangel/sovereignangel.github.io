@@ -13,7 +13,6 @@ const navItems = [
   { href: '/thesis/output', label: 'Output', symbol: 'ĠVC+κ' },
   { href: '/thesis/intelligence', label: 'Intelligence', symbol: 'ĠI+𝒪' },
   { href: '/thesis/coherence', label: 'Coherence', symbol: 'Θ−𝓕' },
-  { href: '/thesis/exploration', label: 'Exploration', symbol: 'Δx' },
   { href: '/thesis/goals', label: 'Goals', symbol: '19' },
   { href: '/thesis/elite', label: 'Elite', symbol: '$10M' },
 ]

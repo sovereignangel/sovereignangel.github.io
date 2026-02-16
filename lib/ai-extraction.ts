@@ -15,7 +15,7 @@ export async function extractInsightsFromTranscript(
   conversationType: string,
   participants: string[]
 ): Promise<ExtractedInsights> {
-  const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' })
+  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' })
 
   const prompt = `You are analyzing a ${conversationType} conversation transcript. Extract structured insights in JSON format.
 
@@ -85,7 +85,7 @@ export async function scoreArticleRelevance(
   matchedPillars: string[]
   summary: string
 }> {
-  const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' })
+  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' })
 
   const prompt = `You are scoring an article's relevance to a user's thesis.
 
@@ -141,7 +141,7 @@ export async function generateDailyReportSummary(
   conversations: Array<{ title: string; participants: string[] }>,
   reconnectSuggestions: Array<{ name: string; daysSince: number }>
 ): Promise<string> {
-  const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' })
+  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' })
 
   const signalsText =
     topSignals.length > 0
