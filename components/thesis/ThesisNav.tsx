@@ -186,7 +186,7 @@ export default function ThesisNav() {
         </div>
 
         {/* Nav tabs */}
-        <nav className="flex gap-1 -mb-px overflow-x-auto">
+        <nav className="flex gap-1 -mb-px overflow-x-auto" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}>
           {navItems.map((item) => {
             const isActive = pathname === item.href ||
               (item.href !== '/thesis' && pathname.startsWith(item.href))
