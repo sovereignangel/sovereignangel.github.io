@@ -233,14 +233,68 @@ export default function BookSpeechReader() {
         // Direct download blocked — try BookReader text API
       }
 
-      // Step 3: Use BookReader page-by-page text extraction (works for lending-only)
+      // Step 3: Client-side BookReader page-by-page text extraction
       setError('')
       try {
-        const readerRes = await fetch(`/api/archive-text?id=${encodeURIComponent(id)}`)
-        if (readerRes.ok) {
-          const data = await readerRes.json()
-          if (data.text && data.text.length > 50) {
-            loadBookText(data.text, data.title || title, data.creator || creator, id, 'archive')
+        const server = meta.server
+        const dir = meta.dir
+        const djvuXml = files.find((f: { name: string }) => f.name.endsWith('_djvu.xml'))
+
+        if (server && dir && djvuXml) {
+          const xmlPath = `${dir}/${djvuXml.name}`
+
+          // Get page count from BookReader init
+          let pageCount = 0
+          try {
+            const brUrl = `https://${server}/BookReader/BookReaderJSIA.php?id=${id}&itemPath=${dir}&server=${server}&format=jsonp&subPrefix=${id}`
+            const brRes = await proxyFetch(brUrl)
+            let brText = await brRes.text()
+            brText = brText.replace(/^[^{]*/, '').replace(/[^}]*$/, '')
+            const brData = JSON.parse(brText)
+            pageCount = brData.data?.numPages || brData.numPages || 0
+          } catch {
+            // Estimate from XML file size (~2KB per page)
+            const xmlSize = parseInt(djvuXml.size || '0', 10)
+            pageCount = Math.max(10, Math.ceil(xmlSize / 2000))
+          }
+
+          const maxPages = Math.min(pageCount, 500)
+          const stripHtml = (html: string) =>
+            html
+              .replace(/<br\s*\/?>/gi, '\n')
+              .replace(/<p[^>]*>/gi, '\n\n')
+              .replace(/<\/p>/gi, '')
+              .replace(/<[^>]+>/g, '')
+              .replace(/&nbsp;/g, ' ')
+              .replace(/&amp;/g, '&')
+              .replace(/&lt;/g, '<')
+              .replace(/&gt;/g, '>')
+              .replace(/&quot;/g, '"')
+              .replace(/&#39;/g, "'")
+              .trim()
+
+          // Fetch pages in parallel batches
+          const allPages: string[] = []
+          const batchSize = 15
+          for (let start = 0; start < maxPages; start += batchSize) {
+            const end = Math.min(start + batchSize, maxPages)
+            const batch = Array.from({ length: end - start }, (_, i) => {
+              const page = start + i
+              const pageUrl = `https://${server}/BookReader/BookReaderGetTextWrapper.php?path=${encodeURIComponent(xmlPath)}&mode=1up&page=${page}`
+              return proxyFetch(pageUrl)
+                .then(r => r.text())
+                .then(stripHtml)
+                .catch(() => '')
+            })
+            const results = await Promise.all(batch)
+            allPages.push(...results)
+            setError(`Extracting page ${Math.min(end, maxPages)} of ${maxPages}...`)
+          }
+
+          setError('')
+          const fullText = allPages.filter(p => p.length > 0).join('\n\n')
+          if (fullText.length > 50) {
+            loadBookText(fullText, title, creator, id, 'archive')
             return
           }
         }
