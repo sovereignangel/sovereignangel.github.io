@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
+import 'mapbox-gl/dist/mapbox-gl.css'
 import type { GeneratedRoute } from '@/lib/types'
 
 const DISTANCE_PRESETS = [
