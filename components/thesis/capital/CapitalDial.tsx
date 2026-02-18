@@ -32,6 +32,28 @@ const EMPTY_SNAPSHOT = {
   monthlyExpenses: 0,
 }
 
+// ─── PRO FORMA SEED DATA (from Williamsburg Pro Forma, Sep 2024) ────
+const PRO_FORMA_SNAPSHOT = {
+  cashSavings: 2218,
+  investments: 121,       // Robinhood stocks
+  crypto: 18457,          // Coinbase
+  realEstate: 0,
+  startupEquity: 0,
+  otherAssets: 44000,     // 401k (locked but real asset)
+  totalDebt: 36713,       // Sum of all leveraged debt
+  monthlyIncome: 0,       // Currently between jobs
+  monthlyExpenses: 5400,  // Rent $4,200 + Food $800 + Misc $400
+}
+
+const PRO_FORMA_DEBTS: { name: string; category: DebtCategory; balance: number; apr: number; minimumPayment: number }[] = [
+  { name: 'Chase Sapphire', category: 'credit_card', balance: 15184, apr: 0.285, minimumPayment: 380 },
+  { name: 'Capital One Savor', category: 'credit_card', balance: 2839, apr: 0.2999, minimumPayment: 71 },
+  { name: 'Apple Card', category: 'credit_card', balance: 5693, apr: 0.2749, minimumPayment: 142 },
+  { name: 'Tax Filer Loan', category: 'personal_loan', balance: 5250, apr: 0, minimumPayment: 250 },
+  { name: '2022 SURI Taxes (PR)', category: 'tax', balance: 7339, apr: 0.03, minimumPayment: 250 },
+  { name: '2023-24 Federal Taxes', category: 'tax', balance: 6000, apr: 0.03, minimumPayment: 200 },
+]
+
 const DEBT_CATEGORIES: { value: DebtCategory; label: string }[] = [
   { value: 'credit_card', label: 'Credit Card' },
   { value: 'personal_loan', label: 'Personal Loan' },
@@ -57,6 +79,9 @@ export default function CapitalDial({ onPositionChange, onDebtsChange, scenarios
   const [debts, setDebts] = useState<DebtItem[]>([])
   const [showAddDebt, setShowAddDebt] = useState(false)
   const [newDebt, setNewDebt] = useState({ name: '', category: 'credit_card' as DebtCategory, balance: 0, apr: 0, minimumPayment: 0 })
+
+  // Seed state
+  const [seeding, setSeeding] = useState(false)
 
   // Scenario edit state
   const [editingScenario, setEditingScenario] = useState<number | null>(null)
@@ -151,6 +176,47 @@ export default function CapitalDial({ onPositionChange, onDebtsChange, scenarios
     onDebtsChange(updated)
   }
 
+  const handleSeedProForma = async () => {
+    if (!user) return
+    setSeeding(true)
+
+    // 1. Set snapshot form to pro forma values
+    setForm(PRO_FORMA_SNAPSHOT)
+
+    // 2. Save snapshot to Firestore
+    await saveFinancialSnapshot(user.uid, { month, ...PRO_FORMA_SNAPSHOT })
+
+    // 3. Create all debt items (skip if debts already exist)
+    if (debts.length === 0) {
+      for (const d of PRO_FORMA_DEBTS) {
+        await saveDebtItem(user.uid, { ...d, isActive: true })
+      }
+    }
+
+    // 4. Reload everything
+    const [updatedDebts] = await Promise.all([
+      getDebtItems(user.uid),
+    ])
+    setDebts(updatedDebts)
+    onDebtsChange(updatedDebts)
+
+    // 5. Build position
+    const totalAssets = PRO_FORMA_SNAPSHOT.cashSavings + PRO_FORMA_SNAPSHOT.investments +
+      PRO_FORMA_SNAPSHOT.crypto + PRO_FORMA_SNAPSHOT.realEstate +
+      PRO_FORMA_SNAPSHOT.startupEquity + PRO_FORMA_SNAPSHOT.otherAssets
+    const netWorth = totalAssets - PRO_FORMA_SNAPSHOT.totalDebt
+    const runwayMonths = PRO_FORMA_SNAPSHOT.monthlyExpenses > 0
+      ? PRO_FORMA_SNAPSHOT.cashSavings / PRO_FORMA_SNAPSHOT.monthlyExpenses : 0
+    const position = buildCapitalPosition(
+      { ...PRO_FORMA_SNAPSHOT, totalAssets, netWorth, runwayMonths },
+      updatedDebts
+    )
+    onPositionChange(position)
+
+    setSeeding(false)
+    setLastSaved(new Date().toLocaleTimeString())
+  }
+
   const handleScenarioUpdate = (index: number, field: keyof ScenarioParams, value: string | number) => {
     const updated = [...scenarios]
     updated[index] = { ...updated[index], [field]: typeof value === 'string' ? parseFloat(value) || 0 : value }
@@ -203,6 +269,17 @@ export default function CapitalDial({ onPositionChange, onDebtsChange, scenarios
         {/* SNAPSHOT SECTION */}
         {activeSection === 'snapshot' && loaded && (
           <>
+            {/* Load Pro Forma */}
+            {form.cashSavings === 0 && form.crypto === 0 && form.totalDebt === 0 && (
+              <button
+                onClick={handleSeedProForma}
+                disabled={seeding}
+                className="w-full py-2.5 font-serif text-[10px] font-semibold uppercase tracking-[1px] text-burgundy border-2 border-burgundy/40 rounded-sm hover:bg-burgundy-bg transition-colors disabled:opacity-50 bg-cream"
+              >
+                {seeding ? 'Loading...' : 'Load Williamsburg Pro Forma Data'}
+              </button>
+            )}
+
             {/* Month Selector */}
             <input
               type="month"
@@ -270,6 +347,17 @@ export default function CapitalDial({ onPositionChange, onDebtsChange, scenarios
             >
               {saving ? 'Saving...' : 'Save Snapshot'}
             </button>
+
+            {/* Re-seed option */}
+            {(form.cashSavings !== 0 || form.crypto !== 0 || form.totalDebt !== 0) && (
+              <button
+                onClick={handleSeedProForma}
+                disabled={seeding}
+                className="w-full py-1.5 font-serif text-[8px] font-medium uppercase text-ink-muted border border-rule rounded-sm hover:border-ink-faint transition-colors disabled:opacity-50"
+              >
+                {seeding ? 'Loading...' : 'Reset to Pro Forma (Sep 2024)'}
+              </button>
+            )}
           </>
         )}
 
