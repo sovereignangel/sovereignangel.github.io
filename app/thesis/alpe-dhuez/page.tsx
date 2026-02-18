@@ -20,18 +20,18 @@ export default function AlpeDhuezPage() {
   const [activeTab, setActiveTab] = useState<AlpeTab>('synthesis')
 
   return (
-    <div className="h-full grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-3">
+    <div className="h-full grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-3 min-h-0">
       {/* Left Panel: Tabbed Sections */}
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-1 min-h-0">
         {/* Sub-tab Navigation */}
-        <div className="flex gap-4 border-b border-rule pb-2">
+        <div className="flex gap-1 border-b border-rule shrink-0">
           {TABS.map((tab) => (
             <button
               key={tab.key}
               onClick={() => setActiveTab(tab.key)}
-              className={`font-serif text-[16px] transition-colors py-2 ${
+              className={`font-serif text-[13px] font-medium px-3 py-1.5 transition-colors ${
                 activeTab === tab.key
-                  ? 'text-burgundy font-semibold border-b-2 border-burgundy'
+                  ? 'text-burgundy font-semibold border-b-2 border-burgundy -mb-px'
                   : 'text-ink-muted hover:text-ink'
               }`}
             >
@@ -50,7 +50,9 @@ export default function AlpeDhuezPage() {
       </div>
 
       {/* Right Sidebar */}
-      <AlpeDial />
+      <div className="min-h-0 overflow-y-auto">
+        <AlpeDial />
+      </div>
     </div>
   )
 }
