@@ -83,6 +83,34 @@ export interface SalesAssessment {
   updatedAt: Timestamp
 }
 
+// ─── MONTHLY METRICS (auto-aggregated from daily logs) ───────────────
+
+export interface MonthlyMetrics {
+  totalShips: number
+  totalAsks: number
+  totalPosts: number
+  avgFocusHours: number
+  totalRevenue: number
+  daysWithOutput: number
+  daysTracked: number
+  shipsPerWeek: number
+  asksPerWeek: number
+  postsPerWeek: number
+  twentyFourHourPct: number
+  noEmotionalTextingPct: number
+  publicPct: number
+  feedbackPct: number
+  totalConversations: number
+  totalInsights: number
+  avgScore: number
+  scoreTrajectory: number
+  contactCount: number
+  top30Count: number
+  avgStrength: number
+  touchedIn30d: number
+  staleCount: number
+}
+
 // ─── CONSTANTS ────────────────────────────────────────────────────────
 
 export const TRUST_STAGE_LABELS: Record<TrustStage, string> = {

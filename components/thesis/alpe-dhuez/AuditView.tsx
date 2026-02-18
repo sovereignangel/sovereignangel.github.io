@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useAuth } from '@/components/auth/AuthProvider'
 import {
   getRecentDailyLogs,
@@ -9,9 +9,12 @@ import {
   getRecentSalesAssessments,
   saveSalesAssessment,
 } from '@/lib/firestore'
-import { BELT_COLORS, BELT_BG_COLORS, MUSCLE_TARGETS } from '@/lib/constants'
-import type { SalesAssessment, SalesBelt, RuinConditions, NetworkContact, DailyLog } from '@/lib/types'
-import { BELT_ORDER, BELT_LABELS, getSystemState, SYSTEM_STATE_COLORS } from '@/lib/types'
+import { BELT_COLORS, MUSCLE_TARGETS } from '@/lib/constants'
+import type { SalesAssessment, RuinConditions, NetworkContact, DailyLog, MonthlyMetrics } from '@/lib/types'
+import { BELT_LABELS, getSystemState, SYSTEM_STATE_COLORS } from '@/lib/types'
+import { computeBeltLevel } from '@/lib/belt-engine'
+import type { BeltAssessment } from '@/lib/belt-engine'
+import AlpeDHuezMountain from './AlpeDHuezMountain'
 
 // ─── Constants ────────────────────────────────────────────────────────
 
@@ -41,32 +44,6 @@ function getCurrentMonthKey(): string {
 }
 
 // ─── Auto-computed metrics ────────────────────────────────────────────
-
-interface MonthlyMetrics {
-  totalShips: number
-  totalAsks: number
-  totalPosts: number
-  avgFocusHours: number
-  totalRevenue: number
-  daysWithOutput: number
-  daysTracked: number
-  shipsPerWeek: number
-  asksPerWeek: number
-  postsPerWeek: number
-  twentyFourHourPct: number
-  noEmotionalTextingPct: number
-  publicPct: number
-  feedbackPct: number
-  totalConversations: number
-  totalInsights: number
-  avgScore: number
-  scoreTrajectory: number
-  contactCount: number
-  top30Count: number
-  avgStrength: number
-  touchedIn30d: number
-  staleCount: number
-}
 
 function computeMetrics(logs: DailyLog[], contacts: NetworkContact[]): MonthlyMetrics {
   const n = logs.length || 1
@@ -164,9 +141,13 @@ export default function AuditView() {
   const [oneLiner, setOneLiner] = useState('')
   const [oneLinerClarityScore, setOneLinerClarityScore] = useState(3)
   const [ruinConditions, setRuinConditions] = useState<RuinConditions>(DEFAULT_RUIN)
-  const [currentBelt, setCurrentBelt] = useState<SalesBelt>('white')
-  const [beltProgress, setBeltProgress] = useState(0)
   const [nextMonthFocus, setNextMonthFocus] = useState('')
+
+  // Computed belt assessment — reacts to metrics + manual inputs
+  const beltAssessment: BeltAssessment | null = useMemo(() => {
+    if (!metrics) return null
+    return computeBeltLevel(metrics, oneLinerClarityScore, ruinConditions)
+  }, [metrics, oneLinerClarityScore, ruinConditions])
 
   const loadData = useCallback(async () => {
     if (!user) return
@@ -187,8 +168,6 @@ export default function AuditView() {
         setOneLiner(existing.oneLiner || '')
         setOneLinerClarityScore(existing.oneLinerClarityScore || 3)
         setRuinConditions(existing.ruinConditions || DEFAULT_RUIN)
-        setCurrentBelt(existing.currentBelt || 'white')
-        setBeltProgress(existing.beltProgress || 0)
         setNextMonthFocus(existing.nextMonthFocus || '')
       }
     } catch (err) {
@@ -206,6 +185,7 @@ export default function AuditView() {
       oneLiner,
       oneLinerClarityScore,
       contentPublished: metrics.totalPosts,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       inboundInquiriesMonth: Math.round(monthLogs.reduce((s, l) => s + ((l as any).inboundInquiries as number || 0), 0)),
       warmIntroRate: metrics.contactCount > 0 ? Math.round((metrics.touchedIn30d / metrics.contactCount) * 100) : 0,
       warmConversionRate: 0,
@@ -221,8 +201,8 @@ export default function AuditView() {
         rhythm: Math.min(10, Math.round((metrics.touchedIn30d / Math.max(metrics.contactCount, 1)) * 10)),
         cohort: Math.min(10, Math.round(metrics.totalConversations / 2)),
       },
-      currentBelt,
-      beltProgress,
+      currentBelt: beltAssessment?.currentBelt || 'white',
+      beltProgress: beltAssessment?.beltProgress || 0,
       nextMonthFocus,
     }
     await saveSalesAssessment(user.uid, monthKey, data)
@@ -249,11 +229,75 @@ export default function AuditView() {
 
   return (
     <div className="space-y-3">
+      {/* ─── Alp d'Huez Mountain Visual ────────────────────── */}
+      {beltAssessment && (
+        <div className="bg-paper border border-rule rounded-sm p-3">
+          <h4 className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-2 pb-1.5 border-b-2 border-rule">
+            Alpe d&apos;Huez — Belt Progression
+          </h4>
+          <AlpeDHuezMountain
+            assessment={beltAssessment}
+            ruinConditions={ruinConditions}
+          />
+          <div className="mt-2 pt-2 border-t border-rule-light flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className={`font-mono text-[11px] font-semibold ${BELT_COLORS[beltAssessment.currentBelt]}`}>
+                {BELT_LABELS[beltAssessment.currentBelt]}
+              </span>
+              <span className="font-mono text-[9px] text-ink-muted">
+                {beltAssessment.beltProgress}% to {beltAssessment.nextBelt ? BELT_LABELS[beltAssessment.nextBelt] : 'peak'}
+              </span>
+            </div>
+            {beltAssessment.ruinActive && (
+              <span className="font-mono text-[8px] text-red-ink bg-red-bg px-1.5 py-0.5 rounded-sm border border-red-ink/20">
+                RUIN ACTIVE
+              </span>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ─── Belt Criteria Breakdown ─────────────────────────── */}
+      {beltAssessment && (
+        <div className="bg-paper border border-rule rounded-sm p-3">
+          <h4 className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-2 pb-1.5 border-b-2 border-rule">
+            Belt Criteria
+          </h4>
+          {beltAssessment.allBelts
+            .filter(b => !b.locked)
+            .map(belt => (
+              <div key={belt.belt} className="mb-2.5 last:mb-0">
+                <div className="flex items-center justify-between mb-1">
+                  <span className={`font-mono text-[9px] font-semibold uppercase ${BELT_COLORS[belt.belt]}`}>
+                    {belt.label}
+                  </span>
+                  <span className={`font-mono text-[8px] font-medium ${
+                    belt.progress >= 80 ? 'text-green-ink' : belt.progress >= 50 ? 'text-amber-ink' : 'text-ink-muted'
+                  }`}>
+                    {belt.progress}%
+                  </span>
+                </div>
+                {belt.requirements.map(req => (
+                  <div key={req.key} className="flex items-center justify-between py-0.5 border-b border-rule-light/50">
+                    <span className="font-mono text-[9px] text-ink-muted">{req.label}</span>
+                    <span className={`font-mono text-[9px] font-semibold ${req.met ? 'text-green-ink' : 'text-red-ink'}`}>
+                      {typeof req.current === 'number' && req.current % 1 !== 0
+                        ? req.current.toFixed(1)
+                        : req.current
+                      }{req.unit} / {req.target}{req.unit}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ))}
+        </div>
+      )}
+
       {/* How it works */}
       <div className="bg-cream border border-rule rounded-sm px-3 py-2">
         <p className="font-mono text-[9px] text-ink-muted leading-relaxed">
           Auto-aggregated from {metrics.daysTracked} daily logs + {metrics.contactCount} network contacts.
-          You only fill in: message clarity, ruin check, belt assessment, next month focus.
+          Belt level is computed from your execution data. You fill in: message clarity, ruin check, next month focus.
         </p>
       </div>
 
@@ -372,51 +416,6 @@ export default function AuditView() {
             </div>
           </div>
 
-          {/* Belt */}
-          <div>
-            <label className="font-serif text-[8px] italic uppercase tracking-wide text-ink-muted block mb-0.5">
-              Belt Assessment
-            </label>
-            <div className="flex items-center gap-2 mb-1">
-              {BELT_ORDER.map((belt, i) => {
-                const currentIdx = BELT_ORDER.indexOf(currentBelt)
-                const isFilled = i <= currentIdx
-                return (
-                  <button
-                    key={belt}
-                    onClick={() => setCurrentBelt(belt)}
-                    className="flex flex-col items-center gap-0.5"
-                  >
-                    <div className={`w-4 h-4 rounded-sm border transition-colors ${
-                      isFilled
-                        ? `${BELT_BG_COLORS[belt]} ${BELT_COLORS[belt]} border-current`
-                        : 'bg-rule-light border-rule hover:border-ink-faint'
-                    }`} />
-                    <span className={`font-mono text-[6px] capitalize ${
-                      isFilled ? BELT_COLORS[belt] : 'text-ink-faint'
-                    }`}>
-                      {belt}
-                    </span>
-                  </button>
-                )
-              })}
-            </div>
-            <div className="flex items-center gap-2">
-              <span className={`font-mono text-[8px] ${BELT_COLORS[currentBelt]}`}>
-                {BELT_LABELS[currentBelt]}
-              </span>
-              <input
-                type="range"
-                min={0}
-                max={100}
-                value={beltProgress}
-                onChange={(e) => setBeltProgress(parseInt(e.target.value))}
-                className="flex-1 h-1.5 accent-burgundy"
-              />
-              <span className="font-mono text-[8px] text-ink-muted">{beltProgress}%</span>
-            </div>
-          </div>
-
           {/* Next month */}
           <div>
             <label className="font-serif text-[8px] italic uppercase tracking-wide text-ink-muted block mb-0.5">
@@ -455,7 +454,7 @@ export default function AuditView() {
                   {BELT_LABELS[a.currentBelt]}
                 </span>
                 <span className="font-mono text-[8px] text-ink-muted">
-                  Clarity: {a.oneLinerClarityScore}/5
+                  {a.beltProgress}% | Clarity: {a.oneLinerClarityScore}/5
                 </span>
               </div>
             ))}

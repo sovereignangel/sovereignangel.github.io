@@ -1,10 +1,9 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import UserMenu from '@/components/auth/UserMenu'
-import RewardProofModal from '@/components/thesis/RewardProofModal'
 import ArchitecturePanel from '@/components/thesis/ArchitecturePanel'
 import { useDailyLogContext } from '@/components/thesis/DailyLogProvider'
 import { format } from 'date-fns'
@@ -28,51 +27,15 @@ function ScoreValue({ label, value, color }: { label: string; value: number | nu
   )
 }
 
-function TermCard({
-  symbol,
-  label,
-  desc,
-  color,
-}: {
-  symbol: string
-  label: string
-  desc: string
-  color: string
-}) {
-  return (
-    <div className="flex items-start gap-2">
-      <span className={`font-mono text-[13px] font-semibold ${color} shrink-0 w-6`}>{symbol}</span>
-      <div>
-        <p className="font-serif text-[10px] font-semibold uppercase tracking-[0.5px] text-ink">{label}</p>
-        <p className="font-sans text-[10px] text-ink-muted leading-snug">{desc}</p>
-      </div>
-    </div>
-  )
-}
-
 export default function ThesisNav() {
   const pathname = usePathname()
-  const [showProof, setShowProof] = useState(false)
-  const [showFullProof, setShowFullProof] = useState(false)
   const [showArchitecture, setShowArchitecture] = useState(false)
-  const popoverRef = useRef<HTMLDivElement>(null)
   const { log } = useDailyLogContext()
 
   const reward = log.rewardScore
   const score = reward?.score ?? null
   const delta = reward?.delta ?? null
   const c = reward?.components
-
-  useEffect(() => {
-    if (!showProof) return
-    const handler = (e: MouseEvent) => {
-      if (popoverRef.current && !popoverRef.current.contains(e.target as Node)) {
-        setShowProof(false)
-      }
-    }
-    document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
-  }, [showProof])
 
   const componentColor = (val: number | null) => {
     if (val === null) return 'text-ink-muted'
@@ -97,7 +60,7 @@ export default function ThesisNav() {
             </h1>
 
             {/* Live score readout */}
-            <div className="hidden sm:flex items-center gap-3 relative" ref={popoverRef}>
+            <div className="hidden sm:flex items-center gap-3 relative">
               <span className="flex items-baseline gap-1">
                 <span className="font-mono text-[11px] text-ink-muted">g*</span>
                 <span className={`font-mono text-[16px] font-bold ${scoreColor}`}>
@@ -118,15 +81,6 @@ export default function ThesisNav() {
               <ScoreValue label="κ" value={c?.kappa ?? null} color={componentColor(c?.kappa ?? null)} />
               <ScoreValue label="Θ" value={c?.theta ?? null} color={componentColor(c?.theta ?? null)} />
 
-              {/* Info circle */}
-              <button
-                onClick={() => setShowProof(!showProof)}
-                className="w-3.5 h-3.5 rounded-full border border-ink-faint text-ink-muted hover:border-navy hover:text-navy transition-colors flex items-center justify-center shrink-0"
-                title="View proof"
-              >
-                <span className="font-serif text-[8px] italic leading-none">i</span>
-              </button>
-
               {/* Architecture diagram */}
               <button
                 onClick={() => setShowArchitecture(true)}
@@ -138,49 +92,6 @@ export default function ThesisNav() {
                 </svg>
               </button>
 
-              {/* Proof popover */}
-              {showProof && (
-                <div className="absolute top-full left-0 mt-2 w-[420px] bg-paper border border-rule rounded-sm shadow-lg z-50">
-                  <div className="px-5 py-4">
-                    <div className="flex items-center justify-between mb-3">
-                      <p className="font-serif text-[10px] font-semibold uppercase tracking-[1px] text-ink">
-                        Generative Reward Function
-                      </p>
-                      <span className="font-mono text-[9px] text-ink-faint tracking-wide">
-                        Multiplicative Scorecard
-                      </span>
-                    </div>
-
-                    <p className="font-mono text-[12px] text-ink-muted mb-3">
-                      g* = 𝔼[log GE + log ĠI + log ĠVC + log κ + log 𝒪] &minus; 𝓕 + Θ
-                    </p>
-
-                    <div className="space-y-2.5 mb-4">
-                      <TermCard symbol="GE" label="Generative Energy" desc="Capacity to act without aversion" color="text-green-ink" />
-                      <TermCard symbol="ĠI" label="Intelligence Growth" desc="Rate of model improvement" color="text-navy" />
-                      <TermCard symbol="ĠVC" label="Value Creation Rate" desc="Externalized output growth" color="text-navy" />
-                      <TermCard symbol="κ" label="Capture Ratio" desc="Value retained / value created" color="text-gold" />
-                      <TermCard symbol="𝒪" label="Optionality" desc="Convexity of future payoff" color="text-ink-light" />
-                      <TermCard symbol="𝓕" label="Fragmentation" desc="KL divergence from thesis allocation" color="text-red-ink" />
-                      <TermCard symbol="Θ" label="Thesis Coherence" desc="det[AI, Markets, Mind] volume" color="text-navy" />
-                    </div>
-
-                    <div className="pt-3 border-t border-rule-light">
-                      <p className="font-serif text-[10px] italic text-ink-muted leading-relaxed">
-                        Multiplicative dynamics → maximize time-average log-growth rate.
-                        If any component hits zero, log(0) = −∞. Ruin avoidance is primary.
-                      </p>
-                    </div>
-
-                    <button
-                      onClick={() => { setShowFullProof(true); setShowProof(false) }}
-                      className="mt-3 w-full text-center py-2 border border-navy/20 rounded-sm font-serif text-[11px] text-navy hover:bg-navy-bg transition-colors cursor-pointer"
-                    >
-                      Full mathematical proof →
-                    </button>
-                  </div>
-                </div>
-              )}
             </div>
           </div>
 
@@ -223,7 +134,6 @@ export default function ThesisNav() {
         </nav>
       </div>
 
-      {showFullProof && <RewardProofModal onClose={() => setShowFullProof(false)} />}
       {showArchitecture && <ArchitecturePanel onClose={() => setShowArchitecture(false)} />}
     </header>
   )
