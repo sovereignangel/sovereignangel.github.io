@@ -42,5 +42,11 @@ export const DEFAULT_DAILY_LOG: Partial<DailyLog> = {
   discoveryConversationsCount: 0,
   insightsExtracted: 0,
   externalSignalsReviewed: 0,
+  shipsCount: 0,
+  publicPostsCount: 0,
+  warmIntrosReceived: 0,
+  warmIntrosMade: 0,
+  meetingsBooked: 0,
+  inboundInquiries: 0,
   rewardScore: null,
 }

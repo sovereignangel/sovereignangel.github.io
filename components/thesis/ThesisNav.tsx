@@ -11,11 +11,9 @@ import { format } from 'date-fns'
 
 const navItems = [
   { href: '/thesis', label: 'Energy', symbol: 'GE' },
-  { href: '/thesis/output', label: 'Output', symbol: 'ĠVC+κ' },
-  { href: '/thesis/intelligence', label: 'Intelligence', symbol: 'ĠI+𝒪' },
-  { href: '/thesis/coherence', label: 'Coherence', symbol: 'Θ−𝓕' },
-  { href: '/thesis/goals', label: 'Goals', symbol: '19' },
-  { href: '/thesis/elite', label: 'Elite', symbol: '$10M' },
+  { href: '/thesis/execution', label: 'Execution', symbol: 'GVC+κ' },
+  { href: '/thesis/intelligence', label: 'Intelligence', symbol: 'GI+O' },
+  { href: '/thesis/alpe-dhuez', label: "Alpe d'Huez", symbol: 'Θ+$' },
 ]
 
 function ScoreValue({ label, value, color }: { label: string; value: number | null; color: string }) {

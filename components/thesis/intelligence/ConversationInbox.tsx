@@ -2,32 +2,47 @@
 
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/components/auth/AuthProvider'
-import { getConversations } from '@/lib/firestore'
-import { Conversation } from '@/lib/types'
+import { getConversations, getProjects } from '@/lib/firestore'
+import { Conversation, Project } from '@/lib/types'
 import ConversationUploadModal from './ConversationUploadModal'
 
 export default function ConversationInbox() {
   const { user } = useAuth()
   const [conversations, setConversations] = useState<Conversation[]>([])
+  const [projects, setProjects] = useState<Project[]>([])
   const [loading, setLoading] = useState(true)
   const [showUploadModal, setShowUploadModal] = useState(false)
   const [expandedConvo, setExpandedConvo] = useState<string | null>(null)
 
   useEffect(() => {
     if (!user) return
-    loadConversations()
+    loadData()
   }, [user])
+
+  const loadData = async () => {
+    if (!user) return
+    setLoading(true)
+    try {
+      const [convos, projs] = await Promise.all([
+        getConversations(user.uid, 10),
+        getProjects(user.uid),
+      ])
+      setConversations(convos)
+      setProjects(projs)
+    } catch (error) {
+      console.error('Error loading conversations:', error)
+    }
+    setLoading(false)
+  }
 
   const loadConversations = async () => {
     if (!user) return
-    setLoading(true)
     try {
       const convos = await getConversations(user.uid, 10)
       setConversations(convos)
     } catch (error) {
       console.error('Error loading conversations:', error)
     }
-    setLoading(false)
   }
 
   const handleConversationUploaded = () => {
@@ -187,6 +202,7 @@ export default function ConversationInbox() {
         <ConversationUploadModal
           onClose={() => setShowUploadModal(false)}
           onUploaded={handleConversationUploaded}
+          projects={projects}
         />
       )}
     </div>

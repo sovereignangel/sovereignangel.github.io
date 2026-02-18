@@ -200,3 +200,37 @@ export const NS_STATE_ENERGY_SCORE: Record<string, number> = {
 
 // Floor to avoid log(0) = -infinity (ruin avoidance)
 export const REWARD_FLOOR = 0.05
+
+// ─── SALES MASTERY ────────────────────────────────────────────────────
+
+export const CONTACT_TIERS = [
+  { value: 'decision_maker' as const, label: 'Decision-Maker', target: 10 },
+  { value: 'connector' as const, label: 'Connector', target: 10 },
+  { value: 'peer_operator' as const, label: 'Peer Operator', target: 10 },
+]
+
+export const BELT_COLORS: Record<string, string> = {
+  white: 'text-ink-muted',
+  yellow: 'text-amber-ink',
+  orange: 'text-amber-ink',
+  green: 'text-green-ink',
+  brown: 'text-burgundy',
+  black: 'text-ink',
+}
+
+export const BELT_BG_COLORS: Record<string, string> = {
+  white: 'bg-cream',
+  yellow: 'bg-amber-bg',
+  orange: 'bg-amber-bg',
+  green: 'bg-green-bg',
+  brown: 'bg-burgundy-bg',
+  black: 'bg-ink/5',
+}
+
+// Levelsio muscle targets (weekly)
+export const MUSCLE_TARGETS = {
+  shipsPerWeek: 5,
+  asksPerDay: 3,
+  asksPerWeek: 15,
+  postsPerWeek: 7,
+}
