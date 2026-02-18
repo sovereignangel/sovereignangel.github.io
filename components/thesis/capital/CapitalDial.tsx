@@ -5,8 +5,8 @@ import { useAuth } from '@/components/auth/AuthProvider'
 import { saveFinancialSnapshot, getFinancialSnapshot, getFinancialHistory, getDebtItems, saveDebtItem, deleteDebtItem } from '@/lib/firestore'
 import { buildCapitalPosition, computeHealthScore } from '@/lib/capital-engine'
 import { currency } from '@/lib/formatters'
-import type { FinancialSnapshot, DebtItem, DebtCategory, ScenarioParams, CapitalPosition } from '@/lib/types'
-import { DEFAULT_SCENARIOS } from '@/lib/types'
+import type { FinancialSnapshot, DebtItem, DebtCategory, ScenarioParams, CapitalPosition, IncomeBreakdown, ExpenseBreakdown } from '@/lib/types'
+import { DEFAULT_SCENARIOS, EMPTY_INCOME_BREAKDOWN, EMPTY_EXPENSE_BREAKDOWN } from '@/lib/types'
 
 interface Props {
   onPositionChange: (position: CapitalPosition) => void
@@ -30,9 +30,28 @@ const EMPTY_SNAPSHOT = {
   totalDebt: 0,
   monthlyIncome: 0,
   monthlyExpenses: 0,
+  incomeBreakdown: { ...EMPTY_INCOME_BREAKDOWN },
+  expenseBreakdown: { ...EMPTY_EXPENSE_BREAKDOWN },
 }
 
 // ─── PRO FORMA SEED DATA (from Williamsburg Pro Forma, Sep 2024) ────
+const PRO_FORMA_INCOME: IncomeBreakdown = {
+  employment: 0,         // Between jobs
+  sublease: 1800,        // Sublease rental income (Sep 2024)
+  freelance: 0,
+  other: 0,
+}
+
+const PRO_FORMA_EXPENSES: ExpenseBreakdown = {
+  rent: 4200,
+  food: 800,
+  subscriptions: 370,    // Phone $67, GoogleFi $90, Uber $10, etc.
+  miscellaneous: 400,
+  travel: 0,
+  familySupport: 200,    // Mom utilities
+  other: 0,
+}
+
 const PRO_FORMA_SNAPSHOT = {
   cashSavings: 2218,
   investments: 121,       // Robinhood stocks
@@ -40,9 +59,11 @@ const PRO_FORMA_SNAPSHOT = {
   realEstate: 0,
   startupEquity: 0,
   otherAssets: 44000,     // 401k (locked but real asset)
-  totalDebt: 36713,       // Sum of all leveraged debt
-  monthlyIncome: 0,       // Currently between jobs
-  monthlyExpenses: 5400,  // Rent $4,200 + Food $800 + Misc $400
+  totalDebt: 37168,       // Sum of all leveraged debt (Sep 2024 column)
+  monthlyIncome: 1800,    // Sublease only
+  monthlyExpenses: 5970,  // Rent + Food + Subscriptions + Misc + Family
+  incomeBreakdown: PRO_FORMA_INCOME,
+  expenseBreakdown: PRO_FORMA_EXPENSES,
 }
 
 const PRO_FORMA_DEBTS: { name: string; category: DebtCategory; balance: number; apr: number; minimumPayment: number }[] = [
@@ -116,6 +137,8 @@ export default function CapitalDial({ onPositionChange, onDebtsChange, scenarios
         totalDebt: effectiveSnap.totalDebt,
         monthlyIncome: effectiveSnap.monthlyIncome,
         monthlyExpenses: effectiveSnap.monthlyExpenses,
+        incomeBreakdown: effectiveSnap.incomeBreakdown ?? { ...EMPTY_INCOME_BREAKDOWN },
+        expenseBreakdown: effectiveSnap.expenseBreakdown ?? { ...EMPTY_EXPENSE_BREAKDOWN },
       })
     } else {
       setForm(EMPTY_SNAPSHOT)
@@ -140,7 +163,12 @@ export default function CapitalDial({ onPositionChange, onDebtsChange, scenarios
     const netWorth = totalAssets - form.totalDebt
     const runwayMonths = form.monthlyExpenses > 0 ? form.cashSavings / form.monthlyExpenses : 0
 
-    const fakeSnapshot = { ...form, totalAssets, netWorth, runwayMonths }
+    const fakeSnapshot = {
+      ...form,
+      totalAssets, netWorth, runwayMonths,
+      incomeBreakdown: form.incomeBreakdown,
+      expenseBreakdown: form.expenseBreakdown,
+    }
     const position = buildCapitalPosition(fakeSnapshot, debts)
     onPositionChange(position)
   }, [form, debts, loaded, onPositionChange])
@@ -148,13 +176,34 @@ export default function CapitalDial({ onPositionChange, onDebtsChange, scenarios
   const handleSave = async () => {
     if (!user) return
     setSaving(true)
-    await saveFinancialSnapshot(user.uid, { month, ...form })
+    await saveFinancialSnapshot(user.uid, {
+      month,
+      ...form,
+      incomeBreakdown: form.incomeBreakdown,
+      expenseBreakdown: form.expenseBreakdown,
+    })
     setSaving(false)
     setLastSaved(new Date().toLocaleTimeString())
   }
 
   const updateNum = (field: string, value: string) => {
     setForm(prev => ({ ...prev, [field]: parseFloat(value) || 0 }))
+  }
+
+  const updateIncome = (field: keyof IncomeBreakdown, value: string) => {
+    setForm(prev => {
+      const bd = { ...(prev.incomeBreakdown ?? EMPTY_INCOME_BREAKDOWN), [field]: parseFloat(value) || 0 }
+      const total = bd.employment + bd.sublease + bd.freelance + bd.other
+      return { ...prev, incomeBreakdown: bd, monthlyIncome: total }
+    })
+  }
+
+  const updateExpense = (field: keyof ExpenseBreakdown, value: string) => {
+    setForm(prev => {
+      const bd = { ...(prev.expenseBreakdown ?? EMPTY_EXPENSE_BREAKDOWN), [field]: parseFloat(value) || 0 }
+      const total = bd.rent + bd.food + bd.subscriptions + bd.miscellaneous + bd.travel + bd.familySupport + bd.other
+      return { ...prev, expenseBreakdown: bd, monthlyExpenses: total }
+    })
   }
 
   const handleAddDebt = async () => {
@@ -217,7 +266,11 @@ export default function CapitalDial({ onPositionChange, onDebtsChange, scenarios
     const runwayMonths = PRO_FORMA_SNAPSHOT.monthlyExpenses > 0
       ? PRO_FORMA_SNAPSHOT.cashSavings / PRO_FORMA_SNAPSHOT.monthlyExpenses : 0
     const position = buildCapitalPosition(
-      { ...PRO_FORMA_SNAPSHOT, totalAssets, netWorth, runwayMonths },
+      {
+        ...PRO_FORMA_SNAPSHOT, totalAssets, netWorth, runwayMonths,
+        incomeBreakdown: PRO_FORMA_INCOME,
+        expenseBreakdown: PRO_FORMA_EXPENSES,
+      },
       updatedDebts
     )
     onPositionChange(position)
@@ -320,14 +373,38 @@ export default function CapitalDial({ onPositionChange, onDebtsChange, scenarios
               <NumberField label="Total Debt" value={form.totalDebt} onChange={v => updateNum('totalDebt', v)} />
             </div>
 
-            {/* Cash Flow */}
+            {/* Income Breakdown */}
             <div className="border-b border-rule-light pb-3">
-              <h4 className="font-serif text-[9px] font-semibold uppercase tracking-[1px] text-ink mb-2">
-                Cash Flow
-              </h4>
+              <div className="flex items-baseline justify-between mb-2">
+                <h4 className="font-serif text-[9px] font-semibold uppercase tracking-[1px] text-green-ink">
+                  Monthly Income
+                </h4>
+                <span className="font-mono text-[10px] font-semibold text-green-ink">{currency(form.monthlyIncome)}</span>
+              </div>
               <div className="grid grid-cols-2 gap-2">
-                <NumberField label="Monthly Income" value={form.monthlyIncome} onChange={v => updateNum('monthlyIncome', v)} />
-                <NumberField label="Monthly Expenses" value={form.monthlyExpenses} onChange={v => updateNum('monthlyExpenses', v)} />
+                <NumberField label="Employment" value={form.incomeBreakdown?.employment ?? 0} onChange={v => updateIncome('employment', v)} />
+                <NumberField label="Sublease / Rental" value={form.incomeBreakdown?.sublease ?? 0} onChange={v => updateIncome('sublease', v)} />
+                <NumberField label="Freelance" value={form.incomeBreakdown?.freelance ?? 0} onChange={v => updateIncome('freelance', v)} />
+                <NumberField label="Other Income" value={form.incomeBreakdown?.other ?? 0} onChange={v => updateIncome('other', v)} />
+              </div>
+            </div>
+
+            {/* Expense Breakdown */}
+            <div className="border-b border-rule-light pb-3">
+              <div className="flex items-baseline justify-between mb-2">
+                <h4 className="font-serif text-[9px] font-semibold uppercase tracking-[1px] text-red-ink">
+                  Monthly Expenses
+                </h4>
+                <span className="font-mono text-[10px] font-semibold text-red-ink">{currency(form.monthlyExpenses)}</span>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <NumberField label="Rent" value={form.expenseBreakdown?.rent ?? 0} onChange={v => updateExpense('rent', v)} />
+                <NumberField label="Food" value={form.expenseBreakdown?.food ?? 0} onChange={v => updateExpense('food', v)} />
+                <NumberField label="Subscriptions" value={form.expenseBreakdown?.subscriptions ?? 0} onChange={v => updateExpense('subscriptions', v)} />
+                <NumberField label="Miscellaneous" value={form.expenseBreakdown?.miscellaneous ?? 0} onChange={v => updateExpense('miscellaneous', v)} />
+                <NumberField label="Travel" value={form.expenseBreakdown?.travel ?? 0} onChange={v => updateExpense('travel', v)} />
+                <NumberField label="Family Support" value={form.expenseBreakdown?.familySupport ?? 0} onChange={v => updateExpense('familySupport', v)} />
+                <NumberField label="Other" value={form.expenseBreakdown?.other ?? 0} onChange={v => updateExpense('other', v)} />
               </div>
             </div>
 

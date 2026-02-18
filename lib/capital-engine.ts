@@ -2,6 +2,7 @@ import type {
   DebtItem, DebtPayoffStrategy, ScenarioParams, ScenarioMonth, ScenarioProjection,
   CapitalPosition, FinancialHealthScore, HealthGrade, CapitalAlert, SensitivityResult,
   AllocationTarget, FreedCascadeStep, DeathSpiralMonth,
+  IncomeBreakdown, ExpenseBreakdown,
 } from './types'
 
 // ─── HELPERS ────────────────────────────────────────────────────────
@@ -586,7 +587,13 @@ export function generateAllocationTargets(
 // ─── BUILD CAPITAL POSITION ─────────────────────────────────────────
 
 export function buildCapitalPosition(
-  snapshot: { cashSavings: number; investments: number; crypto: number; totalAssets: number; totalDebt: number; netWorth: number; monthlyIncome: number; monthlyExpenses: number; runwayMonths: number } | null,
+  snapshot: {
+    cashSavings: number; investments: number; crypto: number;
+    otherAssets?: number; totalAssets: number; totalDebt: number;
+    netWorth: number; monthlyIncome: number; monthlyExpenses: number;
+    runwayMonths: number;
+    incomeBreakdown?: IncomeBreakdown; expenseBreakdown?: ExpenseBreakdown;
+  } | null,
   debts: DebtItem[]
 ): CapitalPosition {
   const activeDebts = debts.filter(d => d.isActive)
@@ -598,6 +605,7 @@ export function buildCapitalPosition(
       cashSavings: 0,
       investments: 0,
       crypto: 0,
+      otherAssets: 0,
       totalAssets: 0,
       totalDebt: activeDebts.reduce((s, d) => s + d.balance, 0),
       netWorth: -activeDebts.reduce((s, d) => s + d.balance, 0),
@@ -614,11 +622,14 @@ export function buildCapitalPosition(
     cashSavings: snapshot.cashSavings,
     investments: snapshot.investments,
     crypto: snapshot.crypto,
+    otherAssets: snapshot.otherAssets ?? 0,
     totalAssets: snapshot.totalAssets,
     totalDebt: snapshot.totalDebt,
     netWorth: snapshot.netWorth,
     monthlyIncome: snapshot.monthlyIncome,
     monthlyExpenses: snapshot.monthlyExpenses,
+    incomeBreakdown: snapshot.incomeBreakdown,
+    expenseBreakdown: snapshot.expenseBreakdown,
     runwayMonths: snapshot.runwayMonths,
     debtItems: activeDebts,
     totalMinimumPayments: totalMinimumPayments,
