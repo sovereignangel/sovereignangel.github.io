@@ -15,7 +15,7 @@ export default function IntelligencePage() {
   const onSignalSaved = useCallback(() => setRefreshKey(k => k + 1), [])
 
   return (
-    <div className="h-full grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-3 min-h-0">
+    <div className={`h-full grid grid-cols-1 gap-3 min-h-0 ${activeTab === 'signals' ? 'lg:grid-cols-[1fr_380px]' : ''}`}>
       {/* Left Panel: Tabbed Sections */}
       <div className="flex flex-col gap-1 min-h-0">
         {/* Sub-tab Navigation */}
@@ -49,8 +49,12 @@ export default function IntelligencePage() {
         </div>
       </div>
 
-      {/* Right Sidebar: Signal Creation Form */}
-      <IntelligenceDial onSignalSaved={onSignalSaved} />
+      {/* Right Sidebar: only show on Signals tab at lg+ width */}
+      {activeTab === 'signals' && (
+        <div className="hidden lg:block min-h-0 overflow-y-auto">
+          <IntelligenceDial onSignalSaved={onSignalSaved} />
+        </div>
+      )}
     </div>
   )
 }
