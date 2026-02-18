@@ -1,4 +1,5 @@
 import type { Timestamp } from './shared'
+import type { IncomeBreakdown, ExpenseBreakdown } from './financial'
 
 // ─── DEBT MODELING ──────────────────────────────────────────────────
 
@@ -62,11 +63,14 @@ export interface CapitalPosition {
   cashSavings: number
   investments: number
   crypto: number
+  otherAssets: number
   totalAssets: number
   totalDebt: number
   netWorth: number
   monthlyIncome: number
   monthlyExpenses: number
+  incomeBreakdown?: IncomeBreakdown
+  expenseBreakdown?: ExpenseBreakdown
   runwayMonths: number
   debtItems: DebtItem[]
   totalMinimumPayments: number

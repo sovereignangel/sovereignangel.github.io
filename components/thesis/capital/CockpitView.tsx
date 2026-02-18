@@ -5,7 +5,7 @@ import { useAuth } from '@/components/auth/AuthProvider'
 import { getFinancialHistory } from '@/lib/firestore'
 import { currency } from '@/lib/formatters'
 import { computeHealthScore, generateAlerts, dailyCostOfCarry } from '@/lib/capital-engine'
-import type { CapitalPosition, FinancialHealthScore, CapitalAlert, FinancialSnapshot } from '@/lib/types'
+import type { CapitalPosition, FinancialHealthScore, CapitalAlert, FinancialSnapshot, IncomeBreakdown, ExpenseBreakdown } from '@/lib/types'
 import { NET_WORTH_TARGET } from '@/lib/types'
 
 interface Props {
@@ -86,7 +86,7 @@ export default function CockpitView({ position }: Props) {
   const lowAprDebts = position.debtItems.filter(d => d.isActive && d.apr <= 0.10 && d.balance > 0)
   const highAprTotal = highAprDebts.reduce((s, d) => s + d.balance, 0)
   const lowAprTotal = lowAprDebts.reduce((s, d) => s + d.balance, 0)
-  const nonCurrentAssets = position.totalAssets - position.cashSavings - position.investments - position.crypto
+  const nonCurrentAssets = position.otherAssets ?? (position.totalAssets - position.cashSavings - position.investments - position.crypto)
 
   return (
     <div className="space-y-3 p-1">
@@ -158,10 +158,31 @@ export default function CockpitView({ position }: Props) {
         </div>
         <div className="font-mono text-[10px] space-y-0">
           <PLRow label="REVENUE" value={position.monthlyIncome} bold header />
-          <PLRow label="  Employment Income" value={position.monthlyIncome} indent />
+          {position.incomeBreakdown ? (
+            <>
+              {position.incomeBreakdown.employment > 0 && <PLRow label="  Employment" value={position.incomeBreakdown.employment} indent />}
+              {position.incomeBreakdown.sublease > 0 && <PLRow label="  Sublease / Rental" value={position.incomeBreakdown.sublease} indent />}
+              {position.incomeBreakdown.freelance > 0 && <PLRow label="  Freelance" value={position.incomeBreakdown.freelance} indent />}
+              {position.incomeBreakdown.other > 0 && <PLRow label="  Other Income" value={position.incomeBreakdown.other} indent />}
+            </>
+          ) : (
+            <PLRow label="  Income" value={position.monthlyIncome} indent />
+          )}
           <Divider />
           <PLRow label="EXPENSES" value={-position.monthlyExpenses} bold header />
-          <PLRow label="  Housing & Living" value={-position.monthlyExpenses} indent />
+          {position.expenseBreakdown ? (
+            <>
+              {position.expenseBreakdown.rent > 0 && <PLRow label="  Rent" value={-position.expenseBreakdown.rent} indent />}
+              {position.expenseBreakdown.food > 0 && <PLRow label="  Food" value={-position.expenseBreakdown.food} indent />}
+              {position.expenseBreakdown.subscriptions > 0 && <PLRow label="  Subscriptions" value={-position.expenseBreakdown.subscriptions} indent />}
+              {position.expenseBreakdown.miscellaneous > 0 && <PLRow label="  Miscellaneous" value={-position.expenseBreakdown.miscellaneous} indent />}
+              {position.expenseBreakdown.travel > 0 && <PLRow label="  Travel" value={-position.expenseBreakdown.travel} indent />}
+              {position.expenseBreakdown.familySupport > 0 && <PLRow label="  Family Support" value={-position.expenseBreakdown.familySupport} indent />}
+              {position.expenseBreakdown.other > 0 && <PLRow label="  Other" value={-position.expenseBreakdown.other} indent />}
+            </>
+          ) : (
+            <PLRow label="  Housing & Living" value={-position.monthlyExpenses} indent />
+          )}
           <Divider />
           <PLRow label="OPERATING CASHFLOW" value={position.monthlyIncome - position.monthlyExpenses} bold
             color={position.monthlyIncome - position.monthlyExpenses >= 0 ? 'text-green-ink' : 'text-red-ink'} />
@@ -193,13 +214,31 @@ export default function CockpitView({ position }: Props) {
               <div className="mt-1 mb-0.5">
                 <span className="font-serif text-[8px] font-semibold uppercase tracking-[0.5px] text-ink-muted">Non-Current Assets</span>
               </div>
-              <PLRow label="  Other (401k, etc.)" value={nonCurrentAssets} indent color="text-ink-muted" />
+              <PLRow label="  401(k) / Pension" value={nonCurrentAssets} indent color="text-ink-muted" />
             </>
           )}
           <Divider />
           <PLRow label="LIABILITIES" value={position.totalDebt} bold header color="text-red-ink" />
-          {highAprTotal > 0 && <PLRow label="  Current (High-APR >10%)" value={highAprTotal} indent color="text-red-ink" />}
-          {lowAprTotal > 0 && <PLRow label="  Long-Term (Low-APR)" value={lowAprTotal} indent />}
+          {highAprDebts.length > 0 && (
+            <>
+              <div className="mt-1 mb-0.5">
+                <span className="font-serif text-[8px] font-semibold uppercase tracking-[0.5px] text-red-ink">High-APR (&gt;10%)</span>
+              </div>
+              {highAprDebts.map(d => (
+                <PLRow key={d.id ?? d.name} label={`  ${d.name}`} value={d.balance} indent color="text-red-ink" />
+              ))}
+            </>
+          )}
+          {lowAprDebts.length > 0 && (
+            <>
+              <div className="mt-1 mb-0.5">
+                <span className="font-serif text-[8px] font-semibold uppercase tracking-[0.5px] text-ink-muted">Low-APR / Interest-Free</span>
+              </div>
+              {lowAprDebts.map(d => (
+                <PLRow key={d.id ?? d.name} label={`  ${d.name}`} value={d.balance} indent />
+              ))}
+            </>
+          )}
           <Divider double />
           <PLRow label="NET WORTH" value={position.netWorth} bold
             color={position.netWorth >= 0 ? 'text-green-ink' : 'text-red-ink'} />
