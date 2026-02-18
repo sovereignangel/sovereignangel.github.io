@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
+import { useState, useEffect, useRef, useCallback, useMemo, forwardRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useDailyLogContext } from '@/components/thesis/DailyLogProvider'
 
@@ -15,6 +15,7 @@ type DiagramView = 'reward' | 'system'
 interface NodeDef {
   id: string
   label: string
+  sublabel?: string
   symbol?: string
   type: 'input' | 'component' | 'operator' | 'output' | 'api' | 'data' | 'state' | 'ui'
   column: number
@@ -29,7 +30,7 @@ interface ConnectionDef {
   to: string
 }
 
-// ─── PATH GROUPS (for highlight-tracing) ────────────────────────────────
+// ─── PATH GROUPS ────────────────────────────────────────────────────────
 
 const REWARD_PATH_GROUPS: Record<string, string[]> = {
   ge: ['sleep', 'training', 'bodyFelt', 'nsState', 'ge', 'geoMean', 'finalCalc', 'score'],
@@ -57,46 +58,45 @@ const SYSTEM_PATH_GROUPS: Record<string, string[]> = {
 // ─── REWARD FLOW NODES ──────────────────────────────────────────────────
 
 const REWARD_NODES: NodeDef[] = [
-  // Column 0 — Inputs
-  { id: 'sleep', label: 'Sleep Hours', column: 0, type: 'input', group: 'ge', navigateTo: '/thesis', liveValueKey: 'sleepHours', liveFormatter: (v) => `${v}h` },
-  { id: 'training', label: 'Training', column: 0, type: 'input', group: 'ge', navigateTo: '/thesis' },
-  { id: 'bodyFelt', label: 'Body Felt', column: 0, type: 'input', group: 'ge', navigateTo: '/thesis' },
-  { id: 'nsState', label: 'NS State', column: 0, type: 'input', group: 'ge', navigateTo: '/thesis' },
-  { id: 'problems', label: 'Problems', column: 0, type: 'input', group: 'gi', navigateTo: '/thesis/intelligence' },
-  { id: 'problemSelected', label: 'Problem Selected', column: 0, type: 'input', group: 'gi', navigateTo: '/thesis/intelligence' },
-  { id: 'focusHours', label: 'Focus Hours', column: 0, type: 'input', group: 'gvc', navigateTo: '/thesis/output', liveValueKey: 'focusHoursActual', liveFormatter: (v) => `${v}h` },
-  { id: 'shipping', label: 'Shipping', column: 0, type: 'input', group: 'gvc', navigateTo: '/thesis/output' },
-  { id: 'speed', label: 'Speed > Perfection', column: 0, type: 'input', group: 'gvc', navigateTo: '/thesis/output' },
-  { id: 'revenueAsks', label: 'Revenue Asks', column: 0, type: 'input', group: 'kappa', navigateTo: '/thesis/output', liveValueKey: 'revenueAsksCount' },
-  { id: 'revenueSignal', label: 'Revenue Signal', column: 0, type: 'input', group: 'kappa', navigateTo: '/thesis/output' },
-  { id: 'feedbackLoop', label: 'Feedback Loop', column: 0, type: 'input', group: 'kappa', navigateTo: '/thesis/output' },
-  { id: 'conversations', label: 'Conversations', column: 0, type: 'input', group: 'gd', navigateTo: '/thesis/intelligence', liveValueKey: 'discoveryConversationsCount' },
-  { id: 'extSignals', label: 'External Signals', column: 0, type: 'input', group: 'gd', navigateTo: '/thesis/intelligence', liveValueKey: 'externalSignalsReviewed' },
-  { id: 'insights', label: 'Insights', column: 0, type: 'input', group: 'gd', navigateTo: '/thesis/intelligence', liveValueKey: 'insightsExtracted' },
-  { id: 'pillars', label: 'Pillars Touched', column: 0, type: 'input', group: 'theta', navigateTo: '/thesis/coherence' },
-  { id: 'projectAlloc', label: 'Project Allocation', column: 0, type: 'input', group: 'optionality', navigateTo: '/thesis/coherence' },
+  // Column 0 — Daily Inputs
+  { id: 'sleep', label: 'Sleep Hours', sublabel: 'Target: 7.5h', column: 0, type: 'input', group: 'ge', navigateTo: '/thesis', liveValueKey: 'sleepHours', liveFormatter: (v) => `${v}h` },
+  { id: 'training', label: 'Training Type', sublabel: 'Strength / VO2 / Zone2', column: 0, type: 'input', group: 'ge', navigateTo: '/thesis' },
+  { id: 'bodyFelt', label: 'Body Felt', sublabel: 'Open / Neutral / Tense', column: 0, type: 'input', group: 'ge', navigateTo: '/thesis' },
+  { id: 'nsState', label: 'Nervous System', sublabel: 'Regulated / Spiked', column: 0, type: 'input', group: 'ge', navigateTo: '/thesis' },
+  { id: 'problems', label: 'Problems Identified', sublabel: 'Pain points & solutions', column: 0, type: 'input', group: 'gi', navigateTo: '/thesis/intelligence' },
+  { id: 'problemSelected', label: 'Problem Selected', sublabel: '48h test candidate', column: 0, type: 'input', group: 'gi', navigateTo: '/thesis/intelligence' },
+  { id: 'focusHours', label: 'Focus Hours', sublabel: 'Target: 6h/day', column: 0, type: 'input', group: 'gvc', navigateTo: '/thesis/output', liveValueKey: 'focusHoursActual', liveFormatter: (v) => `${v}h` },
+  { id: 'shipping', label: 'What Shipped', sublabel: 'Public iteration bonus', column: 0, type: 'input', group: 'gvc', navigateTo: '/thesis/output' },
+  { id: 'speed', label: 'Speed > Perfection', sublabel: 'Velocity bonus', column: 0, type: 'input', group: 'gvc', navigateTo: '/thesis/output' },
+  { id: 'revenueAsks', label: 'Revenue Asks', sublabel: 'Target: 2/day', column: 0, type: 'input', group: 'kappa', navigateTo: '/thesis/output', liveValueKey: 'revenueAsksCount' },
+  { id: 'revenueSignal', label: 'Revenue Earned', sublabel: 'Stream type multiplier', column: 0, type: 'input', group: 'kappa', navigateTo: '/thesis/output' },
+  { id: 'feedbackLoop', label: 'Feedback Loop', sublabel: 'Closed = +0.15', column: 0, type: 'input', group: 'kappa', navigateTo: '/thesis/output' },
+  { id: 'conversations', label: 'Discovery Calls', sublabel: 'Target: 2/day', column: 0, type: 'input', group: 'gd', navigateTo: '/thesis/intelligence', liveValueKey: 'discoveryConversationsCount' },
+  { id: 'extSignals', label: 'External Signals', sublabel: 'Target: 5/day', column: 0, type: 'input', group: 'gd', navigateTo: '/thesis/intelligence', liveValueKey: 'externalSignalsReviewed' },
+  { id: 'insights', label: 'Insights Extracted', sublabel: 'From conversations', column: 0, type: 'input', group: 'gd', navigateTo: '/thesis/intelligence', liveValueKey: 'insightsExtracted' },
+  { id: 'pillars', label: 'Pillars Touched', sublabel: 'AI / Markets / Mind', column: 0, type: 'input', group: 'theta', navigateTo: '/thesis/coherence' },
+  { id: 'projectAlloc', label: 'Project Allocation', sublabel: 'Time % per project', column: 0, type: 'input', group: 'optionality', navigateTo: '/thesis/coherence' },
 
-  // Column 1 — Component Scores
-  { id: 'ge', label: 'Generative Energy', symbol: 'GE', column: 1, type: 'component', navigateTo: '/thesis', liveValueKey: 'comp_ge' },
-  { id: 'gi', label: 'Intelligence Growth', symbol: 'GI', column: 1, type: 'component', navigateTo: '/thesis/intelligence', liveValueKey: 'comp_gi' },
-  { id: 'gvc', label: 'Value Creation', symbol: 'GVC', column: 1, type: 'component', navigateTo: '/thesis/output', liveValueKey: 'comp_gvc' },
-  { id: 'kappa', label: 'Capture Ratio', symbol: 'K', column: 1, type: 'component', navigateTo: '/thesis/output', liveValueKey: 'comp_kappa' },
-  { id: 'gd', label: 'Discovery', symbol: 'GD', column: 1, type: 'component', navigateTo: '/thesis/intelligence', liveValueKey: 'comp_gd' },
-  { id: 'optionality', label: 'Optionality', symbol: 'O', column: 1, type: 'component', navigateTo: '/thesis/coherence', liveValueKey: 'comp_optionality' },
-  { id: 'theta', label: 'Coherence', symbol: 'Theta', column: 1, type: 'component', navigateTo: '/thesis/coherence', liveValueKey: 'comp_theta' },
-  { id: 'fragmentation', label: 'Fragmentation', symbol: 'F', column: 1, type: 'component', navigateTo: '/thesis/coherence', liveValueKey: 'comp_fragmentation' },
-  { id: 'gate', label: 'NS Gate', symbol: 'g(v)', column: 1, type: 'component', navigateTo: '/thesis', liveValueKey: 'comp_gate' },
+  // Column 1 — Component Scores (0-1)
+  { id: 'ge', label: 'Generative Energy', symbol: 'GE', sublabel: 'sleep^0.35 * train^0.2 * body^0.2 * ns^0.25', column: 1, type: 'component', navigateTo: '/thesis', liveValueKey: 'comp_ge' },
+  { id: 'gi', label: 'Intelligence Growth', symbol: 'GI', sublabel: 'Problems + selection bonus', column: 1, type: 'component', navigateTo: '/thesis/intelligence', liveValueKey: 'comp_gi' },
+  { id: 'gvc', label: 'Value Creation', symbol: 'GVC', sublabel: 'Ship + focus + recency + speed', column: 1, type: 'component', navigateTo: '/thesis/output', liveValueKey: 'comp_gvc' },
+  { id: 'kappa', label: 'Capture Ratio', symbol: 'K', sublabel: 'Asks + revenue + feedback', column: 1, type: 'component', navigateTo: '/thesis/output', liveValueKey: 'comp_kappa' },
+  { id: 'gd', label: 'Discovery', symbol: 'GD', sublabel: 'Conversations + signals + insights', column: 1, type: 'component', navigateTo: '/thesis/intelligence', liveValueKey: 'comp_gd' },
+  { id: 'optionality', label: 'Optionality', symbol: 'O', sublabel: '1 - HHI + backup bonus', column: 1, type: 'component', navigateTo: '/thesis/coherence', liveValueKey: 'comp_optionality' },
+  { id: 'theta', label: 'Thesis Coherence', symbol: 'Theta', sublabel: '7-day rolling pillar count', column: 1, type: 'component', navigateTo: '/thesis/coherence', liveValueKey: 'comp_theta' },
+  { id: 'fragmentation', label: 'Fragmentation Tax', symbol: 'F', sublabel: 'KL divergence penalty', column: 1, type: 'component', navigateTo: '/thesis/coherence', liveValueKey: 'comp_fragmentation' },
+  { id: 'gate', label: 'NS Gate', symbol: 'g(v)', sublabel: '1.0 / 0.7 / 0.3', column: 1, type: 'component', navigateTo: '/thesis', liveValueKey: 'comp_gate' },
 
   // Column 2 — Aggregation
-  { id: 'geoMean', label: '(GE*GI*GVC*K*O*GD)^1/6', column: 2, type: 'operator' },
-  { id: 'finalCalc', label: 'gate * geoMean - F*0.3 + Theta*0.15', column: 2, type: 'operator' },
+  { id: 'geoMean', label: 'Geometric Mean', sublabel: '(GE * GI * GVC * K * O * GD) ^ 1/6', column: 2, type: 'operator' },
+  { id: 'finalCalc', label: 'Final Computation', sublabel: 'gate * geoMean - F*0.3 + Theta*0.15', column: 2, type: 'operator' },
 
   // Column 3 — Output
-  { id: 'score', label: 'g* Score', symbol: 'g*', column: 3, type: 'output', liveValueKey: 'score' },
+  { id: 'score', label: 'Reward Score', symbol: 'g*', sublabel: 'Range: 0 - 10', column: 3, type: 'output', liveValueKey: 'score' },
 ]
 
 const REWARD_CONNECTIONS: ConnectionDef[] = [
-  // Inputs → Components
   { from: 'sleep', to: 'ge' }, { from: 'training', to: 'ge' }, { from: 'bodyFelt', to: 'ge' }, { from: 'nsState', to: 'ge' },
   { from: 'problems', to: 'gi' }, { from: 'problemSelected', to: 'gi' },
   { from: 'focusHours', to: 'gvc' }, { from: 'shipping', to: 'gvc' }, { from: 'speed', to: 'gvc' },
@@ -105,55 +105,47 @@ const REWARD_CONNECTIONS: ConnectionDef[] = [
   { from: 'pillars', to: 'theta' },
   { from: 'projectAlloc', to: 'optionality' }, { from: 'projectAlloc', to: 'fragmentation' },
   { from: 'nsState', to: 'gate' },
-  // Components → Aggregation
   { from: 'ge', to: 'geoMean' }, { from: 'gi', to: 'geoMean' }, { from: 'gvc', to: 'geoMean' },
   { from: 'kappa', to: 'geoMean' }, { from: 'gd', to: 'geoMean' }, { from: 'optionality', to: 'geoMean' },
   { from: 'geoMean', to: 'finalCalc' }, { from: 'gate', to: 'finalCalc' },
   { from: 'fragmentation', to: 'finalCalc' }, { from: 'theta', to: 'finalCalc' },
-  // Aggregation → Output
   { from: 'finalCalc', to: 'score' },
 ]
 
 // ─── SYSTEM ARCHITECTURE NODES ──────────────────────────────────────────
 
 const SYSTEM_NODES: NodeDef[] = [
-  // Column 0 — External APIs
-  { id: 'garminApi', label: 'Garmin Connect', column: 0, type: 'api' },
-  { id: 'calendarApi', label: 'Google Calendar', column: 0, type: 'api' },
-  { id: 'geminiApi', label: 'Gemini AI', column: 0, type: 'api' },
-  { id: 'rssApi', label: 'RSS Feeds', column: 0, type: 'api' },
+  { id: 'garminApi', label: 'Garmin Connect', sublabel: 'Health metrics sync', column: 0, type: 'api' },
+  { id: 'calendarApi', label: 'Google Calendar', sublabel: 'Focus session import', column: 0, type: 'api' },
+  { id: 'geminiApi', label: 'Gemini AI', sublabel: 'Insight extraction', column: 0, type: 'api' },
+  { id: 'rssApi', label: 'RSS Feeds', sublabel: 'Signal aggregation', column: 0, type: 'api' },
 
-  // Column 1 — Firestore Collections
-  { id: 'dailyLogs', label: 'daily_logs', column: 1, type: 'data' },
-  { id: 'projects', label: 'projects', column: 1, type: 'data' },
-  { id: 'signals', label: 'signals', column: 1, type: 'data' },
-  { id: 'conversations', label: 'conversations', column: 1, type: 'data' },
-  { id: 'externalSignals', label: 'external_signals', column: 1, type: 'data' },
-  { id: 'garminMetrics', label: 'garmin_metrics', column: 1, type: 'data' },
-  { id: 'focusSessions', label: 'focus_sessions', column: 1, type: 'data' },
-  { id: 'weeklyReview', label: 'weekly_synthesis', column: 1, type: 'data' },
+  { id: 'dailyLogs', label: 'daily_logs', sublabel: 'Core daily entries', column: 1, type: 'data' },
+  { id: 'projects', label: 'projects', sublabel: 'Portfolio & allocation', column: 1, type: 'data' },
+  { id: 'signals', label: 'signals', sublabel: 'Problems & opportunities', column: 1, type: 'data' },
+  { id: 'conversations', label: 'conversations', sublabel: 'Discovery transcripts', column: 1, type: 'data' },
+  { id: 'externalSignals', label: 'external_signals', sublabel: 'RSS & web signals', column: 1, type: 'data' },
+  { id: 'garminMetrics', label: 'garmin_metrics', sublabel: 'Sleep, HRV, stress', column: 1, type: 'data' },
+  { id: 'focusSessions', label: 'focus_sessions', sublabel: 'Time tracking', column: 1, type: 'data' },
+  { id: 'weeklyReview', label: 'weekly_synthesis', sublabel: 'Weekly reviews', column: 1, type: 'data' },
 
-  // Column 2 — State Layer
-  { id: 'useDailyLogData', label: 'useDailyLogData', column: 2, type: 'state' },
-  { id: 'useDailyLogActions', label: 'useDailyLogActions', column: 2, type: 'state' },
-  { id: 'useRecentData', label: 'useRecentData', column: 2, type: 'state' },
-  { id: 'computeRewardHook', label: 'computeReward', column: 2, type: 'state' },
+  { id: 'useDailyLogData', label: 'useDailyLogData', sublabel: 'Fetches today + Garmin', column: 2, type: 'state' },
+  { id: 'useDailyLogActions', label: 'useDailyLogActions', sublabel: 'Save + recompute', column: 2, type: 'state' },
+  { id: 'useRecentData', label: 'useRecentData', sublabel: '7-day history + projects', column: 2, type: 'state' },
+  { id: 'computeRewardHook', label: 'computeReward', sublabel: 'Reward function engine', column: 2, type: 'state' },
 
-  // Column 3 — UI Components
-  { id: 'energyGauge', label: 'Energy', symbol: 'GE', column: 3, type: 'ui', navigateTo: '/thesis' },
-  { id: 'outputGauge', label: 'Output', symbol: 'GVC+K', column: 3, type: 'ui', navigateTo: '/thesis/output' },
-  { id: 'intelligenceGauge', label: 'Intelligence', symbol: 'GI', column: 3, type: 'ui', navigateTo: '/thesis/intelligence' },
-  { id: 'coherenceGauge', label: 'Coherence', symbol: 'Theta', column: 3, type: 'ui', navigateTo: '/thesis/coherence' },
-  { id: 'thesisNav', label: 'ThesisNav', symbol: 'g*', column: 3, type: 'ui' },
+  { id: 'energyGauge', label: 'Energy Tab', symbol: 'GE', sublabel: 'Gauge + Dial', column: 3, type: 'ui', navigateTo: '/thesis' },
+  { id: 'outputGauge', label: 'Output Tab', symbol: 'GVC+K', sublabel: 'Gauge + Dial', column: 3, type: 'ui', navigateTo: '/thesis/output' },
+  { id: 'intelligenceGauge', label: 'Intelligence Tab', symbol: 'GI', sublabel: 'Gauge + Dial + Inboxes', column: 3, type: 'ui', navigateTo: '/thesis/intelligence' },
+  { id: 'coherenceGauge', label: 'Coherence Tab', symbol: 'Theta', sublabel: 'Gauge + Dial', column: 3, type: 'ui', navigateTo: '/thesis/coherence' },
+  { id: 'thesisNav', label: 'ThesisNav', symbol: 'g*', sublabel: 'Live score readout', column: 3, type: 'ui' },
 ]
 
 const SYSTEM_CONNECTIONS: ConnectionDef[] = [
-  // APIs → Data
   { from: 'garminApi', to: 'garminMetrics' },
   { from: 'calendarApi', to: 'focusSessions' },
   { from: 'geminiApi', to: 'conversations' },
   { from: 'rssApi', to: 'externalSignals' },
-  // Data → State
   { from: 'dailyLogs', to: 'useDailyLogData' },
   { from: 'projects', to: 'useRecentData' },
   { from: 'garminMetrics', to: 'useDailyLogData' },
@@ -162,10 +154,8 @@ const SYSTEM_CONNECTIONS: ConnectionDef[] = [
   { from: 'signals', to: 'useRecentData' },
   { from: 'focusSessions', to: 'useDailyLogActions' },
   { from: 'weeklyReview', to: 'useRecentData' },
-  // State → State
   { from: 'useDailyLogData', to: 'computeRewardHook' },
   { from: 'useRecentData', to: 'computeRewardHook' },
-  // State → UI
   { from: 'useDailyLogData', to: 'energyGauge' },
   { from: 'useDailyLogActions', to: 'outputGauge' },
   { from: 'useDailyLogData', to: 'intelligenceGauge' },
@@ -173,10 +163,33 @@ const SYSTEM_CONNECTIONS: ConnectionDef[] = [
   { from: 'computeRewardHook', to: 'thesisNav' },
 ]
 
-// ─── COLUMN HEADERS ─────────────────────────────────────────────────────
+// ─── SWIM LANE CONFIG ───────────────────────────────────────────────────
 
-const REWARD_COLUMN_HEADERS = ['Inputs', 'Components', 'Aggregation', 'Score']
-const SYSTEM_COLUMN_HEADERS = ['External APIs', 'Data (Firestore)', 'State (Hooks)', 'UI (Components)']
+const REWARD_LANES = [
+  { title: 'Daily Inputs', subtitle: 'What you log each day', bg: 'bg-cream/40', border: 'border-rule-light' },
+  { title: 'Component Scores', subtitle: 'Computed 0-1 metrics', bg: 'bg-green-bg', border: 'border-green-ink/10' },
+  { title: 'Aggregation', subtitle: 'Mathematical combination', bg: 'bg-amber-bg', border: 'border-amber-ink/10' },
+  { title: 'Output', subtitle: 'Final score', bg: 'bg-burgundy-bg', border: 'border-burgundy/10' },
+]
+
+const SYSTEM_LANES = [
+  { title: 'External APIs', subtitle: 'Third-party integrations', bg: 'bg-cream/40', border: 'border-rule-light' },
+  { title: 'Firestore', subtitle: 'Database collections', bg: 'bg-amber-bg', border: 'border-amber-ink/10' },
+  { title: 'State Layer', subtitle: 'React hooks', bg: 'bg-green-bg', border: 'border-green-ink/10' },
+  { title: 'UI Components', subtitle: 'What the user sees', bg: 'bg-burgundy-bg', border: 'border-burgundy/10' },
+]
+
+// ─── INPUT GROUP CONFIG ─────────────────────────────────────────────────
+
+const INPUT_GROUP_LABELS: Record<string, { label: string; color: string }> = {
+  ge: { label: 'Energy', color: 'text-green-ink' },
+  gi: { label: 'Intelligence', color: 'text-ink' },
+  gvc: { label: 'Value Creation', color: 'text-ink' },
+  kappa: { label: 'Capture', color: 'text-ink' },
+  gd: { label: 'Discovery', color: 'text-ink' },
+  theta: { label: 'Coherence', color: 'text-ink' },
+  optionality: { label: 'Portfolio', color: 'text-ink' },
+}
 
 // ─── MAIN COMPONENT ─────────────────────────────────────────────────────
 
@@ -193,49 +206,43 @@ export default function ArchitecturePanel({ onClose }: ArchitecturePanelProps) {
   const reward = log.rewardScore
   const components = reward?.components
 
-  // Escape key handler
+  // Escape key
   useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
-    }
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
     document.addEventListener('keydown', handler)
     return () => document.removeEventListener('keydown', handler)
   }, [onClose])
 
-  // Compute node positions for SVG connections
+  // Compute positions for SVG arrows
   const computePositions = useCallback(() => {
     const container = containerRef.current
     if (!container) return
-    const containerRect = container.getBoundingClientRect()
-    const newPositions: Record<string, DOMRect> = {}
+    const cr = container.getBoundingClientRect()
+    const pos: Record<string, DOMRect> = {}
     nodeRefs.current.forEach((el, id) => {
       if (el) {
-        const rect = el.getBoundingClientRect()
-        newPositions[id] = new DOMRect(
-          rect.left - containerRect.left,
-          rect.top - containerRect.top,
-          rect.width,
-          rect.height
-        )
+        const r = el.getBoundingClientRect()
+        pos[id] = new DOMRect(r.left - cr.left, r.top - cr.top, r.width, r.height)
       }
     })
-    setNodePositions(newPositions)
+    setNodePositions(pos)
   }, [])
 
   useEffect(() => {
-    const id = requestAnimationFrame(computePositions)
+    // Delay to let layout settle after view switch
+    const t1 = setTimeout(() => requestAnimationFrame(computePositions), 50)
     const container = containerRef.current
-    if (!container) return () => cancelAnimationFrame(id)
-    const observer = new ResizeObserver(computePositions)
+    if (!container) return () => clearTimeout(t1)
+    const observer = new ResizeObserver(() => requestAnimationFrame(computePositions))
     observer.observe(container)
-    return () => { cancelAnimationFrame(id); observer.disconnect() }
+    return () => { clearTimeout(t1); observer.disconnect() }
   }, [computePositions, view])
 
   // Live value lookup
   const getLiveValue = useCallback((key?: string): number | null => {
     if (!key) return null
     if (key.startsWith('comp_')) {
-      const compKey = key.replace('comp_', '') as keyof typeof components
+      const compKey = key.replace('comp_', '') as keyof NonNullable<typeof components>
       return components?.[compKey] ?? null
     }
     if (key === 'score') return reward?.score ?? null
@@ -246,18 +253,11 @@ export default function ArchitecturePanel({ onClose }: ArchitecturePanelProps) {
   // Highlight logic
   const handleNodeClick = useCallback((nodeId: string, navigateTo?: string) => {
     if (activeNodeId === nodeId) {
-      // Second click on same node — navigate if possible
-      if (navigateTo) {
-        router.push(navigateTo)
-        onClose()
-        return
-      }
+      if (navigateTo) { router.push(navigateTo); onClose(); return }
       setActiveNodeId(null)
       setHighlightedNodes(new Set())
       return
     }
-
-    // Find all path groups containing this node
     const pathGroups = view === 'reward' ? REWARD_PATH_GROUPS : SYSTEM_PATH_GROUPS
     const highlighted = new Set<string>()
     for (const group of Object.values(pathGroups)) {
@@ -265,7 +265,6 @@ export default function ArchitecturePanel({ onClose }: ArchitecturePanelProps) {
         for (const id of group) highlighted.add(id)
       }
     }
-
     if (highlighted.size === 0) highlighted.add(nodeId)
     setActiveNodeId(nodeId)
     setHighlightedNodes(highlighted)
@@ -276,21 +275,16 @@ export default function ArchitecturePanel({ onClose }: ArchitecturePanelProps) {
     setHighlightedNodes(new Set())
   }, [])
 
-  // Current diagram data
   const nodes = view === 'reward' ? REWARD_NODES : SYSTEM_NODES
   const connections = view === 'reward' ? REWARD_CONNECTIONS : SYSTEM_CONNECTIONS
-  const columnHeaders = view === 'reward' ? REWARD_COLUMN_HEADERS : SYSTEM_COLUMN_HEADERS
+  const lanes = view === 'reward' ? REWARD_LANES : SYSTEM_LANES
 
-  // Group nodes by column
   const columns = useMemo(() => {
     const cols: NodeDef[][] = [[], [], [], []]
-    for (const node of nodes) {
-      cols[node.column].push(node)
-    }
+    for (const n of nodes) cols[n.column].push(n)
     return cols
   }, [nodes])
 
-  // Set node ref callback
   const setNodeRef = useCallback((id: string) => (el: HTMLDivElement | null) => {
     if (el) nodeRefs.current.set(id, el)
     else nodeRefs.current.delete(id)
@@ -298,225 +292,237 @@ export default function ArchitecturePanel({ onClose }: ArchitecturePanelProps) {
 
   const hasHighlight = highlightedNodes.size > 0
 
-  // Component color helper
-  const componentColor = (val: number | null) => {
+  const valColor = (val: number | null, isScore = false) => {
     if (val === null) return 'text-ink-muted'
-    if (val >= 0.7) return 'text-green-ink'
-    if (val >= 0.4) return 'text-amber-ink'
-    return 'text-red-ink'
+    if (isScore) return val >= 7 ? 'text-green-ink' : val >= 4 ? 'text-amber-ink' : 'text-red-ink'
+    return val >= 0.7 ? 'text-green-ink' : val >= 0.4 ? 'text-amber-ink' : 'text-red-ink'
   }
 
-  const scoreColor = (val: number | null) => {
-    if (val === null) return 'text-ink-muted'
-    if (val >= 7) return 'text-green-ink'
-    if (val >= 4) return 'text-amber-ink'
-    return 'text-red-ink'
+  const valBg = (val: number | null) => {
+    if (val === null) return 'bg-cream/40'
+    if (val >= 0.7) return 'bg-green-bg'
+    if (val >= 0.4) return 'bg-amber-bg'
+    return 'bg-burgundy-bg'
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center pt-4 px-4">
-      {/* Backdrop */}
-      <div className="fixed inset-0 bg-ink/40 backdrop-blur-[2px]" onClick={onClose} />
+    <div className="fixed inset-0 z-50 flex items-start justify-center pt-3 px-3">
+      <div className="fixed inset-0 bg-ink/50 backdrop-blur-[3px]" onClick={onClose} />
 
-      {/* Panel */}
-      <div className="relative bg-paper border border-rule rounded-sm w-full max-w-5xl max-h-[90vh] overflow-y-auto shadow-lg z-50">
-        {/* Sticky Header */}
-        <div className="sticky top-0 bg-paper border-b border-rule px-6 py-4 flex items-center justify-between z-10">
+      <div className="relative bg-paper border border-rule rounded-sm w-full max-w-[1200px] max-h-[92vh] overflow-y-auto shadow-lg z-50">
+        {/* Header */}
+        <div className="sticky top-0 bg-paper border-b-2 border-ink px-8 py-5 flex items-center justify-between z-10">
           <div>
-            <h2 className="font-serif text-[18px] font-bold text-ink tracking-tight">
-              System Architecture
+            <h2 className="font-serif text-[22px] font-bold text-ink tracking-tight">
+              {view === 'reward' ? 'Reward Function Flow' : 'System Architecture'}
             </h2>
-            <p className="font-serif text-[10px] italic text-ink-muted mt-0.5">
-              {view === 'reward' ? 'How inputs flow through the reward function' : 'Tech stack layers and data flow'}
+            <p className="font-serif text-[12px] italic text-ink-muted mt-1">
+              {view === 'reward'
+                ? 'How daily inputs compute into g* — click any node to trace its path'
+                : 'Data flow from external APIs through to the UI — click to trace'}
             </p>
           </div>
 
-          <div className="flex items-center gap-3">
-            {/* View toggle */}
-            <div className="flex gap-1">
+          <div className="flex items-center gap-4">
+            <div className="flex gap-1 border border-rule rounded-sm p-0.5">
               {(['reward', 'system'] as const).map((v) => (
                 <button
                   key={v}
                   onClick={() => { setView(v); clearHighlight(); nodeRefs.current.clear() }}
-                  className={`font-serif text-[11px] px-3 py-1.5 rounded-sm border transition-colors ${
+                  className={`font-serif text-[12px] px-4 py-2 rounded-sm transition-colors ${
                     view === v
-                      ? 'bg-burgundy text-paper border-burgundy'
-                      : 'bg-transparent text-ink-muted border-rule hover:border-ink-faint'
+                      ? 'bg-burgundy text-paper'
+                      : 'bg-transparent text-ink-muted hover:text-ink'
                   }`}
                 >
-                  {v === 'reward' ? 'Reward Flow' : 'System Architecture'}
+                  {v === 'reward' ? 'Reward Flow' : 'System'}
                 </button>
               ))}
             </div>
-
-            {/* Close */}
             <button onClick={onClose} className="text-ink-muted hover:text-ink transition-colors p-1">
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
           </div>
         </div>
 
-        {/* Hint bar */}
-        <div className="px-6 py-2 bg-cream/60 border-b border-rule-light">
-          <p className="font-sans text-[10px] text-ink-muted">
-            Click a node to trace its data path. Click again to navigate to that section.
-          </p>
-        </div>
-
-        {/* Diagram */}
-        <div className="px-6 py-5">
-          <div ref={containerRef} className="relative" style={{ minHeight: view === 'reward' ? '680px' : '420px' }}>
-            {/* SVG connection layer */}
-            <svg className="absolute inset-0 w-full h-full pointer-events-none hidden lg:block" style={{ zIndex: 0 }}>
+        {/* Diagram canvas */}
+        <div className="px-8 py-6 overflow-x-auto">
+          <div ref={containerRef} className="relative min-w-[900px]">
+            {/* SVG arrow layer */}
+            <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 5 }}>
+              <defs>
+                <marker id="arrow" viewBox="0 0 10 7" refX="9" refY="3.5" markerWidth="8" markerHeight="6" orient="auto-start-reverse">
+                  <polygon points="0 0, 10 3.5, 0 7" fill="#9a928a" />
+                </marker>
+                <marker id="arrow-active" viewBox="0 0 10 7" refX="9" refY="3.5" markerWidth="8" markerHeight="6" orient="auto-start-reverse">
+                  <polygon points="0 0, 10 3.5, 0 7" fill="#7c2d2d" />
+                </marker>
+              </defs>
               {connections.map((conn, i) => {
-                const fromPos = nodePositions[conn.from]
-                const toPos = nodePositions[conn.to]
-                if (!fromPos || !toPos) return null
+                const fp = nodePositions[conn.from]
+                const tp = nodePositions[conn.to]
+                if (!fp || !tp) return null
 
-                const x1 = fromPos.x + fromPos.width
-                const y1 = fromPos.y + fromPos.height / 2
-                const x2 = toPos.x
-                const y2 = toPos.y + toPos.height / 2
-                const cp = (x2 - x1) * 0.4
+                const x1 = fp.x + fp.width + 2
+                const y1 = fp.y + fp.height / 2
+                const x2 = tp.x - 2
+                const y2 = tp.y + tp.height / 2
+                const dx = x2 - x1
+                const cp = dx * 0.35
 
-                const isHighlighted = hasHighlight && highlightedNodes.has(conn.from) && highlightedNodes.has(conn.to)
-                const isDimmed = hasHighlight && !isHighlighted
+                const isActive = hasHighlight && highlightedNodes.has(conn.from) && highlightedNodes.has(conn.to)
+                const isDimmed = hasHighlight && !isActive
 
                 return (
                   <path
                     key={`${conn.from}-${conn.to}-${i}`}
                     d={`M ${x1} ${y1} C ${x1 + cp} ${y1}, ${x2 - cp} ${y2}, ${x2} ${y2}`}
                     fill="none"
-                    stroke={isHighlighted ? '#7c2d2d' : '#d8d0c8'}
-                    strokeWidth={isHighlighted ? 2 : 1}
-                    strokeDasharray={isHighlighted ? 'none' : '4 2'}
-                    opacity={isDimmed ? 0.1 : 1}
-                    className="transition-all duration-200"
+                    stroke={isActive ? '#7c2d2d' : '#c8c0b8'}
+                    strokeWidth={isActive ? 2.5 : 1}
+                    opacity={isDimmed ? 0.08 : isActive ? 1 : 0.5}
+                    markerEnd={isActive ? 'url(#arrow-active)' : 'url(#arrow)'}
+                    className="transition-all duration-300"
                   />
                 )
               })}
             </svg>
 
-            {/* Column headers + node columns */}
-            <div className="flex flex-col lg:flex-row gap-4 lg:gap-0 relative" style={{ zIndex: 10 }}>
+            {/* Swim lane columns */}
+            <div className="flex gap-3" style={{ zIndex: 10, position: 'relative' }}>
               {columns.map((col, colIdx) => {
-                // Column widths: inputs wider, output narrower
-                const colWidths = view === 'reward'
-                  ? ['25%', '22%', '30%', '15%']
-                  : ['20%', '25%', '25%', '22%']
-
-                // Group input nodes by their group for reward view
-                let groupedContent: React.ReactNode
-                if (view === 'reward' && colIdx === 0) {
-                  const groups: Record<string, NodeDef[]> = {}
-                  for (const node of col) {
-                    const g = node.group || 'other'
-                    if (!groups[g]) groups[g] = []
-                    groups[g].push(node)
-                  }
-                  const groupLabels: Record<string, string> = {
-                    ge: 'Energy', gi: 'Intelligence', gvc: 'Value Creation',
-                    kappa: 'Capture', gd: 'Discovery', theta: 'Coherence', optionality: 'Portfolio',
-                  }
-                  groupedContent = (
-                    <div className="flex flex-col gap-2">
-                      {Object.entries(groups).map(([groupId, groupNodes]) => (
-                        <div key={groupId} className="border border-rule-light rounded-sm p-1.5 bg-cream/30">
-                          <p className="font-serif text-[8px] uppercase tracking-[0.5px] text-ink-faint mb-1">
-                            {groupLabels[groupId] || groupId}
-                          </p>
-                          <div className="flex flex-col gap-1">
-                            {groupNodes.map(node => (
-                              <DiagramNodeEl
-                                key={node.id}
-                                node={node}
-                                ref={setNodeRef(node.id)}
-                                liveValue={getLiveValue(node.liveValueKey)}
-                                liveFormatter={node.liveFormatter}
-                                isHighlighted={hasHighlight && highlightedNodes.has(node.id)}
-                                isDimmed={hasHighlight && !highlightedNodes.has(node.id)}
-                                isActive={activeNodeId === node.id}
-                                componentColor={componentColor}
-                                scoreColor={scoreColor}
-                                onClick={() => handleNodeClick(node.id, node.navigateTo)}
-                              />
-                            ))}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )
-                } else {
-                  groupedContent = (
-                    <div className="flex flex-col gap-1.5">
-                      {col.map(node => (
-                        <DiagramNodeEl
-                          key={node.id}
-                          node={node}
-                          ref={setNodeRef(node.id)}
-                          liveValue={getLiveValue(node.liveValueKey)}
-                          liveFormatter={node.liveFormatter}
-                          isHighlighted={hasHighlight && highlightedNodes.has(node.id)}
-                          isDimmed={hasHighlight && !highlightedNodes.has(node.id)}
-                          isActive={activeNodeId === node.id}
-                          componentColor={componentColor}
-                          scoreColor={scoreColor}
-                          onClick={() => handleNodeClick(node.id, node.navigateTo)}
-                        />
-                      ))}
-                    </div>
-                  )
-                }
+                const lane = lanes[colIdx]
+                const isInputCol = view === 'reward' && colIdx === 0
+                const isOutputCol = view === 'reward' && colIdx === 3
+                const widths = view === 'reward'
+                  ? ['26%', '24%', '28%', '14%']
+                  : ['22%', '26%', '24%', '22%']
 
                 return (
-                  <div
-                    key={colIdx}
-                    className="flex-shrink-0 lg:px-2"
-                    style={{ width: undefined }}
-                  >
-                    {/* Use lg styles for width */}
-                    <style>{`
-                      @media (min-width: 1024px) {
-                        .arch-col-${view}-${colIdx} { width: ${colWidths[colIdx]}; }
-                      }
-                    `}</style>
-                    <div className={`arch-col-${view}-${colIdx}`}>
-                      <p className="font-serif text-[9px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-2 pb-1 border-b border-rule-light">
-                        {columnHeaders[colIdx]}
-                      </p>
-                      {groupedContent}
+                  <div key={colIdx} className={`${lane.bg} border ${lane.border} rounded-sm flex-shrink-0`} style={{ width: widths[colIdx] }}>
+                    {/* Lane header */}
+                    <div className="px-4 py-3 border-b border-rule-light/60">
+                      <h3 className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy">
+                        {lane.title}
+                      </h3>
+                      <p className="font-sans text-[10px] text-ink-muted mt-0.5">{lane.subtitle}</p>
+                    </div>
+
+                    {/* Lane body */}
+                    <div className={`px-3 py-3 ${isOutputCol ? 'flex items-center justify-center' : ''}`}>
+                      {isInputCol ? (
+                        // Grouped inputs with section dividers
+                        <div className="space-y-3">
+                          {Object.entries(
+                            col.reduce<Record<string, NodeDef[]>>((acc, n) => {
+                              const g = n.group || 'other'
+                              if (!acc[g]) acc[g] = []
+                              acc[g].push(n)
+                              return acc
+                            }, {})
+                          ).map(([groupId, groupNodes]) => {
+                            const cfg = INPUT_GROUP_LABELS[groupId] || { label: groupId, color: 'text-ink' }
+                            return (
+                              <div key={groupId}>
+                                <div className="flex items-center gap-2 mb-2">
+                                  <span className={`font-serif text-[10px] font-semibold uppercase tracking-[0.5px] ${cfg.color}`}>
+                                    {cfg.label}
+                                  </span>
+                                  <span className="flex-1 h-px bg-rule-light" />
+                                </div>
+                                <div className="space-y-1.5">
+                                  {groupNodes.map(node => (
+                                    <BANode
+                                      key={node.id}
+                                      node={node}
+                                      ref={setNodeRef(node.id)}
+                                      liveValue={getLiveValue(node.liveValueKey)}
+                                      isHighlighted={hasHighlight && highlightedNodes.has(node.id)}
+                                      isDimmed={hasHighlight && !highlightedNodes.has(node.id)}
+                                      isActive={activeNodeId === node.id}
+                                      valColor={valColor}
+                                      valBg={valBg}
+                                      onClick={() => handleNodeClick(node.id, node.navigateTo)}
+                                    />
+                                  ))}
+                                </div>
+                              </div>
+                            )
+                          })}
+                        </div>
+                      ) : (
+                        <div className={`space-y-2 ${isOutputCol ? 'w-full' : ''}`}>
+                          {col.map(node => (
+                            <BANode
+                              key={node.id}
+                              node={node}
+                              ref={setNodeRef(node.id)}
+                              liveValue={getLiveValue(node.liveValueKey)}
+                              isHighlighted={hasHighlight && highlightedNodes.has(node.id)}
+                              isDimmed={hasHighlight && !highlightedNodes.has(node.id)}
+                              isActive={activeNodeId === node.id}
+                              valColor={valColor}
+                              valBg={valBg}
+                              onClick={() => handleNodeClick(node.id, node.navigateTo)}
+                            />
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </div>
                 )
               })}
             </div>
+
+            {/* Flow direction arrows between lanes */}
+            <div className="flex items-center justify-around mt-4 px-8">
+              {[0, 1, 2].map(i => (
+                <div key={i} className="flex items-center gap-2 text-ink-faint">
+                  <span className="w-8 h-px bg-rule" />
+                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                  </svg>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
 
         {/* Legend */}
-        <div className="px-6 pb-4">
-          <div className="flex flex-wrap gap-3 pt-3 border-t border-rule-light">
-            <span className="flex items-center gap-1.5">
-              <span className="w-3 h-0.5 bg-green-ink rounded-sm" />
-              <span className="font-sans text-[9px] text-ink-muted">&ge; 0.7 Good</span>
+        <div className="px-8 pb-5">
+          <div className="flex flex-wrap items-center gap-5 pt-4 border-t border-rule">
+            <span className="font-serif text-[10px] font-semibold uppercase tracking-[0.5px] text-ink-muted">Legend</span>
+            <span className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-sm bg-green-ink" />
+              <span className="font-sans text-[11px] text-ink-muted">&ge; 0.7 Healthy</span>
             </span>
-            <span className="flex items-center gap-1.5">
-              <span className="w-3 h-0.5 bg-amber-ink rounded-sm" />
-              <span className="font-sans text-[9px] text-ink-muted">&ge; 0.4 Watch</span>
+            <span className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-sm bg-amber-ink" />
+              <span className="font-sans text-[11px] text-ink-muted">&ge; 0.4 Watch</span>
             </span>
-            <span className="flex items-center gap-1.5">
-              <span className="w-3 h-0.5 bg-red-ink rounded-sm" />
-              <span className="font-sans text-[9px] text-ink-muted">&lt; 0.4 Alert</span>
+            <span className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-sm bg-red-ink" />
+              <span className="font-sans text-[11px] text-ink-muted">&lt; 0.4 Alert</span>
             </span>
-            <span className="flex items-center gap-1.5 ml-auto">
-              <svg className="w-4 h-1" viewBox="0 0 16 4"><line x1="0" y1="2" x2="16" y2="2" stroke="#d8d0c8" strokeWidth="1" strokeDasharray="4 2" /></svg>
-              <span className="font-sans text-[9px] text-ink-muted">Data flow</span>
+            <span className="w-px h-4 bg-rule" />
+            <span className="flex items-center gap-2">
+              <svg className="w-6 h-1.5" viewBox="0 0 24 6">
+                <line x1="0" y1="3" x2="20" y2="3" stroke="#c8c0b8" strokeWidth="1" />
+                <polygon points="18 0, 24 3, 18 6" fill="#9a928a" />
+              </svg>
+              <span className="font-sans text-[11px] text-ink-muted">Data flow</span>
             </span>
-            <span className="flex items-center gap-1.5">
-              <svg className="w-4 h-1" viewBox="0 0 16 4"><line x1="0" y1="2" x2="16" y2="2" stroke="#7c2d2d" strokeWidth="2" /></svg>
-              <span className="font-sans text-[9px] text-ink-muted">Active path</span>
+            <span className="flex items-center gap-2">
+              <svg className="w-6 h-1.5" viewBox="0 0 24 6">
+                <line x1="0" y1="3" x2="20" y2="3" stroke="#7c2d2d" strokeWidth="2.5" />
+                <polygon points="18 0, 24 3, 18 6" fill="#7c2d2d" />
+              </svg>
+              <span className="font-sans text-[11px] text-ink-muted">Active path</span>
+            </span>
+            <span className="ml-auto font-sans text-[10px] text-ink-faint italic">
+              Click node once to trace &middot; click again to navigate
             </span>
           </div>
         </div>
@@ -525,103 +531,153 @@ export default function ArchitecturePanel({ onClose }: ArchitecturePanelProps) {
   )
 }
 
-// ─── DIAGRAM NODE COMPONENT ─────────────────────────────────────────────
+// ─── BA-STYLE NODE COMPONENT ────────────────────────────────────────────
 
-interface DiagramNodeElProps {
+interface BANodeProps {
   node: NodeDef
   liveValue: number | null
-  liveFormatter?: (val: number) => string
   isHighlighted: boolean
   isDimmed: boolean
   isActive: boolean
-  componentColor: (val: number | null) => string
-  scoreColor: (val: number | null) => string
+  valColor: (val: number | null, isScore?: boolean) => string
+  valBg: (val: number | null) => string
   onClick: () => void
 }
 
-import { forwardRef } from 'react'
-
-const DiagramNodeEl = forwardRef<HTMLDivElement, DiagramNodeElProps>(function DiagramNodeEl(
-  { node, liveValue, liveFormatter, isHighlighted, isDimmed, isActive, componentColor, scoreColor, onClick },
+const BANode = forwardRef<HTMLDivElement, BANodeProps>(function BANode(
+  { node, liveValue, isHighlighted, isDimmed, isActive, valColor, valBg, onClick },
   ref
 ) {
-  const typeStyles: Record<string, string> = {
-    input: 'bg-white',
-    component: 'bg-white',
-    operator: 'bg-cream/60',
-    output: 'bg-white',
-    api: 'bg-cream/60',
-    data: 'bg-amber-bg',
-    state: 'bg-burgundy-bg',
-    ui: 'bg-burgundy-bg',
-  }
-
-  const borderStyle = isActive
-    ? 'border-burgundy ring-1 ring-burgundy/20'
-    : isHighlighted
-      ? 'border-burgundy bg-burgundy-bg'
-      : 'border-rule hover:border-ink-faint'
-
   const formatted = liveValue !== null
-    ? (liveFormatter ? liveFormatter(liveValue) : liveValue.toFixed(2))
+    ? (node.liveFormatter ? node.liveFormatter(liveValue) : liveValue.toFixed(2))
     : null
 
-  const valColor = node.type === 'output'
-    ? scoreColor(liveValue)
-    : componentColor(liveValue)
-
+  // ─── Output node (big centered score) ───
   if (node.type === 'output') {
+    const color = valColor(liveValue, true)
     return (
       <div
         ref={ref}
         onClick={onClick}
-        className={`border rounded-sm px-3 py-3 cursor-pointer transition-all duration-200 text-center ${typeStyles[node.type]} ${borderStyle} ${isDimmed ? 'opacity-20' : ''}`}
+        className={`bg-white border-2 rounded-sm p-5 cursor-pointer transition-all duration-300 text-center ${
+          isActive ? 'border-burgundy shadow-md' : isHighlighted ? 'border-burgundy/60' : 'border-rule'
+        } ${isDimmed ? 'opacity-15' : ''}`}
       >
-        {node.symbol && (
-          <p className={`font-mono text-[10px] text-ink-muted mb-1`}>{node.symbol}</p>
-        )}
-        <p className={`font-mono text-[28px] font-bold ${valColor}`}>
+        <p className="font-mono text-[11px] text-ink-muted mb-2 uppercase tracking-[1px]">{node.symbol}</p>
+        <p className={`font-mono text-[40px] font-bold leading-none ${color}`}>
           {liveValue !== null ? liveValue.toFixed(1) : '—'}
         </p>
-        <p className="font-serif text-[9px] text-ink-muted mt-0.5">{node.label}</p>
+        <p className="font-serif text-[11px] text-ink-muted mt-2">{node.label}</p>
+        {node.sublabel && (
+          <p className="font-sans text-[9px] text-ink-faint mt-1">{node.sublabel}</p>
+        )}
       </div>
     )
   }
 
+  // ─── Operator node (formula box) ───
   if (node.type === 'operator') {
     return (
       <div
         ref={ref}
         onClick={onClick}
-        className={`border rounded-sm px-2 py-2 cursor-pointer transition-all duration-200 ${typeStyles[node.type]} ${borderStyle} ${isDimmed ? 'opacity-20' : ''}`}
+        className={`bg-white border-2 border-dashed rounded-sm px-4 py-3 cursor-pointer transition-all duration-300 ${
+          isActive ? 'border-burgundy shadow-md' : isHighlighted ? 'border-burgundy/60' : 'border-rule'
+        } ${isDimmed ? 'opacity-15' : ''}`}
       >
-        <p className="font-mono text-[9px] text-ink-muted leading-snug break-all">{node.label}</p>
+        <p className="font-serif text-[11px] font-semibold text-ink mb-1">{node.label}</p>
+        {node.sublabel && (
+          <p className="font-mono text-[10px] text-ink-muted leading-relaxed">{node.sublabel}</p>
+        )}
       </div>
     )
   }
+
+  // ─── Component node (scored metric with value badge) ───
+  if (node.type === 'component') {
+    const color = valColor(liveValue)
+    const bg = valBg(liveValue)
+    return (
+      <div
+        ref={ref}
+        onClick={onClick}
+        className={`bg-white border-2 rounded-sm px-4 py-2.5 cursor-pointer transition-all duration-300 flex items-center gap-3 ${
+          isActive ? 'border-burgundy shadow-md' : isHighlighted ? 'border-burgundy/60' : 'border-rule'
+        } ${isDimmed ? 'opacity-15' : ''}`}
+      >
+        {/* Score badge */}
+        <div className={`${bg} border border-rule-light rounded-sm px-2 py-1 min-w-[44px] text-center shrink-0`}>
+          <p className={`font-mono text-[14px] font-bold ${color}`}>
+            {formatted ?? '—'}
+          </p>
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-1.5">
+            {node.symbol && (
+              <span className={`font-mono text-[11px] font-bold ${isHighlighted || isActive ? 'text-burgundy' : 'text-ink'}`}>
+                {node.symbol}
+              </span>
+            )}
+            <span className="font-serif text-[11px] font-medium text-ink truncate">{node.label}</span>
+          </div>
+          {node.sublabel && (
+            <p className="font-sans text-[9px] text-ink-muted mt-0.5 truncate">{node.sublabel}</p>
+          )}
+        </div>
+        {node.navigateTo && (
+          <svg className="w-3.5 h-3.5 text-ink-faint shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+          </svg>
+        )}
+      </div>
+    )
+  }
+
+  // ─── Standard node (input, api, data, state, ui) ───
+  const typeAccents: Record<string, { icon: string; border: string }> = {
+    input: { icon: 'text-ink-muted', border: 'border-rule' },
+    api: { icon: 'text-amber-ink', border: 'border-amber-ink/20' },
+    data: { icon: 'text-amber-ink', border: 'border-amber-ink/20' },
+    state: { icon: 'text-green-ink', border: 'border-green-ink/20' },
+    ui: { icon: 'text-burgundy', border: 'border-burgundy/20' },
+  }
+  const accent = typeAccents[node.type] || typeAccents.input
 
   return (
     <div
       ref={ref}
       onClick={onClick}
-      className={`border rounded-sm px-2 py-1 cursor-pointer transition-all duration-200 flex items-center gap-1.5 ${typeStyles[node.type]} ${borderStyle} ${isDimmed ? 'opacity-20' : ''}`}
+      className={`bg-white border rounded-sm px-3 py-2 cursor-pointer transition-all duration-300 ${
+        isActive ? 'border-burgundy shadow-md border-2' : isHighlighted ? `${accent.border} border-burgundy/40` : accent.border
+      } ${isDimmed ? 'opacity-15' : ''}`}
     >
-      {node.symbol && (
-        <span className={`font-mono text-[10px] font-semibold shrink-0 ${isHighlighted ? 'text-burgundy' : 'text-ink'}`}>
-          {node.symbol}
-        </span>
-      )}
-      <span className="font-serif text-[9px] text-ink-muted truncate">{node.label}</span>
-      {formatted !== null && (
-        <span className={`font-mono text-[10px] font-semibold ml-auto shrink-0 ${valColor}`}>
-          {formatted}
-        </span>
-      )}
-      {node.navigateTo && (
-        <svg className="w-2.5 h-2.5 text-ink-faint shrink-0 ml-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-        </svg>
-      )}
+      <div className="flex items-center justify-between gap-2">
+        <div className="min-w-0">
+          <div className="flex items-center gap-1.5">
+            {node.symbol && (
+              <span className={`font-mono text-[10px] font-bold ${isHighlighted || isActive ? 'text-burgundy' : accent.icon}`}>
+                {node.symbol}
+              </span>
+            )}
+            <span className="font-serif text-[11px] font-medium text-ink truncate">{node.label}</span>
+          </div>
+          {node.sublabel && (
+            <p className="font-sans text-[9px] text-ink-muted mt-0.5">{node.sublabel}</p>
+          )}
+        </div>
+        <div className="flex items-center gap-1.5 shrink-0">
+          {formatted !== null && (
+            <span className={`font-mono text-[11px] font-semibold ${valColor(liveValue)}`}>
+              {formatted}
+            </span>
+          )}
+          {node.navigateTo && (
+            <svg className="w-3 h-3 text-ink-faint" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+            </svg>
+          )}
+        </div>
+      </div>
     </div>
   )
 })
