@@ -4,15 +4,13 @@ import { useState } from 'react'
 import AlpeDial from '@/components/thesis/alpe-dhuez/AlpeDial'
 import SynthesisView from '@/components/thesis/alpe-dhuez/SynthesisView'
 import NetworkView from '@/components/thesis/alpe-dhuez/NetworkView'
-import PositionView from '@/components/thesis/alpe-dhuez/PositionView'
 import AuditView from '@/components/thesis/alpe-dhuez/AuditView'
 
-type AlpeTab = 'synthesis' | 'network' | 'position' | 'ascent'
+type AlpeTab = 'synthesis' | 'network' | 'ascent'
 
 const TABS: { key: AlpeTab; label: string }[] = [
   { key: 'synthesis', label: 'Synthesis' },
   { key: 'network', label: 'Network' },
-  { key: 'position', label: 'Position' },
   { key: 'ascent', label: 'Ascent' },
 ]
 
@@ -44,7 +42,6 @@ export default function AlpeDhuezPage() {
         <div className="flex-1 overflow-y-auto">
           {activeTab === 'synthesis' && <SynthesisView />}
           {activeTab === 'network' && <NetworkView />}
-          {activeTab === 'position' && <PositionView />}
           {activeTab === 'ascent' && <AuditView />}
         </div>
       </div>
