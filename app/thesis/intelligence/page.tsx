@@ -15,51 +15,29 @@ export default function IntelligencePage() {
   const onSignalSaved = useCallback(() => setRefreshKey(k => k + 1), [])
 
   return (
-    <div className="h-full grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-4">
+    <div className="h-full grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-3 min-h-0">
       {/* Left Panel: Tabbed Sections */}
-      <div className="flex flex-col gap-4">
-        {/* Tab Navigation - Armstrong Style */}
-        <div className="flex gap-4 border-b border-rule pb-2">
-          <button
-            onClick={() => setActiveTab('signals')}
-            className={`font-serif text-[16px] transition-colors py-2 ${
-              activeTab === 'signals'
-                ? 'text-burgundy font-semibold border-b-2 border-burgundy'
-                : 'text-ink-muted hover:text-ink'
-            }`}
-          >
-            Signal Library
-          </button>
-          <button
-            onClick={() => setActiveTab('conversations')}
-            className={`font-serif text-[16px] transition-colors py-2 ${
-              activeTab === 'conversations'
-                ? 'text-burgundy font-semibold border-b-2 border-burgundy'
-                : 'text-ink-muted hover:text-ink'
-            }`}
-          >
-            Conversations
-          </button>
-          <button
-            onClick={() => setActiveTab('external')}
-            className={`font-serif text-[16px] transition-colors py-2 ${
-              activeTab === 'external'
-                ? 'text-burgundy font-semibold border-b-2 border-burgundy'
-                : 'text-ink-muted hover:text-ink'
-            }`}
-          >
-            External Signals
-          </button>
-          <button
-            onClick={() => setActiveTab('insights')}
-            className={`font-serif text-[16px] transition-colors py-2 ${
-              activeTab === 'insights'
-                ? 'text-burgundy font-semibold border-b-2 border-burgundy'
-                : 'text-ink-muted hover:text-ink'
-            }`}
-          >
-            Insights
-          </button>
+      <div className="flex flex-col gap-1 min-h-0">
+        {/* Sub-tab Navigation */}
+        <div className="flex gap-1 border-b border-rule shrink-0">
+          {([
+            { key: 'signals' as const, label: 'Signals' },
+            { key: 'conversations' as const, label: 'Conversations' },
+            { key: 'external' as const, label: 'External' },
+            { key: 'insights' as const, label: 'Insights' },
+          ]).map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key)}
+              className={`font-serif text-[13px] font-medium px-3 py-1.5 transition-colors ${
+                activeTab === tab.key
+                  ? 'text-burgundy font-semibold border-b-2 border-burgundy -mb-px'
+                  : 'text-ink-muted hover:text-ink'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
         </div>
 
         {/* Tab Content */}
