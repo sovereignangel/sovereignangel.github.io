@@ -12,9 +12,10 @@ import {
 import { BELT_COLORS, MUSCLE_TARGETS } from '@/lib/constants'
 import type { SalesAssessment, RuinConditions, NetworkContact, DailyLog, MonthlyMetrics } from '@/lib/types'
 import { BELT_LABELS, getSystemState, SYSTEM_STATE_COLORS } from '@/lib/types'
-import { computeBeltLevel } from '@/lib/belt-engine'
-import type { BeltAssessment } from '@/lib/belt-engine'
+import { computeMastery } from '@/lib/belt-engine'
+import type { MasteryAssessment } from '@/lib/belt-engine'
 import AlpeDHuezMountain from './AlpeDHuezMountain'
+import MasteryTree from './MasteryTree'
 
 // ─── Constants ────────────────────────────────────────────────────────
 
@@ -143,11 +144,13 @@ export default function AuditView() {
   const [ruinConditions, setRuinConditions] = useState<RuinConditions>(DEFAULT_RUIN)
   const [nextMonthFocus, setNextMonthFocus] = useState('')
 
-  // Computed belt assessment — reacts to metrics + manual inputs
-  const beltAssessment: BeltAssessment | null = useMemo(() => {
+  // Computed mastery assessment — reacts to metrics + manual inputs
+  const mastery: MasteryAssessment | null = useMemo(() => {
     if (!metrics) return null
-    return computeBeltLevel(metrics, oneLinerClarityScore, ruinConditions)
+    return computeMastery(metrics, oneLinerClarityScore, ruinConditions)
   }, [metrics, oneLinerClarityScore, ruinConditions])
+
+  const beltAssessment = mastery?.belt ?? null
 
   const loadData = useCallback(async () => {
     if (!user) return
@@ -257,41 +260,8 @@ export default function AuditView() {
         </div>
       )}
 
-      {/* ─── Belt Criteria Breakdown ─────────────────────────── */}
-      {beltAssessment && (
-        <div className="bg-paper border border-rule rounded-sm p-3">
-          <h4 className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-2 pb-1.5 border-b-2 border-rule">
-            Belt Criteria
-          </h4>
-          {beltAssessment.allBelts
-            .filter(b => !b.locked)
-            .map(belt => (
-              <div key={belt.belt} className="mb-2.5 last:mb-0">
-                <div className="flex items-center justify-between mb-1">
-                  <span className={`font-mono text-[9px] font-semibold uppercase ${BELT_COLORS[belt.belt]}`}>
-                    {belt.label}
-                  </span>
-                  <span className={`font-mono text-[8px] font-medium ${
-                    belt.progress >= 80 ? 'text-green-ink' : belt.progress >= 50 ? 'text-amber-ink' : 'text-ink-muted'
-                  }`}>
-                    {belt.progress}%
-                  </span>
-                </div>
-                {belt.requirements.map(req => (
-                  <div key={req.key} className="flex items-center justify-between py-0.5 border-b border-rule-light/50">
-                    <span className="font-mono text-[9px] text-ink-muted">{req.label}</span>
-                    <span className={`font-mono text-[9px] font-semibold ${req.met ? 'text-green-ink' : 'text-red-ink'}`}>
-                      {typeof req.current === 'number' && req.current % 1 !== 0
-                        ? req.current.toFixed(1)
-                        : req.current
-                      }{req.unit} / {req.target}{req.unit}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            ))}
-        </div>
-      )}
+      {/* ─── Interactive Mastery Tree ─────────────────────────── */}
+      {mastery && <MasteryTree mastery={mastery} />}
 
       {/* How it works */}
       <div className="bg-cream border border-rule rounded-sm px-3 py-2">

@@ -122,3 +122,59 @@ export const SCENARIO_COLORS: Record<ScenarioType, string> = {
   indie_liberal: '#7c2d2d',     // burgundy
   custom: '#9a928a',            // ink-muted
 }
+
+// ─── INTELLIGENCE LAYER ──────────────────────────────────────────────
+
+export type HealthGrade = 'A' | 'B' | 'C' | 'D' | 'F'
+
+export interface FinancialHealthScore {
+  overall: number
+  components: {
+    liquidity: number
+    leverage: number
+    cashflow: number
+    momentum: number
+    debtToxicity: number
+  }
+  grade: HealthGrade
+  previousScore?: number
+}
+
+export type AlertSeverity = 'critical' | 'warning' | 'info' | 'positive'
+
+export interface CapitalAlert {
+  severity: AlertSeverity
+  title: string
+  detail: string
+  metric?: string
+  action?: string
+}
+
+export interface SensitivityResult {
+  variable: string
+  baseValue: number
+  scenarios: { delta: number; label: string; netWorthAt12: number; debtFreeMonth: number | null }[]
+}
+
+export interface AllocationTarget {
+  category: string
+  label: string
+  current: number
+  target: number
+  pct: number
+  rationale: string
+}
+
+export interface FreedCascadeStep {
+  debtName: string
+  paidOffMonth: number
+  freedMinimum: number
+  acceleratesNext: string
+}
+
+export interface DeathSpiralMonth {
+  month: number
+  principalPaid: number
+  interestPaid: number
+  totalBalance: number
+}

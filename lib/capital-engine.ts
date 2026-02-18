@@ -1,4 +1,8 @@
-import type { DebtItem, DebtPayoffStrategy, ScenarioParams, ScenarioMonth, ScenarioProjection, CapitalPosition } from './types'
+import type {
+  DebtItem, DebtPayoffStrategy, ScenarioParams, ScenarioMonth, ScenarioProjection,
+  CapitalPosition, FinancialHealthScore, HealthGrade, CapitalAlert, SensitivityResult,
+  AllocationTarget, FreedCascadeStep, DeathSpiralMonth,
+} from './types'
 
 // ─── HELPERS ────────────────────────────────────────────────────────
 
@@ -205,6 +209,378 @@ export function compareScenarios(
   )
 
   return { bestDebtFree, bestNetWorth }
+}
+
+// ─── INTELLIGENCE LAYER ─────────────────────────────────────────────
+
+export function computeHealthScore(
+  position: CapitalPosition,
+  previousNetWorth?: number
+): FinancialHealthScore {
+  const { cashSavings, totalAssets, totalDebt, monthlyIncome, monthlyExpenses, monthlyInterestCost: interest, totalMinimumPayments } = position
+
+  // Liquidity: cash covers 6 months of expenses
+  const sixMonthTarget = monthlyExpenses * 6
+  const liquidity = sixMonthTarget > 0 ? clamp((cashSavings / sixMonthTarget) * 100, 0, 100) : 0
+
+  // Leverage: inverse of debt-to-asset ratio
+  const leverage = totalAssets > 0
+    ? clamp((1 - totalDebt / totalAssets) * 100, 0, 100)
+    : totalDebt > 0 ? 0 : 50
+
+  // Cash flow: free cash flow as % of income
+  const freeCash = monthlyIncome - monthlyExpenses - totalMinimumPayments
+  const cashflow = monthlyIncome > 0
+    ? clamp((freeCash / monthlyIncome) * 100, 0, 100)
+    : 0
+
+  // Momentum: month-over-month net worth improvement
+  let momentum = 50 // neutral default
+  if (previousNetWorth !== undefined) {
+    const delta = position.netWorth - previousNetWorth
+    const pctChange = previousNetWorth !== 0 ? (delta / Math.abs(previousNetWorth)) * 100 : delta > 0 ? 100 : 0
+    momentum = clamp(50 + pctChange * 2, 0, 100)
+  }
+
+  // Debt toxicity: weighted average APR penalty
+  const activeDebts = position.debtItems.filter(d => d.isActive && d.balance > 0)
+  const totalDebtBalance = activeDebts.reduce((s, d) => s + d.balance, 0)
+  const weightedAPR = totalDebtBalance > 0
+    ? activeDebts.reduce((s, d) => s + d.apr * d.balance, 0) / totalDebtBalance
+    : 0
+  const debtToxicity = clamp(100 - weightedAPR * 200, 0, 100)
+
+  // Weighted overall score
+  const overall = Math.round(
+    liquidity * 0.20 +
+    leverage * 0.20 +
+    cashflow * 0.25 +
+    momentum * 0.10 +
+    debtToxicity * 0.25
+  )
+
+  const grade: HealthGrade = overall >= 80 ? 'A' : overall >= 65 ? 'B' : overall >= 50 ? 'C' : overall >= 35 ? 'D' : 'F'
+
+  return {
+    overall,
+    components: { liquidity, leverage, cashflow, momentum, debtToxicity },
+    grade,
+    previousScore: previousNetWorth !== undefined ? undefined : undefined,
+  }
+}
+
+export function generateAlerts(position: CapitalPosition): CapitalAlert[] {
+  const alerts: CapitalAlert[] = []
+  const { cashSavings, monthlyIncome, monthlyExpenses, monthlyInterestCost: interest, totalMinimumPayments, totalDebt, totalAssets, debtItems, runwayMonths } = position
+  const freeCash = monthlyIncome - monthlyExpenses - totalMinimumPayments
+
+  // Critical
+  if (monthlyIncome === 0 && monthlyExpenses > 0) {
+    alerts.push({
+      severity: 'critical',
+      title: 'Zero Revenue',
+      detail: `Burning $${monthlyExpenses.toLocaleString()}/mo with no income stream. Runway is finite.`,
+      metric: `${runwayMonths.toFixed(1)}mo runway`,
+      action: 'Establish income source — corporate or indie — immediately.',
+    })
+  }
+  if (runwayMonths > 0 && runwayMonths < 3) {
+    alerts.push({
+      severity: 'critical',
+      title: 'Runway Critical',
+      detail: `Cash reserves cover only ${runwayMonths.toFixed(1)} months at current burn rate.`,
+      metric: `$${cashSavings.toLocaleString()} cash`,
+      action: 'Cut non-essential expenses or accelerate revenue generation.',
+    })
+  }
+  if (freeCash < 0 && monthlyIncome > 0) {
+    alerts.push({
+      severity: 'critical',
+      title: 'Negative Free Cash Flow',
+      detail: `Spending $${Math.abs(freeCash).toLocaleString()}/mo more than earning after debt service.`,
+      metric: `-$${Math.abs(freeCash).toLocaleString()}/mo`,
+      action: 'Reduce expenses or increase income to achieve positive cash flow.',
+    })
+  }
+
+  // Warning
+  const toxicDebts = debtItems.filter(d => d.isActive && d.apr > 0.20 && d.balance > 0)
+  if (toxicDebts.length > 0) {
+    const toxicBalance = toxicDebts.reduce((s, d) => s + d.balance, 0)
+    const dailyCost = toxicDebts.reduce((s, d) => s + d.balance * d.apr / 365, 0)
+    alerts.push({
+      severity: 'warning',
+      title: `${toxicDebts.length} Toxic Liabilities (>20% APR)`,
+      detail: `$${toxicBalance.toLocaleString()} at predatory rates costing $${dailyCost.toFixed(2)}/day in interest.`,
+      metric: `$${dailyCost.toFixed(2)}/day`,
+      action: `Target ${toxicDebts[0].name} first (${(toxicDebts[0].apr * 100).toFixed(1)}% APR) with avalanche strategy.`,
+    })
+  }
+  if (interest > 500) {
+    alerts.push({
+      severity: 'warning',
+      title: 'Monthly Interest Exceeds $500',
+      detail: `Paying $${interest.toFixed(0)}/mo in pure interest — capital that buys nothing.`,
+      metric: `$${interest.toFixed(0)}/mo`,
+      action: 'Every extra dollar toward high-APR debt reduces this bleed.',
+    })
+  }
+  if (totalAssets > 0 && totalDebt / totalAssets > 1) {
+    alerts.push({
+      severity: 'warning',
+      title: 'Negative Equity',
+      detail: `Liabilities ($${totalDebt.toLocaleString()}) exceed assets ($${totalAssets.toLocaleString()}).`,
+      metric: `${((totalDebt / totalAssets) * 100).toFixed(0)}% debt-to-asset`,
+    })
+  }
+
+  // Positive
+  if (runwayMonths >= 12) {
+    alerts.push({
+      severity: 'positive',
+      title: 'Strong Runway',
+      detail: `${runwayMonths.toFixed(0)} months of runway provides strategic flexibility.`,
+      metric: `${runwayMonths.toFixed(0)}mo`,
+    })
+  }
+  if (monthlyIncome > 0 && freeCash > 0) {
+    const savingsRate = (freeCash / monthlyIncome) * 100
+    if (savingsRate >= 30) {
+      alerts.push({
+        severity: 'positive',
+        title: 'Strong Savings Rate',
+        detail: `${savingsRate.toFixed(0)}% of income flows to wealth building after all obligations.`,
+        metric: `${savingsRate.toFixed(0)}%`,
+      })
+    }
+  }
+
+  return alerts.sort((a, b) => {
+    const order = { critical: 0, warning: 1, info: 2, positive: 3 }
+    return order[a.severity] - order[b.severity]
+  })
+}
+
+export function dailyCostOfCarry(debts: DebtItem[]): number {
+  return debts
+    .filter(d => d.isActive && d.balance > 0)
+    .reduce((sum, d) => sum + d.balance * d.apr / 365, 0)
+}
+
+export function interestDeathSpiral(debts: DebtItem[], months: number = 60): DeathSpiralMonth[] {
+  const items = debts.filter(d => d.isActive && d.balance > 0)
+  const balances = new Map<string, number>()
+  items.forEach(d => balances.set(d.name, d.balance))
+
+  const result: DeathSpiralMonth[] = []
+
+  for (let m = 0; m < months; m++) {
+    let monthInterest = 0
+    let monthPrincipal = 0
+
+    // Accrue interest
+    for (const debt of items) {
+      const bal = balances.get(debt.name) || 0
+      if (bal <= 0) continue
+      const interest = bal * (debt.apr / 12)
+      balances.set(debt.name, bal + interest)
+      monthInterest += interest
+    }
+
+    // Pay minimums only
+    for (const debt of items) {
+      const bal = balances.get(debt.name) || 0
+      if (bal <= 0) continue
+      const payment = Math.min(debt.minimumPayment, bal)
+      const principalPortion = Math.max(0, payment - bal * (debt.apr / 12))
+      balances.set(debt.name, bal - payment)
+      monthPrincipal += principalPortion
+    }
+
+    const totalBal = Array.from(balances.values()).reduce((s, v) => s + Math.max(0, v), 0)
+    result.push({ month: m, principalPaid: monthPrincipal, interestPaid: monthInterest, totalBalance: totalBal })
+
+    if (totalBal <= 0.01) break
+  }
+
+  return result
+}
+
+export function sensitivityAnalysis(
+  params: ScenarioParams,
+  position: CapitalPosition,
+  variable: 'income' | 'expenses',
+  deltas: number[] = [-0.50, -0.25, 0, 0.25, 0.50]
+): SensitivityResult {
+  const baseValue = variable === 'income' ? params.monthlyGrossIncome : (params.monthlyExpenseOverride ?? position.monthlyExpenses)
+
+  const scenarios = deltas.map(delta => {
+    const adjustedParams = { ...params }
+    if (variable === 'income') {
+      adjustedParams.monthlyGrossIncome = baseValue * (1 + delta)
+    } else {
+      adjustedParams.monthlyExpenseOverride = baseValue * (1 + delta)
+    }
+    const projection = projectScenario(adjustedParams, position, 24)
+    return {
+      delta,
+      label: delta === 0 ? 'Base' : `${delta > 0 ? '+' : ''}${(delta * 100).toFixed(0)}%`,
+      netWorthAt12: projection.months[11]?.liquidNetWorth ?? 0,
+      debtFreeMonth: projection.debtFreeMonth,
+    }
+  })
+
+  return {
+    variable: variable === 'income' ? 'Monthly Income' : 'Monthly Expenses',
+    baseValue,
+    scenarios,
+  }
+}
+
+export function computeExpectedValue(
+  projections: ScenarioProjection[]
+): { name: string; ev12: number; ev24: number; probability: number }[] {
+  // Assign probability weights based on scenario type
+  const probabilities: Record<string, number> = {
+    'Corporate ($200k)': 0.35,
+    'Indie Conservative': 0.30,
+    'Indie Moderate': 0.20,
+    'Indie Liberal': 0.15,
+  }
+
+  return projections.map(p => {
+    const prob = probabilities[p.params.name] ?? (1 / projections.length)
+    return {
+      name: p.params.name,
+      ev12: (p.months[11]?.liquidNetWorth ?? 0) * prob,
+      ev24: p.endingNetWorth * prob,
+      probability: prob,
+    }
+  })
+}
+
+export function freedCapitalCascade(
+  debts: DebtItem[],
+  strategy: DebtPayoffStrategy,
+  extraPayment: number,
+  months: number = 60
+): FreedCascadeStep[] {
+  const items = debts.filter(d => d.isActive && d.balance > 0)
+  if (items.length === 0) return []
+
+  const balances = new Map<string, number>()
+  items.forEach(d => balances.set(d.name, d.balance))
+
+  const sorted = [...items].sort((a, b) => {
+    if (strategy === 'avalanche') return b.apr - a.apr
+    if (strategy === 'snowball') return a.balance - b.balance
+    return 0
+  })
+
+  const steps: FreedCascadeStep[] = []
+  let freedPool = extraPayment
+
+  for (let m = 0; m < months; m++) {
+    // Accrue interest
+    for (const debt of items) {
+      const bal = balances.get(debt.name) || 0
+      if (bal <= 0) continue
+      balances.set(debt.name, bal + bal * (debt.apr / 12))
+    }
+
+    // Pay minimums
+    for (const debt of items) {
+      const bal = balances.get(debt.name) || 0
+      if (bal <= 0) continue
+      const payment = Math.min(debt.minimumPayment, bal)
+      balances.set(debt.name, bal - payment)
+    }
+
+    // Apply freed pool to highest priority active debt
+    let remaining = freedPool
+    const active = sorted.filter(d => (balances.get(d.name) || 0) > 0)
+    for (const debt of active) {
+      if (remaining <= 0) break
+      const bal = balances.get(debt.name) || 0
+      const payment = Math.min(remaining, bal)
+      balances.set(debt.name, bal - payment)
+      remaining -= payment
+    }
+
+    // Check for newly eliminated debts
+    for (const debt of sorted) {
+      const bal = balances.get(debt.name) || 0
+      if (bal <= 0.01 && !steps.find(s => s.debtName === debt.name)) {
+        const nextActive = sorted.filter(d => d.name !== debt.name && (balances.get(d.name) || 0) > 0.01)
+        steps.push({
+          debtName: debt.name,
+          paidOffMonth: m,
+          freedMinimum: debt.minimumPayment,
+          acceleratesNext: nextActive[0]?.name ?? 'None — debt free!',
+        })
+        freedPool += debt.minimumPayment
+      }
+    }
+
+    if (Array.from(balances.values()).every(v => v <= 0.01)) break
+  }
+
+  return steps
+}
+
+export function generateAllocationTargets(
+  position: CapitalPosition
+): AllocationTarget[] {
+  const targets: AllocationTarget[] = []
+  const sixMonthExpenses = position.monthlyExpenses * 6
+  const toxicDebt = position.debtItems
+    .filter(d => d.isActive && d.apr > 0.20 && d.balance > 0)
+    .reduce((s, d) => s + d.balance, 0)
+  const taxDebt = position.debtItems
+    .filter(d => d.isActive && d.category === 'tax' && d.balance > 0)
+    .reduce((s, d) => s + d.balance, 0)
+
+  targets.push({
+    category: 'emergency',
+    label: 'Emergency Fund (6mo)',
+    current: position.cashSavings,
+    target: sixMonthExpenses,
+    pct: sixMonthExpenses > 0 ? clamp(position.cashSavings / sixMonthExpenses * 100, 0, 100) : 0,
+    rationale: 'Cash reserves covering 6 months of expenses provide strategic flexibility and prevent forced liquidation of assets at bad prices.',
+  })
+
+  if (toxicDebt > 0) {
+    targets.push({
+      category: 'toxic_debt',
+      label: 'Toxic Debt Elimination (>20% APR)',
+      current: toxicDebt,
+      target: 0,
+      pct: 0, // 0% progress toward elimination
+      rationale: `Paying off high-APR debt is a guaranteed ${((position.debtItems.filter(d => d.apr > 0.20).sort((a, b) => b.apr - a.apr)[0]?.apr ?? 0.25) * 100).toFixed(1)}% return. No investment beats this risk-adjusted.`,
+    })
+  }
+
+  if (taxDebt > 0) {
+    targets.push({
+      category: 'tax',
+      label: 'Tax Obligations',
+      current: taxDebt,
+      target: 0,
+      pct: 0,
+      rationale: 'Unresolved tax obligations accrue penalties and restrict financial flexibility. IRS payment plans prevent escalation.',
+    })
+  }
+
+  targets.push({
+    category: 'growth',
+    label: 'Growth Capital',
+    current: position.investments + position.crypto,
+    target: position.totalAssets * 0.5,
+    pct: position.totalAssets > 0 ? clamp((position.investments + position.crypto) / (position.totalAssets * 0.5) * 100, 0, 100) : 0,
+    rationale: 'After debt elimination, redirect freed cash flow to diversified investments. Target 50% of assets in growth positions.',
+  })
+
+  return targets
 }
 
 // ─── BUILD CAPITAL POSITION ─────────────────────────────────────────
