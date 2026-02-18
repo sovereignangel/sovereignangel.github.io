@@ -58,51 +58,6 @@ export default function AlpeDial() {
       </div>
 
       <div className="bg-paper border border-rule rounded-sm p-3 flex-1 overflow-y-auto space-y-3">
-        {/* Emotional Volatility */}
-        <div className="border-b border-rule-light pb-2.5">
-          <h4 className="font-serif text-[9px] font-semibold uppercase tracking-[1px] text-burgundy mb-2">
-            Emotional Volatility
-          </h4>
-          <div className="flex gap-2 items-center flex-wrap">
-            <div className="flex items-center gap-1">
-              <label className="font-serif text-[8px] italic uppercase tracking-wide text-ink-muted">24hr Rule</label>
-              <button
-                onClick={() => updateField('twentyFourHourRuleApplied', !log.twentyFourHourRuleApplied)}
-                className={`font-serif text-[9px] font-medium px-1.5 py-0.5 rounded-sm border transition-colors ${
-                  log.twentyFourHourRuleApplied ? 'bg-burgundy text-paper border-burgundy' : 'bg-transparent text-ink-muted border-rule'
-                }`}
-              >
-                {log.twentyFourHourRuleApplied ? 'Y' : 'N'}
-              </button>
-            </div>
-            <div className="flex items-center gap-1">
-              <label className="font-serif text-[8px] italic uppercase tracking-wide text-ink-muted">No Emotional Texting</label>
-              <button
-                onClick={() => updateField('noEmotionalTexting', !log.noEmotionalTexting)}
-                className={`font-serif text-[9px] font-medium px-1.5 py-0.5 rounded-sm border transition-colors ${
-                  log.noEmotionalTexting ? 'bg-burgundy text-paper border-burgundy' : 'bg-transparent text-ink-muted border-rule'
-                }`}
-              >
-                {log.noEmotionalTexting ? 'Y' : 'N'}
-              </button>
-            </div>
-          </div>
-          <input
-            type="text"
-            value={log.cleanRequestRelease || ''}
-            onChange={(e) => updateField('cleanRequestRelease', e.target.value)}
-            className="w-full mt-1.5 font-sans text-[10px] bg-cream border border-rule rounded-sm px-1.5 py-0.5 focus:outline-none focus:border-burgundy"
-            placeholder="Clean request / release..."
-          />
-          <input
-            type="text"
-            value={log.automationOpportunity || ''}
-            onChange={(e) => updateField('automationOpportunity', e.target.value)}
-            className="w-full mt-1.5 font-sans text-[10px] bg-cream border border-rule rounded-sm px-1.5 py-0.5 focus:outline-none focus:border-burgundy"
-            placeholder="Automation opportunity..."
-          />
-        </div>
-
         {/* Network Touch */}
         <div className="border-b border-rule-light pb-2.5">
           <div className="flex items-center justify-between mb-2">
