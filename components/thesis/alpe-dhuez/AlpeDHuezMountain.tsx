@@ -8,12 +8,11 @@ import { BELT_ORDER, BELT_LABELS } from '@/lib/types'
 // Black at top, white at base
 
 const BELT_BANDS: { belt: typeof BELT_ORDER[number]; yTop: number; yBot: number; fill: string; textColor: string }[] = [
-  { belt: 'black',  yTop: 30,  yBot: 82,  fill: '#2a2522', textColor: '#2a2522' },
-  { belt: 'brown',  yTop: 82,  yBot: 134, fill: '#7c2d2d', textColor: '#7c2d2d' },
-  { belt: 'green',  yTop: 134, yBot: 186, fill: '#2d5f3f', textColor: '#2d5f3f' },
-  { belt: 'orange', yTop: 186, yBot: 238, fill: '#8a6d2f', textColor: '#8a6d2f' },
-  { belt: 'yellow', yTop: 238, yBot: 290, fill: '#8a6d2f', textColor: '#8a6d2f' },
-  { belt: 'white',  yTop: 290, yBot: 340, fill: '#9a928a', textColor: '#9a928a' },
+  { belt: 'black',  yTop: 30,  yBot: 92,  fill: '#2a2522', textColor: '#2a2522' },
+  { belt: 'brown',  yTop: 92,  yBot: 154, fill: '#8a6d2f', textColor: '#8a6d2f' },
+  { belt: 'purple', yTop: 154, yBot: 216, fill: '#7c2d2d', textColor: '#7c2d2d' },
+  { belt: 'blue',   yTop: 216, yBot: 278, fill: '#2a4a6b', textColor: '#2a4a6b' },
+  { belt: 'white',  yTop: 278, yBot: 340, fill: '#9a928a', textColor: '#9a928a' },
 ]
 
 // Mountain slope: left edge x at given y

@@ -14,7 +14,6 @@ import type { SalesAssessment, RuinConditions, NetworkContact, DailyLog, Monthly
 import { BELT_LABELS, getSystemState, SYSTEM_STATE_COLORS } from '@/lib/types'
 import { computeMastery } from '@/lib/belt-engine'
 import type { MasteryAssessment } from '@/lib/belt-engine'
-import AlpeDHuezMountain from './AlpeDHuezMountain'
 import MasteryTree from './MasteryTree'
 
 // ─── Constants ────────────────────────────────────────────────────────
@@ -232,34 +231,6 @@ export default function AuditView() {
 
   return (
     <div className="space-y-3">
-      {/* ─── Alp d'Huez Mountain Visual ────────────────────── */}
-      {beltAssessment && (
-        <div className="bg-paper border border-rule rounded-sm p-3">
-          <h4 className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-2 pb-1.5 border-b-2 border-rule">
-            Alpe d&apos;Huez — Belt Progression
-          </h4>
-          <AlpeDHuezMountain
-            assessment={beltAssessment}
-            ruinConditions={ruinConditions}
-          />
-          <div className="mt-2 pt-2 border-t border-rule-light flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className={`font-mono text-[11px] font-semibold ${BELT_COLORS[beltAssessment.currentBelt]}`}>
-                {BELT_LABELS[beltAssessment.currentBelt]}
-              </span>
-              <span className="font-mono text-[9px] text-ink-muted">
-                {beltAssessment.beltProgress}% to {beltAssessment.nextBelt ? BELT_LABELS[beltAssessment.nextBelt] : 'peak'}
-              </span>
-            </div>
-            {beltAssessment.ruinActive && (
-              <span className="font-mono text-[8px] text-red-ink bg-red-bg px-1.5 py-0.5 rounded-sm border border-red-ink/20">
-                RUIN ACTIVE
-              </span>
-            )}
-          </div>
-        </div>
-      )}
-
       {/* ─── Interactive Mastery Tree ─────────────────────────── */}
       {mastery && <MasteryTree mastery={mastery} />}
 
@@ -420,8 +391,8 @@ export default function AuditView() {
             {recentAssessments.map((a) => (
               <div key={a.date} className="flex items-center justify-between py-1 border-b border-rule-light/50">
                 <span className="font-mono text-[10px] text-ink">{a.date.slice(0, 7)}</span>
-                <span className={`font-mono text-[9px] font-medium ${BELT_COLORS[a.currentBelt]}`}>
-                  {BELT_LABELS[a.currentBelt]}
+                <span className={`font-mono text-[9px] font-medium ${BELT_COLORS[a.currentBelt] || 'text-ink-muted'}`}>
+                  {BELT_LABELS[a.currentBelt as keyof typeof BELT_LABELS] || a.currentBelt}
                 </span>
                 <span className="font-mono text-[8px] text-ink-muted">
                   {a.beltProgress}% | Clarity: {a.oneLinerClarityScore}/5

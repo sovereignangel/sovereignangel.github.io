@@ -63,6 +63,7 @@ export interface LevelScore {
   level: MasteryLevelId
   label: string
   sublabel: string
+  context: string
   belt: SalesBelt
   tracks: TrackScore[]
   progress: number    // 0-100
@@ -90,12 +91,27 @@ const SKILL_MET_THRESHOLD = 0.8
 
 // ─── MASTERY LEVEL METADATA ─────────────────────────────────────────
 
-const LEVEL_META: { level: MasteryLevelId; label: string; sublabel: string; belt: SalesBelt }[] = [
-  { level: 'imitation',     label: 'Imitation',     sublabel: 'Do the reps',                    belt: 'white' },
-  { level: 'structure',     label: 'Structure',     sublabel: 'Combine into patterns',           belt: 'yellow' },
-  { level: 'adaptation',    label: 'Adaptation',    sublabel: 'Read, adjust, improvise',          belt: 'orange' },
-  { level: 'integration',   label: 'Integration',   sublabel: 'All three muscles as one',         belt: 'green' },
-  { level: 'transcendence', label: 'Transcendence', sublabel: 'Pure intuition — you ARE the brand', belt: 'brown' },
+const LEVEL_META: { level: MasteryLevelId; label: string; sublabel: string; context: string; belt: SalesBelt }[] = [
+  {
+    level: 'imitation', label: 'Imitation', sublabel: 'White belt — do the reps', belt: 'white',
+    context: 'Like a chess beginner memorizing openings or a white belt drilling basic positions. Build the muscle memory of daily execution — ship something, ask for money, post publicly. Don\'t think, just do the reps until they\'re automatic.',
+  },
+  {
+    level: 'structure', label: 'Structure', sublabel: 'Blue belt — combine into patterns', belt: 'blue',
+    context: 'Like a chess player learning tactical patterns (pins, forks, skewers) or a BJJ blue belt chaining techniques. Your systems form: weekly shipping cadence, conversion tracking, content calendar. Individual moves become combinations that compound.',
+  },
+  {
+    level: 'adaptation', label: 'Adaptation', sublabel: 'Purple belt — read, adjust, improvise', belt: 'purple',
+    context: 'Like reading a chess position intuitively or a purple belt who flows between systems. You read the room, adjust your message in real-time, know when to ship vs. polish. The three muscles start feeding each other — shipping creates content, content creates inbound, inbound creates revenue.',
+  },
+  {
+    level: 'integration', label: 'Integration', sublabel: 'Brown belt — all three muscles as one', belt: 'brown',
+    context: 'Like invisible jiu-jitsu — your system works so smoothly others can\'t see the technique. Inbound exceeds outbound. Revenue flows from warm relationships. Multiple products ship simultaneously. The three muscles are one muscle.',
+  },
+  {
+    level: 'transcendence', label: 'Transcendence', sublabel: 'Black belt — pure intuition', belt: 'black',
+    context: 'Like a grandmaster who "sees" the right move or a push hands master who redirects without thinking. You ARE the brand. Your intuition about what to ship, who to talk to, and what to say is instantaneous. The market shapes around you.',
+  },
 ]
 
 const TRACK_LABELS: Record<MasteryTrack, string> = {
@@ -344,6 +360,7 @@ export function computeMastery(
       level: meta.level,
       label: meta.label,
       sublabel: meta.sublabel,
+      context: meta.context,
       belt: meta.belt,
       tracks: trackScores,
       progress: levelProgress,
@@ -407,15 +424,6 @@ function buildBeltAssessment(
       progress: lvl.progress,
       locked: lvl.locked,
     }
-  })
-
-  // Add the black belt (transcendence covers brown+black in belt space)
-  allBelts.push({
-    belt: 'black',
-    label: BELT_LABELS.black,
-    requirements: [{ key: 'locked', label: 'Peak mastery', target: 0, current: 0, unit: '', met: false }],
-    progress: 0,
-    locked: true,
   })
 
   const currentBelt = BELT_ORDER[currentLevelIdx]
