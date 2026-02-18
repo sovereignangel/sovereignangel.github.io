@@ -11,7 +11,7 @@ import Link from 'next/link'
 
 export default function FocusView() {
   const { user } = useAuth()
-  const { log, recentLogs, dates, updateField } = useDailyLogContext()
+  const { log, recentLogs, dates } = useDailyLogContext()
   const [projects, setProjects] = useState<Project[]>([])
 
   useEffect(() => {
@@ -104,73 +104,53 @@ export default function FocusView() {
         </div>
       </div>
 
-      {/* Today's Focus */}
+      {/* Today's Status (read-only — input via sidebar) */}
       <div className="bg-paper border border-rule rounded-sm p-3">
         <div className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-2 pb-1.5 border-b-2 border-rule">
-          Today&apos;s Focus
+          Today
         </div>
-        <div className="space-y-2">
-          <div>
-            <label className="font-serif text-[8px] italic uppercase tracking-wide text-ink-muted block mb-0.5">
-              What Gets Done Today?
-            </label>
-            <textarea
-              value={(log as Record<string, unknown>).todayFocus as string || ''}
-              onChange={(e) => updateField('todayFocus', e.target.value)}
-              className="w-full font-mono text-[11px] bg-cream border border-rule rounded-sm px-2 py-1 text-ink focus:outline-none focus:border-burgundy min-h-[32px] resize-y"
-              placeholder="What gets done today?"
-            />
-          </div>
-          <div className="grid grid-cols-3 gap-2">
-            <div>
-              <label className="font-serif text-[8px] italic uppercase tracking-wide text-ink-muted block mb-0.5">
-                One Action
-              </label>
-              <input
-                type="text"
-                value={(log as Record<string, unknown>).todayOneAction as string || ''}
-                onChange={(e) => updateField('todayOneAction', e.target.value)}
-                className="w-full font-mono text-[11px] bg-cream border border-rule rounded-sm px-2 py-1 text-ink focus:outline-none focus:border-burgundy"
-                placeholder="Ship by EOD"
-              />
-            </div>
-            <div>
-              <label className="font-serif text-[8px] italic uppercase tracking-wide text-ink-muted block mb-0.5">
-                Focus Target
-              </label>
-              <input
-                type="number"
-                value={log.focusHoursTarget || ''}
-                onChange={(e) => updateField('focusHoursTarget', parseFloat(e.target.value) || 0)}
-                className="w-full font-mono text-[11px] bg-cream border border-rule rounded-sm px-2 py-1 text-ink focus:outline-none focus:border-burgundy"
-                step="0.5"
-                placeholder="6"
-              />
-            </div>
-            <div>
-              <label className="font-serif text-[8px] italic uppercase tracking-wide text-ink-muted block mb-0.5">
-                Days Since Output
-              </label>
-              <input
-                type="number"
-                value={log.daysSinceLastOutput || ''}
-                onChange={(e) => updateField('daysSinceLastOutput', parseInt(e.target.value) || 0)}
-                className={`w-full font-mono text-[11px] bg-cream border border-rule rounded-sm px-2 py-1 focus:outline-none focus:border-burgundy ${
-                  (log.daysSinceLastOutput || 0) >= 3 ? 'text-red-ink' : 'text-ink'
-                }`}
-              />
-            </div>
+        <div className="grid grid-cols-2 gap-x-3 gap-y-2">
+          <div className="col-span-2">
+            <p className="font-serif text-[8px] italic uppercase tracking-wide text-ink-muted mb-0.5">Intent</p>
+            <p className={`font-mono text-[11px] ${(log as Record<string, unknown>).todayFocus ? 'text-ink' : 'text-ink-faint italic'}`}>
+              {(log as Record<string, unknown>).todayFocus as string || 'Set in sidebar →'}
+            </p>
           </div>
           <div>
-            <label className="font-serif text-[8px] italic uppercase tracking-wide text-ink-muted block mb-0.5">
-              Yesterday&apos;s Outcome
-            </label>
-            <textarea
-              value={(log as Record<string, unknown>).yesterdayOutcome as string || ''}
-              onChange={(e) => updateField('yesterdayOutcome', e.target.value)}
-              className="w-full font-mono text-[11px] bg-cream border border-rule rounded-sm px-2 py-1 text-ink focus:outline-none focus:border-burgundy min-h-[28px] resize-y"
-              placeholder="What happened as a result of yesterday's action?"
-            />
+            <p className="font-serif text-[8px] italic uppercase tracking-wide text-ink-muted mb-0.5">One Action</p>
+            <p className={`font-mono text-[11px] ${(log as Record<string, unknown>).todayOneAction ? 'text-ink' : 'text-ink-faint italic'}`}>
+              {(log as Record<string, unknown>).todayOneAction as string || '—'}
+            </p>
+          </div>
+          <div>
+            <p className="font-serif text-[8px] italic uppercase tracking-wide text-ink-muted mb-0.5">Focus</p>
+            <p className="font-mono text-[11px] text-ink">
+              {log.focusHoursActual || 0}h{log.focusHoursTarget ? ` / ${log.focusHoursTarget}h` : ''}
+            </p>
+          </div>
+          <div className="col-span-2">
+            <p className="font-serif text-[8px] italic uppercase tracking-wide text-ink-muted mb-0.5">Shipped</p>
+            <p className={`font-mono text-[11px] ${log.whatShipped ? 'text-ink' : 'text-ink-faint italic'}`}>
+              {log.whatShipped || 'Nothing shipped yet'}
+            </p>
+          </div>
+          {/* Quality badges */}
+          <div className="col-span-2 flex gap-1.5">
+            {log.publicIteration && (
+              <span className="font-mono text-[8px] uppercase px-1.5 py-0.5 rounded-sm border bg-burgundy-bg text-burgundy border-burgundy/20">
+                Public
+              </span>
+            )}
+            {log.feedbackLoopClosed && (
+              <span className="font-mono text-[8px] uppercase px-1.5 py-0.5 rounded-sm border bg-green-bg text-green-ink border-green-ink/20">
+                Feedback
+              </span>
+            )}
+            {log.speedOverPerfection && (
+              <span className="font-mono text-[8px] uppercase px-1.5 py-0.5 rounded-sm border bg-amber-bg text-amber-ink border-amber-ink/20">
+                Speed&gt;Perf
+              </span>
+            )}
           </div>
         </div>
       </div>

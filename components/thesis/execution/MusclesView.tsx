@@ -52,6 +52,11 @@ export default function MusclesView() {
 
   return (
     <div className="h-full flex flex-col space-y-3 overflow-y-auto">
+      {/* Hint */}
+      <p className="font-mono text-[9px] text-ink-faint italic px-1">
+        Daily counts are entered in the sidebar under Ships &amp; Revenue →
+      </p>
+
       {/* Muscle 1: Shipping Speed */}
       <div className="bg-paper border border-rule rounded-sm p-3">
         <div className="flex items-center justify-between mb-2 pb-1.5 border-b-2 border-rule">
