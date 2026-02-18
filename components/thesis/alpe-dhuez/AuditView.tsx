@@ -9,30 +9,29 @@ import {
   getRecentSalesAssessments,
   saveSalesAssessment,
 } from '@/lib/firestore'
-import { BELT_COLORS, MUSCLE_TARGETS } from '@/lib/constants'
+import { BELT_COLORS } from '@/lib/constants'
 import type { SalesAssessment, RuinConditions, NetworkContact, DailyLog, MonthlyMetrics } from '@/lib/types'
-import { BELT_LABELS, getSystemState, SYSTEM_STATE_COLORS } from '@/lib/types'
+import { BELT_LABELS } from '@/lib/types'
 import { computeMastery } from '@/lib/belt-engine'
-import type { MasteryAssessment } from '@/lib/belt-engine'
-import MasteryTree from './MasteryTree'
+import type { MasteryAssessment, SkillNode, TrackScore } from '@/lib/belt-engine'
 
 // ─── Constants ────────────────────────────────────────────────────────
 
 const RUIN_CONDITIONS: { key: keyof RuinConditions; label: string; fix: string }[] = [
   {
     key: 'fragmented',
-    label: 'Network fragmented \u2014 all 30 weak',
-    fix: 'Fix: Focus on 5 highest-potential contacts this week. Deliver value to each one.',
+    label: 'Network fragmented',
+    fix: 'Focus on 5 highest-potential contacts this week.',
   },
   {
     key: 'unclear',
-    label: 'Message unclear \u2014 people don\'t get it',
-    fix: 'Fix: Test your one-liner with 5 new people. Track which version gets the best response.',
+    label: 'Message unclear',
+    fix: 'Test your one-liner with 5 new people.',
   },
   {
     key: 'noValue',
-    label: 'No value flowing \u2014 all asks, no gives',
-    fix: 'Fix: Send 3 value-first touches this week (intros, articles, insights) with zero ask.',
+    label: 'No value flowing',
+    fix: 'Send 3 value-first touches this week with zero ask.',
   },
 ]
 
@@ -106,25 +105,115 @@ function computeMetrics(logs: DailyLog[], contacts: NetworkContact[]): MonthlyMe
   }
 }
 
-// ─── Metric Row ───────────────────────────────────────────────────────
+// ─── Pace utilities ──────────────────────────────────────────────────
 
-function MetricRow({ label, value, unit, state }: { label: string; value: string; unit?: string; state?: string }) {
-  const stateColor = state
-    ? SYSTEM_STATE_COLORS[state as keyof typeof SYSTEM_STATE_COLORS]?.text || 'text-ink'
-    : 'text-ink'
+type PaceStatus = 'met' | 'ahead' | 'on_pace' | 'behind'
+
+function getSkillPace(score: number, monthPct: number): PaceStatus {
+  if (score >= 0.8) return 'met'
+  if (monthPct <= 0.05) return score > 0 ? 'on_pace' : 'behind'
+  const expected = monthPct * 0.8
+  const pace = score / expected
+  if (pace >= 1.3) return 'ahead'
+  if (pace >= 0.8) return 'on_pace'
+  return 'behind'
+}
+
+function getLevelPace(progress: number, monthPct: number): PaceStatus {
+  if (progress >= 80) return 'met'
+  if (monthPct <= 0.05) return progress > 0 ? 'on_pace' : 'behind'
+  const expected = monthPct * 80
+  const pace = progress / expected
+  if (pace >= 1.3) return 'ahead'
+  if (pace >= 0.8) return 'on_pace'
+  return 'behind'
+}
+
+const PACE_STYLES: Record<PaceStatus, { label: string; icon: string; color: string; bg: string }> = {
+  met:     { label: 'MET',     icon: '\u2713', color: 'text-green-ink', bg: 'bg-green-bg border-green-ink/20' },
+  ahead:   { label: 'AHEAD',   icon: '\u2191', color: 'text-green-ink', bg: 'bg-green-bg border-green-ink/20' },
+  on_pace: { label: 'ON PACE', icon: '\u2192', color: 'text-amber-ink', bg: 'bg-amber-bg border-amber-ink/20' },
+  behind:  { label: 'BEHIND',  icon: '\u2193', color: 'text-red-ink',   bg: 'bg-red-bg border-red-ink/20' },
+}
+
+function PaceTag({ status }: { status: PaceStatus }) {
+  const s = PACE_STYLES[status]
   return (
-    <div className="flex items-center justify-between py-1 border-b border-rule-light/50">
-      <span className="font-mono text-[10px] text-ink-muted">{label}</span>
-      <span className="flex items-baseline gap-1">
-        <span className={`font-mono text-[11px] font-semibold tabular-nums ${stateColor}`}>{value}</span>
-        {unit && <span className="font-mono text-[8px] text-ink-faint">{unit}</span>}
-        {state && <span className={`font-mono text-[7px] ${stateColor}`}>{state}</span>}
+    <span className={`font-mono text-[7px] font-bold px-1.5 py-0.5 rounded-sm border ${s.bg} ${s.color} uppercase tracking-[0.5px] flex-shrink-0`}>
+      {s.icon} {s.label}
+    </span>
+  )
+}
+
+// ─── Skill Row ───────────────────────────────────────────────────────
+
+function SkillRow({ skill, monthPct }: { skill: SkillNode; monthPct: number }) {
+  const pct = Math.round(skill.score * 100)
+  const pace = getSkillPace(skill.score, monthPct)
+  const barColor = skill.met
+    ? 'bg-green-ink'
+    : pct >= 50
+      ? 'bg-amber-ink'
+      : pct > 0
+        ? 'bg-ink-faint'
+        : 'bg-rule'
+
+  return (
+    <div className="flex items-center gap-2 py-1.5 border-b border-rule-light/50 last:border-0">
+      <span className="font-mono text-[10px] text-ink-muted w-24 flex-shrink-0 truncate">
+        {skill.label}
       </span>
+      <span className="font-mono text-[11px] font-semibold text-ink tabular-nums w-16 text-right flex-shrink-0">
+        {skill.current}
+      </span>
+      <div className="flex-1 h-[3px] bg-rule-light rounded-sm min-w-[32px]">
+        <div
+          className={`h-full rounded-sm transition-all duration-300 ${barColor}`}
+          style={{ width: `${Math.min(pct, 100)}%` }}
+        />
+      </div>
+      <span className={`font-mono text-[9px] font-semibold tabular-nums w-7 text-right flex-shrink-0 ${
+        skill.met ? 'text-green-ink' : pct >= 50 ? 'text-amber-ink' : 'text-ink-muted'
+      }`}>
+        {pct}%
+      </span>
+      <PaceTag status={pace} />
     </div>
   )
 }
 
-// ─── AuditView ────────────────────────────────────────────────────────
+// ─── Track Card ──────────────────────────────────────────────────────
+
+function TrackCard({ track, monthPct }: { track: TrackScore; monthPct: number }) {
+  const trackPace = getLevelPace(track.progress, monthPct)
+  const metCount = track.skills.filter(s => s.met).length
+
+  return (
+    <div className="bg-paper border border-rule rounded-sm p-3">
+      <div className="flex items-center justify-between mb-1.5 pb-1.5 border-b-2 border-rule">
+        <div className="flex items-center gap-2">
+          <h4 className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-burgundy">
+            {track.label}
+          </h4>
+          <span className="font-mono text-[8px] text-ink-faint">
+            {metCount}/{track.skills.length} met
+          </span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="font-mono text-[10px] font-semibold text-burgundy tabular-nums">
+            {track.progress}%
+          </span>
+          <PaceTag status={trackPace} />
+        </div>
+      </div>
+      {track.skills.map(skill => (
+        <SkillRow key={skill.id} skill={skill} monthPct={monthPct} />
+      ))}
+    </div>
+  )
+}
+
+// ─── AscentView (formerly AuditView) ─────────────────────────────────
 
 export default function AuditView() {
   const { user } = useAuth()
@@ -137,13 +226,13 @@ export default function AuditView() {
   const [recentAssessments, setRecentAssessments] = useState<SalesAssessment[]>([])
   const [saving, setSaving] = useState(false)
 
-  // Manual inputs — the only things you fill in
+  // Manual inputs
   const [oneLiner, setOneLiner] = useState('')
   const [oneLinerClarityScore, setOneLinerClarityScore] = useState(3)
   const [ruinConditions, setRuinConditions] = useState<RuinConditions>(DEFAULT_RUIN)
   const [nextMonthFocus, setNextMonthFocus] = useState('')
 
-  // Computed mastery assessment — reacts to metrics + manual inputs
+  // Computed mastery
   const mastery: MasteryAssessment | null = useMemo(() => {
     if (!metrics) return null
     return computeMastery(metrics, oneLinerClarityScore, ruinConditions)
@@ -173,7 +262,7 @@ export default function AuditView() {
         setNextMonthFocus(existing.nextMonthFocus || '')
       }
     } catch (err) {
-      console.error('Audit load error:', err)
+      console.error('Ascent load error:', err)
       setMetrics(computeMetrics([], []))
     }
   }, [user, monthKey])
@@ -218,86 +307,137 @@ export default function AuditView() {
     setRuinConditions(prev => ({ ...prev, [key]: !prev[key] }))
   }
 
+  // Month progress for pace calculations
+  const now = new Date()
+  const dayOfMonth = now.getDate()
+  const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()
+  const monthPct = dayOfMonth / daysInMonth
+
   if (!metrics) {
     return (
       <div className="h-full flex items-center justify-center">
-        <span className="font-mono text-[11px] text-ink-muted">Loading audit data...</span>
+        <span className="font-mono text-[11px] text-ink-muted">Loading ascent data...</span>
       </div>
     )
   }
 
-  const muscleState = (current: number, target: number) =>
-    getSystemState(target > 0 ? current / target : 0, { nominal: 1.0, watch: 0.7, caution: 0.4 })
+  const currentLevel = mastery ? mastery.levels[mastery.currentLevelIdx] : null
+  const overallPace = currentLevel ? getLevelPace(currentLevel.progress, monthPct) : 'behind'
+  const totalMet = currentLevel
+    ? currentLevel.tracks.reduce((s, t) => s + t.skills.filter(sk => sk.met).length, 0)
+    : 0
+  const totalSkills = currentLevel
+    ? currentLevel.tracks.reduce((s, t) => s + t.skills.length, 0)
+    : 0
 
   return (
     <div className="space-y-3">
-      {/* ─── Interactive Mastery Tree ─────────────────────────── */}
-      {mastery && <MasteryTree mastery={mastery} />}
+      {/* ─── Stage Hero ───────────────────────────────────────── */}
+      {mastery && currentLevel && (
+        <div className="bg-paper border border-rule rounded-sm p-3">
+          <div className="flex items-center justify-between mb-2 pb-1.5 border-b-2 border-rule">
+            <h4 className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy">
+              Ascent
+            </h4>
+            <span className="font-mono text-[8px] text-ink-muted">
+              Day {dayOfMonth} of {daysInMonth}
+            </span>
+          </div>
 
-      {/* How it works */}
-      <div className="bg-cream border border-rule rounded-sm px-3 py-2">
-        <p className="font-mono text-[9px] text-ink-muted leading-relaxed">
-          Auto-aggregated from {metrics.daysTracked} daily logs + {metrics.contactCount} network contacts.
-          Belt level is computed from your execution data. You fill in: message clarity, ruin check, next month focus.
-        </p>
-      </div>
+          {/* Stage one-liner */}
+          <div className="flex items-center gap-2 mb-2">
+            <span className="font-mono text-[7px] font-bold text-paper bg-burgundy px-1 py-0.5 rounded-sm uppercase tracking-[0.5px] flex-shrink-0">
+              Stage {mastery.currentLevelIdx + 1}/5
+            </span>
+            <span className="font-serif text-[12px] font-semibold text-ink">
+              {currentLevel.label}
+            </span>
+            <span className="font-serif text-[10px] text-ink-muted">
+              &mdash; {currentLevel.sublabel}
+            </span>
+          </div>
 
-      {/* ─── AUTO: Execution ───────────────────────────────────── */}
+          {/* Progress bar + pace */}
+          <div className="flex items-center gap-2 mb-2">
+            <div className="flex-1 h-[4px] bg-rule-light rounded-sm overflow-hidden relative">
+              {/* Expected position marker */}
+              <div
+                className="absolute top-0 h-full w-px bg-ink-faint/50"
+                style={{ left: `${Math.min(monthPct * 80, 100)}%` }}
+              />
+              <div
+                className={`h-full rounded-sm transition-all duration-500 ${
+                  overallPace === 'met' || overallPace === 'ahead'
+                    ? 'bg-green-ink'
+                    : overallPace === 'on_pace'
+                      ? 'bg-amber-ink'
+                      : 'bg-red-ink'
+                }`}
+                style={{ width: `${Math.min(currentLevel.progress, 100)}%` }}
+              />
+            </div>
+            <span className="font-mono text-[11px] font-bold text-burgundy tabular-nums flex-shrink-0">
+              {currentLevel.progress}%
+            </span>
+            <PaceTag status={overallPace} />
+          </div>
+
+          {/* Quick stats strip */}
+          <div className="flex items-center gap-3 pt-1.5 border-t border-rule-light">
+            <span className="font-mono text-[9px] text-ink-muted">
+              <span className="font-semibold text-green-ink">{totalMet}</span>/{totalSkills} skills met
+            </span>
+            <span className="font-mono text-[9px] text-ink-muted">
+              Reward <span className="font-semibold text-ink">{metrics.avgScore.toFixed(1)}</span>/10
+            </span>
+            <span className={`font-mono text-[9px] font-semibold ${
+              metrics.scoreTrajectory > 0
+                ? 'text-green-ink'
+                : metrics.scoreTrajectory > -0.5
+                  ? 'text-amber-ink'
+                  : 'text-red-ink'
+            }`}>
+              {metrics.scoreTrajectory >= 0 ? '\u2191' : '\u2193'} {Math.abs(metrics.scoreTrajectory).toFixed(1)} trend
+            </span>
+            <span className="font-mono text-[8px] text-ink-faint ml-auto">
+              {metrics.daysTracked}d tracked
+            </span>
+          </div>
+        </div>
+      )}
+
+      {/* ─── Track Cards (current level) ──────────────────────── */}
+      {currentLevel?.tracks.map(track => (
+        <TrackCard key={track.track} track={track} monthPct={monthPct} />
+      ))}
+
+      {/* ─── Completed Levels ─────────────────────────────────── */}
+      {mastery && mastery.currentLevelIdx > 0 && (
+        <div className="bg-green-bg border border-green-ink/20 rounded-sm p-2.5">
+          <h4 className="font-serif text-[9px] font-semibold uppercase tracking-[0.5px] text-green-ink mb-1.5">
+            Completed Stages
+          </h4>
+          <div className="flex gap-2">
+            {mastery.levels.slice(0, mastery.currentLevelIdx).map(level => (
+              <span
+                key={level.level}
+                className="font-mono text-[8px] font-semibold text-green-ink bg-paper/60 px-1.5 py-0.5 rounded-sm border border-green-ink/20"
+              >
+                &#10003; {level.label} &middot; {level.progress}%
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ─── Monthly Assessment (compact) ─────────────────────── */}
       <div className="bg-paper border border-rule rounded-sm p-3">
         <h4 className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-2 pb-1.5 border-b-2 border-rule">
-          Execution ({metrics.daysTracked}d)
+          Monthly Assessment
         </h4>
-        <MetricRow label="Ships" value={String(metrics.totalShips)} unit={`${metrics.shipsPerWeek.toFixed(1)}/wk`} state={muscleState(metrics.shipsPerWeek, MUSCLE_TARGETS.shipsPerWeek)} />
-        <MetricRow label="Revenue Asks" value={String(metrics.totalAsks)} unit={`${metrics.asksPerWeek.toFixed(1)}/wk`} state={muscleState(metrics.asksPerWeek, MUSCLE_TARGETS.asksPerWeek)} />
-        <MetricRow label="Public Posts" value={String(metrics.totalPosts)} unit={`${metrics.postsPerWeek.toFixed(1)}/wk`} state={muscleState(metrics.postsPerWeek, MUSCLE_TARGETS.postsPerWeek)} />
-        <MetricRow label="Avg Focus" value={metrics.avgFocusHours.toFixed(1)} unit="hrs/day" />
-        <MetricRow label="Revenue" value={`$${metrics.totalRevenue.toLocaleString()}`} />
-        <MetricRow label="Output Days" value={`${metrics.daysWithOutput}/${metrics.daysTracked}`} />
-      </div>
 
-      {/* ─── AUTO: Network Health ──────────────────────────────── */}
-      <div className="bg-paper border border-rule rounded-sm p-3">
-        <h4 className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-2 pb-1.5 border-b-2 border-rule">
-          Network Health
-        </h4>
-        <MetricRow label="Contacts" value={String(metrics.contactCount)} unit={`${metrics.top30Count} Top 30`} />
-        <MetricRow label="Avg Strength" value={metrics.avgStrength.toFixed(1)} unit="/10" />
-        <MetricRow label="Touched (30d)" value={`${metrics.touchedIn30d}/${metrics.contactCount}`} state={getSystemState(metrics.contactCount > 0 ? metrics.touchedIn30d / metrics.contactCount : 0)} />
-        <MetricRow label="Stale" value={String(metrics.staleCount)} state={metrics.staleCount > 10 ? 'CRITICAL' : metrics.staleCount > 5 ? 'CAUTION' : 'NOMINAL'} />
-      </div>
-
-      {/* ─── AUTO: Quality ─────────────────────────────────────── */}
-      <div className="bg-paper border border-rule rounded-sm p-3">
-        <h4 className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-2 pb-1.5 border-b-2 border-rule">
-          Quality &amp; Intelligence
-        </h4>
-        <MetricRow label="Public Shipping" value={`${metrics.publicPct.toFixed(0)}%`} unit="of days" />
-        <MetricRow label="Feedback Loops" value={`${metrics.feedbackPct.toFixed(0)}%`} unit="of days" />
-        <MetricRow label="24hr Rule" value={`${metrics.twentyFourHourPct.toFixed(0)}%`} unit="adherence" />
-        <MetricRow label="Conversations" value={String(metrics.totalConversations)} />
-        <MetricRow label="Insights" value={String(metrics.totalInsights)} />
-      </div>
-
-      {/* ─── AUTO: Reward Trajectory ───────────────────────────── */}
-      <div className="bg-paper border border-rule rounded-sm p-3">
-        <h4 className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-2 pb-1.5 border-b-2 border-rule">
-          Reward Trajectory
-        </h4>
-        <MetricRow label="Avg Score" value={metrics.avgScore.toFixed(1)} unit="/10" />
-        <MetricRow label="Trajectory" value={`${metrics.scoreTrajectory >= 0 ? '+' : ''}${metrics.scoreTrajectory.toFixed(1)}`} state={metrics.scoreTrajectory > 0 ? 'NOMINAL' : metrics.scoreTrajectory > -0.5 ? 'WATCH' : 'CRITICAL'} />
-      </div>
-
-      {/* ─── MANUAL: Reflection ────────────────────────────────── */}
-      <div className="bg-paper border border-rule rounded-sm p-3">
-        <h4 className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-2 pb-1.5 border-b-2 border-rule">
-          Monthly Reflection
-        </h4>
-        <p className="font-mono text-[8px] text-ink-faint italic mb-2">
-          Only fields you fill in manually.
-        </p>
-
-        <div className="space-y-2.5">
-          {/* One-liner */}
+        <div className="space-y-2">
+          {/* One-liner + clarity */}
           <div>
             <label className="font-serif text-[8px] italic uppercase tracking-wide text-ink-muted block mb-0.5">
               Your one-liner
@@ -326,7 +466,7 @@ export default function AuditView() {
             </div>
           </div>
 
-          {/* Ruin Check */}
+          {/* Ruin check */}
           <div>
             <label className="font-serif text-[8px] italic uppercase tracking-wide text-ink-muted block mb-1">
               Ruin Conditions
@@ -357,7 +497,7 @@ export default function AuditView() {
             </div>
           </div>
 
-          {/* Next month */}
+          {/* Next month focus */}
           <div>
             <label className="font-serif text-[8px] italic uppercase tracking-wide text-ink-muted block mb-0.5">
               Next month focus
@@ -381,7 +521,7 @@ export default function AuditView() {
         </div>
       </div>
 
-      {/* ─── History ───────────────────────────────────────────── */}
+      {/* ─── History ──────────────────────────────────────────── */}
       {recentAssessments.length > 0 && (
         <div className="bg-paper border border-rule rounded-sm p-3">
           <h4 className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-2 pb-1.5 border-b border-rule">
