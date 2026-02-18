@@ -151,12 +151,12 @@ function LevelRow({ level, isCurrent, isExpanded, onToggle }: {
           )}
           <div className="min-w-0">
             <span className={`font-serif text-[11px] font-semibold ${
-              level.locked ? 'text-ink-faint' : isCurrent ? 'text-burgundy' : 'text-ink'
+              level.locked ? 'text-ink-muted' : isCurrent ? 'text-burgundy' : 'text-ink'
             }`}>
               {level.label}
             </span>
-            <span className={`font-mono text-[8px] ml-1.5 ${
-              isCurrent ? 'text-burgundy/60' : level.locked ? 'text-ink-faint' : 'text-ink-muted'
+            <span className={`font-mono text-[9px] ml-1.5 ${
+              isCurrent ? 'text-burgundy/80' : level.locked ? 'text-ink-muted' : 'text-ink-muted'
             }`}>
               {level.sublabel}
             </span>
@@ -165,7 +165,7 @@ function LevelRow({ level, isCurrent, isExpanded, onToggle }: {
 
         <div className="flex items-center gap-2 flex-shrink-0">
           {level.locked ? (
-            <span className="font-mono text-[8px] text-ink-faint flex items-center gap-1.5">
+            <span className="font-mono text-[8px] text-ink-muted flex items-center gap-1.5">
               <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 12 12" stroke="currentColor" strokeWidth={1.5}>
                 <rect x={2} y={6} width={8} height={5} rx={1} />
                 <path d="M4,6 V4 a2,2 0 0 1 4,0 V6" />
@@ -201,8 +201,8 @@ function LevelRow({ level, isCurrent, isExpanded, onToggle }: {
       {isExpanded && !level.locked && (
         <div className="px-3 pb-2.5 pt-0.5 border-t border-rule-light">
           {/* Context description */}
-          <p className={`font-serif text-[9px] italic leading-relaxed mb-2.5 ${
-            isCurrent ? 'text-burgundy/80' : 'text-ink-muted'
+          <p className={`font-serif text-[11px] italic leading-relaxed mb-2.5 ${
+            isCurrent ? 'text-burgundy' : 'text-ink'
           }`}>
             {level.context}
           </p>
@@ -219,7 +219,7 @@ function LevelRow({ level, isCurrent, isExpanded, onToggle }: {
       {/* Locked context — show inline */}
       {isExpanded && level.locked && (
         <div className="px-3 pb-2 pt-0.5 border-t border-rule-light">
-          <p className="font-serif text-[9px] italic text-ink-faint leading-relaxed">
+          <p className="font-serif text-[11px] italic text-ink-muted leading-relaxed">
             {level.context}
           </p>
         </div>
