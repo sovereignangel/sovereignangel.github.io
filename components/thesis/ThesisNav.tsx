@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import UserMenu from '@/components/auth/UserMenu'
 import RewardProofModal from '@/components/thesis/RewardProofModal'
+import ArchitecturePanel from '@/components/thesis/ArchitecturePanel'
 import { useDailyLogContext } from '@/components/thesis/DailyLogProvider'
 import { format } from 'date-fns'
 
@@ -54,6 +55,7 @@ export default function ThesisNav() {
   const pathname = usePathname()
   const [showProof, setShowProof] = useState(false)
   const [showFullProof, setShowFullProof] = useState(false)
+  const [showArchitecture, setShowArchitecture] = useState(false)
   const popoverRef = useRef<HTMLDivElement>(null)
   const { log } = useDailyLogContext()
 
@@ -124,6 +126,17 @@ export default function ThesisNav() {
                 title="View proof"
               >
                 <span className="font-serif text-[8px] italic leading-none">i</span>
+              </button>
+
+              {/* Architecture diagram */}
+              <button
+                onClick={() => setShowArchitecture(true)}
+                className="w-3.5 h-3.5 rounded-full border border-ink-faint text-ink-muted hover:border-navy hover:text-navy transition-colors flex items-center justify-center shrink-0"
+                title="System architecture"
+              >
+                <svg className="w-2 h-2" fill="none" viewBox="0 0 12 12" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" d="M1 3h10M1 6h10M1 9h10M4 1v10M8 1v10" />
+                </svg>
               </button>
 
               {/* Proof popover */}
@@ -212,6 +225,7 @@ export default function ThesisNav() {
       </div>
 
       {showFullProof && <RewardProofModal onClose={() => setShowFullProof(false)} />}
+      {showArchitecture && <ArchitecturePanel onClose={() => setShowArchitecture(false)} />}
     </header>
   )
 }
