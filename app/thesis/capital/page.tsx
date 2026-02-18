@@ -2,22 +2,24 @@
 
 import { useState } from 'react'
 import CapitalDial from '@/components/thesis/capital/CapitalDial'
-import PositionView from '@/components/thesis/capital/PositionView'
-import ScenarioView from '@/components/thesis/capital/ScenarioView'
-import DebtView from '@/components/thesis/capital/DebtView'
+import CockpitView from '@/components/thesis/capital/CockpitView'
+import DecisionEngineView from '@/components/thesis/capital/DecisionEngineView'
+import LiabilityCommandView from '@/components/thesis/capital/LiabilityCommandView'
+import AllocationView from '@/components/thesis/capital/AllocationView'
 import type { DebtItem, ScenarioParams, CapitalPosition } from '@/lib/types'
 import { DEFAULT_SCENARIOS } from '@/lib/types'
 
-type CapitalTab = 'position' | 'scenarios' | 'debt'
+type CapitalTab = 'cockpit' | 'scenarios' | 'liabilities' | 'allocation'
 
 const TABS: { key: CapitalTab; label: string }[] = [
-  { key: 'position', label: 'Position' },
+  { key: 'cockpit', label: 'Cockpit' },
   { key: 'scenarios', label: 'Scenarios' },
-  { key: 'debt', label: 'Debt' },
+  { key: 'liabilities', label: 'Liabilities' },
+  { key: 'allocation', label: 'Allocation' },
 ]
 
 export default function CapitalPage() {
-  const [activeTab, setActiveTab] = useState<CapitalTab>('position')
+  const [activeTab, setActiveTab] = useState<CapitalTab>('cockpit')
   const [position, setPosition] = useState<CapitalPosition | null>(null)
   const [debts, setDebts] = useState<DebtItem[]>([])
   const [scenarios, setScenarios] = useState<ScenarioParams[]>(DEFAULT_SCENARIOS)
@@ -45,9 +47,10 @@ export default function CapitalPage() {
 
         {/* Tab Content */}
         <div className="flex-1 overflow-y-auto">
-          {activeTab === 'position' && <PositionView position={position} />}
-          {activeTab === 'scenarios' && <ScenarioView position={position} scenarios={scenarios} />}
-          {activeTab === 'debt' && <DebtView position={position} debts={debts} />}
+          {activeTab === 'cockpit' && <CockpitView position={position} />}
+          {activeTab === 'scenarios' && <DecisionEngineView position={position} scenarios={scenarios} />}
+          {activeTab === 'liabilities' && <LiabilityCommandView position={position} debts={debts} />}
+          {activeTab === 'allocation' && <AllocationView position={position} scenarios={scenarios} />}
         </div>
       </div>
 

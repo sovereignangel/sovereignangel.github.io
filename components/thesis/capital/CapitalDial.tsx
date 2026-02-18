@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '@/components/auth/AuthProvider'
 import { saveFinancialSnapshot, getFinancialSnapshot, getDebtItems, saveDebtItem, deleteDebtItem } from '@/lib/firestore'
-import { buildCapitalPosition } from '@/lib/capital-engine'
+import { buildCapitalPosition, computeHealthScore } from '@/lib/capital-engine'
 import { currency } from '@/lib/formatters'
 import type { FinancialSnapshot, DebtItem, DebtCategory, ScenarioParams, CapitalPosition } from '@/lib/types'
 import { DEFAULT_SCENARIOS } from '@/lib/types'
@@ -337,6 +337,20 @@ export default function CapitalDial({ onPositionChange, onDebtsChange, scenarios
                   {netWorth < 0 ? '-' : ''}{currency(Math.abs(netWorth))}
                 </span>
               </div>
+              {(() => {
+                const runwayMonths = form.monthlyExpenses > 0 ? form.cashSavings / form.monthlyExpenses : 0
+                const fakePos = buildCapitalPosition({ ...form, totalAssets, netWorth, runwayMonths }, debts)
+                const hs = computeHealthScore(fakePos)
+                const gradeColor = hs.grade === 'A' || hs.grade === 'B' ? 'text-green-ink' : hs.grade === 'C' ? 'text-amber-ink' : 'text-red-ink'
+                return (
+                  <div className="flex justify-between pt-1 border-t border-rule-light">
+                    <span className="font-serif text-[9px] text-ink-muted">Health Score</span>
+                    <span className={`font-mono text-[12px] font-bold ${gradeColor}`}>
+                      {hs.grade} ({hs.overall})
+                    </span>
+                  </div>
+                )
+              })()}
             </div>
 
             {/* Save Button */}
