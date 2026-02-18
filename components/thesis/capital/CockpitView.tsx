@@ -2,9 +2,9 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import { useAuth } from '@/components/auth/AuthProvider'
-import { getFinancialHistory } from '@/lib/firestore'
+import { getFinancialHistory, getDebtItems } from '@/lib/firestore'
 import { currency } from '@/lib/formatters'
-import { computeHealthScore, generateAlerts, dailyCostOfCarry } from '@/lib/capital-engine'
+import { computeHealthScore, generateAlerts, dailyCostOfCarry, buildCapitalPosition } from '@/lib/capital-engine'
 import type { CapitalPosition, FinancialHealthScore, CapitalAlert, FinancialSnapshot, IncomeBreakdown, ExpenseBreakdown } from '@/lib/types'
 import { NET_WORTH_TARGET } from '@/lib/types'
 
@@ -35,14 +35,31 @@ const COMPONENT_LABELS: { key: keyof FinancialHealthScore['components']; label: 
   { key: 'debtToxicity', label: 'Debt Health', color: '#7c2d2d' },
 ]
 
-export default function CockpitView({ position }: Props) {
+export default function CockpitView({ position: propPosition }: Props) {
   const { user } = useAuth()
   const [history, setHistory] = useState<FinancialSnapshot[]>([])
+  const [savedPosition, setSavedPosition] = useState<CapitalPosition | null>(null)
+  const [loading, setLoading] = useState(true)
 
+  // Load latest saved snapshot + debts on mount — makes cockpit self-sufficient
   useEffect(() => {
     if (!user) return
-    getFinancialHistory(user.uid, 12).then(setHistory)
+    setLoading(true)
+    Promise.all([
+      getFinancialHistory(user.uid, 12),
+      getDebtItems(user.uid),
+    ]).then(([snapshots, debts]) => {
+      setHistory(snapshots)
+      if (snapshots.length > 0) {
+        const latest = snapshots[snapshots.length - 1]
+        setSavedPosition(buildCapitalPosition(latest, debts))
+      }
+      setLoading(false)
+    }).catch(() => setLoading(false))
   }, [user])
+
+  // Live edits from sidebar override saved data
+  const position = propPosition ?? savedPosition
 
   const healthScore = useMemo(() => {
     if (!position) return null
@@ -59,6 +76,14 @@ export default function CockpitView({ position }: Props) {
     if (!position) return 0
     return dailyCostOfCarry(position.debtItems)
   }, [position])
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <span className="font-mono text-[11px] text-ink-muted">Loading capital data...</span>
+      </div>
+    )
+  }
 
   if (!position) {
     return (
