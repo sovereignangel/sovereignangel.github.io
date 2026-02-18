@@ -39,8 +39,13 @@ export default function NetworkView() {
 
   const loadContacts = async () => {
     if (!user) return
-    const data = await getNetworkContacts(user.uid)
-    setContacts(data)
+    try {
+      const data = await getNetworkContacts(user.uid)
+      setContacts(data)
+    } catch (err) {
+      console.error('Failed to load contacts:', err)
+      setContacts([])
+    }
   }
 
   const toggleTier = (tier: string) => {

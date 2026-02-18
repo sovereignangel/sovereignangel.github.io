@@ -170,25 +170,30 @@ export default function AuditView() {
 
   const loadData = useCallback(async () => {
     if (!user) return
-    const [logs, networkContacts, existing, recent] = await Promise.all([
-      getRecentDailyLogs(user.uid, 30),
-      getNetworkContacts(user.uid),
-      getSalesAssessment(user.uid, monthKey),
-      getRecentSalesAssessments(user.uid, 6),
-    ])
-    setMonthLogs(logs)
-    setContacts(networkContacts)
-    setMetrics(computeMetrics(logs, networkContacts))
-    setRecentAssessments(recent)
+    try {
+      const [logs, networkContacts, existing, recent] = await Promise.all([
+        getRecentDailyLogs(user.uid, 30),
+        getNetworkContacts(user.uid).catch(() => [] as NetworkContact[]),
+        getSalesAssessment(user.uid, monthKey).catch(() => null),
+        getRecentSalesAssessments(user.uid, 6).catch(() => [] as SalesAssessment[]),
+      ])
+      setMonthLogs(logs)
+      setContacts(networkContacts)
+      setMetrics(computeMetrics(logs, networkContacts))
+      setRecentAssessments(recent)
 
-    if (existing) {
-      setAssessment(existing)
-      setOneLiner(existing.oneLiner || '')
-      setOneLinerClarityScore(existing.oneLinerClarityScore || 3)
-      setRuinConditions(existing.ruinConditions || DEFAULT_RUIN)
-      setCurrentBelt(existing.currentBelt || 'white')
-      setBeltProgress(existing.beltProgress || 0)
-      setNextMonthFocus(existing.nextMonthFocus || '')
+      if (existing) {
+        setAssessment(existing)
+        setOneLiner(existing.oneLiner || '')
+        setOneLinerClarityScore(existing.oneLinerClarityScore || 3)
+        setRuinConditions(existing.ruinConditions || DEFAULT_RUIN)
+        setCurrentBelt(existing.currentBelt || 'white')
+        setBeltProgress(existing.beltProgress || 0)
+        setNextMonthFocus(existing.nextMonthFocus || '')
+      }
+    } catch (err) {
+      console.error('Audit load error:', err)
+      setMetrics(computeMetrics([], []))
     }
   }, [user, monthKey])
 

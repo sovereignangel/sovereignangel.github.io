@@ -1,6 +1,8 @@
-import { collection, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, query, where, orderBy, serverTimestamp } from 'firebase/firestore'
+import { collection, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, query, where, serverTimestamp } from 'firebase/firestore'
 import { db } from '../firebase'
 import type { NetworkContact, ContactTier } from '../types'
+
+const TIER_ORDER: Record<string, number> = { 'decision-maker': 0, 'connector': 1, 'peer-operator': 2 }
 
 export async function getNetworkContact(uid: string, contactId: string): Promise<NetworkContact | null> {
   const ref = doc(db, 'users', uid, 'network_contacts', contactId)
@@ -10,23 +12,25 @@ export async function getNetworkContact(uid: string, contactId: string): Promise
 
 export async function getNetworkContacts(uid: string): Promise<NetworkContact[]> {
   const ref = collection(db, 'users', uid, 'network_contacts')
-  const q = query(ref, orderBy('tier'), orderBy('relationshipStrength', 'desc'))
-  const snap = await getDocs(q)
-  return snap.docs.map(d => ({ id: d.id, ...d.data() }) as NetworkContact)
+  const snap = await getDocs(query(ref))
+  const contacts = snap.docs.map(d => ({ id: d.id, ...d.data() }) as NetworkContact)
+  return contacts.sort((a, b) => (TIER_ORDER[a.tier] ?? 9) - (TIER_ORDER[b.tier] ?? 9) || b.relationshipStrength - a.relationshipStrength)
 }
 
 export async function getNetworkContactsByTier(uid: string, tier: ContactTier): Promise<NetworkContact[]> {
   const ref = collection(db, 'users', uid, 'network_contacts')
-  const q = query(ref, where('tier', '==', tier), orderBy('relationshipStrength', 'desc'))
+  const q = query(ref, where('tier', '==', tier))
   const snap = await getDocs(q)
-  return snap.docs.map(d => ({ id: d.id, ...d.data() }) as NetworkContact)
+  const contacts = snap.docs.map(d => ({ id: d.id, ...d.data() }) as NetworkContact)
+  return contacts.sort((a, b) => b.relationshipStrength - a.relationshipStrength)
 }
 
 export async function getTop30Contacts(uid: string): Promise<NetworkContact[]> {
   const ref = collection(db, 'users', uid, 'network_contacts')
-  const q = query(ref, where('isTop30', '==', true), orderBy('tier'))
+  const q = query(ref, where('isTop30', '==', true))
   const snap = await getDocs(q)
-  return snap.docs.map(d => ({ id: d.id, ...d.data() }) as NetworkContact)
+  const contacts = snap.docs.map(d => ({ id: d.id, ...d.data() }) as NetworkContact)
+  return contacts.sort((a, b) => (TIER_ORDER[a.tier] ?? 9) - (TIER_ORDER[b.tier] ?? 9))
 }
 
 export async function saveNetworkContact(uid: string, data: Partial<NetworkContact>): Promise<string> {
