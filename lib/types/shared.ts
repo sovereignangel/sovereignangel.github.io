@@ -14,7 +14,7 @@ export type ThesisConnection = 'ai' | 'markets' | 'mind'
 export type ThesisPillar = 'ai' | 'markets' | 'mind'
 export type NervousSystemTrigger = 'ambiguous_commitment' | 'unseen' | 'stalled_momentum' | 'validation_drop' | 'other'
 export type ActionType = 'ship' | 'ask' | 'signal' | 'regulate' | 'explore' | 'compound'
-export type ConversationType = 'customer_discovery' | 'investor' | 'partnership' | 'advisor' | 'other'
+export type ConversationType = 'customer_discovery' | 'sme_discovery' | 'market_conversation' | 'investor' | 'partnership' | 'advisor' | 'other'
 export type ExternalSignalSource = 'rss_feed' | 'blog' | 'hacker_news' | 'manual'
 export type ExternalSignalStatus = 'inbox' | 'reviewed' | 'converted' | 'archived'
 

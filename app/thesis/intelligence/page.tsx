@@ -5,8 +5,9 @@ import IntelligenceGauge from '@/components/thesis/intelligence/IntelligenceGaug
 import IntelligenceDial from '@/components/thesis/intelligence/IntelligenceDial'
 import ConversationInbox from '@/components/thesis/intelligence/ConversationInbox'
 import ExternalSignalInbox from '@/components/thesis/intelligence/ExternalSignalInbox'
+import InsightsInbox from '@/components/thesis/intelligence/InsightsInbox'
 
-type TabType = 'signals' | 'conversations' | 'external'
+type TabType = 'signals' | 'conversations' | 'external' | 'insights'
 
 export default function IntelligencePage() {
   const [refreshKey, setRefreshKey] = useState(0)
@@ -49,6 +50,16 @@ export default function IntelligencePage() {
           >
             External Signals
           </button>
+          <button
+            onClick={() => setActiveTab('insights')}
+            className={`font-serif text-[16px] transition-colors py-2 ${
+              activeTab === 'insights'
+                ? 'text-burgundy font-semibold border-b-2 border-burgundy'
+                : 'text-ink-muted hover:text-ink'
+            }`}
+          >
+            Insights
+          </button>
         </div>
 
         {/* Tab Content */}
@@ -56,6 +67,7 @@ export default function IntelligencePage() {
           {activeTab === 'signals' && <IntelligenceGauge refreshKey={refreshKey} />}
           {activeTab === 'conversations' && <ConversationInbox />}
           {activeTab === 'external' && <ExternalSignalInbox onSignalCreated={onSignalSaved} />}
+          {activeTab === 'insights' && <InsightsInbox />}
         </div>
       </div>
 

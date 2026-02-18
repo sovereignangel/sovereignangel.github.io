@@ -1,6 +1,35 @@
 import { GoogleGenerativeAI } from '@google/generative-ai'
+import type { InsightType, ThesisPillar } from './types'
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '')
+
+export interface StructuredInsight {
+  type: InsightType
+  content: string
+  summary: string
+  linkedProjectNames: string[]
+  tags: string[]
+  thesisPillars: ThesisPillar[]
+}
+
+export interface ExtractedMacroPattern {
+  pattern: string
+  relatedProjectNames: string[]
+  confidence: 'emerging' | 'confirmed' | 'strong'
+}
+
+export interface ExtractedInsightsV2 {
+  // Legacy arrays (backward compat for Conversation document)
+  processInsights: string[]
+  featureIdeas: string[]
+  actionItems: string[]
+  valueSignals: string[]
+  suggestedContacts: string[]
+  // Structured insights with project tagging
+  structuredInsights: StructuredInsight[]
+  // Cross-conversation macro patterns
+  macroPatterns: ExtractedMacroPattern[]
+}
 
 export interface ExtractedInsights {
   processInsights: string[]
@@ -71,6 +100,132 @@ Keep each item concise (1-2 sentences max). If a category has no relevant conten
       actionItems: [],
       valueSignals: [],
       suggestedContacts: [],
+    }
+  }
+}
+
+export async function extractInsightsV2(
+  transcript: string,
+  conversationType: string,
+  participants: string[],
+  projectNames: string[],
+  existingPatterns?: string[]
+): Promise<ExtractedInsightsV2> {
+  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' })
+
+  const projectsSection = projectNames.length > 0
+    ? `THE USER'S ACTIVE BUSINESSES/PROJECTS:\n${projectNames.map(p => `- ${p}`).join('\n')}`
+    : 'The user has not specified any active projects yet.'
+
+  const patternsSection = existingPatterns && existingPatterns.length > 0
+    ? `\nPREVIOUSLY IDENTIFIED PATTERNS (look for reinforcement or contradiction):\n${existingPatterns.map(p => `- ${p}`).join('\n')}`
+    : ''
+
+  const prompt = `You are analyzing a ${conversationType.replace(/_/g, ' ')} conversation transcript for a builder who runs multiple businesses. Extract structured insights and tag them to the relevant businesses.
+
+${projectsSection}
+
+TRANSCRIPT:
+${transcript}
+
+PARTICIPANTS: ${participants.join(', ')}
+${patternsSection}
+
+Extract the following:
+
+1. LEGACY INSIGHTS (flat arrays for backward compatibility):
+   - processInsights: How they work today, what's broken, pain points, workflow inefficiencies
+   - featureIdeas: What they wish existed, what would save them time/money, specific product requests
+   - actionItems: Follow-up commitments with who/when, specific next steps
+   - valueSignals: Budget mentions, willingness-to-pay indicators, timeline urgency, revenue signals
+   - suggestedContacts: Participant names mentioned (first and last names if available)
+
+2. STRUCTURED INSIGHTS (tagged to projects):
+   For each meaningful insight extracted, create a structured version with:
+   - type: one of [process_insight, feature_idea, action_item, value_signal, market_pattern, arbitrage_opportunity]
+   - content: The insight text (1-2 sentences)
+   - summary: One-line summary (max 10 words)
+   - linkedProjectNames: Which of the user's projects this is relevant to (use exact names from the list above, can be multiple, or empty array if general intelligence)
+   - tags: 2-4 descriptive tags (e.g., "pricing", "onboarding", "churn", "distribution")
+   - thesisPillars: Which thesis pillars apply from ["ai", "markets", "mind"]
+
+3. MACRO PATTERNS:
+   Higher-level patterns from this conversation, especially:
+   - Arbitrage opportunities (something hard/expensive that could be automated/cheap)
+   - Market timing signals (urgency, competitive dynamics)
+   - Cross-business synergies between the user's projects
+   - Contradictions with previously identified patterns (if any)
+
+Return ONLY valid JSON (no markdown, no code blocks):
+{
+  "processInsights": ["..."],
+  "featureIdeas": ["..."],
+  "actionItems": ["..."],
+  "valueSignals": ["..."],
+  "suggestedContacts": ["..."],
+  "structuredInsights": [
+    {
+      "type": "process_insight",
+      "content": "...",
+      "summary": "...",
+      "linkedProjectNames": ["ProjectName"],
+      "tags": ["tag1", "tag2"],
+      "thesisPillars": ["ai"]
+    }
+  ],
+  "macroPatterns": [
+    {
+      "pattern": "...",
+      "relatedProjectNames": ["ProjectName"],
+      "confidence": "emerging"
+    }
+  ]
+}
+
+Keep each item concise (1-2 sentences max). If a category has no relevant content, return an empty array.`
+
+  try {
+    const result = await model.generateContent(prompt)
+    const response = await result.response
+    const text = response.text()
+
+    const cleanedText = text
+      .replace(/```json\n?/g, '')
+      .replace(/```\n?/g, '')
+      .trim()
+
+    const parsed = JSON.parse(cleanedText)
+
+    return {
+      processInsights: parsed.processInsights || [],
+      featureIdeas: parsed.featureIdeas || [],
+      actionItems: parsed.actionItems || [],
+      valueSignals: parsed.valueSignals || [],
+      suggestedContacts: parsed.suggestedContacts || [],
+      structuredInsights: (parsed.structuredInsights || []).map((si: Record<string, unknown>) => ({
+        type: si.type || 'process_insight',
+        content: si.content || '',
+        summary: si.summary || '',
+        linkedProjectNames: si.linkedProjectNames || [],
+        tags: si.tags || [],
+        thesisPillars: si.thesisPillars || [],
+      })),
+      macroPatterns: (parsed.macroPatterns || []).map((mp: Record<string, unknown>) => ({
+        pattern: mp.pattern || '',
+        relatedProjectNames: mp.relatedProjectNames || [],
+        confidence: mp.confidence || 'emerging',
+      })),
+    }
+  } catch (error) {
+    console.error('Error extracting insights V2 with Gemini:', error)
+    return {
+      processInsights: [],
+      featureIdeas: [],
+      actionItems: [],
+      valueSignals: [],
+      suggestedContacts: [],
+      structuredInsights: [],
+      macroPatterns: [],
     }
   }
 }

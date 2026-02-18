@@ -48,6 +48,13 @@ export interface DailyLog {
   discoveryConversationsCount: number
   insightsExtracted: number
   externalSignalsReviewed: number
+  // Sales muscles (daily tracking)
+  shipsCount: number
+  publicPostsCount: number
+  warmIntrosReceived: number
+  warmIntrosMade: number
+  meetingsBooked: number
+  inboundInquiries: number
   rewardScore: RewardScore | null
   createdAt: Timestamp
   updatedAt: Timestamp
