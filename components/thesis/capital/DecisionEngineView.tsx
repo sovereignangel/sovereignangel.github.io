@@ -79,7 +79,7 @@ export default function DecisionEngineView({ position, scenarios }: Props) {
   return (
     <div className="space-y-3 p-1">
       {/* A. Scenario Comparison Chart */}
-      <div className="bg-white border border-rule rounded-sm p-3">
+      <div className="bg-cream/80 border border-rule rounded-sm p-3">
         <div className="mb-2 pb-1.5 border-b-2 border-rule">
           <h3 className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy">
             24-Month Net Worth Projection
@@ -120,7 +120,7 @@ export default function DecisionEngineView({ position, scenarios }: Props) {
       </div>
 
       {/* B. Decision Matrix */}
-      <div className="bg-white border border-rule rounded-sm p-3">
+      <div className="bg-cream/80 border border-rule rounded-sm p-3">
         <div className="mb-2 pb-1.5 border-b-2 border-rule">
           <h3 className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy">
             Decision Matrix
@@ -216,7 +216,7 @@ export default function DecisionEngineView({ position, scenarios }: Props) {
 
       {/* C. Sensitivity Analysis */}
       {selectedProjection && (
-        <div className="bg-white border border-rule rounded-sm p-3">
+        <div className="bg-cream/80 border border-rule rounded-sm p-3">
           <div className="flex items-center justify-between mb-2 pb-1.5 border-b-2 border-rule">
             <h3 className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy">
               Sensitivity: {selectedProjection.params.name}
@@ -301,7 +301,7 @@ export default function DecisionEngineView({ position, scenarios }: Props) {
 
       {/* D. Scenario Detail Table */}
       {selectedProjection && (
-        <div className="bg-white border border-rule rounded-sm p-3">
+        <div className="bg-cream/80 border border-rule rounded-sm p-3">
           <div className="mb-2 pb-1.5 border-b-2 border-rule">
             <h3 className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy">
               {selectedProjection.params.name} — Month by Month

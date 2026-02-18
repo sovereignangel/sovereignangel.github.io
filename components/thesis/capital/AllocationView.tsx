@@ -52,7 +52,7 @@ export default function AllocationView({ position, scenarios }: Props) {
   return (
     <div className="space-y-3 p-1">
       {/* A. Capital Deployment Priority Stack */}
-      <div className="bg-white border border-rule rounded-sm p-3">
+      <div className="bg-cream/80 border border-rule rounded-sm p-3">
         <div className="mb-2 pb-1.5 border-b-2 border-rule">
           <h3 className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy">
             Capital Deployment Priority
@@ -70,7 +70,7 @@ export default function AllocationView({ position, scenarios }: Props) {
       </div>
 
       {/* B. Opportunity Cost Calculator */}
-      <div className="bg-white border border-rule rounded-sm p-3">
+      <div className="bg-cream/80 border border-rule rounded-sm p-3">
         <div className="mb-2 pb-1.5 border-b-2 border-rule">
           <h3 className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy">
             Opportunity Cost Analysis
@@ -129,7 +129,7 @@ export default function AllocationView({ position, scenarios }: Props) {
       </div>
 
       {/* C. Time Allocation Framework */}
-      <div className="bg-white border border-rule rounded-sm p-3">
+      <div className="bg-cream/80 border border-rule rounded-sm p-3">
         <div className="mb-2 pb-1.5 border-b-2 border-rule">
           <h3 className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy">
             Time & Attention Allocation
@@ -186,7 +186,7 @@ export default function AllocationView({ position, scenarios }: Props) {
       </div>
 
       {/* D. Key Insight */}
-      <div className="bg-white border-2 border-burgundy/20 rounded-sm p-3">
+      <div className="bg-cream/80 border-2 border-burgundy/20 rounded-sm p-3">
         <h3 className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-1.5">
           CFO Recommendation
         </h3>
