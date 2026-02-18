@@ -64,6 +64,9 @@ export interface LevelScore {
   label: string
   sublabel: string
   context: string
+  principle: string
+  calculationRationale: string
+  whatMasteryMeans: string
   belt: SalesBelt
   tracks: TrackScore[]
   progress: number    // 0-100
@@ -91,26 +94,52 @@ const SKILL_MET_THRESHOLD = 0.8
 
 // ─── MASTERY LEVEL METADATA ─────────────────────────────────────────
 
-const LEVEL_META: { level: MasteryLevelId; label: string; sublabel: string; context: string; belt: SalesBelt }[] = [
+interface LevelMeta {
+  level: MasteryLevelId
+  label: string
+  sublabel: string
+  context: string
+  principle: string
+  calculationRationale: string
+  whatMasteryMeans: string
+  belt: SalesBelt
+}
+
+const LEVEL_META: LevelMeta[] = [
   {
     level: 'imitation', label: 'Imitation', sublabel: 'White belt — do the reps', belt: 'white',
     context: 'Like a chess beginner memorizing openings or a white belt drilling basic positions. Build the muscle memory of daily execution — ship something, ask for money, post publicly. Don\'t think, just do the reps until they\'re automatic.',
+    principle: 'You cannot manage what you do not measure, and you cannot improve what you do not practice. The single greatest predictor of eventual mastery is whether someone can sustain daily output when no one is watching and no feedback loop yet exists. Most people fail here — not from lack of talent, but from an inability to tolerate the discomfort of producing before they feel ready.',
+    calculationRationale: 'Every metric at this level measures raw volume and consistency, not quality. Output days (15+/mo) tests whether you can show up on more days than not. Ship count (5+/mo) confirms you\'re finishing things, not just starting. Weekly cadence ensures you aren\'t binge-shipping followed by silence. Public percentage measures whether you\'re overcoming the ego barrier of being seen. Ask count (10+/mo) and conversation starts test whether you can initiate economic exchange despite rejection risk. Post count and network touches confirm you exist in public. These are blunt instruments by design — at this stage, precision is the enemy of action. We are measuring the base metabolic rate of an operator.',
+    whatMasteryMeans: 'Imitation is mastered when the daily disciplines of shipping, asking, and showing are no longer decisions — they are reflexes. You don\'t debate whether to ship today; you ship. You don\'t agonize over sending the outreach; you send it. The neural pathways are laid. This is the hardest transition because it requires sustained effort before any compound returns are visible. The 80% threshold means roughly 10 of 12 micro-skills are consistently hitting — evidence that the habits have taken root, not that you\'ve had one good week.',
   },
   {
     level: 'structure', label: 'Structure', sublabel: 'Blue belt — combine into patterns', belt: 'blue',
     context: 'Like a chess player learning tactical patterns (pins, forks, skewers) or a BJJ blue belt chaining techniques. Your systems form: weekly shipping cadence, conversion tracking, content calendar. Individual moves become combinations that compound.',
+    principle: 'The quality of your outcomes is a direct function of the quality of your systems. Individual heroic efforts produce occasional spikes; systems produce reliable baselines that compound. At this stage, the question shifts from "can you do the reps?" to "have the reps organized into a machine?" A machine has inputs, processes, and measurable outputs — and it runs whether you feel motivated or not.',
+    calculationRationale: 'Metrics escalate from volume to velocity and conversion efficiency. Ship velocity (3+/week) proves you\'ve moved past sporadic bursts into systematic cadence — you have a pipeline, not a to-do list. Public dominance (80%+) means your default is building in public, not hiding work. Focus depth (4+ hrs/day) measures whether you can sustain the concentration required for quality output. Feedback loops (50%+ of days) test whether you\'re building closed-loop systems — shipping, measuring response, iterating. Ask velocity (15+/week) and response rate (10%+) introduce conversion as a concept: your asks are becoming calibrated, not random. Revenue ($500+/mo) is the first market signal that value is flowing. Message clarity (4/5) measures whether your thesis is sharp enough to communicate. Network metrics (15+ contacts, 10+ touched) confirm you\'re building relationship infrastructure, not just collecting names.',
+    whatMasteryMeans: 'Structure is mastered when your systems run on cadence and produce measurable, repeating results. You can articulate your weekly rhythm: what ships when, who gets contacted, what content goes where. The critical insight is that structure creates optionality — when your base systems are reliable, you free cognitive bandwidth to notice opportunities. Revenue at this stage is proof of concept, not scale. The compound machine is being assembled; it hasn\'t yet started to accelerate.',
   },
   {
     level: 'adaptation', label: 'Adaptation', sublabel: 'Purple belt — read, adjust, improvise', belt: 'purple',
     context: 'Like reading a chess position intuitively or a purple belt who flows between systems. You read the room, adjust your message in real-time, know when to ship vs. polish. The three muscles start feeding each other — shipping creates content, content creates inbound, inbound creates revenue.',
+    principle: 'Rigid systems break under real-world pressure. The difference between a competent operator and a dangerous one is the ability to read the environment and adjust in real-time without abandoning discipline. Adaptation is not the absence of structure — it is structure that flexes. The three muscles (Ship, Ask, Show) begin feeding each other here, creating a flywheel where output generates attention, attention generates conversations, and conversations generate revenue.',
+    calculationRationale: 'Metrics now measure meta-capabilities and interconnection. Warm conversion rate (40%+) tests whether your network is an asset — can you convert relationships into opportunities without cold outreach? Revenue scaling ($3,000+/mo) is an order-of-magnitude jump that requires systematic channels, not one-off wins. Top 30 active contacts (15+ engaged) measures relationship portfolio management — are you maintaining the relationships that matter? Emotional discipline (90%+ no emotional texting) is a gate function: impulsive communication destroys the compound trust you\'ve built. Ship velocity (5+/week) at near-full public ratio (95%+) means you\'re operating at scale without hiding. Deep focus (5+ hrs/day) reflects the cognitive stamina required for quality at volume. Score trajectory (positive) is a second-derivative metric — not where you are, but whether you\'re accelerating. Average reward score (6+/10) confirms the overall system is producing above-baseline results consistently.',
+    whatMasteryMeans: 'Adaptation is mastered when you can feel the market, not just analyze it. You know intuitively when to ship fast vs. polish, when to push a conversation vs. let it breathe, when to post vs. stay quiet. The flywheel is turning: your shipping generates content, your content generates inbound interest, your inbound converts to revenue. The key diagnostic is that warm channels outperform cold ones — your past work and relationships are now your primary growth engine. Emotional regulation is non-negotiable because a single impulsive message can unwind months of compound trust.',
   },
   {
     level: 'integration', label: 'Integration', sublabel: 'Brown belt — all three muscles as one', belt: 'brown',
     context: 'Like invisible jiu-jitsu — your system works so smoothly others can\'t see the technique. Inbound exceeds outbound. Revenue flows from warm relationships. Multiple products ship simultaneously. The three muscles are one muscle.',
+    principle: 'Integration is the phase where the machine becomes invisible — to others and eventually to yourself. The three muscles are no longer separate activities you schedule; they are one continuous expression of your operating system. Inbound exceeds outbound because your reputation precedes you. Revenue flows from warm relationships because trust compounds faster than marketing spend. You ship multiple products because your systems handle parallelism. At Bridgewater, we call this "getting above yourself" — you are simultaneously the operator and the designer of the machine.',
+    calculationRationale: 'These metrics are system-level outcomes that cannot be gamed through isolated effort. Inbound exceeding outbound is a lagging indicator of brand equity — the market is seeking you, not the reverse. Multiple products shipping simultaneously tests operational leverage — can your systems handle parallel workstreams? Warm intro revenue dominating means your relationship capital is the primary value driver. Recurring revenue ($10k+ MRR) is the definitive proof of product-market fit sustained over time. Being recognized in your niche and having people seek you out are qualitative but essential — they indicate that your compound reputation has crossed the threshold where it generates its own momentum. These metrics are currently locked because they require the lower levels as prerequisites and because premature optimization of system-level metrics leads to brittle strategies.',
+    whatMasteryMeans: 'Integration is mastered when an outside observer cannot distinguish your work from your life, your strategy from your instinct, your brand from your behavior. The technique is invisible because it is fully internalized. You no longer think about shipping cadence — you ship the way you breathe. Your network is a living organism that generates opportunities autonomously. The critical diagnostic: if you stopped all outbound effort for 30 days, inbound would continue. Your machine runs without you pushing it.',
   },
   {
     level: 'transcendence', label: 'Transcendence', sublabel: 'Black belt — pure intuition', belt: 'black',
     context: 'Like a grandmaster who "sees" the right move or a push hands master who redirects without thinking. You ARE the brand. Your intuition about what to ship, who to talk to, and what to say is instantaneous. The market shapes around you.',
+    principle: 'At the highest level of mastery, the distinction between analysis and intuition dissolves. A grandmaster doesn\'t calculate 20 moves ahead — they see the board as a pattern and the right move emerges. A black belt doesn\'t think about technique — their body responds to pressure with the optimal counter. Transcendence is not the absence of rigor; it is rigor so deeply internalized that it operates below conscious thought. You don\'t react to the market — the market reacts to you. Your taste, judgment, and presence are the scarce resources. This is what it means to be the GP of a fund, the voice of an industry, the brand that IS the moat.',
+    calculationRationale: 'Metrics at this level are definitionally uncomputable through daily log data — they are emergent properties of a career arc. Market shaping means your work changes what others build. Fund-scale capital allocation ($50M+ AUM) represents fiduciary trust at institutional scale. "Ship without thinking" is not carelessness — it is the automaticity of a master craftsperson. "Brand IS the moat" means your identity and your competitive advantage are inseparable. These remain locked and scored at 0% because they serve as the orienting vision, not the daily scoreboard. The purpose of including them is architectural: every micro-skill at Levels 1-3 is a brick in the foundation of this eventual structure. Without seeing where the path leads, the daily reps feel arbitrary.',
+    whatMasteryMeans: 'Transcendence cannot be pursued directly — it emerges from the compound effect of thousands of days of disciplined practice at the lower levels. The paradox is that the person who achieves it no longer thinks about mastery at all. They are simply expressing their nature. The market organizes around them because their signal is the clearest in the room. This level exists in the model not as a near-term goal but as a north star that gives direction and meaning to every skill dot at Level 1. The white belt doing their reps is building the same machine — they just can\'t see it yet.',
   },
 ]
 
@@ -361,6 +390,9 @@ export function computeMastery(
       label: meta.label,
       sublabel: meta.sublabel,
       context: meta.context,
+      principle: meta.principle,
+      calculationRationale: meta.calculationRationale,
+      whatMasteryMeans: meta.whatMasteryMeans,
       belt: meta.belt,
       tracks: trackScores,
       progress: levelProgress,

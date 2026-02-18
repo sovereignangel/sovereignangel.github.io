@@ -200,12 +200,42 @@ function LevelRow({ level, isCurrent, isExpanded, onToggle }: {
       {/* Expanded content */}
       {isExpanded && !level.locked && (
         <div className="px-3 pb-2.5 pt-0.5 border-t border-rule-light">
-          {/* Context description */}
-          <p className={`font-serif text-[11px] italic leading-relaxed mb-2.5 ${
+          {/* Context overview */}
+          <p className={`font-serif text-[11px] italic leading-relaxed mb-2 ${
             isCurrent ? 'text-burgundy' : 'text-ink'
           }`}>
             {level.context}
           </p>
+
+          {/* Principle */}
+          <div className="mb-2 bg-cream/80 border border-rule-light rounded-sm p-2">
+            <h5 className="font-serif text-[8px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-1">
+              Principle
+            </h5>
+            <p className="font-serif text-[10px] leading-relaxed text-ink">
+              {level.principle}
+            </p>
+          </div>
+
+          {/* Why These Calculations */}
+          <div className="mb-2 bg-cream/80 border border-rule-light rounded-sm p-2">
+            <h5 className="font-serif text-[8px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-1">
+              Why These Calculations
+            </h5>
+            <p className="font-serif text-[10px] leading-relaxed text-ink">
+              {level.calculationRationale}
+            </p>
+          </div>
+
+          {/* What Mastery Means */}
+          <div className="mb-2.5 bg-cream/80 border border-rule-light rounded-sm p-2">
+            <h5 className="font-serif text-[8px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-1">
+              What Mastery Means
+            </h5>
+            <p className="font-serif text-[10px] leading-relaxed text-ink">
+              {level.whatMasteryMeans}
+            </p>
+          </div>
 
           {/* Three track columns */}
           <div className="flex gap-3">
@@ -216,12 +246,39 @@ function LevelRow({ level, isCurrent, isExpanded, onToggle }: {
         </div>
       )}
 
-      {/* Locked context — show inline */}
+      {/* Locked context — show full detail */}
       {isExpanded && level.locked && (
         <div className="px-3 pb-2 pt-0.5 border-t border-rule-light">
-          <p className="font-serif text-[11px] italic text-ink-muted leading-relaxed">
+          <p className="font-serif text-[11px] italic text-ink-muted leading-relaxed mb-2">
             {level.context}
           </p>
+
+          <div className="mb-2 bg-cream/60 border border-rule-light rounded-sm p-2">
+            <h5 className="font-serif text-[8px] font-semibold uppercase tracking-[0.5px] text-ink-muted mb-1">
+              Principle
+            </h5>
+            <p className="font-serif text-[10px] leading-relaxed text-ink-muted">
+              {level.principle}
+            </p>
+          </div>
+
+          <div className="mb-2 bg-cream/60 border border-rule-light rounded-sm p-2">
+            <h5 className="font-serif text-[8px] font-semibold uppercase tracking-[0.5px] text-ink-muted mb-1">
+              Why These Calculations
+            </h5>
+            <p className="font-serif text-[10px] leading-relaxed text-ink-muted">
+              {level.calculationRationale}
+            </p>
+          </div>
+
+          <div className="bg-cream/60 border border-rule-light rounded-sm p-2">
+            <h5 className="font-serif text-[8px] font-semibold uppercase tracking-[0.5px] text-ink-muted mb-1">
+              What Mastery Means
+            </h5>
+            <p className="font-serif text-[10px] leading-relaxed text-ink-muted">
+              {level.whatMasteryMeans}
+            </p>
+          </div>
         </div>
       )}
     </div>
