@@ -7,13 +7,13 @@ import NetworkView from '@/components/thesis/alpe-dhuez/NetworkView'
 import PositionView from '@/components/thesis/alpe-dhuez/PositionView'
 import AuditView from '@/components/thesis/alpe-dhuez/AuditView'
 
-type AlpeTab = 'synthesis' | 'network' | 'position' | 'audit'
+type AlpeTab = 'synthesis' | 'network' | 'position' | 'ascent'
 
 const TABS: { key: AlpeTab; label: string }[] = [
   { key: 'synthesis', label: 'Synthesis' },
   { key: 'network', label: 'Network' },
   { key: 'position', label: 'Position' },
-  { key: 'audit', label: 'Audit' },
+  { key: 'ascent', label: 'Ascent' },
 ]
 
 export default function AlpeDhuezPage() {
@@ -45,7 +45,7 @@ export default function AlpeDhuezPage() {
           {activeTab === 'synthesis' && <SynthesisView />}
           {activeTab === 'network' && <NetworkView />}
           {activeTab === 'position' && <PositionView />}
-          {activeTab === 'audit' && <AuditView />}
+          {activeTab === 'ascent' && <AuditView />}
         </div>
       </div>
 

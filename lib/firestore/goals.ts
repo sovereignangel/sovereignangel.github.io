@@ -2,11 +2,16 @@ import { collection, doc, getDocs, setDoc, updateDoc, deleteDoc, query, where, s
 import { db } from '../firebase'
 import type { Goal, GoalScope } from '../types'
 
+// Strip undefined values to avoid Firestore "unsupported field value: undefined" errors
+function stripUndefined<T extends Record<string, unknown>>(obj: T): T {
+  return Object.fromEntries(Object.entries(obj).filter(([, v]) => v !== undefined)) as T
+}
+
 export async function saveGoal(uid: string, goal: Partial<Goal> & { text: string; scope: GoalScope }): Promise<string> {
   if (goal.id) {
     const ref = doc(db, 'users', uid, 'goals', goal.id)
     const { id: _, ...data } = goal
-    await updateDoc(ref, { ...data, updatedAt: serverTimestamp() })
+    await updateDoc(ref, { ...stripUndefined(data), updatedAt: serverTimestamp() })
     return goal.id
   }
 
@@ -14,7 +19,7 @@ export async function saveGoal(uid: string, goal: Partial<Goal> & { text: string
   await setDoc(ref, {
     category: 'output',
     completed: false,
-    ...goal,
+    ...stripUndefined(goal),
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   })
