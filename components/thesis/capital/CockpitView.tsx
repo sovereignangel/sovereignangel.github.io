@@ -92,7 +92,7 @@ export default function CockpitView({ position }: Props) {
     <div className="space-y-3 p-1">
       {/* A. Health Score Hero */}
       {healthScore && (
-        <div className="bg-white border border-rule rounded-sm p-3">
+        <div className="bg-cream/80 border border-rule rounded-sm p-3">
           <div className="flex items-center justify-between mb-2 pb-1.5 border-b-2 border-rule">
             <h3 className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy">
               Financial Health
@@ -135,7 +135,7 @@ export default function CockpitView({ position }: Props) {
 
       {/* B. Alerts Panel */}
       {alerts.length > 0 && (
-        <div className="bg-white border border-rule rounded-sm p-3">
+        <div className="bg-cream/80 border border-rule rounded-sm p-3">
           <div className="mb-2 pb-1.5 border-b-2 border-rule">
             <h3 className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy">
               Intelligence Briefing
@@ -150,7 +150,7 @@ export default function CockpitView({ position }: Props) {
       )}
 
       {/* C. P&L Statement */}
-      <div className="bg-white border border-rule rounded-sm p-3">
+      <div className="bg-cream/80 border border-rule rounded-sm p-3">
         <div className="mb-2 pb-1.5 border-b-2 border-rule">
           <h3 className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy">
             Monthly P&L Statement
@@ -174,7 +174,7 @@ export default function CockpitView({ position }: Props) {
       </div>
 
       {/* D. Balance Sheet */}
-      <div className="bg-white border border-rule rounded-sm p-3">
+      <div className="bg-cream/80 border border-rule rounded-sm p-3">
         <div className="mb-2 pb-1.5 border-b-2 border-rule">
           <h3 className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy">
             Balance Sheet
@@ -297,7 +297,7 @@ function Divider({ double }: { double?: boolean }) {
 
 function VitalSign({ label, value, color }: { label: string; value: string; color: string }) {
   return (
-    <div className="bg-white border border-rule rounded-sm p-2">
+    <div className="bg-cream/80 border border-rule rounded-sm p-2">
       <p className="font-serif text-[8px] font-semibold uppercase tracking-[0.5px] text-ink-muted mb-0.5">
         {label}
       </p>

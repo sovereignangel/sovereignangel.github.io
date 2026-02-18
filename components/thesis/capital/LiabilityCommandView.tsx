@@ -86,7 +86,7 @@ export default function LiabilityCommandView({ position, debts }: Props) {
   return (
     <div className="space-y-3 p-1">
       {/* A. Cost of Carry Hero */}
-      <div className="bg-white border-2 border-red-ink/30 rounded-sm p-3">
+      <div className="bg-cream/80 border-2 border-red-ink/30 rounded-sm p-3">
         <div className="text-center">
           <p className="font-serif text-[9px] font-semibold uppercase tracking-[1px] text-ink-muted mb-1">
             Your Debt Costs You
@@ -117,7 +117,7 @@ export default function LiabilityCommandView({ position, debts }: Props) {
       </div>
 
       {/* B. Debt Stack Table */}
-      <div className="bg-white border border-rule rounded-sm p-3">
+      <div className="bg-cream/80 border border-rule rounded-sm p-3">
         <div className="flex items-center justify-between mb-2 pb-1.5 border-b-2 border-rule">
           <h3 className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy">
             Liability Stack
@@ -160,7 +160,7 @@ export default function LiabilityCommandView({ position, debts }: Props) {
 
       {/* C. Death Spiral: Interest vs Principal */}
       {spiralChartData.length > 0 && (
-        <div className="bg-white border border-rule rounded-sm p-3">
+        <div className="bg-cream/80 border border-rule rounded-sm p-3">
           <div className="mb-2 pb-1.5 border-b-2 border-rule">
             <h3 className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy">
               Interest Trap (Minimum Payments Only)
@@ -207,7 +207,7 @@ export default function LiabilityCommandView({ position, debts }: Props) {
 
       {/* D. Freed Capital Cascade */}
       {cascade.length > 0 && (
-        <div className="bg-white border border-rule rounded-sm p-3">
+        <div className="bg-cream/80 border border-rule rounded-sm p-3">
           <div className="mb-2 pb-1.5 border-b-2 border-rule">
             <h3 className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy">
               Capital Cascade ({strategy === 'avalanche' ? 'Avalanche' : 'Snowball'})
@@ -252,7 +252,7 @@ export default function LiabilityCommandView({ position, debts }: Props) {
       )}
 
       {/* E. Extra Payment + Strategy Controls */}
-      <div className="bg-white border border-rule rounded-sm p-3">
+      <div className="bg-cream/80 border border-rule rounded-sm p-3">
         <div className="flex items-center justify-between mb-2">
           <h3 className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-burgundy">
             Strategy Controls
@@ -290,7 +290,7 @@ export default function LiabilityCommandView({ position, debts }: Props) {
       </div>
 
       {/* F. Strategy Comparison */}
-      <div className="bg-white border border-rule rounded-sm p-3">
+      <div className="bg-cream/80 border border-rule rounded-sm p-3">
         <div className="mb-2 pb-1.5 border-b-2 border-rule">
           <h3 className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy">
             Strategy Comparison
@@ -346,7 +346,7 @@ export default function LiabilityCommandView({ position, debts }: Props) {
 
       {/* G. Payoff Timeline */}
       {payoffChartData.length > 0 && (
-        <div className="bg-white border border-rule rounded-sm p-3">
+        <div className="bg-cream/80 border border-rule rounded-sm p-3">
           <div className="mb-2 pb-1.5 border-b-2 border-rule">
             <h3 className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy">
               Payoff Timeline

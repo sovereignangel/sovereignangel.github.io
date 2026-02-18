@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '@/components/auth/AuthProvider'
-import { saveFinancialSnapshot, getFinancialSnapshot, getDebtItems, saveDebtItem, deleteDebtItem } from '@/lib/firestore'
+import { saveFinancialSnapshot, getFinancialSnapshot, getFinancialHistory, getDebtItems, saveDebtItem, deleteDebtItem } from '@/lib/firestore'
 import { buildCapitalPosition, computeHealthScore } from '@/lib/capital-engine'
 import { currency } from '@/lib/formatters'
 import type { FinancialSnapshot, DebtItem, DebtCategory, ScenarioParams, CapitalPosition } from '@/lib/types'
@@ -96,17 +96,26 @@ export default function CapitalDial({ onPositionChange, onDebtsChange, scenarios
       getDebtItems(user.uid),
     ])
 
-    if (snap) {
+    // Fall back to most recent snapshot if current month has no data
+    let effectiveSnap = snap
+    if (!effectiveSnap) {
+      const history = await getFinancialHistory(user.uid, 1)
+      if (history.length > 0) {
+        effectiveSnap = history[history.length - 1]
+      }
+    }
+
+    if (effectiveSnap) {
       setForm({
-        cashSavings: snap.cashSavings,
-        investments: snap.investments,
-        crypto: snap.crypto,
-        realEstate: snap.realEstate,
-        startupEquity: snap.startupEquity,
-        otherAssets: snap.otherAssets,
-        totalDebt: snap.totalDebt,
-        monthlyIncome: snap.monthlyIncome,
-        monthlyExpenses: snap.monthlyExpenses,
+        cashSavings: effectiveSnap.cashSavings,
+        investments: effectiveSnap.investments,
+        crypto: effectiveSnap.crypto,
+        realEstate: effectiveSnap.realEstate,
+        startupEquity: effectiveSnap.startupEquity,
+        otherAssets: effectiveSnap.otherAssets,
+        totalDebt: effectiveSnap.totalDebt,
+        monthlyIncome: effectiveSnap.monthlyIncome,
+        monthlyExpenses: effectiveSnap.monthlyExpenses,
       })
     } else {
       setForm(EMPTY_SNAPSHOT)
@@ -117,7 +126,7 @@ export default function CapitalDial({ onPositionChange, onDebtsChange, scenarios
     setLoaded(true)
 
     // Build position immediately
-    const position = buildCapitalPosition(snap, debtItems)
+    const position = buildCapitalPosition(effectiveSnap, debtItems)
     onPositionChange(position)
   }, [user, month, onPositionChange, onDebtsChange])
 
