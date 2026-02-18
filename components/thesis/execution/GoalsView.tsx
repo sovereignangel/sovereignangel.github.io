@@ -218,6 +218,7 @@ export default function GoalsView() {
   const [showAddQuarterly, setShowAddQuarterly] = useState(false)
   const [showAddWeekly, setShowAddWeekly] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   const currentWeekStart = weekStartDate()
   const currentQuarter = quarterStart()
@@ -225,6 +226,7 @@ export default function GoalsView() {
   const fetchGoals = useCallback(async () => {
     if (!user) return
     setLoading(true)
+    setError(null)
     try {
       const [q, w] = await Promise.all([
         getGoals(user.uid, 'quarterly'),
@@ -234,6 +236,7 @@ export default function GoalsView() {
       setWeeklyGoals(w)
     } catch (err) {
       console.error('Failed to fetch goals:', err)
+      setError(err instanceof Error ? err.message : 'Failed to load goals')
     } finally {
       setLoading(false)
     }
@@ -251,31 +254,48 @@ export default function GoalsView() {
     metricTarget?: number
   ) => {
     if (!user) return
-    await saveGoal(user.uid, {
-      text,
-      scope,
-      category,
-      metric,
-      metricTarget,
-      completed: false,
-      weekStart: scope === 'weekly' ? currentWeekStart : undefined,
-      quarter: scope === 'quarterly' ? currentQuarter : undefined,
-    })
-    if (scope === 'quarterly') setShowAddQuarterly(false)
-    if (scope === 'weekly') setShowAddWeekly(false)
-    fetchGoals()
+    setError(null)
+    try {
+      const goalData: Parameters<typeof saveGoal>[1] = {
+        text,
+        scope,
+        category,
+        completed: false,
+      }
+      if (metric) goalData.metric = metric
+      if (metricTarget != null) goalData.metricTarget = metricTarget
+      if (scope === 'weekly') goalData.weekStart = currentWeekStart
+      if (scope === 'quarterly') goalData.quarter = currentQuarter
+      await saveGoal(user.uid, goalData)
+      if (scope === 'quarterly') setShowAddQuarterly(false)
+      if (scope === 'weekly') setShowAddWeekly(false)
+      fetchGoals()
+    } catch (err) {
+      console.error('Failed to save goal:', err)
+      setError(err instanceof Error ? err.message : 'Failed to save goal')
+    }
   }
 
   const handleToggle = async (goal: Goal) => {
     if (!user || !goal.id) return
-    await toggleGoalComplete(user.uid, goal.id, !goal.completed)
-    fetchGoals()
+    try {
+      await toggleGoalComplete(user.uid, goal.id, !goal.completed)
+      fetchGoals()
+    } catch (err) {
+      console.error('Failed to toggle goal:', err)
+      setError(err instanceof Error ? err.message : 'Failed to update goal')
+    }
   }
 
   const handleDelete = async (goal: Goal) => {
     if (!user || !goal.id) return
-    await deleteGoal(user.uid, goal.id)
-    fetchGoals()
+    try {
+      await deleteGoal(user.uid, goal.id)
+      fetchGoals()
+    } catch (err) {
+      console.error('Failed to delete goal:', err)
+      setError(err instanceof Error ? err.message : 'Failed to delete goal')
+    }
   }
 
   // 7-day execution heatmap: score 0-3 per day
@@ -303,6 +323,14 @@ export default function GoalsView() {
 
   return (
     <div className="h-full flex flex-col space-y-3 overflow-y-auto">
+      {/* Error Banner */}
+      {error && (
+        <div className="bg-burgundy-bg border border-burgundy/20 rounded-sm p-2 flex items-start gap-2">
+          <span className="font-mono text-[11px] text-red-ink flex-1">{error}</span>
+          <button onClick={() => setError(null)} className="font-mono text-[9px] text-ink-muted hover:text-ink">x</button>
+        </div>
+      )}
+
       {/* Quarterly Objectives */}
       <div className="bg-paper border border-rule rounded-sm p-3">
         <div className="flex items-center justify-between mb-2 pb-1.5 border-b-2 border-rule">
