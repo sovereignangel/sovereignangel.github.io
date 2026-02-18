@@ -14,6 +14,7 @@ const navItems = [
   { href: '/thesis/execution', label: 'Execution', symbol: 'GVC+κ' },
   { href: '/thesis/intelligence', label: 'Intelligence', symbol: 'GI+O' },
   { href: '/thesis/alpe-dhuez', label: "Alpe d'Huez", symbol: 'Θ+$' },
+  { href: '/thesis/capital', label: 'Capital', symbol: '$' },
 ]
 
 function ScoreValue({ label, value, color }: { label: string; value: number | null; color: string }) {
