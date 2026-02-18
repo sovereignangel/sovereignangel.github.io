@@ -211,19 +211,17 @@ export const CONTACT_TIERS = [
 
 export const BELT_COLORS: Record<string, string> = {
   white: 'text-ink-muted',
-  yellow: 'text-amber-ink',
-  orange: 'text-amber-ink',
-  green: 'text-green-ink',
-  brown: 'text-burgundy',
+  blue: 'text-navy',
+  purple: 'text-burgundy',
+  brown: 'text-amber-ink',
   black: 'text-ink',
 }
 
 export const BELT_BG_COLORS: Record<string, string> = {
   white: 'bg-cream',
-  yellow: 'bg-amber-bg',
-  orange: 'bg-amber-bg',
-  green: 'bg-green-bg',
-  brown: 'bg-burgundy-bg',
+  blue: 'bg-navy-bg',
+  purple: 'bg-burgundy-bg',
+  brown: 'bg-amber-bg',
   black: 'bg-ink/5',
 }
 

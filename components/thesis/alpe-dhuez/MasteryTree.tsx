@@ -34,7 +34,6 @@ function SkillDot({ skill, locked }: { skill: SkillNode; locked: boolean }) {
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
       >
-        {/* Fill indicator */}
         <div className="relative w-3 h-3 flex-shrink-0">
           <div className={`absolute inset-0 rounded-sm border ${borderColor}`} />
           <div
@@ -49,7 +48,6 @@ function SkillDot({ skill, locked }: { skill: SkillNode; locked: boolean }) {
         </span>
       </div>
 
-      {/* Tooltip on hover */}
       {hovered && !locked && (
         <div className="absolute z-10 left-0 bottom-full mb-1 bg-ink text-paper rounded-sm px-2 py-1 shadow-sm whitespace-nowrap pointer-events-none">
           <div className="font-mono text-[8px] text-paper/70">{skill.target}</div>
@@ -83,7 +81,6 @@ function TrackColumn({ track, locked }: { track: TrackScore; locked: boolean }) 
           {locked ? '—' : `${track.progress}%`}
         </span>
       </div>
-      {/* Progress bar */}
       <div className="h-[2px] bg-rule-light rounded-sm mb-1.5">
         <div
           className={`h-full rounded-sm transition-all duration-300 ${
@@ -110,7 +107,6 @@ function LevelRow({ level, isCurrent, isExpanded, onToggle }: {
   onToggle: () => void
 }) {
   const isComplete = !level.locked && level.progress >= 80
-  const beltColor = BELT_COLORS[level.belt] || 'text-ink-muted'
 
   const progressColor = level.locked
     ? 'text-ink-faint'
@@ -126,7 +122,7 @@ function LevelRow({ level, isCurrent, isExpanded, onToggle }: {
   return (
     <div className={`border rounded-sm transition-colors ${
       isCurrent
-        ? 'border-burgundy/30 bg-burgundy-bg'
+        ? 'border-burgundy bg-burgundy-bg'
         : level.locked
           ? 'border-rule-light bg-transparent'
           : isComplete
@@ -137,39 +133,50 @@ function LevelRow({ level, isCurrent, isExpanded, onToggle }: {
       <button
         onClick={onToggle}
         className="w-full flex items-center justify-between px-3 py-2 text-left"
-        disabled={level.locked}
       >
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 min-w-0">
           {/* Status indicator */}
-          <span className={`w-2 h-2 rounded-sm flex-shrink-0 ${
-            level.locked
-              ? 'bg-rule'
-              : isComplete
-                ? 'bg-green-ink'
-                : isCurrent
-                  ? 'bg-burgundy'
+          {isCurrent ? (
+            <span className="font-mono text-[7px] font-bold text-paper bg-burgundy px-1 py-0.5 rounded-sm flex-shrink-0 uppercase tracking-[0.5px]">
+              Now
+            </span>
+          ) : (
+            <span className={`w-2 h-2 rounded-sm flex-shrink-0 ${
+              level.locked
+                ? 'bg-rule'
+                : isComplete
+                  ? 'bg-green-ink'
                   : 'bg-ink-faint'
-          }`} />
-          <div>
+            }`} />
+          )}
+          <div className="min-w-0">
             <span className={`font-serif text-[11px] font-semibold ${
               level.locked ? 'text-ink-faint' : isCurrent ? 'text-burgundy' : 'text-ink'
             }`}>
               {level.label}
             </span>
-            <span className={`font-mono text-[8px] ml-1.5 ${beltColor}`}>
+            <span className={`font-mono text-[8px] ml-1.5 ${
+              isCurrent ? 'text-burgundy/60' : level.locked ? 'text-ink-faint' : 'text-ink-muted'
+            }`}>
               {level.sublabel}
             </span>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-shrink-0">
           {level.locked ? (
-            <span className="font-mono text-[8px] text-ink-faint flex items-center gap-1">
+            <span className="font-mono text-[8px] text-ink-faint flex items-center gap-1.5">
               <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 12 12" stroke="currentColor" strokeWidth={1.5}>
                 <rect x={2} y={6} width={8} height={5} rx={1} />
                 <path d="M4,6 V4 a2,2 0 0 1 4,0 V6" />
               </svg>
               Future
+              <svg
+                className={`w-2.5 h-2.5 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+                fill="none" viewBox="0 0 12 12" stroke="currentColor" strokeWidth={2}
+              >
+                <path strokeLinecap="round" d="M3 5l3 3 3-3" />
+              </svg>
             </span>
           ) : (
             <>
@@ -190,14 +197,31 @@ function LevelRow({ level, isCurrent, isExpanded, onToggle }: {
         </div>
       </button>
 
-      {/* Expanded content — three track columns */}
+      {/* Expanded content */}
       {isExpanded && !level.locked && (
         <div className="px-3 pb-2.5 pt-0.5 border-t border-rule-light">
+          {/* Context description */}
+          <p className={`font-serif text-[9px] italic leading-relaxed mb-2.5 ${
+            isCurrent ? 'text-burgundy/80' : 'text-ink-muted'
+          }`}>
+            {level.context}
+          </p>
+
+          {/* Three track columns */}
           <div className="flex gap-3">
             {level.tracks.map(track => (
               <TrackColumn key={track.track} track={track} locked={level.locked} />
             ))}
           </div>
+        </div>
+      )}
+
+      {/* Locked context — show inline */}
+      {isExpanded && level.locked && (
+        <div className="px-3 pb-2 pt-0.5 border-t border-rule-light">
+          <p className="font-serif text-[9px] italic text-ink-faint leading-relaxed">
+            {level.context}
+          </p>
         </div>
       )}
     </div>
@@ -211,14 +235,12 @@ interface MasteryTreeProps {
 }
 
 export default function MasteryTree({ mastery }: MasteryTreeProps) {
-  // Expand current level by default
   const [expandedIdx, setExpandedIdx] = useState<number | null>(mastery.currentLevelIdx)
 
   const toggleLevel = (idx: number) => {
     setExpandedIdx(prev => prev === idx ? null : idx)
   }
 
-  // Summary stats
   const computableLevels = mastery.levels.filter(l => !l.locked)
   const totalSkillsMet = computableLevels.reduce(
     (s, l) => s + l.tracks.reduce((s2, t) => s2 + t.skills.filter(sk => sk.met).length, 0), 0
@@ -226,6 +248,8 @@ export default function MasteryTree({ mastery }: MasteryTreeProps) {
   const totalSkills = computableLevels.reduce(
     (s, l) => s + l.tracks.reduce((s2, t) => s2 + t.skills.length, 0), 0
   )
+
+  const currentLevel = mastery.levels[mastery.currentLevelIdx]
 
   return (
     <div className="bg-paper border border-rule rounded-sm p-3">
@@ -237,13 +261,26 @@ export default function MasteryTree({ mastery }: MasteryTreeProps) {
           <span className="font-mono text-[8px] text-ink-muted">
             {totalSkillsMet}/{totalSkills} skills
           </span>
-          <span className="font-serif text-[8px] italic text-ink-faint">
-            Techniques → Patterns → Intuition
-          </span>
         </div>
       </div>
 
-      {/* Level rows — bottom (Imitation) to top (Transcendence), rendered top-down visually reversed */}
+      {/* Current stage summary */}
+      <div className="flex items-center gap-2 mb-2 px-2 py-1.5 bg-burgundy-bg border border-burgundy/20 rounded-sm">
+        <span className="font-mono text-[7px] font-bold text-paper bg-burgundy px-1 py-0.5 rounded-sm uppercase tracking-[0.5px] flex-shrink-0">
+          Stage {mastery.currentLevelIdx + 1}/5
+        </span>
+        <span className="font-serif text-[10px] font-semibold text-burgundy">
+          {currentLevel.label}
+        </span>
+        <span className="font-mono text-[8px] text-burgundy/60">
+          — {currentLevel.sublabel}
+        </span>
+        <span className="font-mono text-[9px] font-semibold text-burgundy ml-auto tabular-nums">
+          {currentLevel.progress}%
+        </span>
+      </div>
+
+      {/* Level rows */}
       <div className="space-y-1.5">
         {mastery.levels.map((level, idx) => (
           <LevelRow
@@ -269,13 +306,6 @@ export default function MasteryTree({ mastery }: MasteryTreeProps) {
         <div className="flex items-center gap-1">
           <div className="w-2 h-2 rounded-sm bg-rule" />
           <span className="font-mono text-[7px] text-ink-muted">Not started</span>
-        </div>
-        <div className="flex items-center gap-1">
-          <svg className="w-2 h-2 text-ink-faint" fill="none" viewBox="0 0 12 12" stroke="currentColor" strokeWidth={1.5}>
-            <rect x={2} y={6} width={8} height={5} rx={1} />
-            <path d="M4,6 V4 a2,2 0 0 1 4,0 V6" />
-          </svg>
-          <span className="font-mono text-[7px] text-ink-muted">Locked</span>
         </div>
       </div>
     </div>

@@ -3,7 +3,7 @@ import type { Timestamp } from './shared'
 // ─── ENUMS ────────────────────────────────────────────────────────────
 
 export type ContactTier = 'decision_maker' | 'connector' | 'peer_operator'
-export type SalesBelt = 'white' | 'yellow' | 'orange' | 'green' | 'brown' | 'black'
+export type SalesBelt = 'white' | 'blue' | 'purple' | 'brown' | 'black'
 export type TrustStage = 1 | 2 | 3 | 4 | 5 | 6
 
 // ─── SYSTEM STATE (Bridgewater diagnostic) ────────────────────────────
@@ -122,13 +122,12 @@ export const TRUST_STAGE_LABELS: Record<TrustStage, string> = {
   6: 'Compounding Partnership',
 }
 
-export const BELT_ORDER: SalesBelt[] = ['white', 'yellow', 'orange', 'green', 'brown', 'black']
+export const BELT_ORDER: SalesBelt[] = ['white', 'blue', 'purple', 'brown', 'black']
 
 export const BELT_LABELS: Record<SalesBelt, string> = {
   white: 'White Belt',
-  yellow: 'Yellow Belt',
-  orange: 'Orange Belt',
-  green: 'Green Belt',
+  blue: 'Blue Belt',
+  purple: 'Purple Belt',
   brown: 'Brown Belt',
   black: 'Black Belt',
 }
