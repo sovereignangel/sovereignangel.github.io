@@ -311,25 +311,23 @@ export default function ArchitecturePanel({ onClose }: ArchitecturePanelProps) {
 
       <div className="relative bg-paper border border-rule rounded-sm w-full max-w-[1200px] max-h-[92vh] overflow-y-auto shadow-lg z-50">
         {/* Header */}
-        <div className="sticky top-0 bg-paper border-b-2 border-ink px-8 py-5 flex items-center justify-between z-10">
+        <div className="sticky top-0 bg-paper border-b-2 border-ink px-6 py-3 flex items-center justify-between z-10">
           <div>
-            <h2 className="font-serif text-[22px] font-bold text-ink tracking-tight">
+            <h2 className="font-serif text-[16px] font-bold text-ink tracking-tight">
               {view === 'reward' ? 'Reward Function Flow' : 'System Architecture'}
             </h2>
-            <p className="font-serif text-[12px] italic text-ink-muted mt-1">
-              {view === 'reward'
-                ? 'How daily inputs compute into g* — click any node to trace its path'
-                : 'Data flow from external APIs through to the UI — click to trace'}
+            <p className="font-sans text-[10px] text-ink-muted mt-0.5">
+              Click node to trace path &middot; click again to navigate
             </p>
           </div>
 
-          <div className="flex items-center gap-4">
-            <div className="flex gap-1 border border-rule rounded-sm p-0.5">
+          <div className="flex items-center gap-3">
+            <div className="flex gap-0.5 border border-rule rounded-sm p-0.5">
               {(['reward', 'system'] as const).map((v) => (
                 <button
                   key={v}
                   onClick={() => { setView(v); clearHighlight(); nodeRefs.current.clear() }}
-                  className={`font-serif text-[12px] px-4 py-2 rounded-sm transition-colors ${
+                  className={`font-serif text-[10px] px-3 py-1 rounded-sm transition-colors ${
                     view === v
                       ? 'bg-burgundy text-paper'
                       : 'bg-transparent text-ink-muted hover:text-ink'
@@ -340,7 +338,7 @@ export default function ArchitecturePanel({ onClose }: ArchitecturePanelProps) {
               ))}
             </div>
             <button onClick={onClose} className="text-ink-muted hover:text-ink transition-colors p-1">
-              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
@@ -348,8 +346,8 @@ export default function ArchitecturePanel({ onClose }: ArchitecturePanelProps) {
         </div>
 
         {/* Diagram canvas */}
-        <div className="px-8 py-6 overflow-x-auto">
-          <div ref={containerRef} className="relative min-w-[900px]">
+        <div className="px-5 py-4 overflow-x-auto">
+          <div ref={containerRef} className="relative min-w-[800px]">
             {/* SVG arrow layer */}
             <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 5 }}>
               <defs>
@@ -391,7 +389,7 @@ export default function ArchitecturePanel({ onClose }: ArchitecturePanelProps) {
             </svg>
 
             {/* Swim lane columns */}
-            <div className="flex gap-3" style={{ zIndex: 10, position: 'relative' }}>
+            <div className="flex gap-2" style={{ zIndex: 10, position: 'relative' }}>
               {columns.map((col, colIdx) => {
                 const lane = lanes[colIdx]
                 const isInputCol = view === 'reward' && colIdx === 0
@@ -403,18 +401,18 @@ export default function ArchitecturePanel({ onClose }: ArchitecturePanelProps) {
                 return (
                   <div key={colIdx} className={`${lane.bg} border ${lane.border} rounded-sm flex-shrink-0`} style={{ width: widths[colIdx] }}>
                     {/* Lane header */}
-                    <div className="px-4 py-3 border-b border-rule-light/60">
-                      <h3 className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy">
+                    <div className="px-3 py-2 border-b border-rule-light/60">
+                      <h3 className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-burgundy">
                         {lane.title}
                       </h3>
-                      <p className="font-sans text-[10px] text-ink-muted mt-0.5">{lane.subtitle}</p>
+                      <p className="font-sans text-[9px] text-ink-muted">{lane.subtitle}</p>
                     </div>
 
                     {/* Lane body */}
-                    <div className={`px-3 py-3 ${isOutputCol ? 'flex items-center justify-center' : ''}`}>
+                    <div className={`px-2 py-2 ${isOutputCol ? 'flex items-center justify-center' : ''}`}>
                       {isInputCol ? (
                         // Grouped inputs with section dividers
-                        <div className="space-y-3">
+                        <div className="space-y-1.5">
                           {Object.entries(
                             col.reduce<Record<string, NodeDef[]>>((acc, n) => {
                               const g = n.group || 'other'
@@ -426,13 +424,13 @@ export default function ArchitecturePanel({ onClose }: ArchitecturePanelProps) {
                             const cfg = INPUT_GROUP_LABELS[groupId] || { label: groupId, color: 'text-ink' }
                             return (
                               <div key={groupId}>
-                                <div className="flex items-center gap-2 mb-2">
-                                  <span className={`font-serif text-[10px] font-semibold uppercase tracking-[0.5px] ${cfg.color}`}>
+                                <div className="flex items-center gap-1.5 mb-0.5">
+                                  <span className={`font-serif text-[8px] font-semibold uppercase tracking-[0.5px] ${cfg.color}`}>
                                     {cfg.label}
                                   </span>
                                   <span className="flex-1 h-px bg-rule-light" />
                                 </div>
-                                <div className="space-y-1.5">
+                                <div className="space-y-0.5">
                                   {groupNodes.map(node => (
                                     <BANode
                                       key={node.id}
@@ -453,7 +451,7 @@ export default function ArchitecturePanel({ onClose }: ArchitecturePanelProps) {
                           })}
                         </div>
                       ) : (
-                        <div className={`space-y-2 ${isOutputCol ? 'w-full' : ''}`}>
+                        <div className={`space-y-1 ${isOutputCol ? 'w-full' : ''}`}>
                           {col.map(node => (
                             <BANode
                               key={node.id}
@@ -476,53 +474,34 @@ export default function ArchitecturePanel({ onClose }: ArchitecturePanelProps) {
               })}
             </div>
 
-            {/* Flow direction arrows between lanes */}
-            <div className="flex items-center justify-around mt-4 px-8">
-              {[0, 1, 2].map(i => (
-                <div key={i} className="flex items-center gap-2 text-ink-faint">
-                  <span className="w-8 h-px bg-rule" />
-                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                  </svg>
-                </div>
-              ))}
-            </div>
+            {/* spacer */}
+            <div className="h-2" />
           </div>
         </div>
 
         {/* Legend */}
-        <div className="px-8 pb-5">
-          <div className="flex flex-wrap items-center gap-5 pt-4 border-t border-rule">
-            <span className="font-serif text-[10px] font-semibold uppercase tracking-[0.5px] text-ink-muted">Legend</span>
-            <span className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-sm bg-green-ink" />
-              <span className="font-sans text-[11px] text-ink-muted">&ge; 0.7 Healthy</span>
+        <div className="px-5 pb-3">
+          <div className="flex flex-wrap items-center gap-4 pt-2 border-t border-rule-light">
+            <span className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-sm bg-green-ink" />
+              <span className="font-sans text-[9px] text-ink-muted">&ge;0.7</span>
             </span>
-            <span className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-sm bg-amber-ink" />
-              <span className="font-sans text-[11px] text-ink-muted">&ge; 0.4 Watch</span>
+            <span className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-sm bg-amber-ink" />
+              <span className="font-sans text-[9px] text-ink-muted">&ge;0.4</span>
             </span>
-            <span className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-sm bg-red-ink" />
-              <span className="font-sans text-[11px] text-ink-muted">&lt; 0.4 Alert</span>
+            <span className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-sm bg-red-ink" />
+              <span className="font-sans text-[9px] text-ink-muted">&lt;0.4</span>
             </span>
-            <span className="w-px h-4 bg-rule" />
-            <span className="flex items-center gap-2">
-              <svg className="w-6 h-1.5" viewBox="0 0 24 6">
-                <line x1="0" y1="3" x2="20" y2="3" stroke="#c8c0b8" strokeWidth="1" />
-                <polygon points="18 0, 24 3, 18 6" fill="#9a928a" />
-              </svg>
-              <span className="font-sans text-[11px] text-ink-muted">Data flow</span>
+            <span className="w-px h-3 bg-rule-light" />
+            <span className="flex items-center gap-1.5">
+              <svg className="w-5 h-1" viewBox="0 0 20 4"><line x1="0" y1="2" x2="16" y2="2" stroke="#c8c0b8" strokeWidth="1" /><polygon points="14 0, 20 2, 14 4" fill="#9a928a" /></svg>
+              <span className="font-sans text-[9px] text-ink-muted">Flow</span>
             </span>
-            <span className="flex items-center gap-2">
-              <svg className="w-6 h-1.5" viewBox="0 0 24 6">
-                <line x1="0" y1="3" x2="20" y2="3" stroke="#7c2d2d" strokeWidth="2.5" />
-                <polygon points="18 0, 24 3, 18 6" fill="#7c2d2d" />
-              </svg>
-              <span className="font-sans text-[11px] text-ink-muted">Active path</span>
-            </span>
-            <span className="ml-auto font-sans text-[10px] text-ink-faint italic">
-              Click node once to trace &middot; click again to navigate
+            <span className="flex items-center gap-1.5">
+              <svg className="w-5 h-1" viewBox="0 0 20 4"><line x1="0" y1="2" x2="16" y2="2" stroke="#7c2d2d" strokeWidth="2" /><polygon points="14 0, 20 2, 14 4" fill="#7c2d2d" /></svg>
+              <span className="font-sans text-[9px] text-ink-muted">Active</span>
             </span>
           </div>
         </div>
@@ -552,25 +531,22 @@ const BANode = forwardRef<HTMLDivElement, BANodeProps>(function BANode(
     ? (node.liveFormatter ? node.liveFormatter(liveValue) : liveValue.toFixed(2))
     : null
 
-  // ─── Output node (big centered score) ───
+  // ─── Output node (centered score) ───
   if (node.type === 'output') {
     const color = valColor(liveValue, true)
     return (
       <div
         ref={ref}
         onClick={onClick}
-        className={`bg-white border-2 rounded-sm p-5 cursor-pointer transition-all duration-300 text-center ${
+        className={`bg-white border-2 rounded-sm px-3 py-4 cursor-pointer transition-all duration-200 text-center ${
           isActive ? 'border-burgundy shadow-md' : isHighlighted ? 'border-burgundy/60' : 'border-rule'
         } ${isDimmed ? 'opacity-15' : ''}`}
       >
-        <p className="font-mono text-[11px] text-ink-muted mb-2 uppercase tracking-[1px]">{node.symbol}</p>
-        <p className={`font-mono text-[40px] font-bold leading-none ${color}`}>
+        <p className="font-mono text-[9px] text-ink-muted mb-1 uppercase tracking-[1px]">{node.symbol}</p>
+        <p className={`font-mono text-[28px] font-bold leading-none ${color}`}>
           {liveValue !== null ? liveValue.toFixed(1) : '—'}
         </p>
-        <p className="font-serif text-[11px] text-ink-muted mt-2">{node.label}</p>
-        {node.sublabel && (
-          <p className="font-sans text-[9px] text-ink-faint mt-1">{node.sublabel}</p>
-        )}
+        <p className="font-serif text-[9px] text-ink-muted mt-1.5">{node.sublabel || node.label}</p>
       </div>
     )
   }
@@ -581,13 +557,13 @@ const BANode = forwardRef<HTMLDivElement, BANodeProps>(function BANode(
       <div
         ref={ref}
         onClick={onClick}
-        className={`bg-white border-2 border-dashed rounded-sm px-4 py-3 cursor-pointer transition-all duration-300 ${
-          isActive ? 'border-burgundy shadow-md' : isHighlighted ? 'border-burgundy/60' : 'border-rule'
+        className={`bg-white border border-dashed rounded-sm px-3 py-1.5 cursor-pointer transition-all duration-200 ${
+          isActive ? 'border-burgundy shadow-sm' : isHighlighted ? 'border-burgundy/60' : 'border-rule'
         } ${isDimmed ? 'opacity-15' : ''}`}
       >
-        <p className="font-serif text-[11px] font-semibold text-ink mb-1">{node.label}</p>
+        <p className="font-serif text-[9px] font-semibold text-ink">{node.label}</p>
         {node.sublabel && (
-          <p className="font-mono text-[10px] text-ink-muted leading-relaxed">{node.sublabel}</p>
+          <p className="font-mono text-[8px] text-ink-muted leading-snug">{node.sublabel}</p>
         )}
       </div>
     )
@@ -601,31 +577,28 @@ const BANode = forwardRef<HTMLDivElement, BANodeProps>(function BANode(
       <div
         ref={ref}
         onClick={onClick}
-        className={`bg-white border-2 rounded-sm px-4 py-2.5 cursor-pointer transition-all duration-300 flex items-center gap-3 ${
-          isActive ? 'border-burgundy shadow-md' : isHighlighted ? 'border-burgundy/60' : 'border-rule'
+        className={`bg-white border rounded-sm px-2 py-1.5 cursor-pointer transition-all duration-200 flex items-center gap-2 ${
+          isActive ? 'border-burgundy shadow-sm border-2' : isHighlighted ? 'border-burgundy/60' : 'border-rule'
         } ${isDimmed ? 'opacity-15' : ''}`}
       >
         {/* Score badge */}
-        <div className={`${bg} border border-rule-light rounded-sm px-2 py-1 min-w-[44px] text-center shrink-0`}>
-          <p className={`font-mono text-[14px] font-bold ${color}`}>
+        <div className={`${bg} border border-rule-light rounded-sm px-1.5 py-0.5 min-w-[36px] text-center shrink-0`}>
+          <p className={`font-mono text-[11px] font-bold ${color}`}>
             {formatted ?? '—'}
           </p>
         </div>
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1">
             {node.symbol && (
-              <span className={`font-mono text-[11px] font-bold ${isHighlighted || isActive ? 'text-burgundy' : 'text-ink'}`}>
+              <span className={`font-mono text-[9px] font-bold ${isHighlighted || isActive ? 'text-burgundy' : 'text-ink'}`}>
                 {node.symbol}
               </span>
             )}
-            <span className="font-serif text-[11px] font-medium text-ink truncate">{node.label}</span>
+            <span className="font-serif text-[9px] font-medium text-ink truncate">{node.label}</span>
           </div>
-          {node.sublabel && (
-            <p className="font-sans text-[9px] text-ink-muted mt-0.5 truncate">{node.sublabel}</p>
-          )}
         </div>
         {node.navigateTo && (
-          <svg className="w-3.5 h-3.5 text-ink-faint shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <svg className="w-2.5 h-2.5 text-ink-faint shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
           </svg>
         )}
@@ -643,36 +616,39 @@ const BANode = forwardRef<HTMLDivElement, BANodeProps>(function BANode(
   }
   const accent = typeAccents[node.type] || typeAccents.input
 
+  // Show sublabel only for non-input types (api, data, state, ui)
+  const showSub = node.type !== 'input'
+
   return (
     <div
       ref={ref}
       onClick={onClick}
-      className={`bg-white border rounded-sm px-3 py-2 cursor-pointer transition-all duration-300 ${
-        isActive ? 'border-burgundy shadow-md border-2' : isHighlighted ? `${accent.border} border-burgundy/40` : accent.border
+      className={`bg-white border rounded-sm px-2 py-1 cursor-pointer transition-all duration-200 ${
+        isActive ? 'border-burgundy shadow-sm border-2' : isHighlighted ? `${accent.border} border-burgundy/40` : accent.border
       } ${isDimmed ? 'opacity-15' : ''}`}
     >
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex items-center justify-between gap-1.5">
         <div className="min-w-0">
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1">
             {node.symbol && (
-              <span className={`font-mono text-[10px] font-bold ${isHighlighted || isActive ? 'text-burgundy' : accent.icon}`}>
+              <span className={`font-mono text-[9px] font-bold ${isHighlighted || isActive ? 'text-burgundy' : accent.icon}`}>
                 {node.symbol}
               </span>
             )}
-            <span className="font-serif text-[11px] font-medium text-ink truncate">{node.label}</span>
+            <span className="font-serif text-[9px] font-medium text-ink truncate">{node.label}</span>
           </div>
-          {node.sublabel && (
-            <p className="font-sans text-[9px] text-ink-muted mt-0.5">{node.sublabel}</p>
+          {showSub && node.sublabel && (
+            <p className="font-sans text-[8px] text-ink-muted">{node.sublabel}</p>
           )}
         </div>
-        <div className="flex items-center gap-1.5 shrink-0">
+        <div className="flex items-center gap-1 shrink-0">
           {formatted !== null && (
-            <span className={`font-mono text-[11px] font-semibold ${valColor(liveValue)}`}>
+            <span className={`font-mono text-[9px] font-semibold ${valColor(liveValue)}`}>
               {formatted}
             </span>
           )}
           {node.navigateTo && (
-            <svg className="w-3 h-3 text-ink-faint" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <svg className="w-2.5 h-2.5 text-ink-faint" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
             </svg>
           )}
