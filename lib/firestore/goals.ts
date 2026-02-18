@@ -1,4 +1,4 @@
-import { collection, doc, getDocs, setDoc, updateDoc, deleteDoc, query, where, orderBy, serverTimestamp, type QueryConstraint } from 'firebase/firestore'
+import { collection, doc, getDocs, setDoc, updateDoc, deleteDoc, query, where, serverTimestamp, type QueryConstraint } from 'firebase/firestore'
 import { db } from '../firebase'
 import type { Goal, GoalScope } from '../types'
 
@@ -23,25 +23,36 @@ export async function saveGoal(uid: string, goal: Partial<Goal> & { text: string
 
 export async function getGoals(uid: string, scope?: GoalScope, weekStart?: string): Promise<Goal[]> {
   const ref = collection(db, 'users', uid, 'goals')
-  const constraints: QueryConstraint[] = [orderBy('createdAt', 'desc')]
+  const constraints: QueryConstraint[] = []
 
   if (scope) {
-    constraints.unshift(where('scope', '==', scope))
+    constraints.push(where('scope', '==', scope))
   }
   if (weekStart) {
-    constraints.unshift(where('weekStart', '==', weekStart))
+    constraints.push(where('weekStart', '==', weekStart))
   }
 
   const q = query(ref, ...constraints)
   const snap = await getDocs(q)
-  return snap.docs.map(d => ({ id: d.id, ...d.data() }) as Goal)
+  const goals = snap.docs.map(d => ({ id: d.id, ...d.data() }) as Goal)
+  // Sort client-side to avoid requiring composite Firestore index
+  return goals.sort((a, b) => {
+    const aTime = a.createdAt?.seconds ?? 0
+    const bTime = b.createdAt?.seconds ?? 0
+    return bTime - aTime
+  })
 }
 
 export async function getActiveGoals(uid: string): Promise<Goal[]> {
   const ref = collection(db, 'users', uid, 'goals')
-  const q = query(ref, where('completed', '==', false), orderBy('createdAt', 'desc'))
+  const q = query(ref, where('completed', '==', false))
   const snap = await getDocs(q)
-  return snap.docs.map(d => ({ id: d.id, ...d.data() }) as Goal)
+  const goals = snap.docs.map(d => ({ id: d.id, ...d.data() }) as Goal)
+  return goals.sort((a, b) => {
+    const aTime = a.createdAt?.seconds ?? 0
+    const bTime = b.createdAt?.seconds ?? 0
+    return bTime - aTime
+  })
 }
 
 export async function toggleGoalComplete(uid: string, goalId: string, completed: boolean): Promise<void> {
