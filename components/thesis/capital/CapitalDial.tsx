@@ -34,10 +34,10 @@ const EMPTY_SNAPSHOT = {
   expenseBreakdown: { ...EMPTY_EXPENSE_BREAKDOWN },
 }
 
-// ─── PRO FORMA SEED DATA (from Williamsburg Pro Forma, Sep 2024) ────
+// ─── PRO FORMA SEED DATA (from Williamsburg Pro Forma, Feb 2026 column) ────
 const PRO_FORMA_INCOME: IncomeBreakdown = {
-  employment: 0,         // Between jobs
-  sublease: 1800,        // Sublease rental income (Sep 2024)
+  employment: 0,
+  sublease: 0,
   freelance: 0,
   other: 0,
 }
@@ -45,32 +45,31 @@ const PRO_FORMA_INCOME: IncomeBreakdown = {
 const PRO_FORMA_EXPENSES: ExpenseBreakdown = {
   rent: 4200,
   food: 800,
-  subscriptions: 370,    // Phone $67, GoogleFi $90, Uber $10, etc.
+  subscriptions: 0,
   miscellaneous: 400,
   travel: 0,
-  familySupport: 200,    // Mom utilities
+  familySupport: 0,
   other: 0,
 }
 
 const PRO_FORMA_SNAPSHOT = {
-  cashSavings: 2218,
-  investments: 121,       // Robinhood stocks
-  crypto: 18457,          // Coinbase
+  cashSavings: 0,
+  investments: 0,
+  crypto: 19629,          // Coinbase (Feb 2026 actual)
   realEstate: 0,
   startupEquity: 0,
   otherAssets: 44000,     // 401k (locked but real asset)
-  totalDebt: 37168,       // Sum of all leveraged debt (Sep 2024 column)
-  monthlyIncome: 1800,    // Sublease only
-  monthlyExpenses: 5970,  // Rent + Food + Subscriptions + Misc + Family
+  totalDebt: 25384,       // Sum of all leveraged debt (Feb 2026 actual)
+  monthlyIncome: 0,
+  monthlyExpenses: 5400,  // Rent + Food + Misc
   incomeBreakdown: PRO_FORMA_INCOME,
   expenseBreakdown: PRO_FORMA_EXPENSES,
 }
 
 const PRO_FORMA_DEBTS: { name: string; category: DebtCategory; balance: number; apr: number; minimumPayment: number }[] = [
-  { name: 'Chase Sapphire', category: 'credit_card', balance: 15184, apr: 0.285, minimumPayment: 380 },
-  { name: 'Capital One Savor', category: 'credit_card', balance: 2839, apr: 0.2999, minimumPayment: 71 },
-  { name: 'Apple Card', category: 'credit_card', balance: 5693, apr: 0.2749, minimumPayment: 142 },
-  { name: 'Tax Filer Loan', category: 'personal_loan', balance: 5250, apr: 0, minimumPayment: 250 },
+  { name: 'Chase Sapphire', category: 'credit_card', balance: 1602, apr: 0.285, minimumPayment: 40 },
+  { name: 'Apple Card', category: 'credit_card', balance: 5693, apr: 0.285, minimumPayment: 142 },
+  { name: 'Tax Filer Loan (2025)', category: 'personal_loan', balance: 4750, apr: 0, minimumPayment: 250 },
   { name: '2022 SURI Taxes (PR)', category: 'tax', balance: 7339, apr: 0.03, minimumPayment: 250 },
   { name: '2023-24 Federal Taxes', category: 'tax', balance: 6000, apr: 0.03, minimumPayment: 200 },
 ]
