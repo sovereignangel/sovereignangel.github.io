@@ -21,7 +21,7 @@ export default function CapitalPage() {
   const [scenarios, setScenarios] = useState<ScenarioParams[]>(DEFAULT_SCENARIOS)
 
   return (
-    <div className="h-full grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-3 min-h-0">
+    <div className="h-full grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-2 min-h-0">
       {/* Left Panel: Tabbed Sections */}
       <div className="flex flex-col min-h-0">
         {/* Sub-tab Navigation */}
