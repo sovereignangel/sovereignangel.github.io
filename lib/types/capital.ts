@@ -64,6 +64,7 @@ export interface CapitalPosition {
   investments: number
   crypto: number
   otherAssets: number
+  liquidAssets: number            // cash + investments + crypto (accessible capital)
   totalAssets: number
   totalDebt: number
   netWorth: number
@@ -75,6 +76,26 @@ export interface CapitalPosition {
   debtItems: DebtItem[]
   totalMinimumPayments: number
   monthlyInterestCost: number
+  dailyInterestCost: number       // daily cost of carry across all debt
+}
+
+// ─── DECISION RULES (pass/fail booleans replace A-F grade) ──────────
+
+export interface DecisionRule {
+  key: string
+  label: string
+  passed: boolean
+  value: string                   // display value e.g. "$5,400" or "3.6mo"
+  threshold: string               // e.g. "> $0" or "> 6mo"
+}
+
+// ─── STRESS SCENARIOS ────────────────────────────────────────────────
+
+export interface StressScenario {
+  label: string
+  netWorth: number
+  runway: number
+  description: string
 }
 
 // ─── DEFAULT SCENARIOS ──────────────────────────────────────────────

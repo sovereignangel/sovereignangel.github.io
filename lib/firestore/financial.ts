@@ -9,7 +9,8 @@ function computeDerived(data: Partial<FinancialSnapshot>): Partial<FinancialSnap
   const income = data.monthlyIncome || 0
   const expenses = data.monthlyExpenses || 0
   const savingsRate = income > 0 ? ((income - expenses) / income) * 100 : 0
-  const runwayMonths = expenses > 0 ? (data.cashSavings || 0) / expenses : 0
+  const liquidAssets = (data.cashSavings || 0) + (data.investments || 0) + (data.crypto || 0)
+  const runwayMonths = expenses > 0 ? liquidAssets / expenses : 0
 
   return { ...data, totalAssets, netWorth, savingsRate, runwayMonths }
 }

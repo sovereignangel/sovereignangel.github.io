@@ -155,8 +155,9 @@ export default function CapitalDial({ onPositionChange, onDebtsChange, scenarios
         PRO_FORMA_SNAPSHOT.crypto + PRO_FORMA_SNAPSHOT.realEstate +
         PRO_FORMA_SNAPSHOT.startupEquity + PRO_FORMA_SNAPSHOT.otherAssets
       const netWorth = totalAssets - PRO_FORMA_SNAPSHOT.totalDebt
+      const proFormaLiquid = PRO_FORMA_SNAPSHOT.cashSavings + PRO_FORMA_SNAPSHOT.investments + PRO_FORMA_SNAPSHOT.crypto
       const runwayMonths = PRO_FORMA_SNAPSHOT.monthlyExpenses > 0
-        ? PRO_FORMA_SNAPSHOT.cashSavings / PRO_FORMA_SNAPSHOT.monthlyExpenses : 0
+        ? proFormaLiquid / PRO_FORMA_SNAPSHOT.monthlyExpenses : 0
       const position = buildCapitalPosition(
         { ...PRO_FORMA_SNAPSHOT, totalAssets, netWorth, runwayMonths },
         seedDebts,
@@ -173,7 +174,8 @@ export default function CapitalDial({ onPositionChange, onDebtsChange, scenarios
     const totalAssets = form.cashSavings + form.investments + form.crypto +
       form.realEstate + form.startupEquity + form.otherAssets
     const netWorth = totalAssets - form.totalDebt
-    const runwayMonths = form.monthlyExpenses > 0 ? form.cashSavings / form.monthlyExpenses : 0
+    const liquidAssets = form.cashSavings + form.investments + form.crypto
+    const runwayMonths = form.monthlyExpenses > 0 ? liquidAssets / form.monthlyExpenses : 0
 
     const fakeSnapshot = {
       ...form,
@@ -275,8 +277,9 @@ export default function CapitalDial({ onPositionChange, onDebtsChange, scenarios
       PRO_FORMA_SNAPSHOT.crypto + PRO_FORMA_SNAPSHOT.realEstate +
       PRO_FORMA_SNAPSHOT.startupEquity + PRO_FORMA_SNAPSHOT.otherAssets
     const netWorth = totalAssets - PRO_FORMA_SNAPSHOT.totalDebt
+    const seedLiquid = PRO_FORMA_SNAPSHOT.cashSavings + PRO_FORMA_SNAPSHOT.investments + PRO_FORMA_SNAPSHOT.crypto
     const runwayMonths = PRO_FORMA_SNAPSHOT.monthlyExpenses > 0
-      ? PRO_FORMA_SNAPSHOT.cashSavings / PRO_FORMA_SNAPSHOT.monthlyExpenses : 0
+      ? seedLiquid / PRO_FORMA_SNAPSHOT.monthlyExpenses : 0
     const position = buildCapitalPosition(
       {
         ...PRO_FORMA_SNAPSHOT, totalAssets, netWorth, runwayMonths,
@@ -436,7 +439,8 @@ export default function CapitalDial({ onPositionChange, onDebtsChange, scenarios
                 </span>
               </div>
               {(() => {
-                const runwayMonths = form.monthlyExpenses > 0 ? form.cashSavings / form.monthlyExpenses : 0
+                const liquid = form.cashSavings + form.investments + form.crypto
+                const runwayMonths = form.monthlyExpenses > 0 ? liquid / form.monthlyExpenses : 0
                 const fakePos = buildCapitalPosition({ ...form, totalAssets, netWorth, runwayMonths }, debts)
                 const hs = computeHealthScore(fakePos)
                 const gradeColor = hs.grade === 'A' || hs.grade === 'B' ? 'text-green-ink' : hs.grade === 'C' ? 'text-amber-ink' : 'text-red-ink'
