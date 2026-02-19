@@ -2,6 +2,7 @@ import type {
   DebtItem, DebtPayoffStrategy, ScenarioParams, ScenarioMonth, ScenarioProjection,
   CapitalPosition, FinancialHealthScore, HealthGrade, CapitalAlert, SensitivityResult,
   AllocationTarget, FreedCascadeStep, DeathSpiralMonth,
+  DecisionRule, StressScenario,
   IncomeBreakdown, ExpenseBreakdown,
 } from './types'
 
@@ -599,6 +600,7 @@ export function buildCapitalPosition(
   const activeDebts = debts.filter(d => d.isActive)
   const totalMinimumPayments = activeDebts.reduce((s, d) => s + d.minimumPayment, 0)
   const interest = monthlyInterestCost(activeDebts)
+  const daily = dailyCostOfCarry(activeDebts)
 
   if (!snapshot) {
     return {
@@ -606,6 +608,7 @@ export function buildCapitalPosition(
       investments: 0,
       crypto: 0,
       otherAssets: 0,
+      liquidAssets: 0,
       totalAssets: 0,
       totalDebt: activeDebts.reduce((s, d) => s + d.balance, 0),
       netWorth: -activeDebts.reduce((s, d) => s + d.balance, 0),
@@ -613,16 +616,21 @@ export function buildCapitalPosition(
       monthlyExpenses: 0,
       runwayMonths: 0,
       debtItems: activeDebts,
-      totalMinimumPayments: totalMinimumPayments,
+      totalMinimumPayments,
       monthlyInterestCost: interest,
+      dailyInterestCost: daily,
     }
   }
+
+  const liquid = snapshot.cashSavings + snapshot.investments + snapshot.crypto
+  const runway = snapshot.monthlyExpenses > 0 ? liquid / snapshot.monthlyExpenses : 0
 
   return {
     cashSavings: snapshot.cashSavings,
     investments: snapshot.investments,
     crypto: snapshot.crypto,
     otherAssets: snapshot.otherAssets ?? 0,
+    liquidAssets: liquid,
     totalAssets: snapshot.totalAssets,
     totalDebt: snapshot.totalDebt,
     netWorth: snapshot.netWorth,
@@ -630,9 +638,101 @@ export function buildCapitalPosition(
     monthlyExpenses: snapshot.monthlyExpenses,
     incomeBreakdown: snapshot.incomeBreakdown,
     expenseBreakdown: snapshot.expenseBreakdown,
-    runwayMonths: snapshot.runwayMonths,
+    runwayMonths: runway,
     debtItems: activeDebts,
-    totalMinimumPayments: totalMinimumPayments,
+    totalMinimumPayments,
     monthlyInterestCost: interest,
+    dailyInterestCost: daily,
   }
+}
+
+// ─── ZERO DATE ───────────────────────────────────────────────────────
+// When do liquid assets hit $0 at current burn rate?
+
+export function computeZeroDate(position: CapitalPosition): Date | null {
+  const monthlyBurn = position.monthlyExpenses + position.totalMinimumPayments
+  if (monthlyBurn <= 0) return null
+  if (position.liquidAssets <= 0) return new Date() // already at zero
+  const monthsLeft = position.liquidAssets / monthlyBurn
+  const zero = new Date()
+  zero.setMonth(zero.getMonth() + Math.floor(monthsLeft))
+  zero.setDate(zero.getDate() + Math.round((monthsLeft % 1) * 30))
+  return zero
+}
+
+// ─── STRESS TESTS ────────────────────────────────────────────────────
+
+export function computeStressTests(position: CapitalPosition): StressScenario[] {
+  const { liquidAssets, monthlyExpenses, totalMinimumPayments, crypto, netWorth } = position
+  const burn = monthlyExpenses + totalMinimumPayments
+
+  const scenarios: StressScenario[] = [
+    {
+      label: 'Base',
+      netWorth,
+      runway: burn > 0 ? liquidAssets / burn : 0,
+      description: 'Current position, no changes',
+    },
+    {
+      label: 'Crypto -50%',
+      netWorth: netWorth - crypto * 0.5,
+      runway: burn > 0 ? (liquidAssets - crypto * 0.5) / burn : 0,
+      description: 'Crypto holdings lose 50% value',
+    },
+    {
+      label: 'Exp +20%',
+      netWorth,
+      runway: (monthlyExpenses * 1.2 + totalMinimumPayments) > 0
+        ? liquidAssets / (monthlyExpenses * 1.2 + totalMinimumPayments) : 0,
+      description: 'Monthly expenses increase 20%',
+    },
+    {
+      label: 'Crypto -50% + Exp +20%',
+      netWorth: netWorth - crypto * 0.5,
+      runway: (monthlyExpenses * 1.2 + totalMinimumPayments) > 0
+        ? (liquidAssets - crypto * 0.5) / (monthlyExpenses * 1.2 + totalMinimumPayments) : 0,
+      description: 'Combined worst case',
+    },
+  ]
+
+  return scenarios
+}
+
+// ─── DECISION RULES ──────────────────────────────────────────────────
+
+export function evaluateDecisionRules(position: CapitalPosition): DecisionRule[] {
+  const { monthlyIncome, monthlyExpenses, runwayMonths, debtItems, dailyInterestCost } = position
+  const toxicDebts = debtItems.filter(d => d.isActive && d.apr > 0.20 && d.balance > 0)
+  const prevToxicBalance = toxicDebts.reduce((s, d) => s + d.balance, 0)
+
+  return [
+    {
+      key: 'income_positive',
+      label: 'Income > Expenses',
+      passed: monthlyIncome > monthlyExpenses,
+      value: monthlyIncome > 0 ? `$${monthlyIncome.toLocaleString()}` : '$0',
+      threshold: `> $${monthlyExpenses.toLocaleString()}`,
+    },
+    {
+      key: 'runway_6mo',
+      label: 'Runway > 6mo',
+      passed: runwayMonths > 6,
+      value: `${runwayMonths.toFixed(1)}mo`,
+      threshold: '> 6mo',
+    },
+    {
+      key: 'toxic_declining',
+      label: 'Toxic Debt Declining',
+      passed: prevToxicBalance === 0,
+      value: prevToxicBalance > 0 ? `$${prevToxicBalance.toLocaleString()}` : '$0',
+      threshold: '$0',
+    },
+    {
+      key: 'interest_bleed',
+      label: 'Daily Interest < $3',
+      passed: dailyInterestCost < 3,
+      value: `$${dailyInterestCost.toFixed(2)}/day`,
+      threshold: '< $3/day',
+    },
+  ]
 }
