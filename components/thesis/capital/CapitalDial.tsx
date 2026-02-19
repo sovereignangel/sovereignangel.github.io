@@ -314,11 +314,11 @@ export default function CapitalDial({ onPositionChange, onDebtsChange, scenarios
   return (
     <div className="h-full flex flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between mb-2">
-        <h3 className="font-serif text-[11px] font-semibold uppercase tracking-[1px] text-ink">
-          Capital Controls
+      <div className="flex items-center justify-between mb-1">
+        <h3 className="font-serif text-[9px] font-semibold uppercase tracking-[1px] text-ink">
+          Controls
         </h3>
-        <span className={`font-mono text-[9px] px-1.5 py-0.5 rounded-sm transition-colors ${
+        <span className={`font-mono text-[8px] px-1 py-0.5 rounded-sm transition-colors ${
           saving ? 'text-ink-muted' : lastSaved ? 'text-green-ink bg-green-ink/10' : 'text-ink-muted'
         }`}>
           {saving ? 'Saving...' : lastSaved ? `Saved ${lastSaved}` : ''}
@@ -326,12 +326,12 @@ export default function CapitalDial({ onPositionChange, onDebtsChange, scenarios
       </div>
 
       {/* Section tabs */}
-      <div className="flex gap-0.5 mb-2 shrink-0">
+      <div className="flex gap-0.5 mb-1 shrink-0">
         {SECTIONS.map(s => (
           <button
             key={s.key}
             onClick={() => setActiveSection(s.key)}
-            className={`font-serif text-[9px] font-medium px-2 py-1 rounded-sm border transition-colors ${
+            className={`font-serif text-[8px] font-medium px-1.5 py-0.5 rounded-sm border transition-colors ${
               activeSection === s.key
                 ? 'bg-burgundy text-paper border-burgundy'
                 : 'bg-transparent text-ink-muted border-rule hover:border-ink-faint'
@@ -342,7 +342,7 @@ export default function CapitalDial({ onPositionChange, onDebtsChange, scenarios
         ))}
       </div>
 
-      <div className="bg-paper border border-rule rounded-sm p-3 flex-1 overflow-y-auto space-y-3">
+      <div className="bg-paper border border-rule rounded-sm p-2 flex-1 overflow-y-auto space-y-2">
         {/* SNAPSHOT SECTION */}
         {activeSection === 'snapshot' && loaded && (
           <>
@@ -351,9 +351,9 @@ export default function CapitalDial({ onPositionChange, onDebtsChange, scenarios
               <button
                 onClick={handleSeedProForma}
                 disabled={seeding}
-                className="w-full py-2.5 font-serif text-[10px] font-semibold uppercase tracking-[1px] text-burgundy border-2 border-burgundy/40 rounded-sm hover:bg-burgundy-bg transition-colors disabled:opacity-50 bg-cream"
+                className="w-full py-1.5 font-serif text-[8px] font-semibold uppercase tracking-[1px] text-burgundy border border-burgundy/40 rounded-sm hover:bg-burgundy-bg transition-colors disabled:opacity-50 bg-cream"
               >
-                {seeding ? 'Loading...' : 'Load Williamsburg Pro Forma Data'}
+                {seeding ? 'Loading...' : 'Load Pro Forma Data'}
               </button>
             )}
 
@@ -362,79 +362,76 @@ export default function CapitalDial({ onPositionChange, onDebtsChange, scenarios
               type="month"
               value={month}
               onChange={(e) => setMonth(e.target.value)}
-              className="w-full font-mono text-[11px] bg-cream border border-rule rounded-sm px-2 py-1 focus:outline-none focus:border-burgundy"
+              className="w-full font-mono text-[9px] bg-cream border border-rule rounded-sm px-1.5 py-0.5 focus:outline-none focus:border-burgundy"
             />
 
             {/* Assets */}
-            <div className="border-b border-rule-light pb-3">
-              <h4 className="font-serif text-[9px] font-semibold uppercase tracking-[1px] text-green-ink mb-2">
+            <div className="border-b border-rule-light pb-2">
+              <h4 className="font-serif text-[8px] font-semibold uppercase tracking-[1px] text-green-ink mb-1">
                 Assets
               </h4>
-              <div className="grid grid-cols-2 gap-2">
-                <NumberField label="Cash & Savings" value={form.cashSavings} onChange={v => updateNum('cashSavings', v)} />
+              <div className="grid grid-cols-2 gap-1">
+                <NumberField label="Cash" value={form.cashSavings} onChange={v => updateNum('cashSavings', v)} />
                 <NumberField label="Investments" value={form.investments} onChange={v => updateNum('investments', v)} />
                 <NumberField label="Crypto" value={form.crypto} onChange={v => updateNum('crypto', v)} />
                 <NumberField label="Real Estate" value={form.realEstate} onChange={v => updateNum('realEstate', v)} />
-                <NumberField label="Startup Equity" value={form.startupEquity} onChange={v => updateNum('startupEquity', v)} />
+                <NumberField label="Startup Eq." value={form.startupEquity} onChange={v => updateNum('startupEquity', v)} />
                 <NumberField label="Other" value={form.otherAssets} onChange={v => updateNum('otherAssets', v)} />
               </div>
             </div>
 
             {/* Liabilities */}
-            <div className="border-b border-rule-light pb-3">
-              <h4 className="font-serif text-[9px] font-semibold uppercase tracking-[1px] text-red-ink mb-2">
+            <div className="border-b border-rule-light pb-2">
+              <h4 className="font-serif text-[8px] font-semibold uppercase tracking-[1px] text-red-ink mb-1">
                 Liabilities
               </h4>
               <NumberField label="Total Debt" value={form.totalDebt} onChange={v => updateNum('totalDebt', v)} />
             </div>
 
             {/* Income Breakdown */}
-            <div className="border-b border-rule-light pb-3">
-              <div className="flex items-baseline justify-between mb-2">
-                <h4 className="font-serif text-[9px] font-semibold uppercase tracking-[1px] text-green-ink">
-                  Monthly Income
+            <div className="border-b border-rule-light pb-2">
+              <div className="flex items-baseline justify-between mb-1">
+                <h4 className="font-serif text-[8px] font-semibold uppercase tracking-[1px] text-green-ink">
+                  Income
                 </h4>
-                <span className="font-mono text-[10px] font-semibold text-green-ink">{currency(form.monthlyIncome)}</span>
+                <span className="font-mono text-[9px] font-semibold text-green-ink">{currency(form.monthlyIncome)}</span>
               </div>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 gap-1">
                 <NumberField label="Employment" value={form.incomeBreakdown?.employment ?? 0} onChange={v => updateIncome('employment', v)} />
-                <NumberField label="Sublease / Rental" value={form.incomeBreakdown?.sublease ?? 0} onChange={v => updateIncome('sublease', v)} />
+                <NumberField label="Sublease" value={form.incomeBreakdown?.sublease ?? 0} onChange={v => updateIncome('sublease', v)} />
                 <NumberField label="Freelance" value={form.incomeBreakdown?.freelance ?? 0} onChange={v => updateIncome('freelance', v)} />
-                <NumberField label="Other Income" value={form.incomeBreakdown?.other ?? 0} onChange={v => updateIncome('other', v)} />
+                <NumberField label="Other" value={form.incomeBreakdown?.other ?? 0} onChange={v => updateIncome('other', v)} />
               </div>
             </div>
 
             {/* Expense Breakdown */}
-            <div className="border-b border-rule-light pb-3">
-              <div className="flex items-baseline justify-between mb-2">
-                <h4 className="font-serif text-[9px] font-semibold uppercase tracking-[1px] text-red-ink">
-                  Monthly Expenses
+            <div className="border-b border-rule-light pb-2">
+              <div className="flex items-baseline justify-between mb-1">
+                <h4 className="font-serif text-[8px] font-semibold uppercase tracking-[1px] text-red-ink">
+                  Expenses
                 </h4>
-                <span className="font-mono text-[10px] font-semibold text-red-ink">{currency(form.monthlyExpenses)}</span>
+                <span className="font-mono text-[9px] font-semibold text-red-ink">{currency(form.monthlyExpenses)}</span>
               </div>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 gap-1">
                 <NumberField label="Rent" value={form.expenseBreakdown?.rent ?? 0} onChange={v => updateExpense('rent', v)} />
                 <NumberField label="Food" value={form.expenseBreakdown?.food ?? 0} onChange={v => updateExpense('food', v)} />
-                <NumberField label="Subscriptions" value={form.expenseBreakdown?.subscriptions ?? 0} onChange={v => updateExpense('subscriptions', v)} />
-                <NumberField label="Miscellaneous" value={form.expenseBreakdown?.miscellaneous ?? 0} onChange={v => updateExpense('miscellaneous', v)} />
+                <NumberField label="Subs" value={form.expenseBreakdown?.subscriptions ?? 0} onChange={v => updateExpense('subscriptions', v)} />
+                <NumberField label="Misc" value={form.expenseBreakdown?.miscellaneous ?? 0} onChange={v => updateExpense('miscellaneous', v)} />
                 <NumberField label="Travel" value={form.expenseBreakdown?.travel ?? 0} onChange={v => updateExpense('travel', v)} />
-                <NumberField label="Family Support" value={form.expenseBreakdown?.familySupport ?? 0} onChange={v => updateExpense('familySupport', v)} />
+                <NumberField label="Family" value={form.expenseBreakdown?.familySupport ?? 0} onChange={v => updateExpense('familySupport', v)} />
                 <NumberField label="Other" value={form.expenseBreakdown?.other ?? 0} onChange={v => updateExpense('other', v)} />
               </div>
             </div>
 
             {/* Computed Readout */}
-            <div className="bg-cream border border-rule rounded-sm p-2.5 space-y-1.5">
-              <p className="font-serif text-[8px] font-semibold uppercase tracking-[1px] text-ink-muted mb-1">
-                Computed Position
-              </p>
+            <div className="bg-cream border border-rule rounded-sm p-1.5 space-y-0.5">
               <div className="flex justify-between">
-                <span className="font-serif text-[9px] text-ink-muted">Total Assets</span>
-                <span className="font-mono text-[10px] font-medium text-ink">{currency(totalAssets)}</span>
+                <span className="font-serif text-[8px] text-ink-muted">Assets</span>
+                <span className="font-mono text-[9px] font-medium text-ink">{currency(totalAssets)}</span>
               </div>
               <div className="flex justify-between">
-                <span className="font-serif text-[9px] text-ink-muted">Net Worth</span>
-                <span className={`font-mono text-[12px] font-bold ${netWorth >= 0 ? 'text-green-ink' : 'text-red-ink'}`}>
+                <span className="font-serif text-[8px] text-ink-muted">Net Worth</span>
+                <span className={`font-mono text-[10px] font-bold ${netWorth >= 0 ? 'text-green-ink' : 'text-red-ink'}`}>
                   {netWorth < 0 ? '-' : ''}{currency(Math.abs(netWorth))}
                 </span>
               </div>
@@ -445,9 +442,9 @@ export default function CapitalDial({ onPositionChange, onDebtsChange, scenarios
                 const hs = computeHealthScore(fakePos)
                 const gradeColor = hs.grade === 'A' || hs.grade === 'B' ? 'text-green-ink' : hs.grade === 'C' ? 'text-amber-ink' : 'text-red-ink'
                 return (
-                  <div className="flex justify-between pt-1 border-t border-rule-light">
-                    <span className="font-serif text-[9px] text-ink-muted">Health Score</span>
-                    <span className={`font-mono text-[12px] font-bold ${gradeColor}`}>
+                  <div className="flex justify-between pt-0.5 border-t border-rule-light">
+                    <span className="font-serif text-[8px] text-ink-muted">Health</span>
+                    <span className={`font-mono text-[10px] font-bold ${gradeColor}`}>
                       {hs.grade} ({hs.overall})
                     </span>
                   </div>
@@ -459,7 +456,7 @@ export default function CapitalDial({ onPositionChange, onDebtsChange, scenarios
             <button
               onClick={handleSave}
               disabled={saving}
-              className="w-full py-2 font-serif text-[11px] font-semibold uppercase tracking-[1px] text-paper bg-burgundy rounded-sm hover:opacity-90 transition-opacity disabled:opacity-50"
+              className="w-full py-1.5 font-serif text-[9px] font-semibold uppercase tracking-[1px] text-paper bg-burgundy rounded-sm hover:opacity-90 transition-opacity disabled:opacity-50"
             >
               {saving ? 'Saving...' : 'Save Snapshot'}
             </button>
@@ -469,7 +466,7 @@ export default function CapitalDial({ onPositionChange, onDebtsChange, scenarios
               <button
                 onClick={handleSeedProForma}
                 disabled={seeding}
-                className="w-full py-1.5 font-serif text-[8px] font-medium uppercase text-ink-muted border border-rule rounded-sm hover:border-ink-faint transition-colors disabled:opacity-50"
+                className="w-full py-1 font-serif text-[7px] font-medium uppercase text-ink-muted border border-rule rounded-sm hover:border-ink-faint transition-colors disabled:opacity-50"
               >
                 {seeding ? 'Loading...' : 'Reset to Pro Forma (Feb 2026)'}
               </button>
@@ -481,25 +478,25 @@ export default function CapitalDial({ onPositionChange, onDebtsChange, scenarios
         {activeSection === 'debt' && (
           <>
             {debts.length > 0 && (
-              <div className="space-y-1.5">
+              <div className="space-y-1">
                 {debts.map(d => (
-                  <div key={d.id} className="bg-cream border border-rule rounded-sm p-2">
+                  <div key={d.id} className="bg-cream border border-rule rounded-sm px-1.5 py-1">
                     <div className="flex items-start justify-between">
                       <div className="min-w-0 flex-1">
-                        <p className="font-mono text-[10px] font-semibold text-ink truncate">{d.name}</p>
-                        <div className="flex gap-2 mt-0.5">
-                          <span className="font-mono text-[9px] text-ink-muted">{currency(d.balance)}</span>
-                          <span className={`font-mono text-[9px] ${
+                        <p className="font-mono text-[8px] font-semibold text-ink truncate">{d.name}</p>
+                        <div className="flex gap-1.5 mt-px">
+                          <span className="font-mono text-[8px] text-ink-muted">{currency(d.balance)}</span>
+                          <span className={`font-mono text-[8px] ${
                             d.apr > 0.20 ? 'text-red-ink' : d.apr > 0.10 ? 'text-amber-ink' : 'text-green-ink'
                           }`}>
                             {(d.apr * 100).toFixed(1)}%
                           </span>
-                          <span className="font-mono text-[9px] text-ink-muted">{currency(d.minimumPayment)}/mo</span>
+                          <span className="font-mono text-[8px] text-ink-muted">{currency(d.minimumPayment)}/mo</span>
                         </div>
                       </div>
                       <button
                         onClick={() => d.id && handleDeleteDebt(d.id)}
-                        className="font-mono text-[9px] text-red-ink hover:text-red-ink/70 px-1"
+                        className="font-mono text-[8px] text-red-ink hover:text-red-ink/70 px-0.5"
                       >
                         x
                       </button>
@@ -511,70 +508,70 @@ export default function CapitalDial({ onPositionChange, onDebtsChange, scenarios
 
             {/* Add Debt Form */}
             {showAddDebt ? (
-              <div className="border border-burgundy/30 rounded-sm p-2.5 space-y-2 bg-cream">
-                <h4 className="font-serif text-[9px] font-semibold uppercase tracking-[1px] text-burgundy">
+              <div className="border border-burgundy/30 rounded-sm p-2 space-y-1.5 bg-cream">
+                <h4 className="font-serif text-[8px] font-semibold uppercase tracking-[1px] text-burgundy">
                   Add Debt
                 </h4>
                 <input
                   type="text"
-                  placeholder="Debt name (e.g. Chase Sapphire)"
+                  placeholder="Debt name"
                   value={newDebt.name}
                   onChange={(e) => setNewDebt(prev => ({ ...prev, name: e.target.value }))}
-                  className="w-full font-mono text-[11px] bg-white border border-rule rounded-sm px-1.5 py-1 focus:outline-none focus:border-burgundy"
+                  className="w-full font-mono text-[9px] bg-white border border-rule rounded-sm px-1.5 py-0.5 focus:outline-none focus:border-burgundy"
                 />
                 <select
                   value={newDebt.category}
                   onChange={(e) => setNewDebt(prev => ({ ...prev, category: e.target.value as DebtCategory }))}
-                  className="w-full font-mono text-[11px] bg-white border border-rule rounded-sm px-1.5 py-1 focus:outline-none focus:border-burgundy"
+                  className="w-full font-mono text-[9px] bg-white border border-rule rounded-sm px-1.5 py-0.5 focus:outline-none focus:border-burgundy"
                 >
                   {DEBT_CATEGORIES.map(c => (
                     <option key={c.value} value={c.value}>{c.label}</option>
                   ))}
                 </select>
-                <div className="grid grid-cols-3 gap-1.5">
+                <div className="grid grid-cols-3 gap-1">
                   <div>
-                    <label className="font-serif text-[8px] italic uppercase tracking-wide text-ink-muted block mb-0.5">Balance</label>
+                    <label className="font-serif text-[7px] italic uppercase text-ink-muted block">Bal</label>
                     <input
                       type="number"
                       value={newDebt.balance || ''}
                       onChange={(e) => setNewDebt(prev => ({ ...prev, balance: parseFloat(e.target.value) || 0 }))}
-                      className="w-full font-mono text-[11px] bg-white border border-rule rounded-sm px-1.5 py-1 focus:outline-none focus:border-burgundy"
+                      className="w-full font-mono text-[9px] bg-white border border-rule rounded-sm px-1 py-0.5 focus:outline-none focus:border-burgundy"
                       placeholder="0"
                     />
                   </div>
                   <div>
-                    <label className="font-serif text-[8px] italic uppercase tracking-wide text-ink-muted block mb-0.5">APR %</label>
+                    <label className="font-serif text-[7px] italic uppercase text-ink-muted block">APR%</label>
                     <input
                       type="number"
                       value={newDebt.apr || ''}
                       onChange={(e) => setNewDebt(prev => ({ ...prev, apr: parseFloat(e.target.value) || 0 }))}
-                      className="w-full font-mono text-[11px] bg-white border border-rule rounded-sm px-1.5 py-1 focus:outline-none focus:border-burgundy"
+                      className="w-full font-mono text-[9px] bg-white border border-rule rounded-sm px-1 py-0.5 focus:outline-none focus:border-burgundy"
                       placeholder="0"
                       step="0.1"
                     />
                   </div>
                   <div>
-                    <label className="font-serif text-[8px] italic uppercase tracking-wide text-ink-muted block mb-0.5">Min/mo</label>
+                    <label className="font-serif text-[7px] italic uppercase text-ink-muted block">Min</label>
                     <input
                       type="number"
                       value={newDebt.minimumPayment || ''}
                       onChange={(e) => setNewDebt(prev => ({ ...prev, minimumPayment: parseFloat(e.target.value) || 0 }))}
-                      className="w-full font-mono text-[11px] bg-white border border-rule rounded-sm px-1.5 py-1 focus:outline-none focus:border-burgundy"
+                      className="w-full font-mono text-[9px] bg-white border border-rule rounded-sm px-1 py-0.5 focus:outline-none focus:border-burgundy"
                       placeholder="0"
                     />
                   </div>
                 </div>
-                <div className="flex gap-1.5">
+                <div className="flex gap-1">
                   <button
                     onClick={handleAddDebt}
                     disabled={saving || !newDebt.name}
-                    className="flex-1 py-1.5 font-serif text-[9px] font-semibold uppercase text-paper bg-burgundy rounded-sm hover:opacity-90 disabled:opacity-50"
+                    className="flex-1 py-1 font-serif text-[8px] font-semibold uppercase text-paper bg-burgundy rounded-sm hover:opacity-90 disabled:opacity-50"
                   >
                     {saving ? 'Saving...' : 'Add'}
                   </button>
                   <button
                     onClick={() => setShowAddDebt(false)}
-                    className="flex-1 py-1.5 font-serif text-[9px] font-semibold uppercase text-ink-muted border border-rule rounded-sm hover:border-ink-faint"
+                    className="flex-1 py-1 font-serif text-[8px] font-semibold uppercase text-ink-muted border border-rule rounded-sm hover:border-ink-faint"
                   >
                     Cancel
                   </button>
@@ -583,9 +580,9 @@ export default function CapitalDial({ onPositionChange, onDebtsChange, scenarios
             ) : (
               <button
                 onClick={() => setShowAddDebt(true)}
-                className="w-full py-2 font-serif text-[10px] font-semibold uppercase tracking-[1px] text-burgundy border border-burgundy/30 rounded-sm hover:bg-burgundy-bg transition-colors"
+                className="w-full py-1.5 font-serif text-[8px] font-semibold uppercase tracking-[1px] text-burgundy border border-burgundy/30 rounded-sm hover:bg-burgundy-bg transition-colors"
               >
-                + Add Debt Item
+                + Add Debt
               </button>
             )}
           </>
@@ -594,59 +591,59 @@ export default function CapitalDial({ onPositionChange, onDebtsChange, scenarios
         {/* SCENARIOS SECTION */}
         {activeSection === 'scenarios' && (
           <>
-            <p className="font-serif text-[9px] text-ink-muted italic">
-              Adjust scenario parameters. Changes update the chart instantly.
+            <p className="font-serif text-[8px] text-ink-muted italic">
+              Adjust parameters. Updates chart instantly.
             </p>
             {scenarios.map((s, i) => (
-              <div key={i} className="border border-rule rounded-sm p-2.5">
+              <div key={i} className="border border-rule rounded-sm p-1.5">
                 <button
                   onClick={() => setEditingScenario(editingScenario === i ? null : i)}
                   className="w-full flex items-center justify-between"
                 >
-                  <span className="font-serif text-[10px] font-semibold text-ink">{s.name}</span>
-                  <span className="font-mono text-[9px] text-ink-muted">
-                    {currency(s.monthlyGrossIncome)}/mo gross
+                  <span className="font-serif text-[8px] font-semibold text-ink">{s.name}</span>
+                  <span className="font-mono text-[8px] text-ink-muted">
+                    {currency(s.monthlyGrossIncome)}/mo
                   </span>
                 </button>
 
                 {editingScenario === i && (
-                  <div className="mt-2 pt-2 border-t border-rule-light space-y-2">
-                    <div className="grid grid-cols-2 gap-1.5">
+                  <div className="mt-1 pt-1 border-t border-rule-light space-y-1">
+                    <div className="grid grid-cols-2 gap-1">
                       <div>
-                        <label className="font-serif text-[8px] italic uppercase tracking-wide text-ink-muted block mb-0.5">Gross Income/mo</label>
+                        <label className="font-serif text-[7px] italic uppercase text-ink-muted block">Gross/mo</label>
                         <input
                           type="number"
                           value={s.monthlyGrossIncome || ''}
                           onChange={(e) => handleScenarioUpdate(i, 'monthlyGrossIncome', e.target.value)}
-                          className="w-full font-mono text-[11px] bg-cream border border-rule rounded-sm px-1.5 py-1 focus:outline-none focus:border-burgundy"
+                          className="w-full font-mono text-[9px] bg-cream border border-rule rounded-sm px-1 py-0.5 focus:outline-none focus:border-burgundy"
                         />
                       </div>
                       <div>
-                        <label className="font-serif text-[8px] italic uppercase tracking-wide text-ink-muted block mb-0.5">Tax Rate %</label>
+                        <label className="font-serif text-[7px] italic uppercase text-ink-muted block">Tax %</label>
                         <input
                           type="number"
                           value={Math.round(s.effectiveTaxRate * 100) || ''}
                           onChange={(e) => handleScenarioUpdate(i, 'effectiveTaxRate', (parseFloat(e.target.value) || 0) / 100)}
-                          className="w-full font-mono text-[11px] bg-cream border border-rule rounded-sm px-1.5 py-1 focus:outline-none focus:border-burgundy"
+                          className="w-full font-mono text-[9px] bg-cream border border-rule rounded-sm px-1 py-0.5 focus:outline-none focus:border-burgundy"
                           step="1"
                         />
                       </div>
                       <div>
-                        <label className="font-serif text-[8px] italic uppercase tracking-wide text-ink-muted block mb-0.5">Ramp Months</label>
+                        <label className="font-serif text-[7px] italic uppercase text-ink-muted block">Ramp Mo</label>
                         <input
                           type="number"
                           value={s.rampUpMonths || ''}
                           onChange={(e) => handleScenarioUpdate(i, 'rampUpMonths', e.target.value)}
-                          className="w-full font-mono text-[11px] bg-cream border border-rule rounded-sm px-1.5 py-1 focus:outline-none focus:border-burgundy"
+                          className="w-full font-mono text-[9px] bg-cream border border-rule rounded-sm px-1 py-0.5 focus:outline-none focus:border-burgundy"
                         />
                       </div>
                       <div>
-                        <label className="font-serif text-[8px] italic uppercase tracking-wide text-ink-muted block mb-0.5">Extra Debt Pmt</label>
+                        <label className="font-serif text-[7px] italic uppercase text-ink-muted block">Extra Pmt</label>
                         <input
                           type="number"
                           value={s.extraDebtPayment || ''}
                           onChange={(e) => handleScenarioUpdate(i, 'extraDebtPayment', e.target.value)}
-                          className="w-full font-mono text-[11px] bg-cream border border-rule rounded-sm px-1.5 py-1 focus:outline-none focus:border-burgundy"
+                          className="w-full font-mono text-[9px] bg-cream border border-rule rounded-sm px-1 py-0.5 focus:outline-none focus:border-burgundy"
                         />
                       </div>
                     </div>
@@ -657,7 +654,7 @@ export default function CapitalDial({ onPositionChange, onDebtsChange, scenarios
 
             <button
               onClick={() => onScenariosChange([...DEFAULT_SCENARIOS])}
-              className="w-full py-1.5 font-serif text-[9px] font-medium uppercase text-ink-muted border border-rule rounded-sm hover:border-ink-faint transition-colors"
+              className="w-full py-1 font-serif text-[7px] font-medium uppercase text-ink-muted border border-rule rounded-sm hover:border-ink-faint transition-colors"
             >
               Reset to Defaults
             </button>
@@ -679,14 +676,14 @@ function NumberField({
 }) {
   return (
     <div>
-      <label className="font-serif text-[8px] italic uppercase tracking-wide text-ink-muted block mb-0.5">
+      <label className="font-serif text-[7px] italic uppercase text-ink-muted block">
         {label}
       </label>
       <input
         type="number"
         value={value || ''}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full font-mono text-[11px] bg-cream border border-rule rounded-sm px-1.5 py-1 focus:outline-none focus:border-burgundy"
+        className="w-full font-mono text-[9px] bg-cream border border-rule rounded-sm px-1 py-0.5 focus:outline-none focus:border-burgundy"
         placeholder="0"
       />
     </div>
