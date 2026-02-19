@@ -50,3 +50,10 @@ export async function deleteExternalSignal(uid: string, signalId: string): Promi
   const ref = doc(db, 'users', uid, 'external_signals', signalId)
   await deleteDoc(ref)
 }
+
+export async function getInboxExternalSignals(uid: string): Promise<ExternalSignal[]> {
+  const ref = collection(db, 'users', uid, 'external_signals')
+  const q = query(ref, where('status', '==', 'inbox'), orderBy('relevanceScore', 'desc'))
+  const snap = await getDocs(q)
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }) as ExternalSignal)
+}

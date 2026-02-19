@@ -239,10 +239,12 @@ export async function scoreArticleRelevance(
   relevanceScore: number
   matchedPillars: string[]
   summary: string
+  keyTakeaway: string
+  valueBullets: string[]
 }> {
   const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' })
 
-  const prompt = `You are scoring an article's relevance to a user's thesis.
+  const prompt = `You are scoring an article's relevance to a user's thesis and extracting a concise brief.
 
 USER THESIS: ${userThesis}
 THESIS PILLARS: ${thesisPillars.join(', ')}
@@ -250,16 +252,24 @@ THESIS PILLARS: ${thesisPillars.join(', ')}
 ARTICLE TITLE: ${articleTitle}
 ARTICLE CONTENT (first 500 chars): ${articleContent.substring(0, 500)}
 
-Score this article on:
+Score and summarize this article:
 1. RELEVANCE SCORE: 0-100, how relevant is this to the user's thesis?
 2. MATCHED PILLARS: Which thesis pillars does this article touch? (${thesisPillars.join(', ')})
 3. SUMMARY: One sentence (max 20 words) summarizing the key insight
+4. KEY TAKEAWAY: The single most important idea from this article in one sentence
+5. VALUE BULLETS: Exactly 3 short bullets (max 15 words each) explaining why this is valuable for the user to know — frame each bullet from the reader's perspective
 
 Return ONLY valid JSON (no markdown, no code blocks):
 {
   "relevanceScore": 85,
   "matchedPillars": ["ai", "markets"],
-  "summary": "Article explores intersection of AI agents and market inefficiencies"
+  "summary": "Article explores intersection of AI agents and market inefficiencies",
+  "keyTakeaway": "AI agents are creating a new class of market makers that compress arbitrage windows from days to seconds",
+  "valueBullets": [
+    "Reveals a timing window for building AI-native trading tools",
+    "Identifies regulatory gaps that favor early movers",
+    "Connects to your thesis on AI × capital market inefficiencies"
+  ]
 }
 
 Be strict: only score >70 if highly relevant to thesis. Most articles should score 20-50.`
@@ -280,6 +290,8 @@ Be strict: only score >70 if highly relevant to thesis. Most articles should sco
       relevanceScore: parsed.relevanceScore / 100, // Convert to 0-1
       matchedPillars: parsed.matchedPillars || [],
       summary: parsed.summary || articleTitle,
+      keyTakeaway: parsed.keyTakeaway || parsed.summary || articleTitle,
+      valueBullets: (parsed.valueBullets || []).slice(0, 3),
     }
   } catch (error) {
     console.error('Error scoring article relevance:', error)
@@ -287,6 +299,8 @@ Be strict: only score >70 if highly relevant to thesis. Most articles should sco
       relevanceScore: 0,
       matchedPillars: [],
       summary: articleTitle,
+      keyTakeaway: articleTitle,
+      valueBullets: [],
     }
   }
 }

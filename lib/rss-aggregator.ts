@@ -84,7 +84,7 @@ export async function fetchAndScoreSignals(
       const thesisPillars = ['ai', 'markets', 'mind'] // All possible pillars
 
       try {
-        const { relevanceScore, matchedPillars, summary } = await scoreArticleRelevance(
+        const { relevanceScore, matchedPillars, summary, keyTakeaway, valueBullets } = await scoreArticleRelevance(
           item.title,
           content,
           userThesis,
@@ -103,6 +103,9 @@ export async function fetchAndScoreSignals(
             relevanceScore,
             thesisPillars: matchedPillars as ThesisPillar[],
             aiSummary: summary,
+            keyTakeaway,
+            valueBullets,
+            readStatus: 'unread',
             convertedToSignal: false,
             status: 'inbox',
             createdAt: Timestamp.now(),

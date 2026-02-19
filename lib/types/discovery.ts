@@ -1,4 +1,4 @@
-import type { ConversationType, ExternalSignalSource, ExternalSignalStatus, ThesisPillar, Timestamp } from './shared'
+import type { ConversationType, ExternalSignalSource, ExternalSignalStatus, ExternalSignalReadStatus, ThesisPillar, Timestamp } from './shared'
 
 export interface Conversation {
   id?: string
@@ -49,6 +49,11 @@ export interface ExternalSignal {
   relevanceScore: number
   thesisPillars: ThesisPillar[]
   aiSummary: string
+  keyTakeaway: string
+  valueBullets: string[]
+
+  // Reading status
+  readStatus: ExternalSignalReadStatus
 
   // Conversion tracking
   convertedToSignal: boolean

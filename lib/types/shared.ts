@@ -17,6 +17,7 @@ export type ActionType = 'ship' | 'ask' | 'signal' | 'regulate' | 'explore' | 'c
 export type ConversationType = 'customer_discovery' | 'sme_discovery' | 'market_conversation' | 'investor' | 'partnership' | 'advisor' | 'other'
 export type ExternalSignalSource = 'rss_feed' | 'blog' | 'hacker_news' | 'manual'
 export type ExternalSignalStatus = 'inbox' | 'reviewed' | 'converted' | 'archived'
+export type ExternalSignalReadStatus = 'unread' | 'read' | 'disliked'
 
 // Re-export Timestamp for convenience
 export { Timestamp }
