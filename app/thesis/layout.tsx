@@ -58,7 +58,7 @@ function ThesisLayoutInner({ children }: { children: React.ReactNode }) {
     <DailyLogProvider>
       <div className="h-screen overflow-hidden flex flex-col">
         <ThesisNav />
-        <main className="flex-1 min-h-0 max-w-7xl w-full mx-auto px-4 sm:px-6 pt-1 pb-1">
+        <main className="flex-1 min-h-0 max-w-7xl w-full mx-auto px-4 sm:px-6 pt-0.5 pb-1">
           {children}
         </main>
       </div>
