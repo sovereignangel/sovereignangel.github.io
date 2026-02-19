@@ -58,7 +58,7 @@ const PRO_FORMA_SNAPSHOT = {
   crypto: 19629,          // Coinbase (Feb 2026 actual)
   realEstate: 0,
   startupEquity: 0,
-  otherAssets: 44000,     // 401k (locked but real asset)
+  otherAssets: 0,          // 401k excluded — locked, not accessible
   totalDebt: 25384,       // Sum of all leveraged debt (Feb 2026 actual)
   monthlyIncome: 0,
   monthlyExpenses: 5400,  // Rent + Food + Misc
