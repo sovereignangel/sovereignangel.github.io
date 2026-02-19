@@ -139,17 +139,30 @@ export default function CapitalDial({ onPositionChange, onDebtsChange, scenarios
         incomeBreakdown: effectiveSnap.incomeBreakdown ?? { ...EMPTY_INCOME_BREAKDOWN },
         expenseBreakdown: effectiveSnap.expenseBreakdown ?? { ...EMPTY_EXPENSE_BREAKDOWN },
       })
+      setDebts(debtItems)
+      onDebtsChange(debtItems)
+      setLoaded(true)
+      const position = buildCapitalPosition(effectiveSnap, debtItems)
+      onPositionChange(position)
     } else {
-      setForm(EMPTY_SNAPSHOT)
+      // No Firestore data — auto-seed from Pro Forma
+      setForm(PRO_FORMA_SNAPSHOT)
+      const seedDebts = PRO_FORMA_DEBTS.map(d => ({ ...d, id: d.name })) as unknown as DebtItem[]
+      setDebts(seedDebts)
+      onDebtsChange(seedDebts)
+      setLoaded(true)
+      const totalAssets = PRO_FORMA_SNAPSHOT.cashSavings + PRO_FORMA_SNAPSHOT.investments +
+        PRO_FORMA_SNAPSHOT.crypto + PRO_FORMA_SNAPSHOT.realEstate +
+        PRO_FORMA_SNAPSHOT.startupEquity + PRO_FORMA_SNAPSHOT.otherAssets
+      const netWorth = totalAssets - PRO_FORMA_SNAPSHOT.totalDebt
+      const runwayMonths = PRO_FORMA_SNAPSHOT.monthlyExpenses > 0
+        ? PRO_FORMA_SNAPSHOT.cashSavings / PRO_FORMA_SNAPSHOT.monthlyExpenses : 0
+      const position = buildCapitalPosition(
+        { ...PRO_FORMA_SNAPSHOT, totalAssets, netWorth, runwayMonths },
+        seedDebts,
+      )
+      onPositionChange(position)
     }
-
-    setDebts(debtItems)
-    onDebtsChange(debtItems)
-    setLoaded(true)
-
-    // Build position immediately
-    const position = buildCapitalPosition(effectiveSnap, debtItems)
-    onPositionChange(position)
   }, [user, month, onPositionChange, onDebtsChange])
 
   useEffect(() => { loadData() }, [loadData])
@@ -454,7 +467,7 @@ export default function CapitalDial({ onPositionChange, onDebtsChange, scenarios
                 disabled={seeding}
                 className="w-full py-1.5 font-serif text-[8px] font-medium uppercase text-ink-muted border border-rule rounded-sm hover:border-ink-faint transition-colors disabled:opacity-50"
               >
-                {seeding ? 'Loading...' : 'Reset to Pro Forma (Sep 2024)'}
+                {seeding ? 'Loading...' : 'Reset to Pro Forma (Feb 2026)'}
               </button>
             )}
           </>
