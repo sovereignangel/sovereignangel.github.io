@@ -11,7 +11,6 @@ const navItems = [
   { href: '/thesis/execution', label: 'Execution', symbol: 'GVC+κ' },
   { href: '/thesis/intelligence', label: 'Intelligence', symbol: 'GI+O' },
   { href: '/thesis/alpe-dhuez', label: "Alpe d'Huez", symbol: 'Θ+$' },
-  { href: '/thesis/capital', label: 'Capital', symbol: '$' },
 ]
 
 function ScoreValue({ label, value, color }: { label: string; value: number | null; color: string }) {
@@ -50,7 +49,7 @@ export default function ThesisNav() {
     <header className="bg-paper border-b-2 border-ink shrink-0">
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         {/* Top row */}
-        <div className="flex items-center justify-between py-2">
+        <div className="flex items-center justify-between py-1.5">
           <div className="flex items-center gap-4">
             <h1 className="font-serif text-[22px] font-bold text-ink tracking-tight">
               Thesis Engine
@@ -105,7 +104,7 @@ export default function ThesisNav() {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex items-baseline gap-1.5 font-serif text-[13px] font-medium px-4 py-2 rounded-t-sm border border-transparent no-underline transition-all duration-150 whitespace-nowrap ${
+                className={`flex items-baseline gap-1.5 font-serif text-[13px] font-medium px-4 py-1.5 rounded-t-sm border border-transparent no-underline transition-all duration-150 whitespace-nowrap ${
                   isActive
                     ? 'text-navy border-navy bg-navy-bg border-b-paper -mb-px'
                     : 'text-ink-light hover:text-ink hover:bg-cream'
