@@ -1,11 +1,5 @@
-'use client'
+import { redirect } from 'next/navigation'
 
-import EnergyCompactView from '@/components/thesis/energy/EnergyCompactView'
-
-export default function EnergyPage() {
-  return (
-    <div className="h-full">
-      <EnergyCompactView />
-    </div>
-  )
+export default function ThesisRedirect() {
+  redirect('/thesis/execution')
 }
