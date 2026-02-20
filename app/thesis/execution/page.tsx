@@ -5,13 +5,15 @@ import ExecutionDial from '@/components/thesis/execution/ExecutionDial'
 import FocusView from '@/components/thesis/execution/FocusView'
 import MusclesView from '@/components/thesis/execution/MusclesView'
 import GoalsView from '@/components/thesis/execution/GoalsView'
+import AuditView from '@/components/thesis/alpe-dhuez/AuditView'
 
-type ExecutionTab = 'focus' | 'muscles' | 'goals'
+type ExecutionTab = 'focus' | 'muscles' | 'goals' | 'ascent'
 
 const TABS: { key: ExecutionTab; label: string }[] = [
   { key: 'focus', label: 'Focus' },
   { key: 'muscles', label: 'Muscles' },
   { key: 'goals', label: 'Goals' },
+  { key: 'ascent', label: 'Ascent' },
 ]
 
 export default function ExecutionPage() {
@@ -43,6 +45,7 @@ export default function ExecutionPage() {
           {activeTab === 'focus' && <FocusView />}
           {activeTab === 'muscles' && <MusclesView />}
           {activeTab === 'goals' && <GoalsView />}
+          {activeTab === 'ascent' && <AuditView />}
         </div>
       </div>
 
