@@ -360,11 +360,12 @@ function TrainingInputsCard({ log, trainingTypes, hasVo2, hasZone2, toggleTraini
         NS State
       </div>
       <div className="flex gap-0.5 mb-2">
-        {(['regulated', 'slightly_spiked', 'spiked'] as NervousSystemState[]).map((state) => {
+        {(['regulated', 'slightly_spiked', 'spiked', 'sick'] as NervousSystemState[]).map((state) => {
           const styles = {
             regulated: { active: 'bg-green-ink text-paper border-green-ink', label: 'Reg' },
             slightly_spiked: { active: 'bg-amber-ink text-paper border-amber-ink', label: 'Slight' },
             spiked: { active: 'bg-red-ink text-paper border-red-ink', label: 'Spike' },
+            sick: { active: 'bg-red-ink text-paper border-red-ink', label: 'Sick' },
           }
           return (
             <button

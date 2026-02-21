@@ -36,7 +36,7 @@ export default function EnergyStatusDot() {
   const subComponents: SubComponent[] = [
     { label: 'Sleep', value: log.sleepHours ? `${log.sleepHours}h` : '—', score: sleepScore },
     { label: 'Training', value: trainingTypes.length > 0 ? trainingTypes.join(', ') : 'None', score: trainingScore },
-    { label: 'NS State', value: log.nervousSystemState === 'regulated' ? 'Regulated' : log.nervousSystemState === 'slightly_spiked' ? 'Slight' : log.nervousSystemState === 'spiked' ? 'Spiked' : '—', score: nsScore },
+    { label: 'NS State', value: log.nervousSystemState === 'regulated' ? 'Regulated' : log.nervousSystemState === 'slightly_spiked' ? 'Slight' : log.nervousSystemState === 'spiked' ? 'Spiked' : log.nervousSystemState === 'sick' ? 'Sick' : '—', score: nsScore },
     { label: 'Body', value: log.bodyFelt ? log.bodyFelt.charAt(0).toUpperCase() + log.bodyFelt.slice(1) : '—', score: bodyScore },
   ]
 

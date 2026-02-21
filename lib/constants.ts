@@ -175,6 +175,7 @@ export const NERVOUS_SYSTEM_GATE: Record<string, number> = {
   regulated: 1.0,
   slightly_spiked: 0.7,
   spiked: 0.3,
+  sick: 0.2,
 }
 
 export const TRAINING_SCORE: Record<string, number> = {
@@ -196,6 +197,7 @@ export const NS_STATE_ENERGY_SCORE: Record<string, number> = {
   regulated: 1.0,
   slightly_spiked: 0.5,
   spiked: 0.1,
+  sick: 0.1,
 }
 
 // Floor to avoid log(0) = -infinity (ruin avoidance)
