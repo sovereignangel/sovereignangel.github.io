@@ -5,6 +5,8 @@ import { usePathname } from 'next/navigation'
 import UserMenu from '@/components/auth/UserMenu'
 import { useDailyLogContext } from '@/components/thesis/DailyLogProvider'
 import EnergyStatusDot from '@/components/thesis/nav/EnergyStatusDot'
+import { useAlphaBeta } from '@/hooks/useAlphaBeta'
+import { TREND_ARROWS, TREND_COLORS } from '@/lib/alpha-engine'
 import { format } from 'date-fns'
 
 const navItems = [
@@ -15,13 +17,18 @@ const navItems = [
   { href: '/thesis/boardroom', label: 'Board Room', symbol: 'J' },
 ]
 
-function ScoreValue({ label, value, color }: { label: string; value: number | null; color: string }) {
+function ScoreValue({ label, value, color, arrow, arrowColor }: {
+  label: string; value: number | null; color: string; arrow?: string; arrowColor?: string
+}) {
   return (
     <span className="flex items-baseline gap-0.5">
       <span className="font-mono text-[9px] text-ink-muted">{label}</span>
       <span className={`font-mono text-[11px] font-semibold ${color}`}>
         {value !== null ? value.toFixed(2) : '—'}
       </span>
+      {arrow && (
+        <span className={`font-mono text-[9px] ${arrowColor || 'text-ink-muted'}`}>{arrow}</span>
+      )}
     </span>
   )
 }
@@ -29,6 +36,13 @@ function ScoreValue({ label, value, color }: { label: string; value: number | nu
 export default function ThesisNav() {
   const pathname = usePathname()
   const { log } = useDailyLogContext()
+  const alphaBeta = useAlphaBeta()
+
+  const getArrow = (component: string) => {
+    const ab = alphaBeta.find(a => a.component === component)
+    if (!ab) return { arrow: undefined, arrowColor: undefined }
+    return { arrow: TREND_ARROWS[ab.direction], arrowColor: TREND_COLORS[ab.direction] }
+  }
 
   const reward = log.rewardScore
   const score = reward?.score ?? null
@@ -73,13 +87,13 @@ export default function ThesisNav() {
 
               <div className="w-px h-3.5 bg-rule" />
 
-              <ScoreValue label="GI" value={c?.gi ?? null} color={componentColor(c?.gi ?? null)} />
-              <ScoreValue label="GVC" value={c?.gvc ?? null} color={componentColor(c?.gvc ?? null)} />
-              <ScoreValue label="κ" value={c?.kappa ?? null} color={componentColor(c?.kappa ?? null)} />
-              <ScoreValue label="GD" value={c?.gd ?? null} color={componentColor(c?.gd ?? null)} />
-              <ScoreValue label="GN" value={c?.gn ?? null} color={componentColor(c?.gn ?? null)} />
-              <ScoreValue label="J" value={c?.j ?? null} color={componentColor(c?.j ?? null)} />
-              <ScoreValue label="Θ" value={c?.theta ?? null} color={componentColor(c?.theta ?? null)} />
+              <ScoreValue label="GI" value={c?.gi ?? null} color={componentColor(c?.gi ?? null)} {...getArrow('GI')} />
+              <ScoreValue label="GVC" value={c?.gvc ?? null} color={componentColor(c?.gvc ?? null)} {...getArrow('GVC')} />
+              <ScoreValue label="κ" value={c?.kappa ?? null} color={componentColor(c?.kappa ?? null)} {...getArrow('κ')} />
+              <ScoreValue label="GD" value={c?.gd ?? null} color={componentColor(c?.gd ?? null)} {...getArrow('GD')} />
+              <ScoreValue label="GN" value={c?.gn ?? null} color={componentColor(c?.gn ?? null)} {...getArrow('GN')} />
+              <ScoreValue label="J" value={c?.j ?? null} color={componentColor(c?.j ?? null)} {...getArrow('J')} />
+              <ScoreValue label="Θ" value={c?.theta ?? null} color={componentColor(c?.theta ?? null)} {...getArrow('Θ')} />
             </div>
           </div>
 
