@@ -93,76 +93,84 @@ async function handleJournal(uid: string, text: string, chatId: number) {
   // Send "parsing..." acknowledgment so user knows it's working
   await sendTelegramReply(chatId, '_Parsing journal..._')
 
-  // AI parse the journal text
-  const parsed = await parseJournalEntry(text)
+  try {
+    // AI parse the journal text
+    const parsed = await parseJournalEntry(text)
 
-  // Build daily log update from parsed data
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const logUpdate: Record<string, any> = {
-    journalEntry: text,
-    updatedAt: new Date(),
-  }
-
-  if (parsed.energy.nervousSystemState) logUpdate.nervousSystemState = parsed.energy.nervousSystemState
-  if (parsed.energy.bodyFelt) logUpdate.bodyFelt = parsed.energy.bodyFelt
-  if (parsed.energy.trainingTypes.length > 0) logUpdate.trainingTypes = parsed.energy.trainingTypes
-  if (parsed.energy.sleepHours != null) logUpdate.sleepHours = parsed.energy.sleepHours
-  if (parsed.output.focusHoursActual != null) logUpdate.focusHoursActual = parsed.output.focusHoursActual
-  if (parsed.output.whatShipped) logUpdate.whatShipped = parsed.output.whatShipped
-  if (parsed.psyCap.hope != null) logUpdate.psyCapHope = parsed.psyCap.hope
-  if (parsed.psyCap.efficacy != null) logUpdate.psyCapEfficacy = parsed.psyCap.efficacy
-  if (parsed.psyCap.resilience != null) logUpdate.psyCapResilience = parsed.psyCap.resilience
-  if (parsed.psyCap.optimism != null) logUpdate.psyCapOptimism = parsed.psyCap.optimism
-
-  // Save to daily log (merge to avoid overwriting existing fields)
-  const logRef = adminDb.collection('users').doc(uid).collection('daily_logs').doc(today)
-  await logRef.set(logUpdate, { merge: true })
-
-  // Create decisions
-  for (const d of parsed.decisions) {
-    const reviewDate = new Date()
-    reviewDate.setDate(reviewDate.getDate() + 90)
-    const decisionRef = adminDb.collection('users').doc(uid).collection('decisions').doc()
-    await decisionRef.set({
-      title: d.title,
-      hypothesis: d.hypothesis,
-      options: [d.chosenOption],
-      chosenOption: d.chosenOption,
-      reasoning: d.reasoning,
-      confidenceLevel: d.confidenceLevel,
-      killCriteria: [],
-      premortem: '',
-      domain: d.domain,
-      linkedProjectIds: [],
-      linkedSignalIds: [],
-      status: 'active',
-      reviewDate: reviewDate.toISOString().split('T')[0],
-      decidedAt: today,
-      createdAt: new Date(),
+    // Build daily log update from parsed data
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const logUpdate: Record<string, any> = {
+      journalEntry: text,
       updatedAt: new Date(),
-    })
-  }
+    }
 
-  // Create principles
-  for (const p of parsed.principles) {
-    const principleRef = adminDb.collection('users').doc(uid).collection('principles').doc()
-    await principleRef.set({
-      text: p.text,
-      shortForm: p.shortForm,
-      source: 'manual',
-      sourceDescription: 'Extracted from Telegram journal',
-      domain: p.domain,
-      dateFirstApplied: today,
-      linkedDecisionIds: [],
-      lastReinforcedAt: today,
-      reinforcementCount: 0,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    })
-  }
+    if (parsed.energy.nervousSystemState) logUpdate.nervousSystemState = parsed.energy.nervousSystemState
+    if (parsed.energy.bodyFelt) logUpdate.bodyFelt = parsed.energy.bodyFelt
+    if (parsed.energy.trainingTypes.length > 0) logUpdate.trainingTypes = parsed.energy.trainingTypes
+    if (parsed.energy.sleepHours != null) logUpdate.sleepHours = parsed.energy.sleepHours
+    if (parsed.output.focusHoursActual != null) logUpdate.focusHoursActual = parsed.output.focusHoursActual
+    if (parsed.output.whatShipped) logUpdate.whatShipped = parsed.output.whatShipped
+    if (parsed.psyCap.hope != null) logUpdate.psyCapHope = parsed.psyCap.hope
+    if (parsed.psyCap.efficacy != null) logUpdate.psyCapEfficacy = parsed.psyCap.efficacy
+    if (parsed.psyCap.resilience != null) logUpdate.psyCapResilience = parsed.psyCap.resilience
+    if (parsed.psyCap.optimism != null) logUpdate.psyCapOptimism = parsed.psyCap.optimism
 
-  // Reply with summary of all actions
-  await sendTelegramReply(chatId, buildJournalReply(parsed))
+    // Save to daily log (merge to avoid overwriting existing fields)
+    const logRef = adminDb.collection('users').doc(uid).collection('daily_logs').doc(today)
+    await logRef.set(logUpdate, { merge: true })
+
+    // Create decisions
+    for (const d of parsed.decisions) {
+      const reviewDate = new Date()
+      reviewDate.setDate(reviewDate.getDate() + 90)
+      const decisionRef = adminDb.collection('users').doc(uid).collection('decisions').doc()
+      await decisionRef.set({
+        title: d.title,
+        hypothesis: d.hypothesis,
+        options: [d.chosenOption],
+        chosenOption: d.chosenOption,
+        reasoning: d.reasoning,
+        confidenceLevel: d.confidenceLevel,
+        killCriteria: [],
+        premortem: '',
+        domain: d.domain,
+        linkedProjectIds: [],
+        linkedSignalIds: [],
+        status: 'active',
+        reviewDate: reviewDate.toISOString().split('T')[0],
+        decidedAt: today,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+    }
+
+    // Create principles
+    for (const p of parsed.principles) {
+      const principleRef = adminDb.collection('users').doc(uid).collection('principles').doc()
+      await principleRef.set({
+        text: p.text,
+        shortForm: p.shortForm,
+        source: 'manual',
+        sourceDescription: 'Extracted from Telegram journal',
+        domain: p.domain,
+        dateFirstApplied: today,
+        linkedDecisionIds: [],
+        lastReinforcedAt: today,
+        reinforcementCount: 0,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+    }
+
+    // Reply with summary of all actions
+    await sendTelegramReply(chatId, buildJournalReply(parsed))
+  } catch (error) {
+    console.error('Journal parsing error:', error)
+    // Still save the raw text even if AI parsing fails
+    const logRef = adminDb.collection('users').doc(uid).collection('daily_logs').doc(today)
+    await logRef.set({ journalEntry: text, updatedAt: new Date() }, { merge: true })
+    await sendTelegramReply(chatId, `Journal text saved, but AI parsing failed.\n\n_${error instanceof Error ? error.message : 'Unknown error'}_`)
+  }
 }
 
 export async function POST(req: NextRequest) {
