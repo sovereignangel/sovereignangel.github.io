@@ -8,6 +8,7 @@ export interface UserSettings {
   sleepTarget: number
   maxProjects: number
   twentyFourHourRuleActive: boolean
+  telegramChatId?: string
 }
 
 export interface UserProfile {

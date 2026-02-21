@@ -191,6 +191,39 @@ export default function SettingsPage() {
           </div>
         </div>
 
+        {/* Telegram Integration */}
+        <div className="bg-paper border border-rule rounded-sm p-5">
+          <h3 className="font-serif text-[11px] font-semibold uppercase tracking-[1px] text-ink mb-4 pb-2 border-b border-rule-light">
+            Telegram Signal Bot
+          </h3>
+          <div className="space-y-3">
+            <p className="font-sans text-[10px] text-ink-muted leading-relaxed">
+              Send signals directly from Telegram. Message your bot with <code className="font-mono text-[9px] bg-cream px-1 py-0.5 rounded-sm">/signal #ai Your observation</code> to create an external signal.
+            </p>
+            <div>
+              <label className="font-serif text-[10px] italic uppercase tracking-wide text-ink-muted block mb-1">Telegram Chat ID</label>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={settings.telegramChatId || ''}
+                  onChange={(e) => updateSettings('telegramChatId', e.target.value)}
+                  placeholder="Send /id to your bot to get this"
+                  className="flex-1 font-mono text-[13px] bg-cream border border-rule rounded-sm px-3 py-2 focus:outline-none focus:border-navy"
+                />
+              </div>
+              <p className="font-mono text-[8px] text-ink-faint mt-1">
+                Open your Thesis Engine bot in Telegram and send /id to get your chat ID.
+              </p>
+            </div>
+            <div className="flex items-center gap-2 pt-1">
+              <span className="font-mono text-[9px] text-ink-muted">Webhook:</span>
+              <code className="font-mono text-[8px] text-ink-faint bg-cream px-2 py-1 rounded-sm">
+                {typeof window !== 'undefined' ? `${window.location.origin}/api/telegram/webhook` : '/api/telegram/webhook'}
+              </code>
+            </div>
+          </div>
+        </div>
+
         {/* Data Export */}
         <div className="bg-paper border border-rule rounded-sm p-5">
           <h3 className="font-serif text-[11px] font-semibold uppercase tracking-[1px] text-ink mb-4 pb-2 border-b border-rule-light">
