@@ -77,6 +77,8 @@ export default function ThesisNav() {
               <ScoreValue label="GVC" value={c?.gvc ?? null} color={componentColor(c?.gvc ?? null)} />
               <ScoreValue label="κ" value={c?.kappa ?? null} color={componentColor(c?.kappa ?? null)} />
               <ScoreValue label="GD" value={c?.gd ?? null} color={componentColor(c?.gd ?? null)} />
+              <ScoreValue label="GN" value={c?.gn ?? null} color={componentColor(c?.gn ?? null)} />
+              <ScoreValue label="J" value={c?.j ?? null} color={componentColor(c?.j ?? null)} />
               <ScoreValue label="Θ" value={c?.theta ?? null} color={componentColor(c?.theta ?? null)} />
             </div>
           </div>
@@ -95,7 +97,7 @@ export default function ThesisNav() {
                 <UserMenu />
               </div>
               <p className="font-mono text-[8px] text-ink-faint hidden sm:block">
-                g* = (GE × GI × GVC × κ × 𝒪 × GD)^(1/6) × Gate − 𝓕 + Θ
+                g* = (GE × GI × GVC × κ × 𝒪 × GD × GN × J)^(1/8) × Gate − 𝓕 + Θ
               </p>
             </div>
           </div>
