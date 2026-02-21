@@ -1,15 +1,12 @@
 /**
  * Daily Sync Cron Job
- * Runs at 6am daily via Vercel Cron
  * Syncs all data from yesterday: Garmin, Calendar, Chess, Stripe, GitHub
  *
- * Vercel Cron Configuration (vercel.json):
- * {
- *   "crons": [{
- *     "path": "/api/cron/sync-daily",
- *     "schedule": "0 6 * * *"
- *   }]
- * }
+ * Runs twice daily (vercel.json):
+ *   Primary:  5am UTC (midnight EST) — catches most metrics
+ *   Backup:  12pm UTC (7am EST)     — catches sleep/HRV that Garmin processes overnight
+ *
+ * Idempotent: re-running overwrites with latest data from Garmin.
  */
 
 import { NextRequest, NextResponse } from 'next/server'

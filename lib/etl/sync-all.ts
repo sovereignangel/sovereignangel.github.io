@@ -2,14 +2,10 @@
 /**
  * Master ETL Sync Function
  * Orchestrates all daily data syncs
- * Called by cron job at 6am daily
+ * Called by cron job twice daily (5am + 12pm UTC)
+ *
+ * Uses dynamic imports to avoid Supabase client initialization at build time.
  */
-
-import { syncGarminMetrics } from './garmin'
-import { syncCalendarTime } from './calendar'
-import { syncChessProgress } from './chess'
-import { syncRevenueMetrics } from './stripe'
-import { syncGitHubActivity } from './github'
 
 export interface SyncResult {
   date: string
@@ -49,6 +45,21 @@ export async function syncAllData(date?: string): Promise<SyncResult> {
   }
 
   const errors: string[] = []
+
+  // Dynamic imports to avoid Supabase client init at build time
+  const [
+    { syncGarminMetrics },
+    { syncCalendarTime },
+    { syncChessProgress },
+    { syncRevenueMetrics },
+    { syncGitHubActivity },
+  ] = await Promise.all([
+    import('./garmin'),
+    import('./calendar'),
+    import('./chess'),
+    import('./stripe'),
+    import('./github'),
+  ])
 
   // Run all syncs in parallel for speed
   const syncPromises = [
