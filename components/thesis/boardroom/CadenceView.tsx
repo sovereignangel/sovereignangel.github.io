@@ -119,14 +119,14 @@ export default function CadenceView() {
   }
 
   return (
-    <div className="p-3">
+    <div className="p-3 bg-cream">
       {/* Header */}
-      <div className="flex items-center justify-between mb-2">
+      <div className="flex items-center justify-between mb-2 pb-1.5 border-b-2 border-rule">
         <h3 className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy">
           Cadence System
         </h3>
         <span className="font-mono text-[10px] text-ink-muted">
-          avg completion: {(averageCompletion * 100).toFixed(0)}%
+          avg {(averageCompletion * 100).toFixed(0)}%
         </span>
       </div>
 
@@ -139,7 +139,7 @@ export default function CadenceView() {
             className={`font-serif text-[11px] font-medium px-2 py-1.5 rounded-sm border transition-colors flex-1 ${
               activeType === tab.key
                 ? 'bg-burgundy text-paper border-burgundy'
-                : 'bg-transparent text-ink-muted border-rule hover:border-ink-faint'
+                : 'bg-paper text-ink-muted border-rule hover:border-ink-faint'
             }`}
           >
             {tab.label}
@@ -151,9 +151,9 @@ export default function CadenceView() {
       <div className="flex items-center justify-between mb-2 pb-1 border-b border-rule-light">
         <span className="font-mono text-[11px] text-ink-muted">{periodKey}</span>
         <div className="flex items-center gap-1.5">
-          <div className="w-24 h-2 bg-rule-light rounded-full overflow-hidden">
+          <div className="w-24 h-2 bg-rule-light rounded-sm overflow-hidden">
             <div
-              className={`h-full rounded-full transition-all ${
+              className={`h-full rounded-sm transition-all ${
                 completionPct >= 80 ? 'bg-green-ink' : completionPct >= 50 ? 'bg-amber-ink' : 'bg-red-ink'
               }`}
               style={{ width: `${completionPct}%` }}
@@ -168,29 +168,31 @@ export default function CadenceView() {
       </div>
 
       {/* Checklist */}
-      <div className="space-y-0.5">
-        {items.map((item) => (
-          <button
-            key={item.key}
-            onClick={() => toggleItem(item.key)}
-            className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-sm text-left transition-colors ${
-              item.completed ? 'bg-green-bg/50' : 'hover:bg-cream'
-            }`}
-          >
-            <div className={`w-4 h-4 rounded-sm border flex items-center justify-center shrink-0 ${
-              item.completed ? 'bg-green-ink border-green-ink' : 'border-rule'
-            }`}>
-              {item.completed && (
-                <span className="text-paper text-[9px] font-bold">✓</span>
-              )}
-            </div>
-            <span className={`font-sans text-[12px] leading-snug ${
-              item.completed ? 'text-ink-muted line-through' : 'text-ink'
-            }`}>
-              {item.label}
-            </span>
-          </button>
-        ))}
+      <div className="bg-paper border border-rule rounded-sm p-1">
+        <div className="space-y-0">
+          {items.map((item) => (
+            <button
+              key={item.key}
+              onClick={() => toggleItem(item.key)}
+              className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-sm text-left transition-colors ${
+                item.completed ? 'bg-green-bg/50' : 'hover:bg-cream'
+              }`}
+            >
+              <div className={`w-4 h-4 rounded-sm border flex items-center justify-center shrink-0 ${
+                item.completed ? 'bg-green-ink border-green-ink' : 'border-rule'
+              }`}>
+                {item.completed && (
+                  <span className="text-paper text-[9px] font-bold">✓</span>
+                )}
+              </div>
+              <span className={`font-sans text-[12px] leading-snug ${
+                item.completed ? 'text-ink-muted line-through' : 'text-ink'
+              }`}>
+                {item.label}
+              </span>
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Notes */}
@@ -207,7 +209,7 @@ export default function CadenceView() {
               await save({ type: activeType, periodKey, items, completionRate, notes }, existingReview?.id)
             }
           }}
-          className="w-full font-sans text-[11px] bg-cream border border-rule rounded-sm px-2 py-1.5 h-16 resize-none focus:outline-none focus:border-burgundy"
+          className="w-full font-sans text-[11px] text-ink bg-paper border border-rule rounded-sm px-2 py-1.5 h-16 resize-none focus:outline-none focus:border-burgundy"
           placeholder="Reflections on this period..."
         />
       </div>
