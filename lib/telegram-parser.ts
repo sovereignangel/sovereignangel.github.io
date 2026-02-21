@@ -5,6 +5,7 @@
  *   /signal <text>           — Create a new external signal
  *   /signal #ai <text>       — Signal with pillar tag
  *   /note <text>             — Quick note (saved as signal with low relevance)
+ *   /journal <text>          — Journal entry (AI-parsed into daily log fields)
  *
  * Pillar hashtags: #ai, #markets, #mind
  */
@@ -12,7 +13,7 @@
 import type { ThesisPillar } from '@/lib/types'
 
 export interface ParsedTelegramMessage {
-  command: 'signal' | 'note' | 'unknown'
+  command: 'signal' | 'note' | 'journal' | 'unknown'
   text: string
   pillars: ThesisPillar[]
   raw: string
@@ -39,6 +40,12 @@ export function parseTelegramMessage(text: string): ParsedTelegramMessage {
     const body = raw.slice('/note'.length).trim()
     const { pillars, cleaned } = extractPillars(body)
     return { command: 'note', text: cleaned, pillars, raw }
+  }
+
+  // /journal command
+  if (raw.startsWith('/journal')) {
+    const body = raw.slice('/journal'.length).trim()
+    return { command: 'journal', text: body, pillars: [], raw }
   }
 
   // Plain text — treat as signal
