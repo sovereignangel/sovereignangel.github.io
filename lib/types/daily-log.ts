@@ -60,6 +60,7 @@ export interface DailyLog {
   psyCapEfficacy?: number
   psyCapResilience?: number
   psyCapOptimism?: number
+  journalEntry?: string
   rewardScore: RewardScore | null
   createdAt: Timestamp
   updatedAt: Timestamp

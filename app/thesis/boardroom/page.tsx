@@ -6,11 +6,13 @@ import DecisionJournal from '@/components/thesis/boardroom/DecisionJournal'
 import PrinciplesLedger from '@/components/thesis/boardroom/PrinciplesLedger'
 import CadenceView from '@/components/thesis/boardroom/CadenceView'
 import CognitionView from '@/components/thesis/boardroom/CognitionView'
+import DailyJournal from '@/components/thesis/boardroom/DailyJournal'
 import BoardRoomDial from '@/components/thesis/boardroom/BoardRoomDial'
 
-type BoardRoomTab = 'synthesis' | 'decisions' | 'principles' | 'cadence' | 'cognition'
+type BoardRoomTab = 'journal' | 'synthesis' | 'decisions' | 'principles' | 'cadence' | 'cognition'
 
 const TABS: { key: BoardRoomTab; label: string }[] = [
+  { key: 'journal', label: 'Journal' },
   { key: 'synthesis', label: 'Synthesis' },
   { key: 'decisions', label: 'Decisions' },
   { key: 'principles', label: 'Principles' },
@@ -19,7 +21,7 @@ const TABS: { key: BoardRoomTab; label: string }[] = [
 ]
 
 export default function BoardRoomPage() {
-  const [activeTab, setActiveTab] = useState<BoardRoomTab>('synthesis')
+  const [activeTab, setActiveTab] = useState<BoardRoomTab>('journal')
 
   return (
     <div className="h-full grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-2 min-h-0">
@@ -44,6 +46,7 @@ export default function BoardRoomPage() {
 
         {/* Tab Content */}
         <div className="flex-1 overflow-y-auto">
+          {activeTab === 'journal' && <DailyJournal />}
           {activeTab === 'synthesis' && <SynthesisView />}
           {activeTab === 'decisions' && <DecisionJournal />}
           {activeTab === 'principles' && <PrinciplesLedger />}

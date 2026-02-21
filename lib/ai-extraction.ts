@@ -1,5 +1,5 @@
 import { GoogleGenerativeAI } from '@google/generative-ai'
-import type { InsightType, ThesisPillar } from './types'
+import type { InsightType, ThesisPillar, NervousSystemState, BodyFelt, TrainingType, DecisionDomain } from './types'
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '')
 
@@ -352,5 +352,171 @@ Tone: Direct, action-oriented, like Rick Rubin meeting Pieter Levels.`
   } catch (error) {
     console.error('Error generating daily report:', error)
     return 'Error generating summary. Please review signals manually.'
+  }
+}
+
+// --- Journal Parsing ---
+
+export interface ParsedJournalEnergy {
+  nervousSystemState: NervousSystemState | null
+  bodyFelt: BodyFelt | null
+  trainingTypes: TrainingType[]
+  sleepHours: number | null
+}
+
+export interface ParsedJournalOutput {
+  focusHoursActual: number | null
+  whatShipped: string | null
+}
+
+export interface ParsedJournalPsyCap {
+  hope: number | null
+  efficacy: number | null
+  resilience: number | null
+  optimism: number | null
+}
+
+export interface ParsedJournalDecision {
+  title: string
+  hypothesis: string
+  chosenOption: string
+  reasoning: string
+  domain: DecisionDomain
+  confidenceLevel: number
+}
+
+export interface ParsedJournalPrinciple {
+  text: string
+  shortForm: string
+  domain: DecisionDomain
+}
+
+export interface ParsedJournalEntry {
+  energy: ParsedJournalEnergy
+  output: ParsedJournalOutput
+  psyCap: ParsedJournalPsyCap
+  cadenceCompleted: string[]
+  decisions: ParsedJournalDecision[]
+  principles: ParsedJournalPrinciple[]
+}
+
+const EMPTY_JOURNAL_RESULT: ParsedJournalEntry = {
+  energy: { nervousSystemState: null, bodyFelt: null, trainingTypes: [], sleepHours: null },
+  output: { focusHoursActual: null, whatShipped: null },
+  psyCap: { hope: null, efficacy: null, resilience: null, optimism: null },
+  cadenceCompleted: [],
+  decisions: [],
+  principles: [],
+}
+
+export async function parseJournalEntry(journalText: string): Promise<ParsedJournalEntry> {
+  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' })
+
+  const prompt = `You are parsing a free-form daily journal entry from a builder/entrepreneur. Extract structured data ONLY where the text clearly states or strongly implies it. Never fabricate or infer beyond what's written.
+
+JOURNAL ENTRY:
+${journalText}
+
+Extract data into these domains. Use null for anything not mentioned.
+
+1. ENERGY:
+   - nervousSystemState: One of "regulated", "slightly_spiked", "spiked". Infer from emotional tone (calm/grounded = regulated, anxious/restless = slightly_spiked, overwhelmed/reactive = spiked). null if unclear.
+   - bodyFelt: One of "open", "neutral", "tense". Infer from physical descriptions. null if not mentioned.
+   - trainingTypes: Array from ["strength", "yoga", "vo2", "zone2", "rest", "none"]. Empty array if not mentioned.
+   - sleepHours: Number of hours slept. null if not mentioned.
+
+2. OUTPUT:
+   - focusHoursActual: Number of focused work hours. null if not mentioned.
+   - whatShipped: What was built, published, or delivered. null if not mentioned.
+
+3. PSYCAP (Psychological Capital, 1-5 scale):
+   - hope: Sense of future possibility, pathways to goals. null if not evident.
+   - efficacy: Confidence in ability to execute. null if not evident.
+   - resilience: Ability to bounce back from setbacks. null if not evident.
+   - optimism: Positive attribution of outcomes. null if not evident.
+
+4. CADENCE COMPLETED: Array of checklist keys that the journal indicates were done today. Only include if clearly mentioned.
+   Valid keys: "energy" (logged energy inputs), "problems" (identified problems worth solving), "focus" (executed focus session), "ship" (shipped something), "signal" (reviewed external signals), "revenue_ask" (made revenue asks), "psycap" (reflected on psychological state)
+
+5. DECISIONS: Array of decisions made. Only include if the journal describes a clear choice between options.
+   Each: { title, hypothesis (what they expect), chosenOption, reasoning, domain (one of "portfolio", "product", "revenue", "personal", "thesis"), confidenceLevel (0-100) }
+
+6. PRINCIPLES: Array of principles, rules, or lessons articulated. Only include if the journal states a clear rule/principle/learning.
+   Each: { text (full principle), shortForm (max 40 chars), domain (one of "portfolio", "product", "revenue", "personal", "thesis") }
+
+Return ONLY valid JSON (no markdown, no code blocks):
+{
+  "energy": { "nervousSystemState": null, "bodyFelt": null, "trainingTypes": [], "sleepHours": null },
+  "output": { "focusHoursActual": null, "whatShipped": null },
+  "psyCap": { "hope": null, "efficacy": null, "resilience": null, "optimism": null },
+  "cadenceCompleted": [],
+  "decisions": [],
+  "principles": []
+}`
+
+  try {
+    const result = await model.generateContent(prompt)
+    const response = await result.response
+    const text = response.text()
+
+    const cleanedText = text
+      .replace(/```json\n?/g, '')
+      .replace(/```\n?/g, '')
+      .trim()
+
+    const parsed = JSON.parse(cleanedText)
+
+    const validNS = ['regulated', 'slightly_spiked', 'spiked']
+    const validBody = ['open', 'neutral', 'tense']
+    const validTraining = ['strength', 'yoga', 'vo2', 'zone2', 'rest', 'none']
+    const validCadence = ['energy', 'problems', 'focus', 'ship', 'signal', 'revenue_ask', 'psycap']
+    const validDomains = ['portfolio', 'product', 'revenue', 'personal', 'thesis']
+
+    const clampPsyCap = (v: unknown): number | null => {
+      if (v == null) return null
+      const n = Number(v)
+      if (isNaN(n)) return null
+      return Math.max(1, Math.min(5, Math.round(n)))
+    }
+
+    const energy = parsed.energy || {}
+    const output = parsed.output || {}
+    const psyCap = parsed.psyCap || {}
+
+    return {
+      energy: {
+        nervousSystemState: validNS.includes(energy.nervousSystemState) ? energy.nervousSystemState : null,
+        bodyFelt: validBody.includes(energy.bodyFelt) ? energy.bodyFelt : null,
+        trainingTypes: (energy.trainingTypes || []).filter((t: string) => validTraining.includes(t)),
+        sleepHours: typeof energy.sleepHours === 'number' ? energy.sleepHours : null,
+      },
+      output: {
+        focusHoursActual: typeof output.focusHoursActual === 'number' ? output.focusHoursActual : null,
+        whatShipped: typeof output.whatShipped === 'string' ? output.whatShipped : null,
+      },
+      psyCap: {
+        hope: clampPsyCap(psyCap.hope),
+        efficacy: clampPsyCap(psyCap.efficacy),
+        resilience: clampPsyCap(psyCap.resilience),
+        optimism: clampPsyCap(psyCap.optimism),
+      },
+      cadenceCompleted: (parsed.cadenceCompleted || []).filter((k: string) => validCadence.includes(k)),
+      decisions: (parsed.decisions || []).map((d: Record<string, unknown>) => ({
+        title: String(d.title || ''),
+        hypothesis: String(d.hypothesis || ''),
+        chosenOption: String(d.chosenOption || ''),
+        reasoning: String(d.reasoning || ''),
+        domain: validDomains.includes(d.domain as string) ? d.domain as DecisionDomain : 'personal',
+        confidenceLevel: typeof d.confidenceLevel === 'number' ? Math.max(0, Math.min(100, d.confidenceLevel)) : 70,
+      })),
+      principles: (parsed.principles || []).map((p: Record<string, unknown>) => ({
+        text: String(p.text || ''),
+        shortForm: String(p.shortForm || '').slice(0, 40),
+        domain: validDomains.includes(p.domain as string) ? p.domain as DecisionDomain : 'personal',
+      })),
+    }
+  } catch (error) {
+    console.error('Error parsing journal entry with Gemini:', error)
+    return EMPTY_JOURNAL_RESULT
   }
 }
