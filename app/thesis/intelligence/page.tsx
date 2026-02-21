@@ -5,21 +5,9 @@ import IntelligenceGauge from '@/components/thesis/intelligence/IntelligenceGaug
 import IntelligenceDial from '@/components/thesis/intelligence/IntelligenceDial'
 import ExternalSignalInbox from '@/components/thesis/intelligence/ExternalSignalInbox'
 import InsightsInbox from '@/components/thesis/intelligence/InsightsInbox'
+import KnowledgeArchitecture from '@/components/thesis/intelligence/KnowledgeArchitecture'
 
 type TabType = 'signals' | 'external' | 'insights' | 'knowledge'
-
-function KnowledgePlaceholder() {
-  return (
-    <div className="flex items-center justify-center h-full min-h-[300px]">
-      <div className="text-center">
-        <h3 className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-1">
-          Knowledge Architecture
-        </h3>
-        <p className="font-serif text-[10px] text-ink-muted">Books, research, 10-K filings with automated tagging — Phase 3</p>
-      </div>
-    </div>
-  )
-}
 
 export default function IntelligencePage() {
   const [refreshKey, setRefreshKey] = useState(0)
@@ -57,7 +45,7 @@ export default function IntelligencePage() {
           {activeTab === 'signals' && <IntelligenceGauge refreshKey={refreshKey} />}
           {activeTab === 'external' && <ExternalSignalInbox onSignalCreated={onSignalSaved} />}
           {activeTab === 'insights' && <InsightsInbox />}
-          {activeTab === 'knowledge' && <KnowledgePlaceholder />}
+          {activeTab === 'knowledge' && <KnowledgeArchitecture />}
         </div>
       </div>
 

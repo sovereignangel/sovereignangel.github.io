@@ -23,6 +23,14 @@ export interface Signal {
   sourceType?: 'manual' | 'conversation' | 'external_signal'
   sourceId?: string
   sourceContactId?: string
+  // Hypothesis structure
+  hypothesis?: string
+  killCriteria?: string[]
+  confidenceLevel?: number
+  predictedOutcome?: string
+  actualOutcome?: string
+  outcomeDate?: string
+  isHypothesisStructured?: boolean
   createdAt: Timestamp
   updatedAt: Timestamp
 }
