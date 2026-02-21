@@ -125,7 +125,7 @@ export default function CadenceView() {
         <h3 className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy">
           Cadence System
         </h3>
-        <span className="font-mono text-[9px] text-ink-muted">
+        <span className="font-mono text-[10px] text-ink-muted">
           avg completion: {(averageCompletion * 100).toFixed(0)}%
         </span>
       </div>
@@ -136,7 +136,7 @@ export default function CadenceView() {
           <button
             key={tab.key}
             onClick={() => handleTypeChange(tab.key)}
-            className={`font-serif text-[10px] font-medium px-2 py-1 rounded-sm border transition-colors flex-1 ${
+            className={`font-serif text-[11px] font-medium px-2 py-1.5 rounded-sm border transition-colors flex-1 ${
               activeType === tab.key
                 ? 'bg-burgundy text-paper border-burgundy'
                 : 'bg-transparent text-ink-muted border-rule hover:border-ink-faint'
@@ -149,9 +149,9 @@ export default function CadenceView() {
 
       {/* Period + Progress */}
       <div className="flex items-center justify-between mb-2 pb-1 border-b border-rule-light">
-        <span className="font-mono text-[10px] text-ink-muted">{periodKey}</span>
+        <span className="font-mono text-[11px] text-ink-muted">{periodKey}</span>
         <div className="flex items-center gap-1.5">
-          <div className="w-20 h-1.5 bg-rule-light rounded-full overflow-hidden">
+          <div className="w-24 h-2 bg-rule-light rounded-full overflow-hidden">
             <div
               className={`h-full rounded-full transition-all ${
                 completionPct >= 80 ? 'bg-green-ink' : completionPct >= 50 ? 'bg-amber-ink' : 'bg-red-ink'
@@ -159,7 +159,7 @@ export default function CadenceView() {
               style={{ width: `${completionPct}%` }}
             />
           </div>
-          <span className={`font-mono text-[10px] font-semibold ${
+          <span className={`font-mono text-[11px] font-semibold ${
             completionPct >= 80 ? 'text-green-ink' : completionPct >= 50 ? 'text-amber-ink' : 'text-red-ink'
           }`}>
             {completedCount}/{items.length}
@@ -173,18 +173,18 @@ export default function CadenceView() {
           <button
             key={item.key}
             onClick={() => toggleItem(item.key)}
-            className={`w-full flex items-center gap-2 p-1.5 rounded-sm text-left transition-colors ${
+            className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-sm text-left transition-colors ${
               item.completed ? 'bg-green-bg/50' : 'hover:bg-cream'
             }`}
           >
-            <div className={`w-3.5 h-3.5 rounded-sm border flex items-center justify-center shrink-0 ${
+            <div className={`w-4 h-4 rounded-sm border flex items-center justify-center shrink-0 ${
               item.completed ? 'bg-green-ink border-green-ink' : 'border-rule'
             }`}>
               {item.completed && (
-                <span className="text-paper text-[8px] font-bold">✓</span>
+                <span className="text-paper text-[9px] font-bold">✓</span>
               )}
             </div>
-            <span className={`font-sans text-[10px] ${
+            <span className={`font-sans text-[12px] leading-snug ${
               item.completed ? 'text-ink-muted line-through' : 'text-ink'
             }`}>
               {item.label}
@@ -195,7 +195,7 @@ export default function CadenceView() {
 
       {/* Notes */}
       <div className="mt-2 pt-2 border-t border-rule-light">
-        <label className="font-serif text-[9px] text-ink-muted uppercase tracking-wide block mb-0.5">
+        <label className="font-serif text-[10px] text-ink-muted uppercase tracking-wide block mb-0.5">
           Notes
         </label>
         <textarea
@@ -207,7 +207,7 @@ export default function CadenceView() {
               await save({ type: activeType, periodKey, items, completionRate, notes }, existingReview?.id)
             }
           }}
-          className="w-full font-sans text-[10px] bg-cream border border-rule rounded-sm px-1.5 py-1 h-14 resize-none focus:outline-none focus:border-burgundy"
+          className="w-full font-sans text-[11px] bg-cream border border-rule rounded-sm px-2 py-1.5 h-16 resize-none focus:outline-none focus:border-burgundy"
           placeholder="Reflections on this period..."
         />
       </div>
