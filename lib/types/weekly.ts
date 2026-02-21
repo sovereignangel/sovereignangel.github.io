@@ -24,6 +24,13 @@ export interface WeeklySynthesis {
   patternToAdopt: string
   thesisStillValid: boolean
   thesisAdjustment: string
+  // Dalio 5-Step Process
+  dalioGoals?: string[]
+  dalioProblems?: string[]
+  dalioAutoProblems?: string[]
+  dalioDiagnosis?: string[]
+  dalioDesign?: string[]
+  dalioExecute?: string[]
   createdAt: Timestamp
   updatedAt: Timestamp
 }

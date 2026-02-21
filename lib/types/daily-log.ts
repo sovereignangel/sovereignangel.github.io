@@ -55,6 +55,11 @@ export interface DailyLog {
   warmIntrosMade: number
   meetingsBooked: number
   inboundInquiries: number
+  // PsyCap HERO model (1-5 scale)
+  psyCapHope?: number
+  psyCapEfficacy?: number
+  psyCapResilience?: number
+  psyCapOptimism?: number
   rewardScore: RewardScore | null
   createdAt: Timestamp
   updatedAt: Timestamp

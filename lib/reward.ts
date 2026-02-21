@@ -181,6 +181,37 @@ export function computeGD(log: Partial<DailyLog>): number {
   return floor(clamp(rawScore, 0.05, 1))
 }
 
+/** Network Capital: conversations + intros + meetings + public posts */
+export function computeGN(log: Partial<DailyLog>): number {
+  const conversationTarget = 2
+  const conversationScore = Math.min((log.discoveryConversationsCount || 0) / conversationTarget, 1.0)
+  const introScore = Math.min(((log.warmIntrosMade || 0) + (log.warmIntrosReceived || 0)) / 2, 1.0)
+  const meetingScore = (log.meetingsBooked || 0) > 0 ? 1.0 : 0.2
+  const publicScore = (log.publicPostsCount || 0) > 0 ? 0.8 : 0.2
+
+  return floor(clamp(
+    conversationScore * 0.35 +
+    introScore * 0.25 +
+    meetingScore * 0.2 +
+    publicScore * 0.2,
+    0.05, 1
+  ))
+}
+
+/** Judgment + Cognition: PsyCap + cadence completion (calibration requires external data) */
+export function computeJ(log: Partial<DailyLog>): number {
+  // PsyCap average (from daily log, 1-5 scale normalized to 0-1)
+  const psycap = [
+    log.psyCapHope, log.psyCapEfficacy,
+    log.psyCapResilience, log.psyCapOptimism,
+  ].filter((v): v is number => v !== undefined && v > 0)
+  const psycapScore = psycap.length > 0
+    ? (psycap.reduce((s, v) => s + v, 0) / psycap.length) / 5
+    : 0.5 // neutral when no data
+
+  return floor(clamp(psycapScore, 0.05, 1))
+}
+
 // ─── MAIN REWARD FUNCTION ───────────────────────────────────────────────
 
 export interface RewardContext {
@@ -207,11 +238,13 @@ export function computeReward(
   const fragmentation = computeFragmentation(log, projects)
   const theta = computeTheta(log, recentLogs)
   const gd = computeGD(log)
+  const gn = computeGN(log)
+  const j = computeJ(log)
 
   const gate = NERVOUS_SYSTEM_GATE[log.nervousSystemState || 'regulated'] ?? 1.0
 
-  // Geometric mean of multiplicative components: (ge × gi × gvc × kappa × optionality × gd)^(1/6)
-  const geoMean = Math.pow(ge * gi * gvc * kappa * optionality * gd, 1 / 6)
+  // Geometric mean of 8 multiplicative components
+  const geoMean = Math.pow(ge * gi * gvc * kappa * optionality * gd * gn * j, 1 / 8)
 
   // Apply gate, fragmentation penalty, thesis coherence bonus
   const rawScore = gate * geoMean - fragmentation * 0.3 + theta * 0.15
@@ -219,7 +252,7 @@ export function computeReward(
   // Scale to 0-10 with one decimal place
   const score = clamp(Math.round(rawScore * 10 * 10) / 10, 0, 10)
 
-  const components: RewardComponents = { ge, gi, gvc, kappa, optionality, fragmentation, theta, gate, gd }
+  const components: RewardComponents = { ge, gi, gvc, kappa, optionality, gd, gn, j, fragmentation, theta, gate }
 
   return {
     score,

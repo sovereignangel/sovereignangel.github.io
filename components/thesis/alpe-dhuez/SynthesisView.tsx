@@ -20,12 +20,16 @@ const COMPONENT_BARS = [
   { key: 'GI', field: 'gi' as const, label: 'Intelligence Growth' },
   { key: 'GVC', field: 'gvc' as const, label: 'Value Creation' },
   { key: '\u03BA', field: 'kappa' as const, label: 'Capture Ratio' },
+  { key: 'GD', field: 'gd' as const, label: 'Discovery' },
+  { key: 'GN', field: 'gn' as const, label: 'Network Capital' },
+  { key: 'J', field: 'j' as const, label: 'Judgment' },
   { key: 'O', field: 'optionality' as const, label: 'Optionality' },
   { key: '\u0398', field: 'theta' as const, label: 'Thesis Coherence' },
   { key: 'F', field: 'fragmentation' as const, label: 'Fragmentation' },
 ]
 
 const SYNTHESIS_TABS = [
+  { key: 'dalio', label: '5-Step' },
   { key: 'signals', label: 'Signals' },
   { key: 'arbitrage', label: 'Arbitrage' },
   { key: 'compound', label: 'Compound' },
@@ -41,7 +45,7 @@ export default function SynthesisView() {
 
   const [synthesis, setSynthesis] = useState<Partial<WeeklySynthesis>>({})
   const [projects, setProjects] = useState<Project[]>([])
-  const [activeTab, setActiveTab] = useState('signals')
+  const [activeTab, setActiveTab] = useState('dalio')
   const [synthesisSaving, setSynthesisSaving] = useState(false)
   const [synthesisLastSaved, setSynthesisLastSaved] = useState<string | null>(null)
 
@@ -235,6 +239,57 @@ export default function SynthesisView() {
 
         {/* Tab content */}
         <div className="space-y-2">
+          {activeTab === 'dalio' && (
+            <>
+              <div className="mb-1.5 p-2 bg-cream border border-rule-light rounded-sm">
+                <p className="font-serif text-[9px] text-ink-muted italic leading-relaxed">
+                  Dalio 5-Step: Goals → Problems → Diagnosis → Design → Execute.
+                  Each step must be completed before moving to the next. Don&apos;t mix steps.
+                </p>
+              </div>
+              {[
+                { field: 'dalioGoals', label: '1. Goals', placeholder: 'What do you want? Be specific and ambitious...' },
+                { field: 'dalioProblems', label: '2. Problems', placeholder: 'What problems stand in your way? Be honest...' },
+                { field: 'dalioDiagnosis', label: '3. Diagnosis', placeholder: 'What are the root causes? Get past proximate causes...' },
+                { field: 'dalioDesign', label: '4. Design', placeholder: 'What is the plan to get around the problems?' },
+                { field: 'dalioExecute', label: '5. Execute', placeholder: 'What specific tasks this week? Who does what by when?' },
+              ].map(({ field, label, placeholder }) => (
+                <div key={field}>
+                  <label className="font-serif text-[10px] font-semibold uppercase tracking-[0.5px] text-burgundy block mb-0.5">{label}</label>
+                  <div className="space-y-0.5">
+                    {((synthesis as Record<string, string[] | undefined>)[field] || ['']).map((item: string, idx: number) => (
+                      <div key={idx} className="flex gap-1">
+                        <span className="font-mono text-[9px] text-ink-faint mt-1 w-3 shrink-0">{idx + 1}</span>
+                        <input
+                          type="text"
+                          value={item}
+                          onChange={(e) => {
+                            const arr = [...((synthesis as Record<string, string[] | undefined>)[field] || [''])]
+                            arr[idx] = e.target.value
+                            updateSynthesisField(field, arr)
+                          }}
+                          className="flex-1 font-sans text-[10px] bg-cream border border-rule rounded-sm px-1.5 py-1 focus:outline-none focus:border-burgundy"
+                          placeholder={idx === 0 ? placeholder : ''}
+                        />
+                        {idx === ((synthesis as Record<string, string[] | undefined>)[field] || ['']).length - 1 && (
+                          <button
+                            onClick={() => {
+                              const arr = [...((synthesis as Record<string, string[] | undefined>)[field] || ['']), '']
+                              updateSynthesisField(field, arr)
+                            }}
+                            className="font-mono text-[10px] text-burgundy hover:text-burgundy/80 px-1"
+                          >
+                            +
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </>
+          )}
+
           {activeTab === 'signals' && (
             <>
               {[
