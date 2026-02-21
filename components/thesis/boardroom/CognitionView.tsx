@@ -125,7 +125,7 @@ export default function CognitionView() {
               <span className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-burgundy">
                 HERO Framework — Luthans PsyCap (2007)
               </span>
-              <button onClick={() => setShowBriefing(false)} className="text-ink-muted hover:text-ink text-[11px]">
+              <button onClick={() => setShowBriefing(false)} className="text-ink-muted hover:text-burgundy text-[11px]">
                 &times;
               </button>
             </div>
@@ -141,20 +141,20 @@ export default function CognitionView() {
                   <span className="font-mono text-[10px] font-bold text-burgundy bg-burgundy-bg px-1 py-0.5 rounded-sm">
                     {item.letter}
                   </span>
-                  <span className="font-serif text-[11px] font-semibold text-ink">{item.dimension}</span>
+                  <span className="font-serif text-[11px] font-semibold text-burgundy">{item.dimension}</span>
                 </div>
                 <div className="space-y-1">
                   <div>
                     <span className="font-mono text-[8px] uppercase text-ink-muted tracking-wide">Mechanism</span>
-                    <p className="font-sans text-[10px] text-ink leading-relaxed">{item.mechanism}</p>
+                    <p className="font-sans text-[10px] text-ink-muted leading-relaxed">{item.mechanism}</p>
                   </div>
                   <div>
                     <span className="font-mono text-[8px] uppercase text-amber-ink tracking-wide">Signal</span>
-                    <p className="font-sans text-[10px] text-ink leading-relaxed">{item.signal}</p>
+                    <p className="font-sans text-[10px] text-ink-muted leading-relaxed">{item.signal}</p>
                   </div>
                   <div>
                     <span className="font-mono text-[8px] uppercase text-green-ink tracking-wide">Leverage</span>
-                    <p className="font-sans text-[10px] text-ink leading-relaxed">{item.leverage}</p>
+                    <p className="font-sans text-[10px] text-ink-muted leading-relaxed">{item.leverage}</p>
                   </div>
                 </div>
               </div>
@@ -170,7 +170,7 @@ export default function CognitionView() {
           return (
             <div key={field.key} className="p-2 bg-paper border border-rule rounded-sm">
               <div className="flex items-center justify-between mb-1">
-                <span className="font-serif text-[11px] font-semibold text-ink">{field.label}</span>
+                <span className="font-serif text-[11px] font-semibold text-burgundy">{field.label}</span>
                 <span className={`font-mono text-[12px] font-bold ${scoreColor(value || null)}`}>
                   {value > 0 ? value : '—'}
                 </span>
