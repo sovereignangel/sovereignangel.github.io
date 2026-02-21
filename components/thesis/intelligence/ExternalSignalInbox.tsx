@@ -111,7 +111,7 @@ export default function ExternalSignalInbox({ onSignalCreated }: ExternalSignalI
       {/* Header */}
       <div className="flex items-center justify-between">
         <h2 className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy">
-          External Signals · RSS
+          External Signals
         </h2>
         <div className="flex items-center gap-2">
           <button
@@ -219,8 +219,13 @@ export default function ExternalSignalInbox({ onSignalCreated }: ExternalSignalI
                         {Math.round(signal.relevanceScore * 100)}%
                       </span>
                     </div>
-                    <p className="font-mono text-[9px] text-ink-muted">
-                      {signal.sourceName} · {new Date(signal.publishedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                    <p className="font-mono text-[9px] text-ink-muted flex items-center gap-1">
+                      {signal.source === 'telegram' ? (
+                        <span className="inline-flex items-center gap-0.5 px-1 py-px rounded-sm bg-[#229ED9]/10 text-[#229ED9] text-[7px] font-semibold uppercase border border-[#229ED9]/20">TG</span>
+                      ) : (
+                        <span className="inline-flex items-center gap-0.5 px-1 py-px rounded-sm bg-amber-bg text-amber-ink text-[7px] font-semibold uppercase border border-amber-ink/20">RSS</span>
+                      )}
+                      <span>{signal.sourceName} · {new Date(signal.publishedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
                     </p>
                   </div>
                 </div>
