@@ -136,6 +136,7 @@ export default function BoardRoomDial() {
               {log.nervousSystemState === 'regulated' ? 'Regulated — full capacity'
                 : log.nervousSystemState === 'slightly_spiked' ? 'Slightly spiked — reduced capacity'
                 : log.nervousSystemState === 'spiked' ? 'Spiked — 24h rule active'
+                : log.nervousSystemState === 'sick' ? 'Sick — recovery mode'
                 : 'Regulated — full capacity'}
             </span>
           </div>

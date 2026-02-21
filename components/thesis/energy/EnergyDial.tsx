@@ -111,11 +111,12 @@ export default function EnergyDial() {
           {/* NS State */}
           <div className="flex items-center gap-0.5">
             <span className="font-serif text-[7px] text-ink-muted">NS</span>
-            {(['regulated', 'slightly_spiked', 'spiked'] as NervousSystemState[]).map((state) => {
+            {(['regulated', 'slightly_spiked', 'spiked', 'sick'] as NervousSystemState[]).map((state) => {
               const styles = {
                 regulated: { active: 'bg-green-ink text-paper border-green-ink', icon: '●' },
                 slightly_spiked: { active: 'bg-amber-ink text-paper border-amber-ink', icon: '◐' },
                 spiked: { active: 'bg-red-ink text-paper border-red-ink', icon: '◯' },
+                sick: { active: 'bg-red-ink text-paper border-red-ink', icon: '✕' },
               }
               return (
                 <button
@@ -193,7 +194,7 @@ export default function EnergyDial() {
         )}
 
         {/* Conditional: NS Trigger + Relational */}
-        {(log.nervousSystemState === 'slightly_spiked' || log.nervousSystemState === 'spiked') && (
+        {(log.nervousSystemState === 'slightly_spiked' || log.nervousSystemState === 'spiked' || log.nervousSystemState === 'sick') && (
           <div className="grid grid-cols-2 gap-1.5">
             <div>
               <label className="font-serif text-[8px] italic uppercase tracking-wide text-ink-muted block mb-0.5">Trigger</label>

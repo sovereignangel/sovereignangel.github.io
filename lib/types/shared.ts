@@ -1,7 +1,7 @@
 import { Timestamp } from 'firebase/firestore'
 
 // Shared type aliases used across multiple domains
-export type NervousSystemState = 'regulated' | 'slightly_spiked' | 'spiked'
+export type NervousSystemState = 'regulated' | 'slightly_spiked' | 'spiked' | 'sick'
 export type BodyFelt = 'open' | 'neutral' | 'tense'
 export type TrainingType = 'strength' | 'yoga' | 'vo2' | 'zone2' | 'rest' | 'none'
 export type RevenueStreamType = 'recurring' | 'one_time' | 'organic'

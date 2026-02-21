@@ -131,11 +131,12 @@ export default function EnergySlideOut({ onClose }: EnergySlideOutProps) {
               NS State
             </label>
             <div className="flex gap-1">
-              {(['regulated', 'slightly_spiked', 'spiked'] as NervousSystemState[]).map((state) => {
+              {(['regulated', 'slightly_spiked', 'spiked', 'sick'] as NervousSystemState[]).map((state) => {
                 const styles = {
                   regulated: { active: 'bg-green-ink text-paper border-green-ink', label: 'Regulated' },
                   slightly_spiked: { active: 'bg-amber-ink text-paper border-amber-ink', label: 'Slight' },
                   spiked: { active: 'bg-red-ink text-paper border-red-ink', label: 'Spiked' },
+                  sick: { active: 'bg-red-ink text-paper border-red-ink', label: 'Sick' },
                 }
                 return (
                   <button
@@ -153,7 +154,7 @@ export default function EnergySlideOut({ onClose }: EnergySlideOutProps) {
           </div>
 
           {/* NS Trigger (conditional) */}
-          {(log.nervousSystemState === 'slightly_spiked' || log.nervousSystemState === 'spiked') && (
+          {(log.nervousSystemState === 'slightly_spiked' || log.nervousSystemState === 'spiked' || log.nervousSystemState === 'sick') && (
             <div>
               <label className="font-serif text-[10px] text-ink-muted uppercase tracking-wide block mb-0.5">Trigger</label>
               <select
