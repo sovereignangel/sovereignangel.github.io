@@ -391,10 +391,51 @@ export interface ParsedJournalPrinciple {
   domain: DecisionDomain
 }
 
+export interface ParsedJournalProblem {
+  problem: string
+  painPoint: string
+  solution: string
+}
+
+export interface ParsedJournalIntelligence {
+  discoveryConversationsCount: number | null
+  problems: ParsedJournalProblem[]
+  problemSelected: string | null
+  insightsExtracted: number | null
+}
+
+export interface ParsedJournalNetwork {
+  warmIntrosMade: number | null
+  warmIntrosReceived: number | null
+  meetingsBooked: number | null
+}
+
+export interface ParsedJournalRevenue {
+  revenueAsksCount: number | null
+  revenueThisSession: number | null
+  revenueStreamType: 'recurring' | 'one_time' | 'organic' | null
+  feedbackLoopClosed: boolean | null
+}
+
+export interface ParsedJournalContact {
+  name: string
+  context: string  // how they were mentioned (e.g. "met at primary", "will intro to friends")
+}
+
+export interface ParsedJournalNote {
+  text: string
+  actionRequired: boolean  // true if it's a to-do, false if it's just an observation
+}
+
 export interface ParsedJournalEntry {
   energy: ParsedJournalEnergy
   output: ParsedJournalOutput
   psyCap: ParsedJournalPsyCap
+  intelligence: ParsedJournalIntelligence
+  network: ParsedJournalNetwork
+  revenue: ParsedJournalRevenue
+  contacts: ParsedJournalContact[]
+  notes: ParsedJournalNote[]
   cadenceCompleted: string[]
   decisions: ParsedJournalDecision[]
   principles: ParsedJournalPrinciple[]
@@ -404,6 +445,11 @@ const EMPTY_JOURNAL_RESULT: ParsedJournalEntry = {
   energy: { nervousSystemState: null, bodyFelt: null, trainingTypes: [], sleepHours: null },
   output: { focusHoursActual: null, whatShipped: null },
   psyCap: { hope: null, efficacy: null, resilience: null, optimism: null },
+  intelligence: { discoveryConversationsCount: null, problems: [], problemSelected: null, insightsExtracted: null },
+  network: { warmIntrosMade: null, warmIntrosReceived: null, meetingsBooked: null },
+  revenue: { revenueAsksCount: null, revenueThisSession: null, revenueStreamType: null, feedbackLoopClosed: null },
+  contacts: [],
+  notes: [],
   cadenceCompleted: [],
   decisions: [],
   principles: [],
@@ -412,7 +458,7 @@ const EMPTY_JOURNAL_RESULT: ParsedJournalEntry = {
 export async function parseJournalEntry(journalText: string): Promise<ParsedJournalEntry> {
   const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' })
 
-  const prompt = `You are parsing a free-form daily journal entry from a builder/entrepreneur. Extract structured data ONLY where the text clearly states or strongly implies it. Never fabricate or infer beyond what's written.
+  const prompt = `You are parsing a free-form daily journal entry from a builder/entrepreneur. Extract structured data where the text clearly states or strongly implies it. Be generous with inference for conversations, relationships, and business interactions — these are the most common journal topics. Use null only when a domain is truly not mentioned at all.
 
 JOURNAL ENTRY:
 ${journalText}
@@ -420,8 +466,8 @@ ${journalText}
 Extract data into these domains. Use null for anything not mentioned.
 
 1. ENERGY:
-   - nervousSystemState: One of "regulated", "slightly_spiked", "spiked". Infer from emotional tone (calm/grounded = regulated, anxious/restless = slightly_spiked, overwhelmed/reactive = spiked). null if unclear.
-   - bodyFelt: One of "open", "neutral", "tense". Infer from physical descriptions. null if not mentioned.
+   - nervousSystemState: One of "regulated", "slightly_spiked", "spiked". Infer from emotional tone (calm/grounded/intimate/connected = regulated, anxious/restless = slightly_spiked, overwhelmed/reactive = spiked). null if unclear.
+   - bodyFelt: One of "open", "neutral", "tense". Infer from physical descriptions or illness mentions (sick/recovering = "tense", healthy/energized = "open"). null if not mentioned.
    - trainingTypes: Array from ["strength", "yoga", "vo2", "zone2", "rest", "none"]. Empty array if not mentioned.
    - sleepHours: Number of hours slept. null if not mentioned.
 
@@ -429,26 +475,54 @@ Extract data into these domains. Use null for anything not mentioned.
    - focusHoursActual: Number of focused work hours. null if not mentioned.
    - whatShipped: What was built, published, or delivered. null if not mentioned.
 
-3. PSYCAP (Psychological Capital, 1-5 scale):
-   - hope: Sense of future possibility, pathways to goals. null if not evident.
-   - efficacy: Confidence in ability to execute. null if not evident.
-   - resilience: Ability to bounce back from setbacks. null if not evident.
-   - optimism: Positive attribution of outcomes. null if not evident.
+3. INTELLIGENCE (discovery conversations and problem identification):
+   - discoveryConversationsCount: Count of distinct conversations, calls, meetings, or meaningful 1:1 interactions described. Count each distinct person/group interaction. This is the MOST IMPORTANT field — journal entries are often about who you talked to and what you learned.
+   - problems: Array of problems/opportunities identified from conversations or observations. Each: { problem (the problem or opportunity), painPoint (who has this pain or what's broken), solution (proposed approach or next step) }. Look for: business challenges discussed, market gaps identified, someone needing help, partnership opportunities, product ideas.
+   - problemSelected: Which problem/opportunity the writer is most likely to act on first. Infer from enthusiasm, revenue potential, or explicit statements of intent.
+   - insightsExtracted: Count of distinct insights, learnings, or actionable takeaways from the day. Count each "aha" or useful piece of information learned.
 
-4. CADENCE COMPLETED: Array of checklist keys that the journal indicates were done today. Only include if clearly mentioned.
+4. NETWORK (relationship capital):
+   - warmIntrosMade: Count of introductions offered or made (connecting people). null if none.
+   - warmIntrosReceived: Count of introductions received. null if none.
+   - meetingsBooked: Count of future meetings/calls scheduled or agreed to. null if none.
+
+5. REVENUE (capture signals):
+   - revenueAsksCount: Count of explicit or implied revenue conversations — pitching a service, discussing pricing, proposing paid work, quoting a rate. null if none.
+   - revenueThisSession: Dollar amount of revenue closed/received today. null if none.
+   - revenueStreamType: If a revenue opportunity is discussed, classify as "recurring" (monthly/retainer/subscription), "one_time" (project/contract), or "organic" (inbound/referral). null if no revenue discussed.
+   - feedbackLoopClosed: true if a previous open loop was resolved (got an answer back, resolved ambiguity, confirmed next steps with someone). null if not evident.
+
+6. PSYCAP (Psychological Capital, 1-5 scale):
+   - hope: Sense of future possibility, pathways to goals. Infer from excitement about opportunities, planning future steps. null if not evident.
+   - efficacy: Confidence in ability to execute. Infer from giving advice, taking charge, making things happen. null if not evident.
+   - resilience: Ability to bounce back from setbacks. Infer from pushing through illness, handling difficult conversations. null if not evident.
+   - optimism: Positive attribution of outcomes. Infer from positive framing of events, excitement about the day. null if not evident.
+
+7. CADENCE COMPLETED: Array of checklist keys that the journal indicates were done today. Only include if clearly mentioned.
    Valid keys: "energy" (logged energy inputs), "problems" (identified problems worth solving), "focus" (executed focus session), "ship" (shipped something), "signal" (reviewed external signals), "revenue_ask" (made revenue asks), "psycap" (reflected on psychological state)
 
-5. DECISIONS: Array of decisions made. Only include if the journal describes a clear choice between options.
+8. CONTACTS: Array of people mentioned by name. Extract EVERY person name mentioned, whether met today, referenced, or planned to meet.
+   Each: { name (person's name, capitalize properly), context (brief description of the interaction or how they were mentioned, max 20 words) }
+
+9. NOTES: Array of action items, reminders, things to look into, or observations worth saving. Look for phrases like "need to", "should", "look into", "remember to", "note to self", or any explicit mention of saving/noting something.
+   Each: { text (the note or action item), actionRequired (true if it requires doing something, false if it's just an observation) }
+
+10. DECISIONS: Array of decisions made. Only include if the journal describes a clear choice between options.
    Each: { title, hypothesis (what they expect), chosenOption, reasoning, domain (one of "portfolio", "product", "revenue", "personal", "thesis"), confidenceLevel (0-100) }
 
-6. PRINCIPLES: Array of principles, rules, or lessons articulated. Only include if the journal states a clear rule/principle/learning.
+11. PRINCIPLES: Array of principles, rules, or lessons articulated. Only include if the journal states a clear rule/principle/learning.
    Each: { text (full principle), shortForm (max 40 chars), domain (one of "portfolio", "product", "revenue", "personal", "thesis") }
 
 Return ONLY valid JSON (no markdown, no code blocks):
 {
   "energy": { "nervousSystemState": null, "bodyFelt": null, "trainingTypes": [], "sleepHours": null },
   "output": { "focusHoursActual": null, "whatShipped": null },
+  "intelligence": { "discoveryConversationsCount": null, "problems": [], "problemSelected": null, "insightsExtracted": null },
+  "network": { "warmIntrosMade": null, "warmIntrosReceived": null, "meetingsBooked": null },
+  "revenue": { "revenueAsksCount": null, "revenueThisSession": null, "revenueStreamType": null, "feedbackLoopClosed": null },
   "psyCap": { "hope": null, "efficacy": null, "resilience": null, "optimism": null },
+  "contacts": [],
+  "notes": [],
   "cadenceCompleted": [],
   "decisions": [],
   "principles": []
@@ -482,6 +556,22 @@ Return ONLY valid JSON (no markdown, no code blocks):
     const energy = parsed.energy || {}
     const output = parsed.output || {}
     const psyCap = parsed.psyCap || {}
+    const intelligence = parsed.intelligence || {}
+    const network = parsed.network || {}
+    const revenue = parsed.revenue || {}
+    const validStreamTypes = ['recurring', 'one_time', 'organic']
+
+    const safeInt = (v: unknown): number | null => {
+      if (v == null) return null
+      const n = Number(v)
+      return isNaN(n) ? null : Math.max(0, Math.round(n))
+    }
+
+    const safeFloat = (v: unknown): number | null => {
+      if (v == null) return null
+      const n = Number(v)
+      return isNaN(n) ? null : Math.max(0, n)
+    }
 
     return {
       energy: {
@@ -494,12 +584,41 @@ Return ONLY valid JSON (no markdown, no code blocks):
         focusHoursActual: typeof output.focusHoursActual === 'number' ? output.focusHoursActual : null,
         whatShipped: typeof output.whatShipped === 'string' ? output.whatShipped : null,
       },
+      intelligence: {
+        discoveryConversationsCount: safeInt(intelligence.discoveryConversationsCount),
+        problems: (intelligence.problems || []).map((p: Record<string, unknown>) => ({
+          problem: String(p.problem || ''),
+          painPoint: String(p.painPoint || ''),
+          solution: String(p.solution || ''),
+        })),
+        problemSelected: typeof intelligence.problemSelected === 'string' ? intelligence.problemSelected : null,
+        insightsExtracted: safeInt(intelligence.insightsExtracted),
+      },
+      network: {
+        warmIntrosMade: safeInt(network.warmIntrosMade),
+        warmIntrosReceived: safeInt(network.warmIntrosReceived),
+        meetingsBooked: safeInt(network.meetingsBooked),
+      },
+      revenue: {
+        revenueAsksCount: safeInt(revenue.revenueAsksCount),
+        revenueThisSession: safeFloat(revenue.revenueThisSession),
+        revenueStreamType: validStreamTypes.includes(revenue.revenueStreamType) ? revenue.revenueStreamType : null,
+        feedbackLoopClosed: typeof revenue.feedbackLoopClosed === 'boolean' ? revenue.feedbackLoopClosed : null,
+      },
       psyCap: {
         hope: clampPsyCap(psyCap.hope),
         efficacy: clampPsyCap(psyCap.efficacy),
         resilience: clampPsyCap(psyCap.resilience),
         optimism: clampPsyCap(psyCap.optimism),
       },
+      contacts: (parsed.contacts || []).map((c: Record<string, unknown>) => ({
+        name: String(c.name || '').trim(),
+        context: String(c.context || '').trim(),
+      })).filter((c: { name: string }) => c.name.length > 0),
+      notes: (parsed.notes || []).map((n: Record<string, unknown>) => ({
+        text: String(n.text || '').trim(),
+        actionRequired: typeof n.actionRequired === 'boolean' ? n.actionRequired : true,
+      })).filter((n: { text: string }) => n.text.length > 0),
       cadenceCompleted: (parsed.cadenceCompleted || []).filter((k: string) => validCadence.includes(k)),
       decisions: (parsed.decisions || []).map((d: Record<string, unknown>) => ({
         title: String(d.title || ''),

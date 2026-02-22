@@ -17,11 +17,13 @@ interface RewardScoreCardProps {
 
 const COMPONENT_BARS = [
   { key: 'GE', field: 'ge' as const, color: 'bg-green-ink', label: 'Generative Energy' },
-  { key: 'ĠI', field: 'gi' as const, color: 'bg-navy', label: 'Intelligence Growth' },
-  { key: 'ĠVC', field: 'gvc' as const, color: 'bg-navy-light', label: 'Value Creation' },
-  { key: 'κ', field: 'kappa' as const, color: 'bg-gold', label: 'Capture Ratio' },
-  { key: 'ĠD', field: 'gd' as const, color: 'bg-blue-600', label: 'Generative Discovery' },
-  { key: 'Θ', field: 'theta' as const, color: 'bg-navy', label: 'Thesis Coherence' },
+  { key: 'GI', field: 'gi' as const, color: 'bg-burgundy', label: 'Intelligence Growth' },
+  { key: 'GVC', field: 'gvc' as const, color: 'bg-ink', label: 'Value Creation' },
+  { key: 'κ', field: 'kappa' as const, color: 'bg-amber-ink', label: 'Capture Ratio' },
+  { key: 'GD', field: 'gd' as const, color: 'bg-burgundy/70', label: 'Discovery' },
+  { key: 'GN', field: 'gn' as const, color: 'bg-green-ink/70', label: 'Network' },
+  { key: 'J', field: 'j' as const, color: 'bg-ink-muted', label: 'Judgment' },
+  { key: 'Θ', field: 'theta' as const, color: 'bg-ink/50', label: 'Coherence' },
 ]
 
 export default function RewardScoreCard({ todayLog, recentLogs, dates }: RewardScoreCardProps) {

@@ -6,6 +6,8 @@ import { useDailyLogContext } from '@/components/thesis/DailyLogProvider'
 import { useCadence } from '@/hooks/useCadence'
 import { saveDecision } from '@/lib/firestore/decisions'
 import { savePrinciple } from '@/lib/firestore/principles'
+import { saveContact, getContactByName, updateContact } from '@/lib/firestore/contacts'
+import { saveExternalSignal } from '@/lib/firestore/external-signals'
 import type { ParsedJournalEntry } from '@/lib/ai-extraction'
 import type { CadenceChecklistItem } from '@/lib/types'
 
@@ -122,6 +124,47 @@ export default function DailyJournal() {
         await updateField('whatShipped', parsed.output.whatShipped)
       }
 
+      // Intelligence fields
+      if (parsed.intelligence.discoveryConversationsCount != null && isEnabled('intel.conversations')) {
+        await updateField('discoveryConversationsCount', parsed.intelligence.discoveryConversationsCount)
+      }
+      if (parsed.intelligence.problems.length > 0 && isEnabled('intel.problems')) {
+        await updateField('problems', parsed.intelligence.problems.map(p => ({
+          problem: p.problem, painPoint: p.painPoint, solution: p.solution, brokenWhy: '',
+        })))
+      }
+      if (parsed.intelligence.problemSelected && isEnabled('intel.problemSelected')) {
+        await updateField('problemSelected', parsed.intelligence.problemSelected)
+      }
+      if (parsed.intelligence.insightsExtracted != null && isEnabled('intel.insights')) {
+        await updateField('insightsExtracted', parsed.intelligence.insightsExtracted)
+      }
+
+      // Network fields
+      if (parsed.network.warmIntrosMade != null && isEnabled('network.intros')) {
+        await updateField('warmIntrosMade', parsed.network.warmIntrosMade)
+      }
+      if (parsed.network.warmIntrosReceived != null && isEnabled('network.introsReceived')) {
+        await updateField('warmIntrosReceived', parsed.network.warmIntrosReceived)
+      }
+      if (parsed.network.meetingsBooked != null && isEnabled('network.meetings')) {
+        await updateField('meetingsBooked', parsed.network.meetingsBooked)
+      }
+
+      // Revenue fields
+      if (parsed.revenue.revenueAsksCount != null && isEnabled('revenue.asks')) {
+        await updateField('revenueAsksCount', parsed.revenue.revenueAsksCount)
+      }
+      if (parsed.revenue.revenueThisSession != null && isEnabled('revenue.amount')) {
+        await updateField('revenueThisSession', parsed.revenue.revenueThisSession)
+      }
+      if (parsed.revenue.revenueStreamType && isEnabled('revenue.streamType')) {
+        await updateField('revenueStreamType', parsed.revenue.revenueStreamType)
+      }
+      if (parsed.revenue.feedbackLoopClosed != null && isEnabled('revenue.feedbackLoop')) {
+        await updateField('feedbackLoopClosed', parsed.revenue.feedbackLoopClosed)
+      }
+
       // PsyCap fields
       if (parsed.psyCap.hope != null && isEnabled('psycap.hope')) {
         await updateField('psyCapHope', parsed.psyCap.hope)
@@ -199,6 +242,46 @@ export default function DailyJournal() {
         })
       }
 
+      // Contacts (upsert — create or update lastConversationDate)
+      for (let i = 0; i < parsed.contacts.length; i++) {
+        if (!isEnabled(`contact.${i}`)) continue
+        const c = parsed.contacts[i]
+        const existing = await getContactByName(user.uid, c.name)
+        if (existing?.id) {
+          const prevNotes = existing.notes || ''
+          await updateContact(user.uid, existing.id, {
+            lastConversationDate: today,
+            notes: prevNotes ? `${prevNotes}\n${today}: ${c.context}` : `${today}: ${c.context}`,
+          })
+        } else {
+          await saveContact(user.uid, {
+            name: c.name,
+            lastConversationDate: today,
+            notes: `${today}: ${c.context}`,
+          })
+        }
+      }
+
+      // Notes (save as external signals in inbox)
+      for (let i = 0; i < parsed.notes.length; i++) {
+        if (!isEnabled(`note.${i}`)) continue
+        const n = parsed.notes[i]
+        await saveExternalSignal(user.uid, {
+          title: n.text.slice(0, 120),
+          aiSummary: n.text,
+          keyTakeaway: n.text,
+          valueBullets: [],
+          sourceUrl: '',
+          sourceName: 'Journal note',
+          source: 'telegram',
+          relevanceScore: n.actionRequired ? 0.8 : 0.4,
+          thesisPillars: [],
+          status: 'inbox',
+          readStatus: 'unread',
+          publishedAt: new Date().toISOString(),
+        })
+      }
+
       setSaved(true)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save')
@@ -208,9 +291,16 @@ export default function DailyJournal() {
   }
 
   const hasAnyResults = parsed && (
+    parsed.contacts.length > 0 || parsed.notes.length > 0 ||
     parsed.energy.nervousSystemState || parsed.energy.bodyFelt ||
     parsed.energy.trainingTypes.length > 0 || parsed.energy.sleepHours != null ||
     parsed.output.focusHoursActual != null || parsed.output.whatShipped ||
+    parsed.intelligence.discoveryConversationsCount != null ||
+    parsed.intelligence.problems.length > 0 || parsed.intelligence.insightsExtracted != null ||
+    parsed.network.warmIntrosMade != null || parsed.network.warmIntrosReceived != null ||
+    parsed.network.meetingsBooked != null ||
+    parsed.revenue.revenueAsksCount != null || parsed.revenue.revenueThisSession != null ||
+    parsed.revenue.feedbackLoopClosed != null ||
     parsed.psyCap.hope != null || parsed.psyCap.efficacy != null ||
     parsed.psyCap.resilience != null || parsed.psyCap.optimism != null ||
     parsed.cadenceCompleted.length > 0 ||
@@ -227,7 +317,7 @@ export default function DailyJournal() {
         <textarea
           value={journalText}
           onChange={(e) => setJournalText(e.target.value)}
-          placeholder="Write freely about your day — energy, what you worked on, decisions made, lessons learned, how you feel. The model will parse it into the right places."
+          placeholder="Write freely about your day — conversations you had, problems you spotted, revenue opportunities, who you connected with, energy levels, what you shipped, decisions made, lessons learned. The model will parse it into the right places."
           className="w-full h-40 bg-paper border border-rule rounded-sm p-2 text-[11px] text-ink font-medium resize-y focus:outline-none focus:border-burgundy"
         />
         <div className="flex items-center gap-2 mt-2">
@@ -323,6 +413,116 @@ export default function DailyJournal() {
             </ResultSection>
           )}
 
+          {/* Intelligence */}
+          {(parsed.intelligence.discoveryConversationsCount != null ||
+            parsed.intelligence.problems.length > 0 || parsed.intelligence.insightsExtracted != null) && (
+            <ResultSection title="Intelligence">
+              {parsed.intelligence.discoveryConversationsCount != null && (
+                <ToggleRow
+                  label="Discovery Conversations"
+                  value={`${parsed.intelligence.discoveryConversationsCount}`}
+                  enabled={isEnabled('intel.conversations')}
+                  onToggle={() => toggle('intel.conversations')}
+                />
+              )}
+              {parsed.intelligence.problems.length > 0 && (
+                <ToggleRow
+                  label="Problems Identified"
+                  value={`${parsed.intelligence.problems.length} problems`}
+                  detail={parsed.intelligence.problems.map(p => `${p.problem} → ${p.solution}`).join(' · ')}
+                  enabled={isEnabled('intel.problems')}
+                  onToggle={() => toggle('intel.problems')}
+                />
+              )}
+              {parsed.intelligence.problemSelected && (
+                <ToggleRow
+                  label="Problem Selected"
+                  value={parsed.intelligence.problemSelected}
+                  enabled={isEnabled('intel.problemSelected')}
+                  onToggle={() => toggle('intel.problemSelected')}
+                />
+              )}
+              {parsed.intelligence.insightsExtracted != null && (
+                <ToggleRow
+                  label="Insights Extracted"
+                  value={`${parsed.intelligence.insightsExtracted}`}
+                  enabled={isEnabled('intel.insights')}
+                  onToggle={() => toggle('intel.insights')}
+                />
+              )}
+            </ResultSection>
+          )}
+
+          {/* Network */}
+          {(parsed.network.warmIntrosMade != null || parsed.network.warmIntrosReceived != null ||
+            parsed.network.meetingsBooked != null) && (
+            <ResultSection title="Network">
+              {parsed.network.warmIntrosMade != null && (
+                <ToggleRow
+                  label="Warm Intros Made"
+                  value={`${parsed.network.warmIntrosMade}`}
+                  enabled={isEnabled('network.intros')}
+                  onToggle={() => toggle('network.intros')}
+                />
+              )}
+              {parsed.network.warmIntrosReceived != null && (
+                <ToggleRow
+                  label="Warm Intros Received"
+                  value={`${parsed.network.warmIntrosReceived}`}
+                  enabled={isEnabled('network.introsReceived')}
+                  onToggle={() => toggle('network.introsReceived')}
+                />
+              )}
+              {parsed.network.meetingsBooked != null && (
+                <ToggleRow
+                  label="Meetings Booked"
+                  value={`${parsed.network.meetingsBooked}`}
+                  enabled={isEnabled('network.meetings')}
+                  onToggle={() => toggle('network.meetings')}
+                />
+              )}
+            </ResultSection>
+          )}
+
+          {/* Revenue */}
+          {(parsed.revenue.revenueAsksCount != null || parsed.revenue.revenueThisSession != null ||
+            parsed.revenue.feedbackLoopClosed != null) && (
+            <ResultSection title="Revenue">
+              {parsed.revenue.revenueAsksCount != null && (
+                <ToggleRow
+                  label="Revenue Asks"
+                  value={`${parsed.revenue.revenueAsksCount}`}
+                  enabled={isEnabled('revenue.asks')}
+                  onToggle={() => toggle('revenue.asks')}
+                />
+              )}
+              {parsed.revenue.revenueThisSession != null && (
+                <ToggleRow
+                  label="Revenue"
+                  value={`$${parsed.revenue.revenueThisSession}`}
+                  enabled={isEnabled('revenue.amount')}
+                  onToggle={() => toggle('revenue.amount')}
+                />
+              )}
+              {parsed.revenue.revenueStreamType && (
+                <ToggleRow
+                  label="Stream Type"
+                  value={parsed.revenue.revenueStreamType.replace(/_/g, ' ')}
+                  enabled={isEnabled('revenue.streamType')}
+                  onToggle={() => toggle('revenue.streamType')}
+                />
+              )}
+              {parsed.revenue.feedbackLoopClosed != null && (
+                <ToggleRow
+                  label="Feedback Loop Closed"
+                  value={parsed.revenue.feedbackLoopClosed ? 'Yes' : 'No'}
+                  enabled={isEnabled('revenue.feedbackLoop')}
+                  onToggle={() => toggle('revenue.feedbackLoop')}
+                />
+              )}
+            </ResultSection>
+          )}
+
           {/* PsyCap */}
           {(parsed.psyCap.hope != null || parsed.psyCap.efficacy != null ||
             parsed.psyCap.resilience != null || parsed.psyCap.optimism != null) && (
@@ -389,6 +589,36 @@ export default function DailyJournal() {
             </ResultSection>
           )}
 
+          {/* Contacts */}
+          {parsed.contacts.length > 0 && (
+            <ResultSection title="Contacts">
+              {parsed.contacts.map((c, i) => (
+                <ToggleRow
+                  key={i}
+                  label={c.name}
+                  value={c.context}
+                  enabled={isEnabled(`contact.${i}`)}
+                  onToggle={() => toggle(`contact.${i}`)}
+                />
+              ))}
+            </ResultSection>
+          )}
+
+          {/* Notes */}
+          {parsed.notes.length > 0 && (
+            <ResultSection title="Notes">
+              {parsed.notes.map((n, i) => (
+                <ToggleRow
+                  key={i}
+                  label={n.actionRequired ? 'Action' : 'Note'}
+                  value={n.text}
+                  enabled={isEnabled(`note.${i}`)}
+                  onToggle={() => toggle(`note.${i}`)}
+                />
+              ))}
+            </ResultSection>
+          )}
+
           {/* Save All */}
           <div className="flex items-center gap-2 pt-1">
             <button
@@ -416,7 +646,7 @@ export default function DailyJournal() {
       {/* No results */}
       {parsed && !hasAnyResults && (
         <div className="bg-white border border-rule rounded-sm p-3 text-[11px] text-ink-muted text-center">
-          No structured data could be extracted. Try writing more about your energy, what you worked on, decisions, or lessons learned.
+          No structured data could be extracted. Try writing about conversations you had, problems you spotted, revenue opportunities, energy levels, or what you shipped.
         </div>
       )}
     </div>

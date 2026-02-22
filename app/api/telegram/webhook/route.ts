@@ -99,6 +99,25 @@ function buildJournalReply(parsed: ParsedJournalEntry): string {
     lines.push('', `*Cadence:* ${parsed.cadenceCompleted.join(', ')}`)
   }
 
+  // Contacts
+  if (parsed.contacts.length > 0) {
+    lines.push('', `*Contacts:* ${parsed.contacts.map(c => c.name).join(', ')}`)
+  }
+
+  // Notes
+  if (parsed.notes.length > 0) {
+    const actionNotes = parsed.notes.filter(n => n.actionRequired)
+    const obsNotes = parsed.notes.filter(n => !n.actionRequired)
+    if (actionNotes.length > 0) {
+      lines.push('', '*Action Items:*')
+      actionNotes.forEach(n => lines.push(`  → ${n.text}`))
+    }
+    if (obsNotes.length > 0) {
+      lines.push('', '*Notes:*')
+      obsNotes.forEach(n => lines.push(`  · ${n.text}`))
+    }
+  }
+
   // Decisions & Principles
   if (parsed.decisions.length > 0) {
     lines.push('', `+${parsed.decisions.length} decision${parsed.decisions.length > 1 ? 's' : ''}`)
@@ -204,6 +223,50 @@ async function handleJournal(uid: string, text: string, chatId: number) {
         linkedDecisionIds: [],
         lastReinforcedAt: today,
         reinforcementCount: 0,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+    }
+
+    // Upsert contacts (create or update lastConversationDate)
+    for (const c of parsed.contacts) {
+      const contactsRef = adminDb.collection('users').doc(uid).collection('contacts')
+      const existing = await contactsRef.where('name', '==', c.name).limit(1).get()
+      if (existing.empty) {
+        await contactsRef.doc().set({
+          name: c.name,
+          lastConversationDate: today,
+          notes: c.context,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        })
+      } else {
+        const doc = existing.docs[0]
+        const prevNotes = doc.data().notes || ''
+        await doc.ref.update({
+          lastConversationDate: today,
+          notes: prevNotes ? `${prevNotes}\n${today}: ${c.context}` : `${today}: ${c.context}`,
+          updatedAt: new Date(),
+        })
+      }
+    }
+
+    // Save notes as external signals (type: telegram, status: inbox)
+    for (const n of parsed.notes) {
+      const signalRef = adminDb.collection('users').doc(uid).collection('external_signals').doc()
+      await signalRef.set({
+        title: n.text.slice(0, 120),
+        aiSummary: n.text,
+        keyTakeaway: n.text,
+        valueBullets: [],
+        sourceUrl: '',
+        sourceName: 'Journal note',
+        source: 'telegram',
+        relevanceScore: n.actionRequired ? 0.8 : 0.4,
+        thesisPillars: [],
+        status: 'inbox',
+        readStatus: 'unread',
+        publishedAt: new Date().toISOString(),
         createdAt: new Date(),
         updatedAt: new Date(),
       })
