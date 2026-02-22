@@ -8,11 +8,13 @@ import CadenceView from '@/components/thesis/boardroom/CadenceView'
 import CognitionView from '@/components/thesis/boardroom/CognitionView'
 import DailyJournal from '@/components/thesis/boardroom/DailyJournal'
 import BoardRoomDial from '@/components/thesis/boardroom/BoardRoomDial'
+import PortfolioView from '@/components/thesis/boardroom/PortfolioView'
 
-type BoardRoomTab = 'journal' | 'synthesis' | 'decisions' | 'principles' | 'cadence' | 'cognition'
+type BoardRoomTab = 'journal' | 'portfolio' | 'synthesis' | 'decisions' | 'principles' | 'cadence' | 'cognition'
 
 const TABS: { key: BoardRoomTab; label: string }[] = [
   { key: 'journal', label: 'Journal' },
+  { key: 'portfolio', label: 'Portfolio' },
   { key: 'synthesis', label: 'Synthesis' },
   { key: 'decisions', label: 'Decisions' },
   { key: 'principles', label: 'Principles' },
@@ -47,6 +49,7 @@ export default function BoardRoomPage() {
         {/* Tab Content */}
         <div className="flex-1 overflow-y-auto">
           {activeTab === 'journal' && <DailyJournal />}
+          {activeTab === 'portfolio' && <PortfolioView />}
           {activeTab === 'synthesis' && <SynthesisView />}
           {activeTab === 'decisions' && <DecisionJournal />}
           {activeTab === 'principles' && <PrinciplesLedger />}
