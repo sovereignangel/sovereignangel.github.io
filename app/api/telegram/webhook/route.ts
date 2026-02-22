@@ -220,6 +220,47 @@ async function handleJournal(uid: string, text: string, chatId: number) {
   }
 }
 
+async function handleRss(uid: string, url: string, pillars: string[], chatId: number) {
+  const adminDb = await getAdminDb()
+
+  // Basic URL validation
+  if (!url.startsWith('http://') && !url.startsWith('https://')) {
+    await sendTelegramReply(chatId, 'Invalid URL. Must start with http:// or https://')
+    return
+  }
+
+  // Extract a feed name from the URL hostname
+  try {
+    const hostname = new URL(url).hostname.replace('www.', '')
+    const name = hostname.split('.')[0]
+    const feedName = name.charAt(0).toUpperCase() + name.slice(1)
+
+    // Check for duplicates
+    const existing = await adminDb.collection('users').doc(uid).collection('rss_feeds')
+      .where('url', '==', url).limit(1).get()
+
+    if (!existing.empty) {
+      await sendTelegramReply(chatId, `Already subscribed to _${feedName}_`)
+      return
+    }
+
+    // Save the feed
+    const feedRef = adminDb.collection('users').doc(uid).collection('rss_feeds').doc()
+    await feedRef.set({
+      name: feedName,
+      url,
+      pillars: pillars.length > 0 ? pillars : ['markets'],
+      active: true,
+      createdAt: new Date(),
+    })
+
+    const pillarStr = pillars.length > 0 ? pillars.join(', ') : 'markets'
+    await sendTelegramReply(chatId, `Subscribed to *${feedName}*\n  URL → ${url}\n  Pillars → ${pillarStr}`)
+  } catch {
+    await sendTelegramReply(chatId, 'Invalid URL format.')
+  }
+}
+
 export async function POST(req: NextRequest) {
   if (!BOT_TOKEN) {
     return NextResponse.json({ error: 'Bot not configured' }, { status: 500 })
@@ -245,6 +286,7 @@ export async function POST(req: NextRequest) {
         '`/signal #ai <text>` — Signal with pillar',
         '`/note <text>` — Quick note',
         '`/journal <text>` — Journal entry (AI-parsed)',
+        '`/rss <url> #pillar` — Subscribe to RSS feed',
         '`/id` — Show your chat ID (for settings)',
         '',
         'Pillar tags: `#ai` `#markets` `#mind`',
@@ -275,6 +317,16 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ ok: true })
       }
       await handleJournal(uid, parsed.text, chatId)
+      return NextResponse.json({ ok: true })
+    }
+
+    // Handle RSS subscribe command
+    if (parsed.command === 'rss') {
+      if (!parsed.text) {
+        await sendTelegramReply(chatId, 'Usage: `/rss https://example.com/feed.xml #ai`\n\nPillar tags: `#ai` `#markets` `#mind`')
+        return NextResponse.json({ ok: true })
+      }
+      await handleRss(uid, parsed.text, parsed.pillars, chatId)
       return NextResponse.json({ ok: true })
     }
 
