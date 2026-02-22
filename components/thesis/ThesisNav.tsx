@@ -10,10 +10,9 @@ import { TREND_ARROWS, TREND_COLORS } from '@/lib/alpha-engine'
 import { format } from 'date-fns'
 
 const navItems = [
+  { href: '/thesis', label: 'Command', symbol: 'g*', exact: true },
   { href: '/thesis/execution', label: 'Execution', symbol: 'GVC+κ' },
   { href: '/thesis/intelligence', label: 'Intelligence', symbol: 'GI' },
-  { href: '/thesis/capital', label: 'Capital', symbol: '$' },
-  { href: '/thesis/network', label: 'Network', symbol: 'GN' },
   { href: '/thesis/boardroom', label: 'Board Room', symbol: 'J' },
 ]
 
@@ -93,7 +92,7 @@ export default function ThesisNav() {
               <ScoreValue label="GD" value={c?.gd ?? null} color={componentColor(c?.gd ?? null)} {...getArrow('GD')} />
               <ScoreValue label="GN" value={c?.gn ?? null} color={componentColor(c?.gn ?? null)} {...getArrow('GN')} />
               <ScoreValue label="J" value={c?.j ?? null} color={componentColor(c?.j ?? null)} {...getArrow('J')} />
-              <ScoreValue label="Θ" value={c?.theta ?? null} color={componentColor(c?.theta ?? null)} {...getArrow('Θ')} />
+              <ScoreValue label="Σ" value={c?.sigma ?? null} color={componentColor(c?.sigma ?? null)} {...getArrow('Σ')} />
             </div>
           </div>
 
@@ -120,8 +119,9 @@ export default function ThesisNav() {
         {/* Nav tabs */}
         <nav className="flex gap-0.5 -mb-px overflow-x-auto" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}>
           {navItems.map((item) => {
-            const isActive = pathname === item.href ||
-              (item.href !== '/thesis' && pathname.startsWith(item.href))
+            const isActive = 'exact' in item && item.exact
+              ? pathname === item.href
+              : pathname === item.href || pathname.startsWith(item.href + '/')
 
             return (
               <Link

@@ -1,5 +1,7 @@
-import { redirect } from 'next/navigation'
+'use client'
 
-export default function ThesisRedirect() {
-  redirect('/thesis/execution')
+import CommandCenter from '@/components/thesis/CommandCenter'
+
+export default function ThesisPage() {
+  return <CommandCenter />
 }

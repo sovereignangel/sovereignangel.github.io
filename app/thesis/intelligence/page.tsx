@@ -6,8 +6,10 @@ import IntelligenceDial from '@/components/thesis/intelligence/IntelligenceDial'
 import ExternalSignalInbox from '@/components/thesis/intelligence/ExternalSignalInbox'
 import InsightsInbox from '@/components/thesis/intelligence/InsightsInbox'
 import KnowledgeArchitecture from '@/components/thesis/intelligence/KnowledgeArchitecture'
+import NetworkView from '@/components/thesis/alpe-dhuez/NetworkView'
+import ConversationInbox from '@/components/thesis/intelligence/ConversationInbox'
 
-type TabType = 'signals' | 'external' | 'insights' | 'knowledge'
+type TabType = 'signals' | 'external' | 'insights' | 'network' | 'knowledge'
 
 export default function IntelligencePage() {
   const [refreshKey, setRefreshKey] = useState(0)
@@ -24,6 +26,7 @@ export default function IntelligencePage() {
             { key: 'signals' as const, label: 'Signals' },
             { key: 'external' as const, label: 'External' },
             { key: 'insights' as const, label: 'Insights' },
+            { key: 'network' as const, label: 'Network' },
             { key: 'knowledge' as const, label: 'Knowledge' },
           ]).map((tab) => (
             <button
@@ -45,6 +48,12 @@ export default function IntelligencePage() {
           {activeTab === 'signals' && <IntelligenceGauge refreshKey={refreshKey} />}
           {activeTab === 'external' && <ExternalSignalInbox onSignalCreated={onSignalSaved} />}
           {activeTab === 'insights' && <InsightsInbox />}
+          {activeTab === 'network' && (
+            <div className="space-y-3">
+              <NetworkView />
+              <ConversationInbox />
+            </div>
+          )}
           {activeTab === 'knowledge' && <KnowledgeArchitecture />}
         </div>
       </div>

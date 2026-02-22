@@ -5,21 +5,19 @@ import SynthesisView from '@/components/thesis/alpe-dhuez/SynthesisView'
 import DecisionJournal from '@/components/thesis/boardroom/DecisionJournal'
 import PrinciplesLedger from '@/components/thesis/boardroom/PrinciplesLedger'
 import CadenceView from '@/components/thesis/boardroom/CadenceView'
-import CognitionView from '@/components/thesis/boardroom/CognitionView'
 import DailyJournal from '@/components/thesis/boardroom/DailyJournal'
 import BoardRoomDial from '@/components/thesis/boardroom/BoardRoomDial'
-import PortfolioView from '@/components/thesis/boardroom/PortfolioView'
+import PositionBriefing from '@/components/thesis/capital/PositionBriefing'
 
-type BoardRoomTab = 'journal' | 'portfolio' | 'synthesis' | 'decisions' | 'principles' | 'cadence' | 'cognition'
+type BoardRoomTab = 'journal' | 'decisions' | 'principles' | 'capital' | 'cadence' | 'synthesis'
 
 const TABS: { key: BoardRoomTab; label: string }[] = [
   { key: 'journal', label: 'Journal' },
-  { key: 'portfolio', label: 'Portfolio' },
-  { key: 'synthesis', label: 'Synthesis' },
   { key: 'decisions', label: 'Decisions' },
   { key: 'principles', label: 'Principles' },
+  { key: 'capital', label: 'Capital' },
   { key: 'cadence', label: 'Cadence' },
-  { key: 'cognition', label: 'Cognition' },
+  { key: 'synthesis', label: 'Synthesis' },
 ]
 
 export default function BoardRoomPage() {
@@ -49,12 +47,11 @@ export default function BoardRoomPage() {
         {/* Tab Content */}
         <div className="flex-1 overflow-y-auto">
           {activeTab === 'journal' && <DailyJournal />}
-          {activeTab === 'portfolio' && <PortfolioView />}
-          {activeTab === 'synthesis' && <SynthesisView />}
           {activeTab === 'decisions' && <DecisionJournal />}
           {activeTab === 'principles' && <PrinciplesLedger />}
+          {activeTab === 'capital' && <PositionBriefing position={null} />}
           {activeTab === 'cadence' && <CadenceView />}
-          {activeTab === 'cognition' && <CognitionView />}
+          {activeTab === 'synthesis' && <SynthesisView />}
         </div>
       </div>
 
