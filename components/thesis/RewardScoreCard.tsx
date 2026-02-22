@@ -23,7 +23,7 @@ const COMPONENT_BARS = [
   { key: 'GD', field: 'gd' as const, color: 'bg-burgundy/70', label: 'Discovery' },
   { key: 'GN', field: 'gn' as const, color: 'bg-green-ink/70', label: 'Network' },
   { key: 'J', field: 'j' as const, color: 'bg-ink-muted', label: 'Judgment' },
-  { key: 'Θ', field: 'theta' as const, color: 'bg-ink/50', label: 'Coherence' },
+  { key: 'Σ', field: 'sigma' as const, color: 'bg-ink/50', label: 'Skill Building' },
 ]
 
 export default function RewardScoreCard({ todayLog, recentLogs, dates }: RewardScoreCardProps) {
@@ -100,11 +100,11 @@ export default function RewardScoreCard({ todayLog, recentLogs, dates }: RewardS
                     <div className="flex-1 h-2 bg-rule-light rounded-sm overflow-hidden">
                       <div
                         className={`h-full ${bar.color} rounded-sm transition-all`}
-                        style={{ width: `${components[bar.field] * 100}%` }}
+                        style={{ width: `${(components[bar.field] ?? 0) * 100}%` }}
                       />
                     </div>
                     <span className="font-mono text-[9px] text-ink-light w-7 text-right">
-                      {(components[bar.field] * 100).toFixed(0)}
+                      {((components[bar.field] ?? 0) * 100).toFixed(0)}
                     </span>
                   </div>
                 ))}
