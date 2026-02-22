@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { parseTelegramMessage, type TelegramUpdate } from '@/lib/telegram-parser'
-import { parseJournalEntry, transcribeAndParseVoiceNote, type ParsedJournalEntry } from '@/lib/ai-extraction'
+import { parseJournalEntry, transcribeAndParseVoiceNote, parsePrediction, type ParsedJournalEntry } from '@/lib/ai-extraction'
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN
 
@@ -437,6 +437,95 @@ async function handleRss(uid: string, url: string, pillars: string[], chatId: nu
   }
 }
 
+async function handlePredict(uid: string, text: string, chatId: number) {
+  const adminDb = await getAdminDb()
+
+  await sendTelegramReply(chatId, '_Analyzing prediction..._')
+
+  try {
+    // Fetch user's active project names for linking
+    const projectsSnap = await adminDb.collection('users').doc(uid).collection('projects')
+      .where('status', '==', 'active').get()
+    const projectNames = projectsSnap.docs.map(d => d.data().name as string).filter(Boolean)
+
+    // Parse with AI
+    const parsed = await parsePrediction(text, projectNames)
+
+    // Compute review date
+    const reviewDate = new Date()
+    reviewDate.setDate(reviewDate.getDate() + parsed.timeHorizonDays)
+    const reviewDateStr = `${reviewDate.getFullYear()}-${String(reviewDate.getMonth() + 1).padStart(2, '0')}-${String(reviewDate.getDate()).padStart(2, '0')}`
+
+    // Save to Firestore
+    const predictionRef = adminDb.collection('users').doc(uid).collection('predictions').doc()
+    await predictionRef.set({
+      prediction: parsed.prediction,
+      reasoning: parsed.reasoning,
+      domain: parsed.domain,
+      confidenceLevel: parsed.confidenceLevel,
+      timeHorizon: parsed.timeHorizonDays,
+      reviewDate: reviewDateStr,
+      linkedProjectNames: parsed.linkedProjectNames,
+      linkedContactNames: parsed.linkedContactNames,
+      antithesis: parsed.antithesis,
+      status: 'active',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    })
+
+    // Format review date for display (e.g. "Mar 7")
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+    const reviewDisplay = `${monthNames[reviewDate.getMonth()]} ${reviewDate.getDate()}`
+
+    // Build reply
+    const lines: string[] = [
+      '*Prediction logged*',
+      '',
+      `_"${parsed.prediction}"_`,
+      `Confidence: ${parsed.confidenceLevel}% | Review: ${reviewDisplay}`,
+      `Domain: ${parsed.domain}`,
+    ]
+
+    if (parsed.antithesis) {
+      lines.push('', '*Antithesis:*', `_${parsed.antithesis}_`)
+    }
+
+    if (parsed.linkedContactNames.length > 0) {
+      lines.push('', `Linked: ${parsed.linkedContactNames.join(', ')}`)
+    }
+
+    if (parsed.linkedProjectNames.length > 0) {
+      lines.push(`Projects: ${parsed.linkedProjectNames.join(', ')}`)
+    }
+
+    await sendTelegramReply(chatId, lines.join('\n'))
+  } catch (error) {
+    console.error('Prediction parsing error:', error)
+    // Still save raw prediction text even if AI parsing fails
+    const reviewDate = new Date()
+    reviewDate.setDate(reviewDate.getDate() + 30)
+    const reviewDateStr = `${reviewDate.getFullYear()}-${String(reviewDate.getMonth() + 1).padStart(2, '0')}-${String(reviewDate.getDate()).padStart(2, '0')}`
+
+    const predictionRef = adminDb.collection('users').doc(uid).collection('predictions').doc()
+    await predictionRef.set({
+      prediction: text,
+      reasoning: '',
+      domain: 'personal',
+      confidenceLevel: 60,
+      timeHorizon: 30,
+      reviewDate: reviewDateStr,
+      linkedProjectNames: [],
+      linkedContactNames: [],
+      antithesis: '',
+      status: 'active',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    })
+
+    await sendTelegramReply(chatId, `Prediction saved, but AI analysis failed.\n\n_${error instanceof Error ? error.message : 'Unknown error'}_`)
+  }
+}
+
 export async function POST(req: NextRequest) {
   if (!BOT_TOKEN) {
     return NextResponse.json({ error: 'Bot not configured' }, { status: 500 })
@@ -534,6 +623,7 @@ export async function POST(req: NextRequest) {
         '`/signal #ai <text>` — Signal with pillar',
         '`/note <text>` — Quick note',
         '`/journal <text>` — Journal entry (AI-parsed)',
+        '`/predict <text>` — Log a prediction (AI-analyzed)',
         '`/rss <url> #pillar` — Subscribe to RSS feed',
         '`/id` — Show your chat ID (for settings)',
         '',
@@ -578,6 +668,16 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ ok: true })
       }
       await handleRss(uid, parsed.text, parsed.pillars, chatId)
+      return NextResponse.json({ ok: true })
+    }
+
+    // Handle predict command
+    if (parsed.command === 'predict') {
+      if (!parsed.text) {
+        await sendTelegramReply(chatId, 'Empty prediction. Usage: `/predict Marcus will close within 2 weeks. 80% confident.`')
+        return NextResponse.json({ ok: true })
+      }
+      await handlePredict(uid, parsed.text, chatId)
       return NextResponse.json({ ok: true })
     }
 

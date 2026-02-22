@@ -11,3 +11,4 @@ out/
 scripts/.env
 scripts/garmin_tokens/
 scripts/firebase-service-account.json
+.vercel

@@ -1,5 +1,6 @@
 import { GoogleGenerativeAI } from '@google/generative-ai'
-import type { InsightType, ThesisPillar, NervousSystemState, BodyFelt, TrainingType, DecisionDomain } from './types'
+import type { InsightType, ThesisPillar, NervousSystemState, BodyFelt, TrainingType, DecisionDomain, PredictionDomain } from './types'
+import { callLLM } from './llm'
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '')
 
@@ -44,8 +45,6 @@ export async function extractInsightsFromTranscript(
   conversationType: string,
   participants: string[]
 ): Promise<ExtractedInsights> {
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' })
-
   const prompt = `You are analyzing a ${conversationType} conversation transcript. Extract structured insights in JSON format.
 
 TRANSCRIPT:
@@ -72,9 +71,7 @@ Return ONLY valid JSON in this exact format (no markdown, no code blocks):
 Keep each item concise (1-2 sentences max). If a category has no relevant content, return an empty array.`
 
   try {
-    const result = await model.generateContent(prompt)
-    const response = await result.response
-    const text = response.text()
+    const text = await callLLM(prompt)
 
     // Remove markdown code blocks if present
     const cleanedText = text
@@ -92,7 +89,7 @@ Keep each item concise (1-2 sentences max). If a category has no relevant conten
       suggestedContacts: parsed.suggestedContacts || [],
     }
   } catch (error) {
-    console.error('Error extracting insights with Gemini:', error)
+    console.error('Error extracting insights:', error)
     // Return empty structure on error
     return {
       processInsights: [],
@@ -111,8 +108,6 @@ export async function extractInsightsV2(
   projectNames: string[],
   existingPatterns?: string[]
 ): Promise<ExtractedInsightsV2> {
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' })
-
   const projectsSection = projectNames.length > 0
     ? `THE USER'S ACTIVE BUSINESSES/PROJECTS:\n${projectNames.map(p => `- ${p}`).join('\n')}`
     : 'The user has not specified any active projects yet.'
@@ -185,9 +180,7 @@ Return ONLY valid JSON (no markdown, no code blocks):
 Keep each item concise (1-2 sentences max). If a category has no relevant content, return an empty array.`
 
   try {
-    const result = await model.generateContent(prompt)
-    const response = await result.response
-    const text = response.text()
+    const text = await callLLM(prompt)
 
     const cleanedText = text
       .replace(/```json\n?/g, '')
@@ -217,7 +210,7 @@ Keep each item concise (1-2 sentences max). If a category has no relevant conten
       })),
     }
   } catch (error) {
-    console.error('Error extracting insights V2 with Gemini:', error)
+    console.error('Error extracting insights V2:', error)
     return {
       processInsights: [],
       featureIdeas: [],
@@ -242,8 +235,6 @@ export async function scoreArticleRelevance(
   keyTakeaway: string
   valueBullets: string[]
 }> {
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' })
-
   const prompt = `You are scoring an article's relevance to a user's thesis and extracting a concise brief.
 
 USER THESIS: ${userThesis}
@@ -275,9 +266,7 @@ Return ONLY valid JSON (no markdown, no code blocks):
 Be strict: only score >70 if highly relevant to thesis. Most articles should score 20-50.`
 
   try {
-    const result = await model.generateContent(prompt)
-    const response = await result.response
-    const text = response.text()
+    const text = await callLLM(prompt)
 
     const cleanedText = text
       .replace(/```json\n?/g, '')
@@ -310,8 +299,6 @@ export async function generateDailyReportSummary(
   conversations: Array<{ title: string; participants: string[] }>,
   reconnectSuggestions: Array<{ name: string; daysSince: number }>
 ): Promise<string> {
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' })
-
   const signalsText =
     topSignals.length > 0
       ? topSignals.map((s, i) => `${i + 1}. ${s.title} (${s.source}) - ${s.summary}`).join('\n')
@@ -346,9 +333,7 @@ Write a 2-3 paragraph summary (max 150 words) that:
 Tone: Direct, action-oriented, like Rick Rubin meeting Pieter Levels.`
 
   try {
-    const result = await model.generateContent(prompt)
-    const response = await result.response
-    return response.text()
+    return await callLLM(prompt, { temperature: 0.7 })
   } catch (error) {
     console.error('Error generating daily report:', error)
     return 'Error generating summary. Please review signals manually.'
@@ -456,8 +441,6 @@ const EMPTY_JOURNAL_RESULT: ParsedJournalEntry = {
 }
 
 export async function parseJournalEntry(journalText: string): Promise<ParsedJournalEntry> {
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' })
-
   const prompt = `You are parsing a free-form daily journal entry from a builder/entrepreneur. Extract structured data where the text clearly states or strongly implies it. Be generous with inference for conversations, relationships, and business interactions — these are the most common journal topics. Use null only when a domain is truly not mentioned at all.
 
 JOURNAL ENTRY:
@@ -529,9 +512,7 @@ Return ONLY valid JSON (no markdown, no code blocks):
 }`
 
   try {
-    const result = await model.generateContent(prompt)
-    const response = await result.response
-    const text = response.text()
+    const text = await callLLM(prompt)
 
     const cleanedText = text
       .replace(/```json\n?/g, '')
@@ -635,7 +616,7 @@ Return ONLY valid JSON (no markdown, no code blocks):
       })),
     }
   } catch (error) {
-    console.error('Error parsing journal entry with Gemini:', error)
+    console.error('Error parsing journal entry:', error)
     return EMPTY_JOURNAL_RESULT
   }
 }
@@ -837,5 +818,122 @@ Return ONLY valid JSON (no markdown, no code blocks):
   } catch (error) {
     console.error('Error transcribing voice note with Gemini:', error)
     throw error
+  }
+}
+
+// --- Prediction Parsing ---
+
+export interface ParsedPrediction {
+  prediction: string
+  reasoning: string
+  domain: PredictionDomain
+  confidenceLevel: number
+  timeHorizonDays: number
+  linkedProjectNames: string[]
+  linkedContactNames: string[]
+  antithesis: string
+}
+
+export async function parsePrediction(text: string, projectNames: string[]): Promise<ParsedPrediction> {
+  const projectsSection = projectNames.length > 0
+    ? `THE USER'S ACTIVE PROJECTS/BUSINESSES:\n${projectNames.map(p => `- ${p}`).join('\n')}`
+    : 'The user has not specified any active projects yet.'
+
+  const prompt = `You are analyzing a prediction made by a builder/entrepreneur. Extract the structured prediction and generate a rigorous counter-argument (antithesis).
+
+${projectsSection}
+
+PREDICTION TEXT:
+${text}
+
+Extract the following:
+
+1. PREDICTION: The core claim — what exactly will happen. State it as a clear, falsifiable prediction. Strip out reasoning and just state the predicted outcome.
+
+2. REASONING: Why they believe this will happen. Extract the supporting evidence and logic from their text.
+
+3. DOMAIN: Classify into exactly one of: "market" (market trends, industry shifts), "relationship" (people, deals, partnerships), "product" (product outcomes, user behavior), "revenue" (sales, revenue, financial outcomes), "personal" (personal goals, habits, health).
+
+4. CONFIDENCE LEVEL: 0-100. If explicitly stated (e.g. "80% confident"), use that number. Otherwise infer from language:
+   - "I'm certain" / "definitely" / "no doubt" = 90-95
+   - "I'm pretty sure" / "very likely" = 75-85
+   - "I think" / "probably" = 55-65
+   - "I bet" / "likely" = 60-70
+   - "Maybe" / "could be" / "might" = 35-50
+   - "Long shot" / "unlikely but" = 15-30
+   Default to 60 if no confidence language is present.
+
+5. TIME HORIZON: Number of days until this prediction should be reviewed. Extract from text if mentioned ("within 2 weeks" = 14, "by end of month" = 30, "next quarter" = 90, "this year" = 365). Default to 30 days if no timeline mentioned.
+
+6. LINKED PROJECT NAMES: Which of the user's projects (from the list above) are relevant to this prediction. Use exact project names. Empty array if none match.
+
+7. LINKED CONTACT NAMES: Extract any person names mentioned in the prediction. These are people involved in or affected by the predicted outcome.
+
+8. ANTITHESIS: Generate the STRONGEST possible counter-argument to this prediction. This is the most important field.
+
+   Rules for the antithesis:
+   - Be genuinely adversarial, not a weak strawman
+   - Attack the weakest assumptions in their reasoning
+   - Cite base rates where relevant ("most enterprise deals take 4-6 weeks, not 2")
+   - Identify what they might be overlooking (selection bias, optimism bias, recency bias)
+   - Consider structural factors that work against the prediction
+   - Keep it to 2-3 sentences, direct and sharp
+   - Write it as if you're a brutally honest advisor who wants them to stress-test their thinking
+
+Return ONLY valid JSON (no markdown, no code blocks):
+{
+  "prediction": "...",
+  "reasoning": "...",
+  "domain": "market",
+  "confidenceLevel": 70,
+  "timeHorizonDays": 30,
+  "linkedProjectNames": [],
+  "linkedContactNames": [],
+  "antithesis": "..."
+}`
+
+  try {
+    const responseText = await callLLM(prompt)
+
+    const cleanedText = responseText
+      .replace(/```json\n?/g, '')
+      .replace(/```\n?/g, '')
+      .trim()
+
+    const parsed = JSON.parse(cleanedText)
+
+    const validDomains: PredictionDomain[] = ['market', 'relationship', 'product', 'revenue', 'personal']
+
+    return {
+      prediction: String(parsed.prediction || text),
+      reasoning: String(parsed.reasoning || ''),
+      domain: validDomains.includes(parsed.domain) ? parsed.domain : 'personal',
+      confidenceLevel: typeof parsed.confidenceLevel === 'number'
+        ? Math.max(0, Math.min(100, Math.round(parsed.confidenceLevel)))
+        : 60,
+      timeHorizonDays: typeof parsed.timeHorizonDays === 'number'
+        ? Math.max(1, Math.round(parsed.timeHorizonDays))
+        : 30,
+      linkedProjectNames: Array.isArray(parsed.linkedProjectNames)
+        ? parsed.linkedProjectNames.map(String)
+        : [],
+      linkedContactNames: Array.isArray(parsed.linkedContactNames)
+        ? parsed.linkedContactNames.map(String)
+        : [],
+      antithesis: String(parsed.antithesis || ''),
+    }
+  } catch (error) {
+    console.error('Error parsing prediction:', error)
+    // Return a minimal parsed result so the prediction still gets saved
+    return {
+      prediction: text,
+      reasoning: '',
+      domain: 'personal',
+      confidenceLevel: 60,
+      timeHorizonDays: 30,
+      linkedProjectNames: [],
+      linkedContactNames: [],
+      antithesis: '',
+    }
   }
 }

@@ -7,6 +7,10 @@ import { useAuth } from './AuthProvider'
 import RewardProofModal from '@/components/thesis/RewardProofModal'
 import ArchitecturePanel from '@/components/thesis/ArchitecturePanel'
 import MasteryTreeModal from '@/components/thesis/MasteryTreeModal'
+import GuidebookModal from '@/components/thesis/guidebooks/GuidebookModal'
+import { DECISION_QUALITY_GUIDE } from '@/lib/guidebooks/decision-quality'
+import { WEEKLY_SYNTHESIS_GUIDE } from '@/lib/guidebooks/weekly-synthesis'
+import { CADENCE_PROTOCOL_GUIDE } from '@/lib/guidebooks/cadence-protocol'
 
 export default function UserMenu() {
   const { user, signOut } = useAuth()
@@ -14,6 +18,7 @@ export default function UserMenu() {
   const [showProof, setShowProof] = useState(false)
   const [showArchitecture, setShowArchitecture] = useState(false)
   const [showMastery, setShowMastery] = useState(false)
+  const [showGuide, setShowGuide] = useState<'decisions' | 'synthesis' | 'cadence' | null>(null)
 
   if (!user) return null
 
@@ -70,6 +75,27 @@ export default function UserMenu() {
               </svg>
               <span>Belt Hierarchy</span>
             </button>
+            <div className="border-b border-rule-light">
+              <span className="block px-4 pt-2 pb-1 font-mono text-[8px] text-ink-faint uppercase tracking-wider">Guidebooks</span>
+              <button
+                onClick={() => { setShowGuide('decisions'); setShowMenu(false) }}
+                className="w-full text-left px-4 py-1.5 font-serif text-[11px] text-ink-muted hover:text-ink hover:bg-cream transition-colors"
+              >
+                Decision Quality
+              </button>
+              <button
+                onClick={() => { setShowGuide('synthesis'); setShowMenu(false) }}
+                className="w-full text-left px-4 py-1.5 font-serif text-[11px] text-ink-muted hover:text-ink hover:bg-cream transition-colors"
+              >
+                Weekly Synthesis
+              </button>
+              <button
+                onClick={() => { setShowGuide('cadence'); setShowMenu(false) }}
+                className="w-full text-left px-4 py-1.5 pb-2 font-serif text-[11px] text-ink-muted hover:text-ink hover:bg-cream transition-colors"
+              >
+                Cadence Protocol
+              </button>
+            </div>
             <Link
               href="/thesis/settings"
               onClick={() => setShowMenu(false)}
@@ -90,6 +116,15 @@ export default function UserMenu() {
       {showProof && <RewardProofModal onClose={() => setShowProof(false)} />}
       {showArchitecture && <ArchitecturePanel onClose={() => setShowArchitecture(false)} />}
       {showMastery && <MasteryTreeModal onClose={() => setShowMastery(false)} />}
+      {showGuide === 'decisions' && (
+        <GuidebookModal title={DECISION_QUALITY_GUIDE.title} sections={DECISION_QUALITY_GUIDE.sections} onClose={() => setShowGuide(null)} />
+      )}
+      {showGuide === 'synthesis' && (
+        <GuidebookModal title={WEEKLY_SYNTHESIS_GUIDE.title} sections={WEEKLY_SYNTHESIS_GUIDE.sections} onClose={() => setShowGuide(null)} />
+      )}
+      {showGuide === 'cadence' && (
+        <GuidebookModal title={CADENCE_PROTOCOL_GUIDE.title} sections={CADENCE_PROTOCOL_GUIDE.sections} onClose={() => setShowGuide(null)} />
+      )}
     </div>
   )
 }

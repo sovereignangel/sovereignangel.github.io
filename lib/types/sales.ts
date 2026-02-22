@@ -25,6 +25,34 @@ export const SYSTEM_STATE_COLORS: Record<SystemState, { text: string; bg: string
   CRITICAL: { text: 'text-red-ink',    bg: 'bg-red-bg',      border: 'border-red-ink/20' },
 }
 
+// ─── PIPELINE STAGE ──────────────────────────────────────────────────
+
+export type PipelineStage =
+  | 'cold'               // No interaction yet
+  | 'signal_detected'    // Identified a problem they have
+  | 'first_conversation' // Had initial discovery call
+  | 'value_delivered'    // Gave them something useful (insight, intro, demo)
+  | 'proposal_sent'      // Formal ask / SOW / quote sent
+  | 'negotiating'        // Back and forth on terms
+  | 'closed'             // Revenue captured
+  | 'churned'            // Relationship went cold or deal lost
+
+export const PIPELINE_STAGE_ORDER: PipelineStage[] = [
+  'cold', 'signal_detected', 'first_conversation', 'value_delivered',
+  'proposal_sent', 'negotiating', 'closed', 'churned',
+]
+
+export const PIPELINE_STAGE_LABELS: Record<PipelineStage, string> = {
+  cold: 'Cold',
+  signal_detected: 'Signal',
+  first_conversation: '1st Call',
+  value_delivered: 'Value Given',
+  proposal_sent: 'Proposed',
+  negotiating: 'Negotiating',
+  closed: 'Closed',
+  churned: 'Churned',
+}
+
 // ─── NETWORK CONTACT ──────────────────────────────────────────────────
 
 export interface NetworkContact {
@@ -41,6 +69,16 @@ export interface NetworkContact {
   isTop30: boolean
   notes?: string
   email?: string
+  // Pipeline & Revenue
+  pipelineStage?: PipelineStage       // Where they are in the sales pipeline
+  dealValue?: number                  // Estimated revenue (monthly or one-time)
+  dealCurrency?: 'monthly' | 'one_time'
+  expectedCloseDate?: string          // YYYY-MM-DD
+  linkedProjectName?: string          // Which project this deal is for
+  problemIdentified?: string          // Their pain point you've identified
+  connectedTo?: string[]              // Names of other contacts they can intro
+  touchCount?: number                 // Total interactions logged
+  lastAskDate?: string                // Last time you made a revenue ask
   createdAt: Timestamp
   updatedAt: Timestamp
 }

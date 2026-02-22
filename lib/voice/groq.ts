@@ -1,17 +1,21 @@
-// @ts-nocheck
 /**
  * Groq LLM Client
- * Uses Llama 3.1 70B for all intelligence processing
+ * Uses Llama 3.3 70B for intelligence processing
  * Zero-cost implementation for bootstrapping
+ *
+ * NOTE: High-frequency calls (journal parsing, RSS scoring) now go through
+ * lib/llm.ts which handles Groq→Gemini fallback automatically. This file
+ * is kept for direct Groq usage (streaming, custom calls).
  */
 
 import Groq from 'groq-sdk'
+import type { ChatCompletionMessageParam } from 'groq-sdk/resources/chat/completions'
 
 const groq = new Groq({
   apiKey: process.env.GROQ_API_KEY!
 })
 
-const DEFAULT_MODEL = 'llama-3.1-70b-versatile'
+const DEFAULT_MODEL = 'llama-3.3-70b-versatile'
 
 export interface LLMResponse {
   content: string
@@ -34,7 +38,7 @@ export async function callGroq(
 ): Promise<LLMResponse> {
   const startTime = Date.now()
 
-  const messages: any[] = []
+  const messages: ChatCompletionMessageParam[] = []
 
   if (systemPrompt) {
     messages.push({ role: 'system', content: systemPrompt })
@@ -71,7 +75,7 @@ export async function* streamGroq(
   systemPrompt?: string,
   model: string = DEFAULT_MODEL
 ): AsyncGenerator<string> {
-  const messages: any[] = []
+  const messages: ChatCompletionMessageParam[] = []
 
   if (systemPrompt) {
     messages.push({ role: 'system', content: systemPrompt })

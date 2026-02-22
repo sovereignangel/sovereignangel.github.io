@@ -11,6 +11,10 @@
     {
       "path": "/api/cron/sync-daily",
       "schedule": "0 12 * * *"
+    },
+    {
+      "path": "/api/weekly-calibration/generate",
+      "schedule": "0 22 * * 0"
     }
   ]
 }

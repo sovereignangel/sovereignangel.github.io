@@ -55,6 +55,10 @@ export interface DailyLog {
   warmIntrosMade: number
   meetingsBooked: number
   inboundInquiries: number
+  // Skill Building (Sigma)
+  deliberatePracticeMinutes: number
+  newTechniqueApplied: boolean
+  automationCreated: boolean
   // PsyCap HERO model (1-5 scale)
   psyCapHope?: number
   psyCapEfficacy?: number
