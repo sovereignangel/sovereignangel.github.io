@@ -5,6 +5,10 @@
       "schedule": "0 5 * * *"
     },
     {
+      "path": "/api/morning-brief/generate",
+      "schedule": "0 11 * * *"
+    },
+    {
       "path": "/api/cron/sync-daily",
       "schedule": "0 12 * * *"
     }

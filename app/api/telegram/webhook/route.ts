@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { parseTelegramMessage, type TelegramUpdate } from '@/lib/telegram-parser'
-import { parseJournalEntry, type ParsedJournalEntry } from '@/lib/ai-extraction'
+import { parseJournalEntry, transcribeAndParseVoiceNote, type ParsedJournalEntry } from '@/lib/ai-extraction'
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN
 
@@ -283,6 +283,119 @@ async function handleJournal(uid: string, text: string, chatId: number) {
   }
 }
 
+async function handleJournalFromVoice(uid: string, transcript: string, parsed: ParsedJournalEntry, chatId: number) {
+  const adminDb = await getAdminDb()
+  const today = getTodayKey()
+
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const logUpdate: Record<string, any> = {
+      journalEntry: transcript,
+      updatedAt: new Date(),
+    }
+
+    // Energy
+    if (parsed.energy.nervousSystemState) logUpdate.nervousSystemState = parsed.energy.nervousSystemState
+    if (parsed.energy.bodyFelt) logUpdate.bodyFelt = parsed.energy.bodyFelt
+    if (parsed.energy.trainingTypes.length > 0) logUpdate.trainingTypes = parsed.energy.trainingTypes
+    if (parsed.energy.sleepHours != null) logUpdate.sleepHours = parsed.energy.sleepHours
+    // Output
+    if (parsed.output.focusHoursActual != null) logUpdate.focusHoursActual = parsed.output.focusHoursActual
+    if (parsed.output.whatShipped) logUpdate.whatShipped = parsed.output.whatShipped
+    // Intelligence
+    if (parsed.intelligence.discoveryConversationsCount != null) logUpdate.discoveryConversationsCount = parsed.intelligence.discoveryConversationsCount
+    if (parsed.intelligence.insightsExtracted != null) logUpdate.insightsExtracted = parsed.intelligence.insightsExtracted
+    if (parsed.intelligence.problemSelected) logUpdate.problemSelected = parsed.intelligence.problemSelected
+    // Network
+    if (parsed.network.warmIntrosMade != null) logUpdate.warmIntrosMade = parsed.network.warmIntrosMade
+    if (parsed.network.warmIntrosReceived != null) logUpdate.warmIntrosReceived = parsed.network.warmIntrosReceived
+    if (parsed.network.meetingsBooked != null) logUpdate.meetingsBooked = parsed.network.meetingsBooked
+    // Revenue
+    if (parsed.revenue.revenueAsksCount != null) logUpdate.revenueAsksCount = parsed.revenue.revenueAsksCount
+    if (parsed.revenue.revenueThisSession != null) logUpdate.revenueThisSession = parsed.revenue.revenueThisSession
+    if (parsed.revenue.revenueStreamType) logUpdate.revenueStreamType = parsed.revenue.revenueStreamType
+    if (parsed.revenue.feedbackLoopClosed != null) logUpdate.feedbackLoopClosed = parsed.revenue.feedbackLoopClosed
+    // PsyCap
+    if (parsed.psyCap.hope != null) logUpdate.psyCapHope = parsed.psyCap.hope
+    if (parsed.psyCap.efficacy != null) logUpdate.psyCapEfficacy = parsed.psyCap.efficacy
+    if (parsed.psyCap.resilience != null) logUpdate.psyCapResilience = parsed.psyCap.resilience
+    if (parsed.psyCap.optimism != null) logUpdate.psyCapOptimism = parsed.psyCap.optimism
+    // Cadence
+    if (parsed.cadenceCompleted.length > 0) logUpdate.cadenceCompleted = parsed.cadenceCompleted
+
+    const logRef = adminDb.collection('users').doc(uid).collection('daily_logs').doc(today)
+    await logRef.set(logUpdate, { merge: true })
+
+    // Create decisions
+    for (const d of parsed.decisions) {
+      const reviewDate = new Date()
+      reviewDate.setDate(reviewDate.getDate() + 90)
+      const decisionRef = adminDb.collection('users').doc(uid).collection('decisions').doc()
+      await decisionRef.set({
+        title: d.title, hypothesis: d.hypothesis, options: [d.chosenOption],
+        chosenOption: d.chosenOption, reasoning: d.reasoning, confidenceLevel: d.confidenceLevel,
+        killCriteria: [], premortem: '', domain: d.domain,
+        linkedProjectIds: [], linkedSignalIds: [], status: 'active',
+        reviewDate: reviewDate.toISOString().split('T')[0], decidedAt: today,
+        createdAt: new Date(), updatedAt: new Date(),
+      })
+    }
+
+    // Create principles
+    for (const p of parsed.principles) {
+      const principleRef = adminDb.collection('users').doc(uid).collection('principles').doc()
+      await principleRef.set({
+        text: p.text, shortForm: p.shortForm, source: 'manual',
+        sourceDescription: 'Extracted from Telegram voice journal', domain: p.domain,
+        dateFirstApplied: today, linkedDecisionIds: [], lastReinforcedAt: today,
+        reinforcementCount: 0, createdAt: new Date(), updatedAt: new Date(),
+      })
+    }
+
+    // Upsert contacts
+    for (const c of parsed.contacts) {
+      const contactsRef = adminDb.collection('users').doc(uid).collection('contacts')
+      const existing = await contactsRef.where('name', '==', c.name).limit(1).get()
+      if (existing.empty) {
+        await contactsRef.doc().set({
+          name: c.name, lastConversationDate: today, notes: c.context,
+          createdAt: new Date(), updatedAt: new Date(),
+        })
+      } else {
+        const doc = existing.docs[0]
+        const prevNotes = doc.data().notes || ''
+        await doc.ref.update({
+          lastConversationDate: today,
+          notes: prevNotes ? `${prevNotes}\n${today}: ${c.context}` : `${today}: ${c.context}`,
+          updatedAt: new Date(),
+        })
+      }
+    }
+
+    // Save notes as external signals
+    for (const n of parsed.notes) {
+      const signalRef = adminDb.collection('users').doc(uid).collection('external_signals').doc()
+      await signalRef.set({
+        title: n.text.slice(0, 120), aiSummary: n.text, keyTakeaway: n.text,
+        valueBullets: [], sourceUrl: '', sourceName: 'Voice journal note',
+        source: 'telegram', relevanceScore: n.actionRequired ? 0.8 : 0.4,
+        thesisPillars: [], status: 'inbox', readStatus: 'unread',
+        publishedAt: new Date().toISOString(), createdAt: new Date(), updatedAt: new Date(),
+      })
+    }
+
+    // Reply with transcript + structured summary
+    const journalReply = buildJournalReply(parsed)
+    const fullReply = `*Transcript:*\n_"${transcript}"_\n\n${journalReply}`
+    await sendTelegramReply(chatId, fullReply)
+  } catch (error) {
+    console.error('Voice journal save error:', error)
+    const logRef = adminDb.collection('users').doc(uid).collection('daily_logs').doc(today)
+    await logRef.set({ journalEntry: transcript, updatedAt: new Date() }, { merge: true })
+    await sendTelegramReply(chatId, `*Transcript:*\n_"${transcript}"_\n\nJournal text saved, but structured parsing failed.\n\n_${error instanceof Error ? error.message : 'Unknown error'}_`)
+  }
+}
+
 async function handleRss(uid: string, url: string, pillars: string[], chatId: number) {
   const adminDb = await getAdminDb()
 
@@ -333,11 +446,83 @@ export async function POST(req: NextRequest) {
     const update: TelegramUpdate = await req.json()
     const message = update.message
 
-    if (!message?.text) {
+    if (!message?.text && !message?.voice) {
       return NextResponse.json({ ok: true })
     }
 
-    const chatId = message.chat.id
+    const chatId = message!.chat.id
+
+    // --- Voice message handling ---
+    if (message!.voice) {
+      const uid = await findUserByChatId(chatId)
+      if (!uid) {
+        await sendTelegramReply(chatId, 'Not linked. Add your chat ID in Thesis Engine > Settings > Telegram.\n\nUse `/id` to get your chat ID.')
+        return NextResponse.json({ ok: true })
+      }
+
+      await sendTelegramReply(chatId, '_Transcribing voice note..._')
+
+      try {
+        // Download voice file from Telegram
+        const fileInfoRes = await fetch(
+          `https://api.telegram.org/bot${BOT_TOKEN}/getFile`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ file_id: message!.voice.file_id }),
+          }
+        )
+        const fileInfo = await fileInfoRes.json()
+
+        if (!fileInfo.ok || !fileInfo.result?.file_path) {
+          await sendTelegramReply(chatId, 'Could not retrieve voice file from Telegram.')
+          return NextResponse.json({ ok: true })
+        }
+
+        const fileUrl = `https://api.telegram.org/file/bot${BOT_TOKEN}/${fileInfo.result.file_path}`
+        const fileRes = await fetch(fileUrl)
+        const arrayBuffer = await fileRes.arrayBuffer()
+        const base64Audio = Buffer.from(arrayBuffer).toString('base64')
+        const mimeType = message!.voice.mime_type || 'audio/ogg'
+
+        // Transcribe + parse with Gemini (one API call)
+        const { transcript, parsed } = await transcribeAndParseVoiceNote(base64Audio, mimeType)
+
+        // Detect if user said "signal" at the start — route as signal
+        const trimmedTranscript = transcript.trim().toLowerCase()
+        if (trimmedTranscript.startsWith('signal')) {
+          const signalText = transcript.trim().slice('signal'.length).trim()
+          if (signalText) {
+            const adminDb = await getAdminDb()
+            const signalRef = adminDb.collection('users').doc(uid).collection('external_signals').doc()
+            await signalRef.set({
+              title: signalText.slice(0, 120), aiSummary: signalText, keyTakeaway: signalText,
+              valueBullets: [], sourceUrl: '',
+              sourceName: `Telegram voice @${message!.from.username || message!.from.first_name}`,
+              source: 'telegram', relevanceScore: 0.7, thesisPillars: [],
+              status: 'inbox', readStatus: 'unread',
+              publishedAt: new Date(message!.date * 1000).toISOString(),
+              createdAt: new Date(), updatedAt: new Date(),
+            })
+            await sendTelegramReply(chatId, `*Transcribed:*\n_"${transcript.trim()}"_\n\nSignal saved.`)
+            return NextResponse.json({ ok: true })
+          }
+        }
+
+        // Default: treat voice note as journal entry
+        await handleJournalFromVoice(uid, transcript.trim(), parsed, chatId)
+        return NextResponse.json({ ok: true })
+      } catch (error) {
+        console.error('Voice transcription error:', error)
+        await sendTelegramReply(chatId, `Voice transcription failed.\n\n_${error instanceof Error ? error.message : 'Unknown error'}_`)
+        return NextResponse.json({ ok: true })
+      }
+    }
+
+    // --- Text message handling (unchanged) ---
+    if (!message!.text) {
+      return NextResponse.json({ ok: true })
+    }
 
     // /start command — show help
     if (message.text.startsWith('/start')) {
@@ -351,6 +536,9 @@ export async function POST(req: NextRequest) {
         '`/journal <text>` — Journal entry (AI-parsed)',
         '`/rss <url> #pillar` — Subscribe to RSS feed',
         '`/id` — Show your chat ID (for settings)',
+        '',
+        'Voice notes → auto-transcribed as journal',
+        'Say "signal" first to save as signal instead',
         '',
         'Pillar tags: `#ai` `#markets` `#mind`',
       ].join('\n'))

@@ -639,3 +639,203 @@ Return ONLY valid JSON (no markdown, no code blocks):
     return EMPTY_JOURNAL_RESULT
   }
 }
+
+// --- Voice Note Transcription + Journal Parsing ---
+
+export interface TranscribedJournalResult {
+  transcript: string
+  parsed: ParsedJournalEntry
+}
+
+export async function transcribeAndParseVoiceNote(
+  base64Audio: string,
+  mimeType: string
+): Promise<TranscribedJournalResult> {
+  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' })
+
+  const prompt = `You are processing an audio voice note from a builder/entrepreneur. First, transcribe the audio exactly as spoken. Then parse the transcript as a daily journal entry and extract structured data.
+
+INSTRUCTIONS:
+1. Transcribe the audio word-for-word into text.
+2. Parse the transcribed text as a journal entry following the extraction rules below.
+3. Be generous with inference for conversations, relationships, and business interactions.
+4. Use null only when a domain is truly not mentioned at all.
+
+EXTRACTION RULES:
+
+1. ENERGY:
+   - nervousSystemState: One of "regulated", "slightly_spiked", "spiked". Infer from emotional tone (calm/grounded = regulated, anxious/restless = slightly_spiked, overwhelmed/reactive = spiked). null if unclear.
+   - bodyFelt: One of "open", "neutral", "tense". null if not mentioned.
+   - trainingTypes: Array from ["strength", "yoga", "vo2", "zone2", "rest", "none"]. Empty array if not mentioned.
+   - sleepHours: Number of hours slept. null if not mentioned.
+
+2. OUTPUT:
+   - focusHoursActual: Number of focused work hours. null if not mentioned.
+   - whatShipped: What was built, published, or delivered. null if not mentioned.
+
+3. INTELLIGENCE:
+   - discoveryConversationsCount: Count of distinct conversations, calls, meetings described. MOST IMPORTANT field.
+   - problems: Array of { problem, painPoint, solution }.
+   - problemSelected: Which problem the writer will act on first.
+   - insightsExtracted: Count of distinct insights or takeaways.
+
+4. NETWORK:
+   - warmIntrosMade, warmIntrosReceived, meetingsBooked: counts or null.
+
+5. REVENUE:
+   - revenueAsksCount: Count of revenue conversations. null if none.
+   - revenueThisSession: Dollar amount closed. null if none.
+   - revenueStreamType: "recurring", "one_time", or "organic". null if none.
+   - feedbackLoopClosed: true if a loop was resolved. null if not evident.
+
+6. PSYCAP (1-5 scale): hope, efficacy, resilience, optimism. null if not evident.
+
+7. CADENCE COMPLETED: Array of keys done today from ["energy", "problems", "focus", "ship", "signal", "revenue_ask", "psycap"]
+
+8. CONTACTS: Array of { name, context (max 20 words) }
+
+9. NOTES: Array of { text, actionRequired (boolean) }
+
+10. DECISIONS: Array of { title, hypothesis, chosenOption, reasoning, domain, confidenceLevel (0-100) }
+
+11. PRINCIPLES: Array of { text, shortForm (max 40 chars), domain }
+
+Return ONLY valid JSON (no markdown, no code blocks):
+{
+  "transcript": "The exact transcribed text from the audio...",
+  "energy": { "nervousSystemState": null, "bodyFelt": null, "trainingTypes": [], "sleepHours": null },
+  "output": { "focusHoursActual": null, "whatShipped": null },
+  "intelligence": { "discoveryConversationsCount": null, "problems": [], "problemSelected": null, "insightsExtracted": null },
+  "network": { "warmIntrosMade": null, "warmIntrosReceived": null, "meetingsBooked": null },
+  "revenue": { "revenueAsksCount": null, "revenueThisSession": null, "revenueStreamType": null, "feedbackLoopClosed": null },
+  "psyCap": { "hope": null, "efficacy": null, "resilience": null, "optimism": null },
+  "contacts": [],
+  "notes": [],
+  "cadenceCompleted": [],
+  "decisions": [],
+  "principles": []
+}`
+
+  try {
+    const result = await model.generateContent([
+      {
+        inlineData: {
+          mimeType,
+          data: base64Audio,
+        },
+      },
+      { text: prompt },
+    ])
+    const response = await result.response
+    const text = response.text()
+
+    const cleanedText = text
+      .replace(/```json\n?/g, '')
+      .replace(/```\n?/g, '')
+      .trim()
+
+    const raw = JSON.parse(cleanedText)
+
+    const transcript = typeof raw.transcript === 'string' ? raw.transcript : ''
+
+    const validNS = ['regulated', 'slightly_spiked', 'spiked']
+    const validBody = ['open', 'neutral', 'tense']
+    const validTraining = ['strength', 'yoga', 'vo2', 'zone2', 'rest', 'none']
+    const validCadence = ['energy', 'problems', 'focus', 'ship', 'signal', 'revenue_ask', 'psycap']
+    const validDomains = ['portfolio', 'product', 'revenue', 'personal', 'thesis']
+    const validStreamTypes = ['recurring', 'one_time', 'organic']
+
+    const clampPsyCap = (v: unknown): number | null => {
+      if (v == null) return null
+      const n = Number(v)
+      if (isNaN(n)) return null
+      return Math.max(1, Math.min(5, Math.round(n)))
+    }
+
+    const safeInt = (v: unknown): number | null => {
+      if (v == null) return null
+      const n = Number(v)
+      return isNaN(n) ? null : Math.max(0, Math.round(n))
+    }
+
+    const safeFloat = (v: unknown): number | null => {
+      if (v == null) return null
+      const n = Number(v)
+      return isNaN(n) ? null : Math.max(0, n)
+    }
+
+    const energy = raw.energy || {}
+    const output = raw.output || {}
+    const psyCap = raw.psyCap || {}
+    const intelligence = raw.intelligence || {}
+    const network = raw.network || {}
+    const revenue = raw.revenue || {}
+
+    const parsed: ParsedJournalEntry = {
+      energy: {
+        nervousSystemState: validNS.includes(energy.nervousSystemState) ? energy.nervousSystemState : null,
+        bodyFelt: validBody.includes(energy.bodyFelt) ? energy.bodyFelt : null,
+        trainingTypes: (energy.trainingTypes || []).filter((t: string) => validTraining.includes(t)),
+        sleepHours: typeof energy.sleepHours === 'number' ? energy.sleepHours : null,
+      },
+      output: {
+        focusHoursActual: typeof output.focusHoursActual === 'number' ? output.focusHoursActual : null,
+        whatShipped: typeof output.whatShipped === 'string' ? output.whatShipped : null,
+      },
+      intelligence: {
+        discoveryConversationsCount: safeInt(intelligence.discoveryConversationsCount),
+        problems: (intelligence.problems || []).map((p: Record<string, unknown>) => ({
+          problem: String(p.problem || ''),
+          painPoint: String(p.painPoint || ''),
+          solution: String(p.solution || ''),
+        })),
+        problemSelected: typeof intelligence.problemSelected === 'string' ? intelligence.problemSelected : null,
+        insightsExtracted: safeInt(intelligence.insightsExtracted),
+      },
+      network: {
+        warmIntrosMade: safeInt(network.warmIntrosMade),
+        warmIntrosReceived: safeInt(network.warmIntrosReceived),
+        meetingsBooked: safeInt(network.meetingsBooked),
+      },
+      revenue: {
+        revenueAsksCount: safeInt(revenue.revenueAsksCount),
+        revenueThisSession: safeFloat(revenue.revenueThisSession),
+        revenueStreamType: validStreamTypes.includes(revenue.revenueStreamType) ? revenue.revenueStreamType : null,
+        feedbackLoopClosed: typeof revenue.feedbackLoopClosed === 'boolean' ? revenue.feedbackLoopClosed : null,
+      },
+      psyCap: {
+        hope: clampPsyCap(psyCap.hope),
+        efficacy: clampPsyCap(psyCap.efficacy),
+        resilience: clampPsyCap(psyCap.resilience),
+        optimism: clampPsyCap(psyCap.optimism),
+      },
+      contacts: (raw.contacts || []).map((c: Record<string, unknown>) => ({
+        name: String(c.name || '').trim(),
+        context: String(c.context || '').trim(),
+      })).filter((c: { name: string }) => c.name.length > 0),
+      notes: (raw.notes || []).map((n: Record<string, unknown>) => ({
+        text: String(n.text || '').trim(),
+        actionRequired: typeof n.actionRequired === 'boolean' ? n.actionRequired : true,
+      })).filter((n: { text: string }) => n.text.length > 0),
+      cadenceCompleted: (raw.cadenceCompleted || []).filter((k: string) => validCadence.includes(k)),
+      decisions: (raw.decisions || []).map((d: Record<string, unknown>) => ({
+        title: String(d.title || ''),
+        hypothesis: String(d.hypothesis || ''),
+        chosenOption: String(d.chosenOption || ''),
+        reasoning: String(d.reasoning || ''),
+        domain: validDomains.includes(d.domain as string) ? d.domain as DecisionDomain : 'personal',
+        confidenceLevel: typeof d.confidenceLevel === 'number' ? Math.max(0, Math.min(100, d.confidenceLevel)) : 70,
+      })),
+      principles: (raw.principles || []).map((p: Record<string, unknown>) => ({
+        text: String(p.text || ''),
+        shortForm: String(p.shortForm || '').slice(0, 40),
+        domain: validDomains.includes(p.domain as string) ? p.domain as DecisionDomain : 'personal',
+      })),
+    }
+
+    return { transcript, parsed }
+  } catch (error) {
+    console.error('Error transcribing voice note with Gemini:', error)
+    throw error
+  }
+}
