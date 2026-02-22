@@ -24,7 +24,7 @@ const COMPONENT_BARS = [
   { key: 'GN', field: 'gn' as const, label: 'Network Capital' },
   { key: 'J', field: 'j' as const, label: 'Judgment' },
   { key: 'O', field: 'optionality' as const, label: 'Optionality' },
-  { key: '\u0398', field: 'theta' as const, label: 'Thesis Coherence' },
+  { key: '\u03A3', field: 'sigma' as const, label: 'Skill Building' },
   { key: 'F', field: 'fragmentation' as const, label: 'Fragmentation' },
 ]
 
@@ -154,7 +154,7 @@ export default function SynthesisView() {
             {components && (
               <div className="space-y-1.5">
                 {COMPONENT_BARS.map(bar => {
-                  const rawVal = components[bar.field]
+                  const rawVal = components[bar.field] ?? 0
                   const isFragmentation = bar.field === 'fragmentation'
                   const displayVal = isFragmentation ? 1 - rawVal : rawVal
                   const state = getSystemState(displayVal)
