@@ -10,7 +10,7 @@ import { TREND_ARROWS, TREND_COLORS } from '@/lib/alpha-engine'
 import { format } from 'date-fns'
 
 const navItems = [
-  { href: '/thesis', label: 'Command', symbol: 'g*', exact: true },
+  { href: '/thesis', label: 'Plan', symbol: 'W', exact: true },
   { href: '/thesis/execution', label: 'Execution', symbol: 'GVC+κ' },
   { href: '/thesis/intelligence', label: 'Intelligence', symbol: 'GI' },
   { href: '/thesis/ventures', label: 'Ventures', symbol: 'V' },
