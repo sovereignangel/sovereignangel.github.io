@@ -1,6 +1,6 @@
 import { callLLM } from './llm'
 import type { DailyLog, WeeklyPlan, WeeklyGoal, DailyAllocation, WeeklyScorecardMetric } from './types'
-import { computeWeeklyActuals, defaultScorecard, formatWeekLabel, getWeekDates } from './weekly-plan-utils'
+import { computeWeeklyActuals, defaultScorecard, ensureTrainingBlocks, formatWeekLabel, getWeekDates } from './weekly-plan-utils'
 
 // ─── Saturday Retro ─────────────────────────────────────────────────
 
@@ -132,6 +132,14 @@ Generate a JSON weekly plan with:
    - "theme": day theme
    - "morningPrime": morning directive
    - "blocks": Array of time blocks with "time", "task", "category", "color"
+     FIXED TRAINING SCHEDULE (always include as the FIRST time block for each day):
+     Mon 7–8a: Push training (category "GE", color "#6b5b4f")
+     Tue 7–8a: Glutes training (category "GE", color "#6b5b4f")
+     Wed 7–8a: VO2 Max intervals (category "GE", color "#6b5b4f")
+     Thu 7–8a: Pull training (category "GE", color "#6b5b4f")
+     Fri 7–8a: Glutes training (category "GE", color "#6b5b4f")
+     Sat 9–10a: Zone 2 run (60min) (category "GE", color "#6b5b4f")
+     Sun 7–8a: VO2 Max intervals (category "GE", color "#6b5b4f")
    - "plannedAsks": number
    - "plannedShips": number
    - "plannedPosts": number
@@ -161,7 +169,7 @@ Respond ONLY with valid JSON, no markdown wrapping.`
         ...g,
         items: (g.items || []).map(item => ({ ...item, completed: false })),
       })),
-      dailyAllocations: parsed.dailyAllocations || [],
+      dailyAllocations: ensureTrainingBlocks(parsed.dailyAllocations || []),
       scorecard: parsed.scorecard || defaultScorecard(),
       projects: parsed.projects || [],
       aiGenerated: true,

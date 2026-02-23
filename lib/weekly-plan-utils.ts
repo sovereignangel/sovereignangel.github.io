@@ -1,5 +1,6 @@
-import type { DailyLog, GarminMetrics, WeeklyScorecardMetric, WeeklyPlan } from './types'
+import type { DailyLog, DailyAllocation, GarminMetrics, WeeklyScorecardMetric, WeeklyPlan } from './types'
 import { localDateString, weekStartDate } from './date-utils'
+import { TRAINING_SCHEDULE } from './constants'
 
 // ─── Week Date Helpers ──────────────────────────────────────────────
 
@@ -125,8 +126,31 @@ export function defaultScorecard(): WeeklyScorecardMetric[] {
 
 // ─── Empty Plan Factory ─────────────────────────────────────────────
 
+const DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+
 export function createEmptyWeeklyPlan(date: Date = new Date()): Omit<WeeklyPlan, 'createdAt' | 'updatedAt'> {
-  const { start, end } = getWeekDates(date)
+  const { start, end, dates } = getWeekDates(date)
+
+  const dailyAllocations: DailyAllocation[] = dates.map((d, i) => {
+    const dayName = DAY_NAMES[i]
+    const training = TRAINING_SCHEDULE[dayName]
+    return {
+      day: dayName,
+      date: d,
+      theme: '',
+      morningPrime: '',
+      blocks: training ? [{
+        time: training.time,
+        task: training.label,
+        category: 'GE',
+        color: '#6b5b4f',
+      }] : [],
+      plannedAsks: 0,
+      plannedShips: 0,
+      plannedPosts: 0,
+    }
+  })
+
   return {
     weekStartDate: start,
     weekEndDate: end,
@@ -136,9 +160,26 @@ export function createEmptyWeeklyPlan(date: Date = new Date()): Omit<WeeklyPlan,
     spineResolutionDetail: '',
     revenueTarget: '',
     goals: [],
-    dailyAllocations: [],
+    dailyAllocations,
     scorecard: defaultScorecard(),
     projects: [],
     aiGenerated: false,
   }
+}
+
+/** Ensure every day in allocations has a training block from TRAINING_SCHEDULE */
+export function ensureTrainingBlocks(allocations: DailyAllocation[]): DailyAllocation[] {
+  return allocations.map(day => {
+    const training = TRAINING_SCHEDULE[day.day]
+    if (!training) return day
+    const hasTraining = day.blocks.some(b => b.category === 'GE')
+    if (hasTraining) return day
+    return {
+      ...day,
+      blocks: [
+        { time: training.time, task: training.label, category: 'GE', color: '#6b5b4f' },
+        ...day.blocks,
+      ],
+    }
+  })
 }

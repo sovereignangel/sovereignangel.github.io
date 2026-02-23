@@ -86,8 +86,11 @@ const goals: WeeklyGoal[] = [
     pillar: 'Mind',
     items: [
       { task: '7+ hours sleep every night', day: 'Daily', outcome: 'Garmin verified', completed: false },
-      { task: '2× VO2 interval sessions (4×4min @ 90% HR)', day: 'Tue + Thu', outcome: 'Completed', completed: false },
-      { task: '1× strength session', day: 'Sat', outcome: 'Completed', completed: false },
+      { task: 'Push training', day: 'Mon', outcome: 'Completed', completed: false },
+      { task: 'Glutes training', day: 'Tue + Fri', outcome: 'Completed', completed: false },
+      { task: 'VO2 Max intervals (4×4min @ 90% HR)', day: 'Wed + Sun', outcome: 'Completed', completed: false },
+      { task: 'Pull training', day: 'Thu', outcome: 'Completed', completed: false },
+      { task: 'Zone 2 run (60min)', day: 'Sat', outcome: 'Completed', completed: false },
       { task: '24-hour rule if spiked', day: 'As needed', outcome: 'Rule honored', completed: false },
     ],
     ruin: 'GE → 0. Multiplicative ruin. Everything collapses.',
@@ -99,6 +102,7 @@ const dailyAllocations: DailyAllocation[] = [
     day: 'Monday', date: '2026-02-23', theme: 'Launch — Revenue + Narrative',
     morningPrime: 'Agent Factory = engine. Products = revenue. Send the asks first.',
     blocks: [
+      { time: '7–8a', task: 'Push training', category: 'GE', color: '#6b5b4f' },
       { time: '8–9a', task: 'Pitch Uzo (with pricing)', category: 'κ', color: '#2d5f3f' },
       { time: '9–9:30a', task: 'Pitch Gillian', category: 'κ', color: '#2d5f3f' },
       { time: '9:30–10a', task: 'Document Sean offer', category: 'Strategy', color: '#8a6d2f' },
@@ -113,7 +117,7 @@ const dailyAllocations: DailyAllocation[] = [
     day: 'Tuesday', date: '2026-02-24', theme: 'Build + Sell — AF v0 + Sean Proposal',
     morningPrime: 'Did Uzo/Gillian respond? Follow up if not.',
     blocks: [
-      { time: '7–8a', task: 'VO2 intervals #1', category: 'GE', color: '#6b5b4f' },
+      { time: '7–8a', task: 'Glutes training', category: 'GE', color: '#6b5b4f' },
       { time: '9a–12p', task: 'Ship Agent Factory v0 → live URL', category: 'Ship', color: '#7c2d2d' },
       { time: '12–1p', task: 'Build Sean proposal (deliverables + price)', category: 'κ', color: '#2d5f3f' },
       { time: '1–2p', task: '2× engagement replies', category: 'Narrative', color: '#2d4a6f' },
@@ -126,6 +130,7 @@ const dailyAllocations: DailyAllocation[] = [
     day: 'Wednesday', date: '2026-02-25', theme: 'Ship Marketing Bot + Generalize Offer',
     morningPrime: 'Pipeline check: who responded? Who needs 2nd touch?',
     blocks: [
+      { time: '7–8a', task: 'VO2 Max intervals', category: 'GE', color: '#6b5b4f' },
       { time: '9a–12p', task: 'Ship Marketing Bot — demo + video', category: 'Ship', color: '#7c2d2d' },
       { time: '12–1p', task: 'Post build-in-public: Bot demo', category: 'Narrative', color: '#2d4a6f' },
       { time: '1–2p', task: 'Generalize Sean → repeatable template', category: 'Strategy', color: '#8a6d2f' },
@@ -139,7 +144,7 @@ const dailyAllocations: DailyAllocation[] = [
     day: 'Thursday', date: '2026-02-26', theme: 'Geneticist Use Case + ICP Research',
     morningPrime: 'NS check. If spiked: skip strategy, just ship.',
     blocks: [
-      { time: '7–8a', task: 'VO2 intervals #2', category: 'GE', color: '#6b5b4f' },
+      { time: '7–8a', task: 'Pull training', category: 'GE', color: '#6b5b4f' },
       { time: '9a–12p', task: 'Build Geneticist-in-Pocket on AF', category: 'Ship', color: '#7c2d2d' },
       { time: '12–1p', task: 'Thread: Geneticist + AF vision', category: 'Narrative', color: '#2d4a6f' },
       { time: '1–2p', task: 'ICP: Who buys AI tech stacks?', category: 'Strategy', color: '#8a6d2f' },
@@ -152,6 +157,7 @@ const dailyAllocations: DailyAllocation[] = [
     day: 'Friday', date: '2026-02-27', theme: 'Close Week — Revenue Push',
     morningPrime: 'Revenue audit: Where are you vs. $2k?',
     blocks: [
+      { time: '7–8a', task: 'Glutes training', category: 'GE', color: '#6b5b4f' },
       { time: '9–11a', task: "Ship Sean's clickable demo", category: 'Ship', color: '#7c2d2d' },
       { time: '11a–12p', task: 'Price research: 3 consultant comps', category: 'Strategy', color: '#8a6d2f' },
       { time: '12–1p', task: 'Post revenue/progress update', category: 'Narrative', color: '#2d4a6f' },
@@ -165,7 +171,7 @@ const dailyAllocations: DailyAllocation[] = [
     day: 'Saturday', date: '2026-02-28', theme: 'Compound — Thesis + Strength',
     morningPrime: 'No asks. Create long-form content that compounds.',
     blocks: [
-      { time: '9–10a', task: 'Strength training', category: 'GE', color: '#6b5b4f' },
+      { time: '9–10a', task: 'Zone 2 run (60min)', category: 'GE', color: '#6b5b4f' },
       { time: '10a–12p', task: 'Write AI + Markets thesis essay', category: 'Narrative', color: '#2d4a6f' },
       { time: '12–1p', task: 'Week review: shipped? converted? kill?', category: 'Strategy', color: '#8a6d2f' },
     ],
@@ -175,6 +181,7 @@ const dailyAllocations: DailyAllocation[] = [
     day: 'Sunday', date: '2026-03-01', theme: 'Rest + Plan',
     morningPrime: 'Synthesis. Did AI + Markets + Mind integrate?',
     blocks: [
+      { time: '7–8a', task: 'VO2 Max intervals', category: 'GE', color: '#6b5b4f' },
       { time: '10–11a', task: 'Weekly synthesis', category: 'Mind', color: '#6b5b4f' },
       { time: '11a–12p', task: 'Plan next week', category: 'Strategy', color: '#8a6d2f' },
     ],

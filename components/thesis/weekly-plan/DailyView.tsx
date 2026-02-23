@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import type { DailyAllocation } from '@/lib/types'
+import { TRAINING_SCHEDULE } from '@/lib/constants'
 
 interface DailyViewProps {
   allocations: DailyAllocation[]
@@ -70,6 +71,9 @@ function DayCard({
           </span>
         </div>
         <div className="flex gap-2.5 font-mono text-[10px] shrink-0">
+          {TRAINING_SCHEDULE[day.day] && (
+            <span className="text-[#6b5b4f]">{TRAINING_SCHEDULE[day.day].label}</span>
+          )}
           {day.plannedAsks > 0 && <span className="text-green-ink">κ:{day.plannedAsks}</span>}
           {day.plannedShips > 0 && <span className="text-burgundy">⬆{day.plannedShips}</span>}
           {day.plannedPosts > 0 && <span className="text-[#2d4a6f]">✎{day.plannedPosts}</span>}

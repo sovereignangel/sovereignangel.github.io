@@ -187,6 +187,16 @@ export const TRAINING_SCORE: Record<string, number> = {
   none: 0.2,
 }
 
+export const TRAINING_SCHEDULE: Record<string, { type: string; label: string; time: string }> = {
+  Monday:    { type: 'strength', label: 'Push', time: '7–8a' },
+  Tuesday:   { type: 'strength', label: 'Glutes', time: '7–8a' },
+  Wednesday: { type: 'vo2',      label: 'VO2 Max intervals', time: '7–8a' },
+  Thursday:  { type: 'strength', label: 'Pull', time: '7–8a' },
+  Friday:    { type: 'strength', label: 'Glutes', time: '7–8a' },
+  Saturday:  { type: 'zone2',    label: 'Zone 2 run (60min)', time: '9–10a' },
+  Sunday:    { type: 'vo2',      label: 'VO2 Max intervals', time: '7–8a' },
+}
+
 export const BODY_FELT_SCORE: Record<string, number> = {
   open: 1.0,
   neutral: 0.6,
