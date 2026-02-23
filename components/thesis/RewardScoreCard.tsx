@@ -2,6 +2,7 @@
 
 import type { DailyLog } from '@/lib/types'
 import { dayOfWeekShort } from '@/lib/formatters'
+import { PillarBreakdown } from '@/components/thesis/reward'
 import dynamic from 'next/dynamic'
 
 const RewardTrajectoryChart = dynamic(
@@ -14,17 +15,6 @@ interface RewardScoreCardProps {
   recentLogs: DailyLog[]
   dates: string[]
 }
-
-const COMPONENT_BARS = [
-  { key: 'GE', field: 'ge' as const, color: 'bg-green-ink', label: 'Generative Energy' },
-  { key: 'GI', field: 'gi' as const, color: 'bg-burgundy', label: 'Intelligence Growth' },
-  { key: 'GVC', field: 'gvc' as const, color: 'bg-ink', label: 'Value Creation' },
-  { key: 'κ', field: 'kappa' as const, color: 'bg-amber-ink', label: 'Capture Ratio' },
-  { key: 'GD', field: 'gd' as const, color: 'bg-burgundy/70', label: 'Discovery' },
-  { key: 'GN', field: 'gn' as const, color: 'bg-green-ink/70', label: 'Network' },
-  { key: 'J', field: 'j' as const, color: 'bg-ink-muted', label: 'Judgment' },
-  { key: 'Σ', field: 'sigma' as const, color: 'bg-ink/50', label: 'Skill Building' },
-]
 
 export default function RewardScoreCard({ todayLog, recentLogs, dates }: RewardScoreCardProps) {
   const reward = todayLog?.rewardScore
@@ -91,23 +81,10 @@ export default function RewardScoreCard({ todayLog, recentLogs, dates }: RewardS
               </span>
             )}
 
-            {/* Component breakdown bars */}
+            {/* Pillar breakdown (Body / Brain / Build) */}
             {components && (
-              <div className="mt-4 space-y-2">
-                {COMPONENT_BARS.map(bar => (
-                  <div key={bar.key} className="flex items-center gap-2">
-                    <span className="font-mono text-[10px] text-ink-muted w-7 shrink-0 text-right">{bar.key}</span>
-                    <div className="flex-1 h-2 bg-rule-light rounded-sm overflow-hidden">
-                      <div
-                        className={`h-full ${bar.color} rounded-sm transition-all`}
-                        style={{ width: `${(components[bar.field] ?? 0) * 100}%` }}
-                      />
-                    </div>
-                    <span className="font-mono text-[9px] text-ink-light w-7 text-right">
-                      {((components[bar.field] ?? 0) * 100).toFixed(0)}
-                    </span>
-                  </div>
-                ))}
+              <div className="mt-4">
+                <PillarBreakdown components={components} />
               </div>
             )}
           </div>

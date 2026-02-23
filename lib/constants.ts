@@ -203,6 +203,63 @@ export const NS_STATE_ENERGY_SCORE: Record<string, number> = {
 // Floor to avoid log(0) = -infinity (ruin avoidance)
 export const REWARD_FLOOR = 0.05
 
+// ─── PILLAR FRAMEWORK (Body / Brain / Build) ─────────────────────────
+
+export type PillarKey = 'body' | 'brain' | 'build'
+
+export const REWARD_PILLARS = [
+  {
+    key: 'body' as PillarKey,
+    label: 'Body',
+    question: 'Can I perform?',
+    weight: '2/9',
+    color: 'text-green-ink',
+    bgColor: 'bg-green-bg',
+    barColor: 'bg-green-ink',
+    borderColor: 'border-green-ink/20',
+    components: ['ge', 'j'] as const,
+  },
+  {
+    key: 'brain' as PillarKey,
+    label: 'Brain',
+    question: 'Am I getting smarter?',
+    weight: '3/9',
+    color: 'text-navy',
+    bgColor: 'bg-navy-bg',
+    barColor: 'bg-navy',
+    borderColor: 'border-navy/20',
+    components: ['gi', 'gd', 'sigma'] as const,
+  },
+  {
+    key: 'build' as PillarKey,
+    label: 'Build',
+    question: 'Am I creating & capturing?',
+    weight: '4/9',
+    color: 'text-burgundy',
+    bgColor: 'bg-burgundy-bg',
+    barColor: 'bg-burgundy',
+    borderColor: 'border-burgundy/20',
+    components: ['gvc', 'kappa', 'gn', 'optionality'] as const,
+  },
+] as const
+
+export const REWARD_COMPONENT_META: Record<string, {
+  symbol: string
+  label: string
+  pillar: PillarKey
+  barColor: string
+}> = {
+  ge:          { symbol: 'GE', label: 'Generative Energy', pillar: 'body', barColor: 'bg-green-ink' },
+  j:           { symbol: 'J', label: 'Judgment & Cognition', pillar: 'body', barColor: 'bg-green-ink/60' },
+  gi:          { symbol: 'GI', label: 'Intelligence Growth', pillar: 'brain', barColor: 'bg-navy' },
+  gd:          { symbol: 'GD', label: 'Discovery', pillar: 'brain', barColor: 'bg-navy/70' },
+  sigma:       { symbol: 'Σ', label: 'Skill Building', pillar: 'brain', barColor: 'bg-navy/50' },
+  gvc:         { symbol: 'GVC', label: 'Value Creation', pillar: 'build', barColor: 'bg-burgundy' },
+  kappa:       { symbol: 'κ', label: 'Capture Ratio', pillar: 'build', barColor: 'bg-burgundy/80' },
+  gn:          { symbol: 'GN', label: 'Network Capital', pillar: 'build', barColor: 'bg-burgundy/60' },
+  optionality: { symbol: '𝒪', label: 'Optionality', pillar: 'build', barColor: 'bg-burgundy/40' },
+}
+
 // ─── SALES MASTERY ────────────────────────────────────────────────────
 
 export const CONTACT_TIERS = [

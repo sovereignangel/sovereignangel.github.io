@@ -10,6 +10,10 @@ export interface RewardComponents {
   sigma: number        // Skill Building [0, 1]
   fragmentation: number // Fragmentation Tax [0, 1]
   gate: number         // Nervous System Gate [0.3, 1.0]
+  // Pillar scores (derived geometric sub-means)
+  body: number         // (GE · J)^(1/2)           [0, 1]
+  brain: number        // (GI · GD · Σ)^(1/3)      [0, 1]
+  build: number        // (GVC · κ · GN · 𝒪)^(1/4) [0, 1]
   theta?: number       // Legacy: Thesis Coherence (deprecated, kept for old data)
 }
 

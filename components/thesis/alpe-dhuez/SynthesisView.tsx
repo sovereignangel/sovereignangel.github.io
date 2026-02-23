@@ -6,27 +6,14 @@ import { useDailyLogContext } from '@/components/thesis/DailyLogProvider'
 import { getWeeklySynthesis, saveWeeklySynthesis, getProjects, getSignals, getRecentDailyLogs } from '@/lib/firestore'
 import { weekStartDate, dateFull, dayOfWeekShort } from '@/lib/formatters'
 import type { WeeklySynthesis, Project, ProjectHealth } from '@/lib/types'
-import { getSystemState, SYSTEM_STATE_COLORS } from '@/lib/types'
 import { PROJECT_HEALTH_OPTIONS } from '@/lib/constants'
+import { PillarBreakdown } from '@/components/thesis/reward'
 import dynamic from 'next/dynamic'
 
 const RewardTrajectoryChart = dynamic(
   () => import('@/components/thesis/RewardTrajectoryChart'),
   { ssr: false, loading: () => <div className="h-[120px]" /> }
 )
-
-const COMPONENT_BARS = [
-  { key: 'GE', field: 'ge' as const, label: 'Generative Energy' },
-  { key: 'GI', field: 'gi' as const, label: 'Intelligence Growth' },
-  { key: 'GVC', field: 'gvc' as const, label: 'Value Creation' },
-  { key: '\u03BA', field: 'kappa' as const, label: 'Capture Ratio' },
-  { key: 'GD', field: 'gd' as const, label: 'Discovery' },
-  { key: 'GN', field: 'gn' as const, label: 'Network Capital' },
-  { key: 'J', field: 'j' as const, label: 'Judgment' },
-  { key: 'O', field: 'optionality' as const, label: 'Optionality' },
-  { key: '\u03A3', field: 'sigma' as const, label: 'Skill Building' },
-  { key: 'F', field: 'fragmentation' as const, label: 'Fragmentation' },
-]
 
 const SYNTHESIS_TABS = [
   { key: 'dalio', label: '5-Step' },
@@ -150,37 +137,9 @@ export default function SynthesisView() {
               )}
             </div>
 
-            {/* Component bars */}
+            {/* Pillar breakdown (Body / Brain / Build) */}
             {components && (
-              <div className="space-y-1.5">
-                {COMPONENT_BARS.map(bar => {
-                  const rawVal = components[bar.field] ?? 0
-                  const isFragmentation = bar.field === 'fragmentation'
-                  const displayVal = isFragmentation ? 1 - rawVal : rawVal
-                  const state = getSystemState(displayVal)
-                  const colors = SYSTEM_STATE_COLORS[state]
-                  return (
-                    <div key={bar.key} className="flex items-center gap-2">
-                      <span className="font-mono text-[9px] text-ink-muted w-5 shrink-0 text-right">{bar.key}</span>
-                      <div className="flex-1 h-2 bg-rule-light rounded-sm overflow-hidden">
-                        <div
-                          className={`h-full rounded-sm transition-all ${colors.bg !== 'bg-transparent' ? colors.bg : 'bg-ink-muted'}`}
-                          style={{
-                            width: `${displayVal * 100}%`,
-                            backgroundColor: state === 'NOMINAL' ? '#2d5f3f' : state === 'WATCH' ? '#9a928a' : state === 'CAUTION' ? '#8a6d2f' : '#8c2d2d',
-                          }}
-                        />
-                      </div>
-                      <span className={`font-mono text-[8px] w-8 text-right ${colors.text}`}>
-                        {(displayVal * 100).toFixed(0)}%
-                      </span>
-                      <span className={`font-mono text-[7px] w-12 text-right ${colors.text}`}>
-                        {state}
-                      </span>
-                    </div>
-                  )
-                })}
-              </div>
+              <PillarBreakdown components={components} compact />
             )}
 
             {/* 7-day trajectory */}

@@ -278,16 +278,22 @@ export function computeReward(
 
   const gate = NERVOUS_SYSTEM_GATE[log.nervousSystemState || 'regulated'] ?? 1.0
 
-  // Geometric mean of 9 multiplicative components (sigma replaces theta)
+  // Pillar sub-means (algebraically equivalent grouping)
+  const body = Math.pow(ge * j, 1 / 2)                              // 2 components
+  const brain = Math.pow(gi * gd * sigma, 1 / 3)                    // 3 components
+  const build = Math.pow(gvc * kappa * gn * optionality, 1 / 4)     // 4 components
+
+  // Geometric mean of 9 multiplicative components
+  // Equivalently: body^(2/9) · brain^(3/9) · build^(4/9)
   const geoMean = Math.pow(ge * gi * gvc * kappa * optionality * gd * gn * j * sigma, 1 / 9)
 
-  // Apply gate and fragmentation penalty (theta additive bonus removed)
+  // Apply gate and fragmentation penalty
   const rawScore = gate * geoMean - fragmentation * 0.3
 
   // Scale to 0-10 with one decimal place
   const score = clamp(Math.round(rawScore * 10 * 10) / 10, 0, 10)
 
-  const components: RewardComponents = { ge, gi, gvc, kappa, optionality, gd, gn, j, sigma, fragmentation, gate }
+  const components: RewardComponents = { ge, gi, gvc, kappa, optionality, gd, gn, j, sigma, fragmentation, gate, body, brain, build }
 
   return {
     score,
