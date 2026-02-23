@@ -832,63 +832,77 @@ async function handleVenture(uid: string, text: string, chatId: number) {
 async function handleApprove(uid: string, chatId: number) {
   const adminDb = await getAdminDb()
 
-  // Find most recent venture with prd_draft stage
-  const venturesSnap = await adminDb.collection('users').doc(uid).collection('ventures')
-    .where('stage', '==', 'prd_draft')
-    .orderBy('createdAt', 'desc')
-    .limit(1)
-    .get()
+  try {
+    // Find most recent venture with prd_draft stage (no orderBy to avoid composite index)
+    const venturesSnap = await adminDb.collection('users').doc(uid).collection('ventures')
+      .where('stage', '==', 'prd_draft')
+      .get()
 
-  if (venturesSnap.empty) {
-    await sendTelegramReply(chatId, 'No PRD waiting for approval.\n\nUse `/venture <idea>` to spec one first.')
-    return
+    if (venturesSnap.empty) {
+      await sendTelegramReply(chatId, 'No PRD waiting for approval.\n\nUse /venture to spec one first.')
+      return
+    }
+
+    // Sort by createdAt in JS
+    const sortedDocs = venturesSnap.docs.sort((a, b) => {
+      const aTime = a.data().createdAt?.toMillis?.() || 0
+      const bTime = b.data().createdAt?.toMillis?.() || 0
+      return bTime - aTime
+    })
+
+    const ventureDoc = sortedDocs[0]
+    const venture = ventureDoc.data()
+
+    await ventureDoc.ref.update({
+      stage: 'prd_approved',
+      updatedAt: new Date(),
+    })
+
+    await sendTelegramReply(chatId, `PRD approved for ${venture.spec.name}\n\nReply /build to start building.`)
+  } catch (error) {
+    console.error('Approve error:', error)
+    await sendTelegramReply(chatId, `Approve failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
   }
-
-  const ventureDoc = venturesSnap.docs[0]
-  const venture = ventureDoc.data()
-
-  await ventureDoc.ref.update({
-    stage: 'prd_approved',
-    updatedAt: new Date(),
-  })
-
-  await sendTelegramReply(chatId, `*PRD approved for ${venture.spec.name}*\n\n_Reply /build to start building._`)
 }
 
 async function handleFeedback(uid: string, text: string, chatId: number) {
   const adminDb = await getAdminDb()
 
   if (!text.trim()) {
-    await sendTelegramReply(chatId, 'Empty feedback. Usage: `/feedback add Stripe integration`')
+    await sendTelegramReply(chatId, 'Empty feedback. Usage: /feedback add Stripe integration')
     return
   }
-
-  // Find most recent venture with prd_draft stage
-  const venturesSnap = await adminDb.collection('users').doc(uid).collection('ventures')
-    .where('stage', '==', 'prd_draft')
-    .orderBy('createdAt', 'desc')
-    .limit(1)
-    .get()
-
-  if (venturesSnap.empty) {
-    await sendTelegramReply(chatId, 'No PRD draft to send feedback on.\n\nUse `/venture <idea>` to create one first.')
-    return
-  }
-
-  const ventureDoc = venturesSnap.docs[0]
-  const venture = ventureDoc.data()
-  const existingPrd = venture.prd
-  const spec = venture.spec
-
-  await sendTelegramReply(chatId, `_Regenerating PRD with feedback..._`)
 
   try {
+    // Find most recent venture with prd_draft stage (no orderBy to avoid composite index)
+    const venturesSnap = await adminDb.collection('users').doc(uid).collection('ventures')
+      .where('stage', '==', 'prd_draft')
+      .get()
+
+    if (venturesSnap.empty) {
+      await sendTelegramReply(chatId, 'No PRD draft to send feedback on.\n\nUse /venture to create one first.')
+      return
+    }
+
+    // Sort by createdAt in JS
+    const sortedDocs = venturesSnap.docs.sort((a, b) => {
+      const aTime = a.data().createdAt?.toMillis?.() || 0
+      const bTime = b.data().createdAt?.toMillis?.() || 0
+      return bTime - aTime
+    })
+
+    const ventureDoc = sortedDocs[0]
+    const venture = ventureDoc.data()
+    const existingPrd = venture.prd
+    const spec = venture.spec
+
+    await sendTelegramReply(chatId, 'Regenerating PRD with feedback...')
+
     // Append feedback to history
     const feedbackHistory = [...(existingPrd?.feedbackHistory || []), text]
 
     // Get existing project names to avoid collision
-    const allVenturesSnap = await adminDb.collection('users').doc(uid).collection('ventures')
-      .orderBy('createdAt', 'desc').get()
+    const allVenturesSnap = await adminDb.collection('users').doc(uid).collection('ventures').get()
     const existingPrdNames = allVenturesSnap.docs
       .filter(d => d.id !== ventureDoc.id)
       .map(d => d.data().prd?.projectName)
@@ -909,9 +923,9 @@ async function handleFeedback(uid: string, text: string, chatId: number) {
     const deepLink = baseUrl ? `${baseUrl}/thesis/ventures?id=${ventureDoc.id}` : ''
 
     const lines: string[] = [
-      `*PRD updated: ${spec.name}* (v${newPrd.version})`,
+      `PRD updated: ${spec.name} (v${newPrd.version})`,
       '',
-      `*Features (${newPrd.features.length}):*`,
+      `Features (${newPrd.features.length}):`,
     ]
 
     newPrd.features.forEach(f => {
@@ -922,12 +936,12 @@ async function handleFeedback(uid: string, text: string, chatId: number) {
       lines.push('', `View full PRD: ${deepLink}`)
     }
 
-    lines.push('', '_Reply /approve or send more /feedback_')
+    lines.push('', 'Reply /approve or send more /feedback')
 
     await sendTelegramReply(chatId, lines.join('\n'))
   } catch (error) {
     console.error('PRD feedback error:', error)
-    await sendTelegramReply(chatId, `Failed to regenerate PRD.\n\n_${error instanceof Error ? error.message : 'Unknown error'}_`)
+    await sendTelegramReply(chatId, `Failed to regenerate PRD: ${error instanceof Error ? error.message : 'Unknown error'}`)
   }
 }
 
@@ -1046,19 +1060,25 @@ async function handleIterate(uid: string, text: string, chatId: number) {
 async function handleBuild(uid: string, chatId: number) {
   const adminDb = await getAdminDb()
 
-  // Find most recent venture with approved PRD
+  try {
+  // Find most recent venture with approved PRD (no orderBy to avoid composite index)
   const venturesSnap = await adminDb.collection('users').doc(uid).collection('ventures')
     .where('stage', '==', 'prd_approved')
-    .orderBy('createdAt', 'desc')
-    .limit(1)
     .get()
 
   if (venturesSnap.empty) {
-    await sendTelegramReply(chatId, 'No approved venture waiting to be built.\n\nUse `/venture <idea>` then `/approve` first.')
+    await sendTelegramReply(chatId, 'No approved venture waiting to be built.\n\nUse /venture then /approve first.')
     return
   }
 
-  const ventureDoc = venturesSnap.docs[0]
+  // Sort by createdAt in JS to avoid composite index requirement
+  const sortedDocs = venturesSnap.docs.sort((a, b) => {
+    const aTime = a.data().createdAt?.toMillis?.() || 0
+    const bTime = b.data().createdAt?.toMillis?.() || 0
+    return bTime - aTime
+  })
+
+  const ventureDoc = sortedDocs[0]
   const venture = ventureDoc.data()
   const ventureId = ventureDoc.id
   const spec = venture.spec
@@ -1071,7 +1091,7 @@ async function handleBuild(uid: string, chatId: number) {
     updatedAt: new Date(),
   })
 
-  await sendTelegramReply(chatId, `*Build started for ${spec.name}*\n\n_Generating codebase... This may take a few minutes._`)
+  await sendTelegramReply(chatId, `Build started for ${spec.name}\n\nGenerating codebase... This may take a few minutes.`)
 
   // Fire repository_dispatch to the builder repo (fire-and-forget)
   const githubToken = process.env.GITHUB_TOKEN
@@ -1089,40 +1109,34 @@ async function handleBuild(uid: string, chatId: number) {
     return
   }
 
-  try {
-    const dispatchRes = await fetch(`https://api.github.com/repos/${githubOwner}/venture-builder/dispatches`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${githubToken}`,
-        'Accept': 'application/vnd.github.v3+json',
-        'Content-Type': 'application/json',
+  const dispatchRes = await fetch(`https://api.github.com/repos/${githubOwner}/venture-builder/dispatches`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${githubToken}`,
+      'Accept': 'application/vnd.github.v3+json',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      event_type: 'build-venture',
+      client_payload: {
+        uid,
+        ventureId,
+        spec,
+        prd: venture.prd,
+        chatId,
+        callbackUrl,
       },
-      body: JSON.stringify({
-        event_type: 'build-venture',
-        client_payload: {
-          uid,
-          ventureId,
-          spec,
-          chatId,
-          callbackUrl,
-        },
-      }),
-    })
+    }),
+  })
 
-    if (!dispatchRes.ok) {
-      const errText = await dispatchRes.text()
-      throw new Error(`GitHub dispatch failed (${dispatchRes.status}): ${errText}`)
-    }
+  if (!dispatchRes.ok) {
+    const errText = await dispatchRes.text()
+    throw new Error(`GitHub dispatch failed (${dispatchRes.status}): ${errText}`)
+  }
+
   } catch (error) {
-    console.error('Build dispatch error:', error)
-    await ventureDoc.ref.update({
-      'build.status': 'failed',
-      'build.errorMessage': error instanceof Error ? error.message : 'Dispatch failed',
-      'build.completedAt': new Date(),
-      updatedAt: new Date(),
-    })
-    await sendTelegramReply(chatId,
-      `Build dispatch failed for ${spec.name}.\n\n_${error instanceof Error ? error.message : 'Unknown error'}_`)
+    console.error('Build error:', error)
+    await sendTelegramReply(chatId, `Build failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
   }
 }
 
