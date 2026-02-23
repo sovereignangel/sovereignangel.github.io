@@ -14,6 +14,7 @@ const navItems = [
   { href: '/thesis/execution', label: 'Execution', symbol: 'GVC+κ' },
   { href: '/thesis/intelligence', label: 'Intelligence', symbol: 'GI' },
   { href: '/thesis/ventures', label: 'Ventures', symbol: 'V' },
+  { href: '/thesis/capital', label: 'Capital', symbol: '$' },
   { href: '/thesis/boardroom', label: 'Board Room', symbol: 'J' },
   { href: '/thesis/rl', label: 'RL', symbol: '\u03C0' },
 ]
