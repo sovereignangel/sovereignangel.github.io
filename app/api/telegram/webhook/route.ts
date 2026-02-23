@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { parseTelegramMessage, type TelegramUpdate } from '@/lib/telegram-parser'
-import { parseJournalEntry, transcribeAndParseVoiceNote, parsePrediction, parseVentureIdea, type ParsedJournalEntry } from '@/lib/ai-extraction'
+import { parseJournalEntry, transcribeAndParseVoiceNote, parsePrediction, parseVentureIdea, generateVenturePRD, type ParsedJournalEntry } from '@/lib/ai-extraction'
 import { computeReward } from '@/lib/reward'
 import { DEFAULT_SETTINGS } from '@/lib/constants'
 
@@ -702,29 +702,33 @@ async function handleVenture(uid: string, text: string, chatId: number) {
     // AI parse
     const parsed = await parseVentureIdea(text, projectNames)
 
-    // Build venture document
+    // Build venture spec object
+    const spec = {
+      name: parsed.name,
+      oneLiner: parsed.oneLiner,
+      problem: parsed.problem,
+      targetCustomer: parsed.targetCustomer,
+      solution: parsed.solution,
+      category: parsed.category,
+      thesisPillars: parsed.thesisPillars,
+      revenueModel: parsed.revenueModel,
+      pricingIdea: parsed.pricingIdea,
+      marketSize: parsed.marketSize,
+      techStack: parsed.techStack,
+      mvpFeatures: parsed.mvpFeatures,
+      apiIntegrations: parsed.apiIntegrations,
+      existingAlternatives: parsed.existingAlternatives,
+      unfairAdvantage: parsed.unfairAdvantage,
+      killCriteria: parsed.killCriteria,
+    }
+
+    // Save venture as specced
     const ventureRef = adminDb.collection('users').doc(uid).collection('ventures').doc()
     await ventureRef.set({
       rawInput: text,
       inputSource: 'telegram_text',
-      spec: {
-        name: parsed.name,
-        oneLiner: parsed.oneLiner,
-        problem: parsed.problem,
-        targetCustomer: parsed.targetCustomer,
-        solution: parsed.solution,
-        category: parsed.category,
-        thesisPillars: parsed.thesisPillars,
-        revenueModel: parsed.revenueModel,
-        pricingIdea: parsed.pricingIdea,
-        marketSize: parsed.marketSize,
-        techStack: parsed.techStack,
-        mvpFeatures: parsed.mvpFeatures,
-        apiIntegrations: parsed.apiIntegrations,
-        existingAlternatives: parsed.existingAlternatives,
-        unfairAdvantage: parsed.unfairAdvantage,
-        killCriteria: parsed.killCriteria,
-      },
+      spec,
+      prd: null,
       build: {
         status: 'pending',
         repoUrl: null,
@@ -737,6 +741,7 @@ async function handleVenture(uid: string, text: string, chatId: number) {
         filesGenerated: null,
       },
       stage: 'specced',
+      iterations: [],
       linkedProjectId: null,
       notes: '',
       score: parsed.suggestedScore,
@@ -744,30 +749,51 @@ async function handleVenture(uid: string, text: string, chatId: number) {
       updatedAt: new Date(),
     })
 
+    // Auto-generate PRD
+    await sendTelegramReply(chatId, '_Generating PRD..._')
+
+    // Get existing project names to avoid collision
+    const venturesSnap = await adminDb.collection('users').doc(uid).collection('ventures')
+      .orderBy('createdAt', 'desc').get()
+    const existingPrdNames = venturesSnap.docs
+      .map(d => d.data().prd?.projectName)
+      .filter(Boolean) as string[]
+
+    const prd = await generateVenturePRD(spec, existingPrdNames)
+
+    // Update venture with PRD, move to prd_draft
+    await ventureRef.update({
+      prd,
+      stage: 'prd_draft',
+      updatedAt: new Date(),
+    })
+
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || ''
+    const deepLink = baseUrl ? `${baseUrl}/thesis/ventures?id=${ventureRef.id}` : ''
+
     // Build reply
     const lines: string[] = [
-      `*Venture specced: ${parsed.name}*`,
+      `*PRD drafted: ${parsed.name}*`,
       '',
       `_"${parsed.oneLiner}"_`,
       '',
       `*Problem:* ${parsed.problem}`,
       `*Customer:* ${parsed.targetCustomer}`,
       `*Revenue:* ${parsed.revenueModel} (${parsed.pricingIdea})`,
-      `*Category:* ${parsed.category}`,
       `*Conviction:* ${parsed.suggestedScore}/100`,
+      '',
+      `*Features (${prd.features.length}):*`,
     ]
 
-    if (parsed.mvpFeatures.length > 0) {
-      lines.push('', '*MVP Features:*')
-      parsed.mvpFeatures.forEach(f => lines.push(`  · ${f}`))
+    prd.features.forEach(f => {
+      lines.push(`  ${f.priority}: ${f.name}`)
+    })
+
+    if (deepLink) {
+      lines.push('', `View full PRD: ${deepLink}`)
     }
 
-    if (parsed.killCriteria.length > 0) {
-      lines.push('', '*Kill Criteria:*')
-      parsed.killCriteria.forEach(k => lines.push(`  ✕ ${k}`))
-    }
-
-    lines.push('', '_Reply /build to generate a PoC_')
+    lines.push('', '_Reply /approve or send /feedback <text>_')
 
     await sendTelegramReply(chatId, lines.join('\n'))
   } catch (error) {
@@ -784,12 +810,14 @@ async function handleVenture(uid: string, text: string, chatId: number) {
         mvpFeatures: [], apiIntegrations: [], existingAlternatives: [],
         unfairAdvantage: '', killCriteria: [],
       },
+      prd: null,
       build: {
         status: 'pending', repoUrl: null, previewUrl: null, repoName: null,
         buildLog: [], startedAt: null, completedAt: null, errorMessage: null,
         filesGenerated: null,
       },
       stage: 'idea',
+      iterations: [],
       linkedProjectId: null,
       notes: '',
       score: null,
@@ -801,18 +829,232 @@ async function handleVenture(uid: string, text: string, chatId: number) {
   }
 }
 
-async function handleBuild(uid: string, chatId: number) {
+async function handleApprove(uid: string, chatId: number) {
   const adminDb = await getAdminDb()
 
-  // Find most recent venture with pending build
+  // Find most recent venture with prd_draft stage
   const venturesSnap = await adminDb.collection('users').doc(uid).collection('ventures')
-    .where('build.status', '==', 'pending')
+    .where('stage', '==', 'prd_draft')
     .orderBy('createdAt', 'desc')
     .limit(1)
     .get()
 
   if (venturesSnap.empty) {
-    await sendTelegramReply(chatId, 'No venture waiting to be built.\n\nUse `/venture <idea>` to spec one first.')
+    await sendTelegramReply(chatId, 'No PRD waiting for approval.\n\nUse `/venture <idea>` to spec one first.')
+    return
+  }
+
+  const ventureDoc = venturesSnap.docs[0]
+  const venture = ventureDoc.data()
+
+  await ventureDoc.ref.update({
+    stage: 'prd_approved',
+    updatedAt: new Date(),
+  })
+
+  await sendTelegramReply(chatId, `*PRD approved for ${venture.spec.name}*\n\n_Reply /build to start building._`)
+}
+
+async function handleFeedback(uid: string, text: string, chatId: number) {
+  const adminDb = await getAdminDb()
+
+  if (!text.trim()) {
+    await sendTelegramReply(chatId, 'Empty feedback. Usage: `/feedback add Stripe integration`')
+    return
+  }
+
+  // Find most recent venture with prd_draft stage
+  const venturesSnap = await adminDb.collection('users').doc(uid).collection('ventures')
+    .where('stage', '==', 'prd_draft')
+    .orderBy('createdAt', 'desc')
+    .limit(1)
+    .get()
+
+  if (venturesSnap.empty) {
+    await sendTelegramReply(chatId, 'No PRD draft to send feedback on.\n\nUse `/venture <idea>` to create one first.')
+    return
+  }
+
+  const ventureDoc = venturesSnap.docs[0]
+  const venture = ventureDoc.data()
+  const existingPrd = venture.prd
+  const spec = venture.spec
+
+  await sendTelegramReply(chatId, `_Regenerating PRD with feedback..._`)
+
+  try {
+    // Append feedback to history
+    const feedbackHistory = [...(existingPrd?.feedbackHistory || []), text]
+
+    // Get existing project names to avoid collision
+    const allVenturesSnap = await adminDb.collection('users').doc(uid).collection('ventures')
+      .orderBy('createdAt', 'desc').get()
+    const existingPrdNames = allVenturesSnap.docs
+      .filter(d => d.id !== ventureDoc.id)
+      .map(d => d.data().prd?.projectName)
+      .filter(Boolean) as string[]
+
+    // Re-generate PRD with feedback
+    const newPrd = await generateVenturePRD(spec, existingPrdNames, feedbackHistory)
+
+    // Increment version
+    newPrd.version = (existingPrd?.version || 0) + 1
+
+    await ventureDoc.ref.update({
+      prd: newPrd,
+      updatedAt: new Date(),
+    })
+
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || ''
+    const deepLink = baseUrl ? `${baseUrl}/thesis/ventures?id=${ventureDoc.id}` : ''
+
+    const lines: string[] = [
+      `*PRD updated: ${spec.name}* (v${newPrd.version})`,
+      '',
+      `*Features (${newPrd.features.length}):*`,
+    ]
+
+    newPrd.features.forEach(f => {
+      lines.push(`  ${f.priority}: ${f.name}`)
+    })
+
+    if (deepLink) {
+      lines.push('', `View full PRD: ${deepLink}`)
+    }
+
+    lines.push('', '_Reply /approve or send more /feedback_')
+
+    await sendTelegramReply(chatId, lines.join('\n'))
+  } catch (error) {
+    console.error('PRD feedback error:', error)
+    await sendTelegramReply(chatId, `Failed to regenerate PRD.\n\n_${error instanceof Error ? error.message : 'Unknown error'}_`)
+  }
+}
+
+async function handleIterate(uid: string, text: string, chatId: number) {
+  const adminDb = await getAdminDb()
+
+  if (!text.trim()) {
+    await sendTelegramReply(chatId, 'Usage: `/iterate project-name add dark mode`\n\nFirst word is the project name, rest is the change request.')
+    return
+  }
+
+  // Parse: first word = project name slug, rest = changes
+  const parts = text.trim().split(/\s+/)
+  const projectSlug = parts[0].toLowerCase()
+  const changes = parts.slice(1).join(' ')
+
+  if (!changes) {
+    await sendTelegramReply(chatId, 'Missing change description. Usage: `/iterate project-name add dark mode`')
+    return
+  }
+
+  // Find venture by matching prd.projectName or spec.name
+  const venturesSnap = await adminDb.collection('users').doc(uid).collection('ventures')
+    .where('stage', '==', 'deployed')
+    .get()
+
+  const matchedDoc = venturesSnap.docs.find(d => {
+    const data = d.data()
+    const prdName = data.prd?.projectName?.toLowerCase()
+    const specName = data.spec?.name?.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-+$/, '')
+    return prdName === projectSlug || specName === projectSlug ||
+      data.spec?.name?.toLowerCase() === projectSlug
+  })
+
+  if (!matchedDoc) {
+    await sendTelegramReply(chatId, `No deployed venture found matching "${projectSlug}".\n\nUse the project name from the PRD (kebab-case).`)
+    return
+  }
+
+  const venture = matchedDoc.data()
+  const ventureId = matchedDoc.id
+
+  // Update stage to building, append to iterations
+  const iterations = venture.iterations || []
+  iterations.push({ request: changes, completedAt: null })
+
+  await matchedDoc.ref.update({
+    stage: 'building',
+    iterations,
+    'build.status': 'generating',
+    'build.startedAt': new Date(),
+    'build.errorMessage': null,
+    updatedAt: new Date(),
+  })
+
+  await sendTelegramReply(chatId, `*Iterating on ${venture.spec.name}...*\n\n_"${changes}"_\n\nThis may take a few minutes.`)
+
+  // Fire repository_dispatch for iterate
+  const githubToken = process.env.GITHUB_TOKEN
+  const githubOwner = process.env.GITHUB_OWNER || 'sovereignangel'
+  const callbackUrl = `${process.env.NEXT_PUBLIC_BASE_URL || ''}/api/ventures/build/callback`
+
+  if (!githubToken) {
+    await matchedDoc.ref.update({
+      'build.status': 'failed',
+      'build.errorMessage': 'GITHUB_TOKEN not configured',
+      'build.completedAt': new Date(),
+      stage: 'deployed', // revert
+      updatedAt: new Date(),
+    })
+    await sendTelegramReply(chatId, 'Iterate failed: GITHUB_TOKEN not configured on server.')
+    return
+  }
+
+  try {
+    const dispatchRes = await fetch(`https://api.github.com/repos/${githubOwner}/venture-builder/dispatches`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${githubToken}`,
+        'Accept': 'application/vnd.github.v3+json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        event_type: 'iterate-venture',
+        client_payload: {
+          uid,
+          ventureId,
+          repoName: venture.build.repoName,
+          changes,
+          spec: venture.spec,
+          prd: venture.prd,
+          chatId,
+          callbackUrl,
+        },
+      }),
+    })
+
+    if (!dispatchRes.ok) {
+      const errText = await dispatchRes.text()
+      throw new Error(`GitHub dispatch failed (${dispatchRes.status}): ${errText}`)
+    }
+  } catch (error) {
+    console.error('Iterate dispatch error:', error)
+    await matchedDoc.ref.update({
+      'build.status': 'failed',
+      'build.errorMessage': error instanceof Error ? error.message : 'Dispatch failed',
+      'build.completedAt': new Date(),
+      stage: 'deployed', // revert
+      updatedAt: new Date(),
+    })
+    await sendTelegramReply(chatId,
+      `Iterate dispatch failed for ${venture.spec.name}.\n\n_${error instanceof Error ? error.message : 'Unknown error'}_`)
+  }
+}
+
+async function handleBuild(uid: string, chatId: number) {
+  const adminDb = await getAdminDb()
+
+  // Find most recent venture with approved PRD
+  const venturesSnap = await adminDb.collection('users').doc(uid).collection('ventures')
+    .where('stage', '==', 'prd_approved')
+    .orderBy('createdAt', 'desc')
+    .limit(1)
+    .get()
+
+  if (venturesSnap.empty) {
+    await sendTelegramReply(chatId, 'No approved venture waiting to be built.\n\nUse `/venture <idea>` then `/approve` first.')
     return
   }
 
@@ -945,6 +1187,12 @@ export async function POST(req: NextRequest) {
           }
         }
 
+        // Detect if user said "approve" at the start — route as approve
+        if (trimmedTranscript.startsWith('approve')) {
+          await handleApprove(uid, chatId)
+          return NextResponse.json({ ok: true })
+        }
+
         // Detect if user said "signal" at the start — route as signal
         if (trimmedTranscript.startsWith('signal')) {
           const signalText = transcript.trim().slice('signal'.length).trim()
@@ -991,14 +1239,19 @@ export async function POST(req: NextRequest) {
         '`/note <text>` — Quick note',
         '`/journal <text>` — Journal entry (AI-parsed)',
         '`/predict <text>` — Log a prediction (AI-analyzed)',
-        '`/venture <text>` — Spec a business idea (AI-analyzed)',
-        '`/build` — Auto-build the most recent specced venture',
+        '',
+        '*Venture Builder:*',
+        '`/venture <text>` — Spec + auto-PRD a business idea',
+        '`/approve` — Approve the most recent PRD draft',
+        '`/feedback <text>` — Revise the PRD with feedback',
+        '`/build` — Build the approved venture',
+        '`/iterate <project> <changes>` — Iterate on deployed venture',
+        '',
         '`/rss <url> #pillar` — Subscribe to RSS feed',
         '`/id` — Show your chat ID (for settings)',
         '',
         'Voice notes → auto-transcribed as journal',
-        'Say "venture" first to spec a business idea',
-        'Say "signal" first to save as signal instead',
+        'Say "venture" to spec, "approve" to approve, "signal" to save as signal',
         '',
         'Pillar tags: `#ai` `#markets` `#mind`',
       ].join('\n'))
@@ -1058,6 +1311,28 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ ok: true })
       }
       await handleVenture(uid, parsed.text, chatId)
+      return NextResponse.json({ ok: true })
+    }
+
+    // Handle approve command
+    if (parsed.command === 'approve') {
+      await handleApprove(uid, chatId)
+      return NextResponse.json({ ok: true })
+    }
+
+    // Handle feedback command
+    if (parsed.command === 'feedback') {
+      await handleFeedback(uid, parsed.text, chatId)
+      return NextResponse.json({ ok: true })
+    }
+
+    // Handle iterate command
+    if (parsed.command === 'iterate') {
+      if (!parsed.text) {
+        await sendTelegramReply(chatId, 'Usage: `/iterate project-name add dark mode`')
+        return NextResponse.json({ ok: true })
+      }
+      await handleIterate(uid, parsed.text, chatId)
       return NextResponse.json({ ok: true })
     }
 

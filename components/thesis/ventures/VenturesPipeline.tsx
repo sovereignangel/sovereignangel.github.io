@@ -9,6 +9,9 @@ import BuildStatusBar from './BuildStatusBar'
 const STAGES: { key: VentureStage; label: string }[] = [
   { key: 'idea', label: 'Idea' },
   { key: 'specced', label: 'Specced' },
+  { key: 'validated', label: 'Validated' },
+  { key: 'prd_draft', label: 'PRD Draft' },
+  { key: 'prd_approved', label: 'Approved' },
   { key: 'building', label: 'Building' },
   { key: 'deployed', label: 'Deployed' },
   { key: 'archived', label: 'Archived' },
@@ -87,7 +90,7 @@ export default function VenturesPipeline({ onSelectVenture }: { onSelectVenture:
 
   return (
     <div className="p-3">
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-8 gap-3">
         {STAGES.map(stage => {
           const stageVentures = ventures.filter(v => v.stage === stage.key)
           return (

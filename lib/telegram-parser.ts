@@ -9,7 +9,10 @@
  *   /rss <url> [#pillar]     — Subscribe to an RSS feed
  *   /predict <text>          — Log a prediction with AI analysis
  *   /venture <text>          — Spec a business idea with AI
- *   /build                   — Auto-build the most recent specced venture
+ *   /build                   — Auto-build the most recent approved venture
+ *   /approve                 — Approve the most recent PRD draft
+ *   /feedback <text>         — Send feedback on the most recent PRD draft
+ *   /iterate <project> <changes> — Request changes to a deployed venture
  *
  * Pillar hashtags: #ai, #markets, #mind
  */
@@ -17,7 +20,7 @@
 import type { ThesisPillar } from '@/lib/types'
 
 export interface ParsedTelegramMessage {
-  command: 'signal' | 'note' | 'journal' | 'rss' | 'predict' | 'venture' | 'build' | 'unknown'
+  command: 'signal' | 'note' | 'journal' | 'rss' | 'predict' | 'venture' | 'build' | 'approve' | 'feedback' | 'iterate' | 'unknown'
   text: string
   pillars: ThesisPillar[]
   raw: string
@@ -69,6 +72,23 @@ export function parseTelegramMessage(text: string): ParsedTelegramMessage {
   if (raw.startsWith('/venture')) {
     const body = raw.slice('/venture'.length).trim()
     return { command: 'venture', text: body, pillars: [], raw }
+  }
+
+  // /approve command
+  if (raw.startsWith('/approve')) {
+    return { command: 'approve', text: '', pillars: [], raw }
+  }
+
+  // /feedback command
+  if (raw.startsWith('/feedback')) {
+    const body = raw.slice('/feedback'.length).trim()
+    return { command: 'feedback', text: body, pillars: [], raw }
+  }
+
+  // /iterate command
+  if (raw.startsWith('/iterate')) {
+    const body = raw.slice('/iterate'.length).trim()
+    return { command: 'iterate', text: body, pillars: [], raw }
   }
 
   // /build command

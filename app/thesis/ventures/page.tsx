@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, Suspense } from 'react'
+import { useSearchParams } from 'next/navigation'
 import VenturesPipeline from '@/components/thesis/ventures/VenturesPipeline'
 import VentureDetail from '@/components/thesis/ventures/VentureDetail'
 import VenturesIdeas from '@/components/thesis/ventures/VenturesIdeas'
@@ -13,9 +14,20 @@ const TABS: { key: Exclude<VenturesTab, 'detail'>; label: string }[] = [
   { key: 'ideas', label: 'Ideas' },
 ]
 
-export default function VenturesPage() {
-  const [activeTab, setActiveTab] = useState<VenturesTab>('pipeline')
-  const [selectedVentureId, setSelectedVentureId] = useState<string | null>(null)
+function VenturesContent() {
+  const searchParams = useSearchParams()
+  const linkedId = searchParams.get('id')
+
+  const [activeTab, setActiveTab] = useState<VenturesTab>(linkedId ? 'detail' : 'pipeline')
+  const [selectedVentureId, setSelectedVentureId] = useState<string | null>(linkedId)
+
+  // Handle deep link on mount
+  useEffect(() => {
+    if (linkedId) {
+      setSelectedVentureId(linkedId)
+      setActiveTab('detail')
+    }
+  }, [linkedId])
 
   const handleSelectVenture = (id: string) => {
     setSelectedVentureId(id)
@@ -70,5 +82,13 @@ export default function VenturesPage() {
         <VenturesDial selectedVentureId={selectedVentureId} />
       </div>
     </div>
+  )
+}
+
+export default function VenturesPage() {
+  return (
+    <Suspense fallback={<div className="p-3 text-[11px] text-ink-muted">Loading ventures...</div>}>
+      <VenturesContent />
+    </Suspense>
   )
 }

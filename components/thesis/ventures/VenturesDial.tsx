@@ -126,9 +126,9 @@ export default function VenturesDial({ selectedVentureId }: { selectedVentureId:
           Pipeline
         </div>
         <div className="grid grid-cols-2 gap-1.5">
-          {['idea', 'specced', 'building', 'deployed'].map(stage => (
+          {['idea', 'specced', 'prd_draft', 'prd_approved', 'building', 'deployed'].map(stage => (
             <div key={stage} className="flex items-center justify-between">
-              <span className="font-mono text-[9px] text-ink-muted capitalize">{stage}</span>
+              <span className="font-mono text-[9px] text-ink-muted capitalize">{stage.replace(/_/g, ' ')}</span>
               <span className="font-mono text-[10px] font-semibold text-ink">{stageCounts[stage] || 0}</span>
             </div>
           ))}

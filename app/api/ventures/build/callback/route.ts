@@ -33,6 +33,21 @@ export async function POST(req: NextRequest) {
         'build.completedAt': new Date(),
         updatedAt: new Date(),
       })
+
+      // Auto-log the ship to today's daily_log
+      try {
+        const venture = snap.data()
+        const now = new Date()
+        const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+        const logRef = adminDb.collection('users').doc(uid).collection('daily_logs').doc(today)
+        await logRef.set({
+          whatShipped: `Deployed ${venture?.spec?.name || 'venture'} to ${previewUrl || repoUrl || 'live'}`,
+          publicIteration: true,
+          updatedAt: new Date(),
+        }, { merge: true })
+      } catch (logErr) {
+        console.error('Auto-ship log failed:', logErr)
+      }
     } else if (status === 'failed') {
       await ventureRef.update({
         'build.status': 'failed',
