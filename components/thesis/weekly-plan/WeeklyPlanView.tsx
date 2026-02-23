@@ -97,6 +97,12 @@ export default function WeeklyPlanView() {
     }
   }
 
+  const handleSeedPlan = async () => {
+    if (!user) return
+    await seedThisWeek(user.uid)
+    window.location.reload()
+  }
+
   const handleTabChange = (tab: PlanTab) => {
     setActiveTab(tab)
     if (tab === 'ledger') {
@@ -168,6 +174,7 @@ export default function WeeklyPlanView() {
             onActivate={handleActivate}
             onGenerateRetro={handleGenerateRetro}
             onGenerateNextWeek={handleGenerateNextWeek}
+            onSeedPlan={handleSeedPlan}
           />
         </div>
       </div>

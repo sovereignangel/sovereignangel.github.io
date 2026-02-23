@@ -19,6 +19,7 @@ interface WeeklyPlanSidebarProps {
   onActivate: () => void
   onGenerateRetro: () => void
   onGenerateNextWeek: () => void
+  onSeedPlan?: () => void
 }
 
 export default function WeeklyPlanSidebar({
@@ -28,6 +29,7 @@ export default function WeeklyPlanSidebar({
   onActivate,
   onGenerateRetro,
   onGenerateNextWeek,
+  onSeedPlan,
 }: WeeklyPlanSidebarProps) {
   const { user } = useAuth()
   const { log } = useDailyLogContext()
@@ -135,6 +137,9 @@ export default function WeeklyPlanSidebar({
             <ActionButton onClick={onGenerateRetro} label="Run Saturday Retro" />
           )}
           <ActionButton onClick={onGenerateNextWeek} label="Generate Next Week" />
+          {onSeedPlan && (
+            <ActionButton onClick={onSeedPlan} label="Load This Week's Plan" />
+          )}
           {saving && (
             <div className="font-mono text-[9px] text-ink-muted text-center">Saving...</div>
           )}
