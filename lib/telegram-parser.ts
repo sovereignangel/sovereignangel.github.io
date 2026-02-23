@@ -74,9 +74,10 @@ export function parseTelegramMessage(text: string): ParsedTelegramMessage {
     return { command: 'venture', text: body, pillars: [], raw }
   }
 
-  // /approve command
+  // /approve command (optional number: /approve 3)
   if (raw.startsWith('/approve')) {
-    return { command: 'approve', text: '', pillars: [], raw }
+    const body = raw.slice('/approve'.length).trim()
+    return { command: 'approve', text: body, pillars: [], raw }
   }
 
   // /feedback command
@@ -91,9 +92,10 @@ export function parseTelegramMessage(text: string): ParsedTelegramMessage {
     return { command: 'iterate', text: body, pillars: [], raw }
   }
 
-  // /build command
+  // /build command (optional number: /build 3)
   if (raw.startsWith('/build')) {
-    return { command: 'build', text: '', pillars: [], raw }
+    const body = raw.slice('/build'.length).trim()
+    return { command: 'build', text: body, pillars: [], raw }
   }
 
   // Plain text — treat as signal

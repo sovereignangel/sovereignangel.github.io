@@ -11,8 +11,7 @@ import WeeklyPlanSidebar from './WeeklyPlanSidebar'
 import RetroView from './RetroView'
 import PlanLedger from './PlanLedger'
 import { createEmptyWeeklyPlan, defaultScorecard } from '@/lib/weekly-plan-utils'
-import { seedThisWeek } from '@/lib/seed-this-week'
-import { useAuth } from '@/components/auth/AuthProvider'
+import { getThisWeekPlanData } from '@/lib/seed-this-week'
 import type { WeeklyPlan } from '@/lib/types'
 
 type PlanTab = 'goals' | 'daily' | 'scorecard' | 'retro' | 'ledger'
@@ -26,7 +25,6 @@ const TABS: { key: PlanTab; label: string }[] = [
 ]
 
 export default function WeeklyPlanView() {
-  const { user } = useAuth()
   const {
     plan,
     loading,
@@ -98,9 +96,8 @@ export default function WeeklyPlanView() {
   }
 
   const handleSeedPlan = async () => {
-    if (!user) return
-    await seedThisWeek(user.uid)
-    window.location.reload()
+    const data = getThisWeekPlanData()
+    await savePlan(data)
   }
 
   const handleTabChange = (tab: PlanTab) => {
@@ -135,11 +132,7 @@ export default function WeeklyPlanView() {
             </p>
             <div className="flex gap-2 justify-center flex-wrap">
               <button
-                onClick={async () => {
-                  if (!user) return
-                  await seedThisWeek(user.uid)
-                  window.location.reload()
-                }}
+                onClick={handleSeedPlan}
                 className="font-serif text-[10px] font-medium px-3 py-1.5 rounded-sm border bg-burgundy text-paper border-burgundy hover:bg-burgundy/90 transition-colors"
               >
                 Load This Week&apos;s Plan

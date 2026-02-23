@@ -198,8 +198,9 @@ const projects: WeeklyProjectAllocation[] = [
   { projectName: 'Tech Stack Sales', role: 'Channel', description: 'Custom AI stacks for founders', color: '#8a6d2f' },
 ]
 
-export async function seedThisWeek(uid: string): Promise<void> {
-  await saveWeeklyPlan(uid, WEEK_START, {
+/** Returns the seed data without writing to Firestore */
+export function getThisWeekPlanData(): Partial<WeeklyPlan> {
+  return {
     weekStartDate: WEEK_START,
     weekEndDate: WEEK_END,
     weekLabel: 'Feb 23 – Mar 1, 2026',
@@ -212,5 +213,9 @@ export async function seedThisWeek(uid: string): Promise<void> {
     scorecard,
     projects,
     aiGenerated: false,
-  })
+  }
+}
+
+export async function seedThisWeek(uid: string): Promise<void> {
+  await saveWeeklyPlan(uid, WEEK_START, getThisWeekPlanData())
 }

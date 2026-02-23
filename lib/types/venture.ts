@@ -67,6 +67,7 @@ export interface VentureBuild {
 
 export interface Venture {
   id?: string
+  ventureNumber: number            // Sequential per-user number (for Telegram targeting)
   rawInput: string                 // Original text/voice transcript
   inputSource: 'telegram_text' | 'telegram_voice' | 'dashboard'
   spec: VentureSpec

@@ -33,6 +33,54 @@ async function findUserByChatId(chatId: number): Promise<string | null> {
   return snap.docs[0].id
 }
 
+async function getNextVentureNumber(adminDb: FirebaseFirestore.Firestore, uid: string): Promise<number> {
+  const snap = await adminDb.collection('users').doc(uid).collection('ventures').get()
+  let maxNum = 0
+  snap.docs.forEach(d => {
+    const num = d.data().ventureNumber
+    if (typeof num === 'number' && num > maxNum) maxNum = num
+  })
+  return maxNum + 1
+}
+
+async function findVentureByNumberOrStage(
+  adminDb: FirebaseFirestore.Firestore,
+  uid: string,
+  ventureNumber: number | null,
+  stage: string
+): Promise<FirebaseFirestore.QueryDocumentSnapshot | null> {
+  if (ventureNumber) {
+    // Look up by number
+    const snap = await adminDb.collection('users').doc(uid).collection('ventures')
+      .where('ventureNumber', '==', ventureNumber)
+      .limit(1)
+      .get()
+    if (snap.empty) return null
+    return snap.docs[0]
+  }
+  // Fall back to most recent with matching stage
+  const snap = await adminDb.collection('users').doc(uid).collection('ventures')
+    .where('stage', '==', stage)
+    .get()
+  if (snap.empty) return null
+  const sorted = snap.docs.sort((a, b) => {
+    const aTime = a.data().createdAt?.toMillis?.() || 0
+    const bTime = b.data().createdAt?.toMillis?.() || 0
+    return bTime - aTime
+  })
+  return sorted[0]
+}
+
+// Parse an optional leading number from command text: "3 add dark mode" → { num: 3, rest: "add dark mode" }
+function parseVentureNumber(text: string): { num: number | null; rest: string } {
+  const match = text.match(/^(\d+)\s+(.+)$/)
+  if (match) return { num: parseInt(match[1], 10), rest: match[2] }
+  // Also handle just a number with no text (for /approve 3, /build 3)
+  const numOnly = text.match(/^(\d+)\s*$/)
+  if (numOnly) return { num: parseInt(numOnly[1], 10), rest: '' }
+  return { num: null, rest: text }
+}
+
 function getTodayKey(): string {
   const now = new Date()
   const year = now.getFullYear()
@@ -735,6 +783,9 @@ async function handleVenture(uid: string, text: string, chatId: number) {
       killCriteria: parsed.killCriteria,
     }
 
+    // Auto-assign venture number
+    const ventureNumber = await getNextVentureNumber(adminDb, uid)
+
     // Save venture as specced
     const ventureRef = adminDb.collection('users').doc(uid).collection('ventures').doc()
     await ventureRef.set({
@@ -742,6 +793,7 @@ async function handleVenture(uid: string, text: string, chatId: number) {
       inputSource: 'telegram_text',
       spec,
       prd: null,
+      ventureNumber,
       build: {
         status: 'pending',
         repoUrl: null,
@@ -786,16 +838,16 @@ async function handleVenture(uid: string, text: string, chatId: number) {
 
     // Build reply
     const lines: string[] = [
-      `*PRD drafted: ${parsed.name}*`,
+      `#${ventureNumber} PRD drafted: ${parsed.name}`,
       '',
-      `_"${parsed.oneLiner}"_`,
+      `"${parsed.oneLiner}"`,
       '',
-      `*Problem:* ${parsed.problem}`,
-      `*Customer:* ${parsed.targetCustomer}`,
-      `*Revenue:* ${parsed.revenueModel} (${parsed.pricingIdea})`,
-      `*Conviction:* ${parsed.suggestedScore}/100`,
+      `Problem: ${parsed.problem}`,
+      `Customer: ${parsed.targetCustomer}`,
+      `Revenue: ${parsed.revenueModel} (${parsed.pricingIdea})`,
+      `Conviction: ${parsed.suggestedScore}/100`,
       '',
-      `*Features (${prd.features.length}):*`,
+      `Features (${prd.features.length}):`,
     ]
 
     prd.features.forEach(f => {
@@ -806,12 +858,13 @@ async function handleVenture(uid: string, text: string, chatId: number) {
       lines.push('', `View full PRD: ${deepLink}`)
     }
 
-    lines.push('', '_Reply /approve or send /feedback <text>_')
+    lines.push('', `Reply /approve ${ventureNumber} or /feedback ${ventureNumber} <text>`)
 
     await sendTelegramReply(chatId, lines.join('\n'))
   } catch (error) {
     console.error('Venture parsing error:', error)
     // Still save raw text even if AI parsing fails
+    const fallbackNumber = await getNextVentureNumber(adminDb, uid)
     const ventureRef = adminDb.collection('users').doc(uid).collection('ventures').doc()
     await ventureRef.set({
       rawInput: text,
@@ -824,6 +877,7 @@ async function handleVenture(uid: string, text: string, chatId: number) {
         unfairAdvantage: '', killCriteria: [],
       },
       prd: null,
+      ventureNumber: fallbackNumber,
       build: {
         status: 'pending', repoUrl: null, previewUrl: null, repoName: null,
         buildLog: [], startedAt: null, completedAt: null, errorMessage: null,
@@ -842,36 +896,34 @@ async function handleVenture(uid: string, text: string, chatId: number) {
   }
 }
 
-async function handleApprove(uid: string, chatId: number) {
+async function handleApprove(uid: string, text: string, chatId: number) {
   const adminDb = await getAdminDb()
 
   try {
-    // Find most recent venture with prd_draft stage (no orderBy to avoid composite index)
-    const venturesSnap = await adminDb.collection('users').doc(uid).collection('ventures')
-      .where('stage', '==', 'prd_draft')
-      .get()
+    const { num } = parseVentureNumber(text.trim())
+    const ventureDoc = await findVentureByNumberOrStage(adminDb, uid, num, 'prd_draft')
 
-    if (venturesSnap.empty) {
-      await sendTelegramReply(chatId, 'No PRD waiting for approval.\n\nUse /venture to spec one first.')
+    if (!ventureDoc) {
+      await sendTelegramReply(chatId, num
+        ? `Venture #${num} not found.`
+        : 'No PRD waiting for approval.\n\nUse /venture to spec one first.')
       return
     }
 
-    // Sort by createdAt in JS
-    const sortedDocs = venturesSnap.docs.sort((a, b) => {
-      const aTime = a.data().createdAt?.toMillis?.() || 0
-      const bTime = b.data().createdAt?.toMillis?.() || 0
-      return bTime - aTime
-    })
-
-    const ventureDoc = sortedDocs[0]
     const venture = ventureDoc.data()
+    const vNum = venture.ventureNumber ? `#${venture.ventureNumber} ` : ''
+
+    if (num && venture.stage !== 'prd_draft') {
+      await sendTelegramReply(chatId, `${vNum}${venture.spec.name} is in "${venture.stage}" stage, not prd_draft.\n\nOnly prd_draft ventures can be approved.`)
+      return
+    }
 
     await ventureDoc.ref.update({
       stage: 'prd_approved',
       updatedAt: new Date(),
     })
 
-    await sendTelegramReply(chatId, `PRD approved for ${venture.spec.name}\n\nReply /build to start building.`)
+    await sendTelegramReply(chatId, `${vNum}PRD approved for ${venture.spec.name}\n\nReply /build ${venture.ventureNumber || ''} to start building.`)
   } catch (error) {
     console.error('Approve error:', error)
     await sendTelegramReply(chatId, `Approve failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
@@ -882,37 +934,36 @@ async function handleFeedback(uid: string, text: string, chatId: number) {
   const adminDb = await getAdminDb()
 
   if (!text.trim()) {
-    await sendTelegramReply(chatId, 'Empty feedback. Usage: /feedback add Stripe integration')
+    await sendTelegramReply(chatId, 'Usage: /feedback <text> or /feedback <number> <text>')
     return
   }
 
   try {
-    // Find most recent venture with prd_draft stage (no orderBy to avoid composite index)
-    const venturesSnap = await adminDb.collection('users').doc(uid).collection('ventures')
-      .where('stage', '==', 'prd_draft')
-      .get()
+    const { num, rest: feedbackText } = parseVentureNumber(text.trim())
 
-    if (venturesSnap.empty) {
-      await sendTelegramReply(chatId, 'No PRD draft to send feedback on.\n\nUse /venture to create one first.')
+    if (!feedbackText) {
+      await sendTelegramReply(chatId, 'Missing feedback text. Usage: /feedback 3 add Stripe integration')
       return
     }
 
-    // Sort by createdAt in JS
-    const sortedDocs = venturesSnap.docs.sort((a, b) => {
-      const aTime = a.data().createdAt?.toMillis?.() || 0
-      const bTime = b.data().createdAt?.toMillis?.() || 0
-      return bTime - aTime
-    })
+    const ventureDoc = await findVentureByNumberOrStage(adminDb, uid, num, 'prd_draft')
 
-    const ventureDoc = sortedDocs[0]
+    if (!ventureDoc) {
+      await sendTelegramReply(chatId, num
+        ? `Venture #${num} not found.`
+        : 'No PRD draft to send feedback on.\n\nUse /venture to create one first.')
+      return
+    }
+
     const venture = ventureDoc.data()
+    const vNum = venture.ventureNumber ? `#${venture.ventureNumber} ` : ''
     const existingPrd = venture.prd
     const spec = venture.spec
 
-    await sendTelegramReply(chatId, 'Regenerating PRD with feedback...')
+    await sendTelegramReply(chatId, `${vNum}Regenerating PRD with feedback...`)
 
     // Append feedback to history
-    const feedbackHistory = [...(existingPrd?.feedbackHistory || []), text]
+    const feedbackHistory = [...(existingPrd?.feedbackHistory || []), feedbackText]
 
     // Get existing project names to avoid collision
     const allVenturesSnap = await adminDb.collection('users').doc(uid).collection('ventures').get()
@@ -934,9 +985,10 @@ async function handleFeedback(uid: string, text: string, chatId: number) {
 
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || ''
     const deepLink = baseUrl ? `${baseUrl}/thesis/ventures?id=${ventureDoc.id}` : ''
+    const ventureNum = venture.ventureNumber || ''
 
     const lines: string[] = [
-      `PRD updated: ${spec.name} (v${newPrd.version})`,
+      `${vNum}PRD updated: ${spec.name} (v${newPrd.version})`,
       '',
       `Features (${newPrd.features.length}):`,
     ]
@@ -949,7 +1001,7 @@ async function handleFeedback(uid: string, text: string, chatId: number) {
       lines.push('', `View full PRD: ${deepLink}`)
     }
 
-    lines.push('', 'Reply /approve or send more /feedback')
+    lines.push('', `Reply /approve ${ventureNum} or /feedback ${ventureNum} <more changes>`)
 
     await sendTelegramReply(chatId, lines.join('\n'))
   } catch (error) {
@@ -1070,31 +1122,29 @@ async function handleIterate(uid: string, text: string, chatId: number) {
   }
 }
 
-async function handleBuild(uid: string, chatId: number) {
+async function handleBuild(uid: string, text: string, chatId: number) {
   const adminDb = await getAdminDb()
 
   try {
-  // Find most recent venture with approved PRD (no orderBy to avoid composite index)
-  const venturesSnap = await adminDb.collection('users').doc(uid).collection('ventures')
-    .where('stage', '==', 'prd_approved')
-    .get()
+  const { num } = parseVentureNumber(text.trim())
+  const ventureDoc = await findVentureByNumberOrStage(adminDb, uid, num, 'prd_approved')
 
-  if (venturesSnap.empty) {
-    await sendTelegramReply(chatId, 'No approved venture waiting to be built.\n\nUse /venture then /approve first.')
+  if (!ventureDoc) {
+    await sendTelegramReply(chatId, num
+      ? `Venture #${num} not found.`
+      : 'No approved venture waiting to be built.\n\nUse /venture then /approve first.')
     return
   }
 
-  // Sort by createdAt in JS to avoid composite index requirement
-  const sortedDocs = venturesSnap.docs.sort((a, b) => {
-    const aTime = a.data().createdAt?.toMillis?.() || 0
-    const bTime = b.data().createdAt?.toMillis?.() || 0
-    return bTime - aTime
-  })
-
-  const ventureDoc = sortedDocs[0]
   const venture = ventureDoc.data()
   const ventureId = ventureDoc.id
   const spec = venture.spec
+  const vNum = venture.ventureNumber ? `#${venture.ventureNumber} ` : ''
+
+  if (num && venture.stage !== 'prd_approved') {
+    await sendTelegramReply(chatId, `${vNum}${spec.name} is in "${venture.stage}" stage.\n\nApprove the PRD first with /approve ${venture.ventureNumber || ''}`)
+    return
+  }
 
   // Mark as building
   await ventureDoc.ref.update({
@@ -1104,7 +1154,7 @@ async function handleBuild(uid: string, chatId: number) {
     updatedAt: new Date(),
   })
 
-  await sendTelegramReply(chatId, `Build started for ${spec.name}\n\nGenerating codebase... This may take a few minutes.`)
+  await sendTelegramReply(chatId, `${vNum}Build started for ${spec.name}\n\nGenerating codebase... This may take a few minutes.`)
 
   // Fire repository_dispatch to the builder repo (fire-and-forget)
   const githubToken = process.env.GITHUB_TOKEN
@@ -1216,7 +1266,7 @@ export async function POST(req: NextRequest) {
 
         // Detect if user said "approve" at the start — route as approve
         if (trimmedTranscript.startsWith('approve')) {
-          await handleApprove(uid, chatId)
+          await handleApprove(uid, trimmedTranscript, chatId)
           return NextResponse.json({ ok: true })
         }
 
@@ -1343,7 +1393,7 @@ export async function POST(req: NextRequest) {
 
     // Handle approve command
     if (parsed.command === 'approve') {
-      await handleApprove(uid, chatId)
+      await handleApprove(uid, parsed.text, chatId)
       return NextResponse.json({ ok: true })
     }
 
@@ -1356,7 +1406,7 @@ export async function POST(req: NextRequest) {
     // Handle iterate command
     if (parsed.command === 'iterate') {
       if (!parsed.text) {
-        await sendTelegramReply(chatId, 'Usage: `/iterate project-name add dark mode`')
+        await sendTelegramReply(chatId, 'Usage: /iterate project-name add dark mode')
         return NextResponse.json({ ok: true })
       }
       await handleIterate(uid, parsed.text, chatId)
@@ -1365,7 +1415,7 @@ export async function POST(req: NextRequest) {
 
     // Handle build command
     if (parsed.command === 'build') {
-      await handleBuild(uid, chatId)
+      await handleBuild(uid, parsed.text, chatId)
       return NextResponse.json({ ok: true })
     }
 
