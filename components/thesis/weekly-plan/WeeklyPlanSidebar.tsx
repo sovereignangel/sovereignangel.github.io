@@ -54,7 +54,7 @@ export default function WeeklyPlanSidebar({
   const cadenceDone = cadenceItems.filter(c => c.done).length
 
   return (
-    <div className="space-y-3 p-1">
+    <div className="space-y-3 p-1 bg-cream/90 backdrop-blur-sm rounded-sm">
       {/* Live Score */}
       <div className="bg-white border border-rule rounded-sm p-3">
         <SectionHeader>Live Score</SectionHeader>

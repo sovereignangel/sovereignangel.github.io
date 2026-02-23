@@ -11,6 +11,8 @@ import WeeklyPlanSidebar from './WeeklyPlanSidebar'
 import RetroView from './RetroView'
 import PlanLedger from './PlanLedger'
 import { createEmptyWeeklyPlan, defaultScorecard } from '@/lib/weekly-plan-utils'
+import { seedThisWeek } from '@/lib/seed-this-week'
+import { useAuth } from '@/components/auth/AuthProvider'
 import type { WeeklyPlan } from '@/lib/types'
 
 type PlanTab = 'goals' | 'daily' | 'scorecard' | 'retro' | 'ledger'
@@ -24,6 +26,7 @@ const TABS: { key: PlanTab; label: string }[] = [
 ]
 
 export default function WeeklyPlanView() {
+  const { user } = useAuth()
   const {
     plan,
     loading,
@@ -103,7 +106,7 @@ export default function WeeklyPlanView() {
 
   if (loading) {
     return (
-      <div className="p-6">
+      <div className="p-6 bg-cream/90 backdrop-blur-sm rounded-sm">
         <div className="font-serif text-[13px] text-ink-muted">Loading weekly plan...</div>
       </div>
     )
@@ -113,7 +116,7 @@ export default function WeeklyPlanView() {
   if (!displayPlan) {
     return (
       <div className="h-full grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-2 min-h-0">
-        <div className="flex flex-col items-center justify-center p-6">
+        <div className="flex flex-col items-center justify-center p-6 bg-cream/90 backdrop-blur-sm rounded-sm">
           <div className="text-center max-w-[400px]">
             <div className="font-mono text-[9px] tracking-[3px] text-ink-muted uppercase mb-2">
               Weekly Allocation
@@ -124,7 +127,17 @@ export default function WeeklyPlanView() {
             <p className="font-serif text-[13px] text-ink-muted mb-4">
               Create a weekly execution plan with strategic goals, daily time blocks, and a scorecard to track progress.
             </p>
-            <div className="flex gap-2 justify-center">
+            <div className="flex gap-2 justify-center flex-wrap">
+              <button
+                onClick={async () => {
+                  if (!user) return
+                  await seedThisWeek(user.uid)
+                  window.location.reload()
+                }}
+                className="font-serif text-[10px] font-medium px-3 py-1.5 rounded-sm border bg-burgundy text-paper border-burgundy hover:bg-burgundy/90 transition-colors"
+              >
+                Load This Week&apos;s Plan
+              </button>
               <button
                 onClick={async () => {
                   const empty = createEmptyWeeklyPlan()
@@ -140,7 +153,7 @@ export default function WeeklyPlanView() {
               <button
                 onClick={handleGenerateNextWeek}
                 disabled={generateLoading}
-                className="font-serif text-[10px] font-medium px-3 py-1.5 rounded-sm border bg-burgundy text-paper border-burgundy hover:bg-burgundy/90 transition-colors disabled:opacity-50"
+                className="font-serif text-[10px] font-medium px-3 py-1.5 rounded-sm border bg-transparent text-ink-muted border-rule hover:border-ink-faint hover:text-ink transition-colors disabled:opacity-50"
               >
                 {generateLoading ? 'Generating...' : 'Generate with AI'}
               </button>
@@ -164,7 +177,7 @@ export default function WeeklyPlanView() {
   return (
     <div className="h-full grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-2 min-h-0">
       {/* Left Panel */}
-      <div className="flex flex-col min-h-0 p-3">
+      <div className="flex flex-col min-h-0 p-3 bg-cream/90 backdrop-blur-sm rounded-sm">
         <WeeklyPlanHeader plan={displayPlan} />
         <WeeklyProjectBar projects={displayPlan.projects} />
 
