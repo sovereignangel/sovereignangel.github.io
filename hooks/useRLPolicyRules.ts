@@ -9,11 +9,16 @@ export function useRLPolicyRules(uid: string | undefined) {
   const [loading, setLoading] = useState(true)
 
   const refresh = useCallback(async () => {
-    if (!uid) return
+    if (!uid) {
+      setLoading(false)
+      return
+    }
     setLoading(true)
     try {
       const data = await getRLPolicyRules(uid)
       setRules(data)
+    } catch (err) {
+      console.error('[useRLPolicyRules] Failed to load:', err)
     } finally {
       setLoading(false)
     }

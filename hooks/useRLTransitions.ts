@@ -14,12 +14,17 @@ export function useRLTransitions(days: number = 90) {
   const [filterAction, setFilterAction] = useState<ActionType | 'all'>('all')
 
   const refresh = useCallback(async () => {
-    if (!user?.uid) return
+    if (!user?.uid) {
+      setLoading(false)
+      return
+    }
     setLoading(true)
     try {
       const logs = await getRecentDailyLogs(user.uid, days)
       const trans = computeTransitions(logs)
       setTransitions(trans)
+    } catch (err) {
+      console.error('[useRLTransitions] Failed to load:', err)
     } finally {
       setLoading(false)
     }

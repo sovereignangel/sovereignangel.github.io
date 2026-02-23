@@ -24,7 +24,10 @@ export function useRLAudit() {
   const weekStart = getWeekStart()
 
   const refresh = useCallback(async () => {
-    if (!user?.uid) return
+    if (!user?.uid) {
+      setLoading(false)
+      return
+    }
     setLoading(true)
     try {
       const [current, recent] = await Promise.all([
@@ -33,6 +36,8 @@ export function useRLAudit() {
       ])
       setCurrentAudit(current)
       setRecentAudits(recent)
+    } catch (err) {
+      console.error('[useRLAudit] Failed to load:', err)
     } finally {
       setLoading(false)
     }

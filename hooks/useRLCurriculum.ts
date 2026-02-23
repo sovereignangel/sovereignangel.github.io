@@ -9,11 +9,16 @@ export function useRLCurriculum(uid: string | undefined) {
   const [loading, setLoading] = useState(true)
 
   const refresh = useCallback(async () => {
-    if (!uid) return
+    if (!uid) {
+      setLoading(false)
+      return
+    }
     setLoading(true)
     try {
       const data = await getRLCurriculumProgress(uid)
       setProgress(data)
+    } catch (err) {
+      console.error('[useRLCurriculum] Failed to load:', err)
     } finally {
       setLoading(false)
     }
