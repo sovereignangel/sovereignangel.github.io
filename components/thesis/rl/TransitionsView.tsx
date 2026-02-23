@@ -31,25 +31,25 @@ export default function TransitionsView() {
   }
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2 bg-cream/80 backdrop-blur-sm rounded-sm p-2">
       {/* Summary stats */}
       <div className="grid grid-cols-4 gap-2">
-        <div className="bg-white border border-rule rounded-sm p-2 text-center">
-          <div className="font-mono text-[14px] font-bold text-ink">{transitions.length}</div>
+        <div className="bg-paper/90 border border-rule rounded-sm p-2 text-center">
+          <div className="font-mono text-[14px] font-bold text-burgundy">{transitions.length}</div>
           <div className="font-sans text-[9px] text-ink-muted">Total Transitions</div>
         </div>
-        <div className="bg-white border border-rule rounded-sm p-2 text-center">
-          <div className="font-mono text-[14px] font-bold text-ink">
+        <div className="bg-paper/90 border border-rule rounded-sm p-2 text-center">
+          <div className="font-mono text-[14px] font-bold text-burgundy">
             {transitions.length > 0 ? (transitions.reduce((s, t) => s + t.reward, 0) / transitions.length).toFixed(1) : '0'}
           </div>
           <div className="font-sans text-[9px] text-ink-muted">Avg Reward</div>
         </div>
-        <div className="bg-white border border-rule rounded-sm p-2 text-center">
-          <div className="font-mono text-[14px] font-bold text-ink">{Math.round(explorationRatio * 100)}%</div>
+        <div className="bg-paper/90 border border-rule rounded-sm p-2 text-center">
+          <div className="font-mono text-[14px] font-bold text-burgundy">{Math.round(explorationRatio * 100)}%</div>
           <div className="font-sans text-[9px] text-ink-muted">Explore Ratio</div>
         </div>
-        <div className="bg-white border border-rule rounded-sm p-2 text-center">
-          <div className="font-mono text-[14px] font-bold text-ink">
+        <div className="bg-paper/90 border border-rule rounded-sm p-2 text-center">
+          <div className="font-mono text-[14px] font-bold text-burgundy">
             {Object.entries(actionStats).sort(([,a], [,b]) => b.count - a.count)[0]?.[0] || '\u2014'}
           </div>
           <div className="font-sans text-[9px] text-ink-muted">Most Used Action</div>
@@ -57,15 +57,15 @@ export default function TransitionsView() {
       </div>
 
       {/* Action stats breakdown */}
-      <div className="bg-white border border-rule rounded-sm p-2">
+      <div className="bg-paper/90 border border-rule rounded-sm p-2">
         <h4 className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-1.5">
           Action Statistics
         </h4>
         <div className="grid grid-cols-6 gap-1">
           {(Object.entries(actionStats) as [ActionType, { count: number; avgReward: number }][]).map(([action, stats]) => (
-            <div key={action} className="text-center p-1 bg-cream rounded-sm">
+            <div key={action} className="text-center p-1 bg-cream/80 rounded-sm">
               <div className="font-mono text-[8px] uppercase text-burgundy font-semibold">{action}</div>
-              <div className="font-mono text-[11px] font-bold text-ink">{stats.count}</div>
+              <div className="font-mono text-[11px] font-bold text-burgundy">{stats.count}</div>
               <div className="font-mono text-[8px] text-ink-muted">avg {stats.avgReward.toFixed(1)}</div>
             </div>
           ))}
@@ -82,7 +82,7 @@ export default function TransitionsView() {
             className={`font-mono text-[9px] uppercase px-1.5 py-0.5 rounded-sm border transition-colors ${
               filterAction === a
                 ? 'bg-burgundy text-paper border-burgundy'
-                : 'bg-white text-ink-muted border-rule hover:border-ink-faint'
+                : 'bg-paper/90 text-ink-muted border-rule hover:border-ink-faint'
             }`}
           >
             {a}
