@@ -50,45 +50,54 @@ export default function RewardProofModal({ onClose }: RewardProofModalProps) {
           {/* Section 1: Core Equation */}
           <ProofSection title="I. The Core Equation">
             <div className="bg-cream/60 border border-rule-light rounded-sm px-4 py-3 mb-4">
-              <p className="font-mono text-[13px] text-ink leading-relaxed text-center">
+              <p className="font-mono text-[12px] text-ink leading-relaxed text-center">
                 <span className="text-navy font-semibold">g*</span>
-                <span className="text-ink-muted"> = </span>
-                <span className="text-ink-light">𝔼[</span>
-                <span className="text-green-ink">log GE</span>
-                <span className="text-ink-muted"> + </span>
-                <span className="text-navy">log ĠI</span>
-                <span className="text-ink-muted"> + </span>
-                <span className="text-navy">log ĠVC</span>
-                <span className="text-ink-muted"> + </span>
-                <span className="text-gold">log κ</span>
-                <span className="text-ink-muted"> + </span>
-                <span className="text-ink-light">log 𝒪</span>
-                <span className="text-ink-light">]</span>
+                <span className="text-ink-muted"> = 10 · </span>
+                <span className="text-green-ink">g(s<sub>ν</sub>)</span>
+                <span className="text-ink-muted"> · (</span>
+                <span className="text-green-ink">GE</span>
+                <span className="text-ink-muted"> · </span>
+                <span className="text-navy">ĠI</span>
+                <span className="text-ink-muted"> · </span>
+                <span className="text-navy">ĠVC</span>
+                <span className="text-ink-muted"> · </span>
+                <span className="text-gold">κ</span>
+                <span className="text-ink-muted"> · </span>
+                <span className="text-ink-light">𝒪</span>
+                <span className="text-ink-muted"> · </span>
+                <span className="text-navy">GD</span>
+                <span className="text-ink-muted"> · </span>
+                <span className="text-navy">GN</span>
+                <span className="text-ink-muted"> · </span>
+                <span className="text-ink-light">J</span>
+                <span className="text-ink-muted"> · </span>
+                <span className="text-navy">Σ</span>
+                <span className="text-ink-muted">)</span>
+                <sup className="text-ink-muted text-[9px]">1/9</sup>
                 <span className="text-ink-muted"> − </span>
                 <span className="text-red-ink">𝓕</span>
-                <span className="text-ink-muted"> + </span>
-                <span className="text-navy font-semibold">Θ</span>
+                <span className="text-ink-muted"> × 0.3</span>
               </p>
             </div>
             <p className="font-sans text-[12px] text-ink-light leading-relaxed">
               Under multiplicative dynamics, the quantity to maximize is not expected value
               but the <strong className="text-ink">time-average log-growth rate</strong>. This follows from
-              Peters (2019, <em>Nature Physics</em>) on ergodicity economics. Your life has multiplicative
-              dynamics — one catastrophic term (GE = 0 from nervous system collapse) permanently destroys
-              compounding history.
+              Peters (2019, <em>Nature Physics</em>) on ergodicity economics. The 9th-root geometric mean
+              ensures every component matters — if any single term drops to zero, the entire
+              score collapses. One catastrophic failure permanently destroys compounding history.
             </p>
           </ProofSection>
 
           {/* Section 2: State Space */}
           <ProofSection title="II. State Space">
             <div className="font-mono text-[11px] text-ink bg-cream/40 border border-rule-light rounded-sm px-4 py-3 mb-3 leading-loose">
-              <span className="text-navy font-semibold">s</span> = (s<sub>E</sub>, s<sub>I</sub>, s<sub>V</sub>, s<sub>Θ</sub>, s<sub>ν</sub>) ∈ 𝒮
+              <span className="text-navy font-semibold">s</span> = (s<sub>E</sub>, s<sub>I</sub>, s<sub>V</sub>, s<sub>Σ</sub>, s<sub>ν</sub>) ∈ 𝒮
             </div>
             <div className="space-y-2">
               <StateRow symbol="s_E" label="Execution capacity" desc="hours shipped, asks made, shipping cadence" />
               <StateRow symbol="s_I" label="Intelligence state" desc="signal library quality, world model fidelity" />
               <StateRow symbol="s_V" label="Capital state" desc="revenue streams, NPV of portfolio" />
-              <StateRow symbol="s_Θ" label="Thesis coherence" desc="alignment across AI, Markets, Mind" />
+              <StateRow symbol="s_Σ" label="Skill accumulation" desc="deliberate practice, new techniques, automation/leverage" />
               <StateRow symbol="s_ν" label="Nervous system" desc="regulated → slightly spiked → spiked" />
             </div>
           </ProofSection>
@@ -157,6 +166,43 @@ export default function RewardProofModal({ onClose }: RewardProofModalProps) {
                 benefit from volatility.
               </p>
             </SubSection>
+
+            {/* GD */}
+            <SubSection title="Generative Discovery" symbol="GD" color="text-navy">
+              <div className="font-mono text-[11px] text-ink bg-cream/40 border border-rule-light rounded-sm px-3 py-2 mb-2">
+                GD(s, a) = conversations × 0.5 + signal_review × 0.3 + insights × 0.2
+              </div>
+              <p className="font-sans text-[11px] text-ink-light leading-relaxed">
+                Discovery conversations, external signal review, and insight extraction.
+                Target: 2 discovery calls/day, 5 signals reviewed. Conversations are weighted
+                highest — every conversation is a potential deal, partnership, or world-model update.
+              </p>
+            </SubSection>
+
+            {/* GN */}
+            <SubSection title="Network Capital" symbol="GN" color="text-navy">
+              <div className="font-mono text-[11px] text-ink bg-cream/40 border border-rule-light rounded-sm px-3 py-2 mb-2">
+                GN(s, a) = intros × 0.3 + meetings × 0.25 + posts × 0.25 + inbound × 0.2
+              </div>
+              <p className="font-sans text-[11px] text-ink-light leading-relaxed">
+                Warm intros made/received, meetings booked, public posts, and inbound inquiries.
+                Network is the multiplier on everything else — a great product with zero distribution
+                is worth zero. Measures the growth rate of your surface area.
+              </p>
+            </SubSection>
+
+            {/* J */}
+            <SubSection title="Judgment &amp; Cognition" symbol="J" color="text-ink-light">
+              <div className="font-mono text-[11px] text-ink bg-cream/40 border border-rule-light rounded-sm px-3 py-2 mb-2">
+                J(s) = PsyCap(hope, efficacy, resilience, optimism) / 5
+              </div>
+              <p className="font-sans text-[11px] text-ink-light leading-relaxed">
+                Psychological Capital (Luthans et al. 2007): the meta-resource that determines
+                how well you deploy every other resource. Hope sets direction, efficacy determines
+                effort, resilience absorbs setbacks, optimism sustains the long game.
+                No free pass — if you don&apos;t score PsyCap, J drops to floor.
+              </p>
+            </SubSection>
           </ProofSection>
 
           {/* Section 4: Constraints */}
@@ -174,15 +220,15 @@ export default function RewardProofModal({ onClose }: RewardProofModalProps) {
               </p>
             </SubSection>
 
-            {/* Thesis Coherence */}
-            <SubSection title="Thesis Coherence" symbol="Θ" color="text-navy">
+            {/* Skill Building */}
+            <SubSection title="Skill Building" symbol="Σ" color="text-navy">
               <div className="font-mono text-[11px] text-ink bg-cream/40 border border-rule-light rounded-sm px-3 py-2 mb-2">
-                Θ(s, a) = |det[φ<sub>AI</sub>, φ<sub>Markets</sub>, φ<sub>Mind</sub>]|
+                Σ(s, a) = practice * 0.5 + technique * 0.25 + automation * 0.25
               </div>
               <p className="font-sans text-[11px] text-ink-light leading-relaxed">
-                The volume of the parallelepiped spanned by your three thesis pillars.
-                Zero when any two collapse into each other (redundant). Maximized when all three
-                are orthogonal and large — genuine integration across distinct dimensions.
+                The compounding loop: deliberate practice → new techniques → automation → leverage.
+                Every skill investment makes tomorrow&apos;s output cheaper. In the geometric mean,
+                skipping skill building drags your entire score down — you can&apos;t just grind without growing.
               </p>
             </SubSection>
 
@@ -239,11 +285,15 @@ export default function RewardProofModal({ onClose }: RewardProofModalProps) {
                   </tr>
                 </thead>
                 <tbody className="font-sans text-[11px] text-ink-light">
-                  <RuinRow term="log GE" ruin="Burnout / chronic spike" protection="Sleep, regulation, 24hr rule" />
-                  <RuinRow term="log ĠI" ruin="Research paralysis or stagnation" protection="48hr tests, bounded learning" />
-                  <RuinRow term="log ĠVC" ruin="Nothing going public" protection="Weekly shipping cadence" />
-                  <RuinRow term="log κ" ruin="Building for free" protection="Revenue asks ≥ 2/day" />
-                  <RuinRow term="log 𝒪" ruin="All-in on one irreversible bet" protection="Portfolio diversification" />
+                  <RuinRow term="GE" ruin="Burnout / chronic spike" protection="Sleep, regulation, 24hr rule" />
+                  <RuinRow term="ĠI" ruin="Research paralysis or stagnation" protection="48hr tests, bounded learning" />
+                  <RuinRow term="ĠVC" ruin="Nothing going public" protection="Weekly shipping cadence" />
+                  <RuinRow term="κ" ruin="Building for free" protection="Revenue asks ≥ 2/day" />
+                  <RuinRow term="𝒪" ruin="All-in on one irreversible bet" protection="Portfolio diversification" />
+                  <RuinRow term="GD" ruin="Zero market signal intake" protection="2 discovery calls/day" />
+                  <RuinRow term="GN" ruin="Invisible to the market" protection="Daily posting, warm intros" />
+                  <RuinRow term="J" ruin="Depleted PsyCap / decision fatigue" protection="Daily PsyCap check-in" />
+                  <RuinRow term="Σ" ruin="Stagnant skill set" protection="30 min deliberate practice/day" />
                 </tbody>
               </table>
             </div>
@@ -276,10 +326,11 @@ export default function RewardProofModal({ onClose }: RewardProofModalProps) {
             </p>
             <div className="space-y-1.5">
               <PolicyRow action="Ships fast" why="high r + high ΔΦ_E from momentum" />
-              <PolicyRow action="Asks for money" why="closes Φ_V − Θ gap, increases κ" />
+              <PolicyRow action="Asks for money" why="closes Φ_V gap, increases κ toward 1.0" />
               <PolicyRow action="Captures signals selectively" why="increases Φ_I without noise" />
               <PolicyRow action="Regulates nervous system" why="keeps g(s_ν) ≈ 1" />
               <PolicyRow action="Kills projects ruthlessly" why="minimizes 𝓕 (fragmentation)" />
+              <PolicyRow action="Practices deliberately" why="raises Σ, compounds skill leverage" />
               <PolicyRow action="Compounds across pillars" why="maximizes det[AI, Markets, Mind]" />
             </div>
             <div className="mt-4 pt-3 border-t border-rule-light">

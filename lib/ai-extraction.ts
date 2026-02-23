@@ -1,5 +1,5 @@
 import { GoogleGenerativeAI } from '@google/generative-ai'
-import type { InsightType, ThesisPillar, NervousSystemState, BodyFelt, TrainingType, DecisionDomain, PredictionDomain, VentureCategory } from './types'
+import type { InsightType, ThesisPillar, NervousSystemState, BodyFelt, TrainingType, DecisionDomain, PredictionDomain, VentureCategory, VentureSpec, VenturePRD, VenturePRDPriority } from './types'
 import { callLLM } from './llm'
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '')
@@ -1122,6 +1122,118 @@ Return ONLY valid JSON (no markdown, no code blocks):
       unfairAdvantage: '',
       killCriteria: [],
       suggestedScore: 50,
+    }
+  }
+}
+
+// ─── PRD Generation ─────────────────────────────────────────────────────────────
+
+export async function generateVenturePRD(
+  spec: VentureSpec,
+  existingProjectNames: string[],
+  feedback?: string[]
+): Promise<VenturePRD> {
+  const feedbackSection = feedback && feedback.length > 0
+    ? `\nUSER FEEDBACK ON PREVIOUS DRAFT (incorporate this):\n${feedback.map((f, i) => `${i + 1}. ${f}`).join('\n')}`
+    : ''
+
+  const existingNames = existingProjectNames.length > 0
+    ? `\nEXISTING PROJECT NAMES (avoid collisions):\n${existingProjectNames.map(n => `- ${n}`).join('\n')}`
+    : ''
+
+  const prompt = `You are a technical product manager generating a PRD (Product Requirements Document) for a proof-of-concept build. The builder will use Claude Code CLI to auto-build this in ~5 minutes.
+
+VENTURE SPEC:
+  Name: ${spec.name}
+  One-liner: ${spec.oneLiner}
+  Problem: ${spec.problem}
+  Customer: ${spec.targetCustomer}
+  Solution: ${spec.solution}
+  Revenue: ${spec.revenueModel} (${spec.pricingIdea})
+  Tech stack: ${spec.techStack.join(', ') || 'Next.js, Tailwind, Vercel'}
+  MVP features: ${spec.mvpFeatures.join(', ') || 'Basic landing + core feature'}
+  API integrations: ${spec.apiIntegrations.join(', ') || 'None'}
+${existingNames}${feedbackSection}
+
+Generate a PRD with these sections:
+
+1. PROJECT_NAME: A kebab-case name suitable for a GitHub repo and subdomain (e.g., "greeks-viz", "invoice-bot"). Short, memorable, unique. Must NOT collide with existing names.
+
+2. FEATURES: Array of features with priority:
+   - P0 = Must-have for the PoC to demonstrate value (3-4 features)
+   - P1 = Nice-to-have that rounds out the demo (1-2 features)
+   - P2 = Future features not built now but noted (1-2 features)
+   Each: { name (short), description (1 sentence), priority }
+
+3. DATA_SCHEMA: Markdown describing the data model (collections, key fields, relationships). Keep minimal — just enough for the PoC.
+
+4. USER_FLOWS: 2-3 step-by-step user journeys describing how someone uses the core feature end-to-end.
+
+5. DESIGN_NOTES: Styling instructions. Default to: "Dark, modern SaaS aesthetic. Clean typography, generous whitespace, subtle gradients. Responsive. Mobile-first where appropriate." Add project-specific notes.
+
+6. SUCCESS_METRICS: 2-3 measurable outcomes that prove this PoC works (e.g., "User can complete the core flow in <60 seconds").
+
+7. ESTIMATED_BUILD_MINUTES: How long Claude Code should take to build this (typically 3-8 minutes for a PoC).
+
+Return ONLY valid JSON (no markdown, no code blocks):
+{
+  "projectName": "my-project",
+  "features": [
+    { "name": "Feature Name", "description": "What it does", "priority": "P0" }
+  ],
+  "dataSchema": "## Collections\\n\\n### items\\n- id: string\\n- name: string",
+  "userFlows": [
+    "1. User lands on homepage\\n2. Clicks 'Try it'\\n3. Enters data\\n4. Sees result"
+  ],
+  "designNotes": "Dark modern SaaS aesthetic...",
+  "successMetrics": ["User can do X in <60 seconds"],
+  "estimatedBuildMinutes": 5
+}`
+
+  try {
+    const responseText = await callLLM(prompt)
+
+    const cleanedText = responseText
+      .replace(/```json\n?/g, '')
+      .replace(/```\n?/g, '')
+      .trim()
+
+    const parsed = JSON.parse(cleanedText)
+
+    const validPriorities: VenturePRDPriority[] = ['P0', 'P1', 'P2']
+
+    return {
+      projectName: String(parsed.projectName || spec.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-+$/, '')),
+      features: Array.isArray(parsed.features)
+        ? parsed.features.map((f: Record<string, unknown>) => ({
+            name: String(f.name || ''),
+            description: String(f.description || ''),
+            priority: validPriorities.includes(f.priority as VenturePRDPriority) ? f.priority as VenturePRDPriority : 'P1',
+          }))
+        : [],
+      dataSchema: String(parsed.dataSchema || ''),
+      userFlows: Array.isArray(parsed.userFlows) ? parsed.userFlows.map(String) : [],
+      designNotes: String(parsed.designNotes || ''),
+      successMetrics: Array.isArray(parsed.successMetrics) ? parsed.successMetrics.map(String) : [],
+      estimatedBuildMinutes: typeof parsed.estimatedBuildMinutes === 'number'
+        ? Math.max(1, Math.round(parsed.estimatedBuildMinutes))
+        : 5,
+      version: 1,
+      feedbackHistory: feedback || [],
+    }
+  } catch (error) {
+    console.error('Error generating venture PRD:', error)
+    // Return minimal PRD so the flow isn't blocked
+    return {
+      projectName: spec.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-+$/, ''),
+      features: spec.mvpFeatures.map(f => ({ name: f, description: f, priority: 'P0' as VenturePRDPriority })),
+      dataSchema: '',
+      userFlows: [],
+      designNotes: 'Dark modern SaaS aesthetic. Clean typography, responsive.',
+      successMetrics: [],
+      estimatedBuildMinutes: 5,
+      version: 1,
+      feedbackHistory: feedback || [],
     }
   }
 }

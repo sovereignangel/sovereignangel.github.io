@@ -1,4 +1,4 @@
-import type { DailyLog, Project, RewardScore, RewardComponents, ThesisPillar } from './types'
+import type { DailyLog, Project, RewardScore, RewardComponents } from './types'
 import {
   NERVOUS_SYSTEM_GATE,
   TRAINING_SCORE,
@@ -171,21 +171,23 @@ export function computeFragmentation(log: Partial<DailyLog>, projects: Project[]
   return clamp(kl, 0, 1)
 }
 
-/** Thesis Coherence: 7-day rolling pillar engagement */
-export function computeTheta(log: Partial<DailyLog>, recentLogs: Partial<DailyLog>[] = []): number {
-  // Collect all pillars touched across recent logs + today
-  const allLogs = [...recentLogs, log]
-  const touchedPillars = new Set<ThesisPillar>()
+/** Skill Building: deliberate practice + new techniques + automation/leverage */
+export function computeSigma(log: Partial<DailyLog>): number {
+  // Deliberate practice: minutes spent specifically on getting better
+  // Target: 30 min/day of deliberate practice
+  const practiceTarget = 30
+  const practiceScore = Math.min((log.deliberatePracticeMinutes || 0) / practiceTarget, 1.0)
 
-  for (const l of allLogs) {
-    const pillars = (l.pillarsTouched as ThesisPillar[] | undefined) || []
-    for (const p of pillars) {
-      touchedPillars.add(p)
-    }
-  }
+  // New technique: used a tool/method for the first time today
+  const techniqueScore = log.newTechniqueApplied ? 1.0 : 0.1
 
-  const count = touchedPillars.size
-  return count === 0 ? 0.0 : count === 1 ? 0.33 : count === 2 ? 0.67 : 1.0
+  // Automation/leverage: built something that saves future time
+  const automationScore = log.automationCreated ? 1.0 : 0.1
+
+  // Weighted: practice 50%, technique 25%, automation 25%
+  const raw = practiceScore * 0.50 + techniqueScore * 0.25 + automationScore * 0.25
+
+  return floor(clamp(raw, 0.05, 1))
 }
 
 /** Generative Discovery: customer conversations + RSS signal review + insights extracted */
@@ -269,23 +271,23 @@ export function computeReward(
   const kappa = computeKappa(log, askQuota)
   const optionality = computeOptionality(projects, log)
   const fragmentation = computeFragmentation(log, projects)
-  const theta = computeTheta(log, recentLogs)
   const gd = computeGD(log)
   const gn = computeGN(log)
   const j = computeJ(log)
+  const sigma = computeSigma(log)
 
   const gate = NERVOUS_SYSTEM_GATE[log.nervousSystemState || 'regulated'] ?? 1.0
 
-  // Geometric mean of 8 multiplicative components
-  const geoMean = Math.pow(ge * gi * gvc * kappa * optionality * gd * gn * j, 1 / 8)
+  // Geometric mean of 9 multiplicative components (sigma replaces theta)
+  const geoMean = Math.pow(ge * gi * gvc * kappa * optionality * gd * gn * j * sigma, 1 / 9)
 
-  // Apply gate, fragmentation penalty, thesis coherence bonus
-  const rawScore = gate * geoMean - fragmentation * 0.3 + theta * 0.15
+  // Apply gate and fragmentation penalty (theta additive bonus removed)
+  const rawScore = gate * geoMean - fragmentation * 0.3
 
   // Scale to 0-10 with one decimal place
   const score = clamp(Math.round(rawScore * 10 * 10) / 10, 0, 10)
 
-  const components: RewardComponents = { ge, gi, gvc, kappa, optionality, gd, gn, j, fragmentation, theta, gate }
+  const components: RewardComponents = { ge, gi, gvc, kappa, optionality, gd, gn, j, sigma, fragmentation, gate }
 
   return {
     score,

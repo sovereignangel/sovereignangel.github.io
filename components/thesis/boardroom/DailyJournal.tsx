@@ -165,6 +165,17 @@ export default function DailyJournal() {
         await updateField('feedbackLoopClosed', parsed.revenue.feedbackLoopClosed)
       }
 
+      // Skill Building fields
+      if (parsed.skill.deliberatePracticeMinutes != null && isEnabled('skill.practice')) {
+        await updateField('deliberatePracticeMinutes', parsed.skill.deliberatePracticeMinutes)
+      }
+      if (parsed.skill.newTechniqueApplied != null && isEnabled('skill.technique')) {
+        await updateField('newTechniqueApplied', parsed.skill.newTechniqueApplied)
+      }
+      if (parsed.skill.automationCreated != null && isEnabled('skill.automation')) {
+        await updateField('automationCreated', parsed.skill.automationCreated)
+      }
+
       // PsyCap fields
       if (parsed.psyCap.hope != null && isEnabled('psycap.hope')) {
         await updateField('psyCapHope', parsed.psyCap.hope)
@@ -301,6 +312,8 @@ export default function DailyJournal() {
     parsed.network.meetingsBooked != null ||
     parsed.revenue.revenueAsksCount != null || parsed.revenue.revenueThisSession != null ||
     parsed.revenue.feedbackLoopClosed != null ||
+    parsed.skill.deliberatePracticeMinutes != null || parsed.skill.newTechniqueApplied != null ||
+    parsed.skill.automationCreated != null ||
     parsed.psyCap.hope != null || parsed.psyCap.efficacy != null ||
     parsed.psyCap.resilience != null || parsed.psyCap.optimism != null ||
     parsed.cadenceCompleted.length > 0 ||
@@ -519,6 +532,22 @@ export default function DailyJournal() {
                   enabled={isEnabled('revenue.feedbackLoop')}
                   onToggle={() => toggle('revenue.feedbackLoop')}
                 />
+              )}
+            </ResultSection>
+          )}
+
+          {/* Skill Building */}
+          {(parsed.skill.deliberatePracticeMinutes != null || parsed.skill.newTechniqueApplied != null ||
+            parsed.skill.automationCreated != null) && (
+            <ResultSection title="Skill Building">
+              {parsed.skill.deliberatePracticeMinutes != null && (
+                <ToggleRow label="Practice" value={`${parsed.skill.deliberatePracticeMinutes}m`} enabled={isEnabled('skill.practice')} onToggle={() => toggle('skill.practice')} />
+              )}
+              {parsed.skill.newTechniqueApplied != null && (
+                <ToggleRow label="New Technique" value={parsed.skill.newTechniqueApplied ? 'Yes' : 'No'} enabled={isEnabled('skill.technique')} onToggle={() => toggle('skill.technique')} />
+              )}
+              {parsed.skill.automationCreated != null && (
+                <ToggleRow label="Automation" value={parsed.skill.automationCreated ? 'Yes' : 'No'} enabled={isEnabled('skill.automation')} onToggle={() => toggle('skill.automation')} />
               )}
             </ResultSection>
           )}

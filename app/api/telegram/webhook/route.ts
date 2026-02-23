@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { parseTelegramMessage, type TelegramUpdate } from '@/lib/telegram-parser'
 import { parseJournalEntry, transcribeAndParseVoiceNote, parsePrediction, parseVentureIdea, type ParsedJournalEntry } from '@/lib/ai-extraction'
+import { computeReward } from '@/lib/reward'
+import { DEFAULT_SETTINGS } from '@/lib/constants'
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN
 
@@ -143,6 +145,112 @@ function buildJournalReply(parsed: ParsedJournalEntry): string {
   return lines.join('\n')
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function buildGapsSection(log: Record<string, any>): string {
+  const gaps: { symbol: string; hint: string }[] = []
+
+  // GE — Energy
+  const hasEnergy = (log.sleepHours > 0) ||
+    (log.trainingTypes?.length > 0) ||
+    (log.bodyFelt && log.bodyFelt !== 'neutral') ||
+    (log.nervousSystemState && log.nervousSystemState !== 'regulated')
+  if (!hasEnergy) gaps.push({ symbol: 'GE', hint: 'sleep hours, training, body state' })
+
+  // GI — Intelligence
+  const hasIntelligence =
+    (log.problems?.some((p: { problem?: string }) => p.problem?.trim())) ||
+    (log.problemSelected?.trim())
+  if (!hasIntelligence) gaps.push({ symbol: 'GI', hint: 'problems spotted, problem selected' })
+
+  // GVC — Output
+  const hasOutput = (log.whatShipped?.trim()) || (log.focusHoursActual > 0)
+  if (!hasOutput) gaps.push({ symbol: 'GVC', hint: 'focus hours, what you shipped' })
+
+  // κ — Capture
+  const hasCapture = (log.revenueAsksCount > 0) || (log.revenueThisSession > 0)
+  if (!hasCapture) gaps.push({ symbol: 'κ', hint: 'revenue asks, money earned' })
+
+  // GD — Discovery
+  const hasDiscovery = (log.discoveryConversationsCount > 0) ||
+    (log.externalSignalsReviewed > 0) || (log.insightsExtracted > 0)
+  if (!hasDiscovery) gaps.push({ symbol: 'GD', hint: 'conversations, signals reviewed, insights' })
+
+  // GN — Network
+  const hasNetwork = (log.warmIntrosMade > 0) || (log.warmIntrosReceived > 0) ||
+    (log.meetingsBooked > 0) || (log.publicPostsCount > 0) || (log.inboundInquiries > 0)
+  if (!hasNetwork) gaps.push({ symbol: 'GN', hint: 'intros, meetings, posts, inbound' })
+
+  // J — Judgment
+  const hasJudgment = (log.psyCapHope > 0) || (log.psyCapEfficacy > 0) ||
+    (log.psyCapResilience > 0) || (log.psyCapOptimism > 0)
+  if (!hasJudgment) gaps.push({ symbol: 'J', hint: 'PsyCap (hope, efficacy, resilience, optimism)' })
+
+  // Σ — Skill
+  const hasSkill = (log.deliberatePracticeMinutes > 0) ||
+    log.newTechniqueApplied || log.automationCreated
+  if (!hasSkill) gaps.push({ symbol: 'Σ', hint: 'practice minutes, new technique, automation' })
+
+  if (gaps.length === 0) {
+    return '\n\n_All 8 components touched today._'
+  }
+
+  const lines = [`\n\n*Still at floor (${gaps.length}/8):*`]
+  for (const g of gaps) {
+    lines.push(`  ${g.symbol} — ${g.hint}`)
+  }
+  return lines.join('\n')
+}
+
+function appendJournalText(existing: string, newText: string): string {
+  const now = new Date()
+  const timeStr = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })
+  return existing
+    ? `${existing}\n\n--- ${timeStr} ---\n${newText}`
+    : `--- ${timeStr} ---\n${newText}`
+}
+
+async function computeAndSaveReward(
+  adminDb: FirebaseFirestore.Firestore,
+  uid: string,
+  today: string,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  fullLog: Record<string, any>
+): Promise<{ score: number; delta: number | null }> {
+  // Fetch user settings
+  const userDoc = await adminDb.collection('users').doc(uid).get()
+  const userData = userDoc.data()
+  const settings = userData?.settings ?? DEFAULT_SETTINGS
+
+  // Fetch recent logs (last 7 days) for GVC recency + delta
+  const logsSnap = await adminDb.collection('users').doc(uid).collection('daily_logs')
+    .orderBy('__name__', 'desc').limit(8).get()
+  const recentLogs = logsSnap.docs
+    .filter(d => d.id !== today)
+    .map(d => ({ date: d.id, ...d.data() }))
+
+  // Fetch active projects for optionality + fragmentation
+  const projectsSnap = await adminDb.collection('users').doc(uid).collection('projects')
+    .where('status', 'in', ['active', 'backup', 'optionality']).get()
+  const projects = projectsSnap.docs.map(d => ({ id: d.id, ...d.data() }))
+
+  // Compute reward
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const reward = computeReward(fullLog as any, settings, { recentLogs: recentLogs as any[], projects: projects as any[] })
+
+  // Compute delta from yesterday
+  const yesterdayLog = recentLogs[0] // most recent non-today log
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const yesterdayScore = (yesterdayLog as any)?.rewardScore?.score
+  const delta = yesterdayScore != null ? Math.round((reward.score - yesterdayScore) * 10) / 10 : null
+  const rewardWithDelta = { ...reward, delta }
+
+  // Save reward score back to log
+  const logRef = adminDb.collection('users').doc(uid).collection('daily_logs').doc(today)
+  await logRef.set({ rewardScore: rewardWithDelta }, { merge: true })
+
+  return { score: reward.score, delta }
+}
+
 async function handleJournal(uid: string, text: string, chatId: number) {
   const adminDb = await getAdminDb()
   const today = getTodayKey()
@@ -154,10 +262,16 @@ async function handleJournal(uid: string, text: string, chatId: number) {
     // AI parse the journal text
     const parsed = await parseJournalEntry(text)
 
+    // Read existing log to append journal text (not overwrite)
+    const logRef = adminDb.collection('users').doc(uid).collection('daily_logs').doc(today)
+    const existingSnap = await logRef.get()
+    const existingLog = existingSnap.data() || {}
+    const newJournal = appendJournalText(existingLog.journalEntry || '', text)
+
     // Build daily log update from parsed data
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const logUpdate: Record<string, any> = {
-      journalEntry: text,
+      journalEntry: newJournal,
       updatedAt: new Date(),
     }
 
@@ -195,7 +309,6 @@ async function handleJournal(uid: string, text: string, chatId: number) {
     if (parsed.cadenceCompleted.length > 0) logUpdate.cadenceCompleted = parsed.cadenceCompleted
 
     // Save to daily log (merge to avoid overwriting existing fields)
-    const logRef = adminDb.collection('users').doc(uid).collection('daily_logs').doc(today)
     await logRef.set(logUpdate, { merge: true })
 
     // Create decisions
@@ -285,13 +398,26 @@ async function handleJournal(uid: string, text: string, chatId: number) {
       })
     }
 
-    // Reply with summary of all actions
-    await sendTelegramReply(chatId, buildJournalReply(parsed))
+    // Read back full merged log to detect gaps + compute reward
+    const fullLogSnap = await logRef.get()
+    const fullLog = fullLogSnap.data() || {}
+    const gapsSection = buildGapsSection(fullLog)
+
+    // Compute reward score server-side and save it
+    const { score, delta } = await computeAndSaveReward(adminDb, uid, today, fullLog)
+    const deltaStr = delta != null ? (delta >= 0 ? ` (+${delta})` : ` (${delta})`) : ''
+    const scoreLine = `\n\n*g* = ${score.toFixed(1)}${deltaStr}`
+
+    // Reply with summary + score + gaps
+    await sendTelegramReply(chatId, buildJournalReply(parsed) + scoreLine + gapsSection)
   } catch (error) {
     console.error('Journal parsing error:', error)
-    // Still save the raw text even if AI parsing fails
+    // Still save the raw text even if AI parsing fails (also append)
     const logRef = adminDb.collection('users').doc(uid).collection('daily_logs').doc(today)
-    await logRef.set({ journalEntry: text, updatedAt: new Date() }, { merge: true })
+    const existingSnap = await logRef.get()
+    const existingJournal = existingSnap.data()?.journalEntry || ''
+    const newJournal = appendJournalText(existingJournal, text)
+    await logRef.set({ journalEntry: newJournal, updatedAt: new Date() }, { merge: true })
     await sendTelegramReply(chatId, `Journal text saved, but AI parsing failed.\n\n_${error instanceof Error ? error.message : 'Unknown error'}_`)
   }
 }
@@ -301,9 +427,15 @@ async function handleJournalFromVoice(uid: string, transcript: string, parsed: P
   const today = getTodayKey()
 
   try {
+    // Read existing log to append journal text (not overwrite)
+    const logRef = adminDb.collection('users').doc(uid).collection('daily_logs').doc(today)
+    const existingSnap = await logRef.get()
+    const existingLog = existingSnap.data() || {}
+    const newJournal = appendJournalText(existingLog.journalEntry || '', transcript)
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const logUpdate: Record<string, any> = {
-      journalEntry: transcript,
+      journalEntry: newJournal,
       updatedAt: new Date(),
     }
 
@@ -340,7 +472,6 @@ async function handleJournalFromVoice(uid: string, transcript: string, parsed: P
     // Cadence
     if (parsed.cadenceCompleted.length > 0) logUpdate.cadenceCompleted = parsed.cadenceCompleted
 
-    const logRef = adminDb.collection('users').doc(uid).collection('daily_logs').doc(today)
     await logRef.set(logUpdate, { merge: true })
 
     // Create decisions
@@ -401,14 +532,28 @@ async function handleJournalFromVoice(uid: string, transcript: string, parsed: P
       })
     }
 
-    // Reply with transcript + structured summary
+    // Read back full merged log to detect gaps + compute reward
+    const fullLogSnap = await logRef.get()
+    const fullLog = fullLogSnap.data() || {}
+    const gapsSection = buildGapsSection(fullLog)
+
+    // Compute reward score server-side and save it
+    const { score, delta } = await computeAndSaveReward(adminDb, uid, today, fullLog)
+    const deltaStr = delta != null ? (delta >= 0 ? ` (+${delta})` : ` (${delta})`) : ''
+    const scoreLine = `\n\n*g* = ${score.toFixed(1)}${deltaStr}`
+
+    // Reply with transcript + structured summary + score + gaps
     const journalReply = buildJournalReply(parsed)
-    const fullReply = `*Transcript:*\n_"${transcript}"_\n\n${journalReply}`
+    const fullReply = `*Transcript:*\n_"${transcript}"_\n\n${journalReply}${scoreLine}${gapsSection}`
     await sendTelegramReply(chatId, fullReply)
   } catch (error) {
     console.error('Voice journal save error:', error)
+    // Append even on failure
     const logRef = adminDb.collection('users').doc(uid).collection('daily_logs').doc(today)
-    await logRef.set({ journalEntry: transcript, updatedAt: new Date() }, { merge: true })
+    const existingSnap = await logRef.get()
+    const existingJournal = existingSnap.data()?.journalEntry || ''
+    const newJournal = appendJournalText(existingJournal, transcript)
+    await logRef.set({ journalEntry: newJournal, updatedAt: new Date() }, { merge: true })
     await sendTelegramReply(chatId, `*Transcript:*\n_"${transcript}"_\n\nJournal text saved, but structured parsing failed.\n\n_${error instanceof Error ? error.message : 'Unknown error'}_`)
   }
 }

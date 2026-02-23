@@ -45,7 +45,9 @@ export async function saveVenture(uid: string, data: Partial<Venture>): Promise<
   await setDoc(ref, {
     ...data,
     stage: data.stage || 'idea',
+    prd: data.prd ?? null,
     build: data.build || DEFAULT_BUILD,
+    iterations: data.iterations || [],
     linkedProjectId: data.linkedProjectId ?? null,
     notes: data.notes || '',
     score: data.score ?? null,

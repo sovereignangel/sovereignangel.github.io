@@ -15,7 +15,7 @@ const COMPONENT_BARS = [
   { key: 'ĠVC', field: 'gvc' as const, color: 'bg-navy-light', label: 'Value Creation', invert: false },
   { key: 'κ', field: 'kappa' as const, color: 'bg-gold', label: 'Capture Ratio', invert: false },
   { key: '𝒪', field: 'optionality' as const, color: 'bg-ink-light', label: 'Optionality', invert: false },
-  { key: 'Θ', field: 'theta' as const, color: 'bg-navy', label: 'Thesis Coherence', invert: false },
+  { key: 'Σ', field: 'sigma' as const, color: 'bg-navy', label: 'Skill Building', invert: false },
   { key: '𝓕', field: 'fragmentation' as const, color: 'bg-red-ink', label: 'Fragmentation', invert: true },
 ]
 

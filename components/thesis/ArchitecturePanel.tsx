@@ -39,7 +39,7 @@ const REWARD_PATH_GROUPS: Record<string, string[]> = {
   kappa: ['revenueAsks', 'revenueSignal', 'feedbackLoop', 'kappa', 'geoMean', 'finalCalc', 'score'],
   gd: ['conversations', 'extSignals', 'insights', 'gd', 'geoMean', 'finalCalc', 'score'],
   optionality: ['projectAlloc', 'optionality', 'geoMean', 'finalCalc', 'score'],
-  theta: ['pillars', 'theta', 'finalCalc', 'score'],
+  sigma: ['practice', 'technique', 'automation', 'sigma', 'geoMean', 'finalCalc', 'score'],
   fragmentation: ['projectAlloc', 'fragmentation', 'finalCalc', 'score'],
   gate: ['nsState', 'gate', 'finalCalc', 'score'],
 }
@@ -74,7 +74,9 @@ const REWARD_NODES: NodeDef[] = [
   { id: 'conversations', label: 'Discovery Calls', sublabel: 'Target: 2/day', column: 0, type: 'input', group: 'gd', navigateTo: '/thesis/intelligence', liveValueKey: 'discoveryConversationsCount' },
   { id: 'extSignals', label: 'External Signals', sublabel: 'Target: 5/day', column: 0, type: 'input', group: 'gd', navigateTo: '/thesis/intelligence', liveValueKey: 'externalSignalsReviewed' },
   { id: 'insights', label: 'Insights Extracted', sublabel: 'From conversations', column: 0, type: 'input', group: 'gd', navigateTo: '/thesis/intelligence', liveValueKey: 'insightsExtracted' },
-  { id: 'pillars', label: 'Pillars Touched', sublabel: 'AI / Markets / Mind', column: 0, type: 'input', group: 'theta', navigateTo: '/thesis/coherence' },
+  { id: 'practice', label: 'Deliberate Practice', sublabel: 'Target: 30 min/day', column: 0, type: 'input', group: 'sigma', navigateTo: '/thesis/coherence', liveValueKey: 'deliberatePracticeMinutes', liveFormatter: (v) => `${v}m` },
+  { id: 'technique', label: 'New Technique', sublabel: 'Applied today?', column: 0, type: 'input', group: 'sigma', navigateTo: '/thesis/coherence' },
+  { id: 'automation', label: 'Automation Created', sublabel: 'Leverage built?', column: 0, type: 'input', group: 'sigma', navigateTo: '/thesis/coherence' },
   { id: 'projectAlloc', label: 'Project Allocation', sublabel: 'Time % per project', column: 0, type: 'input', group: 'optionality', navigateTo: '/thesis/coherence' },
 
   // Column 1 — Component Scores (0-1)
@@ -84,13 +86,13 @@ const REWARD_NODES: NodeDef[] = [
   { id: 'kappa', label: 'Capture Ratio', symbol: 'K', sublabel: 'Asks + revenue + feedback', column: 1, type: 'component', navigateTo: '/thesis/output', liveValueKey: 'comp_kappa' },
   { id: 'gd', label: 'Discovery', symbol: 'GD', sublabel: 'Conversations + signals + insights', column: 1, type: 'component', navigateTo: '/thesis/intelligence', liveValueKey: 'comp_gd' },
   { id: 'optionality', label: 'Optionality', symbol: 'O', sublabel: '1 - HHI + backup bonus', column: 1, type: 'component', navigateTo: '/thesis/coherence', liveValueKey: 'comp_optionality' },
-  { id: 'theta', label: 'Thesis Coherence', symbol: 'Theta', sublabel: '7-day rolling pillar count', column: 1, type: 'component', navigateTo: '/thesis/coherence', liveValueKey: 'comp_theta' },
+  { id: 'sigma', label: 'Skill Building', symbol: 'Sigma', sublabel: 'Practice + technique + automation', column: 1, type: 'component', navigateTo: '/thesis/coherence', liveValueKey: 'comp_sigma' },
   { id: 'fragmentation', label: 'Fragmentation Tax', symbol: 'F', sublabel: 'KL divergence penalty', column: 1, type: 'component', navigateTo: '/thesis/coherence', liveValueKey: 'comp_fragmentation' },
   { id: 'gate', label: 'NS Gate', symbol: 'g(v)', sublabel: '1.0 / 0.7 / 0.3', column: 1, type: 'component', navigateTo: '/thesis', liveValueKey: 'comp_gate' },
 
   // Column 2 — Aggregation
-  { id: 'geoMean', label: 'Geometric Mean', sublabel: '(GE * GI * GVC * K * O * GD) ^ 1/6', column: 2, type: 'operator' },
-  { id: 'finalCalc', label: 'Final Computation', sublabel: 'gate * geoMean - F*0.3 + Theta*0.15', column: 2, type: 'operator' },
+  { id: 'geoMean', label: 'Geometric Mean', sublabel: '(GE*GI*GVC*K*O*GD*GN*J*Σ) ^ 1/9', column: 2, type: 'operator' },
+  { id: 'finalCalc', label: 'Final Computation', sublabel: 'gate * geoMean - F*0.3', column: 2, type: 'operator' },
 
   // Column 3 — Output
   { id: 'score', label: 'Reward Score', symbol: 'g*', sublabel: 'Range: 0 - 10', column: 3, type: 'output', liveValueKey: 'score' },
@@ -102,13 +104,14 @@ const REWARD_CONNECTIONS: ConnectionDef[] = [
   { from: 'focusHours', to: 'gvc' }, { from: 'shipping', to: 'gvc' }, { from: 'speed', to: 'gvc' },
   { from: 'revenueAsks', to: 'kappa' }, { from: 'revenueSignal', to: 'kappa' }, { from: 'feedbackLoop', to: 'kappa' },
   { from: 'conversations', to: 'gd' }, { from: 'extSignals', to: 'gd' }, { from: 'insights', to: 'gd' },
-  { from: 'pillars', to: 'theta' },
+  { from: 'practice', to: 'sigma' }, { from: 'technique', to: 'sigma' }, { from: 'automation', to: 'sigma' },
   { from: 'projectAlloc', to: 'optionality' }, { from: 'projectAlloc', to: 'fragmentation' },
   { from: 'nsState', to: 'gate' },
   { from: 'ge', to: 'geoMean' }, { from: 'gi', to: 'geoMean' }, { from: 'gvc', to: 'geoMean' },
   { from: 'kappa', to: 'geoMean' }, { from: 'gd', to: 'geoMean' }, { from: 'optionality', to: 'geoMean' },
+  { from: 'sigma', to: 'geoMean' },
   { from: 'geoMean', to: 'finalCalc' }, { from: 'gate', to: 'finalCalc' },
-  { from: 'fragmentation', to: 'finalCalc' }, { from: 'theta', to: 'finalCalc' },
+  { from: 'fragmentation', to: 'finalCalc' },
   { from: 'finalCalc', to: 'score' },
 ]
 
@@ -137,7 +140,7 @@ const SYSTEM_NODES: NodeDef[] = [
   { id: 'energyGauge', label: 'Energy Tab', symbol: 'GE', sublabel: 'Gauge + Dial', column: 3, type: 'ui', navigateTo: '/thesis' },
   { id: 'outputGauge', label: 'Output Tab', symbol: 'GVC+K', sublabel: 'Gauge + Dial', column: 3, type: 'ui', navigateTo: '/thesis/output' },
   { id: 'intelligenceGauge', label: 'Intelligence Tab', symbol: 'GI', sublabel: 'Gauge + Dial + Inboxes', column: 3, type: 'ui', navigateTo: '/thesis/intelligence' },
-  { id: 'coherenceGauge', label: 'Coherence Tab', symbol: 'Theta', sublabel: 'Gauge + Dial', column: 3, type: 'ui', navigateTo: '/thesis/coherence' },
+  { id: 'coherenceGauge', label: 'Coherence Tab', symbol: 'Σ', sublabel: 'Gauge + Dial', column: 3, type: 'ui', navigateTo: '/thesis/coherence' },
   { id: 'thesisNav', label: 'ThesisNav', symbol: 'g*', sublabel: 'Live score readout', column: 3, type: 'ui' },
 ]
 
@@ -187,7 +190,7 @@ const INPUT_GROUP_LABELS: Record<string, { label: string; color: string }> = {
   gvc: { label: 'Value Creation', color: 'text-ink' },
   kappa: { label: 'Capture', color: 'text-ink' },
   gd: { label: 'Discovery', color: 'text-ink' },
-  theta: { label: 'Coherence', color: 'text-ink' },
+  sigma: { label: 'Skill Building', color: 'text-ink' },
   optionality: { label: 'Portfolio', color: 'text-ink' },
 }
 

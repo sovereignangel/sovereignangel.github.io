@@ -1,8 +1,32 @@
 import type { ThesisPillar } from './shared'
 
-export type VentureStage = 'idea' | 'specced' | 'building' | 'deployed' | 'archived'
+export type VentureStage = 'idea' | 'specced' | 'validated' | 'prd_draft' | 'prd_approved' | 'building' | 'deployed' | 'archived'
 export type VentureBuildStatus = 'pending' | 'generating' | 'pushing' | 'deploying' | 'live' | 'failed'
 export type VentureCategory = 'saas' | 'api' | 'marketplace' | 'tool' | 'content' | 'service' | 'other'
+export type VenturePRDPriority = 'P0' | 'P1' | 'P2'
+
+export interface VenturePRDFeature {
+  name: string
+  description: string
+  priority: VenturePRDPriority
+}
+
+export interface VenturePRD {
+  projectName: string                // kebab-case for repo/subdomain
+  features: VenturePRDFeature[]
+  dataSchema: string                 // Markdown description of data model
+  userFlows: string[]                // Step-by-step user journeys
+  designNotes: string                // Armstrong aesthetic + project-specific notes
+  successMetrics: string[]           // How to measure if this works
+  estimatedBuildMinutes: number      // AI estimate
+  version: number                    // Increments with feedback
+  feedbackHistory: string[]          // User feedback messages
+}
+
+export interface VentureIteration {
+  request: string
+  completedAt: unknown               // Timestamp
+}
 
 export interface VentureSpec {
   name: string                     // Short product name
@@ -46,8 +70,10 @@ export interface Venture {
   rawInput: string                 // Original text/voice transcript
   inputSource: 'telegram_text' | 'telegram_voice' | 'dashboard'
   spec: VentureSpec
+  prd: VenturePRD | null           // null until PRD is generated
   build: VentureBuild
   stage: VentureStage
+  iterations: VentureIteration[]   // History of iteration requests
 
   // Linking
   linkedProjectId: string | null   // If promoted to a full Project
