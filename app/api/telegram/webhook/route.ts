@@ -8,11 +8,16 @@ const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN
 
 async function sendTelegramReply(chatId: number, text: string) {
   if (!BOT_TOKEN) return
-  await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+  // Send without parse_mode first (plain text is reliable)
+  // Markdown parse_mode silently drops messages if formatting is invalid
+  const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'Markdown' }),
+    body: JSON.stringify({ chat_id: chatId, text }),
   })
+  if (!res.ok) {
+    console.error('Telegram sendMessage failed:', await res.text())
+  }
 }
 
 async function getAdminDb() {
@@ -147,56 +152,64 @@ function buildJournalReply(parsed: ParsedJournalEntry): string {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function buildGapsSection(log: Record<string, any>): string {
-  const gaps: { symbol: string; hint: string }[] = []
+  type Gap = { symbol: string; hint: string }
+  const bodyGaps: Gap[] = []
+  const brainGaps: Gap[] = []
+  const buildGaps: Gap[] = []
 
-  // GE — Energy
+  // ── Body ──
   const hasEnergy = (log.sleepHours > 0) ||
     (log.trainingTypes?.length > 0) ||
     (log.bodyFelt && log.bodyFelt !== 'neutral') ||
     (log.nervousSystemState && log.nervousSystemState !== 'regulated')
-  if (!hasEnergy) gaps.push({ symbol: 'GE', hint: 'sleep hours, training, body state' })
+  if (!hasEnergy) bodyGaps.push({ symbol: 'GE', hint: 'sleep, training, body state' })
 
-  // GI — Intelligence
+  const hasJudgment = (log.psyCapHope > 0) || (log.psyCapEfficacy > 0) ||
+    (log.psyCapResilience > 0) || (log.psyCapOptimism > 0)
+  if (!hasJudgment) bodyGaps.push({ symbol: 'J', hint: 'PsyCap (hope, efficacy, resilience, optimism)' })
+
+  // ── Brain ──
   const hasIntelligence =
     (log.problems?.some((p: { problem?: string }) => p.problem?.trim())) ||
     (log.problemSelected?.trim())
-  if (!hasIntelligence) gaps.push({ symbol: 'GI', hint: 'problems spotted, problem selected' })
+  if (!hasIntelligence) brainGaps.push({ symbol: 'GI', hint: 'problems spotted, problem selected' })
 
-  // GVC — Output
-  const hasOutput = (log.whatShipped?.trim()) || (log.focusHoursActual > 0)
-  if (!hasOutput) gaps.push({ symbol: 'GVC', hint: 'focus hours, what you shipped' })
-
-  // κ — Capture
-  const hasCapture = (log.revenueAsksCount > 0) || (log.revenueThisSession > 0)
-  if (!hasCapture) gaps.push({ symbol: 'κ', hint: 'revenue asks, money earned' })
-
-  // GD — Discovery
   const hasDiscovery = (log.discoveryConversationsCount > 0) ||
     (log.externalSignalsReviewed > 0) || (log.insightsExtracted > 0)
-  if (!hasDiscovery) gaps.push({ symbol: 'GD', hint: 'conversations, signals reviewed, insights' })
+  if (!hasDiscovery) brainGaps.push({ symbol: 'GD', hint: 'conversations, signals, insights' })
 
-  // GN — Network
-  const hasNetwork = (log.warmIntrosMade > 0) || (log.warmIntrosReceived > 0) ||
-    (log.meetingsBooked > 0) || (log.publicPostsCount > 0) || (log.inboundInquiries > 0)
-  if (!hasNetwork) gaps.push({ symbol: 'GN', hint: 'intros, meetings, posts, inbound' })
-
-  // J — Judgment
-  const hasJudgment = (log.psyCapHope > 0) || (log.psyCapEfficacy > 0) ||
-    (log.psyCapResilience > 0) || (log.psyCapOptimism > 0)
-  if (!hasJudgment) gaps.push({ symbol: 'J', hint: 'PsyCap (hope, efficacy, resilience, optimism)' })
-
-  // Σ — Skill
   const hasSkill = (log.deliberatePracticeMinutes > 0) ||
     log.newTechniqueApplied || log.automationCreated
-  if (!hasSkill) gaps.push({ symbol: 'Σ', hint: 'practice minutes, new technique, automation' })
+  if (!hasSkill) brainGaps.push({ symbol: 'Σ', hint: 'practice minutes, technique, automation' })
 
-  if (gaps.length === 0) {
+  // ── Build ──
+  const hasOutput = (log.whatShipped?.trim()) || (log.focusHoursActual > 0)
+  if (!hasOutput) buildGaps.push({ symbol: 'GVC', hint: 'focus hours, what you shipped' })
+
+  const hasCapture = (log.revenueAsksCount > 0) || (log.revenueThisSession > 0)
+  if (!hasCapture) buildGaps.push({ symbol: 'κ', hint: 'revenue asks, money earned' })
+
+  const hasNetwork = (log.warmIntrosMade > 0) || (log.warmIntrosReceived > 0) ||
+    (log.meetingsBooked > 0) || (log.publicPostsCount > 0) || (log.inboundInquiries > 0)
+  if (!hasNetwork) buildGaps.push({ symbol: 'GN', hint: 'intros, meetings, posts, inbound' })
+
+  const totalGaps = bodyGaps.length + brainGaps.length + buildGaps.length
+  if (totalGaps === 0) {
     return '\n\n_All 8 components touched today._'
   }
 
-  const lines = [`\n\n*Still at floor (${gaps.length}/8):*`]
-  for (const g of gaps) {
-    lines.push(`  ${g.symbol} — ${g.hint}`)
+  const lines = [`\n\n*Still at floor (${totalGaps}/8):*`]
+  if (bodyGaps.length > 0) {
+    lines.push(`\n🟢 *Body* (${bodyGaps.length})`)
+    for (const g of bodyGaps) lines.push(`  ${g.symbol} — ${g.hint}`)
+  }
+  if (brainGaps.length > 0) {
+    lines.push(`\n🔵 *Brain* (${brainGaps.length})`)
+    for (const g of brainGaps) lines.push(`  ${g.symbol} — ${g.hint}`)
+  }
+  if (buildGaps.length > 0) {
+    lines.push(`\n🟤 *Build* (${buildGaps.length})`)
+    for (const g of buildGaps) lines.push(`  ${g.symbol} — ${g.hint}`)
   }
   return lines.join('\n')
 }
@@ -1390,6 +1403,14 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     console.error('Telegram webhook error:', error)
     const msg = error instanceof Error ? error.message : String(error)
+    // Always try to reply so the user knows something went wrong
+    try {
+      const update: TelegramUpdate = await req.clone().json()
+      const chatId = update.message?.chat?.id
+      if (chatId) {
+        await sendTelegramReply(chatId, `Error: ${msg.slice(0, 200)}`)
+      }
+    } catch { /* ignore reply failure */ }
     return NextResponse.json({ error: 'Internal error', detail: msg }, { status: 500 })
   }
 }
