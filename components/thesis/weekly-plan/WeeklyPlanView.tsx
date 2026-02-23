@@ -118,7 +118,7 @@ export default function WeeklyPlanView() {
   // No plan exists — show creation prompt
   if (!displayPlan) {
     return (
-      <div className="h-full grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-2 min-h-0">
+      <div className="h-full grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-2 min-h-0">
         <div className="flex flex-col items-center justify-center p-6 bg-cream/90 backdrop-blur-sm rounded-sm">
           <div className="text-center max-w-[400px]">
             <div className="font-mono text-[9px] tracking-[3px] text-ink-muted uppercase mb-2">
@@ -167,35 +167,39 @@ export default function WeeklyPlanView() {
             onActivate={handleActivate}
             onGenerateRetro={handleGenerateRetro}
             onGenerateNextWeek={handleGenerateNextWeek}
-            onSeedPlan={handleSeedPlan}
-          />
+            />
         </div>
       </div>
     )
   }
 
   return (
-    <div className="h-full grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-2 min-h-0">
-      {/* Left Panel */}
+    <div className="h-full grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-2 min-h-0">
+      {/* Left Panel — 2/3 width */}
       <div className="flex flex-col min-h-0 p-3 bg-cream/90 backdrop-blur-sm rounded-sm">
         <WeeklyPlanHeader plan={displayPlan} />
         <WeeklyProjectBar projects={displayPlan.projects} />
 
-        {/* Tab navigation */}
-        <div className="flex gap-1 border-b border-rule mt-3 shrink-0">
-          {TABS.map(tab => (
-            <button
-              key={tab.key}
-              onClick={() => handleTabChange(tab.key)}
-              className={`font-serif text-[13px] font-medium px-3 py-1 transition-colors ${
-                activeTab === tab.key
-                  ? 'text-burgundy font-semibold border-b-2 border-burgundy -mb-px'
-                  : 'text-ink-muted hover:text-ink'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
+        {/* Equation + Tabs row */}
+        <div className="flex items-end justify-between mt-2 shrink-0 border-b border-rule">
+          <div className="flex gap-1">
+            {TABS.map(tab => (
+              <button
+                key={tab.key}
+                onClick={() => handleTabChange(tab.key)}
+                className={`font-serif text-[13px] font-medium px-3 py-1 transition-colors ${
+                  activeTab === tab.key
+                    ? 'text-burgundy font-semibold border-b-2 border-burgundy -mb-px'
+                    : 'text-ink-muted hover:text-ink'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+          <p className="font-mono text-[8px] text-ink-faint pb-1.5 hidden lg:block">
+            g* = 𝔼[ log GE + log ΔGI + log ΔGV + log κ + log 𝒪 ] − fragmentation + coherence
+          </p>
         </div>
 
         {/* Tab content */}
@@ -220,22 +224,9 @@ export default function WeeklyPlanView() {
             <PlanLedger plans={pastPlans} onLoadMore={loadPastPlans} />
           )}
         </div>
-
-        {/* Footer */}
-        <div className="shrink-0 mt-3 pt-3 border-t-2 border-burgundy text-center">
-          <p className="font-serif text-[13px] text-burgundy italic">
-            You&apos;re not building products. You&apos;re building the machine that builds products.
-          </p>
-          <p className="font-mono text-[9px] text-ink-muted mt-1.5 tracking-[0.5px]">
-            g* = 𝔼[ log GE + log ΔGI + log ΔGV + log κ + log 𝒪 ] − fragmentation + coherence
-          </p>
-          <p className="font-serif text-[13px] text-ink-muted mt-2 font-semibold tracking-[1px]">
-            Ship. Ask. Own.
-          </p>
-        </div>
       </div>
 
-      {/* Right Sidebar */}
+      {/* Right Sidebar — 1/3 width */}
       <div className="min-h-0 overflow-y-auto">
         <WeeklyPlanSidebar
           plan={displayPlan}
@@ -244,7 +235,6 @@ export default function WeeklyPlanView() {
           onActivate={handleActivate}
           onGenerateRetro={handleGenerateRetro}
           onGenerateNextWeek={handleGenerateNextWeek}
-          onSeedPlan={handleSeedPlan}
         />
       </div>
     </div>

@@ -913,8 +913,15 @@ async function handleApprove(uid: string, text: string, chatId: number) {
     const venture = ventureDoc.data()
     const vNum = venture.ventureNumber ? `#${venture.ventureNumber} ` : ''
 
-    if (num && venture.stage !== 'prd_draft') {
-      await sendTelegramReply(chatId, `${vNum}${venture.spec.name} is in "${venture.stage}" stage, not prd_draft.\n\nOnly prd_draft ventures can be approved.`)
+    // Must have a PRD to approve
+    if (!venture.prd) {
+      await sendTelegramReply(chatId, `${vNum}${venture.spec.name} has no PRD yet.\n\nUse /feedback ${venture.ventureNumber || ''} <text> to generate one.`)
+      return
+    }
+
+    // Already approved or beyond
+    if (venture.stage === 'prd_approved' || venture.stage === 'building' || venture.stage === 'deployed') {
+      await sendTelegramReply(chatId, `${vNum}${venture.spec.name} is already in "${venture.stage}" stage.`)
       return
     }
 
@@ -946,12 +953,15 @@ async function handleFeedback(uid: string, text: string, chatId: number) {
       return
     }
 
-    const ventureDoc = await findVentureByNumberOrStage(adminDb, uid, num, 'prd_draft')
+    // When a number is given, find by number (any stage). Otherwise find most recent prd_draft.
+    const ventureDoc = num
+      ? await findVentureByNumberOrStage(adminDb, uid, num, 'prd_draft')
+      : await findVentureByNumberOrStage(adminDb, uid, null, 'prd_draft')
 
     if (!ventureDoc) {
       await sendTelegramReply(chatId, num
         ? `Venture #${num} not found.`
-        : 'No PRD draft to send feedback on.\n\nUse /venture to create one first.')
+        : 'No venture to send feedback on.\n\nUse /venture to create one first.')
       return
     }
 
@@ -960,7 +970,10 @@ async function handleFeedback(uid: string, text: string, chatId: number) {
     const existingPrd = venture.prd
     const spec = venture.spec
 
-    await sendTelegramReply(chatId, `${vNum}Regenerating PRD with feedback...`)
+    const isNewPrd = !existingPrd
+    await sendTelegramReply(chatId, isNewPrd
+      ? `${vNum}Generating PRD with your feedback...`
+      : `${vNum}Regenerating PRD with feedback...`)
 
     // Append feedback to history
     const feedbackHistory = [...(existingPrd?.feedbackHistory || []), feedbackText]
@@ -978,17 +991,22 @@ async function handleFeedback(uid: string, text: string, chatId: number) {
     // Increment version
     newPrd.version = (existingPrd?.version || 0) + 1
 
-    await ventureDoc.ref.update({
+    // Update venture — also set stage to prd_draft if it wasn't already
+    const updateData: Record<string, unknown> = {
       prd: newPrd,
       updatedAt: new Date(),
-    })
+    }
+    if (venture.stage === 'idea' || venture.stage === 'specced' || venture.stage === 'validated') {
+      updateData.stage = 'prd_draft'
+    }
+    await ventureDoc.ref.update(updateData)
 
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || ''
     const deepLink = baseUrl ? `${baseUrl}/thesis/ventures?id=${ventureDoc.id}` : ''
     const ventureNum = venture.ventureNumber || ''
 
     const lines: string[] = [
-      `${vNum}PRD updated: ${spec.name} (v${newPrd.version})`,
+      `${vNum}${isNewPrd ? 'PRD generated' : 'PRD updated'}: ${spec.name} (v${newPrd.version})`,
       '',
       `Features (${newPrd.features.length}):`,
     ]
