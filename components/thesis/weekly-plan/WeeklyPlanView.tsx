@@ -251,6 +251,7 @@ export default function WeeklyPlanView() {
           onActivate={handleActivate}
           onGenerateRetro={handleGenerateRetro}
           onGenerateNextWeek={handleGenerateNextWeek}
+          onSeedPlan={handleSeedPlan}
         />
       </div>
     </div>
