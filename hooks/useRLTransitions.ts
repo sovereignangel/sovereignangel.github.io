@@ -21,7 +21,9 @@ export function useRLTransitions(days: number = 90) {
     setLoading(true)
     try {
       const logs = await getRecentDailyLogs(user.uid, days)
+      console.log(`[useRLTransitions] Fetched ${logs.length} logs, ${logs.filter(l => l.rewardScore).length} with rewardScore, ${logs.filter(l => l.rewardScore?.components).length} with components`)
       const trans = computeTransitions(logs)
+      console.log(`[useRLTransitions] Computed ${trans.length} transitions`)
       setTransitions(trans)
     } catch (err) {
       console.error('[useRLTransitions] Failed to load:', err)

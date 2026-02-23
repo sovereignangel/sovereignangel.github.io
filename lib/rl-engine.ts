@@ -15,17 +15,18 @@ import type {
 export function logToState(log: Partial<DailyLog>): RLState | null {
   const c = log.rewardScore?.components
   if (!c) return null
+  // Defensively default missing component values to 0
   return {
-    ge: c.ge,
-    gi: c.gi,
-    gvc: c.gvc,
-    kappa: c.kappa,
-    optionality: c.optionality,
-    gd: c.gd,
-    gn: c.gn,
-    j: c.j,
-    sigma: c.sigma,
-    gate: c.gate,
+    ge: c.ge ?? 0,
+    gi: c.gi ?? 0,
+    gvc: c.gvc ?? 0,
+    kappa: c.kappa ?? 0,
+    optionality: c.optionality ?? 0,
+    gd: c.gd ?? 0,
+    gn: c.gn ?? 0,
+    j: c.j ?? 0,
+    sigma: c.sigma ?? 0,
+    gate: c.gate ?? 1.0,
   }
 }
 

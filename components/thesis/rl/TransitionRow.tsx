@@ -24,7 +24,7 @@ interface TransitionRowProps {
 }
 
 export default function TransitionRow({ transition: t }: TransitionRowProps) {
-  const clusterInfo = STATE_CLUSTER_DISPLAY[t.cluster]
+  const clusterInfo = STATE_CLUSTER_DISPLAY[t.cluster] ?? { name: t.cluster, description: '' }
 
   return (
     <div className="flex items-center gap-2 px-2 py-1.5 border-b border-rule-light hover:bg-cream/50 transition-colors">
@@ -35,13 +35,16 @@ export default function TransitionRow({ transition: t }: TransitionRowProps) {
 
       {/* State heatmap (mini) */}
       <div className="flex gap-px shrink-0">
-        {COMPONENT_KEYS.map(key => (
-          <div
-            key={key}
-            className={`w-2.5 h-2.5 rounded-sm ${componentColor(t.state[key])}`}
-            title={`${key}: ${t.state[key].toFixed(2)}`}
-          />
-        ))}
+        {COMPONENT_KEYS.map(key => {
+          const val = t.state?.[key] ?? 0
+          return (
+            <div
+              key={key}
+              className={`w-2.5 h-2.5 rounded-sm ${componentColor(val)}`}
+              title={`${key}: ${val.toFixed(2)}`}
+            />
+          )
+        })}
       </div>
 
       {/* Cluster badge */}
@@ -62,18 +65,18 @@ export default function TransitionRow({ transition: t }: TransitionRowProps) {
 
       {/* Reward */}
       <span className={`font-mono text-[11px] font-semibold w-[36px] text-right shrink-0 ${
-        t.reward >= 7 ? 'text-green-ink' : t.reward >= 4 ? 'text-amber-ink' : 'text-red-ink'
+        (t.reward ?? 0) >= 7 ? 'text-green-ink' : (t.reward ?? 0) >= 4 ? 'text-amber-ink' : 'text-red-ink'
       }`}>
-        {t.reward.toFixed(1)}
+        {(t.reward ?? 0).toFixed(1)}
       </span>
 
       {/* TD Error */}
-      <span className={`font-mono text-[10px] font-medium w-[44px] text-right shrink-0 ${tdErrorColor(t.tdError)}`}>
-        {t.tdError !== null ? (t.tdError >= 0 ? '+' : '') + t.tdError.toFixed(2) : '\u2014'}
+      <span className={`font-mono text-[10px] font-medium w-[44px] text-right shrink-0 ${tdErrorColor(t.tdError ?? null)}`}>
+        {t.tdError != null ? (t.tdError >= 0 ? '+' : '') + t.tdError.toFixed(2) : '\u2014'}
       </span>
 
       {/* Gate indicator */}
-      {t.state.gate < 1.0 && (
+      {(t.state?.gate ?? 1.0) < 1.0 && (
         <span className="font-mono text-[8px] text-red-ink" title={`Gate: ${t.state.gate}`}>
           G{t.state.gate.toFixed(1)}
         </span>

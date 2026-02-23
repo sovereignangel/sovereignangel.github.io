@@ -16,6 +16,7 @@ export default function TransitionsView() {
     explorationRatio,
     filterAction,
     setFilterAction,
+    refresh,
   } = useRLTransitions(90)
 
   const { enrichedTransitions } = useRLValueFunction(transitions)
@@ -110,8 +111,19 @@ export default function TransitionsView() {
       </div>
 
       {transitions.length === 0 && (
-        <div className="text-center py-6 text-[11px] text-ink-muted font-sans">
-          No transitions yet. Start logging daily with actionType selected to build your transition history.
+        <div className="text-center py-6 space-y-2">
+          <div className="text-[11px] text-ink-muted font-sans">
+            No transitions found. Transitions require daily logs with computed reward scores.
+          </div>
+          <div className="text-[9px] text-ink-faint font-sans">
+            Check browser console for diagnostic info.
+          </div>
+          <button
+            onClick={() => refresh()}
+            className="font-serif text-[9px] font-medium px-2 py-1 rounded-sm border bg-burgundy text-paper border-burgundy"
+          >
+            Retry
+          </button>
         </div>
       )}
     </div>
