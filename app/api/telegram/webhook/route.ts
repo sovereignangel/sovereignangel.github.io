@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { parseTelegramMessage, type TelegramUpdate } from '@/lib/telegram-parser'
-import { parseJournalEntry, transcribeAndParseVoiceNote, parsePrediction, type ParsedJournalEntry } from '@/lib/ai-extraction'
+import { parseJournalEntry, transcribeAndParseVoiceNote, parsePrediction, parseVentureIdea, type ParsedJournalEntry } from '@/lib/ai-extraction'
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN
 
@@ -94,6 +94,15 @@ function buildJournalReply(parsed: ParsedJournalEntry): string {
     lines.push('', `*PsyCap:* ${psyParts.join(' | ')}`)
   }
 
+  // Skill Building
+  const skillParts: string[] = []
+  if (parsed.skill.deliberatePracticeMinutes != null) skillParts.push(`${parsed.skill.deliberatePracticeMinutes}m practice`)
+  if (parsed.skill.newTechniqueApplied) skillParts.push('new technique')
+  if (parsed.skill.automationCreated) skillParts.push('automation built')
+  if (skillParts.length > 0) {
+    lines.push('', `*Skill:* ${skillParts.join(' | ')}`)
+  }
+
   // Cadence
   if (parsed.cadenceCompleted.length > 0) {
     lines.push('', `*Cadence:* ${parsed.cadenceCompleted.join(', ')}`)
@@ -173,6 +182,10 @@ async function handleJournal(uid: string, text: string, chatId: number) {
     if (parsed.revenue.revenueThisSession != null) logUpdate.revenueThisSession = parsed.revenue.revenueThisSession
     if (parsed.revenue.revenueStreamType) logUpdate.revenueStreamType = parsed.revenue.revenueStreamType
     if (parsed.revenue.feedbackLoopClosed != null) logUpdate.feedbackLoopClosed = parsed.revenue.feedbackLoopClosed
+    // Skill Building
+    if (parsed.skill.deliberatePracticeMinutes != null) logUpdate.deliberatePracticeMinutes = parsed.skill.deliberatePracticeMinutes
+    if (parsed.skill.newTechniqueApplied != null) logUpdate.newTechniqueApplied = parsed.skill.newTechniqueApplied
+    if (parsed.skill.automationCreated != null) logUpdate.automationCreated = parsed.skill.automationCreated
     // PsyCap
     if (parsed.psyCap.hope != null) logUpdate.psyCapHope = parsed.psyCap.hope
     if (parsed.psyCap.efficacy != null) logUpdate.psyCapEfficacy = parsed.psyCap.efficacy
@@ -315,6 +328,10 @@ async function handleJournalFromVoice(uid: string, transcript: string, parsed: P
     if (parsed.revenue.revenueThisSession != null) logUpdate.revenueThisSession = parsed.revenue.revenueThisSession
     if (parsed.revenue.revenueStreamType) logUpdate.revenueStreamType = parsed.revenue.revenueStreamType
     if (parsed.revenue.feedbackLoopClosed != null) logUpdate.feedbackLoopClosed = parsed.revenue.feedbackLoopClosed
+    // Skill Building
+    if (parsed.skill.deliberatePracticeMinutes != null) logUpdate.deliberatePracticeMinutes = parsed.skill.deliberatePracticeMinutes
+    if (parsed.skill.newTechniqueApplied != null) logUpdate.newTechniqueApplied = parsed.skill.newTechniqueApplied
+    if (parsed.skill.automationCreated != null) logUpdate.automationCreated = parsed.skill.automationCreated
     // PsyCap
     if (parsed.psyCap.hope != null) logUpdate.psyCapHope = parsed.psyCap.hope
     if (parsed.psyCap.efficacy != null) logUpdate.psyCapEfficacy = parsed.psyCap.efficacy
@@ -526,6 +543,202 @@ async function handlePredict(uid: string, text: string, chatId: number) {
   }
 }
 
+async function handleVenture(uid: string, text: string, chatId: number) {
+  const adminDb = await getAdminDb()
+
+  await sendTelegramReply(chatId, '_Analyzing venture idea..._')
+
+  try {
+    // Fetch user's active project names for context
+    const projectsSnap = await adminDb.collection('users').doc(uid).collection('projects')
+      .where('status', '==', 'active').get()
+    const projectNames = projectsSnap.docs.map(d => d.data().name as string).filter(Boolean)
+
+    // AI parse
+    const parsed = await parseVentureIdea(text, projectNames)
+
+    // Build venture document
+    const ventureRef = adminDb.collection('users').doc(uid).collection('ventures').doc()
+    await ventureRef.set({
+      rawInput: text,
+      inputSource: 'telegram_text',
+      spec: {
+        name: parsed.name,
+        oneLiner: parsed.oneLiner,
+        problem: parsed.problem,
+        targetCustomer: parsed.targetCustomer,
+        solution: parsed.solution,
+        category: parsed.category,
+        thesisPillars: parsed.thesisPillars,
+        revenueModel: parsed.revenueModel,
+        pricingIdea: parsed.pricingIdea,
+        marketSize: parsed.marketSize,
+        techStack: parsed.techStack,
+        mvpFeatures: parsed.mvpFeatures,
+        apiIntegrations: parsed.apiIntegrations,
+        existingAlternatives: parsed.existingAlternatives,
+        unfairAdvantage: parsed.unfairAdvantage,
+        killCriteria: parsed.killCriteria,
+      },
+      build: {
+        status: 'pending',
+        repoUrl: null,
+        previewUrl: null,
+        repoName: null,
+        buildLog: [],
+        startedAt: null,
+        completedAt: null,
+        errorMessage: null,
+        filesGenerated: null,
+      },
+      stage: 'specced',
+      linkedProjectId: null,
+      notes: '',
+      score: parsed.suggestedScore,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    })
+
+    // Build reply
+    const lines: string[] = [
+      `*Venture specced: ${parsed.name}*`,
+      '',
+      `_"${parsed.oneLiner}"_`,
+      '',
+      `*Problem:* ${parsed.problem}`,
+      `*Customer:* ${parsed.targetCustomer}`,
+      `*Revenue:* ${parsed.revenueModel} (${parsed.pricingIdea})`,
+      `*Category:* ${parsed.category}`,
+      `*Conviction:* ${parsed.suggestedScore}/100`,
+    ]
+
+    if (parsed.mvpFeatures.length > 0) {
+      lines.push('', '*MVP Features:*')
+      parsed.mvpFeatures.forEach(f => lines.push(`  · ${f}`))
+    }
+
+    if (parsed.killCriteria.length > 0) {
+      lines.push('', '*Kill Criteria:*')
+      parsed.killCriteria.forEach(k => lines.push(`  ✕ ${k}`))
+    }
+
+    lines.push('', '_Reply /build to generate a PoC_')
+
+    await sendTelegramReply(chatId, lines.join('\n'))
+  } catch (error) {
+    console.error('Venture parsing error:', error)
+    // Still save raw text even if AI parsing fails
+    const ventureRef = adminDb.collection('users').doc(uid).collection('ventures').doc()
+    await ventureRef.set({
+      rawInput: text,
+      inputSource: 'telegram_text',
+      spec: {
+        name: 'Untitled Venture', oneLiner: text.slice(0, 120), problem: text,
+        targetCustomer: '', solution: '', category: 'other', thesisPillars: [],
+        revenueModel: '', pricingIdea: '', marketSize: '', techStack: [],
+        mvpFeatures: [], apiIntegrations: [], existingAlternatives: [],
+        unfairAdvantage: '', killCriteria: [],
+      },
+      build: {
+        status: 'pending', repoUrl: null, previewUrl: null, repoName: null,
+        buildLog: [], startedAt: null, completedAt: null, errorMessage: null,
+        filesGenerated: null,
+      },
+      stage: 'idea',
+      linkedProjectId: null,
+      notes: '',
+      score: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    })
+    await sendTelegramReply(chatId,
+      `Venture idea saved, but AI spec generation failed.\n\n_${error instanceof Error ? error.message : 'Unknown error'}_`)
+  }
+}
+
+async function handleBuild(uid: string, chatId: number) {
+  const adminDb = await getAdminDb()
+
+  // Find most recent venture with pending build
+  const venturesSnap = await adminDb.collection('users').doc(uid).collection('ventures')
+    .where('build.status', '==', 'pending')
+    .orderBy('createdAt', 'desc')
+    .limit(1)
+    .get()
+
+  if (venturesSnap.empty) {
+    await sendTelegramReply(chatId, 'No venture waiting to be built.\n\nUse `/venture <idea>` to spec one first.')
+    return
+  }
+
+  const ventureDoc = venturesSnap.docs[0]
+  const venture = ventureDoc.data()
+  const ventureId = ventureDoc.id
+  const spec = venture.spec
+
+  // Mark as building
+  await ventureDoc.ref.update({
+    stage: 'building',
+    'build.status': 'generating',
+    'build.startedAt': new Date(),
+    updatedAt: new Date(),
+  })
+
+  await sendTelegramReply(chatId, `*Build started for ${spec.name}*\n\n_Generating codebase... This may take a few minutes._`)
+
+  // Fire repository_dispatch to the builder repo (fire-and-forget)
+  const githubToken = process.env.GITHUB_TOKEN
+  const githubOwner = process.env.GITHUB_OWNER || 'sovereignangel'
+  const callbackUrl = `${process.env.NEXT_PUBLIC_BASE_URL || ''}/api/ventures/build/callback`
+
+  if (!githubToken) {
+    await ventureDoc.ref.update({
+      'build.status': 'failed',
+      'build.errorMessage': 'GITHUB_TOKEN not configured',
+      'build.completedAt': new Date(),
+      updatedAt: new Date(),
+    })
+    await sendTelegramReply(chatId, 'Build failed: GITHUB_TOKEN not configured on server.')
+    return
+  }
+
+  try {
+    const dispatchRes = await fetch(`https://api.github.com/repos/${githubOwner}/venture-builder/dispatches`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${githubToken}`,
+        'Accept': 'application/vnd.github.v3+json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        event_type: 'build-venture',
+        client_payload: {
+          uid,
+          ventureId,
+          spec,
+          chatId,
+          callbackUrl,
+        },
+      }),
+    })
+
+    if (!dispatchRes.ok) {
+      const errText = await dispatchRes.text()
+      throw new Error(`GitHub dispatch failed (${dispatchRes.status}): ${errText}`)
+    }
+  } catch (error) {
+    console.error('Build dispatch error:', error)
+    await ventureDoc.ref.update({
+      'build.status': 'failed',
+      'build.errorMessage': error instanceof Error ? error.message : 'Dispatch failed',
+      'build.completedAt': new Date(),
+      updatedAt: new Date(),
+    })
+    await sendTelegramReply(chatId,
+      `Build dispatch failed for ${spec.name}.\n\n_${error instanceof Error ? error.message : 'Unknown error'}_`)
+  }
+}
+
 export async function POST(req: NextRequest) {
   if (!BOT_TOKEN) {
     return NextResponse.json({ error: 'Bot not configured' }, { status: 500 })
@@ -577,8 +790,17 @@ export async function POST(req: NextRequest) {
         // Transcribe + parse with Gemini (one API call)
         const { transcript, parsed } = await transcribeAndParseVoiceNote(base64Audio, mimeType)
 
-        // Detect if user said "signal" at the start — route as signal
+        // Detect if user said "venture" at the start — route as venture
         const trimmedTranscript = transcript.trim().toLowerCase()
+        if (trimmedTranscript.startsWith('venture')) {
+          const ventureText = transcript.trim().slice('venture'.length).trim()
+          if (ventureText) {
+            await handleVenture(uid, ventureText, chatId)
+            return NextResponse.json({ ok: true })
+          }
+        }
+
+        // Detect if user said "signal" at the start — route as signal
         if (trimmedTranscript.startsWith('signal')) {
           const signalText = transcript.trim().slice('signal'.length).trim()
           if (signalText) {
@@ -624,10 +846,13 @@ export async function POST(req: NextRequest) {
         '`/note <text>` — Quick note',
         '`/journal <text>` — Journal entry (AI-parsed)',
         '`/predict <text>` — Log a prediction (AI-analyzed)',
+        '`/venture <text>` — Spec a business idea (AI-analyzed)',
+        '`/build` — Auto-build the most recent specced venture',
         '`/rss <url> #pillar` — Subscribe to RSS feed',
         '`/id` — Show your chat ID (for settings)',
         '',
         'Voice notes → auto-transcribed as journal',
+        'Say "venture" first to spec a business idea',
         'Say "signal" first to save as signal instead',
         '',
         'Pillar tags: `#ai` `#markets` `#mind`',
@@ -678,6 +903,22 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ ok: true })
       }
       await handlePredict(uid, parsed.text, chatId)
+      return NextResponse.json({ ok: true })
+    }
+
+    // Handle venture command
+    if (parsed.command === 'venture') {
+      if (!parsed.text) {
+        await sendTelegramReply(chatId, 'Empty venture. Usage: `/venture AI tool that auto-generates landing pages from a product description`')
+        return NextResponse.json({ ok: true })
+      }
+      await handleVenture(uid, parsed.text, chatId)
+      return NextResponse.json({ ok: true })
+    }
+
+    // Handle build command
+    if (parsed.command === 'build') {
+      await handleBuild(uid, chatId)
       return NextResponse.json({ ok: true })
     }
 

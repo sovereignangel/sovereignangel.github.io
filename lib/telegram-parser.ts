@@ -8,6 +8,8 @@
  *   /journal <text>          — Journal entry (AI-parsed into daily log fields)
  *   /rss <url> [#pillar]     — Subscribe to an RSS feed
  *   /predict <text>          — Log a prediction with AI analysis
+ *   /venture <text>          — Spec a business idea with AI
+ *   /build                   — Auto-build the most recent specced venture
  *
  * Pillar hashtags: #ai, #markets, #mind
  */
@@ -15,7 +17,7 @@
 import type { ThesisPillar } from '@/lib/types'
 
 export interface ParsedTelegramMessage {
-  command: 'signal' | 'note' | 'journal' | 'rss' | 'predict' | 'unknown'
+  command: 'signal' | 'note' | 'journal' | 'rss' | 'predict' | 'venture' | 'build' | 'unknown'
   text: string
   pillars: ThesisPillar[]
   raw: string
@@ -61,6 +63,17 @@ export function parseTelegramMessage(text: string): ParsedTelegramMessage {
   if (raw.startsWith('/predict')) {
     const body = raw.slice('/predict'.length).trim()
     return { command: 'predict', text: body, pillars: [], raw }
+  }
+
+  // /venture command
+  if (raw.startsWith('/venture')) {
+    const body = raw.slice('/venture'.length).trim()
+    return { command: 'venture', text: body, pillars: [], raw }
+  }
+
+  // /build command
+  if (raw.startsWith('/build')) {
+    return { command: 'build', text: '', pillars: [], raw }
   }
 
   // Plain text — treat as signal

@@ -1,5 +1,5 @@
 import { GoogleGenerativeAI } from '@google/generative-ai'
-import type { InsightType, ThesisPillar, NervousSystemState, BodyFelt, TrainingType, DecisionDomain, PredictionDomain } from './types'
+import type { InsightType, ThesisPillar, NervousSystemState, BodyFelt, TrainingType, DecisionDomain, PredictionDomain, VentureCategory } from './types'
 import { callLLM } from './llm'
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '')
@@ -402,6 +402,12 @@ export interface ParsedJournalRevenue {
   feedbackLoopClosed: boolean | null
 }
 
+export interface ParsedJournalSkill {
+  deliberatePracticeMinutes: number | null
+  newTechniqueApplied: boolean | null
+  automationCreated: boolean | null
+}
+
 export interface ParsedJournalContact {
   name: string
   context: string  // how they were mentioned (e.g. "met at primary", "will intro to friends")
@@ -419,6 +425,7 @@ export interface ParsedJournalEntry {
   intelligence: ParsedJournalIntelligence
   network: ParsedJournalNetwork
   revenue: ParsedJournalRevenue
+  skill: ParsedJournalSkill
   contacts: ParsedJournalContact[]
   notes: ParsedJournalNote[]
   cadenceCompleted: string[]
@@ -433,6 +440,7 @@ const EMPTY_JOURNAL_RESULT: ParsedJournalEntry = {
   intelligence: { discoveryConversationsCount: null, problems: [], problemSelected: null, insightsExtracted: null },
   network: { warmIntrosMade: null, warmIntrosReceived: null, meetingsBooked: null },
   revenue: { revenueAsksCount: null, revenueThisSession: null, revenueStreamType: null, feedbackLoopClosed: null },
+  skill: { deliberatePracticeMinutes: null, newTechniqueApplied: null, automationCreated: null },
   contacts: [],
   notes: [],
   cadenceCompleted: [],
@@ -481,7 +489,12 @@ Extract data into these domains. Use null for anything not mentioned.
    - resilience: Ability to bounce back from setbacks. Infer from pushing through illness, handling difficult conversations. null if not evident.
    - optimism: Positive attribution of outcomes. Infer from positive framing of events, excitement about the day. null if not evident.
 
-7. CADENCE COMPLETED: Array of checklist keys that the journal indicates were done today. Only include if clearly mentioned.
+7. SKILL (capability growth):
+   - deliberatePracticeMinutes: Minutes spent specifically on getting BETTER at a skill (not just producing output). Examples: studying a tutorial, practicing a sales pitch, learning a new tool, doing coding exercises, reading about a technique then applying it. null if not mentioned.
+   - newTechniqueApplied: true if used a tool, method, framework, or approach for the first time today. Examples: "tried Cursor for the first time", "used a new cold email template", "implemented a design pattern I just learned". null if not evident.
+   - automationCreated: true if built something that saves future time — a script, template, workflow, shortcut, or process improvement. Examples: "wrote a script to automate deployment", "created a Notion template for meeting notes", "set up a Zapier automation". null if not evident.
+
+8. CADENCE COMPLETED: Array of checklist keys that the journal indicates were done today. Only include if clearly mentioned.
    Valid keys: "energy" (logged energy inputs), "problems" (identified problems worth solving), "focus" (executed focus session), "ship" (shipped something), "signal" (reviewed external signals), "revenue_ask" (made revenue asks), "psycap" (reflected on psychological state)
 
 8. CONTACTS: Array of people mentioned by name. Extract EVERY person name mentioned, whether met today, referenced, or planned to meet.
@@ -503,6 +516,7 @@ Return ONLY valid JSON (no markdown, no code blocks):
   "intelligence": { "discoveryConversationsCount": null, "problems": [], "problemSelected": null, "insightsExtracted": null },
   "network": { "warmIntrosMade": null, "warmIntrosReceived": null, "meetingsBooked": null },
   "revenue": { "revenueAsksCount": null, "revenueThisSession": null, "revenueStreamType": null, "feedbackLoopClosed": null },
+  "skill": { "deliberatePracticeMinutes": null, "newTechniqueApplied": null, "automationCreated": null },
   "psyCap": { "hope": null, "efficacy": null, "resilience": null, "optimism": null },
   "contacts": [],
   "notes": [],
@@ -540,6 +554,7 @@ Return ONLY valid JSON (no markdown, no code blocks):
     const intelligence = parsed.intelligence || {}
     const network = parsed.network || {}
     const revenue = parsed.revenue || {}
+    const skill = parsed.skill || {}
     const validStreamTypes = ['recurring', 'one_time', 'organic']
 
     const safeInt = (v: unknown): number | null => {
@@ -564,6 +579,11 @@ Return ONLY valid JSON (no markdown, no code blocks):
       output: {
         focusHoursActual: typeof output.focusHoursActual === 'number' ? output.focusHoursActual : null,
         whatShipped: typeof output.whatShipped === 'string' ? output.whatShipped : null,
+      },
+      skill: {
+        deliberatePracticeMinutes: safeInt(skill.deliberatePracticeMinutes),
+        newTechniqueApplied: typeof skill.newTechniqueApplied === 'boolean' ? skill.newTechniqueApplied : null,
+        automationCreated: typeof skill.automationCreated === 'boolean' ? skill.automationCreated : null,
       },
       intelligence: {
         discoveryConversationsCount: safeInt(intelligence.discoveryConversationsCount),
@@ -669,9 +689,14 @@ EXTRACTION RULES:
    - revenueStreamType: "recurring", "one_time", or "organic". null if none.
    - feedbackLoopClosed: true if a loop was resolved. null if not evident.
 
-6. PSYCAP (1-5 scale): hope, efficacy, resilience, optimism. null if not evident.
+6. SKILL (capability growth):
+   - deliberatePracticeMinutes: Minutes spent on getting BETTER at a skill (tutorials, learning new tools, practicing techniques). null if not mentioned.
+   - newTechniqueApplied: true if used a new tool/method/approach for the first time. null if not evident.
+   - automationCreated: true if built something that saves future time (scripts, templates, automations). null if not evident.
 
-7. CADENCE COMPLETED: Array of keys done today from ["energy", "problems", "focus", "ship", "signal", "revenue_ask", "psycap"]
+7. PSYCAP (1-5 scale): hope, efficacy, resilience, optimism. null if not evident.
+
+8. CADENCE COMPLETED: Array of keys done today from ["energy", "problems", "focus", "ship", "signal", "revenue_ask", "psycap"]
 
 8. CONTACTS: Array of { name, context (max 20 words) }
 
@@ -689,6 +714,7 @@ Return ONLY valid JSON (no markdown, no code blocks):
   "intelligence": { "discoveryConversationsCount": null, "problems": [], "problemSelected": null, "insightsExtracted": null },
   "network": { "warmIntrosMade": null, "warmIntrosReceived": null, "meetingsBooked": null },
   "revenue": { "revenueAsksCount": null, "revenueThisSession": null, "revenueStreamType": null, "feedbackLoopClosed": null },
+  "skill": { "deliberatePracticeMinutes": null, "newTechniqueApplied": null, "automationCreated": null },
   "psyCap": { "hope": null, "efficacy": null, "resilience": null, "optimism": null },
   "contacts": [],
   "notes": [],
@@ -751,6 +777,7 @@ Return ONLY valid JSON (no markdown, no code blocks):
     const intelligence = raw.intelligence || {}
     const network = raw.network || {}
     const revenue = raw.revenue || {}
+    const skill = raw.skill || {}
 
     const parsed: ParsedJournalEntry = {
       energy: {
@@ -762,6 +789,11 @@ Return ONLY valid JSON (no markdown, no code blocks):
       output: {
         focusHoursActual: typeof output.focusHoursActual === 'number' ? output.focusHoursActual : null,
         whatShipped: typeof output.whatShipped === 'string' ? output.whatShipped : null,
+      },
+      skill: {
+        deliberatePracticeMinutes: safeInt(skill.deliberatePracticeMinutes),
+        newTechniqueApplied: typeof skill.newTechniqueApplied === 'boolean' ? skill.newTechniqueApplied : null,
+        automationCreated: typeof skill.automationCreated === 'boolean' ? skill.automationCreated : null,
       },
       intelligence: {
         discoveryConversationsCount: safeInt(intelligence.discoveryConversationsCount),
@@ -934,6 +966,162 @@ Return ONLY valid JSON (no markdown, no code blocks):
       linkedProjectNames: [],
       linkedContactNames: [],
       antithesis: '',
+    }
+  }
+}
+
+// ─── Venture Idea Extraction ───────────────────────────────────────────────────
+
+export interface ParsedVentureIdea {
+  name: string
+  oneLiner: string
+  problem: string
+  targetCustomer: string
+  solution: string
+  category: VentureCategory
+  thesisPillars: ThesisPillar[]
+  revenueModel: string
+  pricingIdea: string
+  marketSize: string
+  techStack: string[]
+  mvpFeatures: string[]
+  apiIntegrations: string[]
+  existingAlternatives: string[]
+  unfairAdvantage: string
+  killCriteria: string[]
+  suggestedScore: number
+}
+
+export async function parseVentureIdea(text: string, projectNames: string[]): Promise<ParsedVentureIdea> {
+  const projectsSection = projectNames.length > 0
+    ? `THE USER'S ACTIVE PROJECTS/BUSINESSES:\n${projectNames.map(p => `- ${p}`).join('\n')}`
+    : 'The user has not specified any active projects yet.'
+
+  const prompt = `You are a startup advisor analyzing a raw business idea from a builder/entrepreneur. Extract a structured venture spec and fill in gaps with smart inferences.
+
+${projectsSection}
+
+RAW IDEA:
+${text}
+
+Extract the following:
+
+1. NAME: A short, catchy product name (1-2 words, like "InvoiceBot" or "SignalFeed"). Infer from the idea if not stated.
+
+2. ONE_LINER: A single sentence pitch, max 120 characters. Format: "[Product] helps [customer] [solve problem] by [mechanism]."
+
+3. PROBLEM: What specific pain point this solves. Be concrete — who is suffering and why?
+
+4. TARGET_CUSTOMER: Who has this problem? Be specific (e.g., "solo founders doing $10K-100K MRR" not just "startups").
+
+5. SOLUTION: How the product solves the problem. Focus on the core mechanism, not features.
+
+6. CATEGORY: Classify into exactly one of: "saas", "api", "marketplace", "tool", "content", "service", "other".
+
+7. THESIS_PILLARS: Which of the user's thesis pillars this aligns with. Array from: ["ai", "markets", "mind"]. Empty if none.
+
+8. REVENUE_MODEL: How it makes money (e.g., "freemium SaaS", "usage-based API", "marketplace take rate").
+
+9. PRICING_IDEA: Rough pricing (e.g., "$29/mo", "0.1% per transaction", "$99/yr"). Infer from market if not stated.
+
+10. MARKET_SIZE: TAM estimate or qualitative size (e.g., "$2B developer tools market", "niche but deep").
+
+11. TECH_STACK: Suggested stack for a PoC. Default to ["Next.js", "Tailwind", "Vercel"] unless the idea requires specific tech. Keep it minimal — 3-5 items max.
+
+12. MVP_FEATURES: The 3-5 core features needed for a minimal proof of concept. Not a full product — just enough to demonstrate the core value.
+
+13. API_INTEGRATIONS: External APIs or services the PoC would need (e.g., ["Stripe", "OpenAI"]). Empty array if self-contained.
+
+14. EXISTING_ALTERNATIVES: 2-3 things people currently use to solve this problem. Can be direct competitors or workarounds.
+
+15. UNFAIR_ADVANTAGE: Why the user (a technical builder with AI, markets, and mind expertise) is uniquely positioned to build this. Infer from their project portfolio if possible.
+
+16. KILL_CRITERIA: 2-3 specific, falsifiable conditions that would kill this idea. These should be testable within 2-4 weeks. Example: "Fewer than 5/50 cold outreach targets respond with interest."
+
+17. SUGGESTED_SCORE: 0-100 conviction score based on:
+    - Market clarity (is the pain obvious?)
+    - Feasibility (can a solo builder ship an MVP in 1-2 weeks?)
+    - Differentiation (is there a real edge?)
+    - Revenue potential (can it generate revenue in <90 days?)
+    Default to 50 if unclear.
+
+Return ONLY valid JSON (no markdown, no code blocks):
+{
+  "name": "...",
+  "oneLiner": "...",
+  "problem": "...",
+  "targetCustomer": "...",
+  "solution": "...",
+  "category": "saas",
+  "thesisPillars": [],
+  "revenueModel": "...",
+  "pricingIdea": "...",
+  "marketSize": "...",
+  "techStack": [],
+  "mvpFeatures": [],
+  "apiIntegrations": [],
+  "existingAlternatives": [],
+  "unfairAdvantage": "...",
+  "killCriteria": [],
+  "suggestedScore": 50
+}`
+
+  try {
+    const responseText = await callLLM(prompt)
+
+    const cleanedText = responseText
+      .replace(/```json\n?/g, '')
+      .replace(/```\n?/g, '')
+      .trim()
+
+    const parsed = JSON.parse(cleanedText)
+
+    const validCategories: VentureCategory[] = ['saas', 'api', 'marketplace', 'tool', 'content', 'service', 'other']
+    const validPillars: ThesisPillar[] = ['ai', 'markets', 'mind']
+
+    return {
+      name: String(parsed.name || 'Untitled Venture'),
+      oneLiner: String(parsed.oneLiner || '').slice(0, 120),
+      problem: String(parsed.problem || text),
+      targetCustomer: String(parsed.targetCustomer || ''),
+      solution: String(parsed.solution || ''),
+      category: validCategories.includes(parsed.category) ? parsed.category : 'other',
+      thesisPillars: Array.isArray(parsed.thesisPillars)
+        ? parsed.thesisPillars.filter((p: string) => validPillars.includes(p as ThesisPillar))
+        : [],
+      revenueModel: String(parsed.revenueModel || ''),
+      pricingIdea: String(parsed.pricingIdea || ''),
+      marketSize: String(parsed.marketSize || ''),
+      techStack: Array.isArray(parsed.techStack) ? parsed.techStack.map(String) : [],
+      mvpFeatures: Array.isArray(parsed.mvpFeatures) ? parsed.mvpFeatures.map(String) : [],
+      apiIntegrations: Array.isArray(parsed.apiIntegrations) ? parsed.apiIntegrations.map(String) : [],
+      existingAlternatives: Array.isArray(parsed.existingAlternatives) ? parsed.existingAlternatives.map(String) : [],
+      unfairAdvantage: String(parsed.unfairAdvantage || ''),
+      killCriteria: Array.isArray(parsed.killCriteria) ? parsed.killCriteria.map(String) : [],
+      suggestedScore: typeof parsed.suggestedScore === 'number'
+        ? Math.max(0, Math.min(100, Math.round(parsed.suggestedScore)))
+        : 50,
+    }
+  } catch (error) {
+    console.error('Error parsing venture idea:', error)
+    return {
+      name: 'Untitled Venture',
+      oneLiner: text.slice(0, 120),
+      problem: text,
+      targetCustomer: '',
+      solution: '',
+      category: 'other',
+      thesisPillars: [],
+      revenueModel: '',
+      pricingIdea: '',
+      marketSize: '',
+      techStack: [],
+      mvpFeatures: [],
+      apiIntegrations: [],
+      existingAlternatives: [],
+      unfairAdvantage: '',
+      killCriteria: [],
+      suggestedScore: 50,
     }
   }
 }

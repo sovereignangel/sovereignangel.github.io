@@ -13,6 +13,7 @@ const navItems = [
   { href: '/thesis', label: 'Command', symbol: 'g*', exact: true },
   { href: '/thesis/execution', label: 'Execution', symbol: 'GVC+κ' },
   { href: '/thesis/intelligence', label: 'Intelligence', symbol: 'GI' },
+  { href: '/thesis/ventures', label: 'Ventures', symbol: 'V' },
   { href: '/thesis/boardroom', label: 'Board Room', symbol: 'J' },
 ]
 
