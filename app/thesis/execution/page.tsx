@@ -1,58 +1,11 @@
 'use client'
 
-import { useState } from 'react'
-import ExecutionDial from '@/components/thesis/execution/ExecutionDial'
-import FocusView from '@/components/thesis/execution/FocusView'
-import MusclesView from '@/components/thesis/execution/MusclesView'
-import GoalsView from '@/components/thesis/execution/GoalsView'
-import AuditView from '@/components/thesis/alpe-dhuez/AuditView'
-
-type ExecutionTab = 'focus' | 'muscles' | 'goals' | 'ascent'
-
-const TABS: { key: ExecutionTab; label: string }[] = [
-  { key: 'focus', label: 'Focus' },
-  { key: 'muscles', label: 'Muscles' },
-  { key: 'goals', label: 'Goals' },
-  { key: 'ascent', label: 'Ascent' },
-]
+import ExecutionView from '@/components/thesis/execution/ExecutionView'
 
 export default function ExecutionPage() {
-  const [activeTab, setActiveTab] = useState<ExecutionTab>('focus')
-
   return (
-    <div className="h-full grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-3 min-h-0">
-      {/* Left Panel: Tabbed Sections */}
-      <div className="flex flex-col gap-1 min-h-0">
-        {/* Sub-tab Navigation */}
-        <div className="flex gap-1 border-b border-rule shrink-0">
-          {TABS.map((tab) => (
-            <button
-              key={tab.key}
-              onClick={() => setActiveTab(tab.key)}
-              className={`font-serif text-[13px] font-medium px-3 py-1.5 transition-colors ${
-                activeTab === tab.key
-                  ? 'text-burgundy font-semibold border-b-2 border-burgundy -mb-px'
-                  : 'text-ink-muted hover:text-ink'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
-
-        {/* Tab Content */}
-        <div className="flex-1 overflow-y-auto">
-          {activeTab === 'focus' && <FocusView />}
-          {activeTab === 'muscles' && <MusclesView />}
-          {activeTab === 'goals' && <GoalsView />}
-          {activeTab === 'ascent' && <AuditView />}
-        </div>
-      </div>
-
-      {/* Right Sidebar */}
-      <div className="min-h-0 overflow-y-auto">
-        <ExecutionDial />
-      </div>
+    <div className="h-full overflow-y-auto">
+      <ExecutionView />
     </div>
   )
 }
