@@ -15,6 +15,7 @@ const navItems = [
   { href: '/thesis/intelligence', label: 'Intelligence', symbol: 'GI' },
   { href: '/thesis/ventures', label: 'Ventures', symbol: 'V' },
   { href: '/thesis/boardroom', label: 'Board Room', symbol: 'J' },
+  { href: '/thesis/rl', label: 'RL', symbol: '\u03C0' },
 ]
 
 function ScoreValue({ label, value, color, arrow, arrowColor }: {
