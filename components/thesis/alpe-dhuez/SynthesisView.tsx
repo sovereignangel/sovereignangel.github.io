@@ -205,47 +205,43 @@ export default function SynthesisView() {
           </p>
         ) : (
           <div className="space-y-3">
-            {/* Row 1: Score + Gate | Attribution */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-              <div>
-                <div className="flex items-end gap-2 mb-1.5">
-                  <span className={`font-mono text-[24px] font-bold leading-none ${scoreColor}`}>
-                    {score !== null ? score.toFixed(1) : '\u2014'}
-                  </span>
-                  <span className="font-mono text-[11px] text-ink-muted mb-0.5">/ 10</span>
-                </div>
-                {gateLabel && (
-                  <span className={`inline-flex items-center font-serif text-[8px] uppercase tracking-wider border rounded-sm px-1.5 py-0.5 ${gateColor}`}>
-                    Gate = {components!.gate.toFixed(1)} &middot; {gateLabel}
-                  </span>
-                )}
+            {/* Score + Gate */}
+            <div className="flex items-center gap-3">
+              <div className="flex items-end gap-2">
+                <span className={`font-mono text-[24px] font-bold leading-none ${scoreColor}`}>
+                  {score !== null ? score.toFixed(1) : '\u2014'}
+                </span>
+                <span className="font-mono text-[11px] text-ink-muted mb-0.5">/ 10</span>
               </div>
-              {components && <ScoreAttribution components={components} />}
+              {gateLabel && (
+                <span className={`inline-flex items-center font-serif text-[8px] uppercase tracking-wider border rounded-sm px-1.5 py-0.5 ${gateColor}`}>
+                  Gate = {components!.gate.toFixed(1)} &middot; {gateLabel}
+                </span>
+              )}
             </div>
 
-            {/* Row 2: Pillar Breakdown | 7-Day Trajectory */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-              {components && (
-                <div>
-                  <PillarBreakdown components={components} compact />
+            {/* Pillar Breakdown (Body / Brain / Build) */}
+            {components && <PillarBreakdown components={components} compact />}
+
+            {/* Score Attribution */}
+            {components && <ScoreAttribution components={components} />}
+
+            {/* 7-day trajectory */}
+            <div>
+              <p className="font-serif text-[8px] italic uppercase tracking-wide text-ink-muted mb-1.5">
+                7-Day Trajectory
+              </p>
+              {hasTrajectoryData ? (
+                <div className="h-[140px]">
+                  <RewardTrajectoryChart data={chartData} />
+                </div>
+              ) : (
+                <div className="h-[80px] flex items-center justify-center">
+                  <p className="font-serif text-[10px] italic text-ink-faint">
+                    Log more days to see trajectory
+                  </p>
                 </div>
               )}
-              <div>
-                <p className="font-serif text-[8px] italic uppercase tracking-wide text-ink-muted mb-1.5">
-                  7-Day Trajectory
-                </p>
-                {hasTrajectoryData ? (
-                  <div className="h-[120px]">
-                    <RewardTrajectoryChart data={chartData} />
-                  </div>
-                ) : (
-                  <div className="h-[80px] flex items-center justify-center">
-                    <p className="font-serif text-[10px] italic text-ink-faint">
-                      Log more days to see trajectory
-                    </p>
-                  </div>
-                )}
-              </div>
             </div>
           </div>
         )}

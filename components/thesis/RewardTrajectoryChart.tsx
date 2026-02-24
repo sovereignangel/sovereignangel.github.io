@@ -7,6 +7,7 @@ import {
   YAxis,
   Tooltip,
   ResponsiveContainer,
+  LabelList,
 } from 'recharts'
 
 interface ChartDataPoint {
@@ -17,7 +18,7 @@ interface ChartDataPoint {
 export default function RewardTrajectoryChart({ data }: { data: ChartDataPoint[] }) {
   return (
     <ResponsiveContainer width="100%" height="100%">
-      <AreaChart data={data}>
+      <AreaChart data={data} margin={{ top: 16, right: 4, bottom: 0, left: 0 }}>
         <defs>
           <linearGradient id="rewardGradient" x1="0" y1="0" x2="0" y2="1">
             <stop offset="5%" stopColor="#1e3a5f" stopOpacity={0.15} />
@@ -54,7 +55,15 @@ export default function RewardTrajectoryChart({ data }: { data: ChartDataPoint[]
           fill="url(#rewardGradient)"
           connectNulls
           dot={{ r: 3, fill: '#1e3a5f', strokeWidth: 0 }}
-        />
+        >
+          <LabelList
+            dataKey="score"
+            position="top"
+            offset={6}
+            style={{ fontSize: 9, fill: '#2a2522', fontFamily: 'monospace' }}
+            formatter={(v: number | null) => v != null ? v.toFixed(1) : ''}
+          />
+        </Area>
       </AreaChart>
     </ResponsiveContainer>
   )
