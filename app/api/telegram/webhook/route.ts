@@ -270,6 +270,62 @@ function appendJournalText(existing: string, newText: string): string {
     : `--- ${timeStr} ---\n${newText}`
 }
 
+// ---------------------------------------------------------------------------
+// Brief feedback helpers
+// ---------------------------------------------------------------------------
+
+async function saveBriefFeedback(uid: string, feedbackText: string, chatId: number) {
+  const adminDb = await getAdminDb()
+  const todayKey = new Date().toISOString().split('T')[0]
+
+  // Find the most recent daily_report with a morning brief (check last 3 days)
+  let reportDate = todayKey
+  let reportRef = adminDb.collection('users').doc(uid).collection('daily_reports').doc(todayKey)
+  let reportSnap = await reportRef.get()
+
+  if (!reportSnap.exists) {
+    // Check yesterday
+    const d = new Date(); d.setDate(d.getDate() - 1)
+    reportDate = d.toISOString().split('T')[0]
+    reportRef = adminDb.collection('users').doc(uid).collection('daily_reports').doc(reportDate)
+    reportSnap = await reportRef.get()
+  }
+
+  const existingFeedback = reportSnap.exists ? (reportSnap.data()?.briefFeedback || []) : []
+  existingFeedback.push({ text: feedbackText, createdAt: new Date().toISOString() })
+
+  await reportRef.set({ briefFeedback: existingFeedback, updatedAt: new Date() }, { merge: true })
+  await sendTelegramReply(chatId, `Brief feedback saved. This will shape future briefs.`)
+}
+
+async function handleBriefReplyFeedback(uid: string, text: string, replyToMessageId: number, chatId: number): Promise<boolean> {
+  const adminDb = await getAdminDb()
+
+  // Check last 7 days of daily_reports for a matching telegramMessageId
+  const dates: string[] = []
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(); d.setDate(d.getDate() - i)
+    dates.push(d.toISOString().split('T')[0])
+  }
+
+  const reportsCollection = adminDb.collection('users').doc(uid).collection('daily_reports')
+  const snaps = await Promise.all(dates.map(dk => reportsCollection.doc(dk).get()))
+
+  for (const snap of snaps) {
+    if (!snap.exists) continue
+    const data = snap.data()!
+    if (data.telegramMessageId === replyToMessageId) {
+      const existingFeedback = data.briefFeedback || []
+      existingFeedback.push({ text, createdAt: new Date().toISOString() })
+      await snap.ref.set({ briefFeedback: existingFeedback, updatedAt: new Date() }, { merge: true })
+      await sendTelegramReply(chatId, `Brief feedback saved. This will shape future briefs.`)
+      return true
+    }
+  }
+
+  return false // Not a reply to a morning brief
+}
+
 async function computeAndSaveReward(
   adminDb: FirebaseFirestore.Firestore,
   uid: string,
@@ -1415,9 +1471,11 @@ export async function POST(req: NextRequest) {
         '`/iterate <project> <changes>` — Iterate on deployed venture',
         '`/reset [#]` — Roll back a venture to its previous stage',
         '',
+        '`/brief <text>` — Feedback on morning brief',
         '`/rss <url> #pillar` — Subscribe to RSS feed',
         '`/id` — Show your chat ID (for settings)',
         '',
+        'Reply to a morning brief to send feedback.',
         'Voice notes → auto-transcribed as journal',
         'Say "venture" to spec, "approve" to approve, "signal" to save as signal',
         '',
@@ -1437,6 +1495,13 @@ export async function POST(req: NextRequest) {
     if (!uid) {
       await sendTelegramReply(chatId, 'Not linked. Add your chat ID in Thesis Engine > Settings > Telegram.\n\nUse `/id` to get your chat ID.')
       return NextResponse.json({ ok: true })
+    }
+
+    // Check if this is a reply to a morning brief → treat as brief feedback
+    if (message.reply_to_message && message.text && !message.text.startsWith('/')) {
+      const replyToId = message.reply_to_message.message_id
+      const handled = await handleBriefReplyFeedback(uid, message.text, replyToId, chatId)
+      if (handled) return NextResponse.json({ ok: true })
     }
 
     // Parse the message
@@ -1513,6 +1578,16 @@ export async function POST(req: NextRequest) {
     // Handle reset command
     if (parsed.command === 'reset') {
       await handleReset(uid, parsed.text, chatId)
+      return NextResponse.json({ ok: true })
+    }
+
+    // Handle brief feedback command
+    if (parsed.command === 'brief') {
+      if (!parsed.text) {
+        await sendTelegramReply(chatId, 'Usage: `/brief more actionable, less verbose` — or just reply to the morning brief message')
+        return NextResponse.json({ ok: true })
+      }
+      await saveBriefFeedback(uid, parsed.text, chatId)
       return NextResponse.json({ ok: true })
     }
 

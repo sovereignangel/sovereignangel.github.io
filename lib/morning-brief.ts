@@ -327,6 +327,31 @@ async function fetchProjectNames(uid: string): Promise<string[]> {
   return snap.docs.map(d => (d.data().name as string) || '').filter(Boolean)
 }
 
+async function fetchRecentBriefFeedback(uid: string): Promise<string[]> {
+  const db = await getAdminDb()
+  // Check last 14 days of daily_reports for feedback
+  const dates: string[] = []
+  for (let i = 0; i < 14; i++) {
+    const d = new Date(); d.setDate(d.getDate() - i)
+    dates.push(localDateString(d))
+  }
+  const snaps = await Promise.all(
+    dates.map(d => db.collection('users').doc(uid).collection('daily_reports').doc(d).get())
+  )
+  const feedback: string[] = []
+  for (const snap of snaps) {
+    if (!snap.exists) continue
+    const items = snap.data()?.briefFeedback
+    if (Array.isArray(items)) {
+      for (const item of items) {
+        feedback.push(typeof item === 'string' ? item : item.text || '')
+      }
+    }
+  }
+  // Return most recent 5 feedbacks
+  return feedback.filter(Boolean).slice(0, 5)
+}
+
 // ---------------------------------------------------------------------------
 // AI Generation
 // ---------------------------------------------------------------------------
@@ -339,7 +364,8 @@ async function generateTopPlaysAndSynthesis(
   stalledProjects: MorningBrief['stalledProjects'],
   rewardTrend: MorningBrief['rewardTrend'],
   recentSignal: string | null,
-  projectNames: string[]
+  projectNames: string[],
+  userFeedback: string[]
 ): Promise<{
   topPlays: MorningBrief['topPlays']
   discernmentPrompt: string
@@ -369,7 +395,10 @@ ${stalledProjects.map(p => `- ${p.name} — ${p.daysSinceActivity} days idle, ne
 Reward Score: Yesterday ${rewardTrend.yesterday ?? 'N/A'} | Week avg ${rewardTrend.weekAvg ?? 'N/A'} | Trend: ${rewardTrend.trend}
 
 Recent Signal for Discernment: ${recentSignal || 'No recent signals available'}
-
+${userFeedback.length > 0 ? `
+USER FEEDBACK ON PREVIOUS BRIEFS (apply these preferences):
+${userFeedback.map(f => `- "${f}"`).join('\n')}
+` : ''}
 Generate these three things:
 
 1. TOP 3 PLAYS — The three highest-leverage actions for today, ranked by (opportunity value × readiness × energy mode). Each play should be specific and actionable (not vague). Consider the energy mode: if RECOVER, suggest lower-intensity actions. Format as JSON array.
@@ -439,6 +468,7 @@ export async function generateMorningBrief(uid: string): Promise<MorningBrief> {
     rewardTrend,
     recentSignal,
     projectNames,
+    userFeedback,
   ] = await Promise.all([
     safeGet<MorningBrief['energyState']>(() => fetchEnergyState(uid), { sleepHours: null, hrv: null, bodyBattery: null, stressLevel: null, nervousSystemState: null, mode: 'CONSERVE' as const, summary: 'Data unavailable' }),
     safeGet(() => fetchUnreadSignals(uid), []),
@@ -448,12 +478,13 @@ export async function generateMorningBrief(uid: string): Promise<MorningBrief> {
     safeGet(() => fetchRewardTrend(uid), { yesterday: null, weekAvg: null, trend: 'flat' as const }),
     safeGet(() => fetchRecentSignalForDiscernment(uid), null),
     safeGet(() => fetchProjectNames(uid), []),
+    safeGet(() => fetchRecentBriefFeedback(uid), []),
   ])
 
   // AI-generated components (top plays, discernment prompt, synthesis)
   const { topPlays, discernmentPrompt, aiSynthesis } = await generateTopPlaysAndSynthesis(
     energyState, signalDigest, staleContacts, pendingDecisions,
-    stalledProjects, rewardTrend, recentSignal, projectNames
+    stalledProjects, rewardTrend, recentSignal, projectNames, userFeedback
   )
 
   return {

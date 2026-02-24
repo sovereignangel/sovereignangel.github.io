@@ -32,15 +32,16 @@ export async function sendTelegramMessage(
   chatId: number | string,
   text: string,
   options?: { parseMode?: 'Markdown' | 'MarkdownV2' | 'HTML' }
-): Promise<void> {
+): Promise<number | null> {
   const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN
   if (!BOT_TOKEN) {
     console.warn('TELEGRAM_BOT_TOKEN not set — skipping sendTelegramMessage')
-    return
+    return null
   }
 
   const parseMode = options?.parseMode ?? 'Markdown'
   const chunks = splitMessage(text)
+  let lastMessageId: number | null = null
 
   for (const chunk of chunks) {
     const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
@@ -56,6 +57,11 @@ export async function sendTelegramMessage(
     if (!res.ok) {
       const body = await res.text()
       console.error(`Telegram sendMessage failed (${res.status}):`, body)
+    } else {
+      const data = await res.json()
+      lastMessageId = data.result?.message_id ?? null
     }
   }
+
+  return lastMessageId
 }

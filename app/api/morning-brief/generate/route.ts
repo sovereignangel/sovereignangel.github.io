@@ -24,15 +24,16 @@ async function generateAndSend(uid: string, chatId: string | number): Promise<{ 
 
     // Format and send via Telegram
     const formatted = formatMorningBrief(brief)
-    await sendTelegramMessage(chatId, formatted)
+    const messageId = await sendTelegramMessage(chatId, formatted)
 
-    // Save to daily_reports for dashboard access
+    // Save to daily_reports for dashboard access (include message_id for reply-based feedback)
     const db = await getAdminDb()
     await db.collection('users').doc(uid).collection('daily_reports').doc(brief.date).set({
       type: 'morning_brief',
       brief,
       formatted,
       generatedAt: new Date(),
+      ...(messageId ? { telegramMessageId: messageId, telegramChatId: chatId } : {}),
     }, { merge: true })
 
     return { success: true }
@@ -109,8 +110,9 @@ export async function POST(request: NextRequest) {
     const formatted = formatMorningBrief(brief)
 
     // Send via Telegram if chat ID available
+    let messageId: number | null = null
     if (resolvedChatId) {
-      await sendTelegramMessage(resolvedChatId, formatted)
+      messageId = await sendTelegramMessage(resolvedChatId, formatted)
     }
 
     // Save to daily_reports
@@ -120,6 +122,7 @@ export async function POST(request: NextRequest) {
       brief,
       formatted,
       generatedAt: new Date(),
+      ...(messageId ? { telegramMessageId: messageId, telegramChatId: resolvedChatId } : {}),
     }, { merge: true })
 
     return NextResponse.json({ success: true, brief, formatted })

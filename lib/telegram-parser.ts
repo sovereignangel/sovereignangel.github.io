@@ -20,7 +20,7 @@
 import type { ThesisPillar } from '@/lib/types'
 
 export interface ParsedTelegramMessage {
-  command: 'signal' | 'note' | 'journal' | 'rss' | 'predict' | 'venture' | 'build' | 'approve' | 'feedback' | 'iterate' | 'reset' | 'unknown'
+  command: 'signal' | 'note' | 'journal' | 'rss' | 'predict' | 'venture' | 'build' | 'approve' | 'feedback' | 'iterate' | 'reset' | 'brief' | 'unknown'
   text: string
   pillars: ThesisPillar[]
   raw: string
@@ -104,6 +104,12 @@ export function parseTelegramMessage(text: string): ParsedTelegramMessage {
     return { command: 'reset', text: body, pillars: [], raw }
   }
 
+  // /brief command — feedback on morning brief
+  if (raw.startsWith('/brief')) {
+    const body = raw.slice('/brief'.length).trim()
+    return { command: 'brief', text: body, pillars: [], raw }
+  }
+
   // Plain text — treat as signal
   const { pillars, cleaned } = extractPillars(raw)
   return { command: 'signal', text: cleaned, pillars, raw }
@@ -146,6 +152,10 @@ export interface TelegramUpdate {
       duration: number
       mime_type?: string
       file_size?: number
+    }
+    reply_to_message?: {
+      message_id: number
+      text?: string
     }
   }
 }
