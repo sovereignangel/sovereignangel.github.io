@@ -1221,6 +1221,71 @@ async function handleBuild(uid: string, text: string, chatId: number) {
   }
 }
 
+const STAGE_ROLLBACK: Record<string, string> = {
+  specced: 'idea',
+  prd_draft: 'specced',
+  prd_approved: 'prd_draft',
+  building: 'prd_approved',
+  deployed: 'prd_approved',
+}
+
+async function handleReset(uid: string, text: string, chatId: number) {
+  const adminDb = await getAdminDb()
+
+  try {
+    const { num } = parseVentureNumber(text.trim())
+
+    // Find by number (any stage), or fall back to most recent "building" venture
+    let ventureDoc: FirebaseFirestore.QueryDocumentSnapshot | null = null
+    if (num) {
+      const snap = await adminDb.collection('users').doc(uid).collection('ventures')
+        .where('ventureNumber', '==', num).limit(1).get()
+      if (!snap.empty) ventureDoc = snap.docs[0]
+    } else {
+      ventureDoc = await findVentureByNumberOrStage(adminDb, uid, null, 'building')
+    }
+
+    if (!ventureDoc) {
+      await sendTelegramReply(chatId, num
+        ? `Venture #${num} not found.`
+        : 'No venture in building stage to reset.')
+      return
+    }
+
+    const venture = ventureDoc.data()
+    const vNum = venture.ventureNumber ? `#${venture.ventureNumber} ` : ''
+    const currentStage = venture.stage as string
+    const previousStage = STAGE_ROLLBACK[currentStage]
+
+    if (!previousStage) {
+      await sendTelegramReply(chatId, `${vNum}${venture.spec.name} is in "${currentStage}" — cannot reset further.`)
+      return
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const updateData: Record<string, any> = {
+      stage: previousStage,
+      updatedAt: new Date(),
+    }
+
+    // Clear build state when rolling back from building
+    if (currentStage === 'building') {
+      updateData['build.status'] = 'pending'
+      updateData['build.startedAt'] = null
+      updateData['build.completedAt'] = null
+      updateData['build.errorMessage'] = null
+    }
+
+    await ventureDoc.ref.update(updateData)
+
+    await sendTelegramReply(chatId,
+      `${vNum}${venture.spec.name} reset: ${currentStage} → ${previousStage}`)
+  } catch (error) {
+    console.error('Reset error:', error)
+    await sendTelegramReply(chatId, `Reset failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
+  }
+}
+
 export async function POST(req: NextRequest) {
   if (!BOT_TOKEN) {
     return NextResponse.json({ error: 'Bot not configured' }, { status: 500 })
@@ -1341,6 +1406,7 @@ export async function POST(req: NextRequest) {
         '`/feedback <text>` — Revise the PRD with feedback',
         '`/build` — Build the approved venture',
         '`/iterate <project> <changes>` — Iterate on deployed venture',
+        '`/reset [#]` — Roll back a venture to its previous stage',
         '',
         '`/rss <url> #pillar` — Subscribe to RSS feed',
         '`/id` — Show your chat ID (for settings)',
@@ -1434,6 +1500,12 @@ export async function POST(req: NextRequest) {
     // Handle build command
     if (parsed.command === 'build') {
       await handleBuild(uid, parsed.text, chatId)
+      return NextResponse.json({ ok: true })
+    }
+
+    // Handle reset command
+    if (parsed.command === 'reset') {
+      await handleReset(uid, parsed.text, chatId)
       return NextResponse.json({ ok: true })
     }
 
