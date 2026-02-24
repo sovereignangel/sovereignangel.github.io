@@ -15,7 +15,7 @@ export default function Header() {
         Lori Corpuz
       </h1>
       <p className="text-[#666] text-[15px] tracking-wide">
-        Emergence · AI · Markets · Mind
+        AI · Markets · Mind
       </p>
     </header>
   )

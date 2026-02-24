@@ -22,6 +22,12 @@ const TIMEZONES = [
 
 const SPINE_OPTIONS = ['Armstrong', 'Manifold', 'Deep Tech Fund', 'Jobs']
 
+const THESIS_OPTIONS = [
+  'I am building a bootstrapped micro PE holdco that incubates, operates, and captures equity across asymmetric AI-native ventures — funded by revenue first, outside capital only after proof.',
+  'I am an AI-native builder who spots market inefficiencies at the intersection of AI + capital markets, ships solutions rapidly through public learning, captures value through products and capital leverage.',
+  'Custom',
+]
+
 export default function SettingsPage() {
   const { user, profile } = useAuth()
   const [settings, setSettings] = useState<UserSettings>(profile?.settings || {
@@ -34,6 +40,8 @@ export default function SettingsPage() {
     twentyFourHourRuleActive: true,
   })
   const [spineProject, setSpineProject] = useState(profile?.spineProject || 'Armstrong')
+  const [thesisStatement, setThesisStatement] = useState(profile?.thesisStatement || THESIS_OPTIONS[0])
+  const [isCustomThesis, setIsCustomThesis] = useState(false)
   const [timezone, setTimezone] = useState(profile?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone)
   const [saving, setSaving] = useState(false)
   const [lastSaved, setLastSaved] = useState<string | null>(null)
@@ -43,6 +51,8 @@ export default function SettingsPage() {
       setSettings(profile.settings)
       setSpineProject(profile.spineProject)
       setTimezone(profile.timezone)
+      setThesisStatement(profile.thesisStatement || THESIS_OPTIONS[0])
+      setIsCustomThesis(!THESIS_OPTIONS.slice(0, -1).includes(profile.thesisStatement))
     }
   }, [profile])
 
@@ -142,6 +152,54 @@ export default function SettingsPage() {
                 step="0.5"
               />
             </div>
+          </div>
+        </div>
+
+        {/* Thesis */}
+        <div className="col-span-2 bg-paper border border-rule rounded-sm p-3">
+          <h3 className="font-serif text-[10px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-2 pb-1 border-b border-rule-light">
+            Thesis
+          </h3>
+          <div className="space-y-2">
+            <div>
+              <label className={labelClass}>North Star Statement</label>
+              <select
+                value={isCustomThesis ? 'Custom' : thesisStatement}
+                onChange={(e) => {
+                  const val = e.target.value
+                  if (val === 'Custom') {
+                    setIsCustomThesis(true)
+                  } else {
+                    setIsCustomThesis(false)
+                    setThesisStatement(val)
+                    save({ thesisStatement: val })
+                  }
+                }}
+                className={selectClass}
+              >
+                {THESIS_OPTIONS.map((opt) => (
+                  <option key={opt} value={opt}>
+                    {opt === 'Custom' ? 'Custom...' : opt.length > 90 ? opt.slice(0, 90) + '...' : opt}
+                  </option>
+                ))}
+              </select>
+            </div>
+            {isCustomThesis && (
+              <div>
+                <label className={labelClass}>Custom Thesis</label>
+                <textarea
+                  value={thesisStatement}
+                  onChange={(e) => setThesisStatement(e.target.value)}
+                  onBlur={() => save({ thesisStatement })}
+                  rows={3}
+                  placeholder="Your north star thesis statement..."
+                  className="w-full font-mono text-[11px] bg-cream border border-rule rounded-sm px-2 py-1.5 focus:outline-none focus:border-navy resize-none"
+                />
+              </div>
+            )}
+            <p className="font-mono text-[8px] text-ink-faint">
+              This anchors your daily reward computation and weekly synthesis.
+            </p>
           </div>
         </div>
 
