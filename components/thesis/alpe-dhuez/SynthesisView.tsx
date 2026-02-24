@@ -5,8 +5,8 @@ import { useAuth } from '@/components/auth/AuthProvider'
 import { useDailyLogContext } from '@/components/thesis/DailyLogProvider'
 import { getWeeklySynthesis, saveWeeklySynthesis, getProjects, getSignals, getRecentDailyLogs } from '@/lib/firestore'
 import { weekStartDate, dateFull, dayOfWeekShort } from '@/lib/formatters'
-import type { WeeklySynthesis, Project, ProjectHealth } from '@/lib/types'
-import { PROJECT_HEALTH_OPTIONS } from '@/lib/constants'
+import type { WeeklySynthesis, Project, ProjectHealth, RewardComponents } from '@/lib/types'
+import { PROJECT_HEALTH_OPTIONS, REWARD_COMPONENT_META } from '@/lib/constants'
 import { PillarBreakdown } from '@/components/thesis/reward'
 import dynamic from 'next/dynamic'
 
@@ -14,6 +14,90 @@ const RewardTrajectoryChart = dynamic(
   () => import('@/components/thesis/RewardTrajectoryChart'),
   { ssr: false, loading: () => <div className="h-[120px]" /> }
 )
+
+// ─── Score Attribution ──────────────────────────────────────────────────────
+
+const COMPONENT_KEYS = ['ge', 'gi', 'gvc', 'kappa', 'optionality', 'gd', 'gn', 'j', 'sigma'] as const
+
+function ScoreAttribution({ components }: { components: RewardComponents }) {
+  // Geometric mean → in log space each component contributes equally (1/9 weight)
+  // Attribution = how much each component pulls score up or down vs mean
+  const values = COMPONENT_KEYS.map(k => ({
+    key: k,
+    meta: REWARD_COMPONENT_META[k],
+    value: components[k as keyof RewardComponents] as number,
+  }))
+
+  const mean = values.reduce((s, v) => s + v.value, 0) / values.length
+
+  // Sort by value ascending → lowest first = biggest drag = highest leverage
+  const sorted = [...values].sort((a, b) => a.value - b.value)
+
+  // Compute % contribution in log space (geometric mean)
+  const logValues = values.map(v => Math.log(Math.max(v.value, 0.001)))
+  const totalLog = logValues.reduce((s, l) => s + l, 0)
+
+  const contributions = new Map<string, number>()
+  values.forEach((v, i) => {
+    // share of total log (all negative, so largest negative = biggest drag)
+    contributions.set(v.key, totalLog !== 0 ? (logValues[i] / totalLog) * 100 : 100 / 9)
+  })
+
+  return (
+    <div className="border border-rule-light rounded-sm p-2">
+      <div className="font-serif text-[9px] font-semibold uppercase tracking-[0.5px] text-ink-muted mb-1.5">
+        Score Attribution
+      </div>
+      <div className="space-y-0.5">
+        {sorted.map(({ key, meta, value }) => {
+          const pct = contributions.get(key) || 0
+          const delta = value - mean
+          const isAbove = delta >= 0
+          return (
+            <div key={key} className="flex items-center gap-1.5">
+              {/* Component symbol */}
+              <span className={`font-mono text-[8px] w-6 shrink-0 text-right ${meta.pillar === 'body' ? 'text-green-ink' : meta.pillar === 'brain' ? 'text-navy' : 'text-burgundy'}`}>
+                {meta.symbol}
+              </span>
+
+              {/* Bar — centered on the mean, extends left (drag) or right (lift) */}
+              <div className="flex-1 h-2 bg-rule-light rounded-sm overflow-hidden relative">
+                <div
+                  className={`absolute top-0 h-full rounded-sm ${isAbove ? 'bg-green-ink/60' : 'bg-red-ink/50'}`}
+                  style={isAbove
+                    ? { left: `${mean * 100}%`, width: `${delta * 100}%` }
+                    : { left: `${value * 100}%`, width: `${-delta * 100}%` }
+                  }
+                />
+                {/* Mean marker */}
+                <div className="absolute top-0 h-full w-px bg-ink-muted/40" style={{ left: `${mean * 100}%` }} />
+              </div>
+
+              {/* Value */}
+              <span className={`font-mono text-[8px] w-5 text-right ${isAbove ? 'text-green-ink' : 'text-red-ink'}`}>
+                {(value * 100).toFixed(0)}
+              </span>
+
+              {/* Contribution % */}
+              <span className="font-mono text-[7px] text-ink-faint w-7 text-right">
+                {pct.toFixed(0)}%
+              </span>
+            </div>
+          )
+        })}
+      </div>
+
+      {/* Biggest lever callout */}
+      {sorted.length > 0 && sorted[0].value < 0.5 && (
+        <div className="mt-1.5 pt-1 border-t border-rule-light">
+          <span className="font-mono text-[8px] text-red-ink">
+            Biggest lever: <span className="font-semibold">{sorted[0].meta.label}</span> ({(sorted[0].value * 100).toFixed(0)}%)
+          </span>
+        </div>
+      )}
+    </div>
+  )
+}
 
 const SYNTHESIS_TABS = [
   { key: 'dalio', label: '5-Step' },
@@ -136,6 +220,9 @@ export default function SynthesisView() {
                 </span>
               )}
             </div>
+
+            {/* Score Attribution — where is the score coming from? */}
+            {components && <ScoreAttribution components={components} />}
 
             {/* Pillar breakdown (Body / Brain / Build) */}
             {components && (
