@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import dynamic from 'next/dynamic'
 import Image from 'next/image'
 import SubTabs from './SubTabs'
@@ -9,6 +9,18 @@ const FunRouteBuilder = dynamic(() => import('./FunRouteBuilder'), {
   ssr: false,
   loading: () => <p className="text-sm text-[#888] italic">Loading route builder...</p>,
 })
+
+interface DeployedVenture {
+  id: string
+  name: string
+  oneLiner: string
+  category: string
+  revenueModel: string
+  pricingIdea: string
+  previewUrl: string | null
+  customDomain: string | null
+  repoUrl: string | null
+}
 
 const projects = [
   {
@@ -68,12 +80,28 @@ const projects = [
 
 export default function OutputsSection() {
   const [activeTab, setActiveTab] = useState('projects')
+  const [ventures, setVentures] = useState<DeployedVenture[]>([])
+
+  useEffect(() => {
+    fetch('/api/portfolio/ventures')
+      .then(res => res.json())
+      .then(data => setVentures(data))
+      .catch(() => {})
+  }, [])
+
+  // Filter out ventures that duplicate a static project (by matching domain)
+  const staticHrefs = new Set(projects.map(p => p.href).filter(Boolean))
+  const uniqueVentures = ventures.filter(v => {
+    const url = v.customDomain ? `https://${v.customDomain}` : v.previewUrl
+    return url && !staticHrefs.has(url)
+  })
 
   return (
     <section>
       <SubTabs
         tabs={[
           { id: 'projects', label: 'Projects' },
+          { id: 'ventures', label: `Ventures${uniqueVentures.length ? ` (${uniqueVentures.length})` : ''}` },
           { id: 'blog', label: 'Blog' },
           { id: 'fun', label: 'Fun' },
         ]}
@@ -120,6 +148,53 @@ export default function OutputsSection() {
               )}
             </div>
           ))}
+        </div>
+      )}
+
+      {activeTab === 'ventures' && (
+        <div>
+          {uniqueVentures.length === 0 ? (
+            <p className="text-sm text-[#888] italic">No deployed ventures yet. Build one from Telegram with /venture.</p>
+          ) : (
+            uniqueVentures.map((v) => {
+              const liveUrl = v.customDomain ? `https://${v.customDomain}` : v.previewUrl
+              return (
+                <div key={v.id} className="mb-7">
+                  <h3 className="text-[17px] font-medium mb-1">
+                    {liveUrl ? (
+                      <a
+                        href={liveUrl}
+                        className="text-[#1a1a1a] no-underline border-b border-[#ccc] hover:border-[#1a1a1a] transition-colors duration-200"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        {v.name}
+                      </a>
+                    ) : (
+                      v.name
+                    )}
+                  </h3>
+                  <p className="text-[13px] text-[#888] mb-1.5">
+                    {v.category !== 'other' ? v.category.toUpperCase() : 'Venture'}
+                    {v.pricingIdea ? ` · ${v.pricingIdea}` : ''}
+                  </p>
+                  <p className="text-[#555] text-[15px]">{v.oneLiner}</p>
+                  {v.repoUrl && (
+                    <div className="mt-2 text-[13px]">
+                      <a
+                        href={v.repoUrl}
+                        className="text-[#888] hover:text-[#1a1a1a] transition-colors duration-200"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        View source
+                      </a>
+                    </div>
+                  )}
+                </div>
+              )
+            })
+          )}
         </div>
       )}
 

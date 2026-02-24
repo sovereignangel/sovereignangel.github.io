@@ -6,6 +6,7 @@ const DEFAULT_BUILD: Venture['build'] = {
   status: 'pending',
   repoUrl: null,
   previewUrl: null,
+  customDomain: null,
   repoName: null,
   buildLog: [],
   startedAt: null,

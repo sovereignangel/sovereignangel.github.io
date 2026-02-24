@@ -8,7 +8,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const { uid, ventureId, status, repoUrl, previewUrl, repoName, filesGenerated, errorMessage } = await req.json()
+    const { uid, ventureId, status, repoUrl, previewUrl, customDomain, repoName, filesGenerated, errorMessage } = await req.json()
 
     if (!uid || !ventureId || !status) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
@@ -28,6 +28,7 @@ export async function POST(req: NextRequest) {
         'build.status': 'live',
         'build.repoUrl': repoUrl || null,
         'build.previewUrl': previewUrl || null,
+        'build.customDomain': customDomain || null,
         'build.repoName': repoName || null,
         'build.filesGenerated': filesGenerated || null,
         'build.completedAt': new Date(),

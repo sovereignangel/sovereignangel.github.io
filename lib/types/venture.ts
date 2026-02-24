@@ -57,6 +57,7 @@ export interface VentureBuild {
   status: VentureBuildStatus
   repoUrl: string | null
   previewUrl: string | null
+  customDomain: string | null      // e.g. projectname.loricorpuz.com
   repoName: string | null
   buildLog: string[]               // Append-only status messages
   startedAt: unknown | null

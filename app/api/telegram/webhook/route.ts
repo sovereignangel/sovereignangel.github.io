@@ -1148,7 +1148,8 @@ async function handleIterate(uid: string, text: string, chatId: number) {
   // Fire repository_dispatch for iterate
   const githubToken = process.env.GITHUB_TOKEN
   const githubOwner = process.env.GITHUB_OWNER || 'sovereignangel'
-  const callbackUrl = `${process.env.NEXT_PUBLIC_BASE_URL || ''}/api/ventures/build/callback`
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '')
+  const callbackUrl = `${baseUrl}/api/ventures/build/callback`
 
   if (!githubToken) {
     await matchedDoc.ref.update({
@@ -1240,7 +1241,8 @@ async function handleBuild(uid: string, text: string, chatId: number) {
   // Fire repository_dispatch to the builder repo (fire-and-forget)
   const githubToken = process.env.GITHUB_TOKEN
   const githubOwner = process.env.GITHUB_OWNER || 'sovereignangel'
-  const callbackUrl = `${process.env.NEXT_PUBLIC_BASE_URL || ''}/api/ventures/build/callback`
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '')
+  const callbackUrl = `${baseUrl}/api/ventures/build/callback`
 
   if (!githubToken) {
     await ventureDoc.ref.update({
