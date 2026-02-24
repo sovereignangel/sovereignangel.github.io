@@ -614,36 +614,33 @@ export default function ExecutionView() {
   // ═══════════════════════════════════════════════════════════════════
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-2">
 
-      {/* ═══ SECTION 1: SYSTEM STATUS ══════════════════════════════════ */}
+      {/* ═══ SECTION 1: SYSTEM STATUS (combined Today + Muscles) ══════ */}
 
-      {/* Today Card */}
-      <div className="bg-paper border border-rule rounded-sm p-3">
-        <div className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-2 pb-1.5 border-b-2 border-rule">
-          Today
-        </div>
-        <div className="grid grid-cols-2 gap-x-4 gap-y-2">
-          <div>
+      <div className="bg-paper border border-rule rounded-sm p-2.5">
+        {/* Today inline strip */}
+        <div className="flex items-start gap-4 mb-2">
+          <div className="flex-1 min-w-0">
             <p className="font-serif text-[8px] italic uppercase tracking-wide text-ink-muted mb-0.5">Intent</p>
-            <p className={`font-mono text-[11px] ${(log as Record<string, unknown>).todayFocus ? 'text-ink' : 'text-ink-faint italic'}`}>
+            <p className={`font-mono text-[11px] truncate ${(log as Record<string, unknown>).todayFocus ? 'text-ink' : 'text-ink-faint italic'}`}>
               {(log as Record<string, unknown>).todayFocus as string || 'Not set'}
             </p>
           </div>
-          <div>
+          <div className="flex-1 min-w-0">
             <p className="font-serif text-[8px] italic uppercase tracking-wide text-ink-muted mb-0.5">One Action</p>
-            <p className={`font-mono text-[11px] ${(log as Record<string, unknown>).todayOneAction ? 'text-ink' : 'text-ink-faint italic'}`}>
+            <p className={`font-mono text-[11px] truncate ${(log as Record<string, unknown>).todayOneAction ? 'text-ink' : 'text-ink-faint italic'}`}>
               {(log as Record<string, unknown>).todayOneAction as string || '\u2014'}
             </p>
           </div>
-          <div>
+          <div className="w-28 flex-shrink-0">
             <p className="font-serif text-[8px] italic uppercase tracking-wide text-ink-muted mb-0.5">Focus</p>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5">
               <span className="font-mono text-[11px] font-semibold text-ink">
                 {log.focusHoursActual || 0}h{log.focusHoursTarget ? ` / ${log.focusHoursTarget}h` : ''}
               </span>
               {(log.focusHoursTarget ?? 0) > 0 && (
-                <div className="flex-1 h-[3px] bg-rule-light rounded-sm max-w-[120px]">
+                <div className="flex-1 h-[3px] bg-rule-light rounded-sm">
                   <div
                     className="h-full bg-burgundy rounded-sm transition-all"
                     style={{ width: `${Math.min(((log.focusHoursActual || 0) / (log.focusHoursTarget || 1)) * 100, 100)}%` }}
@@ -652,64 +649,65 @@ export default function ExecutionView() {
               )}
             </div>
           </div>
-          <div>
+          <div className="flex-1 min-w-0">
             <p className="font-serif text-[8px] italic uppercase tracking-wide text-ink-muted mb-0.5">Shipped</p>
-            <p className={`font-mono text-[11px] ${log.whatShipped ? 'text-ink' : 'text-ink-faint italic'}`}>
-              {log.whatShipped || 'Nothing shipped yet'}
+            <p className={`font-mono text-[11px] truncate ${log.whatShipped ? 'text-ink' : 'text-ink-faint italic'}`}>
+              {log.whatShipped || 'Nothing yet'}
             </p>
           </div>
+          {/* Quality badges inline */}
+          {(log.publicIteration || log.feedbackLoopClosed || log.speedOverPerfection) && (
+            <div className="flex gap-1 flex-shrink-0 items-start pt-2">
+              {log.publicIteration && (
+                <span className="font-mono text-[7px] uppercase px-1 py-0.5 rounded-sm border bg-burgundy-bg text-burgundy border-burgundy/20">Pub</span>
+              )}
+              {log.feedbackLoopClosed && (
+                <span className="font-mono text-[7px] uppercase px-1 py-0.5 rounded-sm border bg-green-bg text-green-ink border-green-ink/20">FB</span>
+              )}
+              {log.speedOverPerfection && (
+                <span className="font-mono text-[7px] uppercase px-1 py-0.5 rounded-sm border bg-amber-bg text-amber-ink border-amber-ink/20">Spd</span>
+              )}
+            </div>
+          )}
         </div>
-        {/* Quality badges */}
-        {(log.publicIteration || log.feedbackLoopClosed || log.speedOverPerfection) && (
-          <div className="flex gap-1.5 mt-2 pt-2 border-t border-rule-light">
-            {log.publicIteration && (
-              <span className="font-mono text-[8px] uppercase px-1.5 py-0.5 rounded-sm border bg-burgundy-bg text-burgundy border-burgundy/20">Public</span>
-            )}
-            {log.feedbackLoopClosed && (
-              <span className="font-mono text-[8px] uppercase px-1.5 py-0.5 rounded-sm border bg-green-bg text-green-ink border-green-ink/20">Feedback</span>
-            )}
-            {log.speedOverPerfection && (
-              <span className="font-mono text-[8px] uppercase px-1.5 py-0.5 rounded-sm border bg-amber-bg text-amber-ink border-amber-ink/20">Speed&gt;Perf</span>
-            )}
+
+        {/* Muscles as compact table row */}
+        <div className="border-t border-rule pt-1.5">
+          <div className="grid grid-cols-3 gap-3">
+            {[
+              { label: 'Ships', todayVal: (log as Record<string, unknown>).shipsCount as number || 0, data: shipsData, weekly: weeklyShips, target: MUSCLE_TARGETS.shipsPerWeek },
+              { label: 'Asks', todayVal: log.revenueAsksCount || 0, data: asksData, weekly: weeklyAsks, target: MUSCLE_TARGETS.asksPerWeek },
+              { label: 'Posts', todayVal: (log as Record<string, unknown>).publicPostsCount as number || 0, data: postsData, weekly: weeklyPosts, target: MUSCLE_TARGETS.postsPerWeek },
+            ].map(({ label, todayVal, data, weekly, target }) => (
+              <div key={label} className="flex items-center gap-2">
+                <span className="font-serif text-[8px] font-semibold uppercase tracking-[0.5px] text-burgundy w-9 flex-shrink-0">{label}</span>
+                <span className="font-mono text-[12px] font-semibold text-ink w-5 text-right flex-shrink-0">{todayVal}</span>
+                <Sparkline data={data} />
+                <span className={`font-mono text-[9px] font-semibold tabular-nums flex-shrink-0 ${weeklyColor(weekly, target)}`}>
+                  {weekly}/{target}
+                </span>
+              </div>
+            ))}
           </div>
-        )}
+        </div>
       </div>
 
-      {/* Muscles Strip */}
-      <div className="grid grid-cols-3 gap-3">
-        {[
-          { label: 'Shipping', todayVal: (log as Record<string, unknown>).shipsCount as number || 0, data: shipsData, weekly: weeklyShips, target: MUSCLE_TARGETS.shipsPerWeek },
-          { label: 'Revenue Asks', todayVal: log.revenueAsksCount || 0, data: asksData, weekly: weeklyAsks, target: MUSCLE_TARGETS.asksPerWeek },
-          { label: 'Public Posts', todayVal: (log as Record<string, unknown>).publicPostsCount as number || 0, data: postsData, weekly: weeklyPosts, target: MUSCLE_TARGETS.postsPerWeek },
-        ].map(({ label, todayVal, data, weekly, target }) => (
-          <div key={label} className="bg-paper border border-rule rounded-sm p-3">
-            <div className="flex items-center justify-between mb-1.5">
-              <h4 className="font-serif text-[9px] font-semibold uppercase tracking-[0.5px] text-burgundy">{label}</h4>
-              <span className="font-mono text-[14px] font-semibold text-ink">{todayVal}</span>
-            </div>
-            <div className="flex items-center gap-2 mb-1.5">
-              <span className="font-mono text-[7px] text-ink-muted">7d</span>
-              <Sparkline data={data} />
-            </div>
-            <div className="flex items-center justify-between">
-              <span className={`font-mono text-[10px] font-semibold ${weeklyColor(weekly, target)}`}>
-                {weekly} / {target}
-              </span>
-              <span className="font-mono text-[7px] text-ink-muted">per wk</span>
-            </div>
-          </div>
-        ))}
-      </div>
+      {/* ═══ SECTION 2: 3-COLUMN GRID (Heatmap | Portfolio | Weekly Bets) */}
 
-      {/* ═══ SECTION 2: 7-DAY VELOCITY ═════════════════════════════════ */}
+      {goalsError && (
+        <div className="bg-burgundy-bg border border-burgundy/20 rounded-sm p-1.5 flex items-start gap-2">
+          <span className="font-mono text-[11px] text-red-ink flex-1">{goalsError}</span>
+          <button onClick={() => setGoalsError(null)} className="font-mono text-[9px] text-ink-muted hover:text-ink">x</button>
+        </div>
+      )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-2">
         {/* Execution Heatmap */}
-        <div className="bg-paper border border-rule rounded-sm p-3">
-          <div className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-2 pb-1.5 border-b-2 border-rule">
+        <div className="bg-paper border border-rule rounded-sm p-2.5">
+          <div className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-1.5 pb-1 border-b-2 border-rule">
             7-Day Execution
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             {dates.map((date) => {
               const score = executionScore(logMap.get(date))
               return (
@@ -723,7 +721,7 @@ export default function ExecutionView() {
               )
             })}
           </div>
-          <div className="flex items-center gap-1 mt-1.5 justify-end">
+          <div className="flex items-center gap-1 mt-1 justify-end">
             <span className="font-mono text-[7px] text-ink-faint">0</span>
             {HEATMAP_COLORS.map((color, i) => (
               <div key={i} className={`w-2 h-2 rounded-sm ${color}`} />
@@ -733,12 +731,11 @@ export default function ExecutionView() {
         </div>
 
         {/* Portfolio */}
-        <div className="bg-paper border border-rule rounded-sm p-3">
-          <div className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-2 pb-1.5 border-b-2 border-rule">
+        <div className="bg-paper border border-rule rounded-sm p-2.5">
+          <div className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-1.5 pb-1 border-b-2 border-rule">
             Portfolio
           </div>
-          {/* Allocation bar */}
-          <div className="flex h-3 rounded-sm overflow-hidden mb-2">
+          <div className="flex h-2.5 rounded-sm overflow-hidden mb-1.5">
             {projects.map((project) => {
               const colors: Record<string, string> = {
                 spine: 'bg-burgundy',
@@ -759,48 +756,36 @@ export default function ExecutionView() {
               <div className="bg-rule" style={{ width: `${learningAllocation}%` }} title={`Learning: ${learningAllocation}%`} />
             )}
           </div>
-          {/* Compact table */}
-          <div className="space-y-1">
+          <div className="space-y-0.5">
             {projects.map((project) => (
-              <div key={project.id} className="flex items-center gap-2">
+              <div key={project.id} className="flex items-center gap-1.5">
                 <Link
                   href={`/thesis/projects/${project.id}`}
                   className="font-mono text-[10px] font-medium text-ink no-underline hover:text-burgundy flex-1 truncate"
                 >
                   {project.name}
                 </Link>
-                <span className="font-mono text-[10px] text-ink-muted tabular-nums">{percent(project.timeAllocationPercent)}</span>
+                <span className="font-mono text-[9px] text-ink-muted tabular-nums">{percent(project.timeAllocationPercent)}</span>
                 <StatusIndicator status={project.status} size="sm" />
               </div>
             ))}
             {learningAllocation > 0 && (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5">
                 <span className="font-mono text-[10px] text-ink-muted flex-1">Learning</span>
-                <span className="font-mono text-[10px] text-ink-muted tabular-nums">{percent(learningAllocation)}</span>
+                <span className="font-mono text-[9px] text-ink-muted tabular-nums">{percent(learningAllocation)}</span>
               </div>
             )}
           </div>
         </div>
-      </div>
 
-      {/* ═══ SECTION 3: BETS & OBJECTIVES ══════════════════════════════ */}
-
-      {goalsError && (
-        <div className="bg-burgundy-bg border border-burgundy/20 rounded-sm p-2 flex items-start gap-2">
-          <span className="font-mono text-[11px] text-red-ink flex-1">{goalsError}</span>
-          <button onClick={() => setGoalsError(null)} className="font-mono text-[9px] text-ink-muted hover:text-ink">x</button>
-        </div>
-      )}
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
         {/* Weekly Bets */}
-        <div className="bg-paper border border-rule rounded-sm p-3">
-          <div className="flex items-center justify-between mb-2 pb-1.5 border-b-2 border-rule">
+        <div className="bg-paper border border-rule rounded-sm p-2.5">
+          <div className="flex items-center justify-between mb-1.5 pb-1 border-b-2 border-rule">
             <h4 className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-burgundy">Weekly Bets</h4>
-            <span className="font-mono text-[9px] text-ink-muted">Week of {currentWeekStart}</span>
+            <span className="font-mono text-[8px] text-ink-muted">{currentWeekStart}</span>
           </div>
           {weeklyGoals.length === 0 && !showAddWeekly && (
-            <p className="font-mono text-[11px] text-ink-faint italic py-2">No weekly bets set.</p>
+            <p className="font-mono text-[10px] text-ink-faint italic py-1">No weekly bets set.</p>
           )}
           <div className="space-y-0">
             {weeklyGoals.map((goal) => (
@@ -808,7 +793,7 @@ export default function ExecutionView() {
             ))}
           </div>
           {showAddWeekly ? (
-            <div className="mt-2">
+            <div className="mt-1.5">
               <AddGoalForm
                 scope="weekly"
                 onSave={(text, category) => handleSaveGoal('weekly', text, category)}
@@ -818,21 +803,25 @@ export default function ExecutionView() {
           ) : (
             <button
               onClick={() => setShowAddWeekly(true)}
-              className="mt-2 font-serif text-[9px] font-medium px-2 py-1 rounded-sm border bg-transparent text-ink-muted border-rule hover:border-ink-faint transition-colors"
+              className="mt-1.5 font-serif text-[9px] font-medium px-2 py-1 rounded-sm border bg-transparent text-ink-muted border-rule hover:border-ink-faint transition-colors"
             >
               + Add Bet
             </button>
           )}
         </div>
+      </div>
 
+      {/* ═══ SECTION 3: QUARTERLY + ASCENT (2-col) ═══════════════════ */}
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
         {/* Quarterly Objectives */}
-        <div className="bg-paper border border-rule rounded-sm p-3">
-          <div className="flex items-center justify-between mb-2 pb-1.5 border-b-2 border-rule">
+        <div className="bg-paper border border-rule rounded-sm p-2.5">
+          <div className="flex items-center justify-between mb-1.5 pb-1 border-b-2 border-rule">
             <h4 className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-burgundy">Quarterly Objectives</h4>
-            <span className="font-mono text-[9px] text-ink-muted">{quarterLabel()}</span>
+            <span className="font-mono text-[8px] text-ink-muted">{quarterLabel()}</span>
           </div>
           {quarterlyGoals.length === 0 && !showAddQuarterly && (
-            <p className="font-mono text-[11px] text-ink-faint italic py-2">No quarterly objectives set.</p>
+            <p className="font-mono text-[10px] text-ink-faint italic py-1">No quarterly objectives set.</p>
           )}
           <div className="space-y-0">
             {quarterlyGoals.map((goal) => (
@@ -840,7 +829,7 @@ export default function ExecutionView() {
             ))}
           </div>
           {showAddQuarterly ? (
-            <div className="mt-2">
+            <div className="mt-1.5">
               <AddGoalForm
                 scope="quarterly"
                 onSave={(text, category, metric, metricTarget) =>
@@ -852,93 +841,88 @@ export default function ExecutionView() {
           ) : (
             <button
               onClick={() => setShowAddQuarterly(true)}
-              className="mt-2 font-serif text-[9px] font-medium px-2 py-1 rounded-sm border bg-transparent text-ink-muted border-rule hover:border-ink-faint transition-colors"
+              className="mt-1.5 font-serif text-[9px] font-medium px-2 py-1 rounded-sm border bg-transparent text-ink-muted border-rule hover:border-ink-faint transition-colors"
             >
               + Add Objective
             </button>
           )}
         </div>
-      </div>
 
-      {/* ═══ SECTION 4: ASCENT (collapsible) ═══════════════════════════ */}
-
-      {/* Collapsed summary — always visible */}
-      <div className="bg-paper border border-rule rounded-sm p-3">
-        <button
-          onClick={() => setAscentExpanded(!ascentExpanded)}
-          className="w-full text-left"
-        >
-          <div className="flex items-center justify-between mb-1.5">
-            <h4 className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy">Ascent</h4>
-            <div className="flex items-center gap-2">
-              {mastery && (
-                <span className="font-mono text-[8px] text-ink-muted">Day {dayOfMonth} of {daysInMonth}</span>
-              )}
-              <span className="font-mono text-[9px] text-ink-muted">{ascentExpanded ? '\u25B4' : '\u25BE'}</span>
+        {/* Ascent (collapsed summary) — second column */}
+        <div className="bg-paper border border-rule rounded-sm p-2.5">
+          <button
+            onClick={() => setAscentExpanded(!ascentExpanded)}
+            className="w-full text-left"
+          >
+            <div className="flex items-center justify-between mb-1">
+              <h4 className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-burgundy">Ascent</h4>
+              <div className="flex items-center gap-2">
+                {mastery && (
+                  <span className="font-mono text-[8px] text-ink-muted">Day {dayOfMonth}/{daysInMonth}</span>
+                )}
+                <span className="font-mono text-[9px] text-ink-muted">{ascentExpanded ? '\u25B4' : '\u25BE'}</span>
+              </div>
             </div>
-          </div>
 
-          {mastery && currentLevel && (
-            <>
-              <div className="flex items-center gap-2 mb-1.5">
-                <span className="font-mono text-[7px] font-bold text-paper bg-burgundy px-1 py-0.5 rounded-sm uppercase tracking-[0.5px] flex-shrink-0">
-                  Stage {mastery.currentLevelIdx + 1}/5
-                </span>
-                <span className="font-serif text-[11px] font-semibold text-ink">{currentLevel.label}</span>
-                <span className="font-serif text-[9px] text-ink-muted">&mdash; {currentLevel.sublabel}</span>
-              </div>
-
-              <div className="flex items-center gap-2 mb-1.5">
-                <div className="flex-1 h-[4px] bg-rule-light rounded-sm overflow-hidden relative">
-                  <div
-                    className="absolute top-0 h-full w-px bg-ink-faint/50"
-                    style={{ left: `${Math.min(monthPct * 80, 100)}%` }}
-                  />
-                  <div
-                    className={`h-full rounded-sm transition-all duration-500 ${
-                      overallPace === 'met' || overallPace === 'ahead'
-                        ? 'bg-green-ink'
-                        : overallPace === 'on_pace' ? 'bg-amber-ink' : 'bg-red-ink'
-                    }`}
-                    style={{ width: `${Math.min(currentLevel.progress, 100)}%` }}
-                  />
+            {mastery && currentLevel && (
+              <>
+                <div className="flex items-center gap-1.5 mb-1">
+                  <span className="font-mono text-[7px] font-bold text-paper bg-burgundy px-1 py-0.5 rounded-sm uppercase tracking-[0.5px] flex-shrink-0">
+                    {mastery.currentLevelIdx + 1}/5
+                  </span>
+                  <span className="font-serif text-[10px] font-semibold text-ink truncate">{currentLevel.label}</span>
                 </div>
-                <span className="font-mono text-[11px] font-bold text-burgundy tabular-nums flex-shrink-0">{currentLevel.progress}%</span>
-                <PaceTag status={overallPace} />
-              </div>
 
-              <div className="flex items-center gap-3 pt-1.5 border-t border-rule-light">
-                <span className="font-mono text-[9px] text-ink-muted">
-                  <span className="font-semibold text-green-ink">{totalMet}</span>/{totalSkills} skills met
-                </span>
-                {metrics && (
-                  <>
-                    <span className="font-mono text-[9px] text-ink-muted">
-                      Reward <span className="font-semibold text-ink">{metrics.avgScore.toFixed(1)}</span>/10
+                <div className="flex items-center gap-1.5 mb-1">
+                  <div className="flex-1 h-[3px] bg-rule-light rounded-sm overflow-hidden relative">
+                    <div
+                      className="absolute top-0 h-full w-px bg-ink-faint/50"
+                      style={{ left: `${Math.min(monthPct * 80, 100)}%` }}
+                    />
+                    <div
+                      className={`h-full rounded-sm transition-all duration-500 ${
+                        overallPace === 'met' || overallPace === 'ahead'
+                          ? 'bg-green-ink'
+                          : overallPace === 'on_pace' ? 'bg-amber-ink' : 'bg-red-ink'
+                      }`}
+                      style={{ width: `${Math.min(currentLevel.progress, 100)}%` }}
+                    />
+                  </div>
+                  <span className="font-mono text-[10px] font-bold text-burgundy tabular-nums flex-shrink-0">{currentLevel.progress}%</span>
+                  <PaceTag status={overallPace} />
+                </div>
+
+                <div className="flex items-center gap-2 pt-1 border-t border-rule-light flex-wrap">
+                  <span className="font-mono text-[8px] text-ink-muted">
+                    <span className="font-semibold text-green-ink">{totalMet}</span>/{totalSkills} met
+                  </span>
+                  {metrics && (
+                    <span className="font-mono text-[8px] text-ink-muted">
+                      Score <span className="font-semibold text-ink">{metrics.avgScore.toFixed(1)}</span>
                     </span>
-                    <span className={`font-mono text-[9px] font-semibold ${
+                  )}
+                  {metrics && (
+                    <span className={`font-mono text-[8px] font-semibold ${
                       metrics.scoreTrajectory > 0 ? 'text-green-ink' : metrics.scoreTrajectory > -0.5 ? 'text-amber-ink' : 'text-red-ink'
                     }`}>
-                      {metrics.scoreTrajectory >= 0 ? '\u2191' : '\u2193'} {Math.abs(metrics.scoreTrajectory).toFixed(1)} trend
+                      {metrics.scoreTrajectory >= 0 ? '\u2191' : '\u2193'}{Math.abs(metrics.scoreTrajectory).toFixed(1)}
                     </span>
-                  </>
-                )}
-                {metrics && (
-                  <span className="font-mono text-[8px] text-ink-faint ml-auto">{metrics.daysTracked}d tracked</span>
-                )}
-              </div>
-            </>
-          )}
+                  )}
+                </div>
+              </>
+            )}
 
-          {!mastery && (
-            <span className="font-mono text-[11px] text-ink-muted">Loading ascent data...</span>
-          )}
-        </button>
+            {!mastery && (
+              <span className="font-mono text-[10px] text-ink-muted">Loading...</span>
+            )}
+          </button>
+        </div>
       </div>
 
-      {/* Expanded ascent detail */}
+      {/* ═══ ASCENT EXPANDED DETAIL ══════════════════════════════════ */}
+
       {ascentExpanded && mastery && currentLevel && (
-        <>
+        <div className="space-y-2">
           {/* Track Cards */}
           {currentLevel.tracks.map(track => (
             <TrackCard key={track.track} track={track} monthPct={monthPct} />
@@ -946,11 +930,11 @@ export default function ExecutionView() {
 
           {/* Completed Levels */}
           {mastery.currentLevelIdx > 0 && (
-            <div className="bg-green-bg border border-green-ink/20 rounded-sm p-2.5">
-              <h4 className="font-serif text-[9px] font-semibold uppercase tracking-[0.5px] text-green-ink mb-1.5">
+            <div className="bg-green-bg border border-green-ink/20 rounded-sm p-2">
+              <h4 className="font-serif text-[9px] font-semibold uppercase tracking-[0.5px] text-green-ink mb-1">
                 Completed Stages
               </h4>
-              <div className="flex gap-2">
+              <div className="flex gap-1.5 flex-wrap">
                 {mastery.levels.slice(0, mastery.currentLevelIdx).map(level => (
                   <span
                     key={level.level}
@@ -964,8 +948,8 @@ export default function ExecutionView() {
           )}
 
           {/* Monthly Assessment */}
-          <div className="bg-paper border border-rule rounded-sm p-3">
-            <h4 className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-2 pb-1.5 border-b-2 border-rule">
+          <div className="bg-paper border border-rule rounded-sm p-2.5">
+            <h4 className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-1.5 pb-1 border-b-2 border-rule">
               Monthly Assessment
             </h4>
             <div className="space-y-2">
@@ -974,16 +958,16 @@ export default function ExecutionView() {
                 <textarea
                   value={oneLiner}
                   onChange={(e) => setOneLiner(e.target.value)}
-                  className="w-full font-mono text-[11px] bg-cream border border-rule rounded-sm px-2 py-1 focus:outline-none focus:border-burgundy min-h-[32px] resize-y"
+                  className="w-full font-mono text-[11px] bg-cream border border-rule rounded-sm px-2 py-1 focus:outline-none focus:border-burgundy min-h-[28px] resize-y"
                   placeholder="I help [who] achieve [what] by [how]..."
                 />
-                <div className="flex items-center gap-1 mt-1">
+                <div className="flex items-center gap-1 mt-0.5">
                   <span className="font-serif text-[8px] italic text-ink-muted mr-1">Clarity:</span>
                   {[1, 2, 3, 4, 5].map(n => (
                     <button
                       key={n}
                       onClick={() => setOneLinerClarityScore(n)}
-                      className={`font-mono text-[9px] font-medium w-6 h-6 rounded-sm border transition-colors ${
+                      className={`font-mono text-[9px] font-medium w-5 h-5 rounded-sm border transition-colors ${
                         oneLinerClarityScore === n
                           ? 'bg-burgundy text-paper border-burgundy'
                           : 'bg-transparent text-ink-muted border-rule hover:border-ink-faint'
@@ -996,13 +980,13 @@ export default function ExecutionView() {
               </div>
 
               <div>
-                <label className="font-serif text-[8px] italic uppercase tracking-wide text-ink-muted block mb-1">Ruin Conditions</label>
-                <div className="space-y-1">
+                <label className="font-serif text-[8px] italic uppercase tracking-wide text-ink-muted block mb-0.5">Ruin Conditions</label>
+                <div className="space-y-0.5">
                   {RUIN_CONDITIONS.map(({ key, label, fix }) => (
                     <div key={key}>
                       <button
                         onClick={() => setRuinConditions(prev => ({ ...prev, [key]: !prev[key] }))}
-                        className={`w-full flex items-center gap-2 px-2 py-1 rounded-sm border transition-colors text-left ${
+                        className={`w-full flex items-center gap-2 px-2 py-0.5 rounded-sm border transition-colors text-left ${
                           ruinConditions[key] ? 'bg-red-bg border-red-ink/20' : 'bg-transparent border-rule hover:border-ink-faint'
                         }`}
                       >
@@ -1024,7 +1008,7 @@ export default function ExecutionView() {
                 <textarea
                   value={nextMonthFocus}
                   onChange={(e) => setNextMonthFocus(e.target.value)}
-                  className="w-full font-mono text-[11px] bg-cream border border-rule rounded-sm px-2 py-1 focus:outline-none focus:border-burgundy min-h-[28px] resize-y"
+                  className="w-full font-mono text-[11px] bg-cream border border-rule rounded-sm px-2 py-1 focus:outline-none focus:border-burgundy min-h-[24px] resize-y"
                   placeholder="Primary focus for next month..."
                 />
               </div>
@@ -1032,7 +1016,7 @@ export default function ExecutionView() {
               <button
                 onClick={handleAscentSave}
                 disabled={ascentSaving}
-                className="w-full py-1.5 font-serif text-[9px] font-semibold uppercase tracking-[1px] text-paper bg-burgundy rounded-sm hover:bg-burgundy/90 transition-colors disabled:opacity-50"
+                className="w-full py-1 font-serif text-[9px] font-semibold uppercase tracking-[1px] text-paper bg-burgundy rounded-sm hover:bg-burgundy/90 transition-colors disabled:opacity-50"
               >
                 {ascentSaving ? 'Saving...' : 'Save Assessment'}
               </button>
@@ -1041,13 +1025,13 @@ export default function ExecutionView() {
 
           {/* History */}
           {recentAssessments.length > 0 && (
-            <div className="bg-paper border border-rule rounded-sm p-3">
-              <h4 className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-2 pb-1.5 border-b border-rule">
+            <div className="bg-paper border border-rule rounded-sm p-2.5">
+              <h4 className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-1.5 pb-1 border-b border-rule">
                 History
               </h4>
-              <div className="space-y-1">
+              <div className="space-y-0.5">
                 {recentAssessments.map((a) => (
-                  <div key={a.date} className="flex items-center justify-between py-1 border-b border-rule-light/50">
+                  <div key={a.date} className="flex items-center justify-between py-0.5 border-b border-rule-light/50">
                     <span className="font-mono text-[10px] text-ink">{a.date.slice(0, 7)}</span>
                     <span className={`font-mono text-[9px] font-medium ${BELT_COLORS[a.currentBelt] || 'text-ink-muted'}`}>
                       {BELT_LABELS[a.currentBelt as keyof typeof BELT_LABELS] || a.currentBelt}
@@ -1060,7 +1044,7 @@ export default function ExecutionView() {
               </div>
             </div>
           )}
-        </>
+        </div>
       )}
     </div>
   )
