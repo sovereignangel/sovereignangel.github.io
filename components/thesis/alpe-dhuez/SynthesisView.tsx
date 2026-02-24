@@ -53,28 +53,27 @@ function ScoreAttribution({ components }: { components: RewardComponents }) {
           const pct = contributions.get(key) || 0
           const delta = value - mean
           const isAbove = delta >= 0
+          const pillarColor = meta.pillar === 'body' ? 'text-green-ink' : meta.pillar === 'brain' ? 'text-navy' : 'text-burgundy'
+          const pillarBar = meta.pillar === 'body' ? 'bg-green-ink' : meta.pillar === 'brain' ? 'bg-navy' : 'bg-burgundy'
           return (
             <div key={key} className="flex items-center gap-1.5">
               {/* Component symbol */}
-              <span className={`font-mono text-[8px] w-6 shrink-0 text-right ${meta.pillar === 'body' ? 'text-green-ink' : meta.pillar === 'brain' ? 'text-navy' : 'text-burgundy'}`}>
+              <span className={`font-mono text-[8px] w-6 shrink-0 text-right ${pillarColor}`}>
                 {meta.symbol}
               </span>
 
-              {/* Bar — centered on the mean, extends left (drag) or right (lift) */}
+              {/* Bar — filled from 0 to value, colored by pillar */}
               <div className="flex-1 h-2 bg-rule-light rounded-sm overflow-hidden relative">
                 <div
-                  className={`absolute top-0 h-full rounded-sm ${isAbove ? 'bg-green-ink/60' : 'bg-red-ink/50'}`}
-                  style={isAbove
-                    ? { left: `${mean * 100}%`, width: `${delta * 100}%` }
-                    : { left: `${value * 100}%`, width: `${-delta * 100}%` }
-                  }
+                  className={`absolute top-0 h-full rounded-sm ${pillarBar}${isAbove ? '' : '/40'}`}
+                  style={{ left: 0, width: `${value * 100}%` }}
                 />
                 {/* Mean marker */}
-                <div className="absolute top-0 h-full w-px bg-ink-muted/40" style={{ left: `${mean * 100}%` }} />
+                <div className="absolute top-0 h-full w-px bg-ink/30" style={{ left: `${mean * 100}%` }} />
               </div>
 
               {/* Value */}
-              <span className={`font-mono text-[8px] w-5 text-right ${isAbove ? 'text-green-ink' : 'text-red-ink'}`}>
+              <span className={`font-mono text-[8px] w-5 text-right ${pillarColor}`}>
                 {(value * 100).toFixed(0)}
               </span>
 
@@ -206,45 +205,47 @@ export default function SynthesisView() {
           </p>
         ) : (
           <div className="space-y-3">
-            {/* Score + Gate */}
-            <div>
-              <div className="flex items-end gap-2 mb-1.5">
-                <span className={`font-mono text-[24px] font-bold leading-none ${scoreColor}`}>
-                  {score !== null ? score.toFixed(1) : '\u2014'}
-                </span>
-                <span className="font-mono text-[11px] text-ink-muted mb-0.5">/ 10</span>
+            {/* Row 1: Score + Gate | Attribution */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+              <div>
+                <div className="flex items-end gap-2 mb-1.5">
+                  <span className={`font-mono text-[24px] font-bold leading-none ${scoreColor}`}>
+                    {score !== null ? score.toFixed(1) : '\u2014'}
+                  </span>
+                  <span className="font-mono text-[11px] text-ink-muted mb-0.5">/ 10</span>
+                </div>
+                {gateLabel && (
+                  <span className={`inline-flex items-center font-serif text-[8px] uppercase tracking-wider border rounded-sm px-1.5 py-0.5 ${gateColor}`}>
+                    Gate = {components!.gate.toFixed(1)} &middot; {gateLabel}
+                  </span>
+                )}
               </div>
-              {gateLabel && (
-                <span className={`inline-flex items-center font-serif text-[8px] uppercase tracking-wider border rounded-sm px-1.5 py-0.5 ${gateColor}`}>
-                  Gate = {components!.gate.toFixed(1)} &middot; {gateLabel}
-                </span>
-              )}
+              {components && <ScoreAttribution components={components} />}
             </div>
 
-            {/* Score Attribution — where is the score coming from? */}
-            {components && <ScoreAttribution components={components} />}
-
-            {/* Pillar breakdown (Body / Brain / Build) */}
-            {components && (
-              <PillarBreakdown components={components} compact />
-            )}
-
-            {/* 7-day trajectory */}
-            <div>
-              <p className="font-serif text-[8px] italic uppercase tracking-wide text-ink-muted mb-1.5">
-                7-Day Trajectory
-              </p>
-              {hasTrajectoryData ? (
-                <div className="h-[120px]">
-                  <RewardTrajectoryChart data={chartData} />
-                </div>
-              ) : (
-                <div className="h-[80px] flex items-center justify-center">
-                  <p className="font-serif text-[10px] italic text-ink-faint">
-                    Log more days to see trajectory
-                  </p>
+            {/* Row 2: Pillar Breakdown | 7-Day Trajectory */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+              {components && (
+                <div>
+                  <PillarBreakdown components={components} compact />
                 </div>
               )}
+              <div>
+                <p className="font-serif text-[8px] italic uppercase tracking-wide text-ink-muted mb-1.5">
+                  7-Day Trajectory
+                </p>
+                {hasTrajectoryData ? (
+                  <div className="h-[120px]">
+                    <RewardTrajectoryChart data={chartData} />
+                  </div>
+                ) : (
+                  <div className="h-[80px] flex items-center justify-center">
+                    <p className="font-serif text-[10px] italic text-ink-faint">
+                      Log more days to see trajectory
+                    </p>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         )}
