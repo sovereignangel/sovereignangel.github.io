@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/components/auth/AuthProvider'
 import { getVenture, updateVenture } from '@/lib/firestore'
-import type { Venture, VentureStage, VenturePRD } from '@/lib/types'
+import type { Venture, VentureStage, VenturePRD, VentureMemo } from '@/lib/types'
 import BuildStatusBar from './BuildStatusBar'
 
 const STAGE_OPTIONS: VentureStage[] = ['idea', 'specced', 'validated', 'prd_draft', 'prd_approved', 'building', 'deployed', 'archived']
@@ -12,6 +12,18 @@ const PRIORITY_STYLES: Record<string, string> = {
   P0: 'bg-burgundy-bg text-burgundy border-burgundy/20',
   P1: 'bg-amber-bg text-amber-ink border-amber-ink/20',
   P2: 'bg-cream text-ink-muted border-rule',
+}
+
+function MemoSection({ title, content }: { title: string; content: string }) {
+  if (!content) return null
+  return (
+    <div>
+      <div className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-1 pb-1 border-b border-rule">
+        {title}
+      </div>
+      <p className="font-mono text-[10px] text-ink leading-relaxed whitespace-pre-line">{content}</p>
+    </div>
+  )
 }
 
 export default function VentureDetail({ ventureId, onBack }: { ventureId: string; onBack: () => void }) {
@@ -24,6 +36,9 @@ export default function VentureDetail({ ventureId, onBack }: { ventureId: string
   const [generatingPrd, setGeneratingPrd] = useState(false)
   const [iterateText, setIterateText] = useState('')
   const [submittingIterate, setSubmittingIterate] = useState(false)
+  const [generatingMemo, setGeneratingMemo] = useState(false)
+  const [memoFeedback, setMemoFeedback] = useState('')
+  const [submittingMemoFeedback, setSubmittingMemoFeedback] = useState(false)
 
   useEffect(() => {
     if (!user) return
@@ -145,6 +160,47 @@ export default function VentureDetail({ ventureId, onBack }: { ventureId: string
     }
   }
 
+  const handleGenerateMemo = async () => {
+    if (!user || !venture) return
+    setGeneratingMemo(true)
+    try {
+      const res = await fetch('/api/ventures/memo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ventureId, uid: user.uid }),
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setVenture({ ...venture, memo: data.memo })
+      }
+    } catch (err) {
+      console.error('Generate memo failed:', err)
+    } finally {
+      setGeneratingMemo(false)
+    }
+  }
+
+  const handleSubmitMemoFeedback = async () => {
+    if (!user || !venture || !memoFeedback.trim()) return
+    setSubmittingMemoFeedback(true)
+    try {
+      const res = await fetch('/api/ventures/memo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ventureId, uid: user.uid, feedback: memoFeedback.trim() }),
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setVenture({ ...venture, memo: data.memo })
+        setMemoFeedback('')
+      }
+    } catch (err) {
+      console.error('Memo feedback failed:', err)
+    } finally {
+      setSubmittingMemoFeedback(false)
+    }
+  }
+
   if (loading) {
     return <div className="p-3 text-[11px] text-ink-muted">Loading...</div>
   }
@@ -156,6 +212,7 @@ export default function VentureDetail({ ventureId, onBack }: { ventureId: string
   const s = venture.spec
   const b = venture.build
   const prd = venture.prd
+  const memo = venture.memo
 
   return (
     <div className="p-3 space-y-3">
@@ -376,6 +433,177 @@ export default function VentureDetail({ ventureId, onBack }: { ventureId: string
             className="font-serif text-[9px] font-medium px-2 py-1 rounded-sm border bg-burgundy text-paper border-burgundy hover:bg-burgundy/90 transition-colors disabled:opacity-50"
           >
             {generatingPrd ? 'Generating PRD...' : 'Generate PRD'}
+          </button>
+        </div>
+      ) : null}
+
+      {/* Pitch Memo Section */}
+      {memo ? (
+        <div className="bg-white border border-rule rounded-sm">
+          {/* Memo Page 1 — Executive Summary */}
+          <div className="p-3 border-b-2 border-burgundy">
+            <div className="flex items-center justify-between mb-2">
+              <div className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy">
+                Investment Memo — {s.name}
+              </div>
+              <span className="font-mono text-[8px] text-ink-muted">v{memo.version}</span>
+            </div>
+
+            {/* Company Purpose */}
+            <p className="font-serif text-[13px] text-ink leading-relaxed italic mb-3">
+              {memo.companyPurpose}
+            </p>
+
+            {/* Key Metrics Banner */}
+            {memo.keyMetrics.length > 0 && (
+              <div className="grid grid-cols-2 lg:grid-cols-3 gap-2 mb-3">
+                {memo.keyMetrics.map((m, i) => (
+                  <div key={i} className="bg-cream border border-rule rounded-sm p-2">
+                    <span className="font-mono text-[8px] uppercase text-ink-muted block">{m.label}</span>
+                    <span className="font-mono text-[14px] font-bold text-ink block">{m.value}</span>
+                    <span className="font-mono text-[8px] text-ink-muted">{m.context}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Executive Summary */}
+            <div className="mb-2">
+              <span className="font-mono text-[9px] text-ink-muted block mb-1">Executive Summary</span>
+              <p className="font-mono text-[10px] text-ink leading-relaxed whitespace-pre-line">{memo.executiveSummary}</p>
+            </div>
+          </div>
+
+          {/* Memo Body */}
+          <div className="p-3 space-y-3">
+            {/* Problem + Solution */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+              <MemoSection title="Problem" content={memo.problem} />
+              <MemoSection title="Solution" content={memo.solution} />
+            </div>
+
+            {/* Why Now + Insight */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+              <MemoSection title="Why Now" content={memo.whyNow} />
+              <MemoSection title="Founder Insight" content={memo.insight} />
+            </div>
+
+            {/* Market */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+              <MemoSection title="Market Size" content={memo.marketSize} />
+              <MemoSection title="Market Dynamics" content={memo.marketDynamics} />
+            </div>
+
+            {/* Competition + Defensibility */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+              <MemoSection title="Competitive Landscape" content={memo.competitiveLandscape} />
+              <MemoSection title="Defensibility" content={memo.defensibility} />
+            </div>
+
+            {/* Business Model + GTM */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+              <MemoSection title="Business Model" content={memo.businessModel} />
+              <MemoSection title="Go-to-Market" content={memo.goToMarket} />
+            </div>
+
+            {/* Founder */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+              <MemoSection title="Founder Advantage" content={memo.founderAdvantage} />
+              <MemoSection title="Relevant Experience" content={memo.relevantExperience} />
+            </div>
+
+            {/* Financials */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+              <MemoSection title="Financial Projection" content={memo.financialProjection} />
+              <MemoSection title="Unit Economics" content={memo.unitEconomics} />
+            </div>
+
+            {/* The Ask */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+              <MemoSection title="Funding Ask" content={memo.fundingAsk} />
+              <MemoSection title="Use of Funds" content={memo.useOfFunds} />
+            </div>
+
+            {/* Milestones */}
+            {memo.milestones.length > 0 && (
+              <div>
+                <div className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-1.5 pb-1 border-b border-rule">
+                  Key Milestones
+                </div>
+                <ol className="space-y-1">
+                  {memo.milestones.map((m, i) => (
+                    <li key={i} className="font-mono text-[10px] text-ink flex items-start gap-1.5">
+                      <span className="font-mono text-[8px] font-bold text-burgundy bg-burgundy-bg px-1 py-0.5 rounded-sm shrink-0 mt-0.5">
+                        {i + 1}
+                      </span>
+                      {m}
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            )}
+
+            {/* Feedback History */}
+            {memo.feedbackHistory.length > 0 && (
+              <details>
+                <summary className="font-mono text-[9px] text-ink-muted cursor-pointer hover:text-ink">
+                  Revision History ({memo.feedbackHistory.length})
+                </summary>
+                <ul className="mt-1 space-y-0.5">
+                  {memo.feedbackHistory.map((fb, i) => (
+                    <li key={i} className="font-mono text-[8px] text-ink-muted italic">&ldquo;{fb}&rdquo;</li>
+                  ))}
+                </ul>
+              </details>
+            )}
+
+            {/* Feedback / Regenerate */}
+            <div className="pt-2 border-t border-rule space-y-2">
+              <div className="flex gap-1">
+                <button
+                  onClick={handleGenerateMemo}
+                  disabled={generatingMemo}
+                  className="font-serif text-[9px] font-medium px-2 py-1 rounded-sm border bg-transparent text-ink-muted border-rule hover:border-ink-faint transition-colors disabled:opacity-50"
+                >
+                  {generatingMemo ? 'Regenerating...' : 'Regenerate Memo'}
+                </button>
+              </div>
+              <div className="flex gap-1">
+                <input
+                  value={memoFeedback}
+                  onChange={e => setMemoFeedback(e.target.value)}
+                  placeholder="Request changes to memo..."
+                  className="flex-1 font-mono text-[9px] bg-cream border border-rule rounded-sm px-2 py-1 text-ink placeholder:text-ink-faint focus:border-burgundy focus:outline-none"
+                />
+                <button
+                  onClick={handleSubmitMemoFeedback}
+                  disabled={submittingMemoFeedback || !memoFeedback.trim()}
+                  className={`font-serif text-[9px] font-medium px-2 py-1 rounded-sm border transition-colors ${
+                    submittingMemoFeedback || !memoFeedback.trim()
+                      ? 'bg-cream text-ink-faint border-rule cursor-not-allowed'
+                      : 'bg-burgundy text-paper border-burgundy hover:bg-burgundy/90'
+                  }`}
+                >
+                  {submittingMemoFeedback ? 'Revising...' : 'Revise Memo'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : (venture.stage !== 'idea') ? (
+        <div className="bg-white border border-rule rounded-sm p-3">
+          <div className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-1.5 pb-1 border-b border-rule">
+            Pitch Memo
+          </div>
+          <p className="font-mono text-[9px] text-ink-muted mb-2">
+            Generate a Sequoia-quality investment memo from this venture&apos;s spec{prd ? ' and PRD' : ''}.
+          </p>
+          <button
+            onClick={handleGenerateMemo}
+            disabled={generatingMemo}
+            className="font-serif text-[9px] font-medium px-2 py-1 rounded-sm border bg-burgundy text-paper border-burgundy hover:bg-burgundy/90 transition-colors disabled:opacity-50"
+          >
+            {generatingMemo ? 'Generating Memo...' : 'Generate Pitch Memo'}
           </button>
         </div>
       ) : null}

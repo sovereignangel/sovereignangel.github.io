@@ -20,7 +20,7 @@
 import type { ThesisPillar } from '@/lib/types'
 
 export interface ParsedTelegramMessage {
-  command: 'signal' | 'note' | 'journal' | 'rss' | 'predict' | 'venture' | 'build' | 'approve' | 'feedback' | 'iterate' | 'reset' | 'brief' | 'unknown'
+  command: 'signal' | 'note' | 'journal' | 'rss' | 'predict' | 'venture' | 'build' | 'approve' | 'feedback' | 'iterate' | 'reset' | 'brief' | 'memo' | 'unknown'
   text: string
   pillars: ThesisPillar[]
   raw: string
@@ -33,7 +33,8 @@ const PILLAR_TAGS: Record<string, ThesisPillar> = {
 }
 
 export function parseTelegramMessage(text: string): ParsedTelegramMessage {
-  const raw = text.trim()
+  // Strip @botname suffix from commands (e.g., /memo@thesis_bot 3 → /memo 3)
+  const raw = text.trim().replace(/^(\/\w+)@\w+/, '$1')
 
   // /signal command
   if (raw.startsWith('/signal')) {
@@ -102,6 +103,12 @@ export function parseTelegramMessage(text: string): ParsedTelegramMessage {
   if (raw.startsWith('/reset')) {
     const body = raw.slice('/reset'.length).trim()
     return { command: 'reset', text: body, pillars: [], raw }
+  }
+
+  // /memo command (optional number: /memo 3)
+  if (raw.startsWith('/memo')) {
+    const body = raw.slice('/memo'.length).trim()
+    return { command: 'memo', text: body, pillars: [], raw }
   }
 
   // /brief command — feedback on morning brief

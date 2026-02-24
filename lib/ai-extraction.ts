@@ -1,5 +1,5 @@
 import { GoogleGenerativeAI } from '@google/generative-ai'
-import type { InsightType, ThesisPillar, NervousSystemState, BodyFelt, TrainingType, DecisionDomain, PredictionDomain, VentureCategory, VentureSpec, VenturePRD, VenturePRDPriority } from './types'
+import type { InsightType, ThesisPillar, NervousSystemState, BodyFelt, TrainingType, DecisionDomain, PredictionDomain, VentureCategory, VentureSpec, VenturePRD, VenturePRDPriority, VentureMemo, VentureMemoMetric } from './types'
 import { callLLM } from './llm'
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '')
@@ -1232,6 +1232,178 @@ Return ONLY valid JSON (no markdown, no code blocks):
       designNotes: 'Dark modern SaaS aesthetic. Clean typography, responsive.',
       successMetrics: [],
       estimatedBuildMinutes: 5,
+      version: 1,
+      feedbackHistory: feedback || [],
+    }
+  }
+}
+
+// ─── Sequoia Pre-Seed Pitch Memo ──────────────────────────────────────────────
+
+export async function generateVentureMemo(
+  spec: VentureSpec,
+  prd: VenturePRD | null,
+  feedback?: string[]
+): Promise<VentureMemo> {
+  const feedbackSection = feedback && feedback.length > 0
+    ? `\nBOARD FEEDBACK ON PREVIOUS DRAFT (incorporate this):\n${feedback.map((f, i) => `${i + 1}. ${f}`).join('\n')}`
+    : ''
+
+  const prdSection = prd
+    ? `\nPRD CONTEXT:
+  Project: ${prd.projectName}
+  Features: ${prd.features.map(f => `[${f.priority}] ${f.name}: ${f.description}`).join('; ')}
+  Success Metrics: ${prd.successMetrics.join('; ')}
+  User Flows: ${prd.userFlows.join(' | ')}`
+    : ''
+
+  const prompt = `You are a former Sequoia Capital partner writing an internal investment memo for a pre-seed company. This memo will be presented to the partnership. It must be elite-quality: precise, quantified, narrative-driven, and brutally honest about risks.
+
+VENTURE SPEC:
+  Name: ${spec.name}
+  One-liner: ${spec.oneLiner}
+  Problem: ${spec.problem}
+  Customer: ${spec.targetCustomer}
+  Solution: ${spec.solution}
+  Category: ${spec.category}
+  Revenue Model: ${spec.revenueModel}
+  Pricing: ${spec.pricingIdea}
+  Market Size: ${spec.marketSize}
+  Existing Alternatives: ${spec.existingAlternatives.join(', ') || 'None identified'}
+  Unfair Advantage: ${spec.unfairAdvantage}
+  Kill Criteria: ${spec.killCriteria.join('; ') || 'None set'}
+  Thesis Pillars: ${spec.thesisPillars.join(', ') || 'General'}
+${prdSection}${feedbackSection}
+
+Write the memo with these sections. Each section should be 2-4 sentences of dense, insight-rich prose unless otherwise noted. Write like you're presenting to Roelof Botha — no fluff, no buzzwords, every sentence earns its place.
+
+1. COMPANY_PURPOSE: One sentence. What this company does and for whom. Format: "[Company] [verb]s [what] for [whom]."
+
+2. EXECUTIVE_SUMMARY: 2-3 paragraphs. The investment thesis in miniature. Why this is interesting, what the founder sees that others don't, and why the timing is right. This should make a partner want to read the rest.
+
+3. KEY_METRICS: 4-6 headline metrics as objects with {label, value, context}. Include TAM, target CAC, target LTV, payback period, and any other relevant metrics. Use realistic pre-seed estimates — not fantasy numbers. If data isn't available, use credible market benchmarks with "[est.]" suffix.
+
+4. PROBLEM: The customer pain — make it vivid and specific. Quantify the cost of the status quo. Who suffers, how much, and how often?
+
+5. SOLUTION: How the product solves it. Focus on mechanism and differentiation. What is the 10x improvement over the status quo?
+
+6. WHY_NOW: What changed in the market, technology, or regulation that makes this possible/necessary NOW? Why didn't this work 3 years ago? Why will it be too late in 3 years?
+
+7. INSIGHT: The non-obvious founder insight. What does this founder understand about the problem/market that most people miss? This is the intellectual edge.
+
+8. MARKET_SIZE: TAM / SAM / SOM breakdown. Use top-down AND bottom-up sizing. Cite comparable markets or analogous companies. Be specific about growth rates.
+
+9. MARKET_DYNAMICS: Tailwinds, headwinds, secular trends. What macro forces make this market attractive?
+
+10. COMPETITIVE_LANDSCAPE: Who else plays here? Map the competitive space. Be honest about incumbent advantages. Explain why this company wins despite them.
+
+11. DEFENSIBILITY: What moats can be built? Network effects, data advantages, switching costs, regulatory capture, brand. Be specific about WHEN each moat kicks in.
+
+12. BUSINESS_MODEL: Revenue mechanics in detail. Pricing tiers, unit economics targets, expansion revenue vectors. How does the model improve with scale?
+
+13. GO_TO_MARKET: How do you get the first 100 customers? The first 1,000? What's the distribution insight? Community-led, sales-led, product-led, or channel-led?
+
+14. FOUNDER_ADVANTAGE: Why THIS founder wins. What unique combination of skills, access, or obsession makes them the right person? Be specific.
+
+15. RELEVANT_EXPERIENCE: Track record. What have they built before? What domain expertise do they bring? What network can they leverage?
+
+16. FINANCIAL_PROJECTION: 3-year sketch. Year 1: what revenue looks like post-MVP. Year 2: growth trajectory. Year 3: scale target. State key assumptions explicitly.
+
+17. UNIT_ECONOMICS: CAC / LTV / payback / gross margin targets. Compare to best-in-class for the category. What needs to be true for unit economics to work?
+
+18. FUNDING_ASK: How much capital is needed for the pre-seed round? What does it buy (in months of runway and milestones)?
+
+19. USE_OF_FUNDS: Percentage breakdown across engineering, GTM, operations. Explain the allocation logic.
+
+20. MILESTONES: 3-5 concrete milestones this round of funding unlocks. Each should be specific and time-bound (e.g., "Ship v1 and reach 50 paying customers within 6 months").
+
+Return ONLY valid JSON (no markdown, no code blocks):
+{
+  "companyPurpose": "...",
+  "executiveSummary": "...",
+  "keyMetrics": [{"label": "TAM", "value": "$X", "context": "..."}],
+  "problem": "...",
+  "solution": "...",
+  "whyNow": "...",
+  "insight": "...",
+  "marketSize": "...",
+  "marketDynamics": "...",
+  "competitiveLandscape": "...",
+  "defensibility": "...",
+  "businessModel": "...",
+  "goToMarket": "...",
+  "founderAdvantage": "...",
+  "relevantExperience": "...",
+  "financialProjection": "...",
+  "unitEconomics": "...",
+  "fundingAsk": "...",
+  "useOfFunds": "...",
+  "milestones": ["milestone 1", "milestone 2", "milestone 3"]
+}`
+
+  try {
+    const responseText = await callLLM(prompt, { temperature: 0.7, maxTokens: 8000 })
+
+    const cleanedText = responseText
+      .replace(/\`\`\`json\n?/g, '')
+      .replace(/\`\`\`\n?/g, '')
+      .trim()
+
+    const parsed = JSON.parse(cleanedText)
+
+    return {
+      companyPurpose: String(parsed.companyPurpose || spec.oneLiner),
+      executiveSummary: String(parsed.executiveSummary || ''),
+      keyMetrics: Array.isArray(parsed.keyMetrics)
+        ? parsed.keyMetrics.map((m: Record<string, unknown>): VentureMemoMetric => ({
+            label: String(m.label || ''),
+            value: String(m.value || ''),
+            context: String(m.context || ''),
+          }))
+        : [],
+      problem: String(parsed.problem || spec.problem),
+      solution: String(parsed.solution || spec.solution),
+      whyNow: String(parsed.whyNow || ''),
+      insight: String(parsed.insight || ''),
+      marketSize: String(parsed.marketSize || spec.marketSize),
+      marketDynamics: String(parsed.marketDynamics || ''),
+      competitiveLandscape: String(parsed.competitiveLandscape || ''),
+      defensibility: String(parsed.defensibility || ''),
+      businessModel: String(parsed.businessModel || spec.revenueModel),
+      goToMarket: String(parsed.goToMarket || ''),
+      founderAdvantage: String(parsed.founderAdvantage || spec.unfairAdvantage),
+      relevantExperience: String(parsed.relevantExperience || ''),
+      financialProjection: String(parsed.financialProjection || ''),
+      unitEconomics: String(parsed.unitEconomics || ''),
+      fundingAsk: String(parsed.fundingAsk || ''),
+      useOfFunds: String(parsed.useOfFunds || ''),
+      milestones: Array.isArray(parsed.milestones) ? parsed.milestones.map(String) : [],
+      version: 1,
+      feedbackHistory: feedback || [],
+    }
+  } catch (error) {
+    console.error('Error generating venture memo:', error)
+    return {
+      companyPurpose: spec.oneLiner,
+      executiveSummary: '',
+      keyMetrics: [],
+      problem: spec.problem,
+      solution: spec.solution,
+      whyNow: '',
+      insight: '',
+      marketSize: spec.marketSize,
+      marketDynamics: '',
+      competitiveLandscape: '',
+      defensibility: '',
+      businessModel: spec.revenueModel,
+      goToMarket: '',
+      founderAdvantage: spec.unfairAdvantage,
+      relevantExperience: '',
+      financialProjection: '',
+      unitEconomics: '',
+      fundingAsk: '',
+      useOfFunds: '',
+      milestones: [],
       version: 1,
       feedbackHistory: feedback || [],
     }

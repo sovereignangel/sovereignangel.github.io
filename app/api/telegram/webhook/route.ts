@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { parseTelegramMessage, type TelegramUpdate } from '@/lib/telegram-parser'
-import { parseJournalEntry, transcribeAndParseVoiceNote, parsePrediction, parseVentureIdea, generateVenturePRD, type ParsedJournalEntry } from '@/lib/ai-extraction'
+import { parseJournalEntry, transcribeAndParseVoiceNote, parsePrediction, parseVentureIdea, generateVenturePRD, generateVentureMemo, type ParsedJournalEntry } from '@/lib/ai-extraction'
 import { computeReward } from '@/lib/reward'
 import { DEFAULT_SETTINGS } from '@/lib/constants'
 
@@ -1286,6 +1286,101 @@ async function handleBuild(uid: string, text: string, chatId: number) {
   }
 }
 
+async function handleMemo(uid: string, text: string, chatId: number) {
+  const adminDb = await getAdminDb()
+
+  try {
+    const { num } = parseVentureNumber(text.trim())
+
+    // Find venture by number, or most recent with a spec (any stage past idea)
+    let ventureDoc: FirebaseFirestore.QueryDocumentSnapshot | null = null
+    if (num) {
+      const snap = await adminDb.collection('users').doc(uid).collection('ventures')
+        .where('ventureNumber', '==', num).limit(1).get()
+      if (!snap.empty) ventureDoc = snap.docs[0]
+    } else {
+      // Find most recent venture that has a spec (not idea stage)
+      const snap = await adminDb.collection('users').doc(uid).collection('ventures')
+        .orderBy('createdAt', 'desc').limit(20).get()
+      const eligible = snap.docs.filter(d => d.data().stage !== 'idea')
+      if (eligible.length > 0) ventureDoc = eligible[0]
+    }
+
+    if (!ventureDoc) {
+      await sendTelegramReply(chatId, num
+        ? `Venture #${num} not found.`
+        : 'No ventures to generate a memo for.\n\nUse /venture to create one first.')
+      return
+    }
+
+    const venture = ventureDoc.data()
+    const vNum = venture.ventureNumber ? `#${venture.ventureNumber} ` : ''
+    const spec = venture.spec
+    const prd = venture.prd || null
+
+    if (venture.stage === 'idea') {
+      await sendTelegramReply(chatId, `${vNum}${spec.name} is still in "idea" stage. Spec it first with /venture.`)
+      return
+    }
+
+    await sendTelegramReply(chatId, `${vNum}Generating pitch memo for ${spec.name}...`)
+
+    // Build feedback history from existing memo
+    const existingMemo = venture.memo
+    const feedbackHistory = existingMemo?.feedbackHistory || []
+
+    const memo = await generateVentureMemo(spec, prd, feedbackHistory.length > 0 ? feedbackHistory : undefined)
+    memo.version = (existingMemo?.version || 0) + 1
+
+    // Save memo to venture
+    await ventureDoc.ref.update({
+      memo,
+      updatedAt: new Date(),
+    })
+
+    // Save public copy for shareable URL
+    const memoId = ventureDoc.id
+    await adminDb.collection('public_memos').doc(memoId).set({
+      memo,
+      ventureName: spec.name,
+      oneLiner: spec.oneLiner,
+      category: spec.category,
+      thesisPillars: spec.thesisPillars,
+      uid,
+      ventureId: memoId,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    })
+
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://loricorpuz.com'
+    const memoUrl = `${baseUrl}/memo/${memoId}`
+
+    const lines: string[] = [
+      `${vNum}Pitch memo generated: ${spec.name}`,
+      '',
+      `"${memo.companyPurpose}"`,
+      '',
+    ]
+
+    // Key metrics summary
+    if (memo.keyMetrics.length > 0) {
+      memo.keyMetrics.slice(0, 4).forEach(m => {
+        lines.push(`  ${m.label}: ${m.value}`)
+      })
+      lines.push('')
+    }
+
+    lines.push(`View full memo: ${memoUrl}`)
+    lines.push('')
+    lines.push(`Reply /memo ${venture.ventureNumber || ''} to regenerate`)
+
+    await sendTelegramReply(chatId, lines.join('\n'))
+  } catch (error) {
+    console.error('Memo generation error:', error)
+    await sendTelegramReply(chatId, `Memo generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
+  }
+}
+
 const STAGE_ROLLBACK: Record<string, string> = {
   specced: 'idea',
   prd_draft: 'specced',
@@ -1470,6 +1565,7 @@ export async function POST(req: NextRequest) {
         '`/approve` — Approve the most recent PRD draft',
         '`/feedback <text>` — Revise the PRD with feedback',
         '`/build` — Build the approved venture',
+        '`/memo [#]` — Generate Sequoia-style pitch memo',
         '`/iterate <project> <changes>` — Iterate on deployed venture',
         '`/reset [#]` — Roll back a venture to its previous stage',
         '',
@@ -1568,6 +1664,12 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ ok: true })
       }
       await handleIterate(uid, parsed.text, chatId)
+      return NextResponse.json({ ok: true })
+    }
+
+    // Handle memo command
+    if (parsed.command === 'memo') {
+      await handleMemo(uid, parsed.text, chatId)
       return NextResponse.json({ ok: true })
     }
 
