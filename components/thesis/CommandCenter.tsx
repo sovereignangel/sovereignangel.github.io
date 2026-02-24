@@ -74,13 +74,15 @@ export default function CommandCenter() {
   useEffect(() => {
     if (!user) return
     setLoading(true)
+    const safe = <T,>(p: Promise<T>, fallback: T): Promise<T> =>
+      p.catch(err => { console.error('CommandCenter fetch error:', err); return fallback })
     Promise.all([
-      getProjects(user.uid),
-      getRecentDailyLogs(user.uid, 7),
-      getNetworkContacts(user.uid),
-      getDecisions(user.uid, 'active'),
-      getInboxExternalSignals(user.uid),
-      getPredictions(user.uid, { status: 'active' }),
+      safe(getProjects(user.uid), []),
+      safe(getRecentDailyLogs(user.uid, 7), []),
+      safe(getNetworkContacts(user.uid), []),
+      safe(getDecisions(user.uid, 'active'), []),
+      safe(getInboxExternalSignals(user.uid), []),
+      safe(getPredictions(user.uid, { status: 'active' }), []),
     ]).then(([p, l, c, d, s, pr]) => {
       setProjects(p)
       setLogs(l)
