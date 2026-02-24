@@ -117,7 +117,7 @@ export function defaultScorecard(): WeeklyScorecardMetric[] {
   return [
     { key: 'revenue_asks', label: 'Revenue Asks', target: '21', targetNumeric: 21, actual: null },
     { key: 'ships', label: 'Public Ships', target: '5', targetNumeric: 5, actual: null },
-    { key: 'posts', label: 'Posts', target: '7', targetNumeric: 7, actual: null },
+    { key: 'posts', label: 'Own', target: '7', targetNumeric: 7, actual: null },
     { key: 'revenue', label: 'Revenue', target: '$2k', targetNumeric: 2000, actual: null, unit: '$' },
     { key: 'vo2', label: 'VO2 Sessions', target: '2', targetNumeric: 2, actual: null },
     { key: 'sleep', label: 'Sleep 7+hrs', target: '7/7', targetNumeric: 7, actual: null },

@@ -675,9 +675,9 @@ export default function ExecutionView() {
         <div className="border-t border-rule pt-1.5">
           <div className="grid grid-cols-3 gap-3">
             {[
-              { label: 'Ships', todayVal: (log as Record<string, unknown>).shipsCount as number || 0, data: shipsData, weekly: weeklyShips, target: MUSCLE_TARGETS.shipsPerWeek },
-              { label: 'Asks', todayVal: log.revenueAsksCount || 0, data: asksData, weekly: weeklyAsks, target: MUSCLE_TARGETS.asksPerWeek },
-              { label: 'Posts', todayVal: (log as Record<string, unknown>).publicPostsCount as number || 0, data: postsData, weekly: weeklyPosts, target: MUSCLE_TARGETS.postsPerWeek },
+              { label: 'Ship', todayVal: (log as Record<string, unknown>).shipsCount as number || 0, data: shipsData, weekly: weeklyShips, target: MUSCLE_TARGETS.shipsPerWeek },
+              { label: 'Ask', todayVal: log.revenueAsksCount || 0, data: asksData, weekly: weeklyAsks, target: MUSCLE_TARGETS.asksPerWeek },
+              { label: 'Own', todayVal: (log as Record<string, unknown>).publicPostsCount as number || 0, data: postsData, weekly: weeklyPosts, target: MUSCLE_TARGETS.postsPerWeek },
             ].map(({ label, todayVal, data, weekly, target }) => (
               <div key={label} className="flex items-center gap-2">
                 <span className="font-serif text-[8px] font-semibold uppercase tracking-[0.5px] text-burgundy w-9 flex-shrink-0">{label}</span>

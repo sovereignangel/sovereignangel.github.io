@@ -4,16 +4,16 @@ import { useState, useCallback } from 'react'
 import IntelligenceGauge from '@/components/thesis/intelligence/IntelligenceGauge'
 import IntelligenceDial from '@/components/thesis/intelligence/IntelligenceDial'
 import ExternalSignalInbox from '@/components/thesis/intelligence/ExternalSignalInbox'
-import InsightsInbox from '@/components/thesis/intelligence/InsightsInbox'
 import KnowledgeArchitecture from '@/components/thesis/intelligence/KnowledgeArchitecture'
+import InsightsInbox from '@/components/thesis/intelligence/InsightsInbox'
 import NetworkView from '@/components/thesis/alpe-dhuez/NetworkView'
 import ConversationInbox from '@/components/thesis/intelligence/ConversationInbox'
 
-type TabType = 'signals' | 'external' | 'insights' | 'network' | 'knowledge'
+type TabType = 'feed' | 'signals' | 'network' | 'knowledge'
 
 export default function IntelligencePage() {
   const [refreshKey, setRefreshKey] = useState(0)
-  const [activeTab, setActiveTab] = useState<TabType>('signals')
+  const [activeTab, setActiveTab] = useState<TabType>('feed')
   const onSignalSaved = useCallback(() => setRefreshKey(k => k + 1), [])
 
   return (
@@ -23,9 +23,8 @@ export default function IntelligencePage() {
         {/* Sub-tab Navigation */}
         <div className="flex gap-1 border-b border-rule shrink-0">
           {([
+            { key: 'feed' as const, label: 'Feed' },
             { key: 'signals' as const, label: 'Signals' },
-            { key: 'external' as const, label: 'External' },
-            { key: 'insights' as const, label: 'Insights' },
             { key: 'network' as const, label: 'Network' },
             { key: 'knowledge' as const, label: 'Knowledge' },
           ]).map((tab) => (
@@ -45,16 +44,20 @@ export default function IntelligencePage() {
 
         {/* Tab Content */}
         <div className="flex-1 overflow-y-auto">
+          {activeTab === 'feed' && <ExternalSignalInbox onSignalCreated={onSignalSaved} />}
           {activeTab === 'signals' && <IntelligenceGauge refreshKey={refreshKey} />}
-          {activeTab === 'external' && <ExternalSignalInbox onSignalCreated={onSignalSaved} />}
-          {activeTab === 'insights' && <InsightsInbox />}
           {activeTab === 'network' && (
             <div className="space-y-3">
               <NetworkView />
               <ConversationInbox />
             </div>
           )}
-          {activeTab === 'knowledge' && <KnowledgeArchitecture />}
+          {activeTab === 'knowledge' && (
+            <div className="space-y-3">
+              <KnowledgeArchitecture />
+              <InsightsInbox />
+            </div>
+          )}
         </div>
       </div>
 

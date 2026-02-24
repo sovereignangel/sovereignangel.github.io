@@ -1,7 +1,7 @@
 'use client'
 
-import WeeklyPlanView from '@/components/thesis/weekly-plan/WeeklyPlanView'
+import CommandCenter from '@/components/thesis/CommandCenter'
 
 export default function ThesisPage() {
-  return <WeeklyPlanView />
+  return <CommandCenter />
 }

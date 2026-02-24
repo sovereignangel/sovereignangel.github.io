@@ -67,9 +67,31 @@ export default function DecisionJournal() {
         <DecisionForm
           decision={editingDecision}
           onSave={async (data) => {
-            await save(data, editingDecision?.id)
+            const decisionId = await save(data, editingDecision?.id)
             setShowForm(false)
             setEditingDecision(null)
+            // Generate antithesis in background for new decisions
+            if (!editingDecision && data.title && data.chosenOption) {
+              fetch('/api/decisions/antithesis', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  title: data.title,
+                  hypothesis: data.hypothesis,
+                  chosenOption: data.chosenOption,
+                  reasoning: data.reasoning,
+                  options: data.options,
+                  premortem: data.premortem,
+                }),
+              })
+                .then(res => res.json())
+                .then(result => {
+                  if (result.antithesis && decisionId) {
+                    save({ antithesis: result.antithesis, antithesisConfidence: result.confidence }, decisionId)
+                  }
+                })
+                .catch(() => {})
+            }
           }}
           onClose={() => { setShowForm(false); setEditingDecision(null) }}
         />
@@ -142,6 +164,17 @@ export default function DecisionJournal() {
                       <div>
                         <span className="font-serif text-[9px] text-ink-muted uppercase">Pre-Mortem</span>
                         <p className="font-sans text-[10px] text-ink mt-0.5">{d.premortem}</p>
+                      </div>
+                    )}
+                    {d.antithesis && (
+                      <div className="bg-burgundy-bg border border-burgundy/20 rounded-sm p-2">
+                        <span className="font-serif text-[9px] text-burgundy uppercase">Antithesis</span>
+                        <p className="font-sans text-[10px] text-ink mt-0.5">{d.antithesis}</p>
+                        {d.antithesisConfidence != null && (
+                          <span className="font-mono text-[8px] text-ink-muted mt-0.5 block">
+                            Counter-argument strength: {d.antithesisConfidence}%
+                          </span>
+                        )}
                       </div>
                     )}
                     <div className="flex items-center justify-between pt-1 border-t border-rule-light">

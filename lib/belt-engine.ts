@@ -146,7 +146,7 @@ const LEVEL_META: LevelMeta[] = [
 const TRACK_LABELS: Record<MasteryTrack, string> = {
   ship: 'Ship',
   ask: 'Ask',
-  show: 'Show',
+  show: 'Own',
 }
 
 // ─── MICRO-SKILL DEFINITIONS ────────────────────────────────────────

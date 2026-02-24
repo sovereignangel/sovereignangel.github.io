@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
       date: result.date,
       results: result.results,
       successCount,
-      totalSources: 5,
+      totalSources: Object.keys(result.results).length,
       durationMs: result.duration_ms,
       errors: result.errors.length > 0 ? result.errors : undefined
     })
@@ -87,7 +87,7 @@ export async function POST(request: NextRequest) {
       date: result.date,
       results: result.results,
       successCount,
-      totalSources: 5,
+      totalSources: Object.keys(result.results).length,
       durationMs: result.duration_ms,
       errors: result.errors.length > 0 ? result.errors : undefined
     })

@@ -18,6 +18,8 @@ export interface Decision {
   linkedSignalIds: string[]
   status: DecisionStatus
   reviewDate: string             // YYYY-MM-DD (90 days out)
+  antithesis?: string              // AI-generated strongest counter-argument
+  antithesisConfidence?: number    // AI confidence in the counter-argument (0-100)
   outcomeScore?: number          // 0-100
   actualOutcome?: string
   learnings?: string

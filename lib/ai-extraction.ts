@@ -1237,3 +1237,57 @@ Return ONLY valid JSON (no markdown, no code blocks):
     }
   }
 }
+
+// ─── DECISION ANTITHESIS ───────────────────────────────────────────────
+
+export interface DecisionAntithesis {
+  antithesis: string
+  confidence: number
+}
+
+export async function generateDecisionAntithesis(decision: {
+  title: string
+  hypothesis: string
+  chosenOption: string
+  reasoning: string
+  options: string[]
+  premortem?: string
+}): Promise<DecisionAntithesis> {
+  const prompt = `You are a rigorous decision analyst practicing steelmanning and red-teaming. Given the following decision, generate the STRONGEST possible counter-argument (antithesis) against the chosen option.
+
+DECISION: ${decision.title}
+
+HYPOTHESIS: ${decision.hypothesis}
+
+OPTIONS CONSIDERED: ${decision.options.join(', ')}
+
+CHOSEN OPTION: ${decision.chosenOption}
+
+REASONING: ${decision.reasoning}
+
+${decision.premortem ? `PREMORTEM: ${decision.premortem}` : ''}
+
+Generate:
+1. ANTITHESIS: The single strongest counter-argument against this decision. Be specific, concrete, and intellectually honest. Reference what could go wrong, what the decision-maker might be blind to, or why one of the other options might actually be superior. 2-3 sentences max.
+
+2. CONFIDENCE: How confident are you (0-100) that the antithesis represents a genuine risk? 90+ means "this is a serious blind spot", 50-70 means "reasonable concern but manageable", below 50 means "the decision seems sound, the counter-argument is weak".
+
+Respond in JSON:
+{"antithesis": "...", "confidence": N}`
+
+  try {
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' })
+    const result = await model.generateContent(prompt)
+    const text = result.response.text()
+    const jsonMatch = text.match(/\{[\s\S]*\}/)
+    if (!jsonMatch) return { antithesis: '', confidence: 0 }
+    const parsed = JSON.parse(jsonMatch[0])
+    return {
+      antithesis: parsed.antithesis || '',
+      confidence: typeof parsed.confidence === 'number' ? parsed.confidence : 50,
+    }
+  } catch (error) {
+    console.error('Error generating decision antithesis:', error)
+    return { antithesis: '', confidence: 0 }
+  }
+}

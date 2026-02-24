@@ -156,11 +156,11 @@ export default function MusclesView() {
         </div>
       </div>
 
-      {/* Muscle 3: Public Narrative */}
+      {/* Muscle 3: Own */}
       <div className="bg-paper border border-rule rounded-sm p-3">
         <div className="flex items-center justify-between mb-2 pb-1.5 border-b-2 border-rule">
           <h4 className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-burgundy">
-            Public Narrative
+            Own
           </h4>
           <span className="font-mono text-[14px] font-semibold text-ink">
             {(log as Record<string, unknown>).publicPostsCount as number || 0}

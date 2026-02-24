@@ -21,10 +21,11 @@ export function useDecisions(uid: string | undefined) {
 
   useEffect(() => { refresh() }, [refresh])
 
-  const save = useCallback(async (data: Partial<Decision>, id?: string) => {
-    if (!uid) return
-    await saveDecision(uid, data, id)
+  const save = useCallback(async (data: Partial<Decision>, id?: string): Promise<string | undefined> => {
+    if (!uid) return undefined
+    const decisionId = await saveDecision(uid, data, id)
     await refresh()
+    return decisionId
   }, [uid, refresh])
 
   const remove = useCallback(async (id: string) => {

@@ -15,6 +15,9 @@ export interface SyncResult {
     chess: boolean
     stripe: boolean
     github: boolean
+    edgar: boolean
+    arxiv: boolean
+    twitter: boolean
   }
   duration_ms: number
   errors: string[]
@@ -41,25 +44,37 @@ export async function syncAllData(date?: string): Promise<SyncResult> {
     calendar: false,
     chess: false,
     stripe: false,
-    github: false
+    github: false,
+    edgar: false,
+    arxiv: false,
+    twitter: false,
   }
 
   const errors: string[] = []
 
-  // Dynamic imports to avoid Supabase client init at build time
+  // Dynamic imports to avoid Supabase/Firebase client init at build time
   const [
     { syncGarminMetrics },
     { syncCalendarTime },
     { syncChessProgress },
     { syncRevenueMetrics },
     { syncGitHubActivity },
+    { syncEdgarFilings },
+    { syncArxivPapers },
+    { syncTwitterLists },
   ] = await Promise.all([
     import('./garmin'),
     import('./calendar'),
     import('./chess'),
     import('./stripe'),
     import('./github'),
+    import('./edgar'),
+    import('./arxiv'),
+    import('./twitter'),
   ])
+
+  // Signal sources need a uid to write to Firestore
+  const uid = process.env.FIREBASE_UID
 
   // Run all syncs in parallel for speed
   const syncPromises = [
@@ -111,15 +126,50 @@ export async function syncAllData(date?: string): Promise<SyncResult> {
       .catch(err => {
         results.github = false
         errors.push(`GitHub: ${err.message}`)
-      })
+      }),
+
+    // Signal sources (require FIREBASE_UID)
+    ...(uid ? [
+      syncEdgarFilings(uid)
+        .then(count => {
+          results.edgar = count > 0
+        })
+        .catch(err => {
+          results.edgar = false
+          errors.push(`EDGAR: ${err.message}`)
+        }),
+
+      syncArxivPapers(uid)
+        .then(count => {
+          results.arxiv = count > 0
+        })
+        .catch(err => {
+          results.arxiv = false
+          errors.push(`ArXiv: ${err.message}`)
+        }),
+
+      syncTwitterLists(uid)
+        .then(count => {
+          results.twitter = count > 0
+        })
+        .catch(err => {
+          results.twitter = false
+          errors.push(`Twitter: ${err.message}`)
+        }),
+    ] : []),
   ]
+
+  if (!uid) {
+    errors.push('FIREBASE_UID not set — skipping signal sources (EDGAR, ArXiv, Twitter)')
+  }
 
   await Promise.all(syncPromises)
 
   const duration = Date.now() - startTime
   const successCount = Object.values(results).filter(Boolean).length
+  const totalSources = uid ? 8 : 5
 
-  console.log(`\n✨ Sync complete: ${successCount}/5 sources succeeded in ${duration}ms`)
+  console.log(`\n✨ Sync complete: ${successCount}/${totalSources} sources succeeded in ${duration}ms`)
 
   if (errors.length > 0) {
     console.log(`\n⚠️  Errors encountered:`)
@@ -164,7 +214,7 @@ export async function backfillAllData(days: number = 30) {
     return sum + Object.values(r.results).filter(Boolean).length
   }, 0)
 
-  const totalPossible = days * 5
+  const totalPossible = days * 8
   const successRate = ((totalSuccessful / totalPossible) * 100).toFixed(1)
 
   console.log(`\n📊 Backfill Summary:`)
@@ -174,6 +224,9 @@ export async function backfillAllData(days: number = 30) {
   console.log(`   Chess: ${allResults.filter(r => r.results.chess).length}/${days}`)
   console.log(`   Stripe: ${allResults.filter(r => r.results.stripe).length}/${days}`)
   console.log(`   GitHub: ${allResults.filter(r => r.results.github).length}/${days}`)
+  console.log(`   EDGAR: ${allResults.filter(r => r.results.edgar).length}/${days}`)
+  console.log(`   ArXiv: ${allResults.filter(r => r.results.arxiv).length}/${days}`)
+  console.log(`   Twitter: ${allResults.filter(r => r.results.twitter).length}/${days}`)
 
   return allResults
 }

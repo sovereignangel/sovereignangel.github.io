@@ -10,13 +10,10 @@ import { TREND_ARROWS, TREND_COLORS } from '@/lib/alpha-engine'
 import { format } from 'date-fns'
 
 const navItems = [
-  { href: '/thesis', label: 'Plan', symbol: 'W', exact: true },
-  { href: '/thesis/execution', label: 'Execution', symbol: 'GVC+κ' },
+  { href: '/thesis', label: 'Command Center', symbol: 'g*', exact: true },
+  { href: '/thesis/operate', label: 'Operate', symbol: 'GVC+\u03BA' },
   { href: '/thesis/intelligence', label: 'Intelligence', symbol: 'GI' },
-  { href: '/thesis/ventures', label: 'Ventures', symbol: 'V' },
-  { href: '/thesis/capital', label: 'Capital', symbol: '$' },
   { href: '/thesis/boardroom', label: 'Board Room', symbol: 'J' },
-  { href: '/thesis/rl', label: 'RL', symbol: '\u03C0' },
 ]
 
 function ScoreValue({ label, value, color, arrow, arrowColor }: {
