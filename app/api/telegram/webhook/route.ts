@@ -283,11 +283,18 @@ async function computeAndSaveReward(
   const settings = userData?.settings ?? DEFAULT_SETTINGS
 
   // Fetch recent logs (last 7 days) for GVC recency + delta
-  const logsSnap = await adminDb.collection('users').doc(uid).collection('daily_logs')
-    .orderBy('__name__', 'desc').limit(8).get()
-  const recentLogs = logsSnap.docs
-    .filter(d => d.id !== today)
-    .map(d => ({ date: d.id, ...d.data() }))
+  // Compute date keys directly to avoid needing a Firestore index
+  const recentDateKeys: string[] = []
+  for (let i = 1; i <= 7; i++) {
+    const d = new Date()
+    d.setDate(d.getDate() - i)
+    recentDateKeys.push(d.toISOString().split('T')[0])
+  }
+  const logsCollection = adminDb.collection('users').doc(uid).collection('daily_logs')
+  const recentSnaps = await Promise.all(recentDateKeys.map(dk => logsCollection.doc(dk).get()))
+  const recentLogs = recentSnaps
+    .filter(s => s.exists)
+    .map(s => ({ date: s.id, ...s.data()! }))
 
   // Fetch active projects for optionality + fragmentation
   const projectsSnap = await adminDb.collection('users').doc(uid).collection('projects')
