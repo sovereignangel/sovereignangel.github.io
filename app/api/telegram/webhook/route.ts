@@ -200,64 +200,57 @@ function buildJournalReply(parsed: ParsedJournalEntry): string {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function buildGapsSection(log: Record<string, any>): string {
-  type Gap = { symbol: string; hint: string }
-  const bodyGaps: Gap[] = []
-  const brainGaps: Gap[] = []
-  const buildGaps: Gap[] = []
+  type Gap = { symbol: string; question: string }
+  const gaps: Gap[] = []
 
   // ── Body ──
   const hasEnergy = (log.sleepHours > 0) ||
     (log.trainingTypes?.length > 0) ||
     (log.bodyFelt && log.bodyFelt !== 'neutral') ||
     (log.nervousSystemState && log.nervousSystemState !== 'regulated')
-  if (!hasEnergy) bodyGaps.push({ symbol: 'GE', hint: 'sleep, training, body state' })
+  if (!hasEnergy) gaps.push({ symbol: 'GE', question: 'How many hours did you sleep? Did you train today? How does your body feel — open, neutral, or tense?' })
 
   const hasJudgment = (log.psyCapHope > 0) || (log.psyCapEfficacy > 0) ||
     (log.psyCapResilience > 0) || (log.psyCapOptimism > 0)
-  if (!hasJudgment) bodyGaps.push({ symbol: 'J', hint: 'PsyCap (hope, efficacy, resilience, optimism)' })
+  if (!hasJudgment) gaps.push({ symbol: 'J', question: 'Rate 1-5: How hopeful do you feel about your goals? How capable? How resilient if things go wrong? How optimistic about the future?' })
 
   // ── Brain ──
   const hasIntelligence =
     (log.problems?.some((p: { problem?: string }) => p.problem?.trim())) ||
     (log.problemSelected?.trim())
-  if (!hasIntelligence) brainGaps.push({ symbol: 'GI', hint: 'problems spotted, problem selected' })
+  if (!hasIntelligence) gaps.push({ symbol: 'GI', question: 'What problems did you notice today in the market or your work? Which one are you testing next?' })
 
   const hasDiscovery = (log.discoveryConversationsCount > 0) ||
     (log.externalSignalsReviewed > 0) || (log.insightsExtracted > 0)
-  if (!hasDiscovery) brainGaps.push({ symbol: 'GD', hint: 'conversations, signals, insights' })
+  if (!hasDiscovery) gaps.push({ symbol: 'GD', question: 'How many discovery conversations did you have today? How many external signals (articles, reports, feeds) did you review? Any insights extracted?' })
 
   const hasSkill = (log.deliberatePracticeMinutes > 0) ||
     log.newTechniqueApplied || log.automationCreated
-  if (!hasSkill) brainGaps.push({ symbol: 'Σ', hint: 'practice minutes, technique, automation' })
+  if (!hasSkill) gaps.push({ symbol: 'Σ', question: 'How many minutes of deliberate practice today (learning a specific skill)? Did you try a new technique or tool? Did you build any automation or leverage?' })
 
   // ── Build ──
   const hasOutput = (log.whatShipped?.trim()) || (log.focusHoursActual > 0)
-  if (!hasOutput) buildGaps.push({ symbol: 'GVC', hint: 'focus hours, what you shipped' })
+  if (!hasOutput) gaps.push({ symbol: 'GVC', question: 'How many focus hours today? What did you ship or make progress on?' })
 
   const hasCapture = (log.revenueAsksCount > 0) || (log.revenueThisSession > 0)
-  if (!hasCapture) buildGaps.push({ symbol: 'κ', hint: 'revenue asks, money earned' })
+  if (!hasCapture) gaps.push({ symbol: 'κ', question: 'How many revenue asks did you make today? Did you earn any revenue? Close any feedback loops with customers?' })
 
   const hasNetwork = (log.warmIntrosMade > 0) || (log.warmIntrosReceived > 0) ||
     (log.meetingsBooked > 0) || (log.publicPostsCount > 0) || (log.inboundInquiries > 0)
-  if (!hasNetwork) buildGaps.push({ symbol: 'GN', hint: 'intros, meetings, posts, inbound' })
+  if (!hasNetwork) gaps.push({ symbol: 'GN', question: 'Any warm intros made or received? Meetings booked? Public posts? Inbound inquiries?' })
 
-  const totalGaps = bodyGaps.length + brainGaps.length + buildGaps.length
-  if (totalGaps === 0) {
-    return '\n\n_All 8 components touched today._'
+  if (gaps.length === 0) {
+    return '\n\n_All 9 components touched._'
   }
 
-  const lines = [`\n\n*Still at floor (${totalGaps}/8):*`]
-  if (bodyGaps.length > 0) {
-    lines.push(`\n🟢 *Body* (${bodyGaps.length})`)
-    for (const g of bodyGaps) lines.push(`  ${g.symbol} — ${g.hint}`)
+  // Pick the highest-impact gaps to ask about (max 3 to keep it conversational)
+  const ask = gaps.slice(0, 3)
+  const lines = [`\n\n*${gaps.length} component${gaps.length > 1 ? 's' : ''} still at floor — reply /journal to fill:*`]
+  for (const g of ask) {
+    lines.push(`\n*${g.symbol}:* ${g.question}`)
   }
-  if (brainGaps.length > 0) {
-    lines.push(`\n🔵 *Brain* (${brainGaps.length})`)
-    for (const g of brainGaps) lines.push(`  ${g.symbol} — ${g.hint}`)
-  }
-  if (buildGaps.length > 0) {
-    lines.push(`\n🟤 *Build* (${buildGaps.length})`)
-    for (const g of buildGaps) lines.push(`  ${g.symbol} — ${g.hint}`)
+  if (gaps.length > 3) {
+    lines.push(`\n_...and ${gaps.length - 3} more._`)
   }
   return lines.join('\n')
 }
