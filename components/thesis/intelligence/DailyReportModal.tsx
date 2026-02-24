@@ -40,15 +40,15 @@ export default function DailyReportModal({
   }
 
   return (
-    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="p-8">
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-3">
+      <div className="bg-white border border-rule rounded-sm shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="p-6">
           {/* Header */}
-          <div className="mb-6">
-            <h1 className="text-2xl font-bold text-neutral-900 mb-2">
+          <div className="mb-4 pb-2 border-b-2 border-rule">
+            <h1 className="font-serif text-[18px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-1">
               Daily Signal Report
             </h1>
-            <p className="text-sm text-neutral-600">
+            <p className="text-[11px] text-ink-muted">
               {new Date(report.date).toLocaleDateString('en-US', {
                 weekday: 'long',
                 year: 'numeric',
@@ -59,49 +59,49 @@ export default function DailyReportModal({
           </div>
 
           {/* AI Summary */}
-          <div className="mb-8">
-            <h2 className="text-lg font-semibold text-neutral-900 mb-3">Summary</h2>
-            <div className="prose prose-sm max-w-none">
-              <p className="text-neutral-700 whitespace-pre-line leading-relaxed">
-                {report.aiSummary}
-              </p>
-            </div>
+          <div className="mb-6">
+            <h2 className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-2">
+              Summary
+            </h2>
+            <p className="text-[12px] text-ink whitespace-pre-line leading-relaxed">
+              {report.aiSummary}
+            </p>
           </div>
 
           {/* Top External Signals */}
           {externalSignals.length > 0 && (
-            <div className="mb-8">
-              <h2 className="text-lg font-semibold text-neutral-900 mb-3">
+            <div className="mb-6">
+              <h2 className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-2">
                 Top Signals from RSS Feeds
               </h2>
-              <div className="space-y-3">
+              <div className="space-y-2">
                 {externalSignals.map((signal) => (
                   <div
                     key={signal.id}
-                    className="bg-neutral-50 border border-neutral-200 rounded-lg p-4"
+                    className="bg-paper border border-rule rounded-sm p-3"
                   >
-                    <div className="flex items-start justify-between gap-4 mb-2">
+                    <div className="flex items-start justify-between gap-3 mb-1.5">
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
-                          <h3 className="font-medium text-neutral-900">{signal.title}</h3>
-                          <span className="text-xs text-neutral-500 font-medium">
+                          <h3 className="text-[12px] font-semibold text-ink">{signal.title}</h3>
+                          <span className="text-[9px] text-ink-muted font-medium">
                             {Math.round(signal.relevanceScore * 100)}%
                           </span>
                         </div>
-                        <p className="text-xs text-neutral-500 mb-2">
+                        <p className="text-[9px] text-ink-muted mb-1.5">
                           {signal.sourceName} •{' '}
                           {new Date(signal.publishedAt).toLocaleDateString()}
                         </p>
-                        <p className="text-sm text-neutral-700">{signal.aiSummary}</p>
+                        <p className="text-[11px] text-ink">{signal.aiSummary}</p>
                       </div>
                     </div>
 
                     {/* Pillars */}
-                    <div className="flex gap-2 mb-3">
+                    <div className="flex gap-1 mb-2">
                       {signal.thesisPillars.map((pillar) => (
                         <span
                           key={pillar}
-                          className="px-2 py-0.5 text-xs rounded-full bg-blue-50 text-blue-700"
+                          className="font-mono text-[8px] uppercase px-1.5 py-0.5 rounded-sm border bg-burgundy-bg text-burgundy border-burgundy/20"
                         >
                           {pillar}
                         </span>
@@ -112,13 +112,13 @@ export default function DailyReportModal({
                     <div className="flex gap-2">
                       <button
                         onClick={() => window.open(signal.sourceUrl, '_blank')}
-                        className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                        className="text-[11px] text-burgundy hover:text-ink font-medium"
                       >
                         Read Full →
                       </button>
                       <button
                         onClick={() => onConvertSignal(signal.id!)}
-                        className="text-sm text-green-600 hover:text-green-700 font-medium"
+                        className="text-[11px] text-green-ink hover:text-ink font-medium"
                       >
                         Convert to Signal
                       </button>
@@ -131,18 +131,18 @@ export default function DailyReportModal({
 
           {/* Yesterday's Conversations */}
           {conversations.length > 0 && (
-            <div className="mb-8">
-              <h2 className="text-lg font-semibold text-neutral-900 mb-3">
-                Yesterday's Conversations
+            <div className="mb-6">
+              <h2 className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-2">
+                Yesterday&apos;s Conversations
               </h2>
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 {conversations.map((convo) => (
                   <div
                     key={convo.id}
-                    className="bg-neutral-50 border border-neutral-200 rounded-lg p-3"
+                    className="bg-paper border border-rule rounded-sm p-3"
                   >
-                    <h3 className="font-medium text-neutral-900 text-sm">{convo.title}</h3>
-                    <p className="text-xs text-neutral-600">
+                    <h3 className="text-[12px] font-semibold text-ink">{convo.title}</h3>
+                    <p className="text-[10px] text-ink-muted">
                       {convo.participants.join(', ')} • {convo.conversationType}
                     </p>
                   </div>
@@ -153,11 +153,11 @@ export default function DailyReportModal({
 
           {/* Reconnect Suggestions */}
           {reconnectContacts.length > 0 && (
-            <div className="mb-8">
-              <h2 className="text-lg font-semibold text-neutral-900 mb-3">
+            <div className="mb-6">
+              <h2 className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-2">
                 Reconnect Suggestions
               </h2>
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 {reconnectContacts.map((contact) => {
                   const daysSince = Math.floor(
                     (new Date().getTime() - new Date(contact.lastConversationDate).getTime()) /
@@ -166,17 +166,17 @@ export default function DailyReportModal({
                   return (
                     <div
                       key={contact.id}
-                      className="bg-amber-50 border border-amber-200 rounded-lg p-3 flex items-center justify-between"
+                      className="bg-amber-bg border border-amber-ink/20 rounded-sm p-3 flex items-center justify-between"
                     >
                       <div>
-                        <h3 className="font-medium text-neutral-900 text-sm">{contact.name}</h3>
-                        <p className="text-xs text-neutral-600">
+                        <h3 className="text-[12px] font-semibold text-ink">{contact.name}</h3>
+                        <p className="text-[10px] text-ink-muted">
                           Last conversation: {daysSince} days ago
                         </p>
                       </div>
                       <button
                         onClick={() => onMarkReconnected(contact.id!)}
-                        className="text-sm text-amber-700 hover:text-amber-800 font-medium px-3 py-1 bg-white border border-amber-300 rounded-lg"
+                        className="font-serif text-[9px] font-medium px-2 py-1 rounded-sm border bg-transparent text-amber-ink border-amber-ink/30 hover:border-amber-ink"
                       >
                         Mark Reconnected
                       </button>
@@ -191,25 +191,25 @@ export default function DailyReportModal({
           {externalSignals.length === 0 &&
             conversations.length === 0 &&
             reconnectContacts.length === 0 && (
-              <div className="bg-neutral-50 border border-neutral-200 rounded-lg p-8 text-center mb-8">
-                <p className="text-neutral-600">
+              <div className="bg-paper border border-rule rounded-sm p-6 text-center mb-6">
+                <p className="text-[11px] text-ink-muted">
                   No new signals, conversations, or reconnect suggestions for today.
                 </p>
               </div>
             )}
 
           {/* Actions */}
-          <div className="flex gap-3 pt-6 border-t border-neutral-200">
+          <div className="flex gap-2 pt-4 border-t border-rule">
             <button
               onClick={onClose}
-              className="flex-1 px-4 py-2 border border-neutral-300 text-neutral-700 rounded-lg hover:bg-neutral-50 transition-colors"
+              className="flex-1 font-serif text-[11px] font-medium px-2 py-2 rounded-sm border bg-transparent text-ink-muted border-rule hover:border-ink-faint transition-colors"
             >
               Close
             </button>
             <button
               onClick={handleMarkReviewed}
               disabled={marking}
-              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+              className="flex-1 font-serif text-[11px] font-medium px-2 py-2 rounded-sm bg-burgundy text-paper border border-burgundy hover:bg-burgundy/90 transition-colors disabled:opacity-50"
             >
               {marking ? 'Marking...' : 'Mark as Reviewed'}
             </button>

@@ -22,58 +22,89 @@ The Thesis Engine is a personal performance tracking dashboard that computes a d
 
 ## Project Structure
 
+### Dashboard Architecture (4 Tabs)
+
+| Tab | Route | Components |
+|-----|-------|-----------|
+| **Command Center** | `/thesis` | `CommandCenter.tsx` — landing page with live score, Ship/Ask/Own |
+| **Operate** | `/thesis/operate` | `execution/`, `ventures/`, `capital/`, `weekly-plan/` |
+| **Intelligence** | `/thesis/intelligence` | `intelligence/`, `alpe-dhuez/NetworkView` |
+| **Board Room** | `/thesis/boardroom` | `boardroom/`, `rl/`, `alpe-dhuez/SynthesisView` |
+
+Utility pages: `/thesis/settings`, `/thesis/projects`, `/thesis/projects/[projectId]`
+
 ```
 app/
   thesis/
-    layout.tsx              # Shared layout with ThesisNav
-    page.tsx                # Energy tab (default)
+    layout.tsx              # Shared layout with ThesisNav + DailyLogProvider
+    page.tsx                # Command Center (landing)
+    operate/page.tsx        # Operate tab
     intelligence/page.tsx   # Intelligence tab
-    coherence/page.tsx      # Coherence tab
-    output/page.tsx         # Output tab
+    boardroom/page.tsx      # Board Room tab
     projects/page.tsx       # Projects management
     settings/page.tsx       # User settings
 
 components/
-  auth/                     # Authentication components
+  auth/                     # AuthProvider, AuthGate, UserMenu
   thesis/
-    [shared components]     # RewardScoreCard, ProgressBar, ThesisNav, etc.
-    energy/                 # EnergyGauge.tsx, EnergyDial.tsx
-    intelligence/           # IntelligenceGauge, IntelligenceDial, + Inboxes
-    coherence/              # CoherenceGauge.tsx, CoherenceDial.tsx
-    output/                 # OutputGauge.tsx, OutputDial.tsx
+    CommandCenter.tsx        # Landing dashboard
+    ThesisNav.tsx            # 4-tab navigation
+    DailyLogProvider.tsx     # State context
+    execution/               # ExecutionView, FocusView, MusclesView, GoalsView
+    ventures/                # VenturesPipeline, VenturesIdeas, VentureDetail, VenturesDial
+    capital/                 # CapitalDial, PositionBriefing, WarRoomView, etc.
+    weekly-plan/             # WeeklyPlanView, DailyView, RetroView, etc.
+    intelligence/            # IntelligenceGauge, IntelligenceDial, Inboxes, DailyReportModal
+    boardroom/               # DailyJournal, DecisionJournal, PrinciplesLedger, BoardRoomDial
+    rl/                      # ConceptsView, TransitionsView, PolicyView, ValueView, AuditView
+    alpe-dhuez/              # SynthesisView, NetworkView (shared by Intelligence + Boardroom)
+    nav/                     # EnergyStatusDot, EnergySlideOut
+    reward/                  # PillarBadge, PillarBreakdown, SubComponentBadge
 
 lib/
-  firestore.ts             # Database CRUD operations (will be split)
-  types.ts                 # TypeScript type definitions (will be split)
-  auth.ts                  # Authentication utilities
-  reward.ts                # Reward computation engine
-  formatters.ts            # Date/number formatting
-  constants.ts             # Default values and scoring maps
-  ai-extraction.ts         # Gemini AI integration
-  rss-aggregator.ts        # RSS feed parsing
+  firestore/                # Domain modules (daily-logs.ts, ventures.ts, etc.) with barrel index.ts
+  types/                    # Domain types (daily-log.ts, venture.ts, etc.) with barrel index.ts
+  etl/                      # Data sync (garmin.ts, calendar.ts, stripe.ts, github.ts, etc.)
+  auth.ts                   # Authentication utilities
+  reward.ts                 # Reward computation engine
+  constants.ts              # Default values and scoring maps
+  ai-extraction.ts          # Gemini AI integration
+  llm.ts                    # LLM abstraction layer
+  telegram.ts               # Telegram message sender
+  telegram-parser.ts        # Telegram command parser
 
 hooks/
-  useDailyLog.ts          # Central hook for daily log state
+  useDailyLog.ts            # Orchestrator (composes sub-hooks)
+  useDailyLogData.ts        # Data fetching for today's log
+  useDailyLogActions.ts     # Save, sync, toggle mutations
+  useRecentData.ts          # 7-day history
+  useWeeklyPlan.ts          # Weekly plan state
+  useDecisions.ts           # Decision tracking
+  usePrinciples.ts          # Principles ledger
+  useRLTransitions.ts       # RL transitions
+  useRLCurriculum.ts        # RL curriculum
+  useRLAudit.ts             # RL audits
+  useRLPolicyRules.ts       # RL policy rules
+  useRLValueFunction.ts     # RL value function
+  useAlphaBeta.ts           # Alpha/beta tracking
+  useCadence.ts             # Cadence reviews
+  useCalendarTime.ts        # Calendar time allocation
 ```
 
 ## Core Patterns
 
-### 1. Gauge + Dial Pattern
+### 1. View + Dial Pattern
 
-Most thesis tabs follow a consistent pattern:
-- **Left panel (Gauge)**: Displays read-only data, charts, and metrics
-- **Right sidebar (~380px width, Dial)**: Input forms and actions
+Each tab composes multiple Views (read-only panels) with a Dial (input sidebar):
 
-**Files:**
-- Energy: `EnergyGauge.tsx` + `EnergyDial.tsx`
-- Coherence: `CoherenceGauge.tsx` + `CoherenceDial.tsx`
-- Output: `OutputGauge.tsx` + `OutputDial.tsx`
-- Intelligence: `IntelligenceGauge.tsx` + `IntelligenceDial.tsx`
-  - Exception: Intelligence also has ConversationInbox and ExternalSignalInbox (legitimate complexity)
+**Active components:**
+- **Operate**: `ExecutionView` + `VenturesPipeline` + `CapitalDial` + `WeeklyPlanView`
+- **Intelligence**: `IntelligenceGauge` + `IntelligenceDial` + Inboxes + `NetworkView`
+- **Board Room**: `DailyJournal` + `DecisionJournal` + `PrinciplesLedger` + RL views + `SynthesisView`
 
-**When creating new tabs:**
-1. Create a Gauge component for data display
-2. Create a Dial component for inputs
+**When creating new views:**
+1. Create a View component in the appropriate module folder
+2. Import it into the tab's page.tsx
 3. Use `useDailyLog()` hook to access shared state
 
 ### 2. Data Flow
@@ -152,7 +183,8 @@ score = 10 * gate * (ge^0.35 * gi^0.2 * gvc^0.2 * kappa^0.25)
 
 ### 6. Type System
 
-All types are in [lib/types.ts](lib/types.ts) (will be split by domain):
+Types are organized by domain in `lib/types/` with barrel export at `lib/types/index.ts`:
+- Import from `@/lib/types` (barrel) — not individual domain files
 - Use strict TypeScript types for all props and data
 - Firestore Timestamps use `Timestamp` from `firebase/firestore`
 - Enums are defined as union types (e.g., `type TrainingType = 'strength' | 'yoga' | 'vo2' | 'zone2' | 'rest' | 'none'`)
@@ -184,7 +216,7 @@ function MyComponent() {
    }
    ```
 
-2. **Add default value** in [lib/firestore.ts](lib/firestore.ts) `saveDailyLog()` and [hooks/useDailyLog.ts](hooks/useDailyLog.ts) `defaultLog`
+2. **Add default value** in [lib/firestore/daily-logs.ts](lib/firestore/daily-logs.ts) `saveDailyLog()` and [hooks/useDailyLog.ts](hooks/useDailyLog.ts) `defaultLog`
    ```typescript
    myNewField: ''
    ```
@@ -208,8 +240,8 @@ function MyComponent() {
 
 ### Adding a New Firestore Collection
 
-1. Define type in [lib/types.ts](lib/types.ts)
-2. Add CRUD functions in [lib/firestore.ts](lib/firestore.ts)
+1. Define type in `lib/types/<domain>.ts` and re-export from `lib/types/index.ts`
+2. Add CRUD module at `lib/firestore/<collection>.ts` and re-export from `lib/firestore/index.ts`
 3. Create hooks if needed (follow `useDailyLog` pattern)
 4. Use in components
 
@@ -378,7 +410,7 @@ text-sm, text-lg, text-base
 
 1. **Reward score not updating?** Check [lib/reward.ts](lib/reward.ts) - ensure new fields are included in computation
 2. **Data not persisting?** Verify Firestore security rules allow the operation
-3. **Type errors?** Check [lib/types.ts](lib/types.ts) - ensure interface matches Firestore document
+3. **Type errors?** Check `lib/types/` - ensure interface matches Firestore document
 4. **Build failing?** Run `npm run build` to catch TypeScript errors early
 
 ## Testing Strategy
@@ -388,25 +420,25 @@ text-sm, text-lg, text-base
 3. **Firestore operations**: Check Firebase console to verify data structure
 4. **Type safety**: `npm run build` must pass before committing
 
-## Active Refactoring
+## Completed Refactoring
 
-The codebase is currently being reorganized (see [plan file](/.claude/plans/quiet-giggling-treasure.md)):
+These refactors are done — use the new patterns:
 
-- **In Progress**: Splitting [lib/firestore.ts](lib/firestore.ts) into domain modules
-- **In Progress**: Extracting shared defaults and date utilities
-- **Planned**: Splitting [lib/types.ts](lib/types.ts) by domain
-- **Planned**: Breaking down [hooks/useDailyLog.ts](hooks/useDailyLog.ts) into composable hooks
-
-When making changes, align with the refactoring plan to avoid creating more technical debt.
+- ✅ `lib/firestore/` — 32 domain modules with barrel at `lib/firestore/index.ts`
+- ✅ `lib/types/` — 27 domain modules with barrel at `lib/types/index.ts`
+- ✅ `hooks/useDailyLog.ts` — decomposed into `useDailyLogData`, `useDailyLogActions`, `useRecentData`
+- ✅ Dashboard simplified from 7+ tabs to 4 (Command Center, Operate, Intelligence, Board Room)
 
 ## Quick Reference
 
 ### Key Files
 - [lib/reward.ts](lib/reward.ts) - Reward computation logic
-- [lib/firestore.ts](lib/firestore.ts) - All database operations
-- [lib/types.ts](lib/types.ts) - All TypeScript types
-- [hooks/useDailyLog.ts](hooks/useDailyLog.ts) - Daily log state management
-- [components/thesis/ThesisNav.tsx](components/thesis/ThesisNav.tsx) - Navigation between tabs
+- [lib/firestore/index.ts](lib/firestore/index.ts) - Database barrel (imports from domain modules)
+- [lib/types/index.ts](lib/types/index.ts) - Types barrel (imports from domain modules)
+- [hooks/useDailyLog.ts](hooks/useDailyLog.ts) - Daily log state orchestrator
+- [components/thesis/ThesisNav.tsx](components/thesis/ThesisNav.tsx) - 4-tab navigation
+- [components/thesis/CommandCenter.tsx](components/thesis/CommandCenter.tsx) - Landing dashboard
+- [app/api/telegram/webhook/route.ts](app/api/telegram/webhook/route.ts) - Telegram bot (all commands)
 
 ### Important Constants
 - Default spine project: `'Armstrong'`
@@ -430,4 +462,4 @@ See [.env.local](.env.local) (not in repo) for:
 
 ---
 
-**Last Updated**: 2026-02-12 during Phase 1 refactoring
+**Last Updated**: 2026-02-24 — Post-simplification cleanup (4-tab architecture)

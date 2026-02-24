@@ -7,7 +7,7 @@ export default function TwentyFourHourBanner() {
           <p className="font-serif text-[13px] font-semibold text-amber-ink">
             24-Hour Rule Active
           </p>
-          <p className="font-sans text-[12px] text-ink-light mt-1">
+          <p className="font-sans text-[12px] text-ink-muted mt-1">
             You can decide tomorrow. Ship your spine project today instead.
           </p>
         </div>
