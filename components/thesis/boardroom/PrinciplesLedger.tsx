@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useAuth } from '@/components/auth/AuthProvider'
 import { usePrinciples } from '@/hooks/usePrinciples'
 import type { Principle, PrincipleSource, DecisionDomain } from '@/lib/types'
@@ -27,6 +27,9 @@ export default function PrinciplesLedger() {
   const [showForm, setShowForm] = useState(false)
   const [filterDomain, setFilterDomain] = useState<DecisionDomain | 'all'>('all')
 
+  const [saving, setSaving] = useState(false)
+  const savingRef = useRef(false)
+
   // New principle form state
   const [text, setText] = useState('')
   const [shortForm, setShortForm] = useState('')
@@ -39,22 +42,29 @@ export default function PrinciplesLedger() {
     : principles.filter(p => p.domain === filterDomain)
 
   const handleSave = async () => {
-    if (!text.trim()) return
-    const today = new Date().toISOString().split('T')[0]
-    await save({
-      text: text.trim(),
-      shortForm: shortForm.trim() || text.trim().slice(0, 40),
-      source,
-      sourceDescription: sourceDescription.trim(),
-      domain,
-      dateFirstApplied: today,
-      lastReinforcedAt: today,
-      linkedDecisionIds: [],
-    })
-    setText('')
-    setShortForm('')
-    setSourceDescription('')
-    setShowForm(false)
+    if (!text.trim() || savingRef.current) return
+    savingRef.current = true
+    setSaving(true)
+    try {
+      const today = new Date().toISOString().split('T')[0]
+      await save({
+        text: text.trim(),
+        shortForm: shortForm.trim() || text.trim().slice(0, 40),
+        source,
+        sourceDescription: sourceDescription.trim(),
+        domain,
+        dateFirstApplied: today,
+        lastReinforcedAt: today,
+        linkedDecisionIds: [],
+      })
+      setText('')
+      setShortForm('')
+      setSourceDescription('')
+      setShowForm(false)
+    } finally {
+      savingRef.current = false
+      setSaving(false)
+    }
   }
 
   if (loading) {
@@ -155,10 +165,10 @@ export default function PrinciplesLedger() {
             <button onClick={() => setShowForm(false)} className="font-serif text-[8px] px-2 py-0.5 text-ink-muted">Cancel</button>
             <button
               onClick={handleSave}
-              disabled={!text.trim()}
+              disabled={saving || !text.trim()}
               className="font-serif text-[8px] font-medium px-2 py-0.5 rounded-sm bg-burgundy text-paper border border-burgundy disabled:opacity-50"
             >
-              Save
+              {saving ? 'Saving...' : 'Save'}
             </button>
           </div>
         </div>

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import type { Decision, DecisionDomain } from '@/lib/types'
 
 interface DecisionFormProps {
@@ -31,6 +31,7 @@ export default function DecisionForm({ decision, onSave, onClose }: DecisionForm
   const [premortem, setPremortem] = useState(decision?.premortem || '')
   const [domain, setDomain] = useState<DecisionDomain>(decision?.domain || 'portfolio')
   const [saving, setSaving] = useState(false)
+  const savingRef = useRef(false)
 
   // For review mode
   const [outcomeScore, setOutcomeScore] = useState(decision?.outcomeScore ?? undefined)
@@ -40,7 +41,8 @@ export default function DecisionForm({ decision, onSave, onClose }: DecisionForm
   const isReview = decision?.status === 'pending_review' || decision?.status === 'active'
 
   const handleSave = async () => {
-    if (!title.trim()) return
+    if (!title.trim() || savingRef.current) return
+    savingRef.current = true
     setSaving(true)
     try {
       const data: Partial<Decision> = {
@@ -67,6 +69,7 @@ export default function DecisionForm({ decision, onSave, onClose }: DecisionForm
       }
       await onSave(data)
     } finally {
+      savingRef.current = false
       setSaving(false)
     }
   }
