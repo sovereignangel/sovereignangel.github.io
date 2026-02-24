@@ -1,56 +1,50 @@
 export const WEEKLY_SYNTHESIS_GUIDE = {
-  title: 'Weekly Synthesis: Dalio 5-Step Process',
+  title: 'Weekly Synthesis',
   sections: [
     {
-      heading: 'Why Weekly Synthesis',
-      content: `The weekly synthesis is your highest-leverage reflection habit. It forces pattern recognition across days that individually feel noisy.
+      heading: 'Purpose',
+      content: `Highest-leverage reflection habit. Forces pattern recognition across noisy days.
 
-Bridgewater's key insight: **the machine that produces outcomes is more important than any individual outcome.** Weekly synthesis is when you inspect the machine.`,
+Bridgewater insight: **the machine producing outcomes matters more than any single outcome.** Weekly synthesis inspects the machine.`,
     },
     {
-      heading: 'Step 1: Goals',
-      content: `What are you trying to achieve this period?
-
-- Be specific and measurable
-- Distinguish between "nice to have" and "must achieve"
-- Maximum 3 goals — more than 3 means you haven't prioritized
-- Connect each goal to a thesis pillar (AI, Markets, Mind)`,
+      heading: '1. Goals',
+      content: `What are you achieving this period?
+- Specific, measurable
+- Separate "must achieve" from "nice to have"
+- Max 3 — more means you haven't prioritized
+- Each linked to a pillar (AI, Markets, Mind)`,
     },
     {
-      heading: 'Step 2: Problems',
-      content: `What problems are blocking your goals?
-
-- Be brutally honest — denial is the #1 failure mode
-- Distinguish root causes from symptoms
-- Auto-problems are surfaced from your daily data (low GE, missed focus hours, NS spikes)
-- The system pre-populates problems from your reward component trends`,
+      heading: '2. Problems',
+      content: `What blocks your goals?
+- Be brutal — denial is the #1 failure mode
+- Root causes, not symptoms
+- System auto-surfaces problems from daily data (low GE, missed focus, NS spikes)`,
     },
     {
-      heading: 'Step 3: Diagnosis',
+      heading: '3. Diagnosis',
       content: `Why do these problems exist?
-
-- Go deeper than the obvious answer
-- Use "5 Whys" — ask why 5 times
-- Look for patterns across weeks, not just this week
-- Common root causes: overcommitment, avoidance, skill gap, environment design`,
+- Go deeper than obvious answers
+- Use "5 Whys"
+- Look for cross-week patterns
+- Common roots: overcommitment, avoidance, skill gap, bad environment`,
     },
     {
-      heading: 'Step 4: Design',
-      content: `What changes to the machine will fix the root causes?
-
-- Design changes to systems, not just willpower
-- Each design should have a clear trigger and action
-- Connect designs to specific problems from Step 3
-- Think in terms of: what process change would make this problem impossible?`,
+      heading: '4. Design',
+      content: `What machine changes fix root causes?
+- Change systems, not willpower
+- Each design: clear trigger + action
+- Connect to specific Step 3 problems
+- Ask: what process change makes this problem impossible?`,
     },
     {
-      heading: 'Step 5: Execute',
-      content: `What specific actions will you take next week?
-
-- Maximum 5 actions — fewer is better
-- Each action should be concrete enough to know if you did it
-- Assign to specific days where possible
-- Review execution in next week's synthesis`,
+      heading: '5. Execute',
+      content: `Specific actions for next week.
+- Max 5 — fewer is better
+- Concrete enough to verify completion
+- Assign to specific days
+- Review execution in next synthesis`,
     },
   ],
 }

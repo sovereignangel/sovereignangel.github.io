@@ -2,58 +2,57 @@ export const CADENCE_PROTOCOL_GUIDE = {
   title: 'Cadence Protocol',
   sections: [
     {
-      heading: 'Why Cadence Matters',
-      content: `Cadence is the rhythm of reflection and action. Without it, you oscillate between reactive firefighting and paralyzed overthinking.
+      heading: 'Why Cadence',
+      content: `Cadence prevents oscillation between reactive firefighting and paralyzed overthinking.
 
-Each interval serves a different cognitive function:
-- **Daily** — Tactical awareness, energy management
-- **Weekly** — Pattern recognition, machine inspection
-- **Monthly** — Strategic course correction
-- **Quarterly** — Thesis-level review, identity evolution`,
+Each interval serves a distinct cognitive function:
+- **Daily** — tactical awareness, energy management
+- **Weekly** — pattern recognition, machine inspection
+- **Monthly** — strategic course correction
+- **Quarterly** — thesis review, identity evolution`,
     },
     {
-      heading: 'Daily Cadence',
-      content: `**Morning (5 min):**
-- Log energy inputs (sleep, training, NS state)
-- Set focus intention for the day
-- Check capital position (1 min)
+      heading: 'Daily (5+5 min)',
+      content: `**Morning:**
+- Log energy (sleep, training, NS state)
+- Set focus intention
+- Check capital (1 min)
 
-**Evening (5 min):**
+**Evening:**
 - Log output (hours, ships, asks)
 - Rate PsyCap (hope, efficacy, resilience, optimism)
-- Flag any signals worth capturing
+- Flag signals worth capturing
 
-The daily cadence feeds your g* score. Consistency here is the foundation.`,
+Daily cadence feeds g*. Consistency here is foundation.`,
     },
     {
-      heading: 'Weekly Cadence',
-      content: `**Sunday evening (30 min):**
-- Complete the Dalio 5-Step synthesis
-- Review reward component trends (alpha/beta arrows)
-- Process external signal inbox
-- Update project status and portfolio allocation
-- Reinforce or create principles from the week's lessons
+      heading: 'Weekly (30 min, Sunday)',
+      content: `- Dalio 5-Step synthesis
+- Review reward trends (alpha/beta arrows)
+- Process signal inbox
+- Update project status + allocation
+- Reinforce or create principles
 
-The weekly is your most important cadence. Miss everything else before missing this.`,
+Most important cadence. Miss everything else before this.`,
     },
     {
-      heading: 'Monthly Cadence',
-      content: `**First Sunday of month (60 min):**
-- Review decision journal — any 90-day reviews due?
-- Audit principle ledger — remove stale, reinforce active
-- Review network health — who haven't you touched?
-- Capital position deep dive — runway, burn rate, projections
-- Knowledge architecture review — what to read next month?`,
+      heading: 'Monthly (60 min)',
+      content: `First Sunday of month:
+- Decision journal — 90-day reviews due?
+- Principle ledger — prune stale, reinforce active
+- Network health — who untouched?
+- Capital deep dive — runway, burn, projections
+- Knowledge review — next month's reading`,
     },
     {
-      heading: 'Quarterly Cadence',
-      content: `**First weekend of quarter (2-3 hours):**
-- Thesis review — are your core beliefs still valid?
-- Decision calibration audit — compute your Brier score
-- Belt progression review — have you leveled up?
-- Goal setting for next quarter using Dalio 5-Step
-- Network relationship depth assessment
-- Write quarterly letter to future self`,
+      heading: 'Quarterly (2-3 hrs)',
+      content: `First weekend of quarter:
+- Thesis review — core beliefs still valid?
+- Calibration audit — compute Brier score
+- Belt progression — leveled up?
+- Goal setting via Dalio 5-Step
+- Network depth assessment
+- Letter to future self`,
     },
   ],
 }
