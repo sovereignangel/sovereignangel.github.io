@@ -1,5 +1,5 @@
 import { GoogleGenerativeAI } from '@google/generative-ai'
-import type { InsightType, ThesisPillar, NervousSystemState, BodyFelt, TrainingType, DecisionDomain, PredictionDomain, VentureCategory, VentureSpec, VenturePRD, VenturePRDPriority, VentureMemo, VentureMemoMetric } from './types'
+import type { InsightType, ThesisPillar, NervousSystemState, BodyFelt, TrainingType, DecisionDomain, PredictionDomain, VentureCategory, VentureSpec, VenturePRD, VenturePRDPriority, VentureMemo, VentureMemoMetric, MarketSizeRow, BusinessModelRow, GTMPhase, FinancialProjectionRow, UnitEconomicsRow, UseOfFundsRow, MilestoneRow } from './types'
 import { callLLM } from './llm'
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '')
@@ -1289,7 +1289,7 @@ export async function generateVentureMemo(
   User Flows: ${prd.userFlows.join(' | ')}`
     : ''
 
-  const prompt = `You are a former Sequoia Capital partner writing an internal investment memo for a pre-seed company. This memo will be presented to the partnership. It must be elite-quality: precise, quantified, narrative-driven, and brutally honest about risks.
+  const prompt = `You are a Bridgewater-caliber investment analyst drafting a board-level memo for a pre-seed venture. This document will be reviewed by a partnership committee. Every sentence must be cogent, precise, and substantiated. Write with the intellectual rigor of Ray Dalio and the narrative clarity of a Sequoia memo. No filler. No platitudes. Every clause earns its place.
 
 VENTURE SPEC:
   Name: ${spec.name}
@@ -1307,47 +1307,49 @@ VENTURE SPEC:
   Thesis Pillars: ${spec.thesisPillars.join(', ') || 'General'}
 ${prdSection}${feedbackSection}
 
-Write the memo with these sections. Each section should be 2-4 sentences of dense, insight-rich prose unless otherwise noted. Write like you're presenting to Roelof Botha — no fluff, no buzzwords, every sentence earns its place.
+VOICE & REGISTER: Write at executive board level. Use language that is cogent, incisive, and authoritative. Favor precision over elaboration. Deploy terms of art where appropriate (unit economics, TAM wedge, LTV/CAC ratio, gross margin leverage). Assume the reader operates at the highest level of business acumen — do not explain basics, demonstrate mastery.
+
+Write the memo with these sections:
 
 1. COMPANY_PURPOSE: One sentence. What this company does and for whom. Format: "[Company] [verb]s [what] for [whom]."
 
-2. EXECUTIVE_SUMMARY: 2-3 paragraphs. The investment thesis in miniature. Why this is interesting, what the founder sees that others don't, and why the timing is right. This should make a partner want to read the rest.
+2. EXECUTIVE_SUMMARY: 2-3 paragraphs. The investment thesis distilled. Articulate the structural opportunity, the founder's proprietary insight, and the temporal catalyst. This should compel a partner to read the full document.
 
-3. KEY_METRICS: 4-6 headline metrics as objects with {label, value, context}. Include TAM, target CAC, target LTV, payback period, and any other relevant metrics. Use realistic pre-seed estimates — not fantasy numbers. If data isn't available, use credible market benchmarks with "[est.]" suffix.
+3. KEY_METRICS: 4-6 headline metrics as objects with {label, value, context}. Include TAM, target CAC, target LTV, payback period, and any other decision-critical metrics. Use credible pre-seed estimates grounded in comparable benchmarks. Mark projections with "[est.]".
 
-4. PROBLEM: The customer pain — make it vivid and specific. Quantify the cost of the status quo. Who suffers, how much, and how often?
+4. PROBLEM: The structural pain point. Quantify the economic cost of the status quo. Identify who bears the cost, the frequency of occurrence, and the magnitude of value destruction.
 
-5. SOLUTION: How the product solves it. Focus on mechanism and differentiation. What is the 10x improvement over the status quo?
+5. SOLUTION: The mechanism of resolution. Articulate the 10x improvement vector and the architectural differentiation from incumbent approaches.
 
-6. WHY_NOW: What changed in the market, technology, or regulation that makes this possible/necessary NOW? Why didn't this work 3 years ago? Why will it be too late in 3 years?
+6. WHY_NOW: The temporal catalyst. What inflection in technology, regulation, or market structure created this window? Why was this infeasible 36 months ago? Why will the window narrow?
 
-7. INSIGHT: The non-obvious founder insight. What does this founder understand about the problem/market that most people miss? This is the intellectual edge.
+7. INSIGHT: The proprietary founder thesis. The non-consensus understanding of market dynamics that constitutes the intellectual edge.
 
-8. MARKET_SIZE: TAM / SAM / SOM breakdown. Use top-down AND bottom-up sizing. Cite comparable markets or analogous companies. Be specific about growth rates.
+8. MARKET_SIZE_TABLE: Return as array of objects. Each row: {segment, size, cagr, notes}. Include exactly 3 rows: TAM, SAM, SOM. Use top-down AND bottom-up sizing. Cite comparable markets.
 
-9. MARKET_DYNAMICS: Tailwinds, headwinds, secular trends. What macro forces make this market attractive?
+9. MARKET_DYNAMICS: Secular tailwinds, structural headwinds, and inflection vectors. 2-3 sentences of macro-level conviction.
 
-10. COMPETITIVE_LANDSCAPE: Who else plays here? Map the competitive space. Be honest about incumbent advantages. Explain why this company wins despite them.
+10. COMPETITIVE_LANDSCAPE: Map the competitive terrain with intellectual honesty. Acknowledge incumbent advantages. Articulate the displacement thesis.
 
-11. DEFENSIBILITY: What moats can be built? Network effects, data advantages, switching costs, regulatory capture, brand. Be specific about WHEN each moat kicks in.
+11. DEFENSIBILITY: Enumerate moats with temporal specificity — which moats exist at launch, which accrue at scale, which compound with time.
 
-12. BUSINESS_MODEL: Revenue mechanics in detail. Pricing tiers, unit economics targets, expansion revenue vectors. How does the model improve with scale?
+12. BUSINESS_MODEL_TABLE: Return as array of objects. Each row: {lever, mechanism, target, marginProfile}. Include 2-4 revenue levers (e.g., "Enterprise SaaS", "API Usage", "Professional Services"). Be specific on pricing and margin.
 
-13. GO_TO_MARKET: How do you get the first 100 customers? The first 1,000? What's the distribution insight? Community-led, sales-led, product-led, or channel-led?
+13. GTM_PHASES: Return as array of objects. Each row: {phase, strategy, channel, milestone}. Include 3 phases: "0→10", "10→100", "100→1K". Specify the distribution strategy for each scale threshold.
 
-14. FOUNDER_ADVANTAGE: Why THIS founder wins. What unique combination of skills, access, or obsession makes them the right person? Be specific.
+14. FOUNDER_ADVANTAGE: The structural reason this founder possesses disproportionate probability of execution. Be specific and substantive.
 
-15. RELEVANT_EXPERIENCE: Track record. What have they built before? What domain expertise do they bring? What network can they leverage?
+15. RELEVANT_EXPERIENCE: Track record, domain credentialing, and network leverage. What has been built, what has been learned, what access is proprietary.
 
-16. FINANCIAL_PROJECTION: 3-year sketch. Year 1: what revenue looks like post-MVP. Year 2: growth trajectory. Year 3: scale target. State key assumptions explicitly.
+16. FINANCIAL_PROJECTION_TABLE: Return as array of objects. Each row: {year, revenue, customers, burn, keyAssumption}. Include exactly 3 rows: Year 1, Year 2, Year 3. State assumptions explicitly. Revenue estimates must be defensible against comparable cohort data.
 
-17. UNIT_ECONOMICS: CAC / LTV / payback / gross margin targets. Compare to best-in-class for the category. What needs to be true for unit economics to work?
+17. UNIT_ECONOMICS_TABLE: Return as array of objects. Each row: {metric, current, target, benchmark}. Include rows for: CAC, LTV, LTV/CAC Ratio, Payback Period, Gross Margin. Use "Pre-launch" for current values where applicable. Benchmark against best-in-class for the category.
 
-18. FUNDING_ASK: How much capital is needed for the pre-seed round? What does it buy (in months of runway and milestones)?
+18. FUNDING_ASK: Capital required, runway purchased, and the milestone unlock thesis. 2-3 sentences.
 
-19. USE_OF_FUNDS: Percentage breakdown across engineering, GTM, operations. Explain the allocation logic.
+19. USE_OF_FUNDS_TABLE: Return as array of objects. Each row: {category, allocation, amount, rationale}. Include 3-4 allocation categories (Engineering, GTM, Operations, etc.). Percentages must sum to 100%.
 
-20. MILESTONES: 3-5 concrete milestones this round of funding unlocks. Each should be specific and time-bound (e.g., "Ship v1 and reach 50 paying customers within 6 months").
+20. MILESTONES_TABLE: Return as array of objects. Each row: {timeline, milestone, successMetric}. Include 3-5 milestones with specific timelines (e.g., "Month 3", "Month 6", "Month 12") and quantified success metrics.
 
 Return ONLY valid JSON (no markdown, no code blocks):
 {
@@ -1358,19 +1360,19 @@ Return ONLY valid JSON (no markdown, no code blocks):
   "solution": "...",
   "whyNow": "...",
   "insight": "...",
-  "marketSize": "...",
+  "marketSizeTable": [{"segment": "TAM", "size": "$X", "cagr": "X%", "notes": "..."}],
   "marketDynamics": "...",
   "competitiveLandscape": "...",
   "defensibility": "...",
-  "businessModel": "...",
-  "goToMarket": "...",
+  "businessModelTable": [{"lever": "...", "mechanism": "...", "target": "...", "marginProfile": "..."}],
+  "gtmPhases": [{"phase": "0→10", "strategy": "...", "channel": "...", "milestone": "..."}],
   "founderAdvantage": "...",
   "relevantExperience": "...",
-  "financialProjection": "...",
-  "unitEconomics": "...",
+  "financialProjectionTable": [{"year": "Year 1", "revenue": "...", "customers": "...", "burn": "...", "keyAssumption": "..."}],
+  "unitEconomicsTable": [{"metric": "CAC", "current": "...", "target": "...", "benchmark": "..."}],
   "fundingAsk": "...",
-  "useOfFunds": "...",
-  "milestones": ["milestone 1", "milestone 2", "milestone 3"]
+  "useOfFundsTable": [{"category": "...", "allocation": "...", "amount": "...", "rationale": "..."}],
+  "milestonesTable": [{"timeline": "Month 3", "milestone": "...", "successMetric": "..."}]
 }`
 
   try {
@@ -1383,33 +1385,76 @@ Return ONLY valid JSON (no markdown, no code blocks):
 
     const parsed = JSON.parse(cleanedText)
 
+    const parseTable = <T>(arr: unknown, mapper: (r: Record<string, unknown>) => T): T[] =>
+      Array.isArray(arr) ? arr.map(mapper) : []
+
     return {
       companyPurpose: String(parsed.companyPurpose || spec.oneLiner),
       executiveSummary: String(parsed.executiveSummary || ''),
-      keyMetrics: Array.isArray(parsed.keyMetrics)
-        ? parsed.keyMetrics.map((m: Record<string, unknown>): VentureMemoMetric => ({
-            label: String(m.label || ''),
-            value: String(m.value || ''),
-            context: String(m.context || ''),
-          }))
-        : [],
+      keyMetrics: parseTable<VentureMemoMetric>(parsed.keyMetrics, m => ({
+        label: String(m.label || ''),
+        value: String(m.value || ''),
+        context: String(m.context || ''),
+      })),
       problem: String(parsed.problem || spec.problem),
       solution: String(parsed.solution || spec.solution),
       whyNow: String(parsed.whyNow || ''),
       insight: String(parsed.insight || ''),
-      marketSize: String(parsed.marketSize || spec.marketSize),
+      marketSize: String(parsed.marketSize || ''),
+      marketSizeTable: parseTable<MarketSizeRow>(parsed.marketSizeTable, r => ({
+        segment: String(r.segment || ''),
+        size: String(r.size || ''),
+        cagr: String(r.cagr || ''),
+        notes: String(r.notes || ''),
+      })),
       marketDynamics: String(parsed.marketDynamics || ''),
       competitiveLandscape: String(parsed.competitiveLandscape || ''),
       defensibility: String(parsed.defensibility || ''),
-      businessModel: String(parsed.businessModel || spec.revenueModel),
+      businessModel: String(parsed.businessModel || ''),
+      businessModelTable: parseTable<BusinessModelRow>(parsed.businessModelTable, r => ({
+        lever: String(r.lever || ''),
+        mechanism: String(r.mechanism || ''),
+        target: String(r.target || ''),
+        marginProfile: String(r.marginProfile || ''),
+      })),
       goToMarket: String(parsed.goToMarket || ''),
+      gtmPhases: parseTable<GTMPhase>(parsed.gtmPhases, r => ({
+        phase: String(r.phase || ''),
+        strategy: String(r.strategy || ''),
+        channel: String(r.channel || ''),
+        milestone: String(r.milestone || ''),
+      })),
       founderAdvantage: String(parsed.founderAdvantage || spec.unfairAdvantage),
       relevantExperience: String(parsed.relevantExperience || ''),
       financialProjection: String(parsed.financialProjection || ''),
+      financialProjectionTable: parseTable<FinancialProjectionRow>(parsed.financialProjectionTable, r => ({
+        year: String(r.year || ''),
+        revenue: String(r.revenue || ''),
+        customers: String(r.customers || ''),
+        burn: String(r.burn || ''),
+        keyAssumption: String(r.keyAssumption || ''),
+      })),
       unitEconomics: String(parsed.unitEconomics || ''),
+      unitEconomicsTable: parseTable<UnitEconomicsRow>(parsed.unitEconomicsTable, r => ({
+        metric: String(r.metric || ''),
+        current: String(r.current || ''),
+        target: String(r.target || ''),
+        benchmark: String(r.benchmark || ''),
+      })),
       fundingAsk: String(parsed.fundingAsk || ''),
       useOfFunds: String(parsed.useOfFunds || ''),
+      useOfFundsTable: parseTable<UseOfFundsRow>(parsed.useOfFundsTable, r => ({
+        category: String(r.category || ''),
+        allocation: String(r.allocation || ''),
+        amount: String(r.amount || ''),
+        rationale: String(r.rationale || ''),
+      })),
       milestones: Array.isArray(parsed.milestones) ? parsed.milestones.map(String) : [],
+      milestonesTable: parseTable<MilestoneRow>(parsed.milestonesTable, r => ({
+        timeline: String(r.timeline || ''),
+        milestone: String(r.milestone || ''),
+        successMetric: String(r.successMetric || ''),
+      })),
       version: 1,
       feedbackHistory: feedback || [],
     }
@@ -1424,18 +1469,25 @@ Return ONLY valid JSON (no markdown, no code blocks):
       whyNow: '',
       insight: '',
       marketSize: spec.marketSize,
+      marketSizeTable: [],
       marketDynamics: '',
       competitiveLandscape: '',
       defensibility: '',
       businessModel: spec.revenueModel,
+      businessModelTable: [],
       goToMarket: '',
+      gtmPhases: [],
       founderAdvantage: spec.unfairAdvantage,
       relevantExperience: '',
       financialProjection: '',
+      financialProjectionTable: [],
       unitEconomics: '',
+      unitEconomicsTable: [],
       fundingAsk: '',
       useOfFunds: '',
+      useOfFundsTable: [],
       milestones: [],
+      milestonesTable: [],
       version: 1,
       feedbackHistory: feedback || [],
     }

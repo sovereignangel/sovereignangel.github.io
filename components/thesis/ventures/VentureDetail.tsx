@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/components/auth/AuthProvider'
 import { getVenture, updateVenture } from '@/lib/firestore'
-import type { Venture, VentureStage, VenturePRD, VentureMemo } from '@/lib/types'
+import type { Venture, VentureStage } from '@/lib/types'
 import BuildStatusBar from './BuildStatusBar'
 
 const STAGE_OPTIONS: VentureStage[] = ['idea', 'specced', 'validated', 'prd_draft', 'prd_approved', 'building', 'deployed', 'archived']
@@ -22,6 +22,37 @@ function MemoSection({ title, content }: { title: string; content: string }) {
         {title}
       </div>
       <p className="font-mono text-[10px] text-ink leading-relaxed whitespace-pre-line">{content}</p>
+    </div>
+  )
+}
+
+function MemoTable({ title, headers, rows }: { title: string; headers: string[]; rows: string[][] }) {
+  if (rows.length === 0) return null
+  return (
+    <div>
+      <div className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-1 pb-1 border-b border-rule">
+        {title}
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full">
+          <thead>
+            <tr className="bg-cream">
+              {headers.map((h, i) => (
+                <th key={i} className="font-mono text-[7px] uppercase text-ink-muted text-left py-1 px-1.5 border-b border-rule">{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row, i) => (
+              <tr key={i} className={i % 2 === 1 ? 'bg-cream/50' : ''}>
+                {row.map((cell, j) => (
+                  <td key={j} className="font-mono text-[9px] text-ink py-1 px-1.5 border-b border-rule/50">{cell}</td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   )
 }
@@ -464,14 +495,14 @@ export default function VentureDetail({ ventureId, onBack }: { ventureId: string
               {memo.companyPurpose}
             </p>
 
-            {/* Key Metrics Banner */}
+            {/* Key Metrics — compact strip */}
             {memo.keyMetrics.length > 0 && (
-              <div className="grid grid-cols-2 lg:grid-cols-3 gap-2 mb-3">
+              <div className="grid grid-cols-3 lg:grid-cols-6 gap-1 mb-3">
                 {memo.keyMetrics.map((m, i) => (
-                  <div key={i} className="bg-cream border border-rule rounded-sm p-2">
-                    <span className="font-mono text-[8px] uppercase text-ink-muted block">{m.label}</span>
-                    <span className="font-mono text-[14px] font-bold text-ink block">{m.value}</span>
-                    <span className="font-mono text-[8px] text-ink-muted">{m.context}</span>
+                  <div key={i} className="bg-cream border border-rule rounded-sm px-1.5 py-1">
+                    <span className="font-mono text-[7px] uppercase text-ink-muted block">{m.label}</span>
+                    <span className="font-mono text-[10px] font-bold text-ink block leading-tight">{m.value}</span>
+                    <span className="font-mono text-[7px] text-ink-muted">{m.context}</span>
                   </div>
                 ))}
               </div>
@@ -498,11 +529,19 @@ export default function VentureDetail({ ventureId, onBack }: { ventureId: string
               <MemoSection title="Founder Insight" content={memo.insight} />
             </div>
 
-            {/* Market */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+            {/* Market Size Table */}
+            {memo.marketSizeTable && memo.marketSizeTable.length > 0 ? (
+              <MemoTable
+                title="Market Sizing"
+                headers={['Segment', 'Size', 'CAGR', 'Notes']}
+                rows={memo.marketSizeTable.map(r => [r.segment, r.size, r.cagr, r.notes])}
+              />
+            ) : (
               <MemoSection title="Market Size" content={memo.marketSize} />
-              <MemoSection title="Market Dynamics" content={memo.marketDynamics} />
-            </div>
+            )}
+
+            {/* Market Dynamics */}
+            <MemoSection title="Market Dynamics" content={memo.marketDynamics} />
 
             {/* Competition + Defensibility */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
@@ -510,11 +549,27 @@ export default function VentureDetail({ ventureId, onBack }: { ventureId: string
               <MemoSection title="Defensibility" content={memo.defensibility} />
             </div>
 
-            {/* Business Model + GTM */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+            {/* Business Model Table */}
+            {memo.businessModelTable && memo.businessModelTable.length > 0 ? (
+              <MemoTable
+                title="Business Model"
+                headers={['Revenue Lever', 'Mechanism', 'Target', 'Margin Profile']}
+                rows={memo.businessModelTable.map(r => [r.lever, r.mechanism, r.target, r.marginProfile])}
+              />
+            ) : (
               <MemoSection title="Business Model" content={memo.businessModel} />
+            )}
+
+            {/* GTM Phases Table */}
+            {memo.gtmPhases && memo.gtmPhases.length > 0 ? (
+              <MemoTable
+                title="Go-to-Market"
+                headers={['Phase', 'Strategy', 'Channel', 'Milestone']}
+                rows={memo.gtmPhases.map(r => [r.phase, r.strategy, r.channel, r.milestone])}
+              />
+            ) : (
               <MemoSection title="Go-to-Market" content={memo.goToMarket} />
-            </div>
+            )}
 
             {/* Founder */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
@@ -522,20 +577,50 @@ export default function VentureDetail({ ventureId, onBack }: { ventureId: string
               <MemoSection title="Relevant Experience" content={memo.relevantExperience} />
             </div>
 
-            {/* Financials */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+            {/* Financial Projection Table */}
+            {memo.financialProjectionTable && memo.financialProjectionTable.length > 0 ? (
+              <MemoTable
+                title="Financial Projection"
+                headers={['Year', 'Revenue', 'Customers', 'Burn', 'Key Assumption']}
+                rows={memo.financialProjectionTable.map(r => [r.year, r.revenue, r.customers, r.burn, r.keyAssumption])}
+              />
+            ) : (
               <MemoSection title="Financial Projection" content={memo.financialProjection} />
+            )}
+
+            {/* Unit Economics Table */}
+            {memo.unitEconomicsTable && memo.unitEconomicsTable.length > 0 ? (
+              <MemoTable
+                title="Unit Economics"
+                headers={['Metric', 'Current', 'Target', 'Benchmark']}
+                rows={memo.unitEconomicsTable.map(r => [r.metric, r.current, r.target, r.benchmark])}
+              />
+            ) : (
               <MemoSection title="Unit Economics" content={memo.unitEconomics} />
-            </div>
+            )}
 
-            {/* The Ask */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-              <MemoSection title="Funding Ask" content={memo.fundingAsk} />
+            {/* Funding Ask */}
+            <MemoSection title="Funding Ask" content={memo.fundingAsk} />
+
+            {/* Use of Funds Table */}
+            {memo.useOfFundsTable && memo.useOfFundsTable.length > 0 ? (
+              <MemoTable
+                title="Use of Funds"
+                headers={['Category', 'Allocation', 'Amount', 'Rationale']}
+                rows={memo.useOfFundsTable.map(r => [r.category, r.allocation, r.amount, r.rationale])}
+              />
+            ) : (
               <MemoSection title="Use of Funds" content={memo.useOfFunds} />
-            </div>
+            )}
 
-            {/* Milestones */}
-            {memo.milestones.length > 0 && (
+            {/* Milestones Table */}
+            {memo.milestonesTable && memo.milestonesTable.length > 0 ? (
+              <MemoTable
+                title="Key Milestones"
+                headers={['Timeline', 'Milestone', 'Success Metric']}
+                rows={memo.milestonesTable.map(r => [r.timeline, r.milestone, r.successMetric])}
+              />
+            ) : memo.milestones.length > 0 ? (
               <div>
                 <div className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-1.5 pb-1 border-b border-rule">
                   Key Milestones
@@ -551,7 +636,7 @@ export default function VentureDetail({ ventureId, onBack }: { ventureId: string
                   ))}
                 </ol>
               </div>
-            )}
+            ) : null}
 
             {/* Feedback History */}
             {memo.feedbackHistory.length > 0 && (
