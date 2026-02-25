@@ -52,7 +52,7 @@ export function useDailyLogActions({
       : null
     const rewardWithDelta = { ...rewardScore, delta }
 
-    const logWithReward = { ...newLog, rewardScore: rewardWithDelta }
+    const logWithReward = { ...newLog, date: logDate, rewardScore: rewardWithDelta }
     setLog(logWithReward)
     setSaving(true)
     await saveDailyLog(uid, logDate, logWithReward)
