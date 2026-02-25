@@ -1,7 +1,7 @@
 /**
  * Morning Brief API
  *
- * GET  — Called by cron at 12:00 + 13:00 UTC to cover DST. Only proceeds if 8 AM ET.
+ * GET  — Called by cron at 13:00 + 14:00 UTC to cover DST. Only proceeds if 9 AM ET.
  * POST — Manual trigger. Accepts { uid } in body to generate for a specific user.
  */
 
@@ -50,13 +50,13 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  // DST guard: two crons fire (12:00 + 13:00 UTC) — only proceed at 8 AM ET
-  // Skip guard if manually triggered via ?force or from dashboard outside 8 AM window
+  // DST guard: two crons fire (13:00 + 14:00 UTC) — only proceed at 9 AM ET
+  // Skip guard if manually triggered via ?force or from dashboard outside 9 AM window
   const force = request.nextUrl.searchParams.get('force') === '1'
   if (!force) {
     const etHour = new Date().toLocaleString('en-US', { timeZone: 'America/New_York', hour: 'numeric', hour12: false })
-    if (parseInt(etHour, 10) !== 8) {
-      return NextResponse.json({ skipped: true, reason: `Not 8 AM ET (hour=${etHour})` })
+    if (parseInt(etHour, 10) !== 9) {
+      return NextResponse.json({ skipped: true, reason: `Not 9 AM ET (hour=${etHour})` })
     }
   }
 

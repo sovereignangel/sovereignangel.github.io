@@ -6,11 +6,11 @@
     },
     {
       "path": "/api/morning-brief/generate",
-      "schedule": "0 12 * * *"
+      "schedule": "0 13 * * *"
     },
     {
       "path": "/api/morning-brief/generate",
-      "schedule": "0 13 * * *"
+      "schedule": "0 14 * * *"
     },
     {
       "path": "/api/cron/sync-daily",
