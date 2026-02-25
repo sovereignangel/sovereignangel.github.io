@@ -1638,3 +1638,52 @@ Respond in JSON:
     return { antithesis: '', strength: 0 }
   }
 }
+
+export interface BeliefSharpenResult {
+  refined: string
+  reasoning: string
+}
+
+export async function sharpenBelief(belief: {
+  statement: string
+  confidence: number
+  domain: string
+  evidenceFor: string[]
+  evidenceAgainst: string[]
+}): Promise<BeliefSharpenResult> {
+  const prompt = `You are a Bridgewater-style belief sharpener. Your job is to take a rough belief and refine it into an elite, testable, precise statement. Make it specific enough to be falsifiable. Remove weasel words. Add time horizons or metrics where possible.
+
+ORIGINAL BELIEF: "${belief.statement}"
+CONFIDENCE: ${belief.confidence}%
+DOMAIN: ${belief.domain}
+
+EVIDENCE FOR:
+${belief.evidenceFor.length > 0 ? belief.evidenceFor.map(e => `- ${e}`).join('\n') : '- None provided'}
+
+EVIDENCE AGAINST:
+${belief.evidenceAgainst.length > 0 ? belief.evidenceAgainst.map(e => `- ${e}`).join('\n') : '- None provided'}
+
+Generate:
+1. REFINED: A sharper, more precise version of this belief. Make it testable and falsifiable. Add specificity (timeframes, metrics, conditions). Remove ambiguity. Keep it as a single clear statement. 1-2 sentences max.
+
+2. REASONING: Brief explanation of what you changed and why (1 sentence).
+
+Respond in JSON:
+{"refined": "...", "reasoning": "..."}`
+
+  try {
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' })
+    const result = await model.generateContent(prompt)
+    const text = result.response.text()
+    const jsonMatch = text.match(/\{[\s\S]*\}/)
+    if (!jsonMatch) return { refined: '', reasoning: '' }
+    const parsed = JSON.parse(jsonMatch[0])
+    return {
+      refined: parsed.refined || '',
+      reasoning: parsed.reasoning || '',
+    }
+  } catch (error) {
+    console.error('Error sharpening belief:', error)
+    return { refined: '', reasoning: '' }
+  }
+}

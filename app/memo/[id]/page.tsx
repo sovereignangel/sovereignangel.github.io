@@ -20,6 +20,17 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
   }
 }
 
+/** Parse inline **bold** markdown into React elements */
+function renderInline(text: string) {
+  const parts = text.split(/(\*\*[^*]+\*\*)/)
+  return parts.map((part, i) => {
+    if (part.startsWith('**') && part.endsWith('**')) {
+      return <strong key={i} className="font-semibold">{part.slice(2, -2)}</strong>
+    }
+    return part
+  })
+}
+
 /** Renders structured "HEADLINE\n• bullet\n• bullet" content with bold headline + bullet list */
 function Section({ title, content }: { title: string; content: string }) {
   if (!content) return null
@@ -33,18 +44,18 @@ function Section({ title, content }: { title: string; content: string }) {
         {title}
       </h3>
       {headline && (
-        <p className="font-mono text-[11px] font-bold text-ink mb-1">{headline}</p>
+        <p className="font-mono text-[11px] font-bold text-ink mb-1">{renderInline(headline)}</p>
       )}
       {bullets.length > 0 ? (
         <ul className="space-y-0.5">
           {bullets.map((b, i) => (
             <li key={i} className="font-mono text-[10px] text-ink leading-relaxed pl-2">
-              {b}
+              {renderInline(b)}
             </li>
           ))}
         </ul>
       ) : !headline ? (
-        <p className="font-mono text-[11px] text-ink leading-relaxed whitespace-pre-line">{content}</p>
+        <p className="font-mono text-[11px] text-ink leading-relaxed whitespace-pre-line">{renderInline(content)}</p>
       ) : null}
     </div>
   )
@@ -192,12 +203,12 @@ export default async function MemoPage({ params }: { params: { id: string } }) {
                 Executive Summary
               </h2>
               {execTagline && (
-                <p className="font-mono text-[12px] font-bold text-ink mb-1">{execTagline}</p>
+                <p className="font-mono text-[12px] font-bold text-ink mb-1">{renderInline(execTagline)}</p>
               )}
               {execBullets.length > 0 ? (
                 <ul className="space-y-0.5">
                   {execBullets.map((b, i) => (
-                    <li key={i} className="font-mono text-[10px] text-ink leading-relaxed pl-2">{b}</li>
+                    <li key={i} className="font-mono text-[10px] text-ink leading-relaxed pl-2">{renderInline(b)}</li>
                   ))}
                 </ul>
               ) : !execTagline ? (
