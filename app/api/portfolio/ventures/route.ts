@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server'
 export async function GET() {
   const portfolioUid = process.env.FIREBASE_UID || process.env.PORTFOLIO_UID
   if (!portfolioUid) {
-    return NextResponse.json({ error: 'no_uid', has_firebase: !!process.env.FIREBASE_UID, has_portfolio: !!process.env.PORTFOLIO_UID })
+    return NextResponse.json([])
   }
 
   try {
@@ -33,8 +33,7 @@ export async function GET() {
 
     return NextResponse.json(ventures)
   } catch (error) {
-    const msg = error instanceof Error ? error.message : String(error)
-    console.error('Portfolio ventures fetch failed:', msg)
-    return NextResponse.json({ error: msg, uid: portfolioUid?.slice(0, 6) }, { status: 500 })
+    console.error('Portfolio ventures fetch failed:', error)
+    return NextResponse.json([])
   }
 }
