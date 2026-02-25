@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server'
 export async function GET() {
   const portfolioUid = process.env.FIREBASE_UID || process.env.PORTFOLIO_UID
   if (!portfolioUid) {
-    return NextResponse.json([])
+    return NextResponse.json({ error: 'no_uid', has_firebase: !!process.env.FIREBASE_UID, has_portfolio: !!process.env.PORTFOLIO_UID })
   }
 
   try {
