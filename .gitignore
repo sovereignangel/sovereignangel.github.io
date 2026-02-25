@@ -12,3 +12,14 @@ scripts/.env
 scripts/garmin_tokens/
 scripts/firebase-service-account.json
 .vercel
+
+# Sensitive docs (keep local, don't publish)
+LORI_PERSONAL_CONTEXT.md
+THESIS_ENGINE_PHILOSOPHY.md
+THESIS_ENGINE_BRAND_STRATEGY.md
+THESIS_ENGINE_PRD.md
+REWARD_FUNCTION_ROADMAP.md
+
+# Log files
+scripts/sync.log
+scripts/garmin_sync.log

@@ -222,9 +222,10 @@ export async function exchangeCodeForToken(code: string) {
 
   const { tokens } = await oauth2Client.getToken(code)
 
-  console.log('Refresh token:', tokens.refresh_token)
-  console.log('Add this to your .env.local:')
-  console.log(`GOOGLE_REFRESH_TOKEN=${tokens.refresh_token}`)
+  if (process.env.NODE_ENV === 'development') {
+    console.log('Add this to your .env.local:')
+    console.log(`GOOGLE_REFRESH_TOKEN=${tokens.refresh_token}`)
+  }
 
   return tokens
 }
