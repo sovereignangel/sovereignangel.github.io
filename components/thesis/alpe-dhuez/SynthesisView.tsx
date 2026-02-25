@@ -6,8 +6,7 @@ import { useDailyLogContext } from '@/components/thesis/DailyLogProvider'
 import { getWeeklySynthesis, saveWeeklySynthesis, getProjects, getSignals, getRecentDailyLogs } from '@/lib/firestore'
 import { weekStartDate, dateFull, dayOfWeekShort } from '@/lib/formatters'
 import type { WeeklySynthesis, Project, ProjectHealth, RewardComponents } from '@/lib/types'
-import { PROJECT_HEALTH_OPTIONS, REWARD_COMPONENT_META } from '@/lib/constants'
-import { PillarBreakdown } from '@/components/thesis/reward'
+import { PROJECT_HEALTH_OPTIONS, REWARD_PILLARS, REWARD_COMPONENT_META } from '@/lib/constants'
 import dynamic from 'next/dynamic'
 
 const RewardTrajectoryChart = dynamic(
@@ -15,82 +14,96 @@ const RewardTrajectoryChart = dynamic(
   { ssr: false, loading: () => <div className="h-[120px]" /> }
 )
 
-// ─── Score Attribution ──────────────────────────────────────────────────────
+// ─── Portfolio Decomposition (Bridgewater-style factor attribution) ─────────
 
-const COMPONENT_KEYS = ['ge', 'gi', 'gvc', 'kappa', 'optionality', 'gd', 'gn', 'j', 'sigma'] as const
+const ALL_KEYS = ['ge', 'gi', 'gvc', 'kappa', 'optionality', 'gd', 'gn', 'j', 'sigma'] as const
 
-function ScoreAttribution({ components }: { components: RewardComponents }) {
-  // Geometric mean → in log space each component contributes equally (1/9 weight)
-  // Attribution = how much each component pulls score up or down vs mean
-  const values = COMPONENT_KEYS.map(k => ({
-    key: k,
-    meta: REWARD_COMPONENT_META[k],
-    value: components[k as keyof RewardComponents] as number,
-  }))
+function PortfolioDecomposition({ components }: { components: RewardComponents }) {
+  // Log-space marginal contribution (geometric mean attribution)
+  const logVals = ALL_KEYS.map(k => Math.log(Math.max(components[k as keyof RewardComponents] as number, 0.001)))
+  const totalLog = logVals.reduce((s, l) => s + l, 0)
+  const contrib = new Map<string, number>()
+  ALL_KEYS.forEach((k, i) => {
+    contrib.set(k, totalLog !== 0 ? (logVals[i] / totalLog) * 100 : 100 / 9)
+  })
 
-  const mean = values.reduce((s, v) => s + v.value, 0) / values.length
-
-  // Sort by value ascending → lowest first = biggest drag = highest leverage
-  const sorted = [...values].sort((a, b) => a.value - b.value)
-
-  // Compute % contribution in log space (geometric mean)
-  const logValues = values.map(v => Math.log(Math.max(v.value, 0.001)))
-  const totalLog = logValues.reduce((s, l) => s + l, 0)
-
-  const contributions = new Map<string, number>()
-  values.forEach((v, i) => {
-    // share of total log (all negative, so largest negative = biggest drag)
-    contributions.set(v.key, totalLog !== 0 ? (logValues[i] / totalLog) * 100 : 100 / 9)
+  // Find weakest component for risk callout
+  let weakest = { key: '', label: '', value: 1 }
+  ALL_KEYS.forEach(k => {
+    const v = components[k as keyof RewardComponents] as number
+    if (v < weakest.value) weakest = { key: k, label: REWARD_COMPONENT_META[k]?.label || k, value: v }
   })
 
   return (
-    <div className="border border-rule-light rounded-sm p-2">
-      <div className="font-serif text-[9px] font-semibold uppercase tracking-[0.5px] text-ink-muted mb-1.5">
-        Score Attribution
-      </div>
-      <div className="space-y-0.5">
-        {sorted.map(({ key, meta, value }) => {
-          const pct = contributions.get(key) || 0
-          const delta = value - mean
-          const isAbove = delta >= 0
-          const pillarColor = meta.pillar === 'body' ? 'text-green-ink' : meta.pillar === 'brain' ? 'text-navy' : 'text-burgundy'
-          const pillarBar = meta.pillar === 'body' ? 'bg-green-ink' : meta.pillar === 'brain' ? 'bg-navy' : 'bg-burgundy'
-          return (
-            <div key={key} className="flex items-center gap-1.5">
-              {/* Component symbol */}
-              <span className={`font-mono text-[8px] w-6 shrink-0 text-right ${pillarColor}`}>
-                {meta.symbol}
-              </span>
+    <div className="space-y-2">
+      {REWARD_PILLARS.map(pillar => {
+        const pillarScore = components[pillar.key]
+        const pillarContrib = pillar.components.reduce((s, k) => s + (contrib.get(k) || 0), 0)
 
-              {/* Bar — filled from 0 to value, colored by pillar */}
-              <div className="flex-1 h-2 bg-rule-light rounded-sm overflow-hidden relative">
-                <div
-                  className={`absolute top-0 h-full rounded-sm ${pillarBar}${isAbove ? '' : '/40'}`}
-                  style={{ left: 0, width: `${value * 100}%` }}
-                />
-                {/* Mean marker */}
-                <div className="absolute top-0 h-full w-px bg-ink/30" style={{ left: `${mean * 100}%` }} />
+        return (
+          <div key={pillar.key}>
+            {/* Pillar header row */}
+            <div className="flex items-center gap-1.5 mb-0.5">
+              <span className={`font-serif text-[9px] font-semibold uppercase tracking-[0.5px] ${pillar.color} w-10 shrink-0`}>
+                {pillar.label}
+              </span>
+              <div className="flex-1 h-2.5 bg-rule-light rounded-sm overflow-hidden">
+                <div className={`h-full ${pillar.barColor} rounded-sm`} style={{ width: `${pillarScore * 100}%` }} />
               </div>
-
-              {/* Value */}
-              <span className={`font-mono text-[8px] w-5 text-right ${pillarColor}`}>
-                {(value * 100).toFixed(0)}
+              <span className={`font-mono text-[9px] font-semibold ${pillar.color} w-5 text-right`}>
+                {(pillarScore * 100).toFixed(0)}
               </span>
-
-              {/* Contribution % */}
-              <span className="font-mono text-[7px] text-ink-faint w-7 text-right">
-                {pct.toFixed(0)}%
-              </span>
+              <span className="font-mono text-[7px] text-ink-faint w-6 text-right">{pillarContrib.toFixed(0)}%</span>
             </div>
-          )
-        })}
-      </div>
 
-      {/* Biggest lever callout */}
-      {sorted.length > 0 && sorted[0].value < 0.5 && (
-        <div className="mt-1.5 pt-1 border-t border-rule-light">
+            {/* Sub-components */}
+            <div className="ml-2 space-y-px">
+              {pillar.components.map(compKey => {
+                const meta = REWARD_COMPONENT_META[compKey]
+                if (!meta) return null
+                const val = components[compKey as keyof RewardComponents] as number
+                const pct = contrib.get(compKey) || 0
+                const isWeak = val < 0.3
+
+                return (
+                  <div key={compKey} className="flex items-center gap-1.5">
+                    <span className={`font-mono text-[7px] w-8 shrink-0 text-right ${isWeak ? 'text-red-ink font-semibold' : 'text-ink-muted'}`}>
+                      {meta.symbol}
+                    </span>
+                    <div className="flex-1 h-1.5 bg-rule-light rounded-sm overflow-hidden">
+                      <div className={`h-full rounded-sm ${isWeak ? 'bg-red-ink/50' : meta.barColor}`} style={{ width: `${val * 100}%` }} />
+                    </div>
+                    <span className={`font-mono text-[7px] w-5 text-right ${isWeak ? 'text-red-ink' : 'text-ink-muted'}`}>
+                      {(val * 100).toFixed(0)}
+                    </span>
+                    <span className="font-mono text-[6px] text-ink-faint w-6 text-right">
+                      {pct.toFixed(0)}%
+                    </span>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )
+      })}
+
+      {/* Fragmentation (risk factor) */}
+      {components.fragmentation > 0.02 && (
+        <div className="flex items-center gap-1.5 pt-1 border-t border-rule-light">
+          <span className="font-mono text-[9px] text-red-ink w-10 shrink-0 text-right">-F</span>
+          <div className="flex-1 h-2 bg-rule-light rounded-sm overflow-hidden">
+            <div className="h-full bg-red-ink rounded-sm" style={{ width: `${components.fragmentation * 100}%` }} />
+          </div>
+          <span className="font-mono text-[8px] text-red-ink w-5 text-right">{(components.fragmentation * 100).toFixed(0)}</span>
+          <span className="w-6" />
+        </div>
+      )}
+
+      {/* Risk callout — biggest portfolio drag */}
+      {weakest.value < 0.5 && (
+        <div className="bg-red-bg border border-red-ink/10 rounded-sm px-2 py-1">
           <span className="font-mono text-[8px] text-red-ink">
-            Biggest lever: <span className="font-semibold">{sorted[0].meta.label}</span> ({(sorted[0].value * 100).toFixed(0)}%)
+            Concentration risk: <span className="font-semibold">{weakest.label}</span> at {(weakest.value * 100).toFixed(0)}% — biggest drag on g*
           </span>
         </div>
       )}
@@ -220,11 +233,8 @@ export default function SynthesisView() {
               )}
             </div>
 
-            {/* Pillar Breakdown (Body / Brain / Build) */}
-            {components && <PillarBreakdown components={components} compact />}
-
-            {/* Score Attribution */}
-            {components && <ScoreAttribution components={components} />}
+            {/* Portfolio Decomposition — pillars + factor attribution */}
+            {components && <PortfolioDecomposition components={components} />}
 
             {/* 7-day trajectory */}
             <div>
