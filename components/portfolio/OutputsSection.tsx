@@ -1,14 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import dynamic from 'next/dynamic'
 import Image from 'next/image'
 import SubTabs from './SubTabs'
-
-const FunRouteBuilder = dynamic(() => import('./FunRouteBuilder'), {
-  ssr: false,
-  loading: () => <p className="text-sm text-[#888] italic">Loading route builder...</p>,
-})
 
 interface DeployedVenture {
   id: string
@@ -97,13 +91,12 @@ export default function OutputsSection() {
   })
 
   return (
-    <section>
+    <section className="bg-[#faf8f4]/90 backdrop-blur-sm rounded-sm p-5 -mx-5">
       <SubTabs
         tabs={[
           { id: 'projects', label: 'Projects' },
-          { id: 'ventures', label: `Ventures${uniqueVentures.length ? ` (${uniqueVentures.length})` : ''}` },
+          { id: 'ventures', label: 'Ventures' },
           { id: 'blog', label: 'Blog' },
-          { id: 'fun', label: 'Fun' },
         ]}
         activeTab={activeTab}
         onTabChange={setActiveTab}
@@ -200,10 +193,6 @@ export default function OutputsSection() {
 
       {activeTab === 'blog' && (
         <p className="text-sm text-[#888] italic">Coming soon</p>
-      )}
-
-      {activeTab === 'fun' && (
-        <FunRouteBuilder />
       )}
     </section>
   )
