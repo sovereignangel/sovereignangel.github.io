@@ -33,7 +33,8 @@ export async function GET() {
 
     return NextResponse.json(ventures)
   } catch (error) {
-    console.error('Portfolio ventures fetch failed:', error)
-    return NextResponse.json([])
+    const msg = error instanceof Error ? error.message : String(error)
+    console.error('Portfolio ventures fetch failed:', msg)
+    return NextResponse.json({ error: msg, uid: portfolioUid?.slice(0, 6) }, { status: 500 })
   }
 }
