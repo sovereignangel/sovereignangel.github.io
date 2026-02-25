@@ -20,7 +20,7 @@
 import type { ThesisPillar } from '@/lib/types'
 
 export interface ParsedTelegramMessage {
-  command: 'signal' | 'note' | 'journal' | 'rss' | 'predict' | 'venture' | 'build' | 'approve' | 'feedback' | 'iterate' | 'reset' | 'brief' | 'memo' | 'unknown'
+  command: 'signal' | 'note' | 'journal' | 'rss' | 'predict' | 'venture' | 'build' | 'approve' | 'feedback' | 'iterate' | 'reset' | 'brief' | 'memo' | 'morning' | 'unknown'
   text: string
   pillars: ThesisPillar[]
   raw: string
@@ -109,6 +109,11 @@ export function parseTelegramMessage(text: string): ParsedTelegramMessage {
   if (raw.startsWith('/memo')) {
     const body = raw.slice('/memo'.length).trim()
     return { command: 'memo', text: body, pillars: [], raw }
+  }
+
+  // /morning command — trigger morning brief on demand
+  if (raw.startsWith('/morning')) {
+    return { command: 'morning', text: '', pillars: [], raw }
   }
 
   // /brief command — feedback on morning brief

@@ -1678,6 +1678,31 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: true })
     }
 
+    // Handle morning brief on-demand trigger
+    if (parsed.command === 'morning') {
+      await sendTelegramReply(chatId, 'Generating your morning brief...')
+      try {
+        const { generateMorningBrief } = await import('@/lib/morning-brief')
+        const { formatMorningBrief } = await import('@/lib/morning-brief-formatter')
+        const { sendTelegramMessage } = await import('@/lib/telegram')
+        const brief = await generateMorningBrief(uid)
+        const formatted = formatMorningBrief(brief)
+        const messageId = await sendTelegramMessage(chatId, formatted)
+        const adminDb = await getAdminDb()
+        await adminDb.collection('users').doc(uid).collection('daily_reports').doc(brief.date).set({
+          type: 'morning_brief',
+          brief,
+          formatted,
+          generatedAt: new Date(),
+          ...(messageId ? { telegramMessageId: messageId, telegramChatId: chatId } : {}),
+        }, { merge: true })
+      } catch (error) {
+        console.error('[morning] Manual brief failed:', error)
+        await sendTelegramReply(chatId, `Brief generation failed: ${error instanceof Error ? error.message : String(error)}`)
+      }
+      return NextResponse.json({ ok: true })
+    }
+
     // Handle brief feedback command
     if (parsed.command === 'brief') {
       if (!parsed.text) {
