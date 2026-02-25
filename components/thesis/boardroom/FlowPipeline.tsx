@@ -34,24 +34,26 @@ export default function FlowPipeline({ stages, activeSection, onStageClick }: Fl
               <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${
                 isActive ? 'bg-burgundy' : hasAlert ? 'bg-amber-ink' : 'bg-ink-faint'
               }`} />
-              <span className={`font-mono text-[8px] uppercase font-semibold ${
+              <span className={`font-mono text-[9px] uppercase font-semibold ${
                 isActive ? 'text-burgundy' : 'text-ink-muted'
               }`}>
                 {stage.label}
               </span>
-              <span className={`font-mono text-[8px] ${
-                isActive ? 'text-burgundy' : 'text-ink-faint'
-              }`}>
-                {stage.count}
-              </span>
+              {stage.count > 0 && !hasAlert && (
+                <span className={`font-mono text-[9px] ${
+                  isActive ? 'text-burgundy' : 'text-ink-faint'
+                }`}>
+                  {stage.count}
+                </span>
+              )}
               {hasAlert && (
-                <span className="font-mono text-[8px] font-bold text-amber-ink">
+                <span className="font-mono text-[9px] font-bold text-amber-ink">
                   {stage.alert}!
                 </span>
               )}
             </button>
             {i < stages.length - 1 && (
-              <span className="text-[8px] text-ink-faint mx-0.5">&rarr;</span>
+              <span className="text-[9px] text-ink-faint mx-0.5">&rarr;</span>
             )}
           </div>
         )
