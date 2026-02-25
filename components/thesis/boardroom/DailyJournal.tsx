@@ -45,7 +45,7 @@ type ToggleState = Record<string, boolean>
 
 export default function DailyJournal() {
   const { user } = useAuth()
-  const { log, updateField } = useDailyLogContext()
+  const { log, save: saveDailyFields, updateField } = useDailyLogContext()
   const { save: saveCadence, getByType } = useCadence(user?.uid)
 
   const [journalText, setJournalText] = useState(log.journalEntry || '')
@@ -101,96 +101,100 @@ export default function DailyJournal() {
     try {
       const today = getTodayKey()
 
-      // Save journal text to daily log
-      await updateField('journalEntry', journalText.trim())
+      // Batch all daily log field updates into one save to avoid race conditions
+      // (each updateField writes the full log — sequential calls overwrite each other)
+      const batch: Record<string, unknown> = { journalEntry: journalText.trim() }
 
       // Energy fields
       if (parsed.energy.nervousSystemState && isEnabled('energy.ns')) {
-        await updateField('nervousSystemState', parsed.energy.nervousSystemState)
+        batch.nervousSystemState = parsed.energy.nervousSystemState
       }
       if (parsed.energy.bodyFelt && isEnabled('energy.body')) {
-        await updateField('bodyFelt', parsed.energy.bodyFelt)
+        batch.bodyFelt = parsed.energy.bodyFelt
       }
       if (parsed.energy.trainingTypes.length > 0 && isEnabled('energy.training')) {
-        await updateField('trainingTypes', parsed.energy.trainingTypes)
+        batch.trainingTypes = parsed.energy.trainingTypes
       }
       if (parsed.energy.sleepHours != null && isEnabled('energy.sleep')) {
-        await updateField('sleepHours', parsed.energy.sleepHours)
+        batch.sleepHours = parsed.energy.sleepHours
       }
 
       // Output fields
       if (parsed.output.focusHoursActual != null && isEnabled('output.focus')) {
-        await updateField('focusHoursActual', parsed.output.focusHoursActual)
+        batch.focusHoursActual = parsed.output.focusHoursActual
       }
       if (parsed.output.whatShipped && isEnabled('output.shipped')) {
-        await updateField('whatShipped', parsed.output.whatShipped)
+        batch.whatShipped = parsed.output.whatShipped
       }
 
       // Intelligence fields
       if (parsed.intelligence.discoveryConversationsCount != null && isEnabled('intel.conversations')) {
-        await updateField('discoveryConversationsCount', parsed.intelligence.discoveryConversationsCount)
+        batch.discoveryConversationsCount = parsed.intelligence.discoveryConversationsCount
       }
       if (parsed.intelligence.problems.length > 0 && isEnabled('intel.problems')) {
-        await updateField('problems', parsed.intelligence.problems.map(p => ({
+        batch.problems = parsed.intelligence.problems.map(p => ({
           problem: p.problem, painPoint: p.painPoint, solution: p.solution, brokenWhy: '',
-        })))
+        }))
       }
       if (parsed.intelligence.problemSelected && isEnabled('intel.problemSelected')) {
-        await updateField('problemSelected', parsed.intelligence.problemSelected)
+        batch.problemSelected = parsed.intelligence.problemSelected
       }
       if (parsed.intelligence.insightsExtracted != null && isEnabled('intel.insights')) {
-        await updateField('insightsExtracted', parsed.intelligence.insightsExtracted)
+        batch.insightsExtracted = parsed.intelligence.insightsExtracted
       }
 
       // Network fields
       if (parsed.network.warmIntrosMade != null && isEnabled('network.intros')) {
-        await updateField('warmIntrosMade', parsed.network.warmIntrosMade)
+        batch.warmIntrosMade = parsed.network.warmIntrosMade
       }
       if (parsed.network.warmIntrosReceived != null && isEnabled('network.introsReceived')) {
-        await updateField('warmIntrosReceived', parsed.network.warmIntrosReceived)
+        batch.warmIntrosReceived = parsed.network.warmIntrosReceived
       }
       if (parsed.network.meetingsBooked != null && isEnabled('network.meetings')) {
-        await updateField('meetingsBooked', parsed.network.meetingsBooked)
+        batch.meetingsBooked = parsed.network.meetingsBooked
       }
 
       // Revenue fields
       if (parsed.revenue.revenueAsksCount != null && isEnabled('revenue.asks')) {
-        await updateField('revenueAsksCount', parsed.revenue.revenueAsksCount)
+        batch.revenueAsksCount = parsed.revenue.revenueAsksCount
       }
       if (parsed.revenue.revenueThisSession != null && isEnabled('revenue.amount')) {
-        await updateField('revenueThisSession', parsed.revenue.revenueThisSession)
+        batch.revenueThisSession = parsed.revenue.revenueThisSession
       }
       if (parsed.revenue.revenueStreamType && isEnabled('revenue.streamType')) {
-        await updateField('revenueStreamType', parsed.revenue.revenueStreamType)
+        batch.revenueStreamType = parsed.revenue.revenueStreamType
       }
       if (parsed.revenue.feedbackLoopClosed != null && isEnabled('revenue.feedbackLoop')) {
-        await updateField('feedbackLoopClosed', parsed.revenue.feedbackLoopClosed)
+        batch.feedbackLoopClosed = parsed.revenue.feedbackLoopClosed
       }
 
       // Skill Building fields
       if (parsed.skill.deliberatePracticeMinutes != null && isEnabled('skill.practice')) {
-        await updateField('deliberatePracticeMinutes', parsed.skill.deliberatePracticeMinutes)
+        batch.deliberatePracticeMinutes = parsed.skill.deliberatePracticeMinutes
       }
       if (parsed.skill.newTechniqueApplied != null && isEnabled('skill.technique')) {
-        await updateField('newTechniqueApplied', parsed.skill.newTechniqueApplied)
+        batch.newTechniqueApplied = parsed.skill.newTechniqueApplied
       }
       if (parsed.skill.automationCreated != null && isEnabled('skill.automation')) {
-        await updateField('automationCreated', parsed.skill.automationCreated)
+        batch.automationCreated = parsed.skill.automationCreated
       }
 
       // PsyCap fields
       if (parsed.psyCap.hope != null && isEnabled('psycap.hope')) {
-        await updateField('psyCapHope', parsed.psyCap.hope)
+        batch.psyCapHope = parsed.psyCap.hope
       }
       if (parsed.psyCap.efficacy != null && isEnabled('psycap.efficacy')) {
-        await updateField('psyCapEfficacy', parsed.psyCap.efficacy)
+        batch.psyCapEfficacy = parsed.psyCap.efficacy
       }
       if (parsed.psyCap.resilience != null && isEnabled('psycap.resilience')) {
-        await updateField('psyCapResilience', parsed.psyCap.resilience)
+        batch.psyCapResilience = parsed.psyCap.resilience
       }
       if (parsed.psyCap.optimism != null && isEnabled('psycap.optimism')) {
-        await updateField('psyCapOptimism', parsed.psyCap.optimism)
+        batch.psyCapOptimism = parsed.psyCap.optimism
       }
+
+      // Save all daily log fields in one atomic write
+      await saveDailyFields(batch)
 
       // Cadence — merge with existing daily review
       if (parsed.cadenceCompleted.length > 0) {

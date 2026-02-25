@@ -19,6 +19,7 @@ export interface DailyLogContextValue {
   trainingTypes: TrainingType[]
   hasVo2: boolean
   hasZone2: boolean
+  save: (updates: Partial<DailyLog>) => Promise<void>
   updateField: (field: string, value: unknown) => void
   toggleTraining: (type: TrainingType) => void
   syncCalendar: () => Promise<void>
@@ -46,6 +47,7 @@ export function useDailyLog(): DailyLogContextValue {
 
   // Actions (save, sync, toggle)
   const {
+    save,
     saving,
     lastSaved,
     updateField,
@@ -79,6 +81,7 @@ export function useDailyLog(): DailyLogContextValue {
     trainingTypes: trainingTypesArr,
     hasVo2: trainingTypesArr.includes('vo2'),
     hasZone2: trainingTypesArr.includes('zone2'),
+    save,
     updateField,
     toggleTraining,
     syncCalendar,
