@@ -47,8 +47,8 @@ export default function FlowPipeline({ stages, activeSection, onStageClick }: Fl
                 </span>
               )}
               {hasAlert && (
-                <span className="font-mono text-[9px] font-bold text-amber-ink">
-                  {stage.alert}!
+                <span className="font-mono text-[9px] text-amber-ink">
+                  {stage.alert}
                 </span>
               )}
             </button>
