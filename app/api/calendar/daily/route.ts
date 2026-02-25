@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { verifyAuth } from '@/lib/api-auth'
 
 export const dynamic = 'force-dynamic'
 
@@ -11,6 +12,9 @@ function getSupabase() {
 }
 
 export async function GET(request: NextRequest) {
+  const auth = await verifyAuth(request)
+  if (auth instanceof NextResponse) return auth
+
   const supabase = getSupabase()
   const { searchParams } = new URL(request.url)
   const date = searchParams.get('date')

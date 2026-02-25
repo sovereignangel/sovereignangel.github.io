@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { GoogleGenerativeAI } from '@google/generative-ai'
+import { verifyAuth } from '@/lib/api-auth'
 import {
   scaleToRealWorld,
   ensureClosedLoop,
@@ -11,6 +12,9 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '')
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN || ''
 
 export async function POST(req: NextRequest) {
+  const auth = await verifyAuth(req)
+  if (auth instanceof NextResponse) return auth
+
   try {
     const { location, distanceKm, shapePrompt } = await req.json()
 

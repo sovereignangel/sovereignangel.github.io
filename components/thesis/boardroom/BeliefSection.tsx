@@ -5,11 +5,12 @@ import { useAuth } from '@/components/auth/AuthProvider'
 import { useBeliefs } from '@/hooks/useBeliefs'
 import { saveBelief } from '@/lib/firestore'
 import type { Belief, DecisionDomain } from '@/lib/types'
+import { authFetch } from '@/lib/auth-fetch'
 import BeliefForm from './BeliefForm'
 
 const DOMAIN_COLORS: Record<string, string> = {
   portfolio: 'text-burgundy bg-burgundy-bg border-burgundy/20',
-  product: 'text-ink bg-cream border-rule',
+  product: 'text-ink-muted bg-cream border-rule',
   revenue: 'text-green-ink bg-green-bg border-green-ink/20',
   personal: 'text-amber-ink bg-amber-bg border-amber-ink/20',
   thesis: 'text-burgundy bg-burgundy-bg border-burgundy/20',
@@ -35,6 +36,9 @@ export default function BeliefSection({ onActOnBelief }: BeliefSectionProps) {
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [extendingId, setExtendingId] = useState<string | null>(null)
   const [extendReason, setExtendReason] = useState('')
+  const [sharpeningId, setSharpeningId] = useState<string | null>(null)
+  const [sharpenResult, setSharpenResult] = useState<{ refined: string; reasoning: string } | null>(null)
+  const [sharpenLoading, setSharpenLoading] = useState(false)
 
   const today = new Date().toISOString().split('T')[0]
 
@@ -72,7 +76,7 @@ export default function BeliefSection({ onActOnBelief }: BeliefSectionProps) {
     setShowForm(false)
     // Trigger antithesis in background
     if (beliefId) {
-      fetch('/api/beliefs/antithesis', {
+      authFetch('/api/beliefs/antithesis', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
@@ -105,6 +109,43 @@ export default function BeliefSection({ onActOnBelief }: BeliefSectionProps) {
   async function handleArchive(belief: Belief) {
     if (!belief.id) return
     await save({ status: 'archived' }, belief.id)
+  }
+
+  async function handleSharpen(belief: Belief) {
+    if (!belief.id) return
+    setSharpeningId(belief.id)
+    setSharpenResult(null)
+    setSharpenLoading(true)
+    try {
+      const res = await authFetch('/api/beliefs/sharpen', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          statement: belief.statement,
+          confidence: belief.confidence,
+          domain: belief.domain,
+          evidenceFor: belief.evidenceFor,
+          evidenceAgainst: belief.evidenceAgainst,
+        }),
+      })
+      if (res.ok) {
+        const data = await res.json()
+        if (data.refined) {
+          setSharpenResult(data)
+        }
+      }
+    } catch {
+      // ignore
+    } finally {
+      setSharpenLoading(false)
+    }
+  }
+
+  async function handleAcceptSharpen(belief: Belief) {
+    if (!belief.id || !sharpenResult?.refined) return
+    await save({ statement: sharpenResult.refined }, belief.id)
+    setSharpeningId(null)
+    setSharpenResult(null)
   }
 
   if (loading) {
@@ -164,6 +205,7 @@ export default function BeliefSection({ onActOnBelief }: BeliefSectionProps) {
             const isStale = belief.attentionDate && belief.attentionDate <= today && belief.status === 'active'
             const isUntested = !belief.antithesis && belief.status === 'active'
             const domainStyle = DOMAIN_COLORS[belief.domain] || DOMAIN_COLORS.thesis
+            const isSharpeningThis = sharpeningId === belief.id
 
             return (
               <div
@@ -180,7 +222,7 @@ export default function BeliefSection({ onActOnBelief }: BeliefSectionProps) {
                   <span className={`font-mono text-[7px] uppercase px-1 py-0.5 rounded-sm border shrink-0 ${domainStyle}`}>
                     {belief.domain}
                   </span>
-                  <span className="text-[10px] font-medium text-ink flex-1 truncate">
+                  <span className="font-sans text-[11px] text-ink flex-1 truncate">
                     {belief.statement}
                   </span>
                   <span className={`font-mono text-[9px] font-semibold shrink-0 ${
@@ -213,10 +255,10 @@ export default function BeliefSection({ onActOnBelief }: BeliefSectionProps) {
                     {/* Evidence for */}
                     {belief.evidenceFor.length > 0 && (
                       <div>
-                        <span className="font-serif text-[8px] text-green-ink uppercase">Evidence For</span>
+                        <span className="font-serif text-[8px] text-green-ink uppercase tracking-[0.5px]">Evidence For</span>
                         <ul className="mt-0.5 space-y-0.5">
                           {belief.evidenceFor.map((e, i) => (
-                            <li key={i} className="text-[9px] text-ink flex items-start gap-1">
+                            <li key={i} className="font-sans text-[9px] text-ink-muted flex items-start gap-1">
                               <span className="text-green-ink shrink-0 mt-px">+</span>
                               <span>{e}</span>
                             </li>
@@ -228,10 +270,10 @@ export default function BeliefSection({ onActOnBelief }: BeliefSectionProps) {
                     {/* Evidence against */}
                     {belief.evidenceAgainst.length > 0 && (
                       <div>
-                        <span className="font-serif text-[8px] text-red-ink uppercase">Evidence Against</span>
+                        <span className="font-serif text-[8px] text-red-ink uppercase tracking-[0.5px]">Evidence Against</span>
                         <ul className="mt-0.5 space-y-0.5">
                           {belief.evidenceAgainst.map((e, i) => (
-                            <li key={i} className="text-[9px] text-ink flex items-start gap-1">
+                            <li key={i} className="font-sans text-[9px] text-ink-muted flex items-start gap-1">
                               <span className="text-red-ink shrink-0 mt-px">-</span>
                               <span>{e}</span>
                             </li>
@@ -244,7 +286,7 @@ export default function BeliefSection({ onActOnBelief }: BeliefSectionProps) {
                     {belief.antithesis ? (
                       <div className="bg-burgundy-bg border-l-2 border-burgundy rounded-sm p-1.5">
                         <div className="flex items-center gap-1.5 mb-0.5">
-                          <span className="font-serif text-[8px] text-burgundy uppercase">Antithesis</span>
+                          <span className="font-serif text-[8px] text-burgundy uppercase tracking-[0.5px]">Antithesis</span>
                           {belief.antithesisStrength != null && (
                             <span className={`font-mono text-[8px] font-semibold ${
                               belief.antithesisStrength >= 70 ? 'text-red-ink'
@@ -255,18 +297,46 @@ export default function BeliefSection({ onActOnBelief }: BeliefSectionProps) {
                             </span>
                           )}
                         </div>
-                        <p className="text-[9px] text-ink leading-relaxed">{belief.antithesis}</p>
+                        <p className="font-sans text-[9px] text-ink-muted leading-relaxed">{belief.antithesis}</p>
                       </div>
                     ) : (
                       <div className="bg-amber-bg border-l-2 border-amber-ink/30 rounded-sm p-1.5">
-                        <span className="font-serif text-[8px] text-amber-ink uppercase">Awaiting stress test...</span>
+                        <span className="font-serif text-[8px] text-amber-ink uppercase tracking-[0.5px]">Awaiting stress test...</span>
+                      </div>
+                    )}
+
+                    {/* Sharpen suggestion */}
+                    {isSharpeningThis && sharpenLoading && (
+                      <div className="bg-cream border border-rule rounded-sm p-1.5">
+                        <span className="font-serif text-[8px] text-ink-muted uppercase tracking-[0.5px]">Sharpening...</span>
+                      </div>
+                    )}
+                    {isSharpeningThis && sharpenResult && (
+                      <div className="bg-green-bg border-l-2 border-green-ink rounded-sm p-1.5 space-y-1">
+                        <span className="font-serif text-[8px] text-green-ink uppercase tracking-[0.5px]">Refined Version</span>
+                        <p className="font-sans text-[10px] text-ink leading-relaxed">{sharpenResult.refined}</p>
+                        <p className="font-sans text-[8px] text-ink-muted leading-tight">{sharpenResult.reasoning}</p>
+                        <div className="flex gap-1 pt-0.5">
+                          <button
+                            onClick={() => handleAcceptSharpen(belief)}
+                            className="font-serif text-[8px] font-medium px-2 py-1 rounded-sm border bg-burgundy text-paper border-burgundy hover:bg-burgundy/90 transition-colors"
+                          >
+                            Accept & Resave
+                          </button>
+                          <button
+                            onClick={() => { setSharpeningId(null); setSharpenResult(null) }}
+                            className="font-serif text-[8px] font-medium px-2 py-1 rounded-sm border border-rule text-ink-muted hover:text-ink transition-colors"
+                          >
+                            Keep Original
+                          </button>
+                        </div>
                       </div>
                     )}
 
                     {/* Stale / extend */}
                     {isStale && extendingId !== belief.id && (
                       <div className="flex items-center gap-2">
-                        <span className="text-[9px] text-amber-ink">Past attention date ({belief.attentionDate})</span>
+                        <span className="font-sans text-[9px] text-amber-ink">Past attention date ({belief.attentionDate})</span>
                         <button
                           onClick={() => setExtendingId(belief.id || null)}
                           className="font-serif text-[8px] text-ink-muted hover:text-burgundy transition-colors"
@@ -278,27 +348,27 @@ export default function BeliefSection({ onActOnBelief }: BeliefSectionProps) {
 
                     {extendingId === belief.id && (
                       <div className="bg-paper border border-rule rounded-sm p-2 space-y-1">
-                        <label className="font-serif text-[8px] text-ink-muted uppercase block">
+                        <label className="font-serif text-[8px] text-ink-muted uppercase tracking-[0.5px] block">
                           Why extend? (required)
                         </label>
                         <textarea
                           value={extendReason}
                           onChange={e => setExtendReason(e.target.value)}
                           placeholder="Why does this belief need more time?"
-                          className="w-full h-12 bg-white border border-rule rounded-sm p-1.5 text-[10px] text-ink resize-none focus:outline-none focus:border-burgundy"
+                          className="w-full h-12 bg-white border border-rule rounded-sm p-1.5 font-sans text-[10px] text-ink resize-none focus:outline-none focus:border-burgundy"
                           autoFocus
                         />
                         <div className="flex gap-1">
                           <button
                             onClick={() => handleExtend(belief)}
                             disabled={!extendReason.trim()}
-                            className="font-serif text-[8px] px-2 py-1 rounded-sm border bg-burgundy text-paper border-burgundy disabled:opacity-40"
+                            className="font-serif text-[8px] font-medium px-2 py-1 rounded-sm border bg-burgundy text-paper border-burgundy disabled:opacity-40"
                           >
                             Extend +21 days
                           </button>
                           <button
                             onClick={() => { setExtendingId(null); setExtendReason('') }}
-                            className="font-serif text-[8px] px-2 py-1 rounded-sm border border-rule text-ink-muted"
+                            className="font-serif text-[8px] font-medium px-2 py-1 rounded-sm border border-rule text-ink-muted"
                           >
                             Cancel
                           </button>
@@ -309,10 +379,10 @@ export default function BeliefSection({ onActOnBelief }: BeliefSectionProps) {
                     {/* Extension history */}
                     {belief.extensions && belief.extensions.length > 0 && (
                       <div>
-                        <span className="font-serif text-[8px] text-ink-muted uppercase">Extensions</span>
+                        <span className="font-serif text-[8px] text-ink-muted uppercase tracking-[0.5px]">Extensions</span>
                         <div className="mt-0.5 space-y-0.5">
                           {belief.extensions.map((ext, i) => (
-                            <div key={i} className="text-[8px] text-ink-muted">
+                            <div key={i} className="font-mono text-[8px] text-ink-muted">
                               {ext.extendedAt}: {ext.reason} (to {ext.newAttentionDate})
                             </div>
                           ))}
@@ -322,6 +392,13 @@ export default function BeliefSection({ onActOnBelief }: BeliefSectionProps) {
 
                     {/* Actions */}
                     <div className="flex items-center gap-2 pt-1 border-t border-rule-light">
+                      <button
+                        onClick={() => handleSharpen(belief)}
+                        disabled={sharpenLoading && isSharpeningThis}
+                        className="font-serif text-[9px] font-medium text-burgundy hover:text-burgundy/70 transition-colors"
+                      >
+                        {sharpenLoading && isSharpeningThis ? 'Sharpening...' : 'Sharpen'}
+                      </button>
                       {onActOnBelief && (
                         <button
                           onClick={() => onActOnBelief(belief)}
@@ -336,7 +413,7 @@ export default function BeliefSection({ onActOnBelief }: BeliefSectionProps) {
                       >
                         Archive
                       </button>
-                      <span className="text-[8px] text-ink-faint ml-auto">
+                      <span className="font-mono text-[8px] text-ink-faint ml-auto">
                         {belief.sourceJournalDate}
                       </span>
                     </div>

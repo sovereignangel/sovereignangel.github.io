@@ -8,6 +8,7 @@ import { saveDecision } from '@/lib/firestore/decisions'
 import { savePrinciple } from '@/lib/firestore/principles'
 import { saveContact, getContactByName, updateContact } from '@/lib/firestore/contacts'
 import { saveExternalSignal } from '@/lib/firestore/external-signals'
+import { authFetch } from '@/lib/auth-fetch'
 import { saveBelief } from '@/lib/firestore/beliefs'
 import type { ParsedJournalEntry } from '@/lib/ai-extraction'
 import type { CadenceChecklistItem } from '@/lib/types'
@@ -72,7 +73,7 @@ export default function DailyJournal() {
     setToggles({})
 
     try {
-      const res = await fetch('/api/journal/parse', {
+      const res = await authFetch('/api/journal/parse', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ journalText: journalText.trim() }),
@@ -293,7 +294,7 @@ export default function DailyJournal() {
           attentionDate: attentionDateStr,
         })
         // Trigger antithesis generation in background
-        fetch('/api/beliefs/antithesis', {
+        authFetch('/api/beliefs/antithesis', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -376,7 +377,7 @@ export default function DailyJournal() {
           value={journalText}
           onChange={(e) => setJournalText(e.target.value)}
           placeholder="Write freely about your day — conversations you had, problems you spotted, revenue opportunities, who you connected with, energy levels, what you shipped, decisions made, lessons learned. The model will parse it into the right places."
-          className="w-full h-40 bg-paper border border-rule rounded-sm p-2 text-[11px] text-ink font-medium resize-y focus:outline-none focus:border-burgundy"
+          className="w-full h-20 bg-paper border border-rule rounded-sm p-2 font-sans text-[11px] text-ink resize-y focus:outline-none focus:border-burgundy"
         />
         <div className="flex items-center gap-2 mt-2">
           <button
@@ -790,11 +791,11 @@ function ToggleRow({
       </button>
       <div className="flex-1 min-w-0">
         <div className="flex items-baseline gap-1.5">
-          <span className="text-[11px] font-semibold text-ink">{label}</span>
-          <span className="text-[10px] text-ink-muted">{value}</span>
+          <span className="font-sans text-[11px] font-medium text-ink">{label}</span>
+          <span className="font-mono text-[10px] text-ink-muted">{value}</span>
         </div>
         {detail && (
-          <div className="text-[9px] text-ink-muted mt-0.5 leading-tight">{detail}</div>
+          <div className="font-sans text-[9px] text-ink-muted mt-0.5 leading-tight">{detail}</div>
         )}
       </div>
     </div>

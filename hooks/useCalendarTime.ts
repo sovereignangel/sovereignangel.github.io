@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { localDateString } from '@/lib/date-utils'
+import { authFetch } from '@/lib/auth-fetch'
 
 export interface CalendarTimeEntry {
   date: string
@@ -19,7 +20,7 @@ export function useCalendarTime(days: number = 7) {
 
   useEffect(() => {
     const today = localDateString(new Date())
-    fetch(`/api/calendar/daily?date=${today}&range=${days}`)
+    authFetch(`/api/calendar/daily?date=${today}&range=${days}`)
       .then(res => res.json())
       .then(result => {
         if (Array.isArray(result)) {

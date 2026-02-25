@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useWeeklyPlan } from '@/hooks/useWeeklyPlan'
+import { authFetch } from '@/lib/auth-fetch'
 import WeeklyPlanHeader from './WeeklyPlanHeader'
 import WeeklyProjectBar from './WeeklyProjectBar'
 import GoalsView from './GoalsView'
@@ -51,7 +52,7 @@ export default function WeeklyPlanView() {
     if (!plan) return
     setRetroLoading(true)
     try {
-      const res = await fetch('/api/weekly-plan/retro', {
+      const res = await authFetch('/api/weekly-plan/retro', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ plan, logs: weekLogs }),
@@ -79,7 +80,7 @@ export default function WeeklyPlanView() {
     setGenerateLoading(true)
     try {
       const projectNames = plan?.projects.map(p => p.projectName) || []
-      const res = await fetch('/api/weekly-plan/generate', {
+      const res = await authFetch('/api/weekly-plan/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ lastWeekPlan: plan, logs: weekLogs, projectNames }),

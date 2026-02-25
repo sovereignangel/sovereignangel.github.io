@@ -1,11 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { verifyAuth } from '@/lib/api-auth'
 
 export async function POST(req: NextRequest) {
-  try {
-    const { ventureId, uid } = await req.json()
+  const auth = await verifyAuth(req)
+  if (auth instanceof NextResponse) return auth
 
-    if (!ventureId || !uid) {
-      return NextResponse.json({ error: 'Missing ventureId or uid' }, { status: 400 })
+  try {
+    const { ventureId } = await req.json()
+    const uid = auth.uid
+
+    if (!ventureId) {
+      return NextResponse.json({ error: 'Missing ventureId' }, { status: 400 })
     }
 
     const { adminDb } = await import('@/lib/firebase-admin')

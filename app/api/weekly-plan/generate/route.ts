@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { generateNextWeekPlan } from '@/lib/weekly-plan-ai'
+import { verifyAuth } from '@/lib/api-auth'
 
 export async function POST(req: NextRequest) {
+  const auth = await verifyAuth(req)
+  if (auth instanceof NextResponse) return auth
+
   try {
     const { lastWeekPlan, logs, projectNames } = await req.json()
 

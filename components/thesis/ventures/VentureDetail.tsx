@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '@/components/auth/AuthProvider'
 import { getVenture, updateVenture } from '@/lib/firestore'
 import type { Venture, VentureStage, CompetitorRow } from '@/lib/types'
+import { authFetch } from '@/lib/auth-fetch'
 import BuildStatusBar from './BuildStatusBar'
 
 const STAGE_OPTIONS: VentureStage[] = ['idea', 'specced', 'validated', 'prd_draft', 'prd_approved', 'building', 'deployed', 'archived']
@@ -169,7 +170,7 @@ export default function VentureDetail({ ventureId, onBack }: { ventureId: string
     if (!user || !venture) return
     setApprovingPrd(true)
     try {
-      const res = await fetch('/api/ventures/approve', {
+      const res = await authFetch('/api/ventures/approve', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ventureId, uid: user.uid }),
@@ -188,7 +189,7 @@ export default function VentureDetail({ ventureId, onBack }: { ventureId: string
     if (!user || !venture || !feedback.trim()) return
     setSubmittingFeedback(true)
     try {
-      const res = await fetch('/api/ventures/feedback', {
+      const res = await authFetch('/api/ventures/feedback', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ventureId, uid: user.uid, feedback: feedback.trim() }),
@@ -209,7 +210,7 @@ export default function VentureDetail({ ventureId, onBack }: { ventureId: string
     if (!user || !venture) return
     setGeneratingPrd(true)
     try {
-      const res = await fetch('/api/ventures/feedback', {
+      const res = await authFetch('/api/ventures/feedback', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ventureId, uid: user.uid, generateNew: true }),
@@ -255,7 +256,7 @@ export default function VentureDetail({ ventureId, onBack }: { ventureId: string
     if (!user || !venture) return
     setGeneratingMemo(true)
     try {
-      const res = await fetch('/api/ventures/memo', {
+      const res = await authFetch('/api/ventures/memo', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ventureId, uid: user.uid }),
@@ -275,7 +276,7 @@ export default function VentureDetail({ ventureId, onBack }: { ventureId: string
     if (!user || !venture || !memoFeedback.trim()) return
     setSubmittingMemoFeedback(true)
     try {
-      const res = await fetch('/api/ventures/memo', {
+      const res = await authFetch('/api/ventures/memo', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ventureId, uid: user.uid, feedback: memoFeedback.trim() }),

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { fetchAndScoreSignals, DEFAULT_RSS_FEEDS, type RSSFeed } from '@/lib/rss-aggregator'
+import { verifyAuth } from '@/lib/api-auth'
 
 const DEFAULT_THESIS =
   'I am an AI-native builder who spots market inefficiencies at the intersection of AI + capital markets, ships solutions rapidly through public learning, captures value through products and capital leverage.'
@@ -24,13 +25,17 @@ async function getUserFeeds(uid: string): Promise<RSSFeed[]> {
 }
 
 export async function POST(request: NextRequest) {
+  const auth = await verifyAuth(request)
+  if (auth instanceof NextResponse) return auth
+
   try {
-    const { thesis, uid } = await request.json()
+    const { thesis } = await request.json()
+    const uid = auth.uid
     const userThesis = thesis || DEFAULT_THESIS
 
     // Combine default feeds with user's custom feeds
     let feeds = [...DEFAULT_RSS_FEEDS]
-    if (uid) {
+    {
       const userFeeds = await getUserFeeds(uid)
       // Deduplicate by URL
       const existingUrls = new Set(feeds.map(f => f.url))

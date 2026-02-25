@@ -3,12 +3,16 @@ import { extractInsightsV2 } from '@/lib/ai-extraction'
 import { saveConversation, saveContact, getContactByName, saveInsights, saveMacroPattern } from '@/lib/firestore'
 import { ConversationType } from '@/lib/types'
 import { Timestamp } from 'firebase-admin/firestore'
+import { verifyAuth } from '@/lib/api-auth'
 
 export async function POST(request: NextRequest) {
+  const auth = await verifyAuth(request)
+  if (auth instanceof NextResponse) return auth
+
   try {
     const body = await request.json()
+    const uid = auth.uid
     const {
-      uid,
       title,
       date,
       participants,

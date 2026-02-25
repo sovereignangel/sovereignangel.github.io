@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import type { ReadingHighlight, ReadingQA } from '@/lib/types/reading'
+import { authFetch } from '@/lib/auth-fetch'
 
 type SidebarTab = 'highlights' | 'notes' | 'ask'
 
@@ -48,7 +49,7 @@ export default function ReaderSidebar({
     setAskingAI(true)
 
     try {
-      const res = await fetch('/api/reader/ask', {
+      const res = await authFetch('/api/reader/ask', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

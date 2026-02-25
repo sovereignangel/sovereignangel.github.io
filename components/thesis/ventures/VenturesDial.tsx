@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '@/components/auth/AuthProvider'
 import { getVentures, getVenture, updateVenture, saveVenture } from '@/lib/firestore'
 import type { Venture, VentureStage } from '@/lib/types'
+import { authFetch } from '@/lib/auth-fetch'
 
 export default function VenturesDial({ selectedVentureId }: { selectedVentureId: string | null }) {
   const { user } = useAuth()
@@ -37,7 +38,7 @@ export default function VenturesDial({ selectedVentureId }: { selectedVentureId:
     if (!user || !newIdea.trim()) return
     setSubmitting(true)
     try {
-      const res = await fetch('/api/ventures/parse', {
+      const res = await authFetch('/api/ventures/parse', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text: newIdea }),

@@ -5,6 +5,7 @@ import { useAuth } from '@/components/auth/AuthProvider'
 import { useDecisions } from '@/hooks/useDecisions'
 import DecisionForm from './DecisionForm'
 import type { Decision, DecisionDomain } from '@/lib/types'
+import { authFetch } from '@/lib/auth-fetch'
 
 const DOMAIN_LABELS: Record<DecisionDomain, string> = {
   portfolio: 'Portfolio',
@@ -72,7 +73,7 @@ export default function DecisionJournal() {
             setEditingDecision(null)
             // Generate antithesis in background for new decisions
             if (!editingDecision && data.title && data.chosenOption) {
-              fetch('/api/decisions/antithesis', {
+              authFetch('/api/decisions/antithesis', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

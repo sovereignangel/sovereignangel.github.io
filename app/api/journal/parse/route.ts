@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { parseJournalEntry } from '@/lib/ai-extraction'
+import { verifyAuth } from '@/lib/api-auth'
 
 export async function POST(request: NextRequest) {
+  const auth = await verifyAuth(request)
+  if (auth instanceof NextResponse) return auth
+
   try {
     const body = await request.json()
     const { journalText } = body

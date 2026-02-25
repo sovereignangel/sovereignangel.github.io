@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useAuth } from '@/components/auth/AuthProvider'
 import type { ConversationType, Project } from '@/lib/types'
+import { authFetch } from '@/lib/auth-fetch'
 import type { StructuredInsight, ExtractedMacroPattern } from '@/lib/ai-extraction'
 
 const INSIGHT_TYPE_LABELS: Record<string, string> = {
@@ -89,7 +90,7 @@ export default function ConversationUploadModal({
         }
       }
 
-      const response = await fetch('/api/conversations/process', {
+      const response = await authFetch('/api/conversations/process', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

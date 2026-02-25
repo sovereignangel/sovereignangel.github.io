@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '@/components/auth/AuthProvider'
 import { getInboxExternalSignals, saveExternalSignal, updateExternalSignal } from '@/lib/firestore'
 import type { ExternalSignal, ExternalSignalReadStatus, ThesisPillar } from '@/lib/types'
+import { authFetch } from '@/lib/auth-fetch'
 
 interface ExternalSignalInboxProps {
   onSignalCreated: () => void
@@ -47,7 +48,7 @@ export default function ExternalSignalInbox({ onSignalCreated }: ExternalSignalI
     if (!user || fetching) return
     setFetching(true)
     try {
-      const res = await fetch('/api/rss/fetch', {
+      const res = await authFetch('/api/rss/fetch', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({}),

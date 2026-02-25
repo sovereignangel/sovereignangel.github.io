@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import 'mapbox-gl/dist/mapbox-gl.css'
 import type { GeneratedRoute } from '@/lib/types'
+import { authFetch } from '@/lib/auth-fetch'
 
 const DISTANCE_PRESETS = [
   { value: 3, label: '3k' },
@@ -147,7 +148,7 @@ export default function FunRouteBuilder() {
     setError(null)
 
     try {
-      const res = await fetch('/api/exploration/generate-route', {
+      const res = await authFetch('/api/exploration/generate-route', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ location, distanceKm: distance, shapePrompt }),

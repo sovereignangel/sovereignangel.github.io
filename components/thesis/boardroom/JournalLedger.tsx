@@ -8,7 +8,7 @@ import type { Decision, Principle, Belief } from '@/lib/types'
 
 const DOMAIN_COLORS: Record<string, string> = {
   portfolio: 'text-burgundy bg-burgundy-bg border-burgundy/20',
-  product: 'text-ink bg-cream border-rule',
+  product: 'text-ink-muted bg-cream border-rule',
   revenue: 'text-green-ink bg-green-bg border-green-ink/20',
   personal: 'text-amber-ink bg-amber-bg border-amber-ink/20',
   thesis: 'text-burgundy bg-burgundy-bg border-burgundy/20',
@@ -38,9 +38,9 @@ export default function JournalLedger() {
 
   if (loading) {
     return (
-      <div className="p-3 space-y-3">
+      <div className="p-3 space-y-1">
         {[1, 2, 3].map(i => (
-          <div key={i} className="h-24 bg-rule-light/40 rounded-sm animate-pulse" />
+          <div key={i} className="h-8 bg-rule-light/40 rounded-sm animate-pulse" />
         ))}
       </div>
     )
@@ -49,11 +49,11 @@ export default function JournalLedger() {
   if (days.length === 0) {
     return (
       <div className="p-3">
-        <div className="text-center py-12">
+        <div className="text-center py-6">
           <p className="font-serif text-[11px] text-ink-muted">
             No journal entries in the last {rangeDays} days.
           </p>
-          <p className="font-serif text-[9px] text-ink-faint mt-1">
+          <p className="font-sans text-[9px] text-ink-faint mt-1">
             Send /journal via Telegram or write above to start building your ledger.
           </p>
         </div>
@@ -66,33 +66,50 @@ export default function JournalLedger() {
       <div className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-2 pb-1.5 border-b-2 border-rule">
         Ledger
       </div>
-      {days.map((day) => (
-        <LedgerDayCard key={day.date} day={day} />
-      ))}
+      <div className="max-h-[320px] overflow-y-auto space-y-1 pr-1">
+        {days.map((day) => (
+          <LedgerDayCard key={day.date} day={day} />
+        ))}
 
-      <div className="pt-2 text-center">
-        <button
-          onClick={loadMore}
-          className="font-serif text-[9px] font-medium px-3 py-1.5 rounded-sm border border-rule text-ink-muted hover:border-burgundy hover:text-burgundy transition-colors"
-        >
-          Load older entries
-        </button>
+        <div className="pt-2 text-center">
+          <button
+            onClick={loadMore}
+            className="font-serif text-[9px] font-medium px-3 py-1.5 rounded-sm border border-rule text-ink-muted hover:border-burgundy hover:text-burgundy transition-colors"
+          >
+            Load older entries
+          </button>
+        </div>
       </div>
     </div>
   )
 }
 
 function LedgerDayCard({ day }: { day: LedgerDay }) {
+  const [expanded, setExpanded] = useState(false)
   const hasArtifacts = day.decisions.length > 0 || day.principles.length > 0 || day.beliefs.length > 0
   const hasContext = day.focusHours !== null || day.whatShipped || day.discoveryConversations > 0
 
   return (
     <div className="bg-white border border-rule rounded-sm">
-      {/* Day Header */}
-      <div className="flex items-center justify-between px-3 py-2 border-b-2 border-rule">
-        <span className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-burgundy">
-          {formatLedgerDate(day.date)}
-        </span>
+      {/* Day Header — clickable dropdown toggle */}
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="w-full flex items-center justify-between px-3 py-1.5 hover:bg-cream/30 transition-colors"
+      >
+        <div className="flex items-center gap-2">
+          <svg
+            className={`w-2.5 h-2.5 text-ink-muted transition-transform ${expanded ? 'rotate-90' : ''}`}
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+          </svg>
+          <span className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-burgundy">
+            {formatLedgerDate(day.date)}
+          </span>
+        </div>
         <div className="flex items-center gap-2">
           {hasContext && (
             <div className="flex items-center gap-1.5">
@@ -109,43 +126,53 @@ function LedgerDayCard({ day }: { day: LedgerDay }) {
               g = {day.rewardScore.toFixed(1)}
             </span>
           )}
-        </div>
-      </div>
-
-      {/* Journal Entries */}
-      <div className="px-3 py-2 space-y-2">
-        {day.entries.map((entry, i) => (
-          <EntryBlock key={i} entry={entry} />
-        ))}
-
-        {/* Shipped line */}
-        {day.whatShipped && (
-          <div className="flex items-start gap-1.5 pt-1">
-            <span className="font-mono text-[8px] uppercase px-1 py-0.5 rounded-sm border bg-green-bg text-green-ink border-green-ink/20 shrink-0 mt-px">
-              shipped
+          {hasArtifacts && (
+            <span className="font-mono text-[7px] text-ink-faint">
+              {day.beliefs.length + day.decisions.length + day.principles.length} derived
             </span>
-            <span className="text-[10px] text-ink">{day.whatShipped}</span>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
+      </button>
 
-      {/* Derived Artifacts */}
-      {hasArtifacts && (
-        <div className="px-3 py-2 border-t border-rule-light">
-          <span className="font-serif text-[9px] font-semibold uppercase tracking-[0.5px] text-ink-muted block mb-1">
-            Derived
-          </span>
-          <div className="space-y-1">
-            {day.beliefs.map((b) => (
-              <BeliefRow key={b.id} belief={b} />
+      {/* Expanded content */}
+      {expanded && (
+        <div className="border-t border-rule">
+          {/* Journal Entries */}
+          <div className="px-3 py-2 space-y-2">
+            {day.entries.map((entry, i) => (
+              <EntryBlock key={i} entry={entry} />
             ))}
-            {day.decisions.map((d) => (
-              <DecisionRow key={d.id} decision={d} />
-            ))}
-            {day.principles.map((p) => (
-              <PrincipleRow key={p.id} principle={p} />
-            ))}
+
+            {/* Shipped line */}
+            {day.whatShipped && (
+              <div className="flex items-start gap-1.5 pt-1">
+                <span className="font-mono text-[8px] uppercase px-1 py-0.5 rounded-sm border bg-green-bg text-green-ink border-green-ink/20 shrink-0 mt-px">
+                  shipped
+                </span>
+                <span className="font-sans text-[10px] text-ink-muted">{day.whatShipped}</span>
+              </div>
+            )}
           </div>
+
+          {/* Derived Artifacts */}
+          {hasArtifacts && (
+            <div className="px-3 py-2 border-t border-rule-light">
+              <span className="font-serif text-[9px] font-semibold uppercase tracking-[0.5px] text-ink-muted block mb-1">
+                Derived
+              </span>
+              <div className="space-y-1">
+                {day.beliefs.map((b) => (
+                  <BeliefRow key={b.id} belief={b} />
+                ))}
+                {day.decisions.map((d) => (
+                  <DecisionRow key={d.id} decision={d} />
+                ))}
+                {day.principles.map((p) => (
+                  <PrincipleRow key={p.id} principle={p} />
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -168,7 +195,7 @@ function EntryBlock({ entry }: { entry: JournalEntry }) {
           {entry.time}
         </span>
       )}
-      <p className="text-[11px] text-ink leading-relaxed whitespace-pre-wrap">
+      <p className="font-sans text-[11px] text-ink-muted leading-relaxed whitespace-pre-wrap">
         {displayText}
       </p>
       {isLong && (
@@ -196,7 +223,7 @@ function DecisionRow({ decision }: { decision: Decision }) {
         <span className={`font-mono text-[7px] uppercase px-1 py-0.5 rounded-sm border shrink-0 ${domainStyle}`}>
           decision
         </span>
-        <span className="text-[10px] font-medium text-ink flex-1 truncate">
+        <span className="font-sans text-[10px] text-ink flex-1 truncate">
           {decision.title}
         </span>
         <span className={`font-mono text-[9px] font-semibold shrink-0 ${
@@ -211,24 +238,24 @@ function DecisionRow({ decision }: { decision: Decision }) {
         <div className="ml-1 pl-2 border-l border-rule-light mt-0.5 mb-1 space-y-0.5">
           {decision.hypothesis && (
             <div>
-              <span className="font-serif text-[8px] text-ink-muted uppercase">Hypothesis</span>
-              <p className="text-[9px] text-ink">{decision.hypothesis}</p>
+              <span className="font-serif text-[8px] text-ink-muted uppercase tracking-[0.5px]">Hypothesis</span>
+              <p className="font-sans text-[9px] text-ink-muted">{decision.hypothesis}</p>
             </div>
           )}
           <div>
-            <span className="font-serif text-[8px] text-ink-muted uppercase">Chosen</span>
-            <p className="text-[9px] text-ink">{decision.chosenOption}</p>
+            <span className="font-serif text-[8px] text-ink-muted uppercase tracking-[0.5px]">Chosen</span>
+            <p className="font-sans text-[9px] text-ink-muted">{decision.chosenOption}</p>
           </div>
           {decision.reasoning && (
             <div>
-              <span className="font-serif text-[8px] text-ink-muted uppercase">Reasoning</span>
-              <p className="text-[9px] text-ink">{decision.reasoning}</p>
+              <span className="font-serif text-[8px] text-ink-muted uppercase tracking-[0.5px]">Reasoning</span>
+              <p className="font-sans text-[9px] text-ink-muted">{decision.reasoning}</p>
             </div>
           )}
           {decision.antithesis && (
             <div className="bg-burgundy-bg border border-burgundy/20 rounded-sm p-1.5 mt-0.5">
-              <span className="font-serif text-[8px] text-burgundy uppercase">Antithesis</span>
-              <p className="text-[9px] text-ink">{decision.antithesis}</p>
+              <span className="font-serif text-[8px] text-burgundy uppercase tracking-[0.5px]">Antithesis</span>
+              <p className="font-sans text-[9px] text-ink-muted">{decision.antithesis}</p>
             </div>
           )}
           <div className="flex items-center gap-2 pt-0.5">
@@ -255,7 +282,7 @@ function BeliefRow({ belief }: { belief: Belief }) {
       <span className={`font-mono text-[7px] uppercase px-1 py-0.5 rounded-sm border shrink-0 ${domainStyle}`}>
         belief
       </span>
-      <span className="text-[10px] text-ink flex-1 truncate">
+      <span className="font-sans text-[10px] text-ink-muted flex-1 truncate">
         {belief.statement.slice(0, 60)}
       </span>
       <span className={`font-mono text-[8px] font-medium shrink-0 ${
@@ -286,7 +313,7 @@ function PrincipleRow({ principle }: { principle: Principle }) {
       <span className={`font-mono text-[7px] uppercase px-1 py-0.5 rounded-sm border shrink-0 ${domainStyle}`}>
         principle
       </span>
-      <span className="text-[10px] text-ink flex-1 truncate">
+      <span className="font-sans text-[10px] text-ink-muted flex-1 truncate">
         {principle.shortForm || principle.text.slice(0, 60)}
       </span>
       <span className="font-mono text-[8px] text-green-ink font-medium shrink-0">
