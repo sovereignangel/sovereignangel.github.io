@@ -54,7 +54,7 @@ export default function JournalLedger() {
             No journal entries in the last {rangeDays} days.
           </p>
           <p className="font-serif text-[9px] text-ink-faint mt-1">
-            Send /journal via Telegram or write in the Entry tab to start building your ledger.
+            Send /journal via Telegram or write above to start building your ledger.
           </p>
         </div>
       </div>
@@ -63,6 +63,9 @@ export default function JournalLedger() {
 
   return (
     <div className="p-3 space-y-1">
+      <div className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-2 pb-1.5 border-b-2 border-rule">
+        Ledger
+      </div>
       {days.map((day) => (
         <LedgerDayCard key={day.date} day={day} />
       ))}

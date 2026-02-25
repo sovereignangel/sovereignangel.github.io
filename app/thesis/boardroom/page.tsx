@@ -16,7 +16,6 @@ import AuditView from '@/components/thesis/rl/AuditView'
 import RLStatusDial from '@/components/thesis/rl/RLStatusDial'
 
 type BoardRoomTab = 'journal' | 'decisions' | 'principles' | 'synthesis' | 'rl' | 'research'
-type JournalMode = 'entry' | 'ledger'
 type RLSubTab = 'concepts' | 'transitions' | 'policy' | 'value' | 'audit'
 
 const TABS: { key: BoardRoomTab; label: string }[] = [
@@ -38,7 +37,6 @@ const RL_TABS: { key: RLSubTab; label: string }[] = [
 
 export default function BoardRoomPage() {
   const [activeTab, setActiveTab] = useState<BoardRoomTab>('journal')
-  const [journalMode, setJournalMode] = useState<JournalMode>('entry')
   const [rlSubTab, setRlSubTab] = useState<RLSubTab>('concepts')
 
   const isJournal = activeTab === 'journal'
@@ -71,25 +69,6 @@ export default function BoardRoomPage() {
           ))}
         </div>
 
-        {/* Journal sub-tabs */}
-        {isJournal && (
-          <div className="flex gap-1 border-b border-rule-light shrink-0 mt-1">
-            {([{ key: 'entry', label: 'Entry' }, { key: 'ledger', label: 'Ledger' }] as const).map((tab) => (
-              <button
-                key={tab.key}
-                onClick={() => setJournalMode(tab.key)}
-                className={`font-serif text-[11px] font-medium px-2 py-1 transition-colors ${
-                  journalMode === tab.key
-                    ? 'text-burgundy font-semibold border-b-2 border-burgundy -mb-px'
-                    : 'text-ink-muted hover:text-ink'
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
-        )}
-
         {/* RL sub-tabs */}
         {isRL && (
           <div className="flex gap-1 border-b border-rule-light shrink-0 mt-1">
@@ -111,8 +90,12 @@ export default function BoardRoomPage() {
 
         {/* Tab Content */}
         <div className="flex-1 overflow-y-auto min-h-0">
-          {isJournal && journalMode === 'entry' && <DailyJournal />}
-          {isJournal && journalMode === 'ledger' && <JournalLedger />}
+          {isJournal && (
+            <>
+              <DailyJournal />
+              <JournalLedger />
+            </>
+          )}
           {activeTab === 'decisions' && <DecisionJournal />}
           {activeTab === 'principles' && <PrinciplesLedger />}
           {activeTab === 'synthesis' && <SynthesisView />}
