@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useRef, useEffect } from 'react'
+import { useState, useCallback, useRef, useEffect, useMemo } from 'react'
 import { Document, Page, pdfjs } from 'react-pdf'
 import 'react-pdf/dist/Page/AnnotationLayer.css'
 import 'react-pdf/dist/Page/TextLayer.css'
@@ -14,7 +14,7 @@ interface PDFReaderViewProps {
   highlights: ReadingHighlight[]
   onPageChange: (page: number) => void
   onTotalPages: (total: number) => void
-  onTextSelected: (text: string, rects: HighlightRect[], pageNumber: number) => void
+  onTextSelected: (text: string, rects: HighlightRect[], pageNumber: number, screenPos: { x: number; y: number }) => void
   onPageTextExtracted?: (pageNumber: number, text: string) => void
   searchQuery?: string
 }
@@ -32,8 +32,9 @@ export default function PDFReaderView({
   const [numPages, setNumPages] = useState(0)
   const [scale, setScale] = useState(1.2)
   const [loadError, setLoadError] = useState<string | null>(null)
-  const pageRef = useRef<HTMLDivElement>(null)
-  const containerRef = useRef<HTMLDivElement>(null)
+  const scrollContainerRef = useRef<HTMLDivElement>(null)
+  const pageRefs = useRef<Map<number, HTMLDivElement>>(new Map())
+  const isJumping = useRef(false)
 
   function onDocumentLoadSuccess({ numPages: total }: { numPages: number }) {
     setNumPages(total)
@@ -45,18 +46,55 @@ export default function PDFReaderView({
     setLoadError(error.message || 'Failed to load PDF')
   }
 
-  // Extract text when page renders (for search + Q&A context)
-  const handlePageRenderSuccess = useCallback(() => {
-    if (!onPageTextExtracted || !pageRef.current) return
-    const textLayer = pageRef.current.querySelector('.react-pdf__Page__textContent')
-    if (textLayer) {
-      onPageTextExtracted(currentPage, textLayer.textContent || '')
-    }
-  }, [currentPage, onPageTextExtracted])
-
-  // Handle text selection
+  // IntersectionObserver to track which page is visible
   useEffect(() => {
-    const container = containerRef.current
+    const container = scrollContainerRef.current
+    if (!container || numPages === 0) return
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (isJumping.current) return
+        let mostVisible: { page: number; ratio: number } | null = null
+        for (const entry of entries) {
+          const pageNum = Number(entry.target.getAttribute('data-page'))
+          if (pageNum && entry.intersectionRatio > (mostVisible?.ratio ?? 0)) {
+            mostVisible = { page: pageNum, ratio: entry.intersectionRatio }
+          }
+        }
+        if (mostVisible) {
+          onPageChange(mostVisible.page)
+        }
+      },
+      { root: container, threshold: [0, 0.25, 0.5, 0.75, 1] }
+    )
+
+    pageRefs.current.forEach((el) => observer.observe(el))
+    return () => observer.disconnect()
+  }, [numPages, onPageChange])
+
+  // Jump to page when currentPage changes externally (e.g. page input or sidebar click)
+  const jumpToPage = useCallback((page: number) => {
+    const el = pageRefs.current.get(page)
+    if (!el) return
+    isJumping.current = true
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    setTimeout(() => { isJumping.current = false }, 600)
+  }, [])
+
+  // Extract text when a page renders
+  const handlePageRenderSuccess = useCallback((pageNumber: number) => {
+    if (!onPageTextExtracted) return
+    const el = pageRefs.current.get(pageNumber)
+    if (!el) return
+    const textLayer = el.querySelector('.react-pdf__Page__textContent')
+    if (textLayer) {
+      onPageTextExtracted(pageNumber, textLayer.textContent || '')
+    }
+  }, [onPageTextExtracted])
+
+  // Handle text selection — detect which page it's on
+  useEffect(() => {
+    const container = scrollContainerRef.current
     if (!container) return
 
     const handleMouseUp = () => {
@@ -66,12 +104,25 @@ export default function PDFReaderView({
       const text = selection.toString().trim()
       if (text.length < 3) return
 
-      // Get selection rects relative to the page
       const range = selection.getRangeAt(0)
-      const pageEl = pageRef.current?.querySelector('.react-pdf__Page')
-      if (!pageEl) return
 
-      const pageRect = pageEl.getBoundingClientRect()
+      // Walk up from the selection to find the data-page container
+      let node: Node | null = range.startContainer
+      let pageNumber = currentPage
+      while (node && node !== container) {
+        if (node instanceof HTMLElement && node.hasAttribute('data-page')) {
+          pageNumber = Number(node.getAttribute('data-page'))
+          break
+        }
+        node = node.parentNode
+      }
+
+      // Find the page element for rect normalization
+      const pageEl = pageRefs.current.get(pageNumber)
+      const pdfPage = pageEl?.querySelector('.react-pdf__Page')
+      if (!pdfPage) return
+
+      const pageRect = pdfPage.getBoundingClientRect()
       const rangeRects = Array.from(range.getClientRects())
 
       const normalizedRects: HighlightRect[] = rangeRects
@@ -81,11 +132,17 @@ export default function PDFReaderView({
           y1: ((r.top - pageRect.top) / pageRect.height) * 100,
           x2: ((r.right - pageRect.left) / pageRect.width) * 100,
           y2: ((r.bottom - pageRect.top) / pageRect.height) * 100,
-          pageNumber: currentPage,
+          pageNumber,
         }))
 
       if (normalizedRects.length > 0) {
-        onTextSelected(text, normalizedRects, currentPage)
+        // Compute screen position for popup — use midpoint-top of last rect
+        const lastRect = rangeRects[rangeRects.length - 1]
+        const screenPos = {
+          x: lastRect.left + lastRect.width / 2,
+          y: lastRect.top,
+        }
+        onTextSelected(text, normalizedRects, pageNumber, screenPos)
       }
     }
 
@@ -93,44 +150,29 @@ export default function PDFReaderView({
     return () => container.removeEventListener('mouseup', handleMouseUp)
   }, [currentPage, onTextSelected])
 
-  // Keyboard navigation
-  useEffect(() => {
-    const handleKey = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
-        e.preventDefault()
-        if (currentPage < numPages) onPageChange(currentPage + 1)
-      } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
-        e.preventDefault()
-        if (currentPage > 1) onPageChange(currentPage - 1)
-      }
+  // Group highlights by page
+  const highlightsByPage = useMemo(() => {
+    const map = new Map<number, ReadingHighlight[]>()
+    for (const h of highlights) {
+      const p = h.position.pageNumber
+      if (!map.has(p)) map.set(p, [])
+      map.get(p)!.push(h)
     }
-    window.addEventListener('keydown', handleKey)
-    return () => window.removeEventListener('keydown', handleKey)
-  }, [currentPage, numPages, onPageChange])
+    return map
+  }, [highlights])
 
-  const pageHighlights = highlights.filter(h => h.position.pageNumber === currentPage)
+  // Page numbers to render
+  const pages = useMemo(() => {
+    return Array.from({ length: numPages }, (_, i) => i + 1)
+  }, [numPages])
 
   return (
-    <div ref={containerRef} className="flex-1 flex flex-col min-h-0">
+    <div className="flex-1 flex flex-col min-h-0">
       {/* Toolbar */}
       <div className="flex items-center gap-2 px-3 py-1.5 border-b border-rule bg-cream/50 shrink-0">
-        <button
-          onClick={() => currentPage > 1 && onPageChange(currentPage - 1)}
-          disabled={currentPage <= 1}
-          className="text-[10px] font-serif px-1.5 py-0.5 rounded-sm border border-rule text-ink-muted hover:text-ink disabled:opacity-30"
-        >
-          Prev
-        </button>
         <span className="font-mono text-[10px] text-ink-muted">
           {currentPage} / {numPages || '...'}
         </span>
-        <button
-          onClick={() => currentPage < numPages && onPageChange(currentPage + 1)}
-          disabled={currentPage >= numPages}
-          className="text-[10px] font-serif px-1.5 py-0.5 rounded-sm border border-rule text-ink-muted hover:text-ink disabled:opacity-30"
-        >
-          Next
-        </button>
 
         <div className="flex-1" />
 
@@ -159,14 +201,20 @@ export default function PDFReaderView({
           value={currentPage}
           onChange={e => {
             const p = parseInt(e.target.value)
-            if (p >= 1 && p <= numPages) onPageChange(p)
+            if (p >= 1 && p <= numPages) {
+              onPageChange(p)
+              jumpToPage(p)
+            }
           }}
           className="w-12 text-[10px] font-mono text-center border border-rule rounded-sm px-1 py-0.5 bg-white text-ink"
         />
       </div>
 
-      {/* PDF Content */}
-      <div className="flex-1 overflow-auto flex justify-center bg-cream/30 py-4">
+      {/* PDF Content — continuous scroll */}
+      <div
+        ref={scrollContainerRef}
+        className="flex-1 overflow-auto bg-cream/30 py-4"
+      >
         {loadError ? (
           <div className="flex items-center justify-center h-full">
             <div className="bg-white border border-red-ink/20 rounded-sm p-4 max-w-sm text-center">
@@ -175,31 +223,42 @@ export default function PDFReaderView({
             </div>
           </div>
         ) : (
-          <div ref={pageRef} className="relative">
-            <Document
-              file={url}
-              onLoadSuccess={onDocumentLoadSuccess}
-              onLoadError={onDocumentLoadError}
-              loading={
-                <div className="flex items-center justify-center h-96">
-                  <span className="text-[11px] text-ink-muted">Loading document...</span>
+          <Document
+            file={url}
+            onLoadSuccess={onDocumentLoadSuccess}
+            onLoadError={onDocumentLoadError}
+            loading={
+              <div className="flex items-center justify-center h-96">
+                <span className="text-[11px] text-ink-muted">Loading document...</span>
+              </div>
+            }
+          >
+            {pages.map((pageNum) => (
+              <div
+                key={pageNum}
+                data-page={pageNum}
+                ref={(el) => {
+                  if (el) pageRefs.current.set(pageNum, el)
+                  else pageRefs.current.delete(pageNum)
+                }}
+                className="flex justify-center mb-4 relative"
+              >
+                <div className="relative">
+                  <Page
+                    pageNumber={pageNum}
+                    scale={scale}
+                    renderTextLayer={true}
+                    renderAnnotationLayer={true}
+                    onRenderSuccess={() => handlePageRenderSuccess(pageNum)}
+                  />
+                  {/* Highlight overlays for this page */}
+                  {(highlightsByPage.get(pageNum) || []).map(h => (
+                    <HighlightOverlay key={h.id} highlight={h} />
+                  ))}
                 </div>
-              }
-            >
-              <Page
-                pageNumber={currentPage}
-                scale={scale}
-                renderTextLayer={true}
-                renderAnnotationLayer={true}
-                onRenderSuccess={handlePageRenderSuccess}
-              />
-            </Document>
-
-            {/* Highlight overlays */}
-            {pageHighlights.map(h => (
-              <HighlightOverlay key={h.id} highlight={h} />
+              </div>
             ))}
-          </div>
+          </Document>
         )}
       </div>
     </div>

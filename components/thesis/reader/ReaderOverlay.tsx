@@ -44,6 +44,7 @@ export default function ReaderOverlay({ source, onClose }: ReaderOverlayProps) {
     text: string
     rects: HighlightRect[]
     pageNumber: number
+    screenPos: { x: number; y: number }
   } | null>(null)
   const [showSearch, setShowSearch] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
@@ -72,8 +73,8 @@ export default function ReaderOverlay({ source, onClose }: ReaderOverlayProps) {
     }
   }, [session, initSession, setTotalPages, source])
 
-  const handleTextSelected = useCallback((text: string, rects: HighlightRect[], pageNumber: number) => {
-    setPendingSelection({ text, rects, pageNumber })
+  const handleTextSelected = useCallback((text: string, rects: HighlightRect[], pageNumber: number, screenPos: { x: number; y: number }) => {
+    setPendingSelection({ text, rects, pageNumber, screenPos })
   }, [])
 
   const handleHighlight = useCallback((color: HighlightColor) => {
@@ -197,14 +198,14 @@ export default function ReaderOverlay({ source, onClose }: ReaderOverlayProps) {
         )}
       </div>
 
-      {/* Floating highlight popup */}
+      {/* Floating highlight popup — anchored near selection */}
       {pendingSelection && (
         <div
           ref={popupRef}
           className="fixed z-[60] bg-white border border-rule rounded-sm shadow-sm p-1.5 flex gap-1"
           style={{
-            left: '50%',
-            bottom: '80px',
+            left: `${Math.min(Math.max(pendingSelection.screenPos.x, 100), window.innerWidth - 100)}px`,
+            top: `${Math.max(pendingSelection.screenPos.y - 40, 8)}px`,
             transform: 'translateX(-50%)',
           }}
         >
