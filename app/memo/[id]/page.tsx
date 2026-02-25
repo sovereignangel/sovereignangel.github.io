@@ -2,6 +2,8 @@ import { adminDb } from '@/lib/firebase-admin'
 import type { VentureMemo, VentureMemoMetric, MarketSizeRow, BusinessModelRow, GTMPhase, FinancialProjectionRow, UnitEconomicsRow, UseOfFundsRow, MilestoneRow, CompetitorRow } from '@/lib/types'
 import type { Metadata } from 'next'
 
+export const dynamic = 'force-dynamic'
+
 interface PublicMemoDoc {
   memo: VentureMemo
   ventureName: string

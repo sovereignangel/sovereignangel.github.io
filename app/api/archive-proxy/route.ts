@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-const ALLOWED_HOSTS = ['archive.org', 'gutenberg.org', 'gutendex.com', 'arxiv.org', 'incompleteideas.net']
+const ALLOWED_HOSTS = ['archive.org', 'gutenberg.org', 'gutendex.com', 'arxiv.org', 'biorxiv.org', 'incompleteideas.net']
 
 export async function GET(req: NextRequest) {
   const url = req.nextUrl.searchParams.get('url')
