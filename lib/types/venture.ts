@@ -78,6 +78,12 @@ export interface MilestoneRow {
   successMetric: string              // "5 active pilots"
 }
 
+export interface CompetitorRow {
+  feature: string                    // High-leverage differentiator
+  us: string                         // Our capability ("Yes", "AI-native", etc.)
+  competitors: Record<string, string>  // { "Competitor A": "Partial", "Competitor B": "No" }
+}
+
 export interface VentureMemo {
   // Page 1 — Executive Summary
   companyPurpose: string             // One sentence: what this company does
@@ -96,7 +102,9 @@ export interface VentureMemo {
   marketDynamics: string             // Growth vectors, tailwinds, secular trends
 
   // Competition & Positioning
-  competitiveLandscape: string       // Who else is here, why they'll lose
+  competitiveLandscape: string       // Prose fallback
+  competitorTable?: CompetitorRow[]  // Feature comparison matrix
+  competitorNames?: string[]         // Column headers for competitor table
   defensibility: string              // Moats: network effects, data, switching costs, etc.
 
   // Business Model

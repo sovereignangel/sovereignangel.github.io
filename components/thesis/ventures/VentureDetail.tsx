@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/components/auth/AuthProvider'
 import { getVenture, updateVenture } from '@/lib/firestore'
-import type { Venture, VentureStage } from '@/lib/types'
+import type { Venture, VentureStage, CompetitorRow } from '@/lib/types'
 import BuildStatusBar from './BuildStatusBar'
 
 const STAGE_OPTIONS: VentureStage[] = ['idea', 'specced', 'validated', 'prd_draft', 'prd_approved', 'building', 'deployed', 'archived']
@@ -16,12 +16,26 @@ const PRIORITY_STYLES: Record<string, string> = {
 
 function MemoSection({ title, content }: { title: string; content: string }) {
   if (!content) return null
+  const lines = content.split('\n')
+  const headline = lines[0]?.startsWith('•') ? null : lines[0]
+  const bullets = lines.filter(l => l.startsWith('• '))
   return (
     <div>
       <div className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-1 pb-1 border-b border-rule">
         {title}
       </div>
-      <p className="font-mono text-[10px] text-ink leading-relaxed whitespace-pre-line">{content}</p>
+      {headline && (
+        <p className="font-mono text-[10px] font-bold text-ink mb-0.5">{headline}</p>
+      )}
+      {bullets.length > 0 ? (
+        <ul className="space-y-0.5">
+          {bullets.map((b, i) => (
+            <li key={i} className="font-mono text-[9px] text-ink leading-relaxed pl-1">{b}</li>
+          ))}
+        </ul>
+      ) : !headline ? (
+        <p className="font-mono text-[10px] text-ink leading-relaxed whitespace-pre-line">{content}</p>
+      ) : null}
     </div>
   )
 }
@@ -34,11 +48,11 @@ function MemoTable({ title, headers, rows }: { title: string; headers: string[];
         {title}
       </div>
       <div className="overflow-x-auto">
-        <table className="w-full">
+        <table className="w-full table-auto">
           <thead>
             <tr className="bg-cream">
               {headers.map((h, i) => (
-                <th key={i} className="font-mono text-[7px] uppercase text-ink-muted text-left py-1 px-1.5 border-b border-rule">{h}</th>
+                <th key={i} className="font-mono text-[7px] uppercase text-ink-muted text-left py-1 px-1.5 border-b border-rule whitespace-nowrap">{h}</th>
               ))}
             </tr>
           </thead>
@@ -47,6 +61,41 @@ function MemoTable({ title, headers, rows }: { title: string; headers: string[];
               <tr key={i} className={i % 2 === 1 ? 'bg-cream/50' : ''}>
                 {row.map((cell, j) => (
                   <td key={j} className="font-mono text-[9px] text-ink py-1 px-1.5 border-b border-rule/50">{cell}</td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  )
+}
+
+function CompetitorTableView({ names, rows, ventureName }: { names: string[]; rows: CompetitorRow[]; ventureName: string }) {
+  if (rows.length === 0) return null
+  return (
+    <div>
+      <div className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-1 pb-1 border-b border-rule">
+        Competitive Landscape
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full table-auto">
+          <thead>
+            <tr className="bg-cream">
+              <th className="font-mono text-[7px] uppercase text-ink-muted text-left py-1 px-1.5 border-b border-rule whitespace-nowrap">Feature</th>
+              <th className="font-mono text-[7px] uppercase text-burgundy text-left py-1 px-1.5 border-b border-rule whitespace-nowrap">{ventureName}</th>
+              {names.map(n => (
+                <th key={n} className="font-mono text-[7px] uppercase text-ink-muted text-left py-1 px-1.5 border-b border-rule whitespace-nowrap">{n}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row, i) => (
+              <tr key={i} className={i % 2 === 1 ? 'bg-cream/50' : ''}>
+                <td className="font-mono text-[9px] font-medium text-ink py-1 px-1.5 border-b border-rule/50">{row.feature}</td>
+                <td className="font-mono text-[9px] font-semibold text-green-ink py-1 px-1.5 border-b border-rule/50">{row.us}</td>
+                {names.map(n => (
+                  <td key={n} className="font-mono text-[9px] text-ink-muted py-1 px-1.5 border-b border-rule/50">{row.competitors[n] || '—'}</td>
                 ))}
               </tr>
             ))}
@@ -495,14 +544,14 @@ export default function VentureDetail({ ventureId, onBack }: { ventureId: string
               {memo.companyPurpose}
             </p>
 
-            {/* Key Metrics — compact strip */}
+            {/* Key Metrics — compact inline strip */}
             {memo.keyMetrics.length > 0 && (
               <div className="grid grid-cols-3 lg:grid-cols-6 gap-1 mb-3">
                 {memo.keyMetrics.map((m, i) => (
                   <div key={i} className="bg-cream border border-rule rounded-sm px-1.5 py-1">
-                    <span className="font-mono text-[7px] uppercase text-ink-muted block">{m.label}</span>
-                    <span className="font-mono text-[10px] font-bold text-ink block leading-tight">{m.value}</span>
-                    <span className="font-mono text-[7px] text-ink-muted">{m.context}</span>
+                    <span className="font-mono text-[7px] uppercase text-ink-muted">{m.label}</span>
+                    <span className="font-mono text-[10px] font-bold text-ink leading-none"> {m.value}</span>
+                    <span className="font-mono text-[7px] text-ink-muted block">{m.context}</span>
                   </div>
                 ))}
               </div>
@@ -511,7 +560,25 @@ export default function VentureDetail({ ventureId, onBack }: { ventureId: string
             {/* Executive Summary */}
             <div className="mb-2">
               <span className="font-mono text-[9px] text-ink-muted block mb-1">Executive Summary</span>
-              <p className="font-mono text-[10px] text-ink leading-relaxed whitespace-pre-line">{memo.executiveSummary}</p>
+              {(() => {
+                const lines = memo.executiveSummary.split('\n')
+                const tagline = lines[0]?.startsWith('•') ? null : lines[0]
+                const bullets = lines.filter((l: string) => l.startsWith('• '))
+                return (
+                  <>
+                    {tagline && <p className="font-mono text-[10px] font-bold text-ink mb-0.5">{tagline}</p>}
+                    {bullets.length > 0 ? (
+                      <ul className="space-y-0.5">
+                        {bullets.map((b: string, i: number) => (
+                          <li key={i} className="font-mono text-[9px] text-ink leading-relaxed pl-1">{b}</li>
+                        ))}
+                      </ul>
+                    ) : !tagline ? (
+                      <p className="font-mono text-[10px] text-ink leading-relaxed whitespace-pre-line">{memo.executiveSummary}</p>
+                    ) : null}
+                  </>
+                )
+              })()}
             </div>
           </div>
 
@@ -543,11 +610,15 @@ export default function VentureDetail({ ventureId, onBack }: { ventureId: string
             {/* Market Dynamics */}
             <MemoSection title="Market Dynamics" content={memo.marketDynamics} />
 
-            {/* Competition + Defensibility */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+            {/* Competitive Landscape — table or prose fallback */}
+            {memo.competitorTable && memo.competitorTable.length > 0 && memo.competitorNames ? (
+              <CompetitorTableView names={memo.competitorNames} rows={memo.competitorTable} ventureName={s.name} />
+            ) : (
               <MemoSection title="Competitive Landscape" content={memo.competitiveLandscape} />
-              <MemoSection title="Defensibility" content={memo.defensibility} />
-            </div>
+            )}
+
+            {/* Defensibility */}
+            <MemoSection title="Defensibility" content={memo.defensibility} />
 
             {/* Business Model Table */}
             {memo.businessModelTable && memo.businessModelTable.length > 0 ? (

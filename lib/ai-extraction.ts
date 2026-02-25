@@ -1309,68 +1309,78 @@ ${prdSection}${feedbackSection}
 
 VOICE & REGISTER: Write at executive board level. Use language that is cogent, incisive, and authoritative. Favor precision over elaboration. Deploy terms of art where appropriate (unit economics, TAM wedge, LTV/CAC ratio, gross margin leverage). Assume the reader operates at the highest level of business acumen — do not explain basics, demonstrate mastery.
 
+FORMATTING RULES (CRITICAL — follow exactly):
+- Every prose section MUST have a "headline" field: a single bold sentence (max 12 words) that captures the core thesis of that section. This is the 2-second skim line.
+- The executiveSummary headline should be the marketing tagline for the company.
+- Every prose section MUST have a "bullets" field: an array of 3-5 MECE bullet points (mutually exclusive, collectively exhaustive). Each bullet is one concise sentence. No paragraph prose — bullets only.
+- For keyMetrics: keep label and value SHORT (no line breaks). The "context" field must be 5 words max.
+
 Write the memo with these sections:
 
 1. COMPANY_PURPOSE: One sentence. What this company does and for whom. Format: "[Company] [verb]s [what] for [whom]."
 
-2. EXECUTIVE_SUMMARY: 2-3 paragraphs. The investment thesis distilled. Articulate the structural opportunity, the founder's proprietary insight, and the temporal catalyst. This should compel a partner to read the full document.
+2. EXECUTIVE_SUMMARY: Return as object with "headline" (marketing tagline, max 8 words) and "bullets" (4-6 MECE bullet points distilling the investment thesis).
 
-3. KEY_METRICS: 4-6 headline metrics as objects with {label, value, context}. Include TAM, target CAC, target LTV, payback period, and any other decision-critical metrics. Use credible pre-seed estimates grounded in comparable benchmarks. Mark projections with "[est.]".
+3. KEY_METRICS: 4-6 headline metrics as objects with {label, value, context}. Keep values SHORT (e.g. "$4.2B" not "$4.2 Billion"). Context is max 5 words (e.g. "24% CAGR" or "Growing 3x YoY"). NO line breaks in any field.
 
-4. PROBLEM: The structural pain point. Quantify the economic cost of the status quo. Identify who bears the cost, the frequency of occurrence, and the magnitude of value destruction.
+4. PROBLEM: Return as object with "headline" (one sentence, the pain in sharp relief) and "bullets" (3-5 MECE bullets quantifying the cost of status quo).
 
-5. SOLUTION: The mechanism of resolution. Articulate the 10x improvement vector and the architectural differentiation from incumbent approaches.
+5. SOLUTION: Return as object with "headline" (one sentence, the 10x claim) and "bullets" (3-5 MECE bullets on mechanism and differentiation).
 
-6. WHY_NOW: The temporal catalyst. What inflection in technology, regulation, or market structure created this window? Why was this infeasible 36 months ago? Why will the window narrow?
+6. WHY_NOW: Return as object with "headline" (one sentence, the temporal catalyst) and "bullets" (3-4 MECE bullets on market/tech/regulatory inflection).
 
-7. INSIGHT: The proprietary founder thesis. The non-consensus understanding of market dynamics that constitutes the intellectual edge.
+7. INSIGHT: Return as object with "headline" (one sentence, the non-consensus thesis) and "bullets" (3-4 MECE bullets on the intellectual edge).
 
-8. MARKET_SIZE_TABLE: Return as array of objects. Each row: {segment, size, cagr, notes}. Include exactly 3 rows: TAM, SAM, SOM. Use top-down AND bottom-up sizing. Cite comparable markets.
+8. MARKET_SIZE_TABLE: Array of objects. Each row: {segment, size, cagr, notes}. Exactly 3 rows: TAM, SAM, SOM. Keep values compact.
 
-9. MARKET_DYNAMICS: Secular tailwinds, structural headwinds, and inflection vectors. 2-3 sentences of macro-level conviction.
+9. MARKET_DYNAMICS: Return as object with "headline" (one sentence) and "bullets" (3-4 MECE bullets on secular trends and tailwinds).
 
-10. COMPETITIVE_LANDSCAPE: Map the competitive terrain with intellectual honesty. Acknowledge incumbent advantages. Articulate the displacement thesis.
+10. COMPETITOR_TABLE: Feature comparison matrix. Return as object with:
+  - "competitorNames": array of 3-4 competitor company names
+  - "rows": array of objects, each: {feature, us, competitors: {"CompanyA": "...", "CompanyB": "...", ...}}
+  Include 5-7 rows for the highest-leverage differentiating features. Use short values: "Yes", "No", "Partial", "AI-native", "Manual", "Limited", etc.
 
-11. DEFENSIBILITY: Enumerate moats with temporal specificity — which moats exist at launch, which accrue at scale, which compound with time.
+11. DEFENSIBILITY: Return as object with "headline" (one sentence) and "bullets" (3-5 MECE bullets with temporal specificity — which moats at launch vs. scale).
 
-12. BUSINESS_MODEL_TABLE: Return as array of objects. Each row: {lever, mechanism, target, marginProfile}. Include 2-4 revenue levers (e.g., "Enterprise SaaS", "API Usage", "Professional Services"). Be specific on pricing and margin.
+12. BUSINESS_MODEL_TABLE: Array of objects. Each row: {lever, mechanism, target, marginProfile}. Include 2-4 revenue levers. Keep cell values concise (max 6 words each).
 
-13. GTM_PHASES: Return as array of objects. Each row: {phase, strategy, channel, milestone}. Include 3 phases: "0→10", "10→100", "100→1K". Specify the distribution strategy for each scale threshold.
+13. GTM_PHASES: Array of objects. Each row: {phase, strategy, channel, milestone}. 3 phases: "0→10", "10→100", "100→1K". Keep cell values concise (max 6 words each).
 
-14. FOUNDER_ADVANTAGE: The structural reason this founder possesses disproportionate probability of execution. Be specific and substantive.
+14. FOUNDER_ADVANTAGE: Return as object with "headline" (one sentence) and "bullets" (3-4 MECE bullets on why THIS founder wins).
 
-15. RELEVANT_EXPERIENCE: Track record, domain credentialing, and network leverage. What has been built, what has been learned, what access is proprietary.
+15. RELEVANT_EXPERIENCE: Return as object with "headline" (one sentence) and "bullets" (3-4 MECE bullets on track record and domain access).
 
-16. FINANCIAL_PROJECTION_TABLE: Return as array of objects. Each row: {year, revenue, customers, burn, keyAssumption}. Include exactly 3 rows: Year 1, Year 2, Year 3. State assumptions explicitly. Revenue estimates must be defensible against comparable cohort data.
+16. FINANCIAL_PROJECTION_TABLE: Array of objects. Each row: {year, revenue, customers, burn, keyAssumption}. Exactly 3 rows: Year 1, Year 2, Year 3. Keep cell values concise.
 
-17. UNIT_ECONOMICS_TABLE: Return as array of objects. Each row: {metric, current, target, benchmark}. Include rows for: CAC, LTV, LTV/CAC Ratio, Payback Period, Gross Margin. Use "Pre-launch" for current values where applicable. Benchmark against best-in-class for the category.
+17. UNIT_ECONOMICS_TABLE: Array of objects. Each row: {metric, current, target, benchmark}. Rows for: CAC, LTV, LTV/CAC, Payback, Gross Margin. Use "Pre-launch" for current where applicable.
 
-18. FUNDING_ASK: Capital required, runway purchased, and the milestone unlock thesis. 2-3 sentences.
+18. FUNDING_ASK: Return as object with "headline" (one sentence, the ask) and "bullets" (3-4 MECE bullets on runway and milestone unlocks).
 
-19. USE_OF_FUNDS_TABLE: Return as array of objects. Each row: {category, allocation, amount, rationale}. Include 3-4 allocation categories (Engineering, GTM, Operations, etc.). Percentages must sum to 100%.
+19. USE_OF_FUNDS_TABLE: Array of objects. Each row: {category, allocation, amount, rationale}. 3-4 categories. Percentages must sum to 100%. Keep rationale concise.
 
-20. MILESTONES_TABLE: Return as array of objects. Each row: {timeline, milestone, successMetric}. Include 3-5 milestones with specific timelines (e.g., "Month 3", "Month 6", "Month 12") and quantified success metrics.
+20. MILESTONES_TABLE: Array of objects. Each row: {timeline, milestone, successMetric}. 3-5 milestones with specific timelines and quantified metrics.
 
 Return ONLY valid JSON (no markdown, no code blocks):
 {
   "companyPurpose": "...",
-  "executiveSummary": "...",
-  "keyMetrics": [{"label": "TAM", "value": "$X", "context": "..."}],
-  "problem": "...",
-  "solution": "...",
-  "whyNow": "...",
-  "insight": "...",
+  "executiveSummary": {"headline": "...", "bullets": ["...", "..."]},
+  "keyMetrics": [{"label": "TAM", "value": "$4.2B", "context": "24% CAGR"}],
+  "problem": {"headline": "...", "bullets": ["...", "..."]},
+  "solution": {"headline": "...", "bullets": ["...", "..."]},
+  "whyNow": {"headline": "...", "bullets": ["...", "..."]},
+  "insight": {"headline": "...", "bullets": ["...", "..."]},
   "marketSizeTable": [{"segment": "TAM", "size": "$X", "cagr": "X%", "notes": "..."}],
-  "marketDynamics": "...",
-  "competitiveLandscape": "...",
-  "defensibility": "...",
+  "marketDynamics": {"headline": "...", "bullets": ["...", "..."]},
+  "competitorNames": ["Competitor A", "Competitor B", "Competitor C"],
+  "competitorTable": [{"feature": "...", "us": "...", "competitors": {"Competitor A": "...", "Competitor B": "..."}}],
+  "defensibility": {"headline": "...", "bullets": ["...", "..."]},
   "businessModelTable": [{"lever": "...", "mechanism": "...", "target": "...", "marginProfile": "..."}],
   "gtmPhases": [{"phase": "0→10", "strategy": "...", "channel": "...", "milestone": "..."}],
-  "founderAdvantage": "...",
-  "relevantExperience": "...",
+  "founderAdvantage": {"headline": "...", "bullets": ["...", "..."]},
+  "relevantExperience": {"headline": "...", "bullets": ["...", "..."]},
   "financialProjectionTable": [{"year": "Year 1", "revenue": "...", "customers": "...", "burn": "...", "keyAssumption": "..."}],
   "unitEconomicsTable": [{"metric": "CAC", "current": "...", "target": "...", "benchmark": "..."}],
-  "fundingAsk": "...",
+  "fundingAsk": {"headline": "...", "bullets": ["...", "..."]},
   "useOfFundsTable": [{"category": "...", "allocation": "...", "amount": "...", "rationale": "..."}],
   "milestonesTable": [{"timeline": "Month 3", "milestone": "...", "successMetric": "..."}]
 }`
@@ -1388,45 +1398,72 @@ Return ONLY valid JSON (no markdown, no code blocks):
     const parseTable = <T>(arr: unknown, mapper: (r: Record<string, unknown>) => T): T[] =>
       Array.isArray(arr) ? arr.map(mapper) : []
 
+    // Parse structured {headline, bullets} sections into "HEADLINE\n• bullet1\n• bullet2"
+    const parseStructured = (val: unknown, fallback: string): string => {
+      if (typeof val === 'string') return val
+      if (val && typeof val === 'object' && 'headline' in val) {
+        const obj = val as { headline?: string; bullets?: string[] }
+        const headline = String(obj.headline || '')
+        const bullets = Array.isArray(obj.bullets)
+          ? obj.bullets.map(b => `• ${String(b)}`).join('\n')
+          : ''
+        return bullets ? `${headline}\n${bullets}` : headline
+      }
+      return fallback
+    }
+
+    // Parse competitor table
+    const competitorNames = Array.isArray(parsed.competitorNames)
+      ? parsed.competitorNames.map(String) : []
+    const competitorTable = parseTable(parsed.competitorTable, (r) => ({
+      feature: String(r.feature || ''),
+      us: String(r.us || ''),
+      competitors: (r.competitors && typeof r.competitors === 'object')
+        ? Object.fromEntries(Object.entries(r.competitors as Record<string, unknown>).map(([k, v]) => [k, String(v)]))
+        : {},
+    }))
+
     return {
       companyPurpose: String(parsed.companyPurpose || spec.oneLiner),
-      executiveSummary: String(parsed.executiveSummary || ''),
+      executiveSummary: parseStructured(parsed.executiveSummary, ''),
       keyMetrics: parseTable<VentureMemoMetric>(parsed.keyMetrics, m => ({
-        label: String(m.label || ''),
-        value: String(m.value || ''),
-        context: String(m.context || ''),
+        label: String(m.label || '').replace(/\n/g, ' '),
+        value: String(m.value || '').replace(/\n/g, ' '),
+        context: String(m.context || '').replace(/\n/g, ' '),
       })),
-      problem: String(parsed.problem || spec.problem),
-      solution: String(parsed.solution || spec.solution),
-      whyNow: String(parsed.whyNow || ''),
-      insight: String(parsed.insight || ''),
-      marketSize: String(parsed.marketSize || ''),
+      problem: parseStructured(parsed.problem, spec.problem),
+      solution: parseStructured(parsed.solution, spec.solution),
+      whyNow: parseStructured(parsed.whyNow, ''),
+      insight: parseStructured(parsed.insight, ''),
+      marketSize: '',
       marketSizeTable: parseTable<MarketSizeRow>(parsed.marketSizeTable, r => ({
         segment: String(r.segment || ''),
         size: String(r.size || ''),
         cagr: String(r.cagr || ''),
         notes: String(r.notes || ''),
       })),
-      marketDynamics: String(parsed.marketDynamics || ''),
-      competitiveLandscape: String(parsed.competitiveLandscape || ''),
-      defensibility: String(parsed.defensibility || ''),
-      businessModel: String(parsed.businessModel || ''),
+      marketDynamics: parseStructured(parsed.marketDynamics, ''),
+      competitiveLandscape: '',
+      competitorTable,
+      competitorNames,
+      defensibility: parseStructured(parsed.defensibility, ''),
+      businessModel: '',
       businessModelTable: parseTable<BusinessModelRow>(parsed.businessModelTable, r => ({
         lever: String(r.lever || ''),
         mechanism: String(r.mechanism || ''),
         target: String(r.target || ''),
         marginProfile: String(r.marginProfile || ''),
       })),
-      goToMarket: String(parsed.goToMarket || ''),
+      goToMarket: '',
       gtmPhases: parseTable<GTMPhase>(parsed.gtmPhases, r => ({
         phase: String(r.phase || ''),
         strategy: String(r.strategy || ''),
         channel: String(r.channel || ''),
         milestone: String(r.milestone || ''),
       })),
-      founderAdvantage: String(parsed.founderAdvantage || spec.unfairAdvantage),
-      relevantExperience: String(parsed.relevantExperience || ''),
-      financialProjection: String(parsed.financialProjection || ''),
+      founderAdvantage: parseStructured(parsed.founderAdvantage, spec.unfairAdvantage),
+      relevantExperience: parseStructured(parsed.relevantExperience, ''),
+      financialProjection: '',
       financialProjectionTable: parseTable<FinancialProjectionRow>(parsed.financialProjectionTable, r => ({
         year: String(r.year || ''),
         revenue: String(r.revenue || ''),
@@ -1434,22 +1471,22 @@ Return ONLY valid JSON (no markdown, no code blocks):
         burn: String(r.burn || ''),
         keyAssumption: String(r.keyAssumption || ''),
       })),
-      unitEconomics: String(parsed.unitEconomics || ''),
+      unitEconomics: '',
       unitEconomicsTable: parseTable<UnitEconomicsRow>(parsed.unitEconomicsTable, r => ({
         metric: String(r.metric || ''),
         current: String(r.current || ''),
         target: String(r.target || ''),
         benchmark: String(r.benchmark || ''),
       })),
-      fundingAsk: String(parsed.fundingAsk || ''),
-      useOfFunds: String(parsed.useOfFunds || ''),
+      fundingAsk: parseStructured(parsed.fundingAsk, ''),
+      useOfFunds: '',
       useOfFundsTable: parseTable<UseOfFundsRow>(parsed.useOfFundsTable, r => ({
         category: String(r.category || ''),
         allocation: String(r.allocation || ''),
         amount: String(r.amount || ''),
         rationale: String(r.rationale || ''),
       })),
-      milestones: Array.isArray(parsed.milestones) ? parsed.milestones.map(String) : [],
+      milestones: [],
       milestonesTable: parseTable<MilestoneRow>(parsed.milestonesTable, r => ({
         timeline: String(r.timeline || ''),
         milestone: String(r.milestone || ''),
@@ -1468,12 +1505,14 @@ Return ONLY valid JSON (no markdown, no code blocks):
       solution: spec.solution,
       whyNow: '',
       insight: '',
-      marketSize: spec.marketSize,
+      marketSize: '',
       marketSizeTable: [],
       marketDynamics: '',
       competitiveLandscape: '',
+      competitorTable: [],
+      competitorNames: [],
       defensibility: '',
-      businessModel: spec.revenueModel,
+      businessModel: '',
       businessModelTable: [],
       goToMarket: '',
       gtmPhases: [],
