@@ -53,7 +53,7 @@ export default function JournalLedger() {
           <p className="font-serif text-[11px] text-ink-muted">
             No journal entries in the last {rangeDays} days.
           </p>
-          <p className="font-sans text-[9px] text-ink-faint mt-1">
+          <p className="font-serif text-[9px] text-ink-faint mt-1">
             Send /journal via Telegram or write above to start building your ledger.
           </p>
         </div>
@@ -149,7 +149,7 @@ function LedgerDayCard({ day }: { day: LedgerDay }) {
                 <span className="font-mono text-[8px] uppercase px-1 py-0.5 rounded-sm border bg-green-bg text-green-ink border-green-ink/20 shrink-0 mt-px">
                   shipped
                 </span>
-                <span className="font-sans text-[10px] text-ink-muted">{day.whatShipped}</span>
+                <span className="font-serif text-[10px] text-ink-muted">{day.whatShipped}</span>
               </div>
             )}
           </div>
@@ -195,7 +195,7 @@ function EntryBlock({ entry }: { entry: JournalEntry }) {
           {entry.time}
         </span>
       )}
-      <p className="font-sans text-[11px] text-ink-muted leading-relaxed whitespace-pre-wrap">
+      <p className="font-serif text-[11px] text-ink-muted leading-relaxed whitespace-pre-wrap">
         {displayText}
       </p>
       {isLong && (
@@ -223,7 +223,7 @@ function DecisionRow({ decision }: { decision: Decision }) {
         <span className={`font-mono text-[7px] uppercase px-1 py-0.5 rounded-sm border shrink-0 ${domainStyle}`}>
           decision
         </span>
-        <span className="font-sans text-[10px] text-ink flex-1 truncate">
+        <span className="font-serif text-[10px] text-ink flex-1 truncate">
           {decision.title}
         </span>
         <span className={`font-mono text-[9px] font-semibold shrink-0 ${
@@ -239,23 +239,23 @@ function DecisionRow({ decision }: { decision: Decision }) {
           {decision.hypothesis && (
             <div>
               <span className="font-serif text-[8px] text-ink-muted uppercase tracking-[0.5px]">Hypothesis</span>
-              <p className="font-sans text-[9px] text-ink-muted">{decision.hypothesis}</p>
+              <p className="font-serif text-[9px] text-ink-muted">{decision.hypothesis}</p>
             </div>
           )}
           <div>
             <span className="font-serif text-[8px] text-ink-muted uppercase tracking-[0.5px]">Chosen</span>
-            <p className="font-sans text-[9px] text-ink-muted">{decision.chosenOption}</p>
+            <p className="font-serif text-[9px] text-ink-muted">{decision.chosenOption}</p>
           </div>
           {decision.reasoning && (
             <div>
               <span className="font-serif text-[8px] text-ink-muted uppercase tracking-[0.5px]">Reasoning</span>
-              <p className="font-sans text-[9px] text-ink-muted">{decision.reasoning}</p>
+              <p className="font-serif text-[9px] text-ink-muted">{decision.reasoning}</p>
             </div>
           )}
           {decision.antithesis && (
             <div className="bg-burgundy-bg border border-burgundy/20 rounded-sm p-1.5 mt-0.5">
               <span className="font-serif text-[8px] text-burgundy uppercase tracking-[0.5px]">Antithesis</span>
-              <p className="font-sans text-[9px] text-ink-muted">{decision.antithesis}</p>
+              <p className="font-serif text-[9px] text-ink-muted">{decision.antithesis}</p>
             </div>
           )}
           <div className="flex items-center gap-2 pt-0.5">
@@ -282,7 +282,7 @@ function BeliefRow({ belief }: { belief: Belief }) {
       <span className={`font-mono text-[7px] uppercase px-1 py-0.5 rounded-sm border shrink-0 ${domainStyle}`}>
         belief
       </span>
-      <span className="font-sans text-[10px] text-ink-muted flex-1 truncate">
+      <span className="font-serif text-[10px] text-ink-muted flex-1 truncate">
         {belief.statement.slice(0, 60)}
       </span>
       <span className={`font-mono text-[8px] font-medium shrink-0 ${
@@ -313,7 +313,7 @@ function PrincipleRow({ principle }: { principle: Principle }) {
       <span className={`font-mono text-[7px] uppercase px-1 py-0.5 rounded-sm border shrink-0 ${domainStyle}`}>
         principle
       </span>
-      <span className="font-sans text-[10px] text-ink-muted flex-1 truncate">
+      <span className="font-serif text-[10px] text-ink-muted flex-1 truncate">
         {principle.shortForm || principle.text.slice(0, 60)}
       </span>
       <span className="font-mono text-[8px] text-green-ink font-medium shrink-0">

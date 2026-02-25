@@ -120,13 +120,13 @@ export default function PrinciplesLedger() {
           <input
             value={text}
             onChange={e => setText(e.target.value)}
-            className="w-full font-sans text-[10px] bg-cream border border-rule rounded-sm px-1.5 py-1 focus:outline-none focus:border-burgundy"
+            className="w-full font-serif text-[10px] bg-cream border border-rule rounded-sm px-1.5 py-1 focus:outline-none focus:border-burgundy"
             placeholder="Principle text (e.g., 'Pain + Reflection = Progress')"
           />
           <input
             value={shortForm}
             onChange={e => setShortForm(e.target.value)}
-            className="w-full font-sans text-[10px] bg-cream border border-rule rounded-sm px-1.5 py-1 focus:outline-none focus:border-burgundy"
+            className="w-full font-serif text-[10px] bg-cream border border-rule rounded-sm px-1.5 py-1 focus:outline-none focus:border-burgundy"
             placeholder="Short form (optional, max 40 chars)"
           />
           <div className="flex gap-1.5">
@@ -135,7 +135,7 @@ export default function PrinciplesLedger() {
               <select
                 value={source}
                 onChange={e => setSource(e.target.value as PrincipleSource)}
-                className="w-full font-sans text-[9px] bg-cream border border-rule rounded-sm px-1 py-0.5 focus:outline-none focus:border-burgundy"
+                className="w-full font-serif text-[9px] bg-cream border border-rule rounded-sm px-1 py-0.5 focus:outline-none focus:border-burgundy"
               >
                 {Object.entries(SOURCE_LABELS).map(([k, v]) => (
                   <option key={k} value={k}>{v}</option>
@@ -147,7 +147,7 @@ export default function PrinciplesLedger() {
               <select
                 value={domain}
                 onChange={e => setDomain(e.target.value as DecisionDomain)}
-                className="w-full font-sans text-[9px] bg-cream border border-rule rounded-sm px-1 py-0.5 focus:outline-none focus:border-burgundy"
+                className="w-full font-serif text-[9px] bg-cream border border-rule rounded-sm px-1 py-0.5 focus:outline-none focus:border-burgundy"
               >
                 {Object.entries(DOMAIN_LABELS).map(([k, v]) => (
                   <option key={k} value={k}>{v}</option>
@@ -158,7 +158,7 @@ export default function PrinciplesLedger() {
           <input
             value={sourceDescription}
             onChange={e => setSourceDescription(e.target.value)}
-            className="w-full font-sans text-[10px] bg-cream border border-rule rounded-sm px-1.5 py-1 focus:outline-none focus:border-burgundy"
+            className="w-full font-serif text-[10px] bg-cream border border-rule rounded-sm px-1.5 py-1 focus:outline-none focus:border-burgundy"
             placeholder="Where did this principle come from?"
           />
           <div className="flex justify-end gap-1">

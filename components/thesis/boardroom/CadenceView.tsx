@@ -185,7 +185,7 @@ export default function CadenceView() {
                   <span className="text-paper text-[9px] font-bold">✓</span>
                 )}
               </div>
-              <span className={`font-sans text-[12px] leading-snug ${
+              <span className={`font-serif text-[12px] leading-snug ${
                 item.completed ? 'text-ink-faint line-through' : 'text-ink-muted'
               }`}>
                 {item.label}
@@ -209,7 +209,7 @@ export default function CadenceView() {
               await save({ type: activeType, periodKey, items, completionRate, notes }, existingReview?.id)
             }
           }}
-          className="w-full font-sans text-[11px] text-ink-muted bg-paper border border-rule rounded-sm px-2 py-1.5 h-16 resize-none focus:outline-none focus:border-burgundy"
+          className="w-full font-serif text-[11px] text-ink-muted bg-paper border border-rule rounded-sm px-2 py-1.5 h-16 resize-none focus:outline-none focus:border-burgundy"
           placeholder="Reflections on this period..."
         />
       </div>

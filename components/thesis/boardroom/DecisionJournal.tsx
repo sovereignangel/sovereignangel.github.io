@@ -141,22 +141,22 @@ export default function DecisionJournal() {
                   <div className="border-t border-rule-light p-2 space-y-1.5">
                     <div>
                       <span className="font-serif text-[9px] text-ink-muted uppercase">Hypothesis</span>
-                      <p className="font-sans text-[10px] text-ink mt-0.5">{d.hypothesis}</p>
+                      <p className="font-serif text-[10px] text-ink mt-0.5">{d.hypothesis}</p>
                     </div>
                     <div>
                       <span className="font-serif text-[9px] text-ink-muted uppercase">Chosen</span>
-                      <p className="font-sans text-[10px] text-ink mt-0.5">{d.chosenOption}</p>
+                      <p className="font-serif text-[10px] text-ink mt-0.5">{d.chosenOption}</p>
                     </div>
                     <div>
                       <span className="font-serif text-[9px] text-ink-muted uppercase">Reasoning</span>
-                      <p className="font-sans text-[10px] text-ink mt-0.5">{d.reasoning}</p>
+                      <p className="font-serif text-[10px] text-ink mt-0.5">{d.reasoning}</p>
                     </div>
                     {d.killCriteria.length > 0 && (
                       <div>
                         <span className="font-serif text-[9px] text-ink-muted uppercase">Kill Criteria</span>
                         <ul className="mt-0.5">
                           {d.killCriteria.map((k, i) => (
-                            <li key={i} className="font-sans text-[10px] text-red-ink">• {k}</li>
+                            <li key={i} className="font-serif text-[10px] text-red-ink">• {k}</li>
                           ))}
                         </ul>
                       </div>
@@ -164,13 +164,13 @@ export default function DecisionJournal() {
                     {d.premortem && (
                       <div>
                         <span className="font-serif text-[9px] text-ink-muted uppercase">Pre-Mortem</span>
-                        <p className="font-sans text-[10px] text-ink mt-0.5">{d.premortem}</p>
+                        <p className="font-serif text-[10px] text-ink mt-0.5">{d.premortem}</p>
                       </div>
                     )}
                     {d.antithesis && (
                       <div className="bg-burgundy-bg border border-burgundy/20 rounded-sm p-2">
                         <span className="font-serif text-[9px] text-burgundy uppercase">Antithesis</span>
-                        <p className="font-sans text-[10px] text-ink mt-0.5">{d.antithesis}</p>
+                        <p className="font-serif text-[10px] text-ink mt-0.5">{d.antithesis}</p>
                         {d.antithesisConfidence != null && (
                           <span className="font-mono text-[8px] text-ink-muted mt-0.5 block">
                             Counter-argument strength: {d.antithesisConfidence}%
@@ -212,10 +212,10 @@ export default function DecisionJournal() {
                           </span>
                         </div>
                         {d.actualOutcome && (
-                          <p className="font-sans text-[10px] text-ink mt-0.5">{d.actualOutcome}</p>
+                          <p className="font-serif text-[10px] text-ink mt-0.5">{d.actualOutcome}</p>
                         )}
                         {d.learnings && (
-                          <p className="font-sans text-[10px] text-ink-muted italic mt-0.5">{d.learnings}</p>
+                          <p className="font-serif text-[10px] text-ink-muted italic mt-0.5">{d.learnings}</p>
                         )}
                       </div>
                     )}

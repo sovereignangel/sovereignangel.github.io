@@ -161,7 +161,7 @@ export default function PortfolioView() {
             {metrics.map(m => (
               <tr key={m.project.id} className="border-b border-rule-light hover:bg-cream transition-colors">
                 <td className="py-2 px-3">
-                  <div className="font-sans text-[12px] font-medium text-ink">{m.project.name}</div>
+                  <div className="font-serif text-[12px] font-medium text-ink">{m.project.name}</div>
                   {m.linkedContacts > 0 && (
                     <div className="font-mono text-[9px] text-ink-muted">
                       {m.linkedContacts} contact{m.linkedContacts !== 1 ? 's' : ''} in pipeline
@@ -215,7 +215,7 @@ export default function PortfolioView() {
           <div className="space-y-2">
             {metrics.filter(m => m.linkedContacts > 0).map(m => (
               <div key={m.project.id}>
-                <div className="font-sans text-[11px] font-medium text-ink mb-1">{m.project.name}</div>
+                <div className="font-serif text-[11px] font-medium text-ink mb-1">{m.project.name}</div>
                 <div className="flex flex-wrap gap-1">
                   {PIPELINE_STAGE_ORDER
                     .filter(stage => m.stageBreakdown[stage])

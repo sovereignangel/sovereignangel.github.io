@@ -57,7 +57,7 @@ export default function BeliefForm({ onSave, onCancel }: BeliefFormProps) {
           value={statement}
           onChange={e => setStatement(e.target.value)}
           placeholder="State a testable belief — something that could be proven right or wrong"
-          className="w-full h-16 bg-white border border-rule rounded-sm p-2 font-sans text-[11px] text-ink-muted resize-y focus:outline-none focus:border-burgundy"
+          className="w-full h-16 bg-white border border-rule rounded-sm p-2 font-serif text-[11px] text-ink-muted resize-y focus:outline-none focus:border-burgundy"
           autoFocus
         />
       </div>
@@ -83,7 +83,7 @@ export default function BeliefForm({ onSave, onCancel }: BeliefFormProps) {
           <select
             value={domain}
             onChange={e => setDomain(e.target.value as DecisionDomain)}
-            className="bg-white border border-rule rounded-sm px-1.5 py-1 font-sans text-[10px] text-ink-muted focus:outline-none focus:border-burgundy"
+            className="bg-white border border-rule rounded-sm px-1.5 py-1 font-serif text-[10px] text-ink-muted focus:outline-none focus:border-burgundy"
           >
             {DOMAINS.map(d => (
               <option key={d.key} value={d.key}>{d.label}</option>
@@ -100,7 +100,7 @@ export default function BeliefForm({ onSave, onCancel }: BeliefFormProps) {
           value={evidenceFor}
           onChange={e => setEvidenceFor(e.target.value)}
           placeholder="Supporting evidence..."
-          className="w-full h-12 bg-white border border-rule rounded-sm p-2 font-sans text-[10px] text-ink-muted resize-y focus:outline-none focus:border-burgundy"
+          className="w-full h-12 bg-white border border-rule rounded-sm p-2 font-serif text-[10px] text-ink-muted resize-y focus:outline-none focus:border-burgundy"
         />
       </div>
 
@@ -112,7 +112,7 @@ export default function BeliefForm({ onSave, onCancel }: BeliefFormProps) {
           value={evidenceAgainst}
           onChange={e => setEvidenceAgainst(e.target.value)}
           placeholder="Counter-evidence..."
-          className="w-full h-12 bg-white border border-rule rounded-sm p-2 font-sans text-[10px] text-ink-muted resize-y focus:outline-none focus:border-burgundy"
+          className="w-full h-12 bg-white border border-rule rounded-sm p-2 font-serif text-[10px] text-ink-muted resize-y focus:outline-none focus:border-burgundy"
         />
       </div>
 

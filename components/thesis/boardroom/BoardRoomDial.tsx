@@ -52,13 +52,13 @@ export default function BoardRoomDial() {
           </div>
           <div className="space-y-0.5">
             <div className="flex justify-between">
-              <span className="font-sans text-[9px] text-ink-muted">PsyCap (HERO)</span>
+              <span className="font-serif text-[9px] text-ink-muted">PsyCap (HERO)</span>
               <span className={`font-mono text-[9px] font-medium ${scoreColor(psyCapAvg ? psyCapAvg / 5 : null)}`}>
                 {psyCapAvg !== null ? `${psyCapAvg.toFixed(1)}/5` : '—'}
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="font-sans text-[9px] text-ink-muted">Calibration</span>
+              <span className="font-serif text-[9px] text-ink-muted">Calibration</span>
               <span className={`font-mono text-[9px] font-medium ${
                 calibrationGap === null ? 'text-ink-muted'
                   : calibrationGap <= 15 ? 'text-green-ink'
@@ -69,11 +69,11 @@ export default function BoardRoomDial() {
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="font-sans text-[9px] text-ink-muted">Principles</span>
+              <span className="font-serif text-[9px] text-ink-muted">Principles</span>
               <span className="font-mono text-[9px] font-medium text-ink">{activePrinciples.length} active</span>
             </div>
             <div className="flex justify-between">
-              <span className="font-sans text-[9px] text-ink-muted">Cadence</span>
+              <span className="font-serif text-[9px] text-ink-muted">Cadence</span>
               <span className={`font-mono text-[9px] font-medium ${scoreColor(averageCompletion)}`}>
                 {(averageCompletion * 100).toFixed(0)}%
               </span>
@@ -87,17 +87,17 @@ export default function BoardRoomDial() {
           <div className="grid grid-cols-3 gap-1.5">
             <div className="text-center">
               <span className="font-mono text-[14px] font-bold text-ink block">{decisions.filter(d => d.status === 'active').length}</span>
-              <span className="font-sans text-[7px] text-ink-muted uppercase">Active</span>
+              <span className="font-serif text-[7px] text-ink-muted uppercase">Active</span>
             </div>
             <div className="text-center">
               <span className={`font-mono text-[14px] font-bold block ${pendingReview.length > 0 ? 'text-amber-ink' : 'text-ink-muted'}`}>
                 {pendingReview.length}
               </span>
-              <span className="font-sans text-[7px] text-ink-muted uppercase">Review</span>
+              <span className="font-serif text-[7px] text-ink-muted uppercase">Review</span>
             </div>
             <div className="text-center">
               <span className="font-mono text-[14px] font-bold text-ink block">{reviewed.length}</span>
-              <span className="font-sans text-[7px] text-ink-muted uppercase">Reviewed</span>
+              <span className="font-serif text-[7px] text-ink-muted uppercase">Reviewed</span>
             </div>
           </div>
         </div>
@@ -109,7 +109,7 @@ export default function BoardRoomDial() {
             <div className="space-y-0.5">
               {activePrinciples.slice(0, 5).map(p => (
                 <div key={p.id} className="flex items-center justify-between">
-                  <span className="font-sans text-[9px] text-ink truncate flex-1 mr-1">
+                  <span className="font-serif text-[9px] text-ink truncate flex-1 mr-1">
                     {p.shortForm || p.text.slice(0, 40)}
                   </span>
                   <span className="font-mono text-[8px] text-green-ink font-medium shrink-0">
@@ -132,7 +132,7 @@ export default function BoardRoomDial() {
             }`}>
               {log.rewardScore?.components?.gate?.toFixed(1) ?? '1.0'}
             </span>
-            <span className="font-sans text-[9px] text-ink-muted">
+            <span className="font-serif text-[9px] text-ink-muted">
               {log.nervousSystemState === 'regulated' ? 'Regulated — full capacity'
                 : log.nervousSystemState === 'slightly_spiked' ? 'Slightly spiked — reduced capacity'
                 : log.nervousSystemState === 'spiked' ? 'Spiked — 24h rule active'

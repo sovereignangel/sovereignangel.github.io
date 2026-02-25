@@ -222,7 +222,7 @@ export default function BeliefSection({ onActOnBelief }: BeliefSectionProps) {
                   <span className={`font-mono text-[7px] uppercase px-1 py-0.5 rounded-sm border shrink-0 ${domainStyle}`}>
                     {belief.domain}
                   </span>
-                  <span className="font-sans text-[11px] text-ink flex-1 truncate">
+                  <span className="font-serif text-[11px] text-ink flex-1 truncate">
                     {belief.statement}
                   </span>
                   <span className={`font-mono text-[9px] font-semibold shrink-0 ${
@@ -258,7 +258,7 @@ export default function BeliefSection({ onActOnBelief }: BeliefSectionProps) {
                         <span className="font-serif text-[8px] text-green-ink uppercase tracking-[0.5px]">Evidence For</span>
                         <ul className="mt-0.5 space-y-0.5">
                           {belief.evidenceFor.map((e, i) => (
-                            <li key={i} className="font-sans text-[9px] text-ink-muted flex items-start gap-1">
+                            <li key={i} className="font-serif text-[9px] text-ink-muted flex items-start gap-1">
                               <span className="text-green-ink shrink-0 mt-px">+</span>
                               <span>{e}</span>
                             </li>
@@ -273,7 +273,7 @@ export default function BeliefSection({ onActOnBelief }: BeliefSectionProps) {
                         <span className="font-serif text-[8px] text-red-ink uppercase tracking-[0.5px]">Evidence Against</span>
                         <ul className="mt-0.5 space-y-0.5">
                           {belief.evidenceAgainst.map((e, i) => (
-                            <li key={i} className="font-sans text-[9px] text-ink-muted flex items-start gap-1">
+                            <li key={i} className="font-serif text-[9px] text-ink-muted flex items-start gap-1">
                               <span className="text-red-ink shrink-0 mt-px">-</span>
                               <span>{e}</span>
                             </li>
@@ -297,7 +297,7 @@ export default function BeliefSection({ onActOnBelief }: BeliefSectionProps) {
                             </span>
                           )}
                         </div>
-                        <p className="font-sans text-[9px] text-ink-muted leading-relaxed">{belief.antithesis}</p>
+                        <p className="font-serif text-[9px] text-ink-muted leading-relaxed">{belief.antithesis}</p>
                       </div>
                     ) : (
                       <div className="bg-amber-bg border-l-2 border-amber-ink/30 rounded-sm p-1.5">
@@ -314,8 +314,8 @@ export default function BeliefSection({ onActOnBelief }: BeliefSectionProps) {
                     {isSharpeningThis && sharpenResult && (
                       <div className="bg-green-bg border-l-2 border-green-ink rounded-sm p-1.5 space-y-1">
                         <span className="font-serif text-[8px] text-green-ink uppercase tracking-[0.5px]">Refined Version</span>
-                        <p className="font-sans text-[10px] text-ink leading-relaxed">{sharpenResult.refined}</p>
-                        <p className="font-sans text-[8px] text-ink-muted leading-tight">{sharpenResult.reasoning}</p>
+                        <p className="font-serif text-[10px] text-ink leading-relaxed">{sharpenResult.refined}</p>
+                        <p className="font-serif text-[8px] text-ink-muted leading-tight">{sharpenResult.reasoning}</p>
                         <div className="flex gap-1 pt-0.5">
                           <button
                             onClick={() => handleAcceptSharpen(belief)}
@@ -336,7 +336,7 @@ export default function BeliefSection({ onActOnBelief }: BeliefSectionProps) {
                     {/* Stale / extend */}
                     {isStale && extendingId !== belief.id && (
                       <div className="flex items-center gap-2">
-                        <span className="font-sans text-[9px] text-amber-ink">Past attention date ({belief.attentionDate})</span>
+                        <span className="font-serif text-[9px] text-amber-ink">Past attention date ({belief.attentionDate})</span>
                         <button
                           onClick={() => setExtendingId(belief.id || null)}
                           className="font-serif text-[8px] text-ink-muted hover:text-burgundy transition-colors"
@@ -355,7 +355,7 @@ export default function BeliefSection({ onActOnBelief }: BeliefSectionProps) {
                           value={extendReason}
                           onChange={e => setExtendReason(e.target.value)}
                           placeholder="Why does this belief need more time?"
-                          className="w-full h-12 bg-white border border-rule rounded-sm p-1.5 font-sans text-[10px] text-ink resize-none focus:outline-none focus:border-burgundy"
+                          className="w-full h-12 bg-white border border-rule rounded-sm p-1.5 font-serif text-[10px] text-ink resize-none focus:outline-none focus:border-burgundy"
                           autoFocus
                         />
                         <div className="flex gap-1">

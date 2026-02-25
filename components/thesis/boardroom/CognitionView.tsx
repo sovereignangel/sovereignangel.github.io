@@ -129,7 +129,7 @@ export default function CognitionView() {
                 &times;
               </button>
             </div>
-            <p className="font-sans text-[10px] text-ink-muted mt-0.5 leading-relaxed">
+            <p className="font-serif text-[10px] text-ink-muted mt-0.5 leading-relaxed">
               State-like psychological resources that are measurable, developable, and causally linked to performance.
               Unlike trait personality, PsyCap moves — and you can move it deliberately.
             </p>
@@ -146,15 +146,15 @@ export default function CognitionView() {
                 <div className="space-y-1">
                   <div>
                     <span className="font-mono text-[8px] uppercase text-ink-muted tracking-wide">Mechanism</span>
-                    <p className="font-sans text-[10px] text-ink-muted leading-relaxed">{item.mechanism}</p>
+                    <p className="font-serif text-[10px] text-ink-muted leading-relaxed">{item.mechanism}</p>
                   </div>
                   <div>
                     <span className="font-mono text-[8px] uppercase text-amber-ink tracking-wide">Signal</span>
-                    <p className="font-sans text-[10px] text-ink-muted leading-relaxed">{item.signal}</p>
+                    <p className="font-serif text-[10px] text-ink-muted leading-relaxed">{item.signal}</p>
                   </div>
                   <div>
                     <span className="font-mono text-[8px] uppercase text-green-ink tracking-wide">Leverage</span>
-                    <p className="font-sans text-[10px] text-ink-muted leading-relaxed">{item.leverage}</p>
+                    <p className="font-serif text-[10px] text-ink-muted leading-relaxed">{item.leverage}</p>
                   </div>
                 </div>
               </div>

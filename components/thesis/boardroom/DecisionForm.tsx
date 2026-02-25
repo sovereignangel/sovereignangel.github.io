@@ -74,7 +74,7 @@ export default function DecisionForm({ decision, onSave, onClose }: DecisionForm
     }
   }
 
-  const inputClass = 'w-full font-sans text-[10px] bg-cream border border-rule rounded-sm px-1.5 py-1 focus:outline-none focus:border-burgundy'
+  const inputClass = 'w-full font-serif text-[10px] bg-cream border border-rule rounded-sm px-1.5 py-1 focus:outline-none focus:border-burgundy'
   const labelClass = 'font-serif text-[10px] text-ink-muted uppercase tracking-wide block mb-0.5'
 
   return (
