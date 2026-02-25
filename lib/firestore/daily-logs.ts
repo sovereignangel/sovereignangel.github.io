@@ -1,4 +1,4 @@
-import { collection, doc, getDoc, getDocs, setDoc, updateDoc, query, where, orderBy, documentId, serverTimestamp } from 'firebase/firestore'
+import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore'
 import { db } from '../firebase'
 import type { DailyLog } from '../types'
 import { DEFAULT_DAILY_LOG } from '../defaults'
@@ -28,15 +28,22 @@ export async function saveDailyLog(uid: string, date: string, data: Partial<Dail
 }
 
 export async function getRecentDailyLogs(uid: string, days: number = 7): Promise<DailyLog[]> {
-  const startDate = new Date()
-  startDate.setDate(startDate.getDate() - days)
-  const startStr = localDateString(startDate)
+  // Fetch individual documents by date ID — most reliable approach
+  // (avoids Firestore index requirements for documentId() range queries)
+  const dates: string[] = []
+  for (let i = 0; i < days; i++) {
+    const d = new Date()
+    d.setDate(d.getDate() - i)
+    dates.push(localDateString(d))
+  }
 
-  const ref = collection(db, 'users', uid, 'daily_logs')
-  const q = query(ref, where(documentId(), '>=', startStr), orderBy(documentId(), 'desc'))
-  const snap = await getDocs(q)
-  return snap.docs.map(d => {
-    const data = d.data()
-    return { id: d.id, ...data, date: data.date || d.id } as DailyLog
-  })
+  const ref = (date: string) => doc(db, 'users', uid, 'daily_logs', date)
+  const snaps = await Promise.all(dates.map(date => getDoc(ref(date))))
+
+  return snaps
+    .filter(snap => snap.exists())
+    .map(snap => {
+      const data = snap.data()!
+      return { id: snap.id, ...data, date: data.date || snap.id } as DailyLog
+    })
 }
