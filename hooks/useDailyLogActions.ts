@@ -62,7 +62,7 @@ export function useDailyLogActions({
     // Update recentLogs with the new data for today
     setRecentLogs(prev => {
       const filtered = prev.filter(l => l.date !== logDate)
-      return [...filtered, logWithReward as DailyLog].sort((a, b) => a.date.localeCompare(b.date))
+      return [...filtered, logWithReward as DailyLog].sort((a, b) => (a.date || '').localeCompare(b.date || ''))
     })
   }, [uid, logDate, log, userSettings, recentLogs, projects, setLog, setRecentLogs])
 

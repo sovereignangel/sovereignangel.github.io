@@ -101,7 +101,7 @@ export default function CommandCenter() {
   const scores = logs
     .map(l => ({ date: l.date, score: l.rewardScore?.score }))
     .filter((s): s is { date: string; score: number } => typeof s.score === 'number')
-    .sort((a, b) => a.date.localeCompare(b.date))
+    .sort((a, b) => (a.date || '').localeCompare(b.date || ''))
 
   const avgScore = scores.length > 0
     ? scores.reduce((s, v) => s + v.score, 0) / scores.length
@@ -119,7 +119,7 @@ export default function CommandCenter() {
   const weeklyOwn = logs.reduce((s, l) => s + logField(l, 'publicPostsCount'), 0)
 
   // Sparkline data (7 days)
-  const sortedLogs = [...logs].sort((a, b) => a.date.localeCompare(b.date))
+  const sortedLogs = [...logs].sort((a, b) => (a.date || '').localeCompare(b.date || ''))
   const shipsData = sortedLogs.map(l => logField(l, 'shipsCount') || (l.whatShipped ? 1 : 0))
   const asksData = sortedLogs.map(l => l.revenueAsksCount || 0)
   const ownData = sortedLogs.map(l => logField(l, 'publicPostsCount'))
