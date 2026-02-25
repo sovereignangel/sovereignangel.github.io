@@ -14,6 +14,17 @@ const PRIORITY_STYLES: Record<string, string> = {
   P2: 'bg-cream text-ink-muted border-rule',
 }
 
+/** Parse inline **bold** markdown into React elements */
+function renderInline(text: string) {
+  const parts = text.split(/(\*\*[^*]+\*\*)/)
+  return parts.map((part, i) => {
+    if (part.startsWith('**') && part.endsWith('**')) {
+      return <strong key={i} className="font-semibold">{part.slice(2, -2)}</strong>
+    }
+    return part
+  })
+}
+
 function MemoSection({ title, content }: { title: string; content: string }) {
   if (!content) return null
   const lines = content.split('\n')
@@ -25,16 +36,16 @@ function MemoSection({ title, content }: { title: string; content: string }) {
         {title}
       </div>
       {headline && (
-        <p className="font-mono text-[10px] font-bold text-ink mb-0.5">{headline}</p>
+        <p className="font-mono text-[10px] font-bold text-ink mb-0.5">{renderInline(headline)}</p>
       )}
       {bullets.length > 0 ? (
         <ul className="space-y-0.5">
           {bullets.map((b, i) => (
-            <li key={i} className="font-mono text-[9px] text-ink leading-relaxed pl-1">{b}</li>
+            <li key={i} className="font-mono text-[9px] text-ink leading-relaxed pl-1">{renderInline(b)}</li>
           ))}
         </ul>
       ) : !headline ? (
-        <p className="font-mono text-[10px] text-ink leading-relaxed whitespace-pre-line">{content}</p>
+        <p className="font-mono text-[10px] text-ink leading-relaxed whitespace-pre-line">{renderInline(content)}</p>
       ) : null}
     </div>
   )
@@ -566,15 +577,15 @@ export default function VentureDetail({ ventureId, onBack }: { ventureId: string
                 const bullets = lines.filter((l: string) => l.startsWith('• '))
                 return (
                   <>
-                    {tagline && <p className="font-mono text-[10px] font-bold text-ink mb-0.5">{tagline}</p>}
+                    {tagline && <p className="font-mono text-[10px] font-bold text-ink mb-0.5">{renderInline(tagline)}</p>}
                     {bullets.length > 0 ? (
                       <ul className="space-y-0.5">
                         {bullets.map((b: string, i: number) => (
-                          <li key={i} className="font-mono text-[9px] text-ink leading-relaxed pl-1">{b}</li>
+                          <li key={i} className="font-mono text-[9px] text-ink leading-relaxed pl-1">{renderInline(b)}</li>
                         ))}
                       </ul>
                     ) : !tagline ? (
-                      <p className="font-mono text-[10px] text-ink leading-relaxed whitespace-pre-line">{memo.executiveSummary}</p>
+                      <p className="font-mono text-[10px] text-ink leading-relaxed whitespace-pre-line">{renderInline(memo.executiveSummary)}</p>
                     ) : null}
                   </>
                 )
