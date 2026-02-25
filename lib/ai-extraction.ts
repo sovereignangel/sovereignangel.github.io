@@ -418,6 +418,14 @@ export interface ParsedJournalNote {
   actionRequired: boolean  // true if it's a to-do, false if it's just an observation
 }
 
+export interface ParsedJournalBelief {
+  statement: string
+  confidence: number
+  domain: DecisionDomain
+  evidenceFor: string[]
+  evidenceAgainst: string[]
+}
+
 export interface ParsedJournalEntry {
   energy: ParsedJournalEnergy
   output: ParsedJournalOutput
@@ -431,6 +439,7 @@ export interface ParsedJournalEntry {
   cadenceCompleted: string[]
   decisions: ParsedJournalDecision[]
   principles: ParsedJournalPrinciple[]
+  beliefs: ParsedJournalBelief[]
 }
 
 const EMPTY_JOURNAL_RESULT: ParsedJournalEntry = {
@@ -446,6 +455,7 @@ const EMPTY_JOURNAL_RESULT: ParsedJournalEntry = {
   cadenceCompleted: [],
   decisions: [],
   principles: [],
+  beliefs: [],
 }
 
 export async function parseJournalEntry(journalText: string): Promise<ParsedJournalEntry> {
@@ -509,6 +519,9 @@ Extract data into these domains. Use null for anything not mentioned.
 11. PRINCIPLES: Array of principles, rules, or lessons articulated. Only include if the journal states a clear rule/principle/learning.
    Each: { text (full principle), shortForm (max 40 chars), domain (one of "portfolio", "product", "revenue", "personal", "thesis") }
 
+12. BELIEFS: Array of testable beliefs or hypotheses stated or implied. Look for: predictions, assumptions, "I think X", expectations, theories about how things work. Only claims about how the world works that could be proven right or wrong. Do NOT duplicate decisions or principles here.
+   Each: { statement ("I believe that..." form — rewrite vague claims into testable form), confidence (0-100), domain (one of "portfolio", "product", "revenue", "personal", "thesis"), evidenceFor (array of supporting evidence from the text), evidenceAgainst (array of contradicting evidence, if any — empty array if none) }
+
 Return ONLY valid JSON (no markdown, no code blocks):
 {
   "energy": { "nervousSystemState": null, "bodyFelt": null, "trainingTypes": [], "sleepHours": null },
@@ -522,7 +535,8 @@ Return ONLY valid JSON (no markdown, no code blocks):
   "notes": [],
   "cadenceCompleted": [],
   "decisions": [],
-  "principles": []
+  "principles": [],
+  "beliefs": []
 }`
 
   try {
@@ -634,6 +648,13 @@ Return ONLY valid JSON (no markdown, no code blocks):
         shortForm: String(p.shortForm || '').slice(0, 40),
         domain: validDomains.includes(p.domain as string) ? p.domain as DecisionDomain : 'personal',
       })),
+      beliefs: (parsed.beliefs || []).map((b: Record<string, unknown>) => ({
+        statement: String(b.statement || ''),
+        confidence: typeof b.confidence === 'number' ? Math.max(0, Math.min(100, b.confidence)) : 60,
+        domain: validDomains.includes(b.domain as string) ? b.domain as DecisionDomain : 'personal',
+        evidenceFor: Array.isArray(b.evidenceFor) ? b.evidenceFor.map(String) : [],
+        evidenceAgainst: Array.isArray(b.evidenceAgainst) ? b.evidenceAgainst.map(String) : [],
+      })).filter((b: { statement: string }) => b.statement.length > 0),
     }
   } catch (error) {
     console.error('Error parsing journal entry:', error)
@@ -706,6 +727,9 @@ EXTRACTION RULES:
 
 11. PRINCIPLES: Array of { text, shortForm (max 40 chars), domain }
 
+12. BELIEFS: Array of testable beliefs or hypotheses stated or implied. Look for predictions, assumptions, "I think X", expectations.
+   Each: { statement ("I believe that..." form), confidence (0-100), domain, evidenceFor (array), evidenceAgainst (array) }
+
 Return ONLY valid JSON (no markdown, no code blocks):
 {
   "transcript": "The exact transcribed text from the audio...",
@@ -720,7 +744,8 @@ Return ONLY valid JSON (no markdown, no code blocks):
   "notes": [],
   "cadenceCompleted": [],
   "decisions": [],
-  "principles": []
+  "principles": [],
+  "beliefs": []
 }`
 
   try {
@@ -844,6 +869,13 @@ Return ONLY valid JSON (no markdown, no code blocks):
         shortForm: String(p.shortForm || '').slice(0, 40),
         domain: validDomains.includes(p.domain as string) ? p.domain as DecisionDomain : 'personal',
       })),
+      beliefs: (raw.beliefs || []).map((b: Record<string, unknown>) => ({
+        statement: String(b.statement || ''),
+        confidence: typeof b.confidence === 'number' ? Math.max(0, Math.min(100, b.confidence)) : 60,
+        domain: validDomains.includes(b.domain as string) ? b.domain as DecisionDomain : 'personal',
+        evidenceFor: Array.isArray(b.evidenceFor) ? b.evidenceFor.map(String) : [],
+        evidenceAgainst: Array.isArray(b.evidenceAgainst) ? b.evidenceAgainst.map(String) : [],
+      })).filter((b: { statement: string }) => b.statement.length > 0),
     }
 
     return { transcript, parsed }
@@ -1461,5 +1493,56 @@ Respond in JSON:
   } catch (error) {
     console.error('Error generating decision antithesis:', error)
     return { antithesis: '', confidence: 0 }
+  }
+}
+
+// ─── BELIEF ANTITHESIS (STRESS TEST) ──────────────────────────────────
+
+export interface BeliefAntithesis {
+  antithesis: string
+  strength: number
+}
+
+export async function generateBeliefAntithesis(belief: {
+  statement: string
+  confidence: number
+  domain: string
+  evidenceFor: string[]
+  evidenceAgainst: string[]
+}): Promise<BeliefAntithesis> {
+  const prompt = `You are a Bridgewater-style stress tester. Your job is to generate the STRONGEST possible counter-argument to this belief. Be genuinely adversarial — this person needs to know if their belief is wrong BEFORE they act on it.
+
+BELIEF: "${belief.statement}"
+CONFIDENCE: ${belief.confidence}%
+DOMAIN: ${belief.domain}
+
+EVIDENCE FOR:
+${belief.evidenceFor.length > 0 ? belief.evidenceFor.map(e => `- ${e}`).join('\n') : '- None provided'}
+
+EVIDENCE AGAINST:
+${belief.evidenceAgainst.length > 0 ? belief.evidenceAgainst.map(e => `- ${e}`).join('\n') : '- None provided'}
+
+Generate:
+1. ANTITHESIS: The single strongest counter-argument against this belief. Attack the weakest assumptions. Cite base rates where relevant. Identify cognitive biases (confirmation bias, recency bias, survivorship bias, anchoring). Consider structural factors that work against this belief. 2-3 sentences, direct and sharp.
+
+2. STRENGTH: How strong is this counter-argument (0-100)? 90+ means "this belief is likely wrong", 60-80 means "serious concern that needs addressing", 40-60 means "worth considering but belief may still hold", below 40 means "the belief seems well-founded."
+
+Respond in JSON:
+{"antithesis": "...", "strength": N}`
+
+  try {
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' })
+    const result = await model.generateContent(prompt)
+    const text = result.response.text()
+    const jsonMatch = text.match(/\{[\s\S]*\}/)
+    if (!jsonMatch) return { antithesis: '', strength: 0 }
+    const parsed = JSON.parse(jsonMatch[0])
+    return {
+      antithesis: parsed.antithesis || '',
+      strength: typeof parsed.strength === 'number' ? parsed.strength : 50,
+    }
+  } catch (error) {
+    console.error('Error generating belief antithesis:', error)
+    return { antithesis: '', strength: 0 }
   }
 }

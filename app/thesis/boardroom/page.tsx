@@ -1,12 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import SynthesisView from '@/components/thesis/alpe-dhuez/SynthesisView'
-import DecisionJournal from '@/components/thesis/boardroom/DecisionJournal'
-import PrinciplesLedger from '@/components/thesis/boardroom/PrinciplesLedger'
-import DailyJournal from '@/components/thesis/boardroom/DailyJournal'
-import JournalLedger from '@/components/thesis/boardroom/JournalLedger'
-import BoardRoomDial from '@/components/thesis/boardroom/BoardRoomDial'
+import TheMachine from '@/components/thesis/boardroom/TheMachine'
+import MachineDial from '@/components/thesis/boardroom/MachineDial'
 import ResearchNorthStarView from '@/components/thesis/boardroom/ResearchNorthStarView'
 import ConceptsView from '@/components/thesis/rl/ConceptsView'
 import TransitionsView from '@/components/thesis/rl/TransitionsView'
@@ -15,14 +11,11 @@ import ValueView from '@/components/thesis/rl/ValueView'
 import AuditView from '@/components/thesis/rl/AuditView'
 import RLStatusDial from '@/components/thesis/rl/RLStatusDial'
 
-type BoardRoomTab = 'journal' | 'decisions' | 'principles' | 'synthesis' | 'rl' | 'research'
+type BoardRoomTab = 'machine' | 'rl' | 'research'
 type RLSubTab = 'concepts' | 'transitions' | 'policy' | 'value' | 'audit'
 
 const TABS: { key: BoardRoomTab; label: string }[] = [
-  { key: 'journal', label: 'Journal' },
-  { key: 'decisions', label: 'Decisions' },
-  { key: 'principles', label: 'Principles' },
-  { key: 'synthesis', label: 'Synthesis' },
+  { key: 'machine', label: 'The Machine' },
   { key: 'rl', label: 'RL' },
   { key: 'research', label: 'Research' },
 ]
@@ -36,10 +29,10 @@ const RL_TABS: { key: RLSubTab; label: string }[] = [
 ]
 
 export default function BoardRoomPage() {
-  const [activeTab, setActiveTab] = useState<BoardRoomTab>('journal')
+  const [activeTab, setActiveTab] = useState<BoardRoomTab>('machine')
   const [rlSubTab, setRlSubTab] = useState<RLSubTab>('concepts')
 
-  const isJournal = activeTab === 'journal'
+  const isMachine = activeTab === 'machine'
   const isRL = activeTab === 'rl'
   const isResearch = activeTab === 'research'
   const isFullWidth = isResearch
@@ -90,15 +83,7 @@ export default function BoardRoomPage() {
 
         {/* Tab Content */}
         <div className="flex-1 overflow-y-auto min-h-0">
-          {isJournal && (
-            <>
-              <DailyJournal />
-              <JournalLedger />
-            </>
-          )}
-          {activeTab === 'decisions' && <DecisionJournal />}
-          {activeTab === 'principles' && <PrinciplesLedger />}
-          {activeTab === 'synthesis' && <SynthesisView />}
+          {isMachine && <TheMachine />}
           {isResearch && <ResearchNorthStarView />}
           {isRL && rlSubTab === 'concepts' && <ConceptsView />}
           {isRL && rlSubTab === 'transitions' && <TransitionsView />}
@@ -111,7 +96,7 @@ export default function BoardRoomPage() {
       {/* Right Sidebar — hidden when full-width tabs are active */}
       {!isFullWidth && (
         <div className="min-h-0 overflow-y-auto">
-          {isRL ? <RLStatusDial /> : <BoardRoomDial />}
+          {isMachine ? <MachineDial /> : <RLStatusDial />}
         </div>
       )}
     </div>

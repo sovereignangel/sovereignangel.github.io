@@ -56,6 +56,19 @@ function VentureCard({ venture, onClick }: { venture: Venture; onClick: () => vo
           <BuildStatusBar status={venture.build.status} />
         </div>
       )}
+      {venture.memo && (
+        <div className="mt-1.5 pt-1 border-t border-rule">
+          <a
+            href={`/memo/${venture.id}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={e => e.stopPropagation()}
+            className="font-mono text-[8px] text-burgundy hover:underline"
+          >
+            View Pitch Memo &rarr;
+          </a>
+        </div>
+      )}
     </button>
   )
 }

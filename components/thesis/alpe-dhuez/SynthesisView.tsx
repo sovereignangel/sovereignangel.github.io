@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '@/components/auth/AuthProvider'
 import { useDailyLogContext } from '@/components/thesis/DailyLogProvider'
 import { getWeeklySynthesis, saveWeeklySynthesis, getProjects, getSignals, getRecentDailyLogs } from '@/lib/firestore'
+import { computeReward } from '@/lib/reward'
 import { weekStartDate, dateFull, dayOfWeekShort } from '@/lib/formatters'
 import type { WeeklySynthesis, Project, ProjectHealth, RewardComponents } from '@/lib/types'
 import { PROJECT_HEALTH_OPTIONS, REWARD_PILLARS, REWARD_COMPONENT_META } from '@/lib/constants'
@@ -181,10 +182,13 @@ export default function SynthesisView() {
   const components = reward?.components
 
   const logMap = new Map(recentLogs.map(l => [l.date, l]))
-  const chartData = dates.map(date => ({
-    date: dayOfWeekShort(date).slice(0, 2),
-    score: logMap.get(date)?.rewardScore?.score ?? null,
-  }))
+  const chartData = dates.map(date => {
+    const dayLog = logMap.get(date)
+    if (!dayLog) return { date: dayOfWeekShort(date).slice(0, 2), score: null }
+    const score = dayLog.rewardScore?.score
+      ?? computeReward(dayLog, undefined, { recentLogs }).score
+    return { date: dayOfWeekShort(date).slice(0, 2), score }
+  })
   const hasTrajectoryData = chartData.some(d => d.score !== null)
 
   const scoreColor = score === null ? 'text-ink-muted'

@@ -8,6 +8,7 @@ import { saveDecision } from '@/lib/firestore/decisions'
 import { savePrinciple } from '@/lib/firestore/principles'
 import { saveContact, getContactByName, updateContact } from '@/lib/firestore/contacts'
 import { saveExternalSignal } from '@/lib/firestore/external-signals'
+import { saveBelief } from '@/lib/firestore/beliefs'
 import type { ParsedJournalEntry } from '@/lib/ai-extraction'
 import type { CadenceChecklistItem } from '@/lib/types'
 
@@ -273,6 +274,49 @@ export default function DailyJournal() {
         }
       }
 
+      // Beliefs
+      for (let i = 0; i < parsed.beliefs.length; i++) {
+        if (!isEnabled(`belief.${i}`)) continue
+        const b = parsed.beliefs[i]
+        const attentionDate = new Date()
+        attentionDate.setDate(attentionDate.getDate() + 21)
+        const attentionDateStr = attentionDate.toISOString().split('T')[0]
+        const beliefId = await saveBelief(user.uid, {
+          statement: b.statement,
+          confidence: b.confidence,
+          domain: b.domain,
+          evidenceFor: b.evidenceFor,
+          evidenceAgainst: b.evidenceAgainst,
+          linkedDecisionIds: [],
+          linkedPrincipleIds: [],
+          sourceJournalDate: today,
+          attentionDate: attentionDateStr,
+        })
+        // Trigger antithesis generation in background
+        fetch('/api/beliefs/antithesis', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            statement: b.statement,
+            confidence: b.confidence,
+            domain: b.domain,
+            evidenceFor: b.evidenceFor,
+            evidenceAgainst: b.evidenceAgainst,
+          }),
+        }).then(async (res) => {
+          if (res.ok) {
+            const { antithesis, strength } = await res.json()
+            if (antithesis) {
+              await saveBelief(user.uid, {
+                antithesis,
+                antithesisStrength: strength,
+                status: 'tested',
+              }, beliefId)
+            }
+          }
+        }).catch(() => {}) // fire-and-forget
+      }
+
       // Notes (save as external signals in inbox)
       for (let i = 0; i < parsed.notes.length; i++) {
         if (!isEnabled(`note.${i}`)) continue
@@ -317,7 +361,8 @@ export default function DailyJournal() {
     parsed.psyCap.hope != null || parsed.psyCap.efficacy != null ||
     parsed.psyCap.resilience != null || parsed.psyCap.optimism != null ||
     parsed.cadenceCompleted.length > 0 ||
-    parsed.decisions.length > 0 || parsed.principles.length > 0
+    parsed.decisions.length > 0 || parsed.principles.length > 0 ||
+    parsed.beliefs.length > 0
   )
 
   return (
@@ -613,6 +658,25 @@ export default function DailyJournal() {
                   detail={p.text}
                   enabled={isEnabled(`principle.${i}`)}
                   onToggle={() => toggle(`principle.${i}`)}
+                />
+              ))}
+            </ResultSection>
+          )}
+
+          {/* Beliefs */}
+          {parsed.beliefs.length > 0 && (
+            <ResultSection title="Beliefs">
+              {parsed.beliefs.map((b, i) => (
+                <ToggleRow
+                  key={i}
+                  label={b.statement.length > 60 ? b.statement.slice(0, 60) + '...' : b.statement}
+                  value={`${b.domain} · ${b.confidence}% confidence`}
+                  detail={[
+                    b.evidenceFor.length > 0 ? `For: ${b.evidenceFor.join('; ')}` : '',
+                    b.evidenceAgainst.length > 0 ? `Against: ${b.evidenceAgainst.join('; ')}` : '',
+                  ].filter(Boolean).join(' | ')}
+                  enabled={isEnabled(`belief.${i}`)}
+                  onToggle={() => toggle(`belief.${i}`)}
                 />
               ))}
             </ResultSection>

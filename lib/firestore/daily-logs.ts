@@ -1,4 +1,4 @@
-import { collection, doc, getDoc, getDocs, setDoc, updateDoc, query, where, orderBy, serverTimestamp } from 'firebase/firestore'
+import { collection, doc, getDoc, getDocs, setDoc, updateDoc, query, where, orderBy, documentId, serverTimestamp } from 'firebase/firestore'
 import { db } from '../firebase'
 import type { DailyLog } from '../types'
 import { DEFAULT_DAILY_LOG } from '../defaults'
@@ -33,7 +33,10 @@ export async function getRecentDailyLogs(uid: string, days: number = 7): Promise
   const startStr = localDateString(startDate)
 
   const ref = collection(db, 'users', uid, 'daily_logs')
-  const q = query(ref, where('date', '>=', startStr), orderBy('date', 'desc'))
+  const q = query(ref, where(documentId(), '>=', startStr), orderBy(documentId(), 'desc'))
   const snap = await getDocs(q)
-  return snap.docs.map(d => ({ id: d.id, ...d.data() }) as DailyLog)
+  return snap.docs.map(d => {
+    const data = d.data()
+    return { id: d.id, ...data, date: data.date || d.id } as DailyLog
+  })
 }

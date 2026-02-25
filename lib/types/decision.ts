@@ -20,9 +20,15 @@ export interface Decision {
   reviewDate: string             // YYYY-MM-DD (90 days out)
   antithesis?: string              // AI-generated strongest counter-argument
   antithesisConfidence?: number    // AI confidence in the counter-argument (0-100)
+  linkedBeliefIds?: string[]       // beliefs that drove this decision
   outcomeScore?: number          // 0-100
   actualOutcome?: string
   learnings?: string
+  extensions?: Array<{            // audit trail for review date extensions
+    extendedAt: string
+    reason: string
+    newReviewDate: string
+  }>
   decidedAt: string
   createdAt: Timestamp
   updatedAt: Timestamp

@@ -182,12 +182,15 @@ function buildJournalReply(parsed: ParsedJournalEntry): string {
     }
   }
 
-  // Decisions & Principles
+  // Decisions, Principles, Beliefs
   if (parsed.decisions.length > 0) {
     lines.push('', `+${parsed.decisions.length} decision${parsed.decisions.length > 1 ? 's' : ''}`)
   }
   if (parsed.principles.length > 0) {
     lines.push('', `+${parsed.principles.length} principle${parsed.principles.length > 1 ? 's' : ''}`)
+  }
+  if (parsed.beliefs.length > 0) {
+    lines.push('', `+${parsed.beliefs.length} belief${parsed.beliefs.length > 1 ? 's' : ''} (stress testing...)`)
   }
 
   // If nothing was parsed beyond raw text
@@ -198,61 +201,66 @@ function buildJournalReply(parsed: ParsedJournalEntry): string {
   return lines.join('\n')
 }
 
+function daysSince(dateStr: string): number {
+  const d = new Date(dateStr + 'T00:00:00')
+  const now = new Date()
+  return Math.floor((now.getTime() - d.getTime()) / (1000 * 60 * 60 * 24))
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function buildGapsSection(log: Record<string, any>): string {
-  type Gap = { symbol: string; question: string }
-  const gaps: Gap[] = []
+function buildFrameworkCoaching(
+  parsed: ParsedJournalEntry,
+  existingBeliefs: Array<{ statement: string; status: string; linkedDecisionIds?: string[]; sourceJournalDate: string }>,
+  existingDecisions: Array<{ title: string; status: string; reviewDate?: string; outcomeScore?: number; learnings?: string }>
+): string {
+  const todayStr = getTodayKey()
+  const prompts: string[] = []
 
-  // ── Body ──
-  const hasEnergy = (log.sleepHours > 0) ||
-    (log.trainingTypes?.length > 0) ||
-    (log.bodyFelt && log.bodyFelt !== 'neutral') ||
-    (log.nervousSystemState && log.nervousSystemState !== 'regulated')
-  if (!hasEnergy) gaps.push({ symbol: 'GE', question: 'How many hours did you sleep? Did you train today? How does your body feel — open, neutral, or tense?' })
-
-  const hasJudgment = (log.psyCapHope > 0) || (log.psyCapEfficacy > 0) ||
-    (log.psyCapResilience > 0) || (log.psyCapOptimism > 0)
-  if (!hasJudgment) gaps.push({ symbol: 'J', question: 'Rate 1-5: How hopeful do you feel about your goals? How capable? How resilient if things go wrong? How optimistic about the future?' })
-
-  // ── Brain ──
-  const hasIntelligence =
-    (log.problems?.some((p: { problem?: string }) => p.problem?.trim())) ||
-    (log.problemSelected?.trim())
-  if (!hasIntelligence) gaps.push({ symbol: 'GI', question: 'What problems did you notice today in the market or your work? Which one are you testing next?' })
-
-  const hasDiscovery = (log.discoveryConversationsCount > 0) ||
-    (log.externalSignalsReviewed > 0) || (log.insightsExtracted > 0)
-  if (!hasDiscovery) gaps.push({ symbol: 'GD', question: 'How many discovery conversations did you have today? How many external signals (articles, reports, feeds) did you review? Any insights extracted?' })
-
-  const hasSkill = (log.deliberatePracticeMinutes > 0) ||
-    log.newTechniqueApplied || log.automationCreated
-  if (!hasSkill) gaps.push({ symbol: 'Σ', question: 'How many minutes of deliberate practice today (learning a specific skill)? Did you try a new technique or tool? Did you build any automation or leverage?' })
-
-  // ── Build ──
-  const hasOutput = (log.whatShipped?.trim()) || (log.focusHoursActual > 0)
-  if (!hasOutput) gaps.push({ symbol: 'GVC', question: 'How many focus hours today? What did you ship or make progress on?' })
-
-  const hasCapture = (log.revenueAsksCount > 0) || (log.revenueThisSession > 0)
-  if (!hasCapture) gaps.push({ symbol: 'κ', question: 'How many revenue asks did you make today? Did you earn any revenue? Close any feedback loops with customers?' })
-
-  const hasNetwork = (log.warmIntrosMade > 0) || (log.warmIntrosReceived > 0) ||
-    (log.meetingsBooked > 0) || (log.publicPostsCount > 0) || (log.inboundInquiries > 0)
-  if (!hasNetwork) gaps.push({ symbol: 'GN', question: 'Any warm intros made or received? Meetings booked? Public posts? Inbound inquiries?' })
-
-  if (gaps.length === 0) {
-    return '\n\n_All 9 components touched._'
+  // --- OBSERVE -> BELIEVE gap ---
+  if (parsed.intelligence.insightsExtracted && parsed.intelligence.insightsExtracted > 0 && parsed.beliefs.length === 0) {
+    prompts.push(`You noted ${parsed.intelligence.insightsExtracted} insights but formed no testable beliefs. Sharpen one into: "I believe that [X] because [Y]"`)
   }
 
-  // Pick the highest-impact gaps to ask about (max 3 to keep it conversational)
-  const ask = gaps.slice(0, 3)
-  const lines = [`\n\n*${gaps.length} component${gaps.length > 1 ? 's' : ''} still at floor — reply /journal to fill:*`]
-  for (const g of ask) {
-    lines.push(`\n*${g.symbol}:* ${g.question}`)
+  // --- BELIEVE completeness ---
+  for (const b of parsed.beliefs) {
+    if (b.evidenceFor.length === 0) {
+      prompts.push(`BELIEVE "${b.statement.slice(0, 50)}..." — what's your evidence?`)
+    }
+    if (b.evidenceAgainst.length === 0) {
+      prompts.push(`STRESS TEST "${b.statement.slice(0, 50)}..." — what's the strongest counter-argument?`)
+    }
   }
-  if (gaps.length > 3) {
-    lines.push(`\n_...and ${gaps.length - 3} more._`)
+
+  // --- BELIEVE -> DECIDE gap (stale beliefs) ---
+  const staleBeliefs = existingBeliefs.filter(b =>
+    b.status === 'active' && (!b.linkedDecisionIds || b.linkedDecisionIds.length === 0) &&
+    daysSince(b.sourceJournalDate) > 14
+  )
+  if (staleBeliefs.length > 0) {
+    prompts.push(`${staleBeliefs.length} belief${staleBeliefs.length > 1 ? 's' : ''} held >14 days with no action. Act, update, or kill: "${staleBeliefs[0].statement.slice(0, 40)}..."`)
   }
-  return lines.join('\n')
+
+  // --- DECIDE completeness ---
+  for (const d of parsed.decisions) {
+    prompts.push(`DECIDE "${d.title}" — what belief drives this? What would make you stop?`)
+  }
+
+  // --- OUTCOME gap (pending reviews) ---
+  const pendingReview = existingDecisions.filter(d =>
+    d.status === 'active' && d.reviewDate && d.reviewDate <= todayStr
+  )
+  if (pendingReview.length > 0) {
+    prompts.push(`${pendingReview.length} decision${pendingReview.length > 1 ? 's' : ''} past review date. Score the outcome: "${pendingReview[0].title.slice(0, 40)}..."`)
+  }
+
+  // --- OUTCOME -> CODIFY gap ---
+  const unclosed = existingDecisions.filter(d => d.outcomeScore != null && !d.learnings)
+  if (unclosed.length > 0) {
+    prompts.push(`You scored "${unclosed[0].title.slice(0, 40)}..." but didn't extract a principle. What's the rule for next time?`)
+  }
+
+  if (prompts.length === 0) return '\n\n_All loops closed. Machine running clean._'
+  return '\n\n*The Machine:*\n' + prompts.slice(0, 3).map(q => `-> _${q}_`).join('\n')
 }
 
 function appendJournalText(existing: string, newText: string): string {
@@ -515,18 +523,47 @@ async function handleJournal(uid: string, text: string, chatId: number) {
       })
     }
 
-    // Read back full merged log to detect gaps + compute reward
+    // Create beliefs + trigger antithesis in background
+    for (const b of parsed.beliefs) {
+      const attentionDate = new Date()
+      attentionDate.setDate(attentionDate.getDate() + 21)
+      const beliefRef = adminDb.collection('users').doc(uid).collection('beliefs').doc()
+      await beliefRef.set({
+        statement: b.statement,
+        confidence: b.confidence,
+        domain: b.domain,
+        evidenceFor: b.evidenceFor,
+        evidenceAgainst: b.evidenceAgainst,
+        status: 'active',
+        linkedDecisionIds: [],
+        linkedPrincipleIds: [],
+        sourceJournalDate: today,
+        attentionDate: attentionDate.toISOString().split('T')[0],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+    }
+
+    // Fetch existing beliefs + decisions for framework coaching
+    const [beliefsSnap, decisionsSnap] = await Promise.all([
+      adminDb.collection('users').doc(uid).collection('beliefs').where('status', '==', 'active').get(),
+      adminDb.collection('users').doc(uid).collection('decisions').where('status', '==', 'active').get(),
+    ])
+    const existingBeliefs = beliefsSnap.docs.map(d => d.data() as { statement: string; status: string; linkedDecisionIds?: string[]; sourceJournalDate: string })
+    const existingDecisions = decisionsSnap.docs.map(d => d.data() as { title: string; status: string; reviewDate?: string; outcomeScore?: number; learnings?: string })
+
+    // Read back full merged log to compute reward
     const fullLogSnap = await logRef.get()
     const fullLog = fullLogSnap.data() || {}
-    const gapsSection = buildGapsSection(fullLog)
+    const coachingSection = buildFrameworkCoaching(parsed, existingBeliefs, existingDecisions)
 
     // Compute reward score server-side and save it
     const { score, delta } = await computeAndSaveReward(adminDb, uid, today, fullLog)
     const deltaStr = delta != null ? (delta >= 0 ? ` (+${delta})` : ` (${delta})`) : ''
     const scoreLine = `\n\n*g* = ${score.toFixed(1)}${deltaStr}`
 
-    // Reply with summary + score + gaps
-    await sendTelegramReply(chatId, buildJournalReply(parsed) + scoreLine + gapsSection)
+    // Reply with summary + score + coaching
+    await sendTelegramReply(chatId, buildJournalReply(parsed) + scoreLine + coachingSection)
   } catch (error) {
     console.error('Journal parsing error:', error)
     // Still save the raw text even if AI parsing fails (also append)
@@ -649,19 +686,41 @@ async function handleJournalFromVoice(uid: string, transcript: string, parsed: P
       })
     }
 
-    // Read back full merged log to detect gaps + compute reward
+    // Create beliefs + trigger antithesis in background
+    for (const b of parsed.beliefs) {
+      const attentionDate = new Date()
+      attentionDate.setDate(attentionDate.getDate() + 21)
+      const beliefRef = adminDb.collection('users').doc(uid).collection('beliefs').doc()
+      await beliefRef.set({
+        statement: b.statement, confidence: b.confidence, domain: b.domain,
+        evidenceFor: b.evidenceFor, evidenceAgainst: b.evidenceAgainst,
+        status: 'active', linkedDecisionIds: [], linkedPrincipleIds: [],
+        sourceJournalDate: today, attentionDate: attentionDate.toISOString().split('T')[0],
+        createdAt: new Date(), updatedAt: new Date(),
+      })
+    }
+
+    // Fetch existing beliefs + decisions for framework coaching
+    const [beliefsSnap, decisionsSnap] = await Promise.all([
+      adminDb.collection('users').doc(uid).collection('beliefs').where('status', '==', 'active').get(),
+      adminDb.collection('users').doc(uid).collection('decisions').where('status', '==', 'active').get(),
+    ])
+    const existingBeliefs = beliefsSnap.docs.map(d => d.data() as { statement: string; status: string; linkedDecisionIds?: string[]; sourceJournalDate: string })
+    const existingDecisions = decisionsSnap.docs.map(d => d.data() as { title: string; status: string; reviewDate?: string; outcomeScore?: number; learnings?: string })
+
+    // Read back full merged log to compute reward
     const fullLogSnap = await logRef.get()
     const fullLog = fullLogSnap.data() || {}
-    const gapsSection = buildGapsSection(fullLog)
+    const coachingSection = buildFrameworkCoaching(parsed, existingBeliefs, existingDecisions)
 
     // Compute reward score server-side and save it
     const { score, delta } = await computeAndSaveReward(adminDb, uid, today, fullLog)
     const deltaStr = delta != null ? (delta >= 0 ? ` (+${delta})` : ` (${delta})`) : ''
     const scoreLine = `\n\n*g* = ${score.toFixed(1)}${deltaStr}`
 
-    // Reply with transcript + structured summary + score + gaps
+    // Reply with transcript + structured summary + score + coaching
     const journalReply = buildJournalReply(parsed)
-    const fullReply = `*Transcript:*\n_"${transcript}"_\n\n${journalReply}${scoreLine}${gapsSection}`
+    const fullReply = `*Transcript:*\n_"${transcript}"_\n\n${journalReply}${scoreLine}${coachingSection}`
     await sendTelegramReply(chatId, fullReply)
   } catch (error) {
     console.error('Voice journal save error:', error)

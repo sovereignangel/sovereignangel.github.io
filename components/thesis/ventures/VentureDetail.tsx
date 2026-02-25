@@ -446,7 +446,17 @@ export default function VentureDetail({ ventureId, onBack }: { ventureId: string
               <div className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy">
                 Investment Memo — {s.name}
               </div>
-              <span className="font-mono text-[8px] text-ink-muted">v{memo.version}</span>
+              <div className="flex items-center gap-2">
+                <a
+                  href={`/memo/${ventureId}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-mono text-[9px] text-burgundy underline hover:text-ink transition-colors"
+                >
+                  Public Link
+                </a>
+                <span className="font-mono text-[8px] text-ink-muted">v{memo.version}</span>
+              </div>
             </div>
 
             {/* Company Purpose */}

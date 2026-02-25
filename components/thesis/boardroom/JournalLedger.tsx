@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useAuth } from '@/components/auth/AuthProvider'
 import { useJournalLedger } from '@/hooks/useJournalLedger'
 import type { LedgerDay, JournalEntry } from '@/hooks/useJournalLedger'
-import type { Decision, Principle } from '@/lib/types'
+import type { Decision, Principle, Belief } from '@/lib/types'
 
 const DOMAIN_COLORS: Record<string, string> = {
   portfolio: 'text-burgundy bg-burgundy-bg border-burgundy/20',
@@ -83,7 +83,7 @@ export default function JournalLedger() {
 }
 
 function LedgerDayCard({ day }: { day: LedgerDay }) {
-  const hasArtifacts = day.decisions.length > 0 || day.principles.length > 0
+  const hasArtifacts = day.decisions.length > 0 || day.principles.length > 0 || day.beliefs.length > 0
   const hasContext = day.focusHours !== null || day.whatShipped || day.discoveryConversations > 0
 
   return (
@@ -136,6 +136,9 @@ function LedgerDayCard({ day }: { day: LedgerDay }) {
             Derived
           </span>
           <div className="space-y-1">
+            {day.beliefs.map((b) => (
+              <BeliefRow key={b.id} belief={b} />
+            ))}
             {day.decisions.map((d) => (
               <DecisionRow key={d.id} decision={d} />
             ))}
@@ -239,6 +242,37 @@ function DecisionRow({ decision }: { decision: Decision }) {
             <span className="font-mono text-[7px] text-ink-faint">review {decision.reviewDate}</span>
           </div>
         </div>
+      )}
+    </div>
+  )
+}
+
+function BeliefRow({ belief }: { belief: Belief }) {
+  const domainStyle = DOMAIN_COLORS[belief.domain] || DOMAIN_COLORS.thesis
+
+  return (
+    <div className="flex items-center gap-1.5 px-1 py-0.5">
+      <span className={`font-mono text-[7px] uppercase px-1 py-0.5 rounded-sm border shrink-0 ${domainStyle}`}>
+        belief
+      </span>
+      <span className="text-[10px] text-ink flex-1 truncate">
+        {belief.statement.slice(0, 60)}
+      </span>
+      <span className={`font-mono text-[8px] font-medium shrink-0 ${
+        belief.confidence >= 70 ? 'text-green-ink'
+          : belief.confidence >= 40 ? 'text-amber-ink'
+          : 'text-red-ink'
+      }`}>
+        {belief.confidence}%
+      </span>
+      {belief.antithesis ? (
+        <span className="font-mono text-[7px] uppercase px-1 py-0.5 rounded-sm border text-green-ink bg-green-bg border-green-ink/20 shrink-0">
+          tested
+        </span>
+      ) : (
+        <span className="font-mono text-[7px] uppercase px-1 py-0.5 rounded-sm border text-amber-ink bg-amber-bg border-amber-ink/20 shrink-0">
+          untested
+        </span>
       )}
     </div>
   )

@@ -1,8 +1,8 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { getRecentDailyLogs, getDecisions, getPrinciples } from '@/lib/firestore'
-import type { Decision, Principle, DailyLog } from '@/lib/types'
+import { getRecentDailyLogs, getDecisions, getPrinciples, getBeliefs } from '@/lib/firestore'
+import type { Decision, Principle, Belief, DailyLog } from '@/lib/types'
 
 export interface JournalEntry {
   time: string
@@ -15,6 +15,7 @@ export interface LedgerDay {
   rewardScore: number | null
   decisions: Decision[]
   principles: Principle[]
+  beliefs: Belief[]
   discoveryConversations: number
   focusHours: number | null
   whatShipped: string | null
@@ -68,10 +69,11 @@ export function useJournalLedger(uid: string | undefined, initialDays: number = 
     setLoading(true)
 
     try {
-      const [logs, allDecisions, allPrinciples] = await Promise.all([
+      const [logs, allDecisions, allPrinciples, allBeliefs] = await Promise.all([
         getRecentDailyLogs(uid, rangeDays),
         getDecisions(uid),
         getPrinciples(uid),
+        getBeliefs(uid),
       ])
 
       // Group decisions by decidedAt date
@@ -92,6 +94,15 @@ export function useJournalLedger(uid: string | undefined, initialDays: number = 
         principlesByDate.get(date)!.push(p)
       }
 
+      // Group beliefs by sourceJournalDate
+      const beliefsByDate = new Map<string, Belief[]>()
+      for (const b of allBeliefs) {
+        const date = b.sourceJournalDate
+        if (!date) continue
+        if (!beliefsByDate.has(date)) beliefsByDate.set(date, [])
+        beliefsByDate.get(date)!.push(b)
+      }
+
       // Build ledger days — only include days with journal entries
       const ledgerDays: LedgerDay[] = logs
         .filter((log: DailyLog) => log.journalEntry?.trim())
@@ -101,6 +112,7 @@ export function useJournalLedger(uid: string | undefined, initialDays: number = 
           rewardScore: log.rewardScore?.score ?? null,
           decisions: decisionsByDate.get(log.date) || [],
           principles: principlesByDate.get(log.date) || [],
+          beliefs: beliefsByDate.get(log.date) || [],
           discoveryConversations: log.discoveryConversationsCount || 0,
           focusHours: log.focusHoursActual || null,
           whatShipped: log.whatShipped || null,
