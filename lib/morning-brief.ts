@@ -106,6 +106,14 @@ async function fetchEnergyState(uid: string) {
   const todayKey = today()
   const yesterdayKey = yesterday()
 
+  // Fresh Garmin sync so body battery reflects current watch reading
+  try {
+    const { syncGarminMetrics } = await import('@/lib/etl/garmin')
+    await syncGarminMetrics(todayKey)
+  } catch (e) {
+    console.warn('[morning-brief] Garmin pre-sync failed, using cached data:', (e as Error).message)
+  }
+
   // Garmin metrics for today (or yesterday if not yet synced)
   let garmin: Record<string, unknown> | null = null
   const garminSnap = await db.collection('users').doc(uid).collection('garmin_metrics').doc(todayKey).get()
@@ -122,7 +130,7 @@ async function fetchEnergyState(uid: string) {
 
   const sleepHours = (garmin?.sleepDurationHours as number) ?? (garmin?.sleepHours as number) ?? null
   const hrv = (garmin?.hrvWeeklyAvg as number) ?? (garmin?.hrv as number) ?? null
-  const bodyBattery = (garmin?.bodyBatteryHigh as number) ?? (garmin?.bodyBattery as number) ?? null
+  const bodyBattery = (garmin?.bodyBatteryCurrent as number) ?? (garmin?.bodyBattery as number) ?? null
   const stressLevel = (garmin?.avgStressLevel as number) ?? null
   const nervousSystemState = (log?.nervousSystemState as string) ?? null
 

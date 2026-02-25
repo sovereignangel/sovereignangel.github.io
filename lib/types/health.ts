@@ -26,6 +26,7 @@ export interface GarminMetrics {
   activeCalories: number | null
   stressLevel: number | null
   bodyBattery: number | null
+  bodyBatteryCurrent: number | null
   bodyBatteryCharged: number | null
   bodyBatteryDrained: number | null
   respirationRate: number | null

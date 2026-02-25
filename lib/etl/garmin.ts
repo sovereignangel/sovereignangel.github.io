@@ -165,8 +165,10 @@ async function fetchGarminData(
       if (values.length > 0) {
         const valid = values
           .filter((v) => v[1] !== null && v[1] !== undefined)
-          .map((v) => v[1])
-        metrics.bodyBattery = valid.length > 0 ? Math.max(...valid) : null
+        const nums = valid.map((v) => v[1])
+        metrics.bodyBattery = nums.length > 0 ? Math.max(...nums) : null
+        // Latest reading = last valid entry (what the watch shows now)
+        metrics.bodyBatteryCurrent = nums.length > 0 ? nums[nums.length - 1] : null
       }
     }
   } catch (e) {
