@@ -377,7 +377,7 @@ export default function DailyJournal() {
           value={journalText}
           onChange={(e) => setJournalText(e.target.value)}
           placeholder="Write freely about your day — conversations you had, problems you spotted, revenue opportunities, who you connected with, energy levels, what you shipped, decisions made, lessons learned. The model will parse it into the right places."
-          className="w-full h-20 bg-paper border border-rule rounded-sm p-2 font-sans text-[11px] text-ink resize-y focus:outline-none focus:border-burgundy"
+          className="w-full h-20 bg-paper border border-rule rounded-sm p-2 font-sans text-[11px] text-ink-muted resize-y focus:outline-none focus:border-burgundy"
         />
         <div className="flex items-center gap-2 mt-2">
           <button

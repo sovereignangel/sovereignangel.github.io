@@ -19,7 +19,7 @@ export default function FlowPipeline({ stages, activeSection, onStageClick }: Fl
     <div className="flex items-center gap-0.5 px-2 py-1.5 overflow-x-auto">
       {stages.map((stage, i) => {
         const isActive = activeSection === stage.scrollTo
-        const hasAlert = stage.alert && stage.alert > 0
+        const hasAlert = stage.alert != null && stage.alert > 0
 
         return (
           <div key={stage.id} className="flex items-center shrink-0">
@@ -40,14 +40,14 @@ export default function FlowPipeline({ stages, activeSection, onStageClick }: Fl
                 {stage.label}
               </span>
               {stage.count > 0 && !hasAlert && (
-                <span className={`font-mono text-[9px] ${
-                  isActive ? 'text-burgundy' : 'text-ink-faint'
+                <span className={`font-mono text-[9px] font-semibold ${
+                  isActive ? 'text-burgundy' : 'text-ink-muted'
                 }`}>
                   {stage.count}
                 </span>
               )}
               {hasAlert && (
-                <span className="font-mono text-[9px] text-amber-ink">
+                <span className="font-mono text-[9px] font-semibold text-amber-ink">
                   {stage.alert}
                 </span>
               )}
