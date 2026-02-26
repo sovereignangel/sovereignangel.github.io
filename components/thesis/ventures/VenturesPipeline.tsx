@@ -11,7 +11,6 @@ const STAGES: { key: VentureStage; label: string }[] = [
   { key: 'specced', label: 'Specced' },
   { key: 'validated', label: 'Validated' },
   { key: 'prd_draft', label: 'PRD Draft' },
-  { key: 'prd_approved', label: 'Approved' },
   { key: 'building', label: 'Building' },
   { key: 'deployed', label: 'Deployed' },
   { key: 'archived', label: 'Archived' },

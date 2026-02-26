@@ -738,9 +738,22 @@ async function handleJournalFromVoice(uid: string, transcript: string, parsed: P
 async function handleRss(uid: string, url: string, pillars: string[], chatId: number) {
   const adminDb = await getAdminDb()
 
-  // Basic URL validation
-  if (!url.startsWith('http://') && !url.startsWith('https://')) {
-    await sendTelegramReply(chatId, 'Invalid URL. Must start with http:// or https://')
+  // URL validation with SSRF protection
+  try {
+    const parsed = new URL(url)
+    if (!['http:', 'https:'].includes(parsed.protocol)) {
+      await sendTelegramReply(chatId, 'Invalid URL. Must start with http:// or https://')
+      return
+    }
+    const host = parsed.hostname.toLowerCase()
+    if (host === 'localhost' || host === '127.0.0.1' || host === '0.0.0.0' ||
+        host.startsWith('10.') || host.startsWith('192.168.') || host.startsWith('172.') ||
+        host === '169.254.169.254' || host.endsWith('.internal') || host.endsWith('.local')) {
+      await sendTelegramReply(chatId, 'Invalid URL. Private/internal addresses are not allowed.')
+      return
+    }
+  } catch {
+    await sendTelegramReply(chatId, 'Invalid URL format.')
     return
   }
 
@@ -979,7 +992,7 @@ async function handleVenture(uid: string, text: string, chatId: number) {
       lines.push('', `View full PRD: ${deepLink}`)
     }
 
-    lines.push('', `Reply /approve ${ventureNumber} or /feedback ${ventureNumber} <text>`)
+    lines.push('', `Reply /build ${ventureNumber} or /feedback ${ventureNumber} <text>`)
 
     await sendTelegramReply(chatId, lines.join('\n'))
   } catch (error) {
@@ -1025,46 +1038,7 @@ async function handleVenture(uid: string, text: string, chatId: number) {
   }
 }
 
-async function handleApprove(uid: string, text: string, chatId: number) {
-  const adminDb = await getAdminDb()
-
-  try {
-    const { num } = parseVentureNumber(text.trim())
-    const ventureDoc = await findVentureByNumberOrStage(adminDb, uid, num, 'prd_draft')
-
-    if (!ventureDoc) {
-      await sendTelegramReply(chatId, num
-        ? `Venture #${num} not found.`
-        : 'No PRD waiting for approval.\n\nUse /venture to spec one first.')
-      return
-    }
-
-    const venture = ventureDoc.data()
-    const vNum = venture.ventureNumber ? `#${venture.ventureNumber} ` : ''
-
-    // Must have a PRD to approve
-    if (!venture.prd) {
-      await sendTelegramReply(chatId, `${vNum}${venture.spec.name} has no PRD yet.\n\nUse /feedback ${venture.ventureNumber || ''} <text> to generate one.`)
-      return
-    }
-
-    // Already approved or beyond
-    if (venture.stage === 'prd_approved' || venture.stage === 'building' || venture.stage === 'deployed') {
-      await sendTelegramReply(chatId, `${vNum}${venture.spec.name} is already in "${venture.stage}" stage.`)
-      return
-    }
-
-    await ventureDoc.ref.update({
-      stage: 'prd_approved',
-      updatedAt: new Date(),
-    })
-
-    await sendTelegramReply(chatId, `${vNum}PRD approved for ${venture.spec.name}\n\nReply /build ${venture.ventureNumber || ''} to start building.`)
-  } catch (error) {
-    console.error('Approve error:', error)
-    await sendTelegramReply(chatId, `Approve failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
-  }
-}
+// /approve removed — /build works directly from prd_draft
 
 async function handleFeedback(uid: string, text: string, chatId: number) {
   const adminDb = await getAdminDb()
@@ -1148,7 +1122,7 @@ async function handleFeedback(uid: string, text: string, chatId: number) {
       lines.push('', `View full PRD: ${deepLink}`)
     }
 
-    lines.push('', `Reply /approve ${ventureNum} or /feedback ${ventureNum} <more changes>`)
+    lines.push('', `Reply /build ${ventureNum} or /feedback ${ventureNum} <more changes>`)
 
     await sendTelegramReply(chatId, lines.join('\n'))
   } catch (error) {
@@ -1275,12 +1249,12 @@ async function handleBuild(uid: string, text: string, chatId: number) {
 
   try {
   const { num } = parseVentureNumber(text.trim())
-  const ventureDoc = await findVentureByNumberOrStage(adminDb, uid, num, 'prd_approved')
+  const ventureDoc = await findVentureByNumberOrStage(adminDb, uid, num, 'prd_draft')
 
   if (!ventureDoc) {
     await sendTelegramReply(chatId, num
       ? `Venture #${num} not found.`
-      : 'No approved venture waiting to be built.\n\nUse /venture then /approve first.')
+      : 'No venture with a PRD ready to build.\n\nUse /venture to spec one first.')
     return
   }
 
@@ -1289,8 +1263,13 @@ async function handleBuild(uid: string, text: string, chatId: number) {
   const spec = venture.spec
   const vNum = venture.ventureNumber ? `#${venture.ventureNumber} ` : ''
 
-  if (num && venture.stage !== 'prd_approved') {
-    await sendTelegramReply(chatId, `${vNum}${spec.name} is in "${venture.stage}" stage.\n\nApprove the PRD first with /approve ${venture.ventureNumber || ''}`)
+  if (!venture.prd) {
+    await sendTelegramReply(chatId, `${vNum}${spec.name} has no PRD yet.\n\nUse /feedback ${venture.ventureNumber || ''} <text> to generate one.`)
+    return
+  }
+
+  if (venture.stage === 'building' || venture.stage === 'deployed') {
+    await sendTelegramReply(chatId, `${vNum}${spec.name} is already in "${venture.stage}" stage.`)
     return
   }
 
@@ -1450,9 +1429,8 @@ async function handleMemo(uid: string, text: string, chatId: number) {
 const STAGE_ROLLBACK: Record<string, string> = {
   specced: 'idea',
   prd_draft: 'specced',
-  prd_approved: 'prd_draft',
-  building: 'prd_approved',
-  deployed: 'prd_approved',
+  building: 'prd_draft',
+  deployed: 'prd_draft',
 }
 
 async function handleReset(uid: string, text: string, chatId: number) {
@@ -1580,9 +1558,9 @@ export async function POST(req: NextRequest) {
           }
         }
 
-        // Detect if user said "approve" at the start — route as approve
-        if (trimmedTranscript.startsWith('approve')) {
-          await handleApprove(uid, trimmedTranscript, chatId)
+        // Detect if user said "build" at the start — route as build
+        if (trimmedTranscript.startsWith('build')) {
+          await handleBuild(uid, trimmedTranscript.slice('build'.length).trim(), chatId)
           return NextResponse.json({ ok: true })
         }
 
@@ -1635,9 +1613,8 @@ export async function POST(req: NextRequest) {
         '',
         '*Venture Builder:*',
         '`/venture <text>` — Spec + auto-PRD a business idea',
-        '`/approve` — Approve the most recent PRD draft',
         '`/feedback <text>` — Revise the PRD with feedback',
-        '`/build` — Build the approved venture',
+        '`/build` — Build the venture from its PRD',
         '`/memo [#]` — Generate Sequoia-style pitch memo',
         '`/iterate <project> <changes>` — Iterate on deployed venture',
         '`/reset [#]` — Roll back a venture to its previous stage',
@@ -1648,7 +1625,7 @@ export async function POST(req: NextRequest) {
         '',
         'Reply to a morning brief to send feedback.',
         'Voice notes → auto-transcribed as journal',
-        'Say "venture" to spec, "approve" to approve, "signal" to save as signal',
+        'Say "venture" to spec, "build" to build, "signal" to save as signal',
         '',
         'Pillar tags: `#ai` `#markets` `#mind`',
       ].join('\n'))
@@ -1718,9 +1695,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: true })
     }
 
-    // Handle approve command
+    // /approve removed — /build works directly from prd_draft
     if (parsed.command === 'approve') {
-      await handleApprove(uid, parsed.text, chatId)
+      await sendTelegramReply(chatId, '/approve is no longer needed. Just use /build to build directly from the PRD.')
       return NextResponse.json({ ok: true })
     }
 

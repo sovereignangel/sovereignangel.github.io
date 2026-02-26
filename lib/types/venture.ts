@@ -1,6 +1,6 @@
 import type { ThesisPillar } from './shared'
 
-export type VentureStage = 'idea' | 'specced' | 'validated' | 'prd_draft' | 'prd_approved' | 'building' | 'deployed' | 'archived'
+export type VentureStage = 'idea' | 'specced' | 'validated' | 'prd_draft' | 'building' | 'deployed' | 'archived'
 export type VentureBuildStatus = 'pending' | 'generating' | 'pushing' | 'deploying' | 'live' | 'failed'
 export type VentureCategory = 'saas' | 'api' | 'marketplace' | 'tool' | 'content' | 'service' | 'other'
 export type VenturePRDPriority = 'P0' | 'P1' | 'P2'

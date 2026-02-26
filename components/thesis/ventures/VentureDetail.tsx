@@ -7,7 +7,7 @@ import type { Venture, VentureStage, CompetitorRow } from '@/lib/types'
 import { authFetch } from '@/lib/auth-fetch'
 import BuildStatusBar from './BuildStatusBar'
 
-const STAGE_OPTIONS: VentureStage[] = ['idea', 'specced', 'validated', 'prd_draft', 'prd_approved', 'building', 'deployed', 'archived']
+const STAGE_OPTIONS: VentureStage[] = ['idea', 'specced', 'validated', 'prd_draft', 'building', 'deployed', 'archived']
 
 const PRIORITY_STYLES: Record<string, string> = {
   P0: 'bg-burgundy-bg text-burgundy border-burgundy/20',
@@ -124,7 +124,7 @@ export default function VentureDetail({ ventureId, onBack }: { ventureId: string
   const [loading, setLoading] = useState(true)
   const [feedback, setFeedback] = useState('')
   const [submittingFeedback, setSubmittingFeedback] = useState(false)
-  const [approvingPrd, setApprovingPrd] = useState(false)
+  // approvingPrd state removed — approve stage eliminated
   const [generatingPrd, setGeneratingPrd] = useState(false)
   const [iterateText, setIterateText] = useState('')
   const [submittingIterate, setSubmittingIterate] = useState(false)
@@ -149,7 +149,7 @@ export default function VentureDetail({ ventureId, onBack }: { ventureId: string
   const handleTriggerBuild = async () => {
     if (!user || !venture) return
     try {
-      const res = await fetch('/api/ventures/build/trigger', {
+      const res = await authFetch('/api/ventures/build/trigger', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ventureId }),
@@ -163,25 +163,6 @@ export default function VentureDetail({ ventureId, onBack }: { ventureId: string
       }
     } catch (err) {
       console.error('Build trigger failed:', err)
-    }
-  }
-
-  const handleApprovePrd = async () => {
-    if (!user || !venture) return
-    setApprovingPrd(true)
-    try {
-      const res = await authFetch('/api/ventures/approve', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ventureId, uid: user.uid }),
-      })
-      if (res.ok) {
-        setVenture({ ...venture, stage: 'prd_approved' })
-      }
-    } catch (err) {
-      console.error('Approve failed:', err)
-    } finally {
-      setApprovingPrd(false)
     }
   }
 
@@ -230,7 +211,7 @@ export default function VentureDetail({ ventureId, onBack }: { ventureId: string
     if (!user || !venture || !iterateText.trim()) return
     setSubmittingIterate(true)
     try {
-      const res = await fetch('/api/ventures/build/trigger', {
+      const res = await authFetch('/api/ventures/build/trigger', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ventureId, iterate: true, changes: iterateText.trim() }),
@@ -479,16 +460,15 @@ export default function VentureDetail({ ventureId, onBack }: { ventureId: string
             </details>
           )}
 
-          {/* Approve / Feedback actions */}
+          {/* Build / Feedback actions */}
           {venture.stage === 'prd_draft' && (
             <div className="mt-2 pt-2 border-t border-rule space-y-2">
               <div className="flex gap-1">
                 <button
-                  onClick={handleApprovePrd}
-                  disabled={approvingPrd}
-                  className="font-serif text-[9px] font-medium px-2 py-1 rounded-sm border bg-burgundy text-paper border-burgundy hover:bg-burgundy/90 transition-colors disabled:opacity-50"
+                  onClick={handleTriggerBuild}
+                  className="font-serif text-[9px] font-medium px-2 py-1 rounded-sm border bg-burgundy text-paper border-burgundy hover:bg-burgundy/90 transition-colors"
                 >
-                  {approvingPrd ? 'Approving...' : 'Approve PRD'}
+                  Build
                 </button>
               </div>
               <div className="flex gap-1">
@@ -907,7 +887,7 @@ export default function VentureDetail({ ventureId, onBack }: { ventureId: string
               Live Preview
             </a>
           )}
-          {(venture.stage === 'prd_approved' && (b.status === 'pending' || b.status === 'failed')) && (
+          {((venture.stage === 'prd_draft' || venture.stage === 'building') && (b.status === 'pending' || b.status === 'failed')) && (
             <button
               onClick={handleTriggerBuild}
               className="font-serif text-[9px] font-medium px-2 py-1 rounded-sm border bg-burgundy text-paper border-burgundy hover:bg-burgundy/90 transition-colors"
