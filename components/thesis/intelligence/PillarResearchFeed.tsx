@@ -168,7 +168,7 @@ export default function PillarResearchFeed({ pillar }: { pillar: ThesisPillarExt
 
     Promise.all([
       getInboxExternalSignals(user.uid).then(all =>
-        all.filter(s => s.thesisPillars?.includes(pillar))
+        all.filter(s => s.thesisPillars?.includes(pillar as typeof s.thesisPillars[number]))
       ).catch(() => []),
       pillar !== 'markets'
         ? getRecentDailyLogs(user.uid, 30).then(logs => extractKeywordSignals(logs, keywords)).catch(() => [])
