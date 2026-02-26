@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { getDailyLog, getGarminMetrics } from '@/lib/firestore'
+import { computeReward } from '@/lib/reward'
 import type { DailyLog, GarminMetrics } from '@/lib/types'
 import { DEFAULT_DAILY_LOG } from '@/lib/defaults'
 
@@ -23,7 +24,16 @@ export function useDailyLogData(uid: string | undefined, logDate: string) {
           if (existing.trainingType && (!existing.trainingTypes || existing.trainingTypes.length === 0)) {
             existing.trainingTypes = existing.trainingType !== 'none' ? [existing.trainingType] : []
           }
+          // Compute baseline reward if none stored yet
+          if (!existing.rewardScore) {
+            existing.rewardScore = computeReward(existing)
+          }
           setLog(existing)
+        } else {
+          // No log exists yet — compute baseline from defaults
+          const baseline = { ...DEFAULT_DAILY_LOG, date: logDate }
+          baseline.rewardScore = computeReward(baseline)
+          setLog(baseline)
         }
       }),
       getGarminMetrics(uid, logDate).then((garmin) => {
