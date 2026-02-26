@@ -6,19 +6,18 @@ import { getFinancialHistory, getDebtItems } from '@/lib/firestore'
 import { currency } from '@/lib/formatters'
 import {
   buildCapitalPosition, generateAlerts, computeZeroDate,
-  computeStressTests, evaluateDecisionRules, dailyCostOfCarry,
+  computeStressTests, evaluateDecisionRules,
   computeCorporateMetrics,
 } from '@/lib/capital-engine'
 import CapitalCommand from './CapitalCommand'
 import CorporateMetrics from './CorporateMetrics'
-import type { CapitalPosition, CapitalAlert, DecisionRule, StressScenario, FinancialSnapshot, DebtItem } from '@/lib/types'
+import type { CapitalPosition, CapitalAlert, FinancialSnapshot, DebtItem } from '@/lib/types'
 
 interface Props {
-  position: CapitalPosition | null
   onApplied?: () => void
 }
 
-export default function PositionBriefing({ position: propPosition, onApplied }: Props) {
+export default function PositionBriefing({ onApplied }: Props) {
   const { user } = useAuth()
   const [savedPosition, setSavedPosition] = useState<CapitalPosition | null>(null)
   const [savedDebts, setSavedDebts] = useState<DebtItem[]>([])
@@ -50,7 +49,7 @@ export default function PositionBriefing({ position: propPosition, onApplied }: 
     onApplied?.()
   }, [onApplied])
 
-  const position = propPosition ?? savedPosition
+  const position = savedPosition
 
   const rules = useMemo(() => position ? evaluateDecisionRules(position) : [], [position])
   const stressTests = useMemo(() => position ? computeStressTests(position) : [], [position])
@@ -73,7 +72,7 @@ export default function PositionBriefing({ position: propPosition, onApplied }: 
     return (
       <div className="flex items-center justify-center h-64">
         <p className="font-serif text-[13px] text-ink-muted italic">
-          Enter your financial position in the sidebar to begin.
+          No financial data yet. Add a snapshot in Settings &gt; Capital to begin.
         </p>
       </div>
     )

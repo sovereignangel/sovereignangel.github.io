@@ -1248,83 +1248,82 @@ async function handleBuild(uid: string, text: string, chatId: number) {
   const adminDb = await getAdminDb()
 
   try {
-  const { num } = parseVentureNumber(text.trim())
-  const ventureDoc = await findVentureByNumberOrStage(adminDb, uid, num, 'prd_draft')
+    const { num } = parseVentureNumber(text.trim())
+    const ventureDoc = await findVentureByNumberOrStage(adminDb, uid, num, 'prd_draft')
 
-  if (!ventureDoc) {
-    await sendTelegramReply(chatId, num
-      ? `Venture #${num} not found.`
-      : 'No venture with a PRD ready to build.\n\nUse /venture to spec one first.')
-    return
-  }
+    if (!ventureDoc) {
+      await sendTelegramReply(chatId, num
+        ? `Venture #${num} not found.`
+        : 'No venture with a PRD ready to build.\n\nUse /venture to spec one first.')
+      return
+    }
 
-  const venture = ventureDoc.data()
-  const ventureId = ventureDoc.id
-  const spec = venture.spec
-  const vNum = venture.ventureNumber ? `#${venture.ventureNumber} ` : ''
+    const venture = ventureDoc.data()
+    const ventureId = ventureDoc.id
+    const spec = venture.spec
+    const vNum = venture.ventureNumber ? `#${venture.ventureNumber} ` : ''
 
-  if (!venture.prd) {
-    await sendTelegramReply(chatId, `${vNum}${spec.name} has no PRD yet.\n\nUse /feedback ${venture.ventureNumber || ''} <text> to generate one.`)
-    return
-  }
+    if (!venture.prd) {
+      await sendTelegramReply(chatId, `${vNum}${spec.name} has no PRD yet.\n\nUse /feedback ${venture.ventureNumber || ''} <text> to generate one.`)
+      return
+    }
 
-  if (venture.stage === 'building' || venture.stage === 'deployed') {
-    await sendTelegramReply(chatId, `${vNum}${spec.name} is already in "${venture.stage}" stage.`)
-    return
-  }
+    if (venture.stage === 'building' || venture.stage === 'deployed') {
+      await sendTelegramReply(chatId, `${vNum}${spec.name} is already in "${venture.stage}" stage.`)
+      return
+    }
 
-  // Mark as building
-  await ventureDoc.ref.update({
-    stage: 'building',
-    'build.status': 'generating',
-    'build.startedAt': new Date(),
-    updatedAt: new Date(),
-  })
-
-  await sendTelegramReply(chatId, `${vNum}Build started for ${spec.name}\n\nGenerating codebase... This may take a few minutes.`)
-
-  // Fire repository_dispatch to the builder repo (fire-and-forget)
-  const githubToken = process.env.GITHUB_TOKEN
-  const githubOwner = process.env.GITHUB_OWNER || 'sovereignangel'
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '')
-  const callbackUrl = `${baseUrl}/api/ventures/build/callback`
-
-  if (!githubToken) {
+    // Mark as building
     await ventureDoc.ref.update({
-      'build.status': 'failed',
-      'build.errorMessage': 'GITHUB_TOKEN not configured',
-      'build.completedAt': new Date(),
+      stage: 'building',
+      'build.status': 'generating',
+      'build.startedAt': new Date(),
       updatedAt: new Date(),
     })
-    await sendTelegramReply(chatId, 'Build failed: GITHUB_TOKEN not configured on server.')
-    return
-  }
 
-  const dispatchRes = await fetch(`https://api.github.com/repos/${githubOwner}/venture-builder/dispatches`, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${githubToken}`,
-      'Accept': 'application/vnd.github.v3+json',
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      event_type: 'build-venture',
-      client_payload: {
-        uid,
-        ventureId,
-        spec,
-        prd: venture.prd,
-        chatId,
-        callbackUrl,
+    await sendTelegramReply(chatId, `${vNum}Build started for ${spec.name}\n\nGenerating codebase... This may take a few minutes.`)
+
+    // Fire repository_dispatch to the builder repo (fire-and-forget)
+    const githubToken = process.env.GITHUB_TOKEN
+    const githubOwner = process.env.GITHUB_OWNER || 'sovereignangel'
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '')
+    const callbackUrl = `${baseUrl}/api/ventures/build/callback`
+
+    if (!githubToken) {
+      await ventureDoc.ref.update({
+        'build.status': 'failed',
+        'build.errorMessage': 'GITHUB_TOKEN not configured',
+        'build.completedAt': new Date(),
+        updatedAt: new Date(),
+      })
+      await sendTelegramReply(chatId, 'Build failed: GITHUB_TOKEN not configured on server.')
+      return
+    }
+
+    const dispatchRes = await fetch(`https://api.github.com/repos/${githubOwner}/venture-builder/dispatches`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${githubToken}`,
+        'Accept': 'application/vnd.github.v3+json',
+        'Content-Type': 'application/json',
       },
-    }),
-  })
+      body: JSON.stringify({
+        event_type: 'build-venture',
+        client_payload: {
+          uid,
+          ventureId,
+          spec,
+          prd: venture.prd,
+          chatId,
+          callbackUrl,
+        },
+      }),
+    })
 
-  if (!dispatchRes.ok) {
-    const errText = await dispatchRes.text()
-    throw new Error(`GitHub dispatch failed (${dispatchRes.status}): ${errText}`)
-  }
-
+    if (!dispatchRes.ok) {
+      const errText = await dispatchRes.text()
+      throw new Error(`GitHub dispatch failed (${dispatchRes.status}): ${errText}`)
+    }
   } catch (error) {
     console.error('Build error:', error)
     await sendTelegramReply(chatId, `Build failed: ${error instanceof Error ? error.message : 'Unknown error'}`)

@@ -1,23 +1,40 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect, useCallback } from 'react'
+import { useAuth } from '@/components/auth/AuthProvider'
+import { getFinancialHistory, getDebtItems } from '@/lib/firestore'
 import { currency } from '@/lib/formatters'
 import {
-  projectScenario, computeExpectedValue, compareScenarios,
+  buildCapitalPosition, projectScenario, computeExpectedValue, compareScenarios,
   simulateDebtPayoff, dailyCostOfCarry,
 } from '@/lib/capital-engine'
-import type { CapitalPosition, ScenarioParams, ScenarioProjection, DebtPayoffStrategy } from '@/lib/types'
-import { SCENARIO_COLORS } from '@/lib/types'
+import type { CapitalPosition, DebtPayoffStrategy } from '@/lib/types'
+import { DEFAULT_SCENARIOS, SCENARIO_COLORS } from '@/lib/types'
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine, ReferenceArea, Legend } from 'recharts'
 
-interface Props {
-  position: CapitalPosition | null
-  scenarios: ScenarioParams[]
-}
+export default function WarRoomView() {
+  const { user } = useAuth()
+  const [position, setPosition] = useState<CapitalPosition | null>(null)
+  const [loading, setLoading] = useState(true)
 
-export default function WarRoomView({ position, scenarios }: Props) {
-  const [extraPayment, setExtraPayment] = useState(1000)
-  const [strategy, setStrategy] = useState<DebtPayoffStrategy>('avalanche')
+  const loadData = useCallback(() => {
+    if (!user) return
+    setLoading(true)
+    Promise.all([
+      getFinancialHistory(user.uid, 12),
+      getDebtItems(user.uid),
+    ]).then(([snapshots, debts]) => {
+      if (snapshots.length > 0) {
+        const latest = snapshots[snapshots.length - 1]
+        setPosition(buildCapitalPosition(latest, debts))
+      }
+      setLoading(false)
+    }).catch(() => setLoading(false))
+  }, [user])
+
+  useEffect(() => { loadData() }, [loadData])
+
+  const scenarios = DEFAULT_SCENARIOS
 
   const projections = useMemo(() => {
     if (!position) return []
@@ -36,6 +53,13 @@ export default function WarRoomView({ position, scenarios }: Props) {
 
   const activeDebts = position?.debtItems.filter(d => d.isActive && d.balance > 0) ?? []
 
+  // Auto-compute extra payment from free cash flow
+  const extraPayment = useMemo(() => {
+    if (!position) return 0
+    const fcf = position.monthlyIncome - position.monthlyExpenses - position.totalMinimumPayments
+    return Math.max(0, Math.round(fcf / 100) * 100) // round to nearest $100
+  }, [position])
+
   const strategyResults = useMemo(() => {
     if (activeDebts.length === 0) return []
     return (['avalanche', 'snowball', 'minimum_only'] as DebtPayoffStrategy[]).map(s => {
@@ -44,13 +68,19 @@ export default function WarRoomView({ position, scenarios }: Props) {
     })
   }, [activeDebts, extraPayment])
 
-  const dailyCost = useMemo(() => dailyCostOfCarry(activeDebts), [activeDebts])
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <span className="font-mono text-[11px] text-ink-muted">Loading war room data...</span>
+      </div>
+    )
+  }
 
   if (!position) {
     return (
       <div className="flex items-center justify-center h-64">
         <p className="font-serif text-[13px] text-ink-muted italic">
-          Enter your financial position in the sidebar to begin.
+          No financial data yet. Add a snapshot in Settings &gt; Capital to begin.
         </p>
       </div>
     )
@@ -173,63 +203,43 @@ export default function WarRoomView({ position, scenarios }: Props) {
         </table>
       </div>
 
-      {/* C. Strategy Controls + Opportunity Cost side by side */}
+      {/* C. Debt Strategy (auto-computed) + Opportunity Cost side by side */}
       <div className="grid grid-cols-2 gap-1.5">
-        {/* Strategy Controls */}
+        {/* Debt Strategy — auto-computed from FCF */}
         <div className="bg-cream/80 border border-rule rounded-sm p-2">
-          <div className="flex items-center justify-between mb-1">
+          <div className="flex items-center justify-between mb-1 pb-0.5 border-b border-rule">
             <h4 className="font-serif text-[9px] font-semibold uppercase tracking-[0.5px] text-burgundy">
               Debt Strategy
             </h4>
-            <span className="font-mono text-[9px] font-bold text-ink">{currency(extraPayment)}/mo</span>
+            <span className="font-mono text-[8px] text-ink-muted">
+              FCF: {currency(extraPayment)}/mo extra
+            </span>
           </div>
-          <input
-            type="range"
-            min={0}
-            max={5000}
-            step={100}
-            value={extraPayment}
-            onChange={(e) => setExtraPayment(Number(e.target.value))}
-            className="w-full accent-burgundy h-1.5"
-          />
-          <div className="flex justify-between mt-0.5 mb-1.5">
-            <span className="font-mono text-[7px] text-ink-muted">$0</span>
-            <span className="font-mono text-[7px] text-ink-muted">$5,000</span>
-          </div>
-          <div className="flex gap-1 mb-1.5">
-            {(['avalanche', 'snowball'] as DebtPayoffStrategy[]).map(s => (
-              <button
-                key={s}
-                onClick={() => setStrategy(s)}
-                className={`flex-1 font-serif text-[8px] font-medium py-1 rounded-sm border transition-colors ${
-                  strategy === s
-                    ? 'bg-burgundy text-paper border-burgundy'
-                    : 'bg-transparent text-ink-muted border-rule hover:border-ink-faint'
-                }`}
-              >
-                {s === 'avalanche' ? 'Avalanche' : 'Snowball'}
-              </button>
-            ))}
-          </div>
-          {/* Strategy comparison row */}
-          <div className="grid grid-cols-3 gap-1">
-            {strategyResults.map(r => {
-              const label = r.strategy === 'avalanche' ? 'Aval.' : r.strategy === 'snowball' ? 'Snow.' : 'Min.'
-              return (
-                <div key={r.strategy} className="text-center">
-                  <p className="font-mono text-[7px] text-ink-muted uppercase">{label}</p>
-                  <p className="font-mono text-[9px] font-semibold text-ink">
-                    {r.debtFreeMonth !== null ? `${r.debtFreeMonth}mo` : '60+'}
-                  </p>
-                  <p className="font-mono text-[7px] text-red-ink">{currency(r.totalInterestPaid)}</p>
-                </div>
-              )
-            })}
-          </div>
-          {interestSaved > 0 && (
-            <p className="font-mono text-[7px] text-green-ink text-center mt-1">
-              Saves {currency(interestSaved)} vs minimums
-            </p>
+          {activeDebts.length > 0 ? (
+            <>
+              <div className="grid grid-cols-3 gap-1">
+                {strategyResults.map(r => {
+                  const label = r.strategy === 'avalanche' ? 'Avalanche' : r.strategy === 'snowball' ? 'Snowball' : 'Minimums'
+                  const isBest = r.strategy === 'avalanche'
+                  return (
+                    <div key={r.strategy} className={`text-center py-1 rounded-sm ${isBest ? 'bg-burgundy-bg border border-burgundy/20' : ''}`}>
+                      <p className={`font-mono text-[7px] uppercase ${isBest ? 'text-burgundy font-semibold' : 'text-ink-muted'}`}>{label}</p>
+                      <p className="font-mono text-[10px] font-semibold text-ink">
+                        {r.debtFreeMonth !== null ? `${r.debtFreeMonth}mo` : '60+'}
+                      </p>
+                      <p className="font-mono text-[7px] text-red-ink">{currency(r.totalInterestPaid)} int.</p>
+                    </div>
+                  )
+                })}
+              </div>
+              {interestSaved > 0 && (
+                <p className="font-mono text-[7px] text-green-ink text-center mt-1">
+                  Avalanche saves {currency(interestSaved)} vs minimums
+                </p>
+              )}
+            </>
+          ) : (
+            <p className="font-mono text-[9px] text-ink-muted text-center py-2">No active debts</p>
           )}
         </div>
 
@@ -238,31 +248,37 @@ export default function WarRoomView({ position, scenarios }: Props) {
           <h4 className="font-serif text-[9px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-1 pb-0.5 border-b border-rule">
             Opportunity Cost
           </h4>
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-rule-light">
-                {['Deploy to', 'Rate', 'Annual $'].map(h => (
-                  <th key={h} className="font-mono text-[7px] text-ink-muted text-right px-0.5 py-0.5 first:text-left uppercase">
-                    {h}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {opportunityCosts.map(o => (
-                <tr key={o.label} className="border-b border-rule-light">
-                  <td className="font-mono text-[8px] text-ink px-0.5 py-0.5">{o.label}</td>
-                  <td className="font-mono text-[8px] text-ink-muted text-right px-0.5 py-0.5">{o.apr.toFixed(1)}%</td>
-                  <td className="font-mono text-[8px] text-green-ink text-right px-0.5 py-0.5">+{currency(o.annual)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          <div className="mt-1.5 pt-1 border-t border-rule-light">
-            <p className="font-serif text-[8px] text-ink-muted italic">
-              Paying off 28.5% APR debt = guaranteed 28.5% return. No investment beats this risk-adjusted.
-            </p>
-          </div>
+          {opportunityCosts.length > 0 ? (
+            <>
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-rule-light">
+                    {['Deploy to', 'Rate', 'Annual $'].map(h => (
+                      <th key={h} className="font-mono text-[7px] text-ink-muted text-right px-0.5 py-0.5 first:text-left uppercase">
+                        {h}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {opportunityCosts.map(o => (
+                    <tr key={o.label} className="border-b border-rule-light">
+                      <td className="font-mono text-[8px] text-ink px-0.5 py-0.5">{o.label}</td>
+                      <td className="font-mono text-[8px] text-ink-muted text-right px-0.5 py-0.5">{o.apr.toFixed(1)}%</td>
+                      <td className="font-mono text-[8px] text-green-ink text-right px-0.5 py-0.5">+{currency(o.annual)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <div className="mt-1.5 pt-1 border-t border-rule-light">
+                <p className="font-serif text-[8px] text-ink-muted italic">
+                  Paying off high-APR debt = guaranteed return. No investment beats this risk-adjusted.
+                </p>
+              </div>
+            </>
+          ) : (
+            <p className="font-mono text-[9px] text-ink-muted text-center py-2">No opportunity cost data</p>
+          )}
         </div>
       </div>
     </div>

@@ -7,12 +7,9 @@ import VenturesPipeline from '@/components/thesis/ventures/VenturesPipeline'
 import VentureDetail from '@/components/thesis/ventures/VentureDetail'
 import VenturesIdeas from '@/components/thesis/ventures/VenturesIdeas'
 import VenturesDial from '@/components/thesis/ventures/VenturesDial'
-import CapitalDial from '@/components/thesis/capital/CapitalDial'
 import PositionBriefing from '@/components/thesis/capital/PositionBriefing'
 import WarRoomView from '@/components/thesis/capital/WarRoomView'
 import WeeklyPlanView from '@/components/thesis/weekly-plan/WeeklyPlanView'
-import type { CapitalPosition, ScenarioParams } from '@/lib/types'
-import { DEFAULT_SCENARIOS } from '@/lib/types'
 
 type OperateTab = 'plan' | 'execute' | 'ventures' | 'capital'
 type VenturesSubTab = 'pipeline' | 'ideas' | 'detail'
@@ -36,8 +33,6 @@ function OperateContent() {
 
   // Capital state
   const [capitalSubTab, setCapitalSubTab] = useState<CapitalSubTab>('position')
-  const [position, setPosition] = useState<CapitalPosition | null>(null)
-  const [scenarios, setScenarios] = useState<ScenarioParams[]>(DEFAULT_SCENARIOS)
   const [capitalRefreshKey, setCapitalRefreshKey] = useState(0)
 
   useEffect(() => {
@@ -128,44 +123,33 @@ function OperateContent() {
         )}
 
         {activeTab === 'capital' && (
-          <div className="h-full grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-2 min-h-0">
-            <div className="flex flex-col min-h-0">
-              <div className="flex gap-1 border-b border-rule shrink-0 mt-1">
-                {([
-                  { key: 'position' as const, label: 'Position' },
-                  { key: 'warroom' as const, label: 'War Room' },
-                ]).map(tab => (
-                  <button
-                    key={tab.key}
-                    onClick={() => setCapitalSubTab(tab.key)}
-                    className={`font-serif text-[11px] font-medium px-2 py-1 transition-colors ${
-                      capitalSubTab === tab.key
-                        ? 'text-burgundy font-semibold border-b-2 border-burgundy -mb-px'
-                        : 'text-ink-muted hover:text-ink'
-                    }`}
-                  >
-                    {tab.label}
-                  </button>
-                ))}
-              </div>
-              <div className="flex-1 overflow-y-auto">
-                {capitalSubTab === 'position' && (
-                  <PositionBriefing
-                    key={capitalRefreshKey}
-                    position={position}
-                    onApplied={() => setCapitalRefreshKey(k => k + 1)}
-                  />
-                )}
-                {capitalSubTab === 'warroom' && <WarRoomView position={position} scenarios={scenarios} />}
-              </div>
+          <div className="flex flex-col min-h-0">
+            <div className="flex gap-1 border-b border-rule shrink-0 mt-1">
+              {([
+                { key: 'position' as const, label: 'Position' },
+                { key: 'warroom' as const, label: 'War Room' },
+              ]).map(tab => (
+                <button
+                  key={tab.key}
+                  onClick={() => setCapitalSubTab(tab.key)}
+                  className={`font-serif text-[11px] font-medium px-2 py-1 transition-colors ${
+                    capitalSubTab === tab.key
+                      ? 'text-burgundy font-semibold border-b-2 border-burgundy -mb-px'
+                      : 'text-ink-muted hover:text-ink'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
             </div>
-            <div className="min-h-0 overflow-y-auto">
-              <CapitalDial
-                onPositionChange={setPosition}
-                onDebtsChange={() => {}}
-                scenarios={scenarios}
-                onScenariosChange={setScenarios}
-              />
+            <div className="flex-1 overflow-y-auto">
+              {capitalSubTab === 'position' && (
+                <PositionBriefing
+                  key={capitalRefreshKey}
+                  onApplied={() => setCapitalRefreshKey(k => k + 1)}
+                />
+              )}
+              {capitalSubTab === 'warroom' && <WarRoomView />}
             </div>
           </div>
         )}

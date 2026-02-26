@@ -3,61 +3,59 @@
 import { useState } from 'react'
 import PillarBriefCard from '@/components/thesis/intelligence/PillarBriefCard'
 import PillarResearchFeed from '@/components/thesis/intelligence/PillarResearchFeed'
-import QuickCapture from '@/components/thesis/intelligence/QuickCapture'
 import IntelligenceLibrary from '@/components/thesis/intelligence/IntelligenceLibrary'
 import type { ThesisPillarExtended } from '@/lib/types/pillar-brief'
 
-type TabType = ThesisPillarExtended | 'library'
-
-const TABS: Array<{ key: TabType; label: string }> = [
+const PILLARS: Array<{ key: ThesisPillarExtended; label: string }> = [
   { key: 'ai', label: 'AI' },
   { key: 'markets', label: 'Markets' },
   { key: 'mind', label: 'Mind' },
   { key: 'emergence', label: 'Emergence' },
-  { key: 'library', label: 'Library' },
 ]
 
 export default function IntelligencePage() {
-  const [activeTab, setActiveTab] = useState<TabType>('ai')
-  const isPillarTab = activeTab !== 'library'
+  const [activePillar, setActivePillar] = useState<ThesisPillarExtended>('ai')
+  const [showLibrary, setShowLibrary] = useState(false)
 
   return (
     <div className="h-full flex flex-col min-h-0">
-      {/* Tab Navigation */}
-      <div className="flex gap-1 border-b border-rule shrink-0">
-        {TABS.map((tab) => (
-          <button
-            key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
-            className={`font-serif text-[13px] font-medium px-3 py-1 transition-colors ${
-              activeTab === tab.key
-                ? 'text-burgundy font-semibold border-b-2 border-burgundy -mb-px'
-                : 'text-ink-muted hover:text-ink'
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
+      {/* Pillar Selector + Library Toggle */}
+      <div className="flex items-center justify-between border-b border-rule shrink-0 pb-1">
+        <div className="flex gap-1">
+          {PILLARS.map((p) => (
+            <button
+              key={p.key}
+              onClick={() => { setActivePillar(p.key); setShowLibrary(false) }}
+              className={`font-serif text-[13px] font-medium px-3 py-1 transition-colors ${
+                activePillar === p.key && !showLibrary
+                  ? 'text-burgundy font-semibold border-b-2 border-burgundy -mb-px'
+                  : 'text-ink-muted hover:text-ink'
+              }`}
+            >
+              {p.label}
+            </button>
+          ))}
+        </div>
+        <button
+          onClick={() => setShowLibrary(!showLibrary)}
+          className={`font-serif text-[11px] font-medium px-2 py-1 rounded-sm border transition-colors ${
+            showLibrary
+              ? 'bg-burgundy text-paper border-burgundy'
+              : 'bg-transparent text-ink-muted border-rule hover:border-ink-faint'
+          }`}
+        >
+          Library
+        </button>
       </div>
 
       {/* Content */}
-      <div className="flex-1 min-h-0 overflow-hidden">
-        {isPillarTab ? (
-          <div className="h-full grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-2">
-            {/* Main Panel: Brief + Research Feed */}
-            <div className="overflow-y-auto space-y-3 py-2">
-              <PillarBriefCard pillar={activeTab as ThesisPillarExtended} />
-              <PillarResearchFeed pillar={activeTab as ThesisPillarExtended} />
-            </div>
-
-            {/* Right Sidebar: Quick Capture */}
-            <div className="hidden lg:block overflow-y-auto py-2">
-              <QuickCapture />
-            </div>
-          </div>
+      <div className="flex-1 min-h-0 overflow-y-auto py-2">
+        {showLibrary ? (
+          <IntelligenceLibrary />
         ) : (
-          <div className="h-full py-2">
-            <IntelligenceLibrary />
+          <div className="space-y-3">
+            <PillarBriefCard pillar={activePillar} />
+            <PillarResearchFeed pillar={activePillar} />
           </div>
         )}
       </div>
