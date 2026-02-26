@@ -99,3 +99,48 @@ export function formatMorningBrief(brief: MorningBrief): string {
 
   return lines.join('\n')
 }
+
+/**
+ * Compact Telegram format: top 3-5 plays + link to full brief page.
+ * Replaces the full brief dump — keeps Telegram messages short and actionable.
+ */
+export function formatMorningBriefCompact(brief: MorningBrief, briefUrl: string): string {
+  const dateLabel = new Date(brief.date + 'T12:00:00').toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+  })
+
+  const arrow = TREND_ARROW[brief.rewardTrend.trend] || '→'
+  const yScore = brief.rewardTrend.yesterday != null ? brief.rewardTrend.yesterday.toFixed(1) : '—'
+
+  const lines: string[] = []
+
+  lines.push(`*MORNING BRIEF — ${dateLabel}*`)
+  lines.push(`${brief.energyState.mode} | Score ${yScore} ${arrow}`)
+  lines.push('')
+
+  // Top plays — the core of the compact message
+  if (brief.topPlays.length > 0) {
+    brief.topPlays.forEach((play, i) => {
+      lines.push(`${i + 1}. *${play.action}*`)
+      lines.push(`   ${play.reason}`)
+    })
+    lines.push('')
+  }
+
+  // One-line alerts
+  if (brief.staleContacts.length > 0) {
+    lines.push(`Reconnect: ${brief.staleContacts.map(c => c.name).join(', ')}`)
+  }
+  if (brief.pendingDecisions.length > 0) {
+    lines.push(`Decisions due: ${brief.pendingDecisions.map(d => `${d.title} (${d.daysUntilReview}d)`).join(', ')}`)
+  }
+  if (brief.staleContacts.length > 0 || brief.pendingDecisions.length > 0) {
+    lines.push('')
+  }
+
+  // Link to full brief
+  lines.push(`[Full brief →](${briefUrl})`)
+
+  return lines.join('\n')
+}

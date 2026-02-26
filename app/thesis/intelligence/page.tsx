@@ -1,72 +1,66 @@
 'use client'
 
-import { useState, useCallback } from 'react'
-import IntelligenceGauge from '@/components/thesis/intelligence/IntelligenceGauge'
-import IntelligenceDial from '@/components/thesis/intelligence/IntelligenceDial'
-import ExternalSignalInbox from '@/components/thesis/intelligence/ExternalSignalInbox'
-import KnowledgeArchitecture from '@/components/thesis/intelligence/KnowledgeArchitecture'
-import InsightsInbox from '@/components/thesis/intelligence/InsightsInbox'
-import NetworkView from '@/components/thesis/alpe-dhuez/NetworkView'
-import ConversationInbox from '@/components/thesis/intelligence/ConversationInbox'
+import { useState } from 'react'
+import PillarBriefCard from '@/components/thesis/intelligence/PillarBriefCard'
+import PillarResearchFeed from '@/components/thesis/intelligence/PillarResearchFeed'
+import QuickCapture from '@/components/thesis/intelligence/QuickCapture'
+import IntelligenceLibrary from '@/components/thesis/intelligence/IntelligenceLibrary'
+import type { ThesisPillarExtended } from '@/lib/types/pillar-brief'
 
-type TabType = 'feed' | 'signals' | 'network' | 'knowledge'
+type TabType = ThesisPillarExtended | 'library'
+
+const TABS: Array<{ key: TabType; label: string }> = [
+  { key: 'ai', label: 'AI' },
+  { key: 'markets', label: 'Markets' },
+  { key: 'mind', label: 'Mind' },
+  { key: 'emergence', label: 'Emergence' },
+  { key: 'library', label: 'Library' },
+]
 
 export default function IntelligencePage() {
-  const [refreshKey, setRefreshKey] = useState(0)
-  const [activeTab, setActiveTab] = useState<TabType>('feed')
-  const onSignalSaved = useCallback(() => setRefreshKey(k => k + 1), [])
+  const [activeTab, setActiveTab] = useState<TabType>('ai')
+  const isPillarTab = activeTab !== 'library'
 
   return (
-    <div className={`h-full grid grid-cols-1 gap-2 min-h-0 ${activeTab === 'signals' ? 'lg:grid-cols-[1fr_380px]' : ''}`}>
-      {/* Left Panel: Tabbed Sections */}
-      <div className="flex flex-col min-h-0">
-        {/* Sub-tab Navigation */}
-        <div className="flex gap-1 border-b border-rule shrink-0">
-          {([
-            { key: 'feed' as const, label: 'Feed' },
-            { key: 'signals' as const, label: 'Signals' },
-            { key: 'network' as const, label: 'Network' },
-            { key: 'knowledge' as const, label: 'Knowledge' },
-          ]).map((tab) => (
-            <button
-              key={tab.key}
-              onClick={() => setActiveTab(tab.key)}
-              className={`font-serif text-[13px] font-medium px-3 py-1 transition-colors ${
-                activeTab === tab.key
-                  ? 'text-burgundy font-semibold border-b-2 border-burgundy -mb-px'
-                  : 'text-ink-muted hover:text-ink'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
-
-        {/* Tab Content */}
-        <div className="flex-1 overflow-y-auto">
-          {activeTab === 'feed' && <ExternalSignalInbox onSignalCreated={onSignalSaved} />}
-          {activeTab === 'signals' && <IntelligenceGauge refreshKey={refreshKey} />}
-          {activeTab === 'network' && (
-            <div className="space-y-3">
-              <NetworkView />
-              <ConversationInbox />
-            </div>
-          )}
-          {activeTab === 'knowledge' && (
-            <div className="space-y-3">
-              <KnowledgeArchitecture />
-              <InsightsInbox />
-            </div>
-          )}
-        </div>
+    <div className="h-full flex flex-col min-h-0">
+      {/* Tab Navigation */}
+      <div className="flex gap-1 border-b border-rule shrink-0">
+        {TABS.map((tab) => (
+          <button
+            key={tab.key}
+            onClick={() => setActiveTab(tab.key)}
+            className={`font-serif text-[13px] font-medium px-3 py-1 transition-colors ${
+              activeTab === tab.key
+                ? 'text-burgundy font-semibold border-b-2 border-burgundy -mb-px'
+                : 'text-ink-muted hover:text-ink'
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
       </div>
 
-      {/* Right Sidebar: only show on Signals tab at lg+ width */}
-      {activeTab === 'signals' && (
-        <div className="hidden lg:block min-h-0 overflow-y-auto">
-          <IntelligenceDial onSignalSaved={onSignalSaved} />
-        </div>
-      )}
+      {/* Content */}
+      <div className="flex-1 min-h-0 overflow-hidden">
+        {isPillarTab ? (
+          <div className="h-full grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-2">
+            {/* Main Panel: Brief + Research Feed */}
+            <div className="overflow-y-auto space-y-3 py-2">
+              <PillarBriefCard pillar={activeTab as ThesisPillarExtended} />
+              <PillarResearchFeed pillar={activeTab as ThesisPillarExtended} />
+            </div>
+
+            {/* Right Sidebar: Quick Capture */}
+            <div className="hidden lg:block overflow-y-auto py-2">
+              <QuickCapture />
+            </div>
+          </div>
+        ) : (
+          <div className="h-full py-2">
+            <IntelligenceLibrary />
+          </div>
+        )}
+      </div>
     </div>
   )
 }

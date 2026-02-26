@@ -6,8 +6,9 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
+import { randomBytes } from 'crypto'
 import { generateMorningBrief } from '@/lib/morning-brief'
-import { formatMorningBrief } from '@/lib/morning-brief-formatter'
+import { formatMorningBriefCompact } from '@/lib/morning-brief-formatter'
 import { sendTelegramMessage } from '@/lib/telegram'
 
 export const runtime = 'nodejs'
@@ -18,12 +19,25 @@ async function getAdminDb() {
   return adminDb
 }
 
+function generatePublicToken(): string {
+  return randomBytes(16).toString('hex')
+}
+
+function getBriefUrl(date: string, token: string): string {
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || process.env.VERCEL_URL
+    ? `https://${process.env.VERCEL_URL}`
+    : 'http://localhost:3000'
+  return `${baseUrl}/brief/${date}?token=${token}`
+}
+
 async function generateAndSend(uid: string, chatId: string | number): Promise<{ success: boolean; error?: string }> {
   try {
     const brief = await generateMorningBrief(uid)
+    const publicToken = generatePublicToken()
+    const briefUrl = getBriefUrl(brief.date, publicToken)
 
-    // Format and send via Telegram
-    const formatted = formatMorningBrief(brief)
+    // Format compact Telegram message with link to full brief
+    const formatted = formatMorningBriefCompact(brief, briefUrl)
     const messageId = await sendTelegramMessage(chatId, formatted)
 
     // Save to daily_reports for dashboard access (include message_id for reply-based feedback)
@@ -32,6 +46,7 @@ async function generateAndSend(uid: string, chatId: string | number): Promise<{ 
       type: 'morning_brief',
       brief,
       formatted,
+      publicToken,
       generatedAt: new Date(),
       ...(messageId ? { telegramMessageId: messageId, telegramChatId: chatId } : {}),
     }, { merge: true })
@@ -117,7 +132,9 @@ export async function POST(request: NextRequest) {
     }
 
     const brief = await generateMorningBrief(uid)
-    const formatted = formatMorningBrief(brief)
+    const publicToken = generatePublicToken()
+    const briefUrl = getBriefUrl(brief.date, publicToken)
+    const formatted = formatMorningBriefCompact(brief, briefUrl)
 
     // Send via Telegram if chat ID available
     let messageId: number | null = null
@@ -131,11 +148,12 @@ export async function POST(request: NextRequest) {
       type: 'morning_brief',
       brief,
       formatted,
+      publicToken,
       generatedAt: new Date(),
       ...(messageId ? { telegramMessageId: messageId, telegramChatId: resolvedChatId } : {}),
     }, { merge: true })
 
-    return NextResponse.json({ success: true, brief, formatted })
+    return NextResponse.json({ success: true, brief, formatted, briefUrl })
   } catch (error) {
     console.error('[morning-brief] Manual trigger failed:', error)
     return NextResponse.json(
