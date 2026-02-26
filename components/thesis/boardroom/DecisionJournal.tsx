@@ -145,32 +145,32 @@ export default function DecisionJournal() {
                 {isExpanded && (
                   <div className="border-t border-rule-light px-2 pb-1.5 pt-1 space-y-0.5">
                     {d.hypothesis && (
-                      <p className="font-serif text-[9px] text-ink-muted">
-                        <span className="text-ink-faint uppercase tracking-[0.5px]">H: </span>{d.hypothesis}
+                      <p className="font-serif text-[10px] text-ink">
+                        <span className="text-ink-muted uppercase tracking-[0.5px]">H: </span>{d.hypothesis}
                       </p>
                     )}
-                    <p className="font-serif text-[9px] text-ink-muted">
-                      <span className="text-ink-faint uppercase tracking-[0.5px]">Chose: </span>{d.chosenOption}
+                    <p className="font-serif text-[10px] text-ink">
+                      <span className="text-ink-muted uppercase tracking-[0.5px]">Chose: </span>{d.chosenOption}
                     </p>
                     {d.reasoning && (
-                      <p className="font-serif text-[9px] text-ink-muted">
-                        <span className="text-ink-faint uppercase tracking-[0.5px]">Why: </span>{d.reasoning}
+                      <p className="font-serif text-[10px] text-ink">
+                        <span className="text-ink-muted uppercase tracking-[0.5px]">Why: </span>{d.reasoning}
                       </p>
                     )}
                     {d.killCriteria.length > 0 && (
-                      <p className="font-serif text-[9px] text-red-ink">
-                        <span className="text-ink-faint uppercase tracking-[0.5px]">Kill: </span>
+                      <p className="font-serif text-[10px] text-red-ink">
+                        <span className="text-ink-muted uppercase tracking-[0.5px]">Kill: </span>
                         {d.killCriteria.join(' · ')}
                       </p>
                     )}
                     {d.premortem && (
-                      <p className="font-serif text-[9px] text-ink-muted">
-                        <span className="text-ink-faint uppercase tracking-[0.5px]">Pre-mortem: </span>{d.premortem}
+                      <p className="font-serif text-[10px] text-ink">
+                        <span className="text-ink-muted uppercase tracking-[0.5px]">Pre-mortem: </span>{d.premortem}
                       </p>
                     )}
                     {d.antithesis && (
                       <div className="bg-burgundy-bg border-l-2 border-burgundy rounded-sm px-1.5 py-1 mt-0.5">
-                        <p className="font-serif text-[9px] text-ink-muted">{d.antithesis}</p>
+                        <p className="font-serif text-[10px] text-ink">{d.antithesis}</p>
                         {d.antithesisConfidence != null && (
                           <span className="font-mono text-[7px] text-burgundy">counter {d.antithesisConfidence}%</span>
                         )}

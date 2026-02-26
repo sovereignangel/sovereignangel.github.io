@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * X/Twitter List ETL
  * Fetches recent tweets from configured Twitter lists
@@ -11,6 +10,9 @@
 import { doc, setDoc, collection, serverTimestamp } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
 import { scoreArticleRelevance } from '@/lib/ai-extraction'
+
+const DEFAULT_THESIS = 'How does intelligence structure itself to expand agency over time? Computational Cognitive Science × Reinforcement Learning. Portfolio construction, venture building, and complex systems.'
+const ALL_PILLARS = ['ai', 'markets', 'mind', 'emergence']
 
 const TWITTER_API = 'https://api.twitter.com/2'
 
@@ -118,11 +120,12 @@ export async function syncTwitterLists(uid: string, lists?: typeof DEFAULT_LISTS
 
     for (const tweet of highEngagement.slice(0, 5)) {
       try {
-        const relevance = await scoreArticleRelevance({
-          title: `@${tweet.authorUsername}: ${tweet.text.slice(0, 80)}`,
-          content: tweet.text,
-          url: tweet.url,
-        })
+        const relevance = await scoreArticleRelevance(
+          `@${tweet.authorUsername}: ${tweet.text.slice(0, 80)}`,
+          tweet.text,
+          DEFAULT_THESIS,
+          ALL_PILLARS
+        )
 
         if (relevance.relevanceScore < 0.5) continue
 

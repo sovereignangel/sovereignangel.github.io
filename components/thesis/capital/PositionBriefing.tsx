@@ -1,38 +1,54 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useAuth } from '@/components/auth/AuthProvider'
 import { getFinancialHistory, getDebtItems } from '@/lib/firestore'
 import { currency } from '@/lib/formatters'
 import {
   buildCapitalPosition, generateAlerts, computeZeroDate,
   computeStressTests, evaluateDecisionRules, dailyCostOfCarry,
+  computeCorporateMetrics,
 } from '@/lib/capital-engine'
-import type { CapitalPosition, CapitalAlert, DecisionRule, StressScenario, FinancialSnapshot } from '@/lib/types'
+import CapitalCommand from './CapitalCommand'
+import CorporateMetrics from './CorporateMetrics'
+import type { CapitalPosition, CapitalAlert, DecisionRule, StressScenario, FinancialSnapshot, DebtItem } from '@/lib/types'
 
 interface Props {
   position: CapitalPosition | null
+  onApplied?: () => void
 }
 
-export default function PositionBriefing({ position: propPosition }: Props) {
+export default function PositionBriefing({ position: propPosition, onApplied }: Props) {
   const { user } = useAuth()
   const [savedPosition, setSavedPosition] = useState<CapitalPosition | null>(null)
+  const [savedDebts, setSavedDebts] = useState<DebtItem[]>([])
+  const [savedSnapshot, setSavedSnapshot] = useState<FinancialSnapshot | null>(null)
   const [loading, setLoading] = useState(true)
+  const [refreshKey, setRefreshKey] = useState(0)
 
-  useEffect(() => {
+  const loadData = useCallback(() => {
     if (!user) return
     setLoading(true)
     Promise.all([
       getFinancialHistory(user.uid, 12),
       getDebtItems(user.uid),
     ]).then(([snapshots, debts]) => {
+      setSavedDebts(debts)
       if (snapshots.length > 0) {
         const latest = snapshots[snapshots.length - 1]
+        setSavedSnapshot(latest)
         setSavedPosition(buildCapitalPosition(latest, debts))
       }
       setLoading(false)
     }).catch(() => setLoading(false))
   }, [user])
+
+  useEffect(() => { loadData() }, [loadData, refreshKey])
+
+  const handleApplied = useCallback(() => {
+    setRefreshKey(k => k + 1)
+    onApplied?.()
+  }, [onApplied])
 
   const position = propPosition ?? savedPosition
 
@@ -40,6 +56,10 @@ export default function PositionBriefing({ position: propPosition }: Props) {
   const stressTests = useMemo(() => position ? computeStressTests(position) : [], [position])
   const alerts = useMemo(() => position ? generateAlerts(position) : [], [position])
   const zeroDate = useMemo(() => position ? computeZeroDate(position) : null, [position])
+  const corpMetrics = useMemo(() => position ? computeCorporateMetrics(position) : null, [position])
+
+  // Determine current month for commands
+  const currentMonth = savedSnapshot?.month || new Date().toISOString().slice(0, 7)
 
   if (loading) {
     return (
@@ -75,6 +95,15 @@ export default function PositionBriefing({ position: propPosition }: Props) {
 
   return (
     <div className="p-1 space-y-1.5">
+      {/* Capital Command — natural language input */}
+      <CapitalCommand
+        position={position}
+        debts={savedDebts}
+        snapshot={savedSnapshot || {}}
+        month={currentMonth}
+        onApplied={handleApplied}
+      />
+
       {/* ROW 1: Position Strip — 5 key metrics */}
       <div className="grid grid-cols-5 gap-1.5">
         <Metric
@@ -103,6 +132,9 @@ export default function PositionBriefing({ position: propPosition }: Props) {
           color={position.runwayMonths < 6 ? 'text-red-ink' : 'text-amber-ink'}
         />
       </div>
+
+      {/* ROW 1.5: Corporate Metrics */}
+      {corpMetrics && <CorporateMetrics metrics={corpMetrics} />}
 
       {/* ROW 2: Decision Rules — pass/fail checks */}
       <div className="flex gap-1.5 px-0.5">

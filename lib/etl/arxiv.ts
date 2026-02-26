@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * ArXiv Research Paper ETL
  * Fetches recent papers from ArXiv API based on configured search queries
@@ -11,6 +10,9 @@ import { scoreArticleRelevance } from '@/lib/ai-extraction'
 
 const ARXIV_API = 'https://export.arxiv.org/api/query'
 
+const DEFAULT_THESIS = 'How does intelligence structure itself to expand agency over time? Computational Cognitive Science × Reinforcement Learning. Portfolio construction, venture building, and complex systems.'
+const ALL_PILLARS = ['ai', 'markets', 'mind', 'emergence']
+
 /**
  * Default search queries aligned with thesis pillars
  */
@@ -19,6 +21,8 @@ const DEFAULT_QUERIES = [
   { query: 'cat:cs.LG+AND+ti:transformer', pillar: 'ai' },
   { query: 'cat:cs.CL+AND+ti:language+model', pillar: 'ai' },
   { query: 'cat:q-fin.PM+AND+ti:portfolio', pillar: 'markets' },
+  { query: 'cat:nlin.AO+AND+ti:self+organization', pillar: 'emergence' },
+  { query: 'cat:physics.soc-ph+AND+ti:complex+systems', pillar: 'emergence' },
 ]
 
 interface ArxivPaper {
@@ -107,11 +111,12 @@ export async function syncArxivPapers(uid: string, queries?: typeof DEFAULT_QUER
 
     for (const paper of papers) {
       try {
-        const relevance = await scoreArticleRelevance({
-          title: paper.title,
-          content: paper.summary,
-          url: paper.url,
-        })
+        const relevance = await scoreArticleRelevance(
+          paper.title,
+          paper.summary,
+          DEFAULT_THESIS,
+          ALL_PILLARS
+        )
 
         if (relevance.relevanceScore < 0.5) continue
 

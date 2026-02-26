@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * SEC EDGAR ETL
  * Fetches recent 10-K and 10-Q filings from tracked companies
@@ -9,6 +8,8 @@
 import { doc, setDoc, collection, serverTimestamp } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
 import { scoreArticleRelevance } from '@/lib/ai-extraction'
+
+const DEFAULT_THESIS = 'How does intelligence structure itself to expand agency over time? Portfolio construction, capital markets, venture building, and complex systems.'
 
 const EDGAR_SEARCH_URL = 'https://efts.sec.gov/LATEST/search-index'
 const EDGAR_FILING_URL = 'https://www.sec.gov/cgi-bin/browse-edgar'
@@ -87,11 +88,12 @@ export async function syncEdgarFilings(uid: string, companies?: typeof DEFAULT_C
     for (const filing of filings) {
       try {
         // Score relevance
-        const relevance = await scoreArticleRelevance({
-          title: `${filing.companyName} ${filing.formType}`,
-          content: `${filing.companyName} filed a ${filing.formType} report with the SEC on ${filing.filedAt}. This is a ${filing.formType === '10-K' ? 'annual' : 'quarterly'} financial report.`,
-          url: filing.reportUrl,
-        })
+        const relevance = await scoreArticleRelevance(
+          `${filing.companyName} ${filing.formType}`,
+          `${filing.companyName} filed a ${filing.formType} report with the SEC on ${filing.filedAt}. This is a ${filing.formType === '10-K' ? 'annual' : 'quarterly'} financial report.`,
+          DEFAULT_THESIS,
+          ['markets']
+        )
 
         if (relevance.relevanceScore < 0.5) continue
 

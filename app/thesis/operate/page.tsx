@@ -38,6 +38,7 @@ function OperateContent() {
   const [capitalSubTab, setCapitalSubTab] = useState<CapitalSubTab>('position')
   const [position, setPosition] = useState<CapitalPosition | null>(null)
   const [scenarios, setScenarios] = useState<ScenarioParams[]>(DEFAULT_SCENARIOS)
+  const [capitalRefreshKey, setCapitalRefreshKey] = useState(0)
 
   useEffect(() => {
     if (ventureId) {
@@ -148,7 +149,13 @@ function OperateContent() {
                 ))}
               </div>
               <div className="flex-1 overflow-y-auto">
-                {capitalSubTab === 'position' && <PositionBriefing position={position} />}
+                {capitalSubTab === 'position' && (
+                  <PositionBriefing
+                    key={capitalRefreshKey}
+                    position={position}
+                    onApplied={() => setCapitalRefreshKey(k => k + 1)}
+                  />
+                )}
                 {capitalSubTab === 'warroom' && <WarRoomView position={position} scenarios={scenarios} />}
               </div>
             </div>

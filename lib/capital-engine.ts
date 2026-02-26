@@ -4,6 +4,7 @@ import type {
   AllocationTarget, FreedCascadeStep, DeathSpiralMonth,
   DecisionRule, StressScenario,
   IncomeBreakdown, ExpenseBreakdown,
+  CorporateMetrics,
 } from './types'
 
 // ─── HELPERS ────────────────────────────────────────────────────────
@@ -735,4 +736,30 @@ export function evaluateDecisionRules(position: CapitalPosition): DecisionRule[]
       threshold: '< $3/day',
     },
   ]
+}
+
+// ─── CORPORATE METRICS ──────────────────────────────────────────────
+
+export function computeCorporateMetrics(position: CapitalPosition): CorporateMetrics {
+  const annualIncome = position.monthlyIncome * 12
+  const monthlyDebtService = position.totalMinimumPayments + position.monthlyInterestCost
+  const freeCashFlow = position.monthlyIncome - position.monthlyExpenses - position.totalMinimumPayments
+
+  return {
+    debtToIncomeRatio: annualIncome > 0
+      ? position.totalDebt / annualIncome
+      : null,
+    debtServiceCoverage: monthlyDebtService > 0
+      ? position.monthlyIncome / monthlyDebtService
+      : null,
+    operatingMargin: position.monthlyIncome > 0
+      ? (freeCashFlow / position.monthlyIncome) * 100
+      : null,
+    currentRatio: position.monthlyExpenses > 0
+      ? position.liquidAssets / position.monthlyExpenses
+      : null,
+    leverageRatio: position.totalAssets > 0
+      ? position.totalDebt / position.totalAssets
+      : null,
+  }
 }

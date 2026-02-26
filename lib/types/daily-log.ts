@@ -65,6 +65,9 @@ export interface DailyLog {
   psyCapResilience?: number
   psyCapOptimism?: number
   journalEntry?: string
+  // Plan alignment tracking
+  intentAligned?: boolean          // true = aligned with plan, false = deviating
+  deviationReason?: string         // required when intentAligned === false
   rewardScore: RewardScore | null
   createdAt: Timestamp
   updatedAt: Timestamp

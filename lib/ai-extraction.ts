@@ -1,5 +1,5 @@
 import { GoogleGenerativeAI } from '@google/generative-ai'
-import type { InsightType, ThesisPillar, NervousSystemState, BodyFelt, TrainingType, DecisionDomain, PredictionDomain, VentureCategory, VentureSpec, VenturePRD, VenturePRDPriority, VentureMemo, VentureMemoMetric, MarketSizeRow, BusinessModelRow, GTMPhase, FinancialProjectionRow, UnitEconomicsRow, UseOfFundsRow, MilestoneRow } from './types'
+import type { InsightType, ThesisPillar, NervousSystemState, BodyFelt, TrainingType, DecisionDomain, PredictionDomain, VentureCategory, VentureSpec, VenturePRD, VenturePRDPriority, VentureMemo, VentureMemoMetric, MarketSizeRow, BusinessModelRow, GTMPhase, FinancialProjectionRow, UnitEconomicsRow, UseOfFundsRow, MilestoneRow, DebtItem, FinancialSnapshot, ParsedCapitalCommand, CapitalOperationType } from './types'
 import { callLLM } from './llm'
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '')
@@ -1682,5 +1682,157 @@ Respond in JSON:
   } catch (error) {
     console.error('Error sharpening belief:', error)
     return { refined: '', reasoning: '' }
+  }
+}
+
+// ─── CAPITAL COMMAND PARSING ──────────────────────────────────────────
+
+const EMPTY_CAPITAL_COMMAND: ParsedCapitalCommand = {
+  operations: [],
+  summary: '',
+  netWorthDelta: 0,
+  totalDebtDelta: 0,
+  totalCashDelta: 0,
+}
+
+export async function parseCapitalCommand(
+  command: string,
+  snapshot: Partial<FinancialSnapshot>,
+  debts: DebtItem[]
+): Promise<ParsedCapitalCommand> {
+  const activeDebts = debts.filter(d => d.isActive && d.balance > 0)
+  const debtList = activeDebts.length > 0
+    ? activeDebts.map((d, i) => `${i + 1}. "${d.name}" — $${d.balance.toFixed(2)} balance (${(d.apr * 100).toFixed(1)}% APR, $${d.minimumPayment}/mo min)`).join('\n')
+    : 'No active debts.'
+
+  const totalAssets = (snapshot.cashSavings || 0) + (snapshot.investments || 0) + (snapshot.crypto || 0) +
+    (snapshot.realEstate || 0) + (snapshot.startupEquity || 0) + (snapshot.otherAssets || 0)
+  const totalDebt = snapshot.totalDebt || 0
+  const netWorth = totalAssets - totalDebt
+
+  const prompt = `You are a personal finance operations parser. Given a natural language command about personal finances, extract structured operations that modify the user's financial position.
+
+CURRENT FINANCIAL STATE:
+- Cash/Savings: $${(snapshot.cashSavings || 0).toFixed(2)}
+- Investments: $${(snapshot.investments || 0).toFixed(2)}
+- Crypto: $${(snapshot.crypto || 0).toFixed(2)}
+- Total Assets: $${totalAssets.toFixed(2)}
+- Total Debt: $${totalDebt.toFixed(2)}
+- Net Worth: $${netWorth.toFixed(2)}
+- Monthly Income: $${(snapshot.monthlyIncome || 0).toFixed(2)}
+- Monthly Expenses: $${(snapshot.monthlyExpenses || 0).toFixed(2)}
+
+CURRENT DEBT ITEMS:
+${debtList}
+
+USER COMMAND:
+"${command}"
+
+RULES:
+1. Parse the command into one or more operations
+2. Each operation modifies specific financial fields
+3. For debt payments: reduce the specific debt balance AND the snapshot totalDebt by the same amount
+4. If income is received and allocated directly to debt, cash does NOT increase — it flows through to debt payment
+5. If income is received and kept, increase cashSavings
+6. If payment amount exceeds a debt's balance, cap at the balance. Route remaining to cashSavings
+7. Match debt names by fuzzy match (e.g., "chase sapphire" matches "Chase Sapphire")
+8. Parse amounts: "2.1k" = 2100, "500" = 500, "$3,000" = 3000
+9. NEVER hallucinate debts not in the current list
+10. For asset transfers (e.g., "moved 2k from crypto to cash"), decrease one and increase the other
+
+EXAMPLES:
+- "received 2.1k from delta, allocate to chase sapphire" → debt_payment on Chase Sapphire for $2,100 (or capped at balance)
+- "paid 500 to apple card" → debt_payment on Apple Card for $500
+- "got 3k freelance payment" → income_received, cashSavings +$3,000
+- "transferred 2k from crypto to cash" → asset_transfer, crypto -$2,000, cashSavings +$2,000
+- "spent 800 on flights" → expense, cashSavings -$800
+
+Return ONLY valid JSON (no markdown, no code blocks):
+{
+  "operations": [
+    {
+      "type": "debt_payment",
+      "description": "Short description of what happened",
+      "debtName": "Exact name from debt list (or null)",
+      "amount": 2100,
+      "fieldChanges": [
+        {
+          "target": "debt",
+          "field": "balance",
+          "debtName": "Chase Sapphire",
+          "before": 6000,
+          "after": 3900,
+          "label": "Chase Sapphire balance"
+        },
+        {
+          "target": "snapshot",
+          "field": "totalDebt",
+          "before": 25384,
+          "after": 23284,
+          "label": "Total Debt"
+        }
+      ]
+    }
+  ],
+  "summary": "One sentence describing all changes",
+  "netWorthDelta": 2100,
+  "totalDebtDelta": -2100,
+  "totalCashDelta": 0
+}`
+
+  try {
+    const text = await callLLM(prompt)
+
+    const cleanedText = text
+      .replace(/```json\n?/g, '')
+      .replace(/```\n?/g, '')
+      .trim()
+
+    const parsed = JSON.parse(cleanedText)
+
+    const validTypes: CapitalOperationType[] = [
+      'debt_payment', 'income_received', 'expense', 'asset_transfer', 'snapshot_update'
+    ]
+
+    // Validate and sanitize operations
+    const operations = (parsed.operations || []).map((op: Record<string, unknown>) => {
+      const type = validTypes.includes(op.type as CapitalOperationType)
+        ? (op.type as CapitalOperationType)
+        : 'snapshot_update'
+
+      const fieldChanges = (Array.isArray(op.fieldChanges) ? op.fieldChanges : []).map(
+        (fc: Record<string, unknown>) => {
+          const before = typeof fc.before === 'number' ? fc.before : 0
+          const after = typeof fc.after === 'number' ? Math.max(0, fc.after) : 0
+          return {
+            target: fc.target === 'debt' ? 'debt' as const : 'snapshot' as const,
+            field: String(fc.field || ''),
+            debtName: fc.debtName ? String(fc.debtName) : undefined,
+            before,
+            after,
+            label: String(fc.label || ''),
+          }
+        }
+      )
+
+      return {
+        type,
+        description: String(op.description || ''),
+        debtName: op.debtName ? String(op.debtName) : undefined,
+        amount: typeof op.amount === 'number' ? Math.abs(op.amount) : 0,
+        fieldChanges,
+      }
+    })
+
+    return {
+      operations,
+      summary: String(parsed.summary || ''),
+      netWorthDelta: typeof parsed.netWorthDelta === 'number' ? parsed.netWorthDelta : 0,
+      totalDebtDelta: typeof parsed.totalDebtDelta === 'number' ? parsed.totalDebtDelta : 0,
+      totalCashDelta: typeof parsed.totalCashDelta === 'number' ? parsed.totalCashDelta : 0,
+    }
+  } catch (error) {
+    console.error('Error parsing capital command:', error)
+    return EMPTY_CAPITAL_COMMAND
   }
 }
