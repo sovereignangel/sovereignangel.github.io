@@ -53,6 +53,9 @@ export async function POST(req: NextRequest) {
       await ventureRef.update({
         'build.status': 'failed',
         'build.errorMessage': errorMessage || 'Unknown build error',
+        'build.repoUrl': repoUrl || null,
+        'build.repoName': repoName || null,
+        'build.filesGenerated': filesGenerated || null,
         'build.completedAt': new Date(),
         updatedAt: new Date(),
       })
