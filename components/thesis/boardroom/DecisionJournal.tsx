@@ -107,118 +107,98 @@ export default function DecisionJournal() {
           </p>
         </div>
       ) : (
-        <div className="max-h-[320px] overflow-y-auto space-y-1.5 pr-1">
+        <div className="max-h-[320px] overflow-y-auto space-y-1 pr-1">
           {decisions.map((d) => {
             const isExpanded = expandedId === d.id
             return (
-              <div key={d.id} className="border border-rule rounded-sm bg-white">
+              <div key={d.id} className="border border-rule rounded-sm bg-white relative group">
+                {/* Delete X — hover */}
+                <button
+                  onClick={(e) => { e.stopPropagation(); d.id && remove(d.id) }}
+                  className="absolute top-1 right-1 w-4 h-4 flex items-center justify-center font-mono text-[10px] text-ink-faint hover:text-red-ink opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                  title="Delete decision"
+                >
+                  ×
+                </button>
                 {/* Compact Row */}
                 <button
                   onClick={() => setExpandedId(isExpanded ? null : d.id!)}
-                  className="w-full flex items-center gap-2 p-2 text-left hover:bg-cream/50 transition-colors"
+                  className="w-full flex items-center gap-1.5 px-2 py-1 pr-6 text-left hover:bg-cream/50 transition-colors"
                 >
-                  <span className={`font-mono text-[8px] uppercase px-1.5 py-0.5 rounded-sm border ${STATUS_COLORS[d.status]}`}>
+                  <span className={`font-mono text-[7px] uppercase px-1 py-0.5 rounded-sm border shrink-0 ${STATUS_COLORS[d.status]}`}>
                     {d.status.replace('_', ' ')}
                   </span>
-                  <span className="font-serif text-[11px] font-medium text-ink flex-1 truncate">
+                  <span className="font-serif text-[10px] font-medium text-ink flex-1 truncate">
                     {d.title}
                   </span>
-                  <span className="font-mono text-[8px] text-ink-faint uppercase">
-                    {DOMAIN_LABELS[d.domain]}
-                  </span>
-                  <span className={`font-mono text-[10px] font-semibold ${
+                  <span className={`font-mono text-[9px] font-semibold shrink-0 ${
                     d.confidenceLevel >= 70 ? 'text-green-ink' : d.confidenceLevel >= 40 ? 'text-amber-ink' : 'text-red-ink'
                   }`}>
                     {d.confidenceLevel}%
                   </span>
-                  <span className="font-mono text-[8px] text-ink-faint">
-                    {d.decidedAt}
+                  <span className="font-mono text-[7px] text-ink-faint shrink-0">
+                    {DOMAIN_LABELS[d.domain]}
                   </span>
                 </button>
 
-                {/* Expanded Detail */}
+                {/* Expanded Detail — compact inline layout */}
                 {isExpanded && (
-                  <div className="border-t border-rule-light p-2 space-y-1.5">
-                    <div>
-                      <span className="font-serif text-[9px] text-ink-muted uppercase">Hypothesis</span>
-                      <p className="font-serif text-[10px] text-ink mt-0.5">{d.hypothesis}</p>
-                    </div>
-                    <div>
-                      <span className="font-serif text-[9px] text-ink-muted uppercase">Chosen</span>
-                      <p className="font-serif text-[10px] text-ink mt-0.5">{d.chosenOption}</p>
-                    </div>
-                    <div>
-                      <span className="font-serif text-[9px] text-ink-muted uppercase">Reasoning</span>
-                      <p className="font-serif text-[10px] text-ink mt-0.5">{d.reasoning}</p>
-                    </div>
+                  <div className="border-t border-rule-light px-2 pb-1.5 pt-1 space-y-0.5">
+                    {d.hypothesis && (
+                      <p className="font-serif text-[9px] text-ink-muted">
+                        <span className="text-ink-faint uppercase tracking-[0.5px]">H: </span>{d.hypothesis}
+                      </p>
+                    )}
+                    <p className="font-serif text-[9px] text-ink-muted">
+                      <span className="text-ink-faint uppercase tracking-[0.5px]">Chose: </span>{d.chosenOption}
+                    </p>
+                    {d.reasoning && (
+                      <p className="font-serif text-[9px] text-ink-muted">
+                        <span className="text-ink-faint uppercase tracking-[0.5px]">Why: </span>{d.reasoning}
+                      </p>
+                    )}
                     {d.killCriteria.length > 0 && (
-                      <div>
-                        <span className="font-serif text-[9px] text-ink-muted uppercase">Kill Criteria</span>
-                        <ul className="mt-0.5">
-                          {d.killCriteria.map((k, i) => (
-                            <li key={i} className="font-serif text-[10px] text-red-ink">• {k}</li>
-                          ))}
-                        </ul>
-                      </div>
+                      <p className="font-serif text-[9px] text-red-ink">
+                        <span className="text-ink-faint uppercase tracking-[0.5px]">Kill: </span>
+                        {d.killCriteria.join(' · ')}
+                      </p>
                     )}
                     {d.premortem && (
-                      <div>
-                        <span className="font-serif text-[9px] text-ink-muted uppercase">Pre-Mortem</span>
-                        <p className="font-serif text-[10px] text-ink mt-0.5">{d.premortem}</p>
-                      </div>
+                      <p className="font-serif text-[9px] text-ink-muted">
+                        <span className="text-ink-faint uppercase tracking-[0.5px]">Pre-mortem: </span>{d.premortem}
+                      </p>
                     )}
                     {d.antithesis && (
-                      <div className="bg-burgundy-bg border border-burgundy/20 rounded-sm p-2">
-                        <span className="font-serif text-[9px] text-burgundy uppercase">Antithesis</span>
-                        <p className="font-serif text-[10px] text-ink mt-0.5">{d.antithesis}</p>
+                      <div className="bg-burgundy-bg border-l-2 border-burgundy rounded-sm px-1.5 py-1 mt-0.5">
+                        <p className="font-serif text-[9px] text-ink-muted">{d.antithesis}</p>
                         {d.antithesisConfidence != null && (
-                          <span className="font-mono text-[8px] text-ink-muted mt-0.5 block">
-                            Counter-argument strength: {d.antithesisConfidence}%
-                          </span>
+                          <span className="font-mono text-[7px] text-burgundy">counter {d.antithesisConfidence}%</span>
                         )}
                       </div>
                     )}
-                    <div className="flex items-center justify-between pt-1 border-t border-rule-light">
-                      <span className="font-mono text-[8px] text-ink-faint">
-                        Review: {d.reviewDate}
-                      </span>
-                      <div className="flex gap-1">
-                        <button
-                          onClick={() => { setEditingDecision(d); setShowForm(true) }}
-                          className="font-serif text-[8px] px-1.5 py-0.5 rounded-sm border border-rule text-ink-muted hover:text-burgundy hover:border-burgundy transition-colors"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => d.id && remove(d.id)}
-                          className="font-serif text-[8px] px-1.5 py-0.5 rounded-sm border border-rule text-ink-muted hover:text-red-ink hover:border-red-ink transition-colors"
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    </div>
-                    {/* Outcome section for reviewed decisions */}
                     {d.outcomeScore !== undefined && (
-                      <div className="pt-1 border-t border-rule-light">
-                        <span className="font-serif text-[9px] text-ink-muted uppercase">Outcome</span>
-                        <div className="flex items-center gap-2 mt-0.5">
-                          <span className={`font-mono text-[11px] font-bold ${
-                            d.outcomeScore >= 70 ? 'text-green-ink' : d.outcomeScore >= 40 ? 'text-amber-ink' : 'text-red-ink'
-                          }`}>
-                            {d.outcomeScore}%
-                          </span>
-                          <span className="font-mono text-[9px] text-ink-muted">
-                            calibration: {Math.abs(d.confidenceLevel - d.outcomeScore)}pt gap
-                          </span>
-                        </div>
+                      <div className="flex items-center gap-1.5 pt-0.5">
+                        <span className="font-serif text-[8px] text-ink-faint uppercase tracking-[0.5px]">Outcome:</span>
+                        <span className={`font-mono text-[9px] font-bold ${
+                          d.outcomeScore >= 70 ? 'text-green-ink' : d.outcomeScore >= 40 ? 'text-amber-ink' : 'text-red-ink'
+                        }`}>{d.outcomeScore}%</span>
+                        <span className="font-mono text-[7px] text-ink-faint">
+                          ({Math.abs(d.confidenceLevel - d.outcomeScore)}pt gap)
+                        </span>
                         {d.actualOutcome && (
-                          <p className="font-serif text-[10px] text-ink mt-0.5">{d.actualOutcome}</p>
-                        )}
-                        {d.learnings && (
-                          <p className="font-serif text-[10px] text-ink-muted italic mt-0.5">{d.learnings}</p>
+                          <span className="font-serif text-[8px] text-ink-muted truncate">{d.actualOutcome}</span>
                         )}
                       </div>
                     )}
+                    <div className="flex items-center gap-2 pt-0.5">
+                      <span className="font-mono text-[7px] text-ink-faint">{d.decidedAt} · review {d.reviewDate}</span>
+                      <button
+                        onClick={() => { setEditingDecision(d); setShowForm(true) }}
+                        className="font-serif text-[8px] text-ink-muted hover:text-burgundy transition-colors ml-auto"
+                      >
+                        Edit
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>

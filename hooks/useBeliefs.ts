@@ -13,7 +13,8 @@ export function useBeliefs(uid: string | undefined) {
     setLoading(true)
     try {
       const data = await getBeliefs(uid)
-      setBeliefs(data)
+      // Exclude archived beliefs from the default view
+      setBeliefs(data.filter(b => b.status !== 'archived'))
     } finally {
       setLoading(false)
     }

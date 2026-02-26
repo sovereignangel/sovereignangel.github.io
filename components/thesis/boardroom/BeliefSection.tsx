@@ -210,14 +210,22 @@ export default function BeliefSection({ onActOnBelief }: BeliefSectionProps) {
             return (
               <div
                 key={belief.id}
-                className={`bg-white border rounded-sm ${
+                className={`bg-white border rounded-sm relative group ${
                   isStale ? 'border-amber-ink/30 bg-amber-bg' : isUntested ? 'border-amber-ink/20' : 'border-rule'
                 }`}
               >
+                {/* Delete X — top right, visible on hover */}
+                <button
+                  onClick={(e) => { e.stopPropagation(); belief.id && remove(belief.id) }}
+                  className="absolute top-1 right-1 w-4 h-4 flex items-center justify-center font-mono text-[10px] text-ink-faint hover:text-red-ink opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                  title="Delete belief"
+                >
+                  ×
+                </button>
                 {/* Collapsed row */}
                 <button
                   onClick={() => setExpandedId(isExpanded ? null : (belief.id || null))}
-                  className="w-full flex items-center gap-1.5 text-left px-2 py-1.5 hover:bg-cream/50 transition-colors"
+                  className="w-full flex items-center gap-1.5 text-left px-2 py-1.5 pr-6 hover:bg-cream/50 transition-colors"
                 >
                   <span className={`font-mono text-[7px] uppercase px-1 py-0.5 rounded-sm border shrink-0 ${domainStyle}`}>
                     {belief.domain}

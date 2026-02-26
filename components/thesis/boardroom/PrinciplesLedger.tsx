@@ -185,44 +185,33 @@ export default function PrinciplesLedger() {
       ) : (
         <div className="max-h-[320px] overflow-y-auto space-y-1 pr-1">
           {filtered.map((p) => (
-            <div key={p.id} className="flex items-start gap-2 p-2 border border-rule rounded-sm bg-white group">
-              <div className="flex-1 min-w-0">
-                <p className="font-serif text-[11px] font-medium text-ink leading-tight">
-                  {p.text}
-                </p>
-                <div className="flex items-center gap-1.5 mt-0.5">
-                  <span className="font-mono text-[7px] uppercase px-1 py-0.5 rounded-sm border bg-burgundy-bg text-burgundy border-burgundy/20">
-                    {DOMAIN_LABELS[p.domain]}
-                  </span>
-                  <span className="font-mono text-[7px] text-ink-faint">
-                    {SOURCE_LABELS[p.source]}
-                  </span>
-                  <span className="font-mono text-[7px] text-ink-faint">
-                    {p.dateFirstApplied}
-                  </span>
-                </div>
-              </div>
-              <div className="flex flex-col items-center gap-0.5 shrink-0">
-                <button
-                  onClick={() => p.id && reinforce(p.id)}
-                  className="font-mono text-[10px] font-bold text-green-ink hover:bg-green-bg px-1 py-0.5 rounded-sm transition-colors"
-                  title="Reinforce this principle"
-                >
-                  +1
-                </button>
-                <span className="font-mono text-[9px] font-semibold text-ink">
-                  {p.reinforcementCount}×
-                </span>
-                <span className="font-mono text-[7px] text-ink-faint">
-                  {p.lastReinforcedAt}
-                </span>
-              </div>
+            <div key={p.id} className="relative group border border-rule rounded-sm bg-white">
+              {/* Delete X — hover */}
               <button
                 onClick={() => p.id && remove(p.id)}
-                className="font-mono text-[9px] text-ink-faint hover:text-red-ink opacity-0 group-hover:opacity-100 transition-opacity"
+                className="absolute top-1 right-1 w-4 h-4 flex items-center justify-center font-mono text-[10px] text-ink-faint hover:text-red-ink opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                title="Delete principle"
               >
                 ×
               </button>
+              <div className="flex items-center gap-1.5 px-2 py-1 pr-6">
+                <span className="font-mono text-[7px] uppercase px-1 py-0.5 rounded-sm border bg-burgundy-bg text-burgundy border-burgundy/20 shrink-0">
+                  {DOMAIN_LABELS[p.domain]}
+                </span>
+                <span className="font-serif text-[10px] text-ink flex-1 truncate">
+                  {p.shortForm || p.text}
+                </span>
+                <button
+                  onClick={() => p.id && reinforce(p.id)}
+                  className="font-mono text-[9px] font-bold text-green-ink hover:bg-green-bg px-1 py-0.5 rounded-sm transition-colors shrink-0"
+                  title="Reinforce"
+                >
+                  +1
+                </button>
+                <span className="font-mono text-[8px] font-semibold text-ink shrink-0">
+                  {p.reinforcementCount}×
+                </span>
+              </div>
             </div>
           ))}
         </div>
