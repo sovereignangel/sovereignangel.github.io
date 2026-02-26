@@ -17,36 +17,43 @@ export function useDailyLogData(uid: string | undefined, logDate: string) {
   useEffect(() => {
     if (!uid) return
 
+    // Fetch both in parallel, then merge and compute reward once
     Promise.all([
-      getDailyLog(uid, logDate).then((existing) => {
-        if (existing) {
-          // Migrate old trainingType to trainingTypes array
-          if (existing.trainingType && (!existing.trainingTypes || existing.trainingTypes.length === 0)) {
-            existing.trainingTypes = existing.trainingType !== 'none' ? [existing.trainingType] : []
-          }
-          // Compute baseline reward if none stored yet
-          if (!existing.rewardScore) {
-            existing.rewardScore = computeReward(existing)
-          }
-          setLog(existing)
-        } else {
-          // No log exists yet — compute baseline from defaults
-          const baseline = { ...DEFAULT_DAILY_LOG, date: logDate }
-          baseline.rewardScore = computeReward(baseline)
-          setLog(baseline)
+      getDailyLog(uid, logDate),
+      getGarminMetrics(uid, logDate),
+    ]).then(([existing, garmin]) => {
+      // Build the log from saved data or defaults
+      let merged: Partial<DailyLog>
+      if (existing) {
+        // Migrate old trainingType to trainingTypes array
+        if (existing.trainingType && (!existing.trainingTypes || existing.trainingTypes.length === 0)) {
+          existing.trainingTypes = existing.trainingType !== 'none' ? [existing.trainingType] : []
         }
-      }),
-      getGarminMetrics(uid, logDate).then((garmin) => {
-        if (garmin) {
-          setGarminData(garmin)
-          const totalMinutes = (garmin.deepSleepMinutes || 0) + (garmin.lightSleepMinutes || 0) + (garmin.remSleepMinutes || 0)
-          if (totalMinutes > 0) {
-            const hours = Math.round((totalMinutes / 60) * 2) / 2
-            setLog(prev => ({ ...prev, sleepHours: hours }))
+        merged = existing
+      } else {
+        merged = { ...DEFAULT_DAILY_LOG, date: logDate }
+      }
+
+      // Merge Garmin sleep into the log before computing reward
+      if (garmin) {
+        setGarminData(garmin)
+        const totalMinutes = (garmin.deepSleepMinutes || 0) + (garmin.lightSleepMinutes || 0) + (garmin.remSleepMinutes || 0)
+        if (totalMinutes > 0) {
+          const hours = Math.round((totalMinutes / 60) * 2) / 2
+          // Only apply Garmin sleep if no manual sleep was logged
+          if (!merged.sleepHours || merged.sleepHours === 0) {
+            merged.sleepHours = hours
           }
         }
-      }),
-    ])
+      }
+
+      // Compute baseline reward if none stored yet (now includes sleep)
+      if (!merged.rewardScore) {
+        merged.rewardScore = computeReward(merged)
+      }
+
+      setLog(merged)
+    })
   }, [uid, logDate])
 
   return {
