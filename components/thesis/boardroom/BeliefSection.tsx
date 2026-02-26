@@ -199,7 +199,7 @@ export default function BeliefSection({ onActOnBelief }: BeliefSectionProps) {
           </p>
         </div>
       ) : (
-        <div className="space-y-1">
+        <div className="max-h-[320px] overflow-y-auto space-y-1 pr-1">
           {sorted.map(belief => {
             const isExpanded = expandedId === belief.id
             const isStale = belief.attentionDate && belief.attentionDate <= today && belief.status === 'active'

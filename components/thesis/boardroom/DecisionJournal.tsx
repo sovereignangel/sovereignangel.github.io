@@ -107,7 +107,7 @@ export default function DecisionJournal() {
           </p>
         </div>
       ) : (
-        <div className="space-y-1.5">
+        <div className="max-h-[320px] overflow-y-auto space-y-1.5 pr-1">
           {decisions.map((d) => {
             const isExpanded = expandedId === d.id
             return (

@@ -183,7 +183,7 @@ export default function PrinciplesLedger() {
           </p>
         </div>
       ) : (
-        <div className="space-y-1">
+        <div className="max-h-[320px] overflow-y-auto space-y-1 pr-1">
           {filtered.map((p) => (
             <div key={p.id} className="flex items-start gap-2 p-2 border border-rule rounded-sm bg-white group">
               <div className="flex-1 min-w-0">
