@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { sendTelegramMessage } from '@/lib/telegram'
 
 export async function POST(req: NextRequest) {
   // Auth check
@@ -8,7 +9,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const { uid, ventureId, status, repoUrl, previewUrl, customDomain, repoName, filesGenerated, errorMessage } = await req.json()
+    const { uid, ventureId, status, repoUrl, previewUrl, customDomain, repoName, filesGenerated, errorMessage, chatId } = await req.json()
 
     if (!uid || !ventureId || !status) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
@@ -20,6 +21,19 @@ export async function POST(req: NextRequest) {
 
     if (!snap.exists) {
       return NextResponse.json({ error: 'Venture not found' }, { status: 404 })
+    }
+
+    const venture = snap.data()
+    const ventureName = venture?.spec?.name || 'venture'
+    const vNum = venture?.ventureNumber ? `#${venture.ventureNumber} ` : ''
+
+    // Resolve chatId: use from payload, or look up from user settings
+    let resolvedChatId = chatId
+    if (!resolvedChatId) {
+      try {
+        const userDoc = await adminDb.collection('users').doc(uid).get()
+        resolvedChatId = userDoc.data()?.settings?.telegramChatId
+      } catch { /* no chat ID available */ }
     }
 
     if (status === 'live') {
@@ -37,17 +51,30 @@ export async function POST(req: NextRequest) {
 
       // Auto-log the ship to today's daily_log
       try {
-        const venture = snap.data()
         const now = new Date()
         const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
         const logRef = adminDb.collection('users').doc(uid).collection('daily_logs').doc(today)
         await logRef.set({
-          whatShipped: `Deployed ${venture?.spec?.name || 'venture'} to ${previewUrl || repoUrl || 'live'}`,
+          whatShipped: `Deployed ${ventureName} to ${previewUrl || repoUrl || 'live'}`,
           publicIteration: true,
           updatedAt: new Date(),
         }, { merge: true })
       } catch (logErr) {
         console.error('Auto-ship log failed:', logErr)
+      }
+
+      // Notify via Telegram
+      if (resolvedChatId) {
+        const liveUrl = customDomain ? `https://${customDomain}` : previewUrl || repoUrl
+        await sendTelegramMessage(resolvedChatId, [
+          `${vNum}${ventureName} is LIVE`,
+          '',
+          liveUrl ? `${liveUrl}` : '',
+          repoUrl ? `Repo: ${repoUrl}` : '',
+          filesGenerated ? `${filesGenerated} files generated` : '',
+          '',
+          'Use /iterate to modify, /memo to generate investment memo',
+        ].filter(Boolean).join('\n'))
       }
     } else if (status === 'failed') {
       await ventureRef.update({
@@ -59,6 +86,17 @@ export async function POST(req: NextRequest) {
         'build.completedAt': new Date(),
         updatedAt: new Date(),
       })
+
+      // Notify via Telegram
+      if (resolvedChatId) {
+        await sendTelegramMessage(resolvedChatId, [
+          `${vNum}${ventureName} build FAILED`,
+          '',
+          errorMessage || 'Unknown error',
+          '',
+          'Use /build to retry or /feedback to adjust the PRD',
+        ].join('\n'))
+      }
     } else {
       // Intermediate status update (generating, pushing, deploying)
       await ventureRef.update({

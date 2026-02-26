@@ -15,6 +15,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyAuth } from '@/lib/api-auth'
+import { sendTelegramMessage } from '@/lib/telegram'
 
 export const runtime = 'nodejs'
 export const maxDuration = 300 // 5 minutes — code generation can take time
@@ -141,6 +142,16 @@ export async function POST(req: NextRequest) {
       } : undefined,
     })
 
+    // Resolve Telegram chatId for notifications
+    let chatId: string | undefined
+    try {
+      const userDoc = await adminDb.collection('users').doc(uid).get()
+      chatId = userDoc.data()?.settings?.telegramChatId
+    } catch { /* no chat ID available */ }
+
+    const ventureName = venture.spec?.name || 'venture'
+    const vNum = venture.ventureNumber ? `#${venture.ventureNumber} ` : ''
+
     // Update venture with results
     if (result.success) {
       await ventureRef.update({
@@ -162,12 +173,26 @@ export async function POST(req: NextRequest) {
         const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
         const logRef = adminDb.collection('users').doc(uid).collection('daily_logs').doc(today)
         await logRef.set({
-          whatShipped: `Deployed ${venture.spec?.name || 'venture'} to ${result.previewUrl || result.repoUrl || 'live'} (Claude build)`,
+          whatShipped: `Deployed ${ventureName} to ${result.previewUrl || result.repoUrl || 'live'} (Claude build)`,
           publicIteration: true,
           updatedAt: new Date(),
         }, { merge: true })
       } catch (logErr) {
         console.error('Auto-ship log failed:', logErr)
+      }
+
+      // Notify via Telegram
+      if (chatId) {
+        const liveUrl = result.customDomain ? `https://${result.customDomain}` : result.previewUrl || result.repoUrl
+        await sendTelegramMessage(chatId, [
+          `${vNum}${ventureName} is LIVE`,
+          '',
+          liveUrl || '',
+          result.repoUrl ? `Repo: ${result.repoUrl}` : '',
+          result.filesGenerated ? `${result.filesGenerated} files generated` : '',
+          '',
+          'Use /iterate to modify, /memo to generate investment memo',
+        ].filter(Boolean).join('\n'))
       }
 
       return NextResponse.json({
@@ -186,6 +211,17 @@ export async function POST(req: NextRequest) {
         ...(iterate ? { stage: 'deployed' } : {}),
         updatedAt: new Date(),
       })
+
+      // Notify via Telegram
+      if (chatId) {
+        await sendTelegramMessage(chatId, [
+          `${vNum}${ventureName} build FAILED`,
+          '',
+          result.errorMessage || 'Unknown error',
+          '',
+          iterate ? 'Use /citerate to retry' : 'Use /cbuild to retry or /feedback to adjust the PRD',
+        ].join('\n'))
+      }
 
       return NextResponse.json({
         success: false,
