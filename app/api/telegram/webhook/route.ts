@@ -2207,7 +2207,7 @@ export async function POST(req: NextRequest) {
         await sendTelegramReply(chatId, 'Usage: /iterate project-name add dark mode')
         return NextResponse.json({ ok: true })
       }
-      await handleIterate(uid, parsed.text, chatId)
+      await handleClaudeIterate(uid, parsed.text, chatId)
       return NextResponse.json({ ok: true })
     }
 
@@ -2217,9 +2217,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: true })
     }
 
-    // Handle build command
+    // Handle build command (routes to Claude builder)
     if (parsed.command === 'build') {
-      await handleBuild(uid, parsed.text, chatId)
+      await handleClaudeBuild(uid, parsed.text, chatId)
       return NextResponse.json({ ok: true })
     }
 
