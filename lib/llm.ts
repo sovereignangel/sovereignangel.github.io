@@ -38,8 +38,22 @@ export interface LLMCallOptions {
   maxTokens?: number
 }
 
+/** Sleep helper for retry backoff */
+function sleep(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms))
+}
+
+/** Check if an error is a retryable rate limit (429) */
+function isRateLimitError(error: unknown): boolean {
+  if (error instanceof Error) {
+    return error.message.includes('429') || error.message.includes('Resource exhausted')
+  }
+  return false
+}
+
 /**
  * Call LLM with Groq as primary provider, Gemini as fallback.
+ * Retries up to 2 times on 429 rate-limit errors with exponential backoff.
  * Returns raw text response.
  */
 export async function callLLM(
@@ -65,14 +79,32 @@ export async function callLLM(
     }
   }
 
-  // --- Fallback to Gemini ---
+  // --- Fallback to Gemini with retry on 429 ---
   const genAI = getGemini()
   if (!genAI) {
     throw new Error('[LLM] No LLM provider available — set GROQ_API_KEY or GEMINI_API_KEY')
   }
 
   const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' })
-  const result = await model.generateContent(prompt)
-  const response = await result.response
-  return response.text()
+  const MAX_RETRIES = 2
+  let lastError: unknown
+
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      const result = await model.generateContent(prompt)
+      const response = await result.response
+      return response.text()
+    } catch (error) {
+      lastError = error
+      if (isRateLimitError(error) && attempt < MAX_RETRIES) {
+        const delay = (attempt + 1) * 3000 // 3s, 6s
+        console.warn(`[LLM] Gemini 429 — retrying in ${delay / 1000}s (attempt ${attempt + 1}/${MAX_RETRIES})`)
+        await sleep(delay)
+        continue
+      }
+      throw error
+    }
+  }
+
+  throw lastError
 }

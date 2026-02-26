@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { parseTelegramMessage, type TelegramUpdate } from '@/lib/telegram-parser'
 import { parseJournalEntry, transcribeAndParseVoiceNote, parsePrediction, parseVentureIdea, generateVenturePRD, generateVentureMemo, type ParsedJournalEntry } from '@/lib/ai-extraction'
+import type { VentureSpec } from '@/lib/types'
 import { computeReward } from '@/lib/reward'
 import { DEFAULT_SETTINGS } from '@/lib/constants'
 
@@ -869,6 +870,11 @@ async function handleVenture(uid: string, text: string, chatId: number) {
 
   await sendTelegramReply(chatId, '_Analyzing venture idea..._')
 
+  // Track whether spec was already saved to avoid creating duplicates on PRD failure
+  let ventureRef: FirebaseFirestore.DocumentReference | null = null
+  let ventureNumber: number | null = null
+  let spec: VentureSpec | null = null
+
   try {
     // Fetch user's active project names for context
     const projectsSnap = await adminDb.collection('users').doc(uid).collection('projects')
@@ -879,7 +885,7 @@ async function handleVenture(uid: string, text: string, chatId: number) {
     const parsed = await parseVentureIdea(text, projectNames)
 
     // Build venture spec object
-    const spec = {
+    spec = {
       name: parsed.name,
       oneLiner: parsed.oneLiner,
       problem: parsed.problem,
@@ -899,10 +905,10 @@ async function handleVenture(uid: string, text: string, chatId: number) {
     }
 
     // Auto-assign venture number
-    const ventureNumber = await getNextVentureNumber(adminDb, uid)
+    ventureNumber = await getNextVentureNumber(adminDb, uid)
 
     // Save venture as specced
-    const ventureRef = adminDb.collection('users').doc(uid).collection('ventures').doc()
+    ventureRef = adminDb.collection('users').doc(uid).collection('ventures').doc()
     await ventureRef.set({
       rawInput: text,
       inputSource: 'telegram_text',
@@ -978,36 +984,44 @@ async function handleVenture(uid: string, text: string, chatId: number) {
     await sendTelegramReply(chatId, lines.join('\n'))
   } catch (error) {
     console.error('Venture parsing error:', error)
-    // Still save raw text even if AI parsing fails
-    const fallbackNumber = await getNextVentureNumber(adminDb, uid)
-    const ventureRef = adminDb.collection('users').doc(uid).collection('ventures').doc()
-    await ventureRef.set({
-      rawInput: text,
-      inputSource: 'telegram_text',
-      spec: {
-        name: 'Untitled Venture', oneLiner: text.slice(0, 120), problem: text,
-        targetCustomer: '', solution: '', category: 'other', thesisPillars: [],
-        revenueModel: '', pricingIdea: '', marketSize: '', techStack: [],
-        mvpFeatures: [], apiIntegrations: [], existingAlternatives: [],
-        unfairAdvantage: '', killCriteria: [],
-      },
-      prd: null,
-      ventureNumber: fallbackNumber,
-      build: {
-        status: 'pending', repoUrl: null, previewUrl: null, repoName: null,
-        buildLog: [], startedAt: null, completedAt: null, errorMessage: null,
-        filesGenerated: null,
-      },
-      stage: 'idea',
-      iterations: [],
-      linkedProjectId: null,
-      notes: '',
-      score: null,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    })
-    await sendTelegramReply(chatId,
-      `Venture idea saved, but AI spec generation failed.\n\n_${error instanceof Error ? error.message : 'Unknown error'}_`)
+
+    if (ventureRef && spec) {
+      // Spec was saved but PRD generation failed — don't create a duplicate
+      const errMsg = error instanceof Error ? error.message : 'Unknown error'
+      await sendTelegramReply(chatId,
+        `Build failed for ${spec.name}\n\n${errMsg}\n\nSpec is saved. You can retry from the dashboard.`)
+    } else {
+      // Spec parsing itself failed — save raw text as fallback
+      const fallbackNumber = await getNextVentureNumber(adminDb, uid)
+      const fallbackRef = adminDb.collection('users').doc(uid).collection('ventures').doc()
+      await fallbackRef.set({
+        rawInput: text,
+        inputSource: 'telegram_text',
+        spec: {
+          name: 'Untitled Venture', oneLiner: text.slice(0, 120), problem: text,
+          targetCustomer: '', solution: '', category: 'other', thesisPillars: [],
+          revenueModel: '', pricingIdea: '', marketSize: '', techStack: [],
+          mvpFeatures: [], apiIntegrations: [], existingAlternatives: [],
+          unfairAdvantage: '', killCriteria: [],
+        },
+        prd: null,
+        ventureNumber: fallbackNumber,
+        build: {
+          status: 'pending', repoUrl: null, previewUrl: null, repoName: null,
+          buildLog: [], startedAt: null, completedAt: null, errorMessage: null,
+          filesGenerated: null,
+        },
+        stage: 'idea',
+        iterations: [],
+        linkedProjectId: null,
+        notes: '',
+        score: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+      await sendTelegramReply(chatId,
+        `Venture idea saved, but AI spec generation failed.\n\n_${error instanceof Error ? error.message : 'Unknown error'}_`)
+    }
   }
 }
 
@@ -1503,10 +1517,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Bot not configured' }, { status: 500 })
   }
 
-  // Verify Telegram webhook secret
+  // Verify Telegram webhook secret (mandatory — reject if not configured)
   const secret = req.headers.get('x-telegram-bot-api-secret-token')
   const expectedSecret = process.env.TELEGRAM_WEBHOOK_SECRET
-  if (expectedSecret && secret !== expectedSecret) {
+  if (!expectedSecret || secret !== expectedSecret) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 

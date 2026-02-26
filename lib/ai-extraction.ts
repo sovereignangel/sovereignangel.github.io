@@ -459,68 +459,71 @@ const EMPTY_JOURNAL_RESULT: ParsedJournalEntry = {
 }
 
 export async function parseJournalEntry(journalText: string): Promise<ParsedJournalEntry> {
-  const prompt = `You are parsing a free-form daily journal entry from a builder/entrepreneur. Extract structured data where the text clearly states or strongly implies it. Be generous with inference for conversations, relationships, and business interactions — these are the most common journal topics. Use null only when a domain is truly not mentioned at all.
+  const prompt = `You are parsing a free-form daily journal entry from a builder/entrepreneur. Extract ONLY data that is explicitly stated or directly described. Do NOT infer numeric values, states, or scores from tone, mood, or vibe — only extract when the writer provides concrete details.
+
+CRITICAL: Prefer null over guessing. It is FAR better to return null than to inflate a field with an inferred value. The extracted data feeds a reward function, so false positives are worse than false negatives.
 
 JOURNAL ENTRY:
 ${journalText}
 
-Extract data into these domains. Use null for anything not mentioned.
+Extract data into these domains. Use null for anything not EXPLICITLY mentioned.
 
 1. ENERGY:
-   - nervousSystemState: One of "regulated", "slightly_spiked", "spiked". Infer from emotional tone (calm/grounded/intimate/connected = regulated, anxious/restless = slightly_spiked, overwhelmed/reactive = spiked). null if unclear.
-   - bodyFelt: One of "open", "neutral", "tense". Infer from physical descriptions or illness mentions (sick/recovering = "tense", healthy/energized = "open"). null if not mentioned.
-   - trainingTypes: Array from ["strength", "yoga", "vo2", "zone2", "rest", "none"]. Empty array if not mentioned.
-   - sleepHours: Number of hours slept. null if not mentioned.
+   - nervousSystemState: One of "regulated", "slightly_spiked", "spiked". ONLY set this if the writer explicitly describes their nervous system, stress level, or regulation state (e.g., "felt regulated", "was anxious all day", "totally spiked after that call"). Do NOT infer from general emotional tone or mood. null if not explicitly discussed.
+   - bodyFelt: One of "open", "neutral", "tense". ONLY set this if the writer explicitly describes physical sensations or body state (e.g., "body felt open", "shoulders were tight", "felt tense"). Do NOT infer from illness, energy level, or emotional state. null if not explicitly discussed.
+   - trainingTypes: Array from ["strength", "yoga", "vo2", "zone2", "rest", "none"]. ONLY include if specific exercise/training is described. Empty array if not mentioned.
+   - sleepHours: Number of hours slept. ONLY set if a specific number is stated (e.g., "slept 7 hours", "got 6h of sleep"). null if not mentioned with a number.
 
 2. OUTPUT:
-   - focusHoursActual: Number of focused work hours. null if not mentioned.
-   - whatShipped: What was built, published, or delivered. null if not mentioned.
+   - focusHoursActual: Number of focused work hours. ONLY set if a specific number is stated. null if not mentioned with a number.
+   - whatShipped: What was built, published, or delivered. ONLY set if the writer describes completing and delivering something specific. null if not mentioned.
 
 3. INTELLIGENCE (discovery conversations and problem identification):
-   - discoveryConversationsCount: Count of distinct conversations, calls, meetings, or meaningful 1:1 interactions described. Count each distinct person/group interaction. This is the MOST IMPORTANT field — journal entries are often about who you talked to and what you learned.
-   - problems: Array of problems/opportunities identified from conversations or observations. Each: { problem (the problem or opportunity), painPoint (who has this pain or what's broken), solution (proposed approach or next step) }. Look for: business challenges discussed, market gaps identified, someone needing help, partnership opportunities, product ideas.
-   - problemSelected: Which problem/opportunity the writer is most likely to act on first. Infer from enthusiasm, revenue potential, or explicit statements of intent.
-   - insightsExtracted: Count of distinct insights, learnings, or actionable takeaways from the day. Count each "aha" or useful piece of information learned.
+   - discoveryConversationsCount: Count of distinct BUSINESS-RELEVANT conversations, calls, or meetings described. ONLY count interactions where the writer describes the substance of what was discussed. Do NOT count casual social mentions, greetings, or passing references to people. null if no substantive conversations are described.
+   - problems: Array of BUSINESS problems/opportunities explicitly identified. Each: { problem, painPoint, solution }. ONLY include if the writer explicitly describes a problem or opportunity — not inferred from general narrative.
+   - problemSelected: Which problem the writer explicitly states they will act on. ONLY set if there is a clear statement of intent. null if not explicitly stated.
+   - insightsExtracted: Count of distinct, explicitly stated insights or learnings. ONLY count things the writer frames as a takeaway or learning, not general narrative. null if none explicitly stated.
 
 4. NETWORK (relationship capital):
-   - warmIntrosMade: Count of introductions offered or made (connecting people). null if none.
-   - warmIntrosReceived: Count of introductions received. null if none.
-   - meetingsBooked: Count of future meetings/calls scheduled or agreed to. null if none.
+   - warmIntrosMade: Count of introductions explicitly described as offered or made. null if none mentioned.
+   - warmIntrosReceived: Count of introductions explicitly described as received. null if none mentioned.
+   - meetingsBooked: Count of future meetings/calls explicitly described as scheduled. null if none mentioned.
 
 5. REVENUE (capture signals):
-   - revenueAsksCount: Count of explicit or implied revenue conversations — pitching a service, discussing pricing, proposing paid work, quoting a rate. null if none.
-   - revenueThisSession: Dollar amount of revenue closed/received today. null if none.
-   - revenueStreamType: If a revenue opportunity is discussed, classify as "recurring" (monthly/retainer/subscription), "one_time" (project/contract), or "organic" (inbound/referral). null if no revenue discussed.
-   - feedbackLoopClosed: true if a previous open loop was resolved (got an answer back, resolved ambiguity, confirmed next steps with someone). null if not evident.
+   - revenueAsksCount: Count of explicit revenue conversations — pitching, discussing pricing, proposing paid work. ONLY count if the writer describes actually making an ask. null if none described.
+   - revenueThisSession: Dollar amount of revenue explicitly stated as closed/received. null if no specific amount mentioned.
+   - revenueStreamType: "recurring", "one_time", or "organic". ONLY set if a revenue event is explicitly described. null if no revenue discussed.
+   - feedbackLoopClosed: true ONLY if the writer explicitly describes closing an open loop. null if not evident.
 
 6. PSYCAP (Psychological Capital, 1-5 scale):
-   - hope: Sense of future possibility, pathways to goals. Infer from excitement about opportunities, planning future steps. null if not evident.
-   - efficacy: Confidence in ability to execute. Infer from giving advice, taking charge, making things happen. null if not evident.
-   - resilience: Ability to bounce back from setbacks. Infer from pushing through illness, handling difficult conversations. null if not evident.
-   - optimism: Positive attribution of outcomes. Infer from positive framing of events, excitement about the day. null if not evident.
+   ONLY set PsyCap values if the writer explicitly reflects on their psychological state. Do NOT infer scores from narrative tone, enthusiasm, or positivity. The writer must describe their inner state for these to be extracted.
+   - hope: ONLY set if the writer explicitly discusses their sense of possibility or pathways forward. null if not explicitly reflected on.
+   - efficacy: ONLY set if the writer explicitly discusses their confidence in execution ability. null if not explicitly reflected on.
+   - resilience: ONLY set if the writer explicitly discusses bouncing back from difficulty. null if not explicitly reflected on.
+   - optimism: ONLY set if the writer explicitly discusses their outlook or attributions. null if not explicitly reflected on.
 
 7. SKILL (capability growth):
-   - deliberatePracticeMinutes: Minutes spent specifically on getting BETTER at a skill (not just producing output). Examples: studying a tutorial, practicing a sales pitch, learning a new tool, doing coding exercises, reading about a technique then applying it. null if not mentioned.
-   - newTechniqueApplied: true if used a tool, method, framework, or approach for the first time today. Examples: "tried Cursor for the first time", "used a new cold email template", "implemented a design pattern I just learned". null if not evident.
-   - automationCreated: true if built something that saves future time — a script, template, workflow, shortcut, or process improvement. Examples: "wrote a script to automate deployment", "created a Notion template for meeting notes", "set up a Zapier automation". null if not evident.
+   - deliberatePracticeMinutes: ONLY set if the writer describes specific time spent on skill building with an approximate duration. null if not mentioned.
+   - newTechniqueApplied: true ONLY if the writer explicitly describes using something for the first time. null if not evident.
+   - automationCreated: true ONLY if the writer explicitly describes building something that saves future time. null if not evident.
 
-8. CADENCE COMPLETED: Array of checklist keys that the journal indicates were done today. Only include if clearly mentioned.
+8. CADENCE COMPLETED: Array of checklist keys that the journal EXPLICITLY indicates were done today. Only include if clearly and directly mentioned.
    Valid keys: "energy" (logged energy inputs), "problems" (identified problems worth solving), "focus" (executed focus session), "ship" (shipped something), "signal" (reviewed external signals), "revenue_ask" (made revenue asks), "psycap" (reflected on psychological state)
 
-8. CONTACTS: Array of people mentioned by name. Extract EVERY person name mentioned, whether met today, referenced, or planned to meet.
+9. CONTACTS: Array of people mentioned by name with substantive context. Extract people the writer interacted with or plans to interact with.
    Each: { name (person's name, capitalize properly), context (brief description of the interaction or how they were mentioned, max 20 words) }
 
-9. NOTES: Array of action items, reminders, things to look into, or observations worth saving. Look for phrases like "need to", "should", "look into", "remember to", "note to self", or any explicit mention of saving/noting something.
+10. NOTES: Array of action items, reminders, things to look into, or observations worth saving. Look for phrases like "need to", "should", "look into", "remember to", "note to self".
    Each: { text (the note or action item), actionRequired (true if it requires doing something, false if it's just an observation) }
 
-10. DECISIONS: Array of decisions made. Only include if the journal describes a clear choice between options.
+11. DECISIONS: Array of decisions made. Only include if the journal describes a clear choice between options.
    Each: { title, hypothesis (what they expect), chosenOption, reasoning, domain (one of "portfolio", "product", "revenue", "personal", "thesis"), confidenceLevel (0-100) }
 
-11. PRINCIPLES: Array of principles, rules, or lessons articulated. Only include if the journal states a clear rule/principle/learning.
+12. PRINCIPLES: Array of principles, rules, or lessons articulated. Only include if the journal states a clear rule/principle/learning.
    Each: { text (full principle), shortForm (max 40 chars), domain (one of "portfolio", "product", "revenue", "personal", "thesis") }
 
-12. BELIEFS: Array of testable beliefs or hypotheses stated or implied. Look for: predictions, assumptions, "I think X", expectations, theories about how things work. Only claims about how the world works that could be proven right or wrong. Do NOT duplicate decisions or principles here.
-   Each: { statement ("I believe that..." form — rewrite vague claims into testable form), confidence (0-100), domain (one of "portfolio", "product", "revenue", "personal", "thesis"), evidenceFor (array of supporting evidence from the text), evidenceAgainst (array of contradicting evidence, if any — empty array if none) }
+13. BELIEFS: Array of testable beliefs or hypotheses explicitly stated. Look for: predictions, assumptions, "I think X", expectations. Only claims the writer explicitly makes — do NOT infer beliefs from narrative. Do NOT duplicate decisions or principles here.
+   Each: { statement ("I believe that..." form), confidence (0-100), domain (one of "portfolio", "product", "revenue", "personal", "thesis"), evidenceFor (array of supporting evidence from the text), evidenceAgainst (array of contradicting evidence, if any — empty array if none) }
 
 Return ONLY valid JSON (no markdown, no code blocks):
 {
@@ -679,55 +682,55 @@ export async function transcribeAndParseVoiceNote(
 
 INSTRUCTIONS:
 1. Transcribe the audio word-for-word into text.
-2. Parse the transcribed text as a journal entry following the extraction rules below.
-3. Be generous with inference for conversations, relationships, and business interactions.
-4. Use null only when a domain is truly not mentioned at all.
+2. Parse the transcribed text following the extraction rules below.
+3. Extract ONLY data that is explicitly stated or directly described. Do NOT infer values from tone, mood, or vibe.
+4. Prefer null over guessing. The extracted data feeds a reward function, so false positives are worse than false negatives.
 
 EXTRACTION RULES:
 
 1. ENERGY:
-   - nervousSystemState: One of "regulated", "slightly_spiked", "spiked". Infer from emotional tone (calm/grounded = regulated, anxious/restless = slightly_spiked, overwhelmed/reactive = spiked). null if unclear.
-   - bodyFelt: One of "open", "neutral", "tense". null if not mentioned.
-   - trainingTypes: Array from ["strength", "yoga", "vo2", "zone2", "rest", "none"]. Empty array if not mentioned.
-   - sleepHours: Number of hours slept. null if not mentioned.
+   - nervousSystemState: One of "regulated", "slightly_spiked", "spiked". ONLY set if explicitly described (e.g., "felt regulated", "was anxious"). Do NOT infer from tone. null if not explicitly discussed.
+   - bodyFelt: One of "open", "neutral", "tense". ONLY set if explicitly described. null if not mentioned.
+   - trainingTypes: Array from ["strength", "yoga", "vo2", "zone2", "rest", "none"]. ONLY include if specific exercise is described. Empty array if not mentioned.
+   - sleepHours: Number of hours slept. ONLY set if a specific number is stated. null if not mentioned.
 
 2. OUTPUT:
-   - focusHoursActual: Number of focused work hours. null if not mentioned.
+   - focusHoursActual: Number of focused work hours. ONLY set if a specific number is stated. null if not mentioned.
    - whatShipped: What was built, published, or delivered. null if not mentioned.
 
 3. INTELLIGENCE:
-   - discoveryConversationsCount: Count of distinct conversations, calls, meetings described. MOST IMPORTANT field.
-   - problems: Array of { problem, painPoint, solution }.
-   - problemSelected: Which problem the writer will act on first.
-   - insightsExtracted: Count of distinct insights or takeaways.
+   - discoveryConversationsCount: Count of distinct BUSINESS-RELEVANT conversations with substantive discussion described. Do NOT count casual social mentions. null if none described.
+   - problems: Array of { problem, painPoint, solution }. ONLY include explicitly described business problems.
+   - problemSelected: ONLY set if explicitly stated which problem they will act on.
+   - insightsExtracted: Count of explicitly stated insights or takeaways.
 
 4. NETWORK:
-   - warmIntrosMade, warmIntrosReceived, meetingsBooked: counts or null.
+   - warmIntrosMade, warmIntrosReceived, meetingsBooked: counts or null. ONLY count if explicitly described.
 
 5. REVENUE:
-   - revenueAsksCount: Count of revenue conversations. null if none.
-   - revenueThisSession: Dollar amount closed. null if none.
-   - revenueStreamType: "recurring", "one_time", or "organic". null if none.
-   - feedbackLoopClosed: true if a loop was resolved. null if not evident.
+   - revenueAsksCount: Count of revenue conversations explicitly described. null if none.
+   - revenueThisSession: Dollar amount explicitly stated as closed. null if none.
+   - revenueStreamType: "recurring", "one_time", or "organic". null if no revenue discussed.
+   - feedbackLoopClosed: true ONLY if explicitly described. null if not evident.
 
 6. SKILL (capability growth):
-   - deliberatePracticeMinutes: Minutes spent on getting BETTER at a skill (tutorials, learning new tools, practicing techniques). null if not mentioned.
-   - newTechniqueApplied: true if used a new tool/method/approach for the first time. null if not evident.
-   - automationCreated: true if built something that saves future time (scripts, templates, automations). null if not evident.
+   - deliberatePracticeMinutes: ONLY set if specific time on skill building is described. null if not mentioned.
+   - newTechniqueApplied: true ONLY if explicitly describes using something for the first time. null if not evident.
+   - automationCreated: true ONLY if explicitly describes building something that saves future time. null if not evident.
 
-7. PSYCAP (1-5 scale): hope, efficacy, resilience, optimism. null if not evident.
+7. PSYCAP (1-5 scale): hope, efficacy, resilience, optimism. ONLY set if the speaker explicitly reflects on their psychological state. Do NOT infer from tone or enthusiasm. null if not explicitly discussed.
 
-8. CADENCE COMPLETED: Array of keys done today from ["energy", "problems", "focus", "ship", "signal", "revenue_ask", "psycap"]
+8. CADENCE COMPLETED: Array of keys explicitly done today from ["energy", "problems", "focus", "ship", "signal", "revenue_ask", "psycap"]
 
-8. CONTACTS: Array of { name, context (max 20 words) }
+9. CONTACTS: Array of { name, context (max 20 words) }. People with substantive interactions described.
 
-9. NOTES: Array of { text, actionRequired (boolean) }
+10. NOTES: Array of { text, actionRequired (boolean) }
 
-10. DECISIONS: Array of { title, hypothesis, chosenOption, reasoning, domain, confidenceLevel (0-100) }
+11. DECISIONS: Array of { title, hypothesis, chosenOption, reasoning, domain, confidenceLevel (0-100) }. Only explicit decisions.
 
-11. PRINCIPLES: Array of { text, shortForm (max 40 chars), domain }
+12. PRINCIPLES: Array of { text, shortForm (max 40 chars), domain }. Only explicitly stated rules/lessons.
 
-12. BELIEFS: Array of testable beliefs or hypotheses stated or implied. Look for predictions, assumptions, "I think X", expectations.
+13. BELIEFS: Array of explicitly stated beliefs or hypotheses. Do NOT infer from narrative.
    Each: { statement ("I believe that..." form), confidence (0-100), domain, evidenceFor (array), evidenceAgainst (array) }
 
 Return ONLY valid JSON (no markdown, no code blocks):
@@ -1572,9 +1575,7 @@ Respond in JSON:
 {"antithesis": "...", "confidence": N}`
 
   try {
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' })
-    const result = await model.generateContent(prompt)
-    const text = result.response.text()
+    const text = await callLLM(prompt)
     const jsonMatch = text.match(/\{[\s\S]*\}/)
     if (!jsonMatch) return { antithesis: '', confidence: 0 }
     const parsed = JSON.parse(jsonMatch[0])
@@ -1623,9 +1624,7 @@ Respond in JSON:
 {"antithesis": "...", "strength": N}`
 
   try {
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' })
-    const result = await model.generateContent(prompt)
-    const text = result.response.text()
+    const text = await callLLM(prompt)
     const jsonMatch = text.match(/\{[\s\S]*\}/)
     if (!jsonMatch) return { antithesis: '', strength: 0 }
     const parsed = JSON.parse(jsonMatch[0])
@@ -1672,9 +1671,7 @@ Respond in JSON:
 {"refined": "...", "reasoning": "..."}`
 
   try {
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' })
-    const result = await model.generateContent(prompt)
-    const text = result.response.text()
+    const text = await callLLM(prompt)
     const jsonMatch = text.match(/\{[\s\S]*\}/)
     if (!jsonMatch) return { refined: '', reasoning: '' }
     const parsed = JSON.parse(jsonMatch[0])
