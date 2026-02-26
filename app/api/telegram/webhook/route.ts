@@ -1490,6 +1490,13 @@ async function handleReset(uid: string, text: string, chatId: number) {
   }
 }
 
+// TEMPORARY: Debug env var presence (remove after confirming webhook works)
+export async function GET() {
+  const hasSecret = !!process.env.TELEGRAM_WEBHOOK_SECRET
+  const secretLen = process.env.TELEGRAM_WEBHOOK_SECRET?.length ?? 0
+  return NextResponse.json({ hasSecret, secretLen })
+}
+
 export async function POST(req: NextRequest) {
   if (!BOT_TOKEN) {
     return NextResponse.json({ error: 'Bot not configured' }, { status: 500 })
