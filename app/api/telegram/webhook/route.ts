@@ -4,6 +4,9 @@ import { parseJournalEntry, transcribeAndParseVoiceNote, parsePrediction, parseV
 import type { VentureSpec } from '@/lib/types'
 import { computeReward } from '@/lib/reward'
 import { DEFAULT_SETTINGS } from '@/lib/constants'
+import { resolveContactsBatch } from '@/lib/entity-resolution'
+import { addInteractionToContact } from '@/lib/firestore'
+import { embedJournalEntry } from '@/lib/embed-on-save'
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN
 
@@ -480,28 +483,25 @@ async function handleJournal(uid: string, text: string, chatId: number) {
       })
     }
 
-    // Upsert contacts (create or update lastConversationDate)
-    for (const c of parsed.contacts) {
-      const contactsRef = adminDb.collection('users').doc(uid).collection('contacts')
-      const existing = await contactsRef.where('name', '==', c.name).limit(1).get()
-      if (existing.empty) {
-        await contactsRef.doc().set({
-          name: c.name,
-          lastConversationDate: today,
-          notes: c.context,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        })
-      } else {
-        const doc = existing.docs[0]
-        const prevNotes = doc.data().notes || ''
-        await doc.ref.update({
-          lastConversationDate: today,
-          notes: prevNotes ? `${prevNotes}\n${today}: ${c.context}` : `${today}: ${c.context}`,
-          updatedAt: new Date(),
+    // Resolve contacts via entity resolution (unified_contacts)
+    let resolvedContactInfo: { contactId: string; canonicalName: string }[] = []
+    if (parsed.contacts.length > 0) {
+      const contactInputs = parsed.contacts.map(c => ({ name: c.name, context: c.context }))
+      const resolved = await resolveContactsBatch(uid, contactInputs, 'journal', today)
+      resolvedContactInfo = resolved.map(r => ({ contactId: r.contactId, canonicalName: r.contact.canonicalName }))
+      for (let i = 0; i < resolved.length; i++) {
+        await addInteractionToContact(uid, resolved[i].contactId, {
+          date: today,
+          source: 'journal',
+          summary: parsed.contacts[i].context,
         })
       }
     }
+
+    // Embed journal text into vector index (fire-and-forget)
+    embedJournalEntry(uid, today, newJournal, resolvedContactInfo).catch(
+      err => console.error('[embed] journal embedding failed:', err)
+    )
 
     // Save notes as external signals (type: telegram, status: inbox)
     for (const n of parsed.notes) {
@@ -655,25 +655,25 @@ async function handleJournalFromVoice(uid: string, transcript: string, parsed: P
       })
     }
 
-    // Upsert contacts
-    for (const c of parsed.contacts) {
-      const contactsRef = adminDb.collection('users').doc(uid).collection('contacts')
-      const existing = await contactsRef.where('name', '==', c.name).limit(1).get()
-      if (existing.empty) {
-        await contactsRef.doc().set({
-          name: c.name, lastConversationDate: today, notes: c.context,
-          createdAt: new Date(), updatedAt: new Date(),
-        })
-      } else {
-        const doc = existing.docs[0]
-        const prevNotes = doc.data().notes || ''
-        await doc.ref.update({
-          lastConversationDate: today,
-          notes: prevNotes ? `${prevNotes}\n${today}: ${c.context}` : `${today}: ${c.context}`,
-          updatedAt: new Date(),
+    // Resolve contacts via entity resolution (unified_contacts)
+    let voiceResolvedContactInfo: { contactId: string; canonicalName: string }[] = []
+    if (parsed.contacts.length > 0) {
+      const contactInputs = parsed.contacts.map(c => ({ name: c.name, context: c.context }))
+      const resolved = await resolveContactsBatch(uid, contactInputs, 'journal', today)
+      voiceResolvedContactInfo = resolved.map(r => ({ contactId: r.contactId, canonicalName: r.contact.canonicalName }))
+      for (let i = 0; i < resolved.length; i++) {
+        await addInteractionToContact(uid, resolved[i].contactId, {
+          date: today,
+          source: 'journal',
+          summary: parsed.contacts[i].context,
         })
       }
     }
+
+    // Embed voice journal text into vector index (fire-and-forget)
+    embedJournalEntry(uid, today, newJournal, voiceResolvedContactInfo).catch(
+      err => console.error('[embed] voice journal embedding failed:', err)
+    )
 
     // Save notes as external signals
     for (const n of parsed.notes) {
