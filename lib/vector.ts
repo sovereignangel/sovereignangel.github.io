@@ -1,19 +1,25 @@
 /**
- * Pinecone vector database client
+ * Vector search using Firestore's built-in findNearest()
  *
- * Wraps the Pinecone Serverless SDK for:
- *   - Upserting embedded document chunks
- *   - Semantic search with metadata filtering
- *   - Cleanup when documents are re-embedded
+ * Zero external services — vectors are stored alongside metadata
+ * in Firestore, using the native KNN vector search.
  *
- * Free tier: 2 billion vectors, 5 GB storage.
+ * Collection: users/{uid}/vectors/{vectorDocId}
+ * Requires composite vector index on the 'embedding' field.
+ *
+ * Setup: Deploy the vector index via Firebase CLI:
+ *   firebase deploy --only firestore:indexes
+ *
+ * Or create manually in Firebase Console → Firestore → Indexes:
+ *   Collection: vectors (collection group)
+ *   Fields: embedding (Vector Config: 768 dims, COSINE)
  */
 
-import { Pinecone, type RecordMetadata } from '@pinecone-database/pinecone'
+import { FieldValue } from 'firebase-admin/firestore'
 
 // ─── TYPES ───────────────────────────────────────────────────────────
 
-export interface VectorMetadata extends RecordMetadata {
+export interface VectorMetadata {
   collection: string       // 'daily_logs', 'conversations', etc.
   documentId: string       // Firestore document ID
   chunkIndex: number       // For multi-chunk documents (transcripts)
@@ -44,29 +50,18 @@ export interface VectorSearchFilters {
   uid: string              // Required: scope to user
 }
 
-// ─── CLIENT ──────────────────────────────────────────────────────────
+// ─── ADMIN DB ACCESS ─────────────────────────────────────────────────
 
-let pineconeClient: Pinecone | null = null
-
-function getPinecone(): Pinecone {
-  if (!pineconeClient) {
-    const apiKey = process.env.PINECONE_API_KEY
-    if (!apiKey) throw new Error('[Vector] PINECONE_API_KEY not set')
-    pineconeClient = new Pinecone({ apiKey })
-  }
-  return pineconeClient
-}
-
-function getIndex() {
-  const indexName = process.env.PINECONE_INDEX || 'thesis-engine'
-  return getPinecone().index<VectorMetadata>(indexName)
+async function getAdminDb() {
+  const { adminDb } = await import('./firebase-admin')
+  return adminDb
 }
 
 // ─── VECTOR ID GENERATION ────────────────────────────────────────────
 
-/** Deterministic vector ID: uid::collection::docId::chunkN */
+/** Deterministic vector doc ID: collection::docId::chunkN */
 export function vectorId(uid: string, collection: string, documentId: string, chunkIndex: number): string {
-  return `${uid}::${collection}::${documentId}::chunk${chunkIndex}`
+  return `${collection}::${documentId}::chunk${chunkIndex}`
 }
 
 // ─── UPSERT ──────────────────────────────────────────────────────────
@@ -75,13 +70,24 @@ export async function upsertVectors(
   vectors: { id: string; values: number[]; metadata: VectorMetadata }[]
 ): Promise<void> {
   if (vectors.length === 0) return
-  const index = getIndex()
+  const db = await getAdminDb()
 
-  // Pinecone max batch size is 100
-  const BATCH_SIZE = 100
+  // Firestore batch write limit is 500
+  const BATCH_SIZE = 500
   for (let i = 0; i < vectors.length; i += BATCH_SIZE) {
-    const batch = vectors.slice(i, i + BATCH_SIZE)
-    await index.upsert({ records: batch })
+    const batch = db.batch()
+    const chunk = vectors.slice(i, i + BATCH_SIZE)
+
+    for (const vec of chunk) {
+      const ref = db.collection('users').doc(vec.metadata.uid).collection('vectors').doc(vec.id)
+      batch.set(ref, {
+        embedding: FieldValue.vector(vec.values),
+        ...vec.metadata,
+        updatedAt: FieldValue.serverTimestamp(),
+      })
+    }
+
+    await batch.commit()
   }
 }
 
@@ -92,47 +98,79 @@ export async function queryVectors(
   topK: number,
   filters: VectorSearchFilters
 ): Promise<VectorSearchResult[]> {
-  const index = getIndex()
+  const db = await getAdminDb()
 
-  // Build Pinecone metadata filter
-  const filterConditions: Record<string, unknown> = {
-    uid: { $eq: filters.uid },
-  }
+  // Start with user-scoped collection
+  let baseQuery = db.collection('users').doc(filters.uid).collection('vectors') as FirebaseFirestore.Query
 
+  // Pre-filter by collection (equality — works with vector index)
   if (filters.collection) {
-    filterConditions.collection = { $eq: filters.collection }
-  }
-  if (filters.contactName) {
-    filterConditions.contactNames = { $in: [filters.contactName] }
-  }
-  if (filters.contactId) {
-    filterConditions.contactIds = { $in: [filters.contactId] }
-  }
-  if (filters.pillar) {
-    filterConditions.thesisPillars = { $in: [filters.pillar] }
-  }
-  if (filters.sourceType) {
-    filterConditions.sourceType = { $eq: filters.sourceType }
-  }
-  if (filters.dateAfter) {
-    filterConditions.date = { ...(filterConditions.date as Record<string, unknown> || {}), $gte: filters.dateAfter }
-  }
-  if (filters.dateBefore) {
-    filterConditions.date = { ...(filterConditions.date as Record<string, unknown> || {}), $lte: filters.dateBefore }
+    baseQuery = baseQuery.where('collection', '==', filters.collection)
   }
 
-  const result = await index.query({
-    vector: embedding,
-    topK,
-    filter: filterConditions,
-    includeMetadata: true,
+  // Pre-filter by sourceType
+  if (filters.sourceType) {
+    baseQuery = baseQuery.where('sourceType', '==', filters.sourceType)
+  }
+
+  // Run vector search
+  // Request extra results to allow for post-filtering
+  const postFilterNeeded = !!(filters.contactName || filters.contactId || filters.dateAfter || filters.dateBefore || filters.pillar)
+  const requestLimit = postFilterNeeded ? Math.min(topK * 3, 1000) : topK
+
+  const vectorQuery = baseQuery.findNearest({
+    vectorField: 'embedding',
+    queryVector: embedding,
+    limit: requestLimit,
+    distanceMeasure: 'COSINE',
+    distanceResultField: 'distance',
   })
 
-  return (result.matches || []).map(m => ({
-    id: m.id,
-    score: m.score ?? 0,
-    metadata: m.metadata as VectorMetadata,
-  }))
+  const snapshot = await vectorQuery.get()
+
+  let results: VectorSearchResult[] = snapshot.docs.map(doc => {
+    const data = doc.data()
+    // Cosine distance: 0 = identical, 2 = opposite. Convert to similarity score (1 = identical, 0 = orthogonal)
+    const distance = data.distance ?? 1
+    const score = 1 - distance
+
+    return {
+      id: doc.id,
+      score,
+      metadata: {
+        collection: data.collection,
+        documentId: data.documentId,
+        chunkIndex: data.chunkIndex,
+        date: data.date,
+        contactNames: data.contactNames || [],
+        contactIds: data.contactIds || [],
+        projectNames: data.projectNames || [],
+        thesisPillars: data.thesisPillars || [],
+        sourceType: data.sourceType,
+        textPreview: data.textPreview,
+        uid: data.uid,
+      },
+    }
+  })
+
+  // Post-filter for fields that can't be efficiently pre-filtered with vector indexes
+  if (filters.contactName) {
+    results = results.filter(r => r.metadata.contactNames.includes(filters.contactName!))
+  }
+  if (filters.contactId) {
+    results = results.filter(r => r.metadata.contactIds.includes(filters.contactId!))
+  }
+  if (filters.dateAfter) {
+    results = results.filter(r => r.metadata.date >= filters.dateAfter!)
+  }
+  if (filters.dateBefore) {
+    results = results.filter(r => r.metadata.date <= filters.dateBefore!)
+  }
+  if (filters.pillar) {
+    results = results.filter(r => r.metadata.thesisPillars.includes(filters.pillar!))
+  }
+
+  return results.slice(0, topK)
 }
 
 // ─── DELETE ──────────────────────────────────────────────────────────
@@ -144,8 +182,15 @@ export async function deleteVectorsByDocId(
   documentId: string,
   maxChunks: number = 100
 ): Promise<void> {
-  const index = getIndex()
-  const ids = Array.from({ length: maxChunks }, (_, i) => vectorId(uid, collection, documentId, i))
-  // Pinecone ignores IDs that don't exist, so this is safe
-  await index.deleteMany({ ids })
+  const db = await getAdminDb()
+  const batch = db.batch()
+
+  for (let i = 0; i < maxChunks; i++) {
+    const id = vectorId(uid, collection, documentId, i)
+    const ref = db.collection('users').doc(uid).collection('vectors').doc(id)
+    batch.delete(ref)
+  }
+
+  // Firestore batch delete silently ignores non-existent docs
+  await batch.commit()
 }

@@ -76,7 +76,7 @@ interface EmbedDocumentOptions {
 }
 
 /**
- * Embed a document's text and upsert to Pinecone.
+ * Embed a document's text and upsert to Firestore vector search.
  * Handles chunking for long texts (transcripts).
  * Deletes old vectors before upserting (idempotent re-embed).
  */
@@ -85,9 +85,9 @@ export async function embedDocument(options: EmbedDocumentOptions): Promise<numb
 
   if (!text?.trim()) return 0
 
-  // Check if Pinecone is configured (graceful no-op if not)
-  if (!process.env.PINECONE_API_KEY) {
-    console.warn('[embed-on-save] PINECONE_API_KEY not set, skipping embedding')
+  // Graceful no-op if Gemini API key not configured
+  if (!process.env.GEMINI_API_KEY) {
+    console.warn('[embed-on-save] GEMINI_API_KEY not set, skipping embedding')
     return 0
   }
 
