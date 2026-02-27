@@ -6,6 +6,7 @@ import UserMenu from '@/components/auth/UserMenu'
 import { useDailyLogContext } from '@/components/thesis/DailyLogProvider'
 import EnergyStatusDot from '@/components/thesis/nav/EnergyStatusDot'
 import { useAlphaBeta } from '@/hooks/useAlphaBeta'
+import { usePendingReviews } from '@/hooks/usePendingReviews'
 import { TREND_ARROWS, TREND_COLORS } from '@/lib/alpha-engine'
 import { format } from 'date-fns'
 
@@ -36,6 +37,7 @@ export default function ThesisNav() {
   const pathname = usePathname()
   const { log } = useDailyLogContext()
   const alphaBeta = useAlphaBeta()
+  const { count: pendingReviewCount } = usePendingReviews()
 
   const getArrow = (component: string) => {
     const ab = alphaBeta.find(a => a.component === component)
@@ -140,6 +142,21 @@ export default function ThesisNav() {
               </Link>
             )
           })}
+          {pendingReviewCount > 0 && (
+            <Link
+              href={`/thesis/review`}
+              className={`flex items-center gap-1 font-serif text-[12px] font-medium px-3 py-1.5 rounded-t-sm border border-transparent no-underline transition-all duration-150 whitespace-nowrap ${
+                pathname.startsWith('/thesis/review')
+                  ? 'text-burgundy border-burgundy bg-burgundy-bg border-b-paper -mb-px font-semibold'
+                  : 'text-amber-ink hover:text-ink hover:bg-cream'
+              }`}
+            >
+              Review
+              <span className="font-mono text-[8px] bg-burgundy text-paper px-1 py-0.5 rounded-sm min-w-[14px] text-center">
+                {pendingReviewCount}
+              </span>
+            </Link>
+          )}
         </nav>
       </div>
     </header>
