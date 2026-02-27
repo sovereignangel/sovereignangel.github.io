@@ -13,6 +13,7 @@
     "@google/generative-ai": "^0.24.1",
     "@hookform/resolvers": "^3.9.1",
     "@octokit/rest": "^22.0.1",
+    "@pinecone-database/pinecone": "^7.1.0",
     "@supabase/supabase-js": "^2.95.3",
     "@types/mapbox-gl": "^3.4.1",
     "date-fns": "^3.6.0",
