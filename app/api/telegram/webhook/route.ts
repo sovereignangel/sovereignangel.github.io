@@ -1489,6 +1489,501 @@ async function handleReset(uid: string, text: string, chatId: number) {
   }
 }
 
+// ─── Claude Build Handlers ────────────────────────────────────────────────────
+
+async function handleClaudeBuild(uid: string, text: string, chatId: number) {
+  const adminDb = await getAdminDb()
+
+  try {
+    // Parse: optional venture number + optional skill names (comma-separated after "with")
+    // Examples: /cbuild 3, /cbuild 3 with armstrong-brand,stripe-payments, /cbuild with dark-saas
+    const withMatch = text.match(/^(.*?)(?:\s+with\s+(.+))?$/)
+    const numPart = withMatch?.[1]?.trim() || ''
+    const skillsPart = withMatch?.[2]?.trim() || ''
+
+    const { num } = parseVentureNumber(numPart)
+    const skillNames = skillsPart
+      ? skillsPart.split(',').map(s => s.trim()).filter(Boolean)
+      : []
+
+    const ventureDoc = await findVentureByNumberOrStage(adminDb, uid, num, 'prd_draft')
+
+    if (!ventureDoc) {
+      await sendTelegramReply(chatId, num
+        ? `Venture #${num} not found.`
+        : 'No venture with a PRD ready to build.\n\nUse /venture to spec one first.')
+      return
+    }
+
+    const venture = ventureDoc.data()
+    const ventureId = ventureDoc.id
+    const spec = venture.spec
+    const vNum = venture.ventureNumber ? `#${venture.ventureNumber} ` : ''
+
+    if (!venture.prd) {
+      await sendTelegramReply(chatId, `${vNum}${spec.name} has no PRD yet.\n\nUse /feedback ${venture.ventureNumber || ''} <text> to generate one.`)
+      return
+    }
+
+    if (venture.stage === 'building') {
+      await sendTelegramReply(chatId, `${vNum}${spec.name} is already building.`)
+      return
+    }
+
+    if (venture.stage === 'deployed') {
+      await sendTelegramReply(chatId, `${vNum}${spec.name} is already deployed. Use /citerate to modify it.`)
+      return
+    }
+
+    // Mark as building
+    await ventureDoc.ref.update({
+      stage: 'building',
+      'build.status': 'generating',
+      'build.startedAt': new Date(),
+      'build.errorMessage': null,
+      'build.buildLog': ['Claude build started'],
+      updatedAt: new Date(),
+    })
+
+    const skillsLabel = skillNames.length > 0 ? `\nSkills: ${skillNames.join(', ')}` : '\nSkills: base-nextjs, clean-design (defaults)'
+    await sendTelegramReply(chatId, `${vNum}Claude build started for ${spec.name}${skillsLabel}\n\nGenerating codebase... This may take 2-5 minutes.`)
+
+    // Load skills
+    const { buildVenture } = await import('@/lib/claude-builder')
+    const { DEFAULT_SKILLS } = await import('@/lib/claude-builder/default-skills')
+
+    let skills: import('@/lib/types').BuilderSkill[] = []
+
+    if (skillNames.length > 0) {
+      // Load user's custom skills
+      const skillsSnap = await adminDb.collection('users').doc(uid).collection('builder_skills').get()
+      const userSkills = skillsSnap.docs.map(d => ({ id: d.id, ...d.data() })) as import('@/lib/types').BuilderSkill[]
+
+      // Match by name
+      const matched = userSkills.filter(s => skillNames.includes(s.name))
+
+      // Also check defaults for unmatched names
+      const userNames = new Set(matched.map(s => s.name))
+      const defaultMatches = DEFAULT_SKILLS
+        .filter(s => skillNames.includes(s.name) && !userNames.has(s.name))
+        .map(s => ({ ...s, id: `default-${s.name}`, createdAt: new Date(), updatedAt: new Date() }))
+
+      skills = [...matched, ...defaultMatches] as import('@/lib/types').BuilderSkill[]
+    }
+
+    // Use auto-attach defaults if no skills specified
+    if (skills.length === 0) {
+      const defaultSnap = await adminDb.collection('users').doc(uid).collection('builder_skills')
+        .where('isDefault', '==', true).get()
+
+      if (!defaultSnap.empty) {
+        skills = defaultSnap.docs.map(d => ({ id: d.id, ...d.data() })) as import('@/lib/types').BuilderSkill[]
+      } else {
+        skills = DEFAULT_SKILLS
+          .filter(s => s.isDefault)
+          .map(s => ({ ...s, id: `default-${s.name}`, createdAt: new Date(), updatedAt: new Date() })) as import('@/lib/types').BuilderSkill[]
+      }
+    }
+
+    // Build with Claude
+    const result = await buildVenture({
+      ventureId,
+      uid,
+      spec: venture.spec,
+      prd: venture.prd,
+      skills,
+    })
+
+    if (result.success) {
+      await ventureDoc.ref.update({
+        stage: 'deployed',
+        'build.status': 'live',
+        'build.repoUrl': result.repoUrl,
+        'build.previewUrl': result.previewUrl,
+        'build.customDomain': result.customDomain,
+        'build.repoName': result.repoName,
+        'build.filesGenerated': result.filesGenerated,
+        'build.completedAt': new Date(),
+        'build.buildLog': result.buildLog,
+        updatedAt: new Date(),
+      })
+
+      // Auto-log the ship
+      try {
+        const now = new Date()
+        const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+        const logRef = adminDb.collection('users').doc(uid).collection('daily_logs').doc(today)
+        await logRef.set({
+          whatShipped: `Deployed ${spec.name} to ${result.previewUrl || result.repoUrl || 'live'} (Claude build)`,
+          publicIteration: true,
+          updatedAt: new Date(),
+        }, { merge: true })
+      } catch (logErr) {
+        console.error('Auto-ship log failed:', logErr)
+      }
+
+      const lines: string[] = [
+        `${vNum}${spec.name} deployed!`,
+        '',
+        `Files: ${result.filesGenerated}`,
+        `Repo: ${result.repoUrl}`,
+      ]
+      if (result.customDomain) {
+        lines.push(`Live: https://${result.customDomain}`)
+      } else if (result.previewUrl) {
+        lines.push(`Preview: ${result.previewUrl}`)
+      }
+      lines.push('', `Reply /citerate ${venture.prd.projectName} <changes> to iterate`)
+
+      await sendTelegramReply(chatId, lines.join('\n'))
+    } else {
+      await ventureDoc.ref.update({
+        'build.status': 'failed',
+        'build.errorMessage': result.errorMessage,
+        'build.completedAt': new Date(),
+        'build.buildLog': result.buildLog,
+        updatedAt: new Date(),
+      })
+
+      await sendTelegramReply(chatId,
+        `${vNum}Claude build failed for ${spec.name}\n\n${result.errorMessage}\n\nUse /cbuild ${venture.ventureNumber || ''} to retry.`)
+    }
+  } catch (error) {
+    console.error('Claude build error:', error)
+    await sendTelegramReply(chatId, `Claude build failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
+  }
+}
+
+async function handleClaudeIterate(uid: string, text: string, chatId: number) {
+  const adminDb = await getAdminDb()
+
+  if (!text.trim()) {
+    await sendTelegramReply(chatId, 'Usage: /citerate project-name add dark mode\n\nOptional skills: /citerate project-name add dark mode with armstrong-brand')
+    return
+  }
+
+  // Parse: first word = project slug, rest = changes (optionally "with skills")
+  const withMatch = text.match(/^(.+?)(?:\s+with\s+(\S+(?:,\S+)*))?$/)
+  const mainPart = withMatch?.[1]?.trim() || text.trim()
+  const skillsPart = withMatch?.[2]?.trim() || ''
+
+  const parts = mainPart.split(/\s+/)
+  const projectSlug = parts[0].toLowerCase()
+  const changes = parts.slice(1).join(' ')
+  const skillNames = skillsPart ? skillsPart.split(',').map(s => s.trim()).filter(Boolean) : []
+
+  if (!changes) {
+    await sendTelegramReply(chatId, 'Missing change description.\n\nUsage: /citerate project-name add dark mode')
+    return
+  }
+
+  // Find venture
+  const venturesSnap = await adminDb.collection('users').doc(uid).collection('ventures')
+    .where('stage', '==', 'deployed').get()
+
+  const matchedDoc = venturesSnap.docs.find(d => {
+    const data = d.data()
+    const prdName = data.prd?.projectName?.toLowerCase()
+    const specName = data.spec?.name?.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-+$/, '')
+    return prdName === projectSlug || specName === projectSlug ||
+      data.spec?.name?.toLowerCase() === projectSlug
+  })
+
+  if (!matchedDoc) {
+    await sendTelegramReply(chatId, `No deployed venture found matching "${projectSlug}".\n\nUse the project name from the PRD (kebab-case).`)
+    return
+  }
+
+  const venture = matchedDoc.data()
+  const ventureId = matchedDoc.id
+  const vNum = venture.ventureNumber ? `#${venture.ventureNumber} ` : ''
+
+  // Update state
+  const iterations = venture.iterations || []
+  iterations.push({ request: changes, completedAt: null })
+  await matchedDoc.ref.update({
+    stage: 'building',
+    iterations,
+    'build.status': 'generating',
+    'build.startedAt': new Date(),
+    'build.errorMessage': null,
+    'build.buildLog': ['Claude iterate started'],
+    updatedAt: new Date(),
+  })
+
+  await sendTelegramReply(chatId, `${vNum}Iterating on ${venture.spec.name} with Claude...\n\n"${changes}"\n\nThis may take 2-5 minutes.`)
+
+  try {
+    const { buildVenture } = await import('@/lib/claude-builder')
+    const { DEFAULT_SKILLS } = await import('@/lib/claude-builder/default-skills')
+
+    // Load skills (same logic as handleClaudeBuild)
+    let skills: import('@/lib/types').BuilderSkill[] = []
+    if (skillNames.length > 0) {
+      const skillsSnap = await adminDb.collection('users').doc(uid).collection('builder_skills').get()
+      const userSkills = skillsSnap.docs.map(d => ({ id: d.id, ...d.data() })) as import('@/lib/types').BuilderSkill[]
+      const matched = userSkills.filter(s => skillNames.includes(s.name))
+      const userNames = new Set(matched.map(s => s.name))
+      const defaultMatches = DEFAULT_SKILLS
+        .filter(s => skillNames.includes(s.name) && !userNames.has(s.name))
+        .map(s => ({ ...s, id: `default-${s.name}`, createdAt: new Date(), updatedAt: new Date() }))
+      skills = [...matched, ...defaultMatches] as import('@/lib/types').BuilderSkill[]
+    }
+    if (skills.length === 0) {
+      skills = DEFAULT_SKILLS
+        .filter(s => s.isDefault)
+        .map(s => ({ ...s, id: `default-${s.name}`, createdAt: new Date(), updatedAt: new Date() })) as import('@/lib/types').BuilderSkill[]
+    }
+
+    const result = await buildVenture({
+      ventureId,
+      uid,
+      spec: venture.spec,
+      prd: venture.prd,
+      skills,
+      iterate: {
+        repoName: venture.build?.repoName || venture.prd.projectName,
+        changes,
+      },
+    })
+
+    if (result.success) {
+      // Mark last iteration as completed
+      iterations[iterations.length - 1].completedAt = new Date()
+      await matchedDoc.ref.update({
+        stage: 'deployed',
+        iterations,
+        'build.status': 'live',
+        'build.repoUrl': result.repoUrl,
+        'build.previewUrl': result.previewUrl,
+        'build.customDomain': result.customDomain,
+        'build.repoName': result.repoName,
+        'build.filesGenerated': result.filesGenerated,
+        'build.completedAt': new Date(),
+        'build.buildLog': result.buildLog,
+        updatedAt: new Date(),
+      })
+
+      const lines = [
+        `${vNum}${venture.spec.name} updated!`,
+        '',
+        `Changes: "${changes}"`,
+        `Files modified: ${result.filesGenerated}`,
+      ]
+      if (result.customDomain) lines.push(`Live: https://${result.customDomain}`)
+      else if (result.previewUrl) lines.push(`Preview: ${result.previewUrl}`)
+
+      await sendTelegramReply(chatId, lines.join('\n'))
+    } else {
+      await matchedDoc.ref.update({
+        'build.status': 'failed',
+        'build.errorMessage': result.errorMessage,
+        'build.completedAt': new Date(),
+        'build.buildLog': result.buildLog,
+        stage: 'deployed', // revert
+        updatedAt: new Date(),
+      })
+      await sendTelegramReply(chatId,
+        `${vNum}Claude iterate failed for ${venture.spec.name}\n\n${result.errorMessage}`)
+    }
+  } catch (error) {
+    console.error('Claude iterate error:', error)
+    await matchedDoc.ref.update({
+      'build.status': 'failed',
+      'build.errorMessage': error instanceof Error ? error.message : 'Unknown error',
+      'build.completedAt': new Date(),
+      stage: 'deployed',
+      updatedAt: new Date(),
+    })
+    await sendTelegramReply(chatId,
+      `Claude iterate failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
+  }
+}
+
+async function handleSkill(uid: string, text: string, chatId: number) {
+  const adminDb = await getAdminDb()
+
+  if (!text.trim()) {
+    await sendTelegramReply(chatId, [
+      'Builder Skills — composable prompt blocks for Claude builds',
+      '',
+      'Commands:',
+      '  /skill list — List all skills',
+      '  /skill create <name> | <prompt> — Create a custom skill',
+      '  /skill default <name> — Toggle skill as default',
+      '  /skill delete <name> — Delete a custom skill',
+      '  /skill info <name> — Show skill details',
+      '',
+      'Use in builds:',
+      '  /cbuild 3 with armstrong-brand,stripe-payments',
+    ].join('\n'))
+    return
+  }
+
+  const parts = text.trim().split(/\s+/)
+  const subcommand = parts[0].toLowerCase()
+
+  if (subcommand === 'list') {
+    // List all skills (user + defaults)
+    const snap = await adminDb.collection('users').doc(uid).collection('builder_skills')
+      .orderBy('name', 'asc').get()
+    const userSkills = snap.docs.map(d => d.data())
+
+    const { DEFAULT_SKILLS } = await import('@/lib/claude-builder/default-skills')
+    const userNames = new Set(userSkills.map(s => s.name))
+    const builtins = DEFAULT_SKILLS.filter(s => !userNames.has(s.name))
+
+    const lines: string[] = ['Builder Skills:']
+    const allSkills = [...userSkills, ...builtins.map(s => ({ ...s, builtin: true }))]
+
+    for (const s of allSkills) {
+      const defaultTag = s.isDefault ? ' [default]' : ''
+      const builtinTag = 'builtin' in s ? ' (built-in)' : ''
+      lines.push(`  ${s.name} — ${s.description || s.label}${defaultTag}${builtinTag}`)
+    }
+
+    lines.push('', `${allSkills.length} skills available`)
+    await sendTelegramReply(chatId, lines.join('\n'))
+    return
+  }
+
+  if (subcommand === 'create') {
+    // Parse: /skill create <name> | <system prompt>
+    const rest = parts.slice(1).join(' ')
+    const pipeIndex = rest.indexOf('|')
+
+    if (pipeIndex === -1) {
+      await sendTelegramReply(chatId, 'Usage: /skill create my-brand | ## Design System\nUse dark theme with blue accents...')
+      return
+    }
+
+    const name = rest.slice(0, pipeIndex).trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-+$/, '')
+    const systemPrompt = rest.slice(pipeIndex + 1).trim()
+
+    if (!name || !systemPrompt) {
+      await sendTelegramReply(chatId, 'Both name and prompt are required.\n\nUsage: /skill create my-brand | ## Design\nDark theme...')
+      return
+    }
+
+    const ref = adminDb.collection('users').doc(uid).collection('builder_skills').doc()
+    await ref.set({
+      name,
+      label: name.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '),
+      category: 'custom',
+      description: systemPrompt.slice(0, 80),
+      systemPrompt,
+      dependencies: [],
+      techStack: [],
+      filePatterns: [],
+      isDefault: false,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    })
+
+    await sendTelegramReply(chatId, `Skill created: ${name}\n\nUse it: /cbuild 3 with ${name}`)
+    return
+  }
+
+  if (subcommand === 'default') {
+    const name = parts[1]?.toLowerCase()
+    if (!name) {
+      await sendTelegramReply(chatId, 'Usage: /skill default <name>')
+      return
+    }
+
+    // Find the skill
+    const snap = await adminDb.collection('users').doc(uid).collection('builder_skills')
+      .where('name', '==', name).limit(1).get()
+
+    if (snap.empty) {
+      // Check if it's a built-in and copy it
+      const { DEFAULT_SKILLS } = await import('@/lib/claude-builder/default-skills')
+      const builtin = DEFAULT_SKILLS.find(s => s.name === name)
+      if (builtin) {
+        const ref = adminDb.collection('users').doc(uid).collection('builder_skills').doc()
+        await ref.set({ ...builtin, isDefault: true, createdAt: new Date(), updatedAt: new Date() })
+        await sendTelegramReply(chatId, `${name} copied from built-ins and set as default.`)
+      } else {
+        await sendTelegramReply(chatId, `Skill "${name}" not found.`)
+      }
+      return
+    }
+
+    const doc = snap.docs[0]
+    const current = doc.data().isDefault ?? false
+    await doc.ref.update({ isDefault: !current, updatedAt: new Date() })
+    await sendTelegramReply(chatId, `${name} ${!current ? 'set as default' : 'removed from defaults'}.`)
+    return
+  }
+
+  if (subcommand === 'delete') {
+    const name = parts[1]?.toLowerCase()
+    if (!name) {
+      await sendTelegramReply(chatId, 'Usage: /skill delete <name>')
+      return
+    }
+    const snap = await adminDb.collection('users').doc(uid).collection('builder_skills')
+      .where('name', '==', name).limit(1).get()
+    if (snap.empty) {
+      await sendTelegramReply(chatId, `Skill "${name}" not found in your collection.`)
+      return
+    }
+    await snap.docs[0].ref.delete()
+    await sendTelegramReply(chatId, `Skill "${name}" deleted.`)
+    return
+  }
+
+  if (subcommand === 'info') {
+    const name = parts[1]?.toLowerCase()
+    if (!name) {
+      await sendTelegramReply(chatId, 'Usage: /skill info <name>')
+      return
+    }
+    // Check user skills
+    const snap = await adminDb.collection('users').doc(uid).collection('builder_skills')
+      .where('name', '==', name).limit(1).get()
+
+    if (!snap.empty) {
+      const s = snap.docs[0].data()
+      const lines = [
+        `Skill: ${s.name}`,
+        `Label: ${s.label}`,
+        `Category: ${s.category}`,
+        `Default: ${s.isDefault ? 'yes' : 'no'}`,
+        s.dependencies?.length ? `Depends on: ${s.dependencies.join(', ')}` : '',
+        s.techStack?.length ? `Tech: ${s.techStack.join(', ')}` : '',
+        '',
+        'Prompt:',
+        s.systemPrompt.slice(0, 500) + (s.systemPrompt.length > 500 ? '...' : ''),
+      ].filter(Boolean)
+      await sendTelegramReply(chatId, lines.join('\n'))
+      return
+    }
+
+    // Check built-ins
+    const { DEFAULT_SKILLS } = await import('@/lib/claude-builder/default-skills')
+    const builtin = DEFAULT_SKILLS.find(s => s.name === name)
+    if (builtin) {
+      const lines = [
+        `Skill: ${builtin.name} (built-in)`,
+        `Label: ${builtin.label}`,
+        `Category: ${builtin.category}`,
+        builtin.techStack?.length ? `Tech: ${builtin.techStack.join(', ')}` : '',
+        '',
+        'Prompt:',
+        builtin.systemPrompt.slice(0, 500) + (builtin.systemPrompt.length > 500 ? '...' : ''),
+      ].filter(Boolean)
+      await sendTelegramReply(chatId, lines.join('\n'))
+      return
+    }
+
+    await sendTelegramReply(chatId, `Skill "${name}" not found.`)
+    return
+  }
+
+  await sendTelegramReply(chatId, `Unknown skill command: ${subcommand}\n\nUse /skill for help.`)
+}
+
 export async function POST(req: NextRequest) {
   if (!BOT_TOKEN) {
     return NextResponse.json({ error: 'Bot not configured' }, { status: 500 })
@@ -1712,7 +2207,7 @@ export async function POST(req: NextRequest) {
         await sendTelegramReply(chatId, 'Usage: /iterate project-name add dark mode')
         return NextResponse.json({ ok: true })
       }
-      await handleIterate(uid, parsed.text, chatId)
+      await handleClaudeIterate(uid, parsed.text, chatId)
       return NextResponse.json({ ok: true })
     }
 
@@ -1722,15 +2217,37 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: true })
     }
 
-    // Handle build command
+    // Handle build command (routes to Claude builder)
     if (parsed.command === 'build') {
-      await handleBuild(uid, parsed.text, chatId)
+      await handleClaudeBuild(uid, parsed.text, chatId)
       return NextResponse.json({ ok: true })
     }
 
     // Handle reset command
     if (parsed.command === 'reset') {
       await handleReset(uid, parsed.text, chatId)
+      return NextResponse.json({ ok: true })
+    }
+
+    // Handle Claude build command
+    if (parsed.command === 'cbuild') {
+      await handleClaudeBuild(uid, parsed.text, chatId)
+      return NextResponse.json({ ok: true })
+    }
+
+    // Handle Claude iterate command
+    if (parsed.command === 'citerate') {
+      if (!parsed.text) {
+        await sendTelegramReply(chatId, 'Usage: /citerate project-name add dark mode')
+        return NextResponse.json({ ok: true })
+      }
+      await handleClaudeIterate(uid, parsed.text, chatId)
+      return NextResponse.json({ ok: true })
+    }
+
+    // Handle skill management command
+    if (parsed.command === 'skill') {
+      await handleSkill(uid, parsed.text, chatId)
       return NextResponse.json({ ok: true })
     }
 

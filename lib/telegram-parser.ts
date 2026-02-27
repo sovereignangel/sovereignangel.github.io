@@ -13,6 +13,9 @@
  *   /approve                 — Approve the most recent PRD draft
  *   /feedback <text>         — Send feedback on the most recent PRD draft
  *   /iterate <project> <changes> — Request changes to a deployed venture
+ *   /cbuild [#] [with skills]   — Claude-powered build (composable skills)
+ *   /citerate <project> <changes> — Claude-powered iterate on deployed venture
+ *   /skill <subcommand>          — Manage composable builder skills
  *
  * Pillar hashtags: #ai, #markets, #mind
  */
@@ -20,7 +23,7 @@
 import type { ThesisPillar } from '@/lib/types'
 
 export interface ParsedTelegramMessage {
-  command: 'signal' | 'note' | 'journal' | 'rss' | 'predict' | 'venture' | 'build' | 'approve' | 'feedback' | 'iterate' | 'reset' | 'brief' | 'memo' | 'morning' | 'unknown'
+  command: 'signal' | 'note' | 'journal' | 'rss' | 'predict' | 'venture' | 'build' | 'approve' | 'feedback' | 'iterate' | 'reset' | 'brief' | 'memo' | 'morning' | 'cbuild' | 'citerate' | 'skill' | 'unknown'
   text: string
   pillars: ThesisPillar[]
   raw: string
@@ -120,6 +123,24 @@ export function parseTelegramMessage(text: string): ParsedTelegramMessage {
   if (raw.startsWith('/brief')) {
     const body = raw.slice('/brief'.length).trim()
     return { command: 'brief', text: body, pillars: [], raw }
+  }
+
+  // /cbuild command — Claude-powered build (optional number + skill names)
+  if (raw.startsWith('/cbuild')) {
+    const body = raw.slice('/cbuild'.length).trim()
+    return { command: 'cbuild', text: body, pillars: [], raw }
+  }
+
+  // /citerate command — Claude-powered iterate on deployed venture
+  if (raw.startsWith('/citerate')) {
+    const body = raw.slice('/citerate'.length).trim()
+    return { command: 'citerate', text: body, pillars: [], raw }
+  }
+
+  // /skill command — manage composable builder skills
+  if (raw.startsWith('/skill')) {
+    const body = raw.slice('/skill'.length).trim()
+    return { command: 'skill', text: body, pillars: [], raw }
   }
 
   // Plain text — treat as signal
