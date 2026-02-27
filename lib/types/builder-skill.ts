@@ -7,7 +7,7 @@
  * Users create skills once, then attach them to ventures before building.
  */
 
-export type BuilderSkillCategory = 'brand' | 'integration' | 'pattern' | 'stack' | 'custom'
+export type BuilderSkillCategory = 'brand' | 'integration' | 'pattern' | 'stack' | 'methodology' | 'custom'
 
 export interface BuilderSkill {
   id?: string
