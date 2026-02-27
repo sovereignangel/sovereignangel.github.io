@@ -1,7 +1,7 @@
 import type { DecisionDomain } from './decision'
 import type { Timestamp } from './shared'
 
-export type PrincipleSource = 'decision' | 'synthesis' | 'conversation' | 'manual' | 'book'
+export type PrincipleSource = 'decision' | 'synthesis' | 'conversation' | 'manual' | 'book' | 'framework'
 
 export interface Principle {
   id?: string
