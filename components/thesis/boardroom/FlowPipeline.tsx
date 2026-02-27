@@ -6,6 +6,7 @@ interface FlowStage {
   count: number
   alert?: number   // count of items needing attention
   scrollTo: string // section id to scroll to
+  ready?: number   // items ready to advance to next stage
 }
 
 interface FlowPipelineProps {
@@ -20,6 +21,7 @@ export default function FlowPipeline({ stages, activeSection, onStageClick }: Fl
       {stages.map((stage, i) => {
         const isActive = activeSection === stage.scrollTo
         const hasAlert = stage.alert != null && stage.alert > 0
+        const hasReady = stage.ready != null && stage.ready > 0
 
         return (
           <div key={stage.id} className="flex items-center shrink-0">
@@ -52,8 +54,17 @@ export default function FlowPipeline({ stages, activeSection, onStageClick }: Fl
                 </span>
               )}
             </button>
+            {/* Gate indicator between stages */}
             {i < stages.length - 1 && (
-              <span className="text-[9px] text-ink-faint mx-0.5">&rarr;</span>
+              <div className="flex items-center mx-0.5">
+                {hasReady ? (
+                  <span className="font-mono text-[8px] text-green-ink" title={`${stage.ready} ready to advance`}>
+                    →{stage.ready}
+                  </span>
+                ) : (
+                  <span className="text-[9px] text-ink-faint">&rarr;</span>
+                )}
+              </div>
             )}
           </div>
         )

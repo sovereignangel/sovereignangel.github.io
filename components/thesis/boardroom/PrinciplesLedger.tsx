@@ -3,7 +3,7 @@
 import { useState, useRef } from 'react'
 import { useAuth } from '@/components/auth/AuthProvider'
 import { usePrinciples } from '@/hooks/usePrinciples'
-import type { Principle, PrincipleSource, DecisionDomain } from '@/lib/types'
+import type { Principle, PrincipleSource, PrincipleMaturity, DecisionDomain } from '@/lib/types'
 
 const SOURCE_LABELS: Record<PrincipleSource, string> = {
   decision: 'Decision',
@@ -21,11 +21,24 @@ const DOMAIN_LABELS: Record<DecisionDomain, string> = {
   thesis: 'Thesis',
 }
 
+function getMaturity(p: Principle): PrincipleMaturity {
+  if (p.linkedDecisionIds.length >= 2 && p.reinforcementCount >= 3) return 'established'
+  if (p.reinforcementCount >= 3 || p.linkedDecisionIds.length >= 1) return 'emerging'
+  return 'draft'
+}
+
+const MATURITY_STYLES: Record<PrincipleMaturity, { label: string; style: string }> = {
+  draft: { label: 'Draft', style: 'text-ink-faint bg-cream border-rule-light' },
+  emerging: { label: 'Emerging', style: 'text-amber-ink bg-amber-bg border-amber-ink/20' },
+  established: { label: 'Established', style: 'text-green-ink bg-green-bg border-green-ink/20' },
+}
+
 export default function PrinciplesLedger() {
   const { user } = useAuth()
   const { principles, active, loading, save, reinforce, remove } = usePrinciples(user?.uid)
   const [showForm, setShowForm] = useState(false)
   const [filterDomain, setFilterDomain] = useState<DecisionDomain | 'all'>('all')
+  const [expandedId, setExpandedId] = useState<string | null>(null)
 
   const [saving, setSaving] = useState(false)
   const savingRef = useRef(false)
@@ -97,6 +110,14 @@ export default function PrinciplesLedger() {
         </button>
       </div>
 
+      {/* Bridgewater guidance */}
+      <div className="mb-2 px-2 py-1 bg-cream border border-rule-light rounded-sm">
+        <p className="font-serif text-[8px] text-ink-muted italic leading-relaxed">
+          Principles are strongest when derived from tested decisions with real outcomes.
+          Draft → Emerging (3+ reinforcements) → Established (linked to 2+ decisions).
+        </p>
+      </div>
+
       {/* Domain Filter */}
       <div className="flex gap-0.5 mb-2">
         {(['all', 'portfolio', 'product', 'revenue', 'personal', 'thesis'] as const).map(d => (
@@ -114,7 +135,7 @@ export default function PrinciplesLedger() {
         ))}
       </div>
 
-      {/* Add Form */}
+      {/* Add Form — Soft gate: recommend linking to decision, allow bypass */}
       {showForm && (
         <div className="mb-2 p-2 border border-rule rounded-sm bg-white space-y-1.5">
           <input
@@ -161,6 +182,14 @@ export default function PrinciplesLedger() {
             className="w-full font-serif text-[10px] bg-cream border border-rule rounded-sm px-1.5 py-1 focus:outline-none focus:border-burgundy"
             placeholder="Where did this principle come from?"
           />
+          {/* Soft gate notice */}
+          {source !== 'decision' && (
+            <div className="px-2 py-1 bg-amber-bg border border-amber-ink/20 rounded-sm">
+              <p className="font-serif text-[8px] text-amber-ink italic">
+                Bridgewater recommends deriving principles from reviewed decisions. This will start as a &quot;draft&quot; principle.
+              </p>
+            </div>
+          )}
           <div className="flex justify-end gap-1">
             <button onClick={() => setShowForm(false)} className="font-serif text-[8px] px-2 py-0.5 text-ink-muted">Cancel</button>
             <button
@@ -184,36 +213,71 @@ export default function PrinciplesLedger() {
         </div>
       ) : (
         <div className="max-h-[320px] overflow-y-auto space-y-1 pr-1">
-          {filtered.map((p) => (
-            <div key={p.id} className="relative group border border-rule rounded-sm bg-white">
-              {/* Delete X — hover */}
-              <button
-                onClick={() => p.id && remove(p.id)}
-                className="absolute top-1 right-1 w-4 h-4 flex items-center justify-center font-mono text-[10px] text-ink-faint hover:text-red-ink opacity-0 group-hover:opacity-100 transition-opacity z-10"
-                title="Delete principle"
-              >
-                ×
-              </button>
-              <div className="flex items-center gap-1.5 px-2 py-1 pr-6">
-                <span className="font-mono text-[7px] uppercase px-1 py-0.5 rounded-sm border bg-burgundy-bg text-burgundy border-burgundy/20 shrink-0">
-                  {DOMAIN_LABELS[p.domain]}
-                </span>
-                <span className="font-serif text-[10px] text-ink flex-1 truncate">
-                  {p.shortForm || p.text}
-                </span>
+          {filtered.map((p) => {
+            const maturity = getMaturity(p)
+            const matStyle = MATURITY_STYLES[maturity]
+            const isExpanded = expandedId === p.id
+
+            return (
+              <div key={p.id} className="relative group border border-rule rounded-sm bg-white">
+                {/* Delete X — hover */}
                 <button
-                  onClick={() => p.id && reinforce(p.id)}
-                  className="font-mono text-[9px] font-bold text-green-ink hover:bg-green-bg px-1 py-0.5 rounded-sm transition-colors shrink-0"
-                  title="Reinforce"
+                  onClick={() => p.id && remove(p.id)}
+                  className="absolute top-1 right-1 w-4 h-4 flex items-center justify-center font-mono text-[10px] text-ink-faint hover:text-red-ink opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                  title="Delete principle"
                 >
-                  +1
+                  ×
                 </button>
-                <span className="font-mono text-[8px] font-semibold text-ink shrink-0">
-                  {p.reinforcementCount}×
-                </span>
+                <button
+                  onClick={() => setExpandedId(isExpanded ? null : (p.id || null))}
+                  className="w-full flex items-center gap-1.5 px-2 py-1 pr-6 text-left hover:bg-cream/50 transition-colors"
+                >
+                  <span className="font-mono text-[7px] uppercase px-1 py-0.5 rounded-sm border bg-burgundy-bg text-burgundy border-burgundy/20 shrink-0">
+                    {DOMAIN_LABELS[p.domain]}
+                  </span>
+                  <span className={`font-serif text-[10px] text-ink flex-1 ${isExpanded ? '' : 'truncate'}`}>
+                    {p.shortForm || p.text}
+                  </span>
+                  {/* Maturity badge */}
+                  <span className={`font-mono text-[7px] uppercase px-1 py-0.5 rounded-sm border shrink-0 ${matStyle.style}`}>
+                    {matStyle.label}
+                  </span>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); p.id && reinforce(p.id) }}
+                    className="font-mono text-[9px] font-bold text-green-ink hover:bg-green-bg px-1 py-0.5 rounded-sm transition-colors shrink-0"
+                    title="Reinforce"
+                  >
+                    +1
+                  </button>
+                  <span className="font-mono text-[8px] font-semibold text-ink shrink-0">
+                    {p.reinforcementCount}×
+                  </span>
+                </button>
+
+                {/* Expanded detail */}
+                {isExpanded && (
+                  <div className="px-2 pb-2 border-t border-rule-light pt-1.5 space-y-1">
+                    <p className="font-serif text-[10px] text-ink leading-relaxed">{p.text}</p>
+                    <div className="flex items-center gap-2 text-ink-faint">
+                      <span className="font-mono text-[8px]">Source: {SOURCE_LABELS[p.source]}</span>
+                      {p.sourceDescription && (
+                        <span className="font-serif text-[8px] italic">{p.sourceDescription}</span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 text-ink-faint">
+                      <span className="font-mono text-[8px]">First applied: {p.dateFirstApplied}</span>
+                      <span className="font-mono text-[8px]">Last reinforced: {p.lastReinforcedAt}</span>
+                    </div>
+                    {p.linkedDecisionIds.length > 0 && (
+                      <span className="font-mono text-[8px] text-ink-muted">
+                        Linked to {p.linkedDecisionIds.length} decision{p.linkedDecisionIds.length > 1 ? 's' : ''}
+                      </span>
+                    )}
+                  </div>
+                )}
               </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       )}
     </div>
