@@ -44,6 +44,11 @@ body.thesis-active::after {
   background: rgba(245, 241, 234, 0.46);
 }
 
+/* Alamo Bernal pages get clean professional overlay */
+body.alamo-active::after {
+  background: rgba(245, 241, 234, 0.50);
+}
+
 /* Ensure all form inputs have visible text color */
 input, textarea, select {
   color: #2a2522;
