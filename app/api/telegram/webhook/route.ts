@@ -117,7 +117,7 @@ function getTodayKey(): string {
 }
 
 function buildJournalReply(parsed: ParsedJournalEntry): string {
-  const lines: string[] = ['*Journal metrics saved*']
+  const lines: string[] = ['*Journal saved*']
 
   // Energy
   const energyLines: string[] = []
@@ -291,83 +291,63 @@ function buildFrameworkCoaching(
 }
 
 // ---------------------------------------------------------------------------
-// Persist structured items from a journal review (decisions, principles, beliefs, contacts, notes)
-// Called when a review is confirmed (either via Telegram or web)
+// Persist structured items immediately and return created doc IDs
 // ---------------------------------------------------------------------------
-interface ReviewableItem {
-  status: 'pending' | 'confirmed' | 'edited' | 'rejected'
+interface SavedIds {
+  contactDocIds: string[]
+  decisionDocIds: string[]
+  principleDocIds: string[]
+  beliefDocIds: string[]
+  noteDocIds: string[]
 }
 
-async function persistReviewedItems(
+async function persistStructuredItems(
   adminDb: FirebaseFirestore.Firestore,
   uid: string,
   today: string,
-  review: {
-    contacts: Array<{ name: string; context: string } & ReviewableItem>
-    decisions: Array<{ title: string; hypothesis: string; chosenOption: string; reasoning: string; domain: string; confidenceLevel: number } & ReviewableItem>
-    principles: Array<{ text: string; shortForm: string; domain: string } & ReviewableItem>
-    beliefs: Array<{ statement: string; confidence: number; domain: string; evidenceFor: string[]; evidenceAgainst: string[] } & ReviewableItem>
-    notes: Array<{ text: string; actionRequired: boolean } & ReviewableItem>
-  }
-) {
-  // Create decisions (only confirmed or edited items)
-  for (const d of review.decisions) {
-    if (d.status === 'rejected') continue
+  parsed: ParsedJournalEntry
+): Promise<SavedIds> {
+  const ids: SavedIds = { contactDocIds: [], decisionDocIds: [], principleDocIds: [], beliefDocIds: [], noteDocIds: [] }
+
+  // Create decisions
+  for (const d of parsed.decisions) {
     const reviewDate = new Date()
     reviewDate.setDate(reviewDate.getDate() + 90)
-    const decisionRef = adminDb.collection('users').doc(uid).collection('decisions').doc()
-    await decisionRef.set({
-      title: d.title,
-      hypothesis: d.hypothesis,
-      options: [d.chosenOption],
-      chosenOption: d.chosenOption,
-      reasoning: d.reasoning,
-      confidenceLevel: d.confidenceLevel,
-      killCriteria: [],
-      premortem: '',
-      domain: d.domain,
-      linkedProjectIds: [],
-      linkedSignalIds: [],
-      status: 'active',
-      reviewDate: reviewDate.toISOString().split('T')[0],
-      decidedAt: today,
-      createdAt: new Date(),
-      updatedAt: new Date(),
+    const ref = adminDb.collection('users').doc(uid).collection('decisions').doc()
+    await ref.set({
+      title: d.title, hypothesis: d.hypothesis, options: [d.chosenOption],
+      chosenOption: d.chosenOption, reasoning: d.reasoning, confidenceLevel: d.confidenceLevel,
+      killCriteria: [], premortem: '', domain: d.domain,
+      linkedProjectIds: [], linkedSignalIds: [], status: 'active',
+      reviewDate: reviewDate.toISOString().split('T')[0], decidedAt: today,
+      createdAt: new Date(), updatedAt: new Date(),
     })
+    ids.decisionDocIds.push(ref.id)
   }
 
   // Create principles
-  for (const p of review.principles) {
-    if (p.status === 'rejected') continue
-    const principleRef = adminDb.collection('users').doc(uid).collection('principles').doc()
-    await principleRef.set({
-      text: p.text,
-      shortForm: p.shortForm,
-      source: 'manual',
-      sourceDescription: 'Extracted from Telegram journal',
-      domain: p.domain,
-      dateFirstApplied: today,
-      linkedDecisionIds: [],
-      lastReinforcedAt: today,
-      reinforcementCount: 0,
-      createdAt: new Date(),
-      updatedAt: new Date(),
+  for (const p of parsed.principles) {
+    const ref = adminDb.collection('users').doc(uid).collection('principles').doc()
+    await ref.set({
+      text: p.text, shortForm: p.shortForm, source: 'manual',
+      sourceDescription: 'Extracted from Telegram journal', domain: p.domain,
+      dateFirstApplied: today, linkedDecisionIds: [], lastReinforcedAt: today,
+      reinforcementCount: 0, createdAt: new Date(), updatedAt: new Date(),
     })
+    ids.principleDocIds.push(ref.id)
   }
 
   // Upsert contacts
-  for (const c of review.contacts) {
-    if (c.status === 'rejected') continue
+  for (const c of parsed.contacts) {
     const contactsRef = adminDb.collection('users').doc(uid).collection('contacts')
     const existing = await contactsRef.where('name', '==', c.name).limit(1).get()
     if (existing.empty) {
-      await contactsRef.doc().set({
-        name: c.name,
-        lastConversationDate: today,
-        notes: c.context,
-        createdAt: new Date(),
-        updatedAt: new Date(),
+      const ref = contactsRef.doc()
+      await ref.set({
+        name: c.name, lastConversationDate: today, notes: c.context,
+        createdAt: new Date(), updatedAt: new Date(),
       })
+      ids.contactDocIds.push(ref.id)
     } else {
       const doc = existing.docs[0]
       const prevNotes = doc.data().notes || ''
@@ -376,52 +356,39 @@ async function persistReviewedItems(
         notes: prevNotes ? `${prevNotes}\n${today}: ${c.context}` : `${today}: ${c.context}`,
         updatedAt: new Date(),
       })
+      ids.contactDocIds.push(doc.id)
     }
   }
 
   // Save notes as external signals
-  for (const n of review.notes) {
-    if (n.status === 'rejected') continue
-    const signalRef = adminDb.collection('users').doc(uid).collection('external_signals').doc()
-    await signalRef.set({
-      title: n.text.slice(0, 120),
-      aiSummary: n.text,
-      keyTakeaway: n.text,
-      valueBullets: [],
-      sourceUrl: '',
-      sourceName: 'Journal note',
-      source: 'telegram',
-      relevanceScore: n.actionRequired ? 0.8 : 0.4,
-      thesisPillars: [],
-      status: 'inbox',
-      readStatus: 'unread',
-      publishedAt: new Date().toISOString(),
-      createdAt: new Date(),
-      updatedAt: new Date(),
+  for (const n of parsed.notes) {
+    const ref = adminDb.collection('users').doc(uid).collection('external_signals').doc()
+    await ref.set({
+      title: n.text.slice(0, 120), aiSummary: n.text, keyTakeaway: n.text,
+      valueBullets: [], sourceUrl: '', sourceName: 'Journal note',
+      source: 'telegram', relevanceScore: n.actionRequired ? 0.8 : 0.4,
+      thesisPillars: [], status: 'inbox', readStatus: 'unread',
+      publishedAt: new Date().toISOString(), createdAt: new Date(), updatedAt: new Date(),
     })
+    ids.noteDocIds.push(ref.id)
   }
 
   // Create beliefs
-  for (const b of review.beliefs) {
-    if (b.status === 'rejected') continue
+  for (const b of parsed.beliefs) {
     const attentionDate = new Date()
     attentionDate.setDate(attentionDate.getDate() + 21)
-    const beliefRef = adminDb.collection('users').doc(uid).collection('beliefs').doc()
-    await beliefRef.set({
-      statement: b.statement,
-      confidence: b.confidence,
-      domain: b.domain,
-      evidenceFor: b.evidenceFor,
-      evidenceAgainst: b.evidenceAgainst,
-      status: 'active',
-      linkedDecisionIds: [],
-      linkedPrincipleIds: [],
-      sourceJournalDate: today,
-      attentionDate: attentionDate.toISOString().split('T')[0],
-      createdAt: new Date(),
-      updatedAt: new Date(),
+    const ref = adminDb.collection('users').doc(uid).collection('beliefs').doc()
+    await ref.set({
+      statement: b.statement, confidence: b.confidence, domain: b.domain,
+      evidenceFor: b.evidenceFor, evidenceAgainst: b.evidenceAgainst,
+      status: 'active', linkedDecisionIds: [], linkedPrincipleIds: [],
+      sourceJournalDate: today, attentionDate: attentionDate.toISOString().split('T')[0],
+      createdAt: new Date(), updatedAt: new Date(),
     })
+    ids.beliefDocIds.push(ref.id)
   }
+
+  return ids
 }
 
 function appendJournalText(existing: string, newText: string): string {
@@ -583,12 +550,13 @@ function hasStructuredItems(parsed: ParsedJournalEntry): boolean {
     parsed.notes.length > 0
 }
 
-async function saveJournalReviewPending(
+async function saveJournalReviewRecord(
   adminDb: FirebaseFirestore.Firestore,
   uid: string,
   today: string,
   journalText: string,
   parsed: ParsedJournalEntry,
+  savedIds: SavedIds,
   chatId: number
 ): Promise<string> {
   const reviewRef = adminDb.collection('users').doc(uid).collection('journal_reviews').doc()
@@ -596,12 +564,12 @@ async function saveJournalReviewPending(
     uid,
     date: today,
     journalText,
-    contacts: parsed.contacts.map(c => ({ ...c, status: 'pending' })),
-    decisions: parsed.decisions.map(d => ({ ...d, status: 'pending' })),
-    principles: parsed.principles.map(p => ({ ...p, status: 'pending' })),
-    beliefs: parsed.beliefs.map(b => ({ ...b, status: 'pending' })),
-    notes: parsed.notes.map(n => ({ ...n, status: 'pending' })),
-    status: 'pending',
+    contacts: parsed.contacts.map((c, i) => ({ ...c, docId: savedIds.contactDocIds[i], status: 'saved' })),
+    decisions: parsed.decisions.map((d, i) => ({ ...d, docId: savedIds.decisionDocIds[i], status: 'saved' })),
+    principles: parsed.principles.map((p, i) => ({ ...p, docId: savedIds.principleDocIds[i], status: 'saved' })),
+    beliefs: parsed.beliefs.map((b, i) => ({ ...b, docId: savedIds.beliefDocIds[i], status: 'saved' })),
+    notes: parsed.notes.map((n, i) => ({ ...n, docId: savedIds.noteDocIds[i], status: 'saved' })),
+    status: 'saved',
     telegramChatId: chatId,
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -631,6 +599,12 @@ async function handleJournal(uid: string, text: string, chatId: number) {
     logUpdate.journalEntry = newJournal
     await logRef.set(logUpdate, { merge: true })
 
+    // Save structured items immediately (contacts, decisions, principles, beliefs, notes)
+    let savedIds: SavedIds | null = null
+    if (hasStructuredItems(parsed)) {
+      savedIds = await persistStructuredItems(adminDb, uid, today, parsed)
+    }
+
     // Fetch existing beliefs + decisions for framework coaching
     const [beliefsSnap, decisionsSnap] = await Promise.all([
       adminDb.collection('users').doc(uid).collection('beliefs').where('status', '==', 'active').get(),
@@ -649,28 +623,28 @@ async function handleJournal(uid: string, text: string, chatId: number) {
     const deltaStr = delta != null ? (delta >= 0 ? ` (+${delta})` : ` (${delta})`) : ''
     const scoreLine = `\n\n*g* = ${score.toFixed(1)}${deltaStr}`
 
-    // If there are structured items (contacts, decisions, beliefs, etc.), hold for review
-    if (hasStructuredItems(parsed)) {
-      const reviewId = await saveJournalReviewPending(adminDb, uid, today, text, parsed, chatId)
+    // Build reply
+    const reply = buildJournalReply(parsed) + scoreLine + coachingSection
+
+    // If there are structured items, save a review record and offer "Review & Edit" link
+    if (savedIds && hasStructuredItems(parsed)) {
+      const reviewId = await saveJournalReviewRecord(adminDb, uid, today, text, parsed, savedIds, chatId)
       const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://sovereignangel.github.io'
       const reviewUrl = `${baseUrl}/thesis/review/${reviewId}`
 
-      // Build reply with review prompt
-      const reply = buildJournalReply(parsed) + scoreLine + coachingSection
-      const reviewPrompt = `\n\n---\nPending review: ${parsed.contacts.length} contacts, ${parsed.decisions.length} decisions, ${parsed.principles.length} principles, ${parsed.beliefs.length} beliefs, ${parsed.notes.length} notes`
+      const itemSummary = [
+        parsed.contacts.length && `${parsed.contacts.length} contacts`,
+        parsed.decisions.length && `${parsed.decisions.length} decisions`,
+        parsed.principles.length && `${parsed.principles.length} principles`,
+        parsed.beliefs.length && `${parsed.beliefs.length} beliefs`,
+        parsed.notes.length && `${parsed.notes.length} notes`,
+      ].filter(Boolean).join(', ')
 
-      await sendTelegramReplyWithKeyboard(chatId, reply + reviewPrompt, [
-        [
-          { text: 'Confirm All', callback_data: `confirm_review:${reviewId}` },
-          { text: 'Review & Edit', url: reviewUrl },
-        ],
-        [
-          { text: 'Reject All', callback_data: `reject_review:${reviewId}` },
-        ],
+      await sendTelegramReplyWithKeyboard(chatId, reply + `\n\n---\nSaved: ${itemSummary}`, [
+        [{ text: 'Review & Edit', url: reviewUrl }],
       ])
     } else {
-      // No structured items — just reply with summary
-      await sendTelegramReply(chatId, buildJournalReply(parsed) + scoreLine + coachingSection)
+      await sendTelegramReply(chatId, reply)
     }
   } catch (error) {
     console.error('Journal parsing error:', error)
@@ -700,6 +674,12 @@ async function handleJournalFromVoice(uid: string, transcript: string, parsed: P
     logUpdate.journalEntry = newJournal
     await logRef.set(logUpdate, { merge: true })
 
+    // Save structured items immediately
+    let savedIds: SavedIds | null = null
+    if (hasStructuredItems(parsed)) {
+      savedIds = await persistStructuredItems(adminDb, uid, today, parsed)
+    }
+
     // Fetch existing beliefs + decisions for framework coaching
     const [beliefsSnap, decisionsSnap] = await Promise.all([
       adminDb.collection('users').doc(uid).collection('beliefs').where('status', '==', 'active').get(),
@@ -722,22 +702,21 @@ async function handleJournalFromVoice(uid: string, transcript: string, parsed: P
     const journalReply = buildJournalReply(parsed)
     const baseReply = `*Transcript:*\n_"${transcript}"_\n\n${journalReply}${scoreLine}${coachingSection}`
 
-    // If there are structured items, hold for review
-    if (hasStructuredItems(parsed)) {
-      const reviewId = await saveJournalReviewPending(adminDb, uid, today, transcript, parsed, chatId)
+    if (savedIds && hasStructuredItems(parsed)) {
+      const reviewId = await saveJournalReviewRecord(adminDb, uid, today, transcript, parsed, savedIds, chatId)
       const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://sovereignangel.github.io'
       const reviewUrl = `${baseUrl}/thesis/review/${reviewId}`
 
-      const reviewPrompt = `\n\n---\nPending review: ${parsed.contacts.length} contacts, ${parsed.decisions.length} decisions, ${parsed.principles.length} principles, ${parsed.beliefs.length} beliefs, ${parsed.notes.length} notes`
+      const itemSummary = [
+        parsed.contacts.length && `${parsed.contacts.length} contacts`,
+        parsed.decisions.length && `${parsed.decisions.length} decisions`,
+        parsed.principles.length && `${parsed.principles.length} principles`,
+        parsed.beliefs.length && `${parsed.beliefs.length} beliefs`,
+        parsed.notes.length && `${parsed.notes.length} notes`,
+      ].filter(Boolean).join(', ')
 
-      await sendTelegramReplyWithKeyboard(chatId, baseReply + reviewPrompt, [
-        [
-          { text: 'Confirm All', callback_data: `confirm_review:${reviewId}` },
-          { text: 'Review & Edit', url: reviewUrl },
-        ],
-        [
-          { text: 'Reject All', callback_data: `reject_review:${reviewId}` },
-        ],
+      await sendTelegramReplyWithKeyboard(chatId, baseReply + `\n\n---\nSaved: ${itemSummary}`, [
+        [{ text: 'Review & Edit', url: reviewUrl }],
       ])
     } else {
       await sendTelegramReply(chatId, baseReply)
@@ -2021,83 +2000,7 @@ export async function POST(req: NextRequest) {
     // --- Handle callback queries (inline keyboard button presses) ---
     if (update.callback_query) {
       const cbq = update.callback_query
-      const cbChatId = cbq.message?.chat.id
-      const cbData = cbq.data || ''
-
-      if (cbChatId && cbData.startsWith('confirm_review:')) {
-        const reviewId = cbData.replace('confirm_review:', '')
-        try {
-          const uid = await findUserByChatId(cbChatId)
-          if (!uid) {
-            await answerCallbackQuery(cbq.id, 'User not found')
-            return NextResponse.json({ ok: true })
-          }
-
-          const adminDb = await getAdminDb()
-          const reviewRef = adminDb.collection('users').doc(uid).collection('journal_reviews').doc(reviewId)
-          const reviewSnap = await reviewRef.get()
-
-          if (!reviewSnap.exists) {
-            await answerCallbackQuery(cbq.id, 'Review not found')
-            return NextResponse.json({ ok: true })
-          }
-
-          const review = reviewSnap.data()!
-          if (review.status !== 'pending') {
-            await answerCallbackQuery(cbq.id, `Already ${review.status}`)
-            return NextResponse.json({ ok: true })
-          }
-
-          // Mark all items as confirmed and persist
-          const confirmedReview = {
-            contacts: (review.contacts || []).map((c: ReviewableItem & Record<string, unknown>) => ({ ...c, status: 'confirmed' })),
-            decisions: (review.decisions || []).map((d: ReviewableItem & Record<string, unknown>) => ({ ...d, status: 'confirmed' })),
-            principles: (review.principles || []).map((p: ReviewableItem & Record<string, unknown>) => ({ ...p, status: 'confirmed' })),
-            beliefs: (review.beliefs || []).map((b: ReviewableItem & Record<string, unknown>) => ({ ...b, status: 'confirmed' })),
-            notes: (review.notes || []).map((n: ReviewableItem & Record<string, unknown>) => ({ ...n, status: 'confirmed' })),
-          }
-
-          await persistReviewedItems(adminDb, uid, review.date, confirmedReview)
-          await reviewRef.update({ status: 'confirmed', ...confirmedReview, updatedAt: new Date() })
-
-          await answerCallbackQuery(cbq.id, 'All items confirmed!')
-          await sendTelegramReply(cbChatId, 'Journal review confirmed. All items saved.')
-        } catch (error) {
-          console.error('Confirm review error:', error)
-          await answerCallbackQuery(cbq.id, 'Error confirming review')
-        }
-        return NextResponse.json({ ok: true })
-      }
-
-      if (cbChatId && cbData.startsWith('reject_review:')) {
-        const reviewId = cbData.replace('reject_review:', '')
-        try {
-          const uid = await findUserByChatId(cbChatId)
-          if (!uid) {
-            await answerCallbackQuery(cbq.id, 'User not found')
-            return NextResponse.json({ ok: true })
-          }
-
-          const adminDb = await getAdminDb()
-          const reviewRef = adminDb.collection('users').doc(uid).collection('journal_reviews').doc(reviewId)
-          const reviewSnap = await reviewRef.get()
-
-          if (!reviewSnap.exists || reviewSnap.data()!.status !== 'pending') {
-            await answerCallbackQuery(cbq.id, 'Review already processed')
-            return NextResponse.json({ ok: true })
-          }
-
-          await reviewRef.update({ status: 'rejected', updatedAt: new Date() })
-          await answerCallbackQuery(cbq.id, 'Review rejected')
-          await sendTelegramReply(cbChatId, 'Journal review rejected. No structured items saved. Metrics are unchanged.')
-        } catch (error) {
-          console.error('Reject review error:', error)
-          await answerCallbackQuery(cbq.id, 'Error rejecting review')
-        }
-        return NextResponse.json({ ok: true })
-      }
-
-      // Unknown callback — acknowledge to stop loading spinner
+      // Acknowledge to stop loading spinner
       await answerCallbackQuery(cbq.id)
       return NextResponse.json({ ok: true })
     }

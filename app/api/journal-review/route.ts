@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
 
   const { adminDb } = await import('@/lib/firebase-admin')
   const snap = await adminDb.collection('users').doc(auth.uid).collection('journal_reviews')
-    .where('status', '==', 'pending')
+    .where('status', '==', 'saved')
     .orderBy('createdAt', 'desc')
     .limit(20)
     .get()

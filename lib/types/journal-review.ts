@@ -1,16 +1,18 @@
 import type { Timestamp } from './shared'
 import type { DecisionDomain } from './decision'
 
-export type JournalReviewStatus = 'pending' | 'confirmed' | 'rejected'
-export type ReviewItemStatus = 'pending' | 'confirmed' | 'edited' | 'rejected'
+export type JournalReviewStatus = 'saved' | 'corrected'
+export type ReviewItemStatus = 'saved' | 'edited' | 'deleted'
 
 export interface ReviewableContact {
+  docId: string
   name: string
   context: string
   status: ReviewItemStatus
 }
 
 export interface ReviewableDecision {
+  docId: string
   title: string
   hypothesis: string
   chosenOption: string
@@ -21,6 +23,7 @@ export interface ReviewableDecision {
 }
 
 export interface ReviewablePrinciple {
+  docId: string
   text: string
   shortForm: string
   domain: DecisionDomain
@@ -28,6 +31,7 @@ export interface ReviewablePrinciple {
 }
 
 export interface ReviewableBelief {
+  docId: string
   statement: string
   confidence: number
   domain: DecisionDomain
@@ -37,6 +41,7 @@ export interface ReviewableBelief {
 }
 
 export interface ReviewableNote {
+  docId: string
   text: string
   actionRequired: boolean
   status: ReviewItemStatus

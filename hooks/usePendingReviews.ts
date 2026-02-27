@@ -19,7 +19,7 @@ export function usePendingReviews() {
     }
 
     const ref = collection(db, 'users', user.uid, 'journal_reviews')
-    const q = query(ref, where('status', '==', 'pending'))
+    const q = query(ref, where('status', '==', 'saved'))
 
     const unsub = onSnapshot(q, (snap) => {
       const items = snap.docs.map(d => ({ id: d.id, ...d.data() }) as JournalReview)

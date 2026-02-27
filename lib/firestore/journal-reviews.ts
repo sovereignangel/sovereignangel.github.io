@@ -4,7 +4,7 @@ import type { JournalReview } from '../types'
 
 export async function getPendingJournalReviews(uid: string): Promise<JournalReview[]> {
   const ref = collection(db, 'users', uid, 'journal_reviews')
-  const q = query(ref, where('status', '==', 'pending'), orderBy('createdAt', 'desc'))
+  const q = query(ref, where('status', '==', 'saved'), orderBy('createdAt', 'desc'))
   const snap = await getDocs(q)
   return snap.docs.map(d => ({ id: d.id, ...d.data() }) as JournalReview)
 }
@@ -30,7 +30,7 @@ export async function saveJournalReview(uid: string, data: Partial<JournalReview
     const ref = doc(collection(db, 'users', uid, 'journal_reviews'))
     await setDoc(ref, {
       ...data,
-      status: 'pending',
+      status: 'saved',
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     })

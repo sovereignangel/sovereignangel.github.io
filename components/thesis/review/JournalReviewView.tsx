@@ -14,15 +14,14 @@ interface JournalReviewData {
   principles: ReviewablePrinciple[]
   beliefs: ReviewableBelief[]
   notes: ReviewableNote[]
-  status: 'pending' | 'confirmed' | 'rejected'
+  status: 'saved' | 'corrected'
 }
 
 function StatusBadge({ status }: { status: ReviewItemStatus }) {
   const colors: Record<ReviewItemStatus, string> = {
-    pending: 'text-amber-ink border-amber-ink/20 bg-amber-bg',
-    confirmed: 'text-green-ink border-green-ink/20 bg-green-bg',
+    saved: 'text-green-ink border-green-ink/20 bg-green-bg',
     edited: 'text-burgundy border-burgundy/20 bg-burgundy-bg',
-    rejected: 'text-red-ink border-red-ink/20 bg-[#8c2d2d08]',
+    deleted: 'text-red-ink border-red-ink/20 bg-[#8c2d2d08]',
   }
   return (
     <span className={`font-mono text-[8px] uppercase px-1.5 py-0.5 rounded-sm border ${colors[status]}`}>
@@ -31,30 +30,24 @@ function StatusBadge({ status }: { status: ReviewItemStatus }) {
   )
 }
 
-function ItemActions({ status, onConfirm, onReject }: { status: ReviewItemStatus; onConfirm: () => void; onReject: () => void }) {
+function ItemActions({ status, onDelete }: { status: ReviewItemStatus; onDelete: () => void }) {
+  if (status === 'deleted') {
+    return (
+      <button
+        onClick={onDelete}
+        className="font-serif text-[9px] font-medium px-2 py-1 rounded-sm border bg-transparent text-ink-muted border-rule hover:border-ink-faint"
+      >
+        Restore
+      </button>
+    )
+  }
   return (
-    <div className="flex gap-1">
-      <button
-        onClick={onConfirm}
-        className={`font-serif text-[9px] font-medium px-2 py-1 rounded-sm border ${
-          status === 'confirmed' || status === 'edited'
-            ? 'bg-burgundy text-paper border-burgundy'
-            : 'bg-transparent text-ink-muted border-rule hover:border-ink-faint'
-        }`}
-      >
-        {status === 'confirmed' || status === 'edited' ? 'Confirmed' : 'Confirm'}
-      </button>
-      <button
-        onClick={onReject}
-        className={`font-serif text-[9px] font-medium px-2 py-1 rounded-sm border ${
-          status === 'rejected'
-            ? 'bg-red-ink text-paper border-red-ink'
-            : 'bg-transparent text-ink-muted border-rule hover:border-ink-faint'
-        }`}
-      >
-        {status === 'rejected' ? 'Rejected' : 'Reject'}
-      </button>
-    </div>
+    <button
+      onClick={onDelete}
+      className="font-serif text-[9px] font-medium px-2 py-1 rounded-sm border bg-transparent text-red-ink border-red-ink/30 hover:bg-[#8c2d2d08]"
+    >
+      Delete
+    </button>
   )
 }
 
@@ -84,66 +77,62 @@ export default function JournalReviewView({ reviewId }: { reviewId: string }) {
     if (!review) return
     const contacts = [...review.contacts]
     contacts[idx] = { ...contacts[idx], ...updates }
-    // If name was edited, mark as edited
-    if (updates.name && updates.name !== review.contacts[idx].name) {
-      contacts[idx].status = 'edited'
-    }
+    if (updates.name !== undefined) contacts[idx].status = 'edited'
     setReview({ ...review, contacts })
   }
 
   const updateDecision = (idx: number, updates: Partial<ReviewableDecision>) => {
     if (!review) return
     const decisions = [...review.decisions]
-    decisions[idx] = { ...decisions[idx], ...updates }
+    decisions[idx] = { ...decisions[idx], ...updates, status: 'edited' }
     setReview({ ...review, decisions })
   }
 
   const updatePrinciple = (idx: number, updates: Partial<ReviewablePrinciple>) => {
     if (!review) return
     const principles = [...review.principles]
-    principles[idx] = { ...principles[idx], ...updates }
+    principles[idx] = { ...principles[idx], ...updates, status: 'edited' }
     setReview({ ...review, principles })
   }
 
   const updateBelief = (idx: number, updates: Partial<ReviewableBelief>) => {
     if (!review) return
     const beliefs = [...review.beliefs]
-    beliefs[idx] = { ...beliefs[idx], ...updates }
+    beliefs[idx] = { ...beliefs[idx], ...updates, status: 'edited' }
     setReview({ ...review, beliefs })
   }
 
   const updateNote = (idx: number, updates: Partial<ReviewableNote>) => {
     if (!review) return
     const notes = [...review.notes]
-    notes[idx] = { ...notes[idx], ...updates }
+    notes[idx] = { ...notes[idx], ...updates, status: 'edited' }
     setReview({ ...review, notes })
   }
 
-  const setItemStatus = (
+  const toggleDelete = (
     collection: 'contacts' | 'decisions' | 'principles' | 'beliefs' | 'notes',
-    idx: number,
-    status: ReviewItemStatus
+    idx: number
   ) => {
     if (!review) return
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const items = [...(review[collection] as any[])]
-    items[idx] = { ...items[idx], status }
+    items[idx] = { ...items[idx], status: items[idx].status === 'deleted' ? 'saved' : 'deleted' }
     setReview({ ...review, [collection]: items })
   }
 
-  const confirmAll = () => {
-    if (!review) return
-    setReview({
-      ...review,
-      contacts: review.contacts.map(c => ({ ...c, status: c.status === 'rejected' ? 'rejected' as const : c.status === 'edited' ? 'edited' as const : 'confirmed' as const })),
-      decisions: review.decisions.map(d => ({ ...d, status: d.status === 'rejected' ? 'rejected' as const : 'confirmed' as const })),
-      principles: review.principles.map(p => ({ ...p, status: p.status === 'rejected' ? 'rejected' as const : 'confirmed' as const })),
-      beliefs: review.beliefs.map(b => ({ ...b, status: b.status === 'rejected' ? 'rejected' as const : 'confirmed' as const })),
-      notes: review.notes.map(n => ({ ...n, status: n.status === 'rejected' ? 'rejected' as const : 'confirmed' as const })),
-    })
+  const hasChanges = () => {
+    if (!review) return false
+    const allItems = [
+      ...review.contacts,
+      ...review.decisions,
+      ...review.principles,
+      ...review.beliefs,
+      ...review.notes,
+    ]
+    return allItems.some(i => i.status === 'edited' || i.status === 'deleted')
   }
 
-  const submitReview = async () => {
+  const submitCorrections = async () => {
     if (!review) return
     setSaving(true)
     try {
@@ -151,7 +140,6 @@ export default function JournalReviewView({ reviewId }: { reviewId: string }) {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          action: 'confirm',
           contacts: review.contacts,
           decisions: review.decisions,
           principles: review.principles,
@@ -163,24 +151,6 @@ export default function JournalReviewView({ reviewId }: { reviewId: string }) {
       setDone(true)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save')
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  const rejectAll = async () => {
-    if (!review) return
-    setSaving(true)
-    try {
-      const res = await authFetch(`/api/journal-review/${reviewId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'reject' }),
-      })
-      if (!res.ok) throw new Error('Failed to reject')
-      setDone(true)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to reject')
     } finally {
       setSaving(false)
     }
@@ -210,15 +180,30 @@ export default function JournalReviewView({ reviewId }: { reviewId: string }) {
     )
   }
 
-  if (done || review.status !== 'pending') {
+  if (done) {
     return (
       <div className="h-full flex items-center justify-center">
         <div className="bg-white border border-rule rounded-sm p-3 text-center">
           <div className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-1.5">
-            Review {done ? 'Submitted' : review.status}
+            Corrections Applied
           </div>
           <div className="text-[11px] text-ink-muted">
-            {review.status === 'confirmed' ? 'All confirmed items have been saved.' : 'No items were saved.'}
+            Edited items have been updated and deleted items removed.
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (review.status === 'corrected') {
+    return (
+      <div className="h-full flex items-center justify-center">
+        <div className="bg-white border border-rule rounded-sm p-3 text-center">
+          <div className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-1.5">
+            Already Corrected
+          </div>
+          <div className="text-[11px] text-ink-muted">
+            This review has already been corrected.
           </div>
         </div>
       </div>
@@ -226,13 +211,10 @@ export default function JournalReviewView({ reviewId }: { reviewId: string }) {
   }
 
   const totalItems = review.contacts.length + review.decisions.length + review.principles.length + review.beliefs.length + review.notes.length
-  const confirmedItems = [
-    ...review.contacts.filter(c => c.status === 'confirmed' || c.status === 'edited'),
-    ...review.decisions.filter(d => d.status === 'confirmed'),
-    ...review.principles.filter(p => p.status === 'confirmed'),
-    ...review.beliefs.filter(b => b.status === 'confirmed'),
-    ...review.notes.filter(n => n.status === 'confirmed'),
-  ].length
+  const editedCount = [...review.contacts, ...review.decisions, ...review.principles, ...review.beliefs, ...review.notes]
+    .filter(i => i.status === 'edited').length
+  const deletedCount = [...review.contacts, ...review.decisions, ...review.principles, ...review.beliefs, ...review.notes]
+    .filter(i => i.status === 'deleted').length
 
   return (
     <div className="h-full overflow-y-auto pb-6">
@@ -240,34 +222,23 @@ export default function JournalReviewView({ reviewId }: { reviewId: string }) {
       <div className="flex items-center justify-between mb-3">
         <div>
           <div className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy">
-            Journal Review
+            Review Journal Parse
           </div>
           <div className="text-[10px] text-ink-muted mt-0.5">
-            {review.date} — {totalItems} items extracted — {confirmedItems} confirmed
+            {review.date} — {totalItems} items saved
+            {editedCount > 0 && ` — ${editedCount} edited`}
+            {deletedCount > 0 && ` — ${deletedCount} to delete`}
           </div>
         </div>
-        <div className="flex gap-1">
+        {hasChanges() && (
           <button
-            onClick={confirmAll}
-            className="font-serif text-[9px] font-medium px-2 py-1 rounded-sm border bg-transparent text-ink-muted border-rule hover:border-ink-faint"
-          >
-            Confirm Remaining
-          </button>
-          <button
-            onClick={submitReview}
+            onClick={submitCorrections}
             disabled={saving}
             className="font-serif text-[9px] font-medium px-2 py-1 rounded-sm border bg-burgundy text-paper border-burgundy disabled:opacity-50"
           >
-            {saving ? 'Saving...' : 'Submit Review'}
+            {saving ? 'Saving...' : 'Apply Corrections'}
           </button>
-          <button
-            onClick={rejectAll}
-            disabled={saving}
-            className="font-serif text-[9px] font-medium px-2 py-1 rounded-sm border bg-transparent text-red-ink border-red-ink/30 hover:bg-[#8c2d2d08] disabled:opacity-50"
-          >
-            Reject All
-          </button>
-        </div>
+        )}
       </div>
 
       {/* Journal text (collapsed) */}
@@ -289,23 +260,23 @@ export default function JournalReviewView({ reviewId }: { reviewId: string }) {
             </div>
             <div className="space-y-2">
               {review.contacts.map((c, i) => (
-                <div key={i} className="flex items-start gap-2 p-2 border border-rule-light rounded-sm">
+                <div key={i} className={`flex items-start gap-2 p-2 border border-rule-light rounded-sm ${c.status === 'deleted' ? 'opacity-40' : ''}`}>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5 mb-1">
                       <StatusBadge status={c.status} />
                       <input
                         type="text"
                         value={c.name}
-                        onChange={(e) => updateContact(i, { name: e.target.value, status: 'edited' })}
-                        className="text-[11px] font-semibold text-ink bg-transparent border-b border-dashed border-rule focus:border-burgundy outline-none flex-1"
+                        onChange={(e) => updateContact(i, { name: e.target.value })}
+                        disabled={c.status === 'deleted'}
+                        className="text-[11px] font-semibold text-ink bg-transparent border-b border-dashed border-rule focus:border-burgundy outline-none flex-1 disabled:opacity-50"
                       />
                     </div>
                     <div className="text-[9px] text-ink-muted">{c.context}</div>
                   </div>
                   <ItemActions
                     status={c.status}
-                    onConfirm={() => setItemStatus('contacts', i, c.status === 'edited' ? 'edited' : 'confirmed')}
-                    onReject={() => setItemStatus('contacts', i, 'rejected')}
+                    onDelete={() => toggleDelete('contacts', i)}
                   />
                 </div>
               ))}
@@ -321,22 +292,19 @@ export default function JournalReviewView({ reviewId }: { reviewId: string }) {
             </div>
             <div className="space-y-2">
               {review.decisions.map((d, i) => (
-                <div key={i} className="p-2 border border-rule-light rounded-sm">
+                <div key={i} className={`p-2 border border-rule-light rounded-sm ${d.status === 'deleted' ? 'opacity-40' : ''}`}>
                   <div className="flex items-start justify-between gap-2 mb-1">
                     <div className="flex items-center gap-1.5">
                       <StatusBadge status={d.status} />
                       <input
                         type="text"
                         value={d.title}
-                        onChange={(e) => updateDecision(i, { title: e.target.value, status: 'edited' as ReviewItemStatus })}
-                        className="text-[11px] font-semibold text-ink bg-transparent border-b border-dashed border-rule focus:border-burgundy outline-none"
+                        onChange={(e) => updateDecision(i, { title: e.target.value })}
+                        disabled={d.status === 'deleted'}
+                        className="text-[11px] font-semibold text-ink bg-transparent border-b border-dashed border-rule focus:border-burgundy outline-none disabled:opacity-50"
                       />
                     </div>
-                    <ItemActions
-                      status={d.status}
-                      onConfirm={() => setItemStatus('decisions', i, 'confirmed')}
-                      onReject={() => setItemStatus('decisions', i, 'rejected')}
-                    />
+                    <ItemActions status={d.status} onDelete={() => toggleDelete('decisions', i)} />
                   </div>
                   <div className="text-[9px] text-ink-muted mb-0.5">
                     <span className="font-semibold">Hypothesis:</span> {d.hypothesis}
@@ -351,9 +319,7 @@ export default function JournalReviewView({ reviewId }: { reviewId: string }) {
                     <span className="font-mono text-[8px] uppercase px-1.5 py-0.5 rounded-sm border bg-burgundy-bg text-burgundy border-burgundy/20">
                       {d.domain}
                     </span>
-                    <span className="text-[8px] text-ink-muted">
-                      {d.confidenceLevel}% confidence
-                    </span>
+                    <span className="text-[8px] text-ink-muted">{d.confidenceLevel}% confidence</span>
                   </div>
                 </div>
               ))}
@@ -369,27 +335,25 @@ export default function JournalReviewView({ reviewId }: { reviewId: string }) {
             </div>
             <div className="space-y-2">
               {review.principles.map((p, i) => (
-                <div key={i} className="p-2 border border-rule-light rounded-sm">
+                <div key={i} className={`p-2 border border-rule-light rounded-sm ${p.status === 'deleted' ? 'opacity-40' : ''}`}>
                   <div className="flex items-start justify-between gap-2 mb-1">
                     <div className="flex items-center gap-1.5 flex-1">
                       <StatusBadge status={p.status} />
                       <input
                         type="text"
                         value={p.shortForm}
-                        onChange={(e) => updatePrinciple(i, { shortForm: e.target.value, status: 'edited' as ReviewItemStatus })}
-                        className="text-[11px] font-semibold text-ink bg-transparent border-b border-dashed border-rule focus:border-burgundy outline-none flex-1"
+                        onChange={(e) => updatePrinciple(i, { shortForm: e.target.value })}
+                        disabled={p.status === 'deleted'}
+                        className="text-[11px] font-semibold text-ink bg-transparent border-b border-dashed border-rule focus:border-burgundy outline-none flex-1 disabled:opacity-50"
                       />
                     </div>
-                    <ItemActions
-                      status={p.status}
-                      onConfirm={() => setItemStatus('principles', i, 'confirmed')}
-                      onReject={() => setItemStatus('principles', i, 'rejected')}
-                    />
+                    <ItemActions status={p.status} onDelete={() => toggleDelete('principles', i)} />
                   </div>
                   <textarea
                     value={p.text}
-                    onChange={(e) => updatePrinciple(i, { text: e.target.value, status: 'edited' as ReviewItemStatus })}
-                    className="w-full text-[9px] text-ink-muted bg-transparent border border-dashed border-rule-light rounded-sm p-1 focus:border-burgundy outline-none resize-none"
+                    onChange={(e) => updatePrinciple(i, { text: e.target.value })}
+                    disabled={p.status === 'deleted'}
+                    className="w-full text-[9px] text-ink-muted bg-transparent border border-dashed border-rule-light rounded-sm p-1 focus:border-burgundy outline-none resize-none disabled:opacity-50"
                     rows={2}
                   />
                   <span className="font-mono text-[8px] uppercase px-1.5 py-0.5 rounded-sm border bg-burgundy-bg text-burgundy border-burgundy/20">
@@ -409,40 +373,29 @@ export default function JournalReviewView({ reviewId }: { reviewId: string }) {
             </div>
             <div className="space-y-2">
               {review.beliefs.map((b, i) => (
-                <div key={i} className="p-2 border border-rule-light rounded-sm">
+                <div key={i} className={`p-2 border border-rule-light rounded-sm ${b.status === 'deleted' ? 'opacity-40' : ''}`}>
                   <div className="flex items-start justify-between gap-2 mb-1">
-                    <div className="flex items-center gap-1.5 flex-1">
-                      <StatusBadge status={b.status} />
-                    </div>
-                    <ItemActions
-                      status={b.status}
-                      onConfirm={() => setItemStatus('beliefs', i, 'confirmed')}
-                      onReject={() => setItemStatus('beliefs', i, 'rejected')}
-                    />
+                    <StatusBadge status={b.status} />
+                    <ItemActions status={b.status} onDelete={() => toggleDelete('beliefs', i)} />
                   </div>
                   <textarea
                     value={b.statement}
-                    onChange={(e) => updateBelief(i, { statement: e.target.value, status: 'edited' as ReviewItemStatus })}
-                    className="w-full text-[10px] text-ink bg-transparent border border-dashed border-rule-light rounded-sm p-1 focus:border-burgundy outline-none resize-none"
+                    onChange={(e) => updateBelief(i, { statement: e.target.value })}
+                    disabled={b.status === 'deleted'}
+                    className="w-full text-[10px] text-ink bg-transparent border border-dashed border-rule-light rounded-sm p-1 focus:border-burgundy outline-none resize-none disabled:opacity-50"
                     rows={2}
                   />
                   <div className="flex gap-2 mt-1">
                     <span className="font-mono text-[8px] uppercase px-1.5 py-0.5 rounded-sm border bg-burgundy-bg text-burgundy border-burgundy/20">
                       {b.domain}
                     </span>
-                    <span className="text-[8px] text-ink-muted">
-                      {b.confidence}% confidence
-                    </span>
+                    <span className="text-[8px] text-ink-muted">{b.confidence}% confidence</span>
                   </div>
                   {b.evidenceFor.length > 0 && (
-                    <div className="text-[8px] text-green-ink mt-1">
-                      For: {b.evidenceFor.join('; ')}
-                    </div>
+                    <div className="text-[8px] text-green-ink mt-1">For: {b.evidenceFor.join('; ')}</div>
                   )}
                   {b.evidenceAgainst.length > 0 && (
-                    <div className="text-[8px] text-red-ink mt-0.5">
-                      Against: {b.evidenceAgainst.join('; ')}
-                    </div>
+                    <div className="text-[8px] text-red-ink mt-0.5">Against: {b.evidenceAgainst.join('; ')}</div>
                   )}
                 </div>
               ))}
@@ -458,7 +411,7 @@ export default function JournalReviewView({ reviewId }: { reviewId: string }) {
             </div>
             <div className="space-y-2">
               {review.notes.map((n, i) => (
-                <div key={i} className="flex items-start gap-2 p-2 border border-rule-light rounded-sm">
+                <div key={i} className={`flex items-start gap-2 p-2 border border-rule-light rounded-sm ${n.status === 'deleted' ? 'opacity-40' : ''}`}>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5 mb-1">
                       <StatusBadge status={n.status} />
@@ -470,16 +423,13 @@ export default function JournalReviewView({ reviewId }: { reviewId: string }) {
                     </div>
                     <textarea
                       value={n.text}
-                      onChange={(e) => updateNote(i, { text: e.target.value, status: 'edited' as ReviewItemStatus })}
-                      className="w-full text-[10px] text-ink bg-transparent border border-dashed border-rule-light rounded-sm p-1 focus:border-burgundy outline-none resize-none"
+                      onChange={(e) => updateNote(i, { text: e.target.value })}
+                      disabled={n.status === 'deleted'}
+                      className="w-full text-[10px] text-ink bg-transparent border border-dashed border-rule-light rounded-sm p-1 focus:border-burgundy outline-none resize-none disabled:opacity-50"
                       rows={2}
                     />
                   </div>
-                  <ItemActions
-                    status={n.status}
-                    onConfirm={() => setItemStatus('notes', i, 'confirmed')}
-                    onReject={() => setItemStatus('notes', i, 'rejected')}
-                  />
+                  <ItemActions status={n.status} onDelete={() => toggleDelete('notes', i)} />
                 </div>
               ))}
             </div>
@@ -488,27 +438,22 @@ export default function JournalReviewView({ reviewId }: { reviewId: string }) {
       </div>
 
       {/* Bottom action bar */}
-      <div className="mt-3 flex items-center justify-between border-t border-rule pt-2">
-        <div className="text-[9px] text-ink-muted">
-          {confirmedItems}/{totalItems} items confirmed
-        </div>
-        <div className="flex gap-1">
+      {hasChanges() && (
+        <div className="mt-3 flex items-center justify-between border-t border-rule pt-2">
+          <div className="text-[9px] text-ink-muted">
+            {editedCount > 0 && `${editedCount} edited`}
+            {editedCount > 0 && deletedCount > 0 && ' · '}
+            {deletedCount > 0 && `${deletedCount} to delete`}
+          </div>
           <button
-            onClick={rejectAll}
-            disabled={saving}
-            className="font-serif text-[9px] font-medium px-2 py-1 rounded-sm border bg-transparent text-red-ink border-red-ink/30 hover:bg-[#8c2d2d08] disabled:opacity-50"
-          >
-            Reject All
-          </button>
-          <button
-            onClick={submitReview}
+            onClick={submitCorrections}
             disabled={saving}
             className="font-serif text-[9px] font-medium px-2 py-1 rounded-sm border bg-burgundy text-paper border-burgundy disabled:opacity-50"
           >
-            {saving ? 'Saving...' : 'Submit Review'}
+            {saving ? 'Saving...' : 'Apply Corrections'}
           </button>
         </div>
-      </div>
+      )}
     </div>
   )
 }

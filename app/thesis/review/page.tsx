@@ -51,8 +51,8 @@ export default function ReviewListPage() {
             >
               <div className="flex items-center justify-between mb-1">
                 <span className="text-[11px] font-semibold text-ink">{review.date}</span>
-                <span className="font-mono text-[8px] uppercase px-1.5 py-0.5 rounded-sm border bg-amber-bg text-amber-ink border-amber-ink/20">
-                  pending
+                <span className="font-mono text-[8px] uppercase px-1.5 py-0.5 rounded-sm border bg-green-bg text-green-ink border-green-ink/20">
+                  saved — review
                 </span>
               </div>
               <div className="text-[9px] text-ink-muted line-clamp-2 mb-1.5">
