@@ -24,17 +24,32 @@ async function sendTelegramReply(chatId: number, text: string) {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function sendTelegramReplyWithKeyboard(chatId: number, text: string, inlineKeyboard: any[][]) {
   if (!BOT_TOKEN) return
-  const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+  // Try with Markdown parse_mode first
+  let res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       chat_id: chatId,
       text,
+      parse_mode: 'Markdown',
       reply_markup: { inline_keyboard: inlineKeyboard },
     }),
   })
   if (!res.ok) {
-    console.error('Telegram sendMessage with keyboard failed:', await res.text())
+    // If Markdown fails, retry without parse_mode (plain text but keeps keyboard)
+    console.error('Telegram keyboard+Markdown failed, retrying plain:', await res.text())
+    res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: chatId,
+        text,
+        reply_markup: { inline_keyboard: inlineKeyboard },
+      }),
+    })
+    if (!res.ok) {
+      console.error('Telegram keyboard+plain also failed:', await res.text())
+    }
   }
 }
 
@@ -629,7 +644,7 @@ async function handleJournal(uid: string, text: string, chatId: number) {
     // If there are structured items, save a review record and offer "Review & Edit" link
     if (savedIds && hasStructuredItems(parsed)) {
       const reviewId = await saveJournalReviewRecord(adminDb, uid, today, text, parsed, savedIds, chatId)
-      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://sovereignangel.github.io'
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://sovereignangel.github.io')
       const reviewUrl = `${baseUrl}/thesis/review/${reviewId}`
 
       const itemSummary = [
@@ -641,7 +656,7 @@ async function handleJournal(uid: string, text: string, chatId: number) {
       ].filter(Boolean).join(', ')
 
       await sendTelegramReplyWithKeyboard(chatId, reply + `\n\n---\nSaved: ${itemSummary}`, [
-        [{ text: 'Review & Edit', url: reviewUrl }],
+        [{ text: '✏️ Review & Edit', url: reviewUrl }],
       ])
     } else {
       await sendTelegramReply(chatId, reply)
@@ -704,7 +719,7 @@ async function handleJournalFromVoice(uid: string, transcript: string, parsed: P
 
     if (savedIds && hasStructuredItems(parsed)) {
       const reviewId = await saveJournalReviewRecord(adminDb, uid, today, transcript, parsed, savedIds, chatId)
-      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://sovereignangel.github.io'
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://sovereignangel.github.io')
       const reviewUrl = `${baseUrl}/thesis/review/${reviewId}`
 
       const itemSummary = [
@@ -716,7 +731,7 @@ async function handleJournalFromVoice(uid: string, transcript: string, parsed: P
       ].filter(Boolean).join(', ')
 
       await sendTelegramReplyWithKeyboard(chatId, baseReply + `\n\n---\nSaved: ${itemSummary}`, [
-        [{ text: 'Review & Edit', url: reviewUrl }],
+        [{ text: '✏️ Review & Edit', url: reviewUrl }],
       ])
     } else {
       await sendTelegramReply(chatId, baseReply)
