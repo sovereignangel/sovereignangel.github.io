@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/components/auth/AuthProvider'
-import { getVenture, updateVenture } from '@/lib/firestore'
-import type { Venture, VentureStage, CompetitorRow } from '@/lib/types'
+import { getVenture, updateVenture, getActiveBuildSessionForVenture } from '@/lib/firestore'
+import type { Venture, VentureStage, CompetitorRow, BuildSession, BuildSessionStage } from '@/lib/types'
 import { authFetch } from '@/lib/auth-fetch'
 import BuildStatusBar from './BuildStatusBar'
 
@@ -131,6 +131,7 @@ export default function VentureDetail({ ventureId, onBack }: { ventureId: string
   const [generatingMemo, setGeneratingMemo] = useState(false)
   const [memoFeedback, setMemoFeedback] = useState('')
   const [submittingMemoFeedback, setSubmittingMemoFeedback] = useState(false)
+  const [buildSession, setBuildSession] = useState<BuildSession | null>(null)
 
   useEffect(() => {
     if (!user) return
@@ -138,6 +139,7 @@ export default function VentureDetail({ ventureId, onBack }: { ventureId: string
       setVenture(v)
       setLoading(false)
     })
+    getActiveBuildSessionForVenture(user.uid, ventureId).then(setBuildSession)
   }, [user, ventureId])
 
   const handleStageChange = async (stage: VentureStage) => {
@@ -853,10 +855,59 @@ export default function VentureDetail({ ventureId, onBack }: { ventureId: string
         </div>
       )}
 
+      {/* Superpowers Build Session Progress */}
+      {buildSession && buildSession.stage !== 'complete' && (
+        <div className="bg-white border border-rule rounded-sm p-3">
+          <div className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-1.5 pb-1 border-b border-rule">
+            Superpowers Build
+          </div>
+          <div className="flex items-center gap-1.5 mb-2">
+            {(['brainstorming', 'design', 'planning', 'building', 'reviewing'] as BuildSessionStage[]).map((stage, i) => {
+              const stages: BuildSessionStage[] = ['brainstorming', 'design', 'planning', 'building', 'reviewing']
+              const currentIdx = stages.indexOf(buildSession.stage)
+              const stageIdx = i
+              const isComplete = stageIdx < currentIdx
+              const isCurrent = stageIdx === currentIdx
+              return (
+                <div key={stage} className="flex items-center gap-1.5">
+                  {i > 0 && <span className="font-mono text-[8px] text-ink-faint">&rarr;</span>}
+                  <span className={`font-mono text-[8px] uppercase px-1.5 py-0.5 rounded-sm border ${
+                    isCurrent
+                      ? 'bg-burgundy text-paper border-burgundy'
+                      : isComplete
+                        ? 'bg-burgundy-bg text-burgundy border-burgundy/20'
+                        : 'bg-cream text-ink-faint border-rule'
+                  }`}>
+                    {stage === 'brainstorming' ? 'Brainstorm' : stage === 'reviewing' ? 'Review' : stage.charAt(0).toUpperCase() + stage.slice(1)}
+                  </span>
+                </div>
+              )
+            })}
+          </div>
+          {buildSession.review && (
+            <div className="space-y-1">
+              <p className="font-mono text-[9px] text-ink">
+                <span className="text-ink-muted">Spec: </span>{buildSession.review.specCompliance}
+              </p>
+              <p className="font-mono text-[9px] text-ink">
+                <span className="text-ink-muted">Quality: </span>{buildSession.review.codeQuality}
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Build Status */}
       <div className="bg-white border border-rule rounded-sm p-3">
-        <div className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-1.5 pb-1 border-b border-rule">
-          Build Status
+        <div className="flex items-center justify-between mb-1.5 pb-1 border-b border-rule">
+          <div className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-burgundy">
+            Build Status
+          </div>
+          {b.methodology === 'superpowers' && (
+            <span className="font-mono text-[8px] uppercase px-1.5 py-0.5 rounded-sm border bg-burgundy-bg text-burgundy border-burgundy/20">
+              Superpowers
+            </span>
+          )}
         </div>
         <div className="mb-2">
           <BuildStatusBar status={b.status} />
@@ -896,6 +947,16 @@ export default function VentureDetail({ ventureId, onBack }: { ventureId: string
             </button>
           )}
         </div>
+
+        {b.skills && b.skills.length > 0 && (
+          <div className="flex flex-wrap gap-1 mt-2">
+            {b.skills.map(sk => (
+              <span key={sk} className="font-mono text-[8px] px-1.5 py-0.5 rounded-sm border border-rule bg-cream text-ink-muted">
+                {sk}
+              </span>
+            ))}
+          </div>
+        )}
 
         {b.buildLog.length > 0 && (
           <div className="mt-2 pt-1.5 border-t border-rule">

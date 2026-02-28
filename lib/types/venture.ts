@@ -176,6 +176,8 @@ export interface VentureBuild {
   completedAt: unknown | null
   errorMessage: string | null
   filesGenerated: number | null
+  methodology?: 'standard' | 'superpowers'  // Build methodology used
+  skills?: string[]                          // Skill names used in build
 }
 
 export interface Venture {
