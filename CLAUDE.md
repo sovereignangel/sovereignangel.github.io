@@ -453,6 +453,56 @@ See [.env.local](.env.local) (not in repo) for:
 - Gemini API key
 - Garmin API credentials
 
+## Deployment & Custom Domains
+
+### Hosting
+
+- **Platform**: Vercel (Next.js)
+- **Primary domain**: `loricorpuz.com`
+- **Production branch**: `main`
+
+### Wildcard Subdomain Setup (ALREADY CONFIGURED)
+
+DNS and Vercel are set up with **wildcard routing**:
+- **DNS**: `*.loricorpuz.com` → `cname.vercel-dns.com` (CNAME)
+- **Vercel**: Wildcard domain `*.loricorpuz.com` is added to the project
+
+This means **any new subdomain works automatically** — no manual DNS or Vercel config needed.
+
+### Adding a New Venture/Project Site
+
+When building a new standalone site (e.g., a partnership proposal, venture page, or micro-app) within this repo:
+
+1. **Create the route**: `app/<project-name>/page.tsx` (with layout, components, etc.)
+2. **Add a host-based rewrite** in `next.config.js` so the subdomain serves the route at `/`:
+
+```javascript
+// In the rewrites() beforeFiles array:
+{
+  source: '/',
+  has: [{ type: 'host', value: '<subdomain>.loricorpuz.com' }],
+  destination: '/<project-name>',
+},
+{
+  source: '/:path*',
+  has: [{ type: 'host', value: '<subdomain>.loricorpuz.com' }],
+  destination: '/<project-name>/:path*',
+},
+```
+
+3. **Merge to main** — that's it. The subdomain will be live.
+
+**No need to**:
+- Add DNS records (wildcard covers it)
+- Add domains in Vercel dashboard (wildcard covers it)
+- Set up SSL certificates (Vercel handles this automatically)
+
+### Existing Subdomain Sites
+
+| Subdomain | Route | Purpose |
+|-----------|-------|---------|
+| `alamobernal.loricorpuz.com` | `/alamo-bernal` | Partnership proposal site for Alamo Bernal Investments |
+
 ## Getting Help
 
 1. **Architecture questions**: See [THESIS_ENGINE_PHILOSOPHY.md](THESIS_ENGINE_PHILOSOPHY.md)
@@ -462,4 +512,4 @@ See [.env.local](.env.local) (not in repo) for:
 
 ---
 
-**Last Updated**: 2026-02-24 — Post-simplification cleanup (4-tab architecture)
+**Last Updated**: 2026-02-28 — Added deployment & wildcard subdomain docs
