@@ -3,6 +3,7 @@
 import { useState, useRef } from 'react'
 import { useAuth } from '@/components/auth/AuthProvider'
 import { usePrinciples } from '@/hooks/usePrinciples'
+import FranklinPrinciples from './FranklinPrinciples'
 import type { Principle, PrincipleSource, PrincipleMaturity, DecisionDomain } from '@/lib/types'
 
 const SOURCE_LABELS: Record<PrincipleSource, string> = {
@@ -11,6 +12,7 @@ const SOURCE_LABELS: Record<PrincipleSource, string> = {
   conversation: 'Conversation',
   manual: 'Manual',
   book: 'Book',
+  framework: 'Framework',
 }
 
 const DOMAIN_LABELS: Record<DecisionDomain, string> = {
@@ -33,12 +35,15 @@ const MATURITY_STYLES: Record<PrincipleMaturity, { label: string; style: string 
   established: { label: 'Established', style: 'text-green-ink bg-green-bg border-green-ink/20' },
 }
 
+type LedgerView = 'ledger' | 'franklin'
+
 export default function PrinciplesLedger() {
   const { user } = useAuth()
   const { principles, active, loading, save, reinforce, remove } = usePrinciples(user?.uid)
   const [showForm, setShowForm] = useState(false)
   const [filterDomain, setFilterDomain] = useState<DecisionDomain | 'all'>('all')
   const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [view, setView] = useState<LedgerView>('ledger')
 
   const [saving, setSaving] = useState(false)
   const savingRef = useRef(false)
@@ -80,6 +85,10 @@ export default function PrinciplesLedger() {
     }
   }
 
+  if (view === 'franklin') {
+    return <FranklinPrinciples onBack={() => setView('ledger')} />
+  }
+
   if (loading) {
     return (
       <div className="p-3 space-y-2">
@@ -102,12 +111,21 @@ export default function PrinciplesLedger() {
             {active.length} active
           </span>
         </div>
-        <button
-          onClick={() => setShowForm(!showForm)}
-          className="font-serif text-[9px] font-medium px-2 py-1 rounded-sm border border-burgundy text-burgundy hover:bg-burgundy hover:text-paper transition-colors"
-        >
-          + Add
-        </button>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => setView('franklin')}
+            className="font-serif text-[9px] font-medium px-2 py-1 rounded-sm border border-rule text-ink-muted hover:border-burgundy hover:text-burgundy transition-colors"
+            title="Franklin&apos;s 8 Learning Principles"
+          >
+            Franklin
+          </button>
+          <button
+            onClick={() => setShowForm(!showForm)}
+            className="font-serif text-[9px] font-medium px-2 py-1 rounded-sm border border-burgundy text-burgundy hover:bg-burgundy hover:text-paper transition-colors"
+          >
+            + Add
+          </button>
+        </div>
       </div>
 
       {/* Bridgewater guidance */}
