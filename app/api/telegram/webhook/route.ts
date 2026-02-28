@@ -21,6 +21,47 @@ async function sendTelegramReply(chatId: number, text: string) {
   }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function sendTelegramReplyWithKeyboard(chatId: number, text: string, inlineKeyboard: any[][]) {
+  if (!BOT_TOKEN) return
+  // Try with Markdown parse_mode first
+  let res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      chat_id: chatId,
+      text,
+      parse_mode: 'Markdown',
+      reply_markup: { inline_keyboard: inlineKeyboard },
+    }),
+  })
+  if (!res.ok) {
+    // If Markdown fails, retry without parse_mode (plain text but keeps keyboard)
+    console.error('Telegram keyboard+Markdown failed, retrying plain:', await res.text())
+    res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: chatId,
+        text,
+        reply_markup: { inline_keyboard: inlineKeyboard },
+      }),
+    })
+    if (!res.ok) {
+      console.error('Telegram keyboard+plain also failed:', await res.text())
+    }
+  }
+}
+
+async function answerCallbackQuery(callbackQueryId: string, text?: string) {
+  if (!BOT_TOKEN) return
+  await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/answerCallbackQuery`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ callback_query_id: callbackQueryId, text }),
+  })
+}
+
 async function getAdminDb() {
   const { adminDb } = await import('@/lib/firebase-admin')
   return adminDb
@@ -264,6 +305,107 @@ function buildFrameworkCoaching(
   return '\n\n*The Machine:*\n' + prompts.slice(0, 3).map(q => `-> _${q}_`).join('\n')
 }
 
+// ---------------------------------------------------------------------------
+// Persist structured items immediately and return created doc IDs
+// ---------------------------------------------------------------------------
+interface SavedIds {
+  contactDocIds: string[]
+  decisionDocIds: string[]
+  principleDocIds: string[]
+  beliefDocIds: string[]
+  noteDocIds: string[]
+}
+
+async function persistStructuredItems(
+  adminDb: FirebaseFirestore.Firestore,
+  uid: string,
+  today: string,
+  parsed: ParsedJournalEntry
+): Promise<SavedIds> {
+  const ids: SavedIds = { contactDocIds: [], decisionDocIds: [], principleDocIds: [], beliefDocIds: [], noteDocIds: [] }
+
+  // Create decisions
+  for (const d of parsed.decisions) {
+    const reviewDate = new Date()
+    reviewDate.setDate(reviewDate.getDate() + 90)
+    const ref = adminDb.collection('users').doc(uid).collection('decisions').doc()
+    await ref.set({
+      title: d.title, hypothesis: d.hypothesis, options: [d.chosenOption],
+      chosenOption: d.chosenOption, reasoning: d.reasoning, confidenceLevel: d.confidenceLevel,
+      killCriteria: [], premortem: '', domain: d.domain,
+      linkedProjectIds: [], linkedSignalIds: [], status: 'active',
+      reviewDate: reviewDate.toISOString().split('T')[0], decidedAt: today,
+      createdAt: new Date(), updatedAt: new Date(),
+    })
+    ids.decisionDocIds.push(ref.id)
+  }
+
+  // Create principles
+  for (const p of parsed.principles) {
+    const ref = adminDb.collection('users').doc(uid).collection('principles').doc()
+    await ref.set({
+      text: p.text, shortForm: p.shortForm, source: 'manual',
+      sourceDescription: 'Extracted from Telegram journal', domain: p.domain,
+      dateFirstApplied: today, linkedDecisionIds: [], lastReinforcedAt: today,
+      reinforcementCount: 0, createdAt: new Date(), updatedAt: new Date(),
+    })
+    ids.principleDocIds.push(ref.id)
+  }
+
+  // Upsert contacts
+  for (const c of parsed.contacts) {
+    const contactsRef = adminDb.collection('users').doc(uid).collection('contacts')
+    const existing = await contactsRef.where('name', '==', c.name).limit(1).get()
+    if (existing.empty) {
+      const ref = contactsRef.doc()
+      await ref.set({
+        name: c.name, lastConversationDate: today, notes: c.context,
+        createdAt: new Date(), updatedAt: new Date(),
+      })
+      ids.contactDocIds.push(ref.id)
+    } else {
+      const doc = existing.docs[0]
+      const prevNotes = doc.data().notes || ''
+      await doc.ref.update({
+        lastConversationDate: today,
+        notes: prevNotes ? `${prevNotes}\n${today}: ${c.context}` : `${today}: ${c.context}`,
+        updatedAt: new Date(),
+      })
+      ids.contactDocIds.push(doc.id)
+    }
+  }
+
+  // Save notes as external signals
+  for (const n of parsed.notes) {
+    const ref = adminDb.collection('users').doc(uid).collection('external_signals').doc()
+    await ref.set({
+      title: n.text.slice(0, 120), aiSummary: n.text, keyTakeaway: n.text,
+      valueBullets: [], sourceUrl: '', sourceName: 'Journal note',
+      source: 'telegram', relevanceScore: n.actionRequired ? 0.8 : 0.4,
+      thesisPillars: [], status: 'inbox', readStatus: 'unread',
+      publishedAt: new Date().toISOString(), createdAt: new Date(), updatedAt: new Date(),
+    })
+    ids.noteDocIds.push(ref.id)
+  }
+
+  // Create beliefs
+  for (const b of parsed.beliefs) {
+    const attentionDate = new Date()
+    attentionDate.setDate(attentionDate.getDate() + 21)
+    const ref = adminDb.collection('users').doc(uid).collection('beliefs').doc()
+    await ref.set({
+      statement: b.statement, confidence: b.confidence, domain: b.domain,
+      evidenceFor: b.evidenceFor, evidenceAgainst: b.evidenceAgainst,
+      status: 'active', linkedDecisionIds: [], linkedPrincipleIds: [],
+      sourceJournalDate: today, attentionDate: attentionDate.toISOString().split('T')[0],
+      createdAt: new Date(), updatedAt: new Date(),
+    })
+    ids.beliefDocIds.push(ref.id)
+  }
+
+  return ids
+}
+
 function appendJournalText(existing: string, newText: string): string {
   const now = new Date()
   const timeStr = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })
@@ -377,6 +519,79 @@ async function computeAndSaveReward(
   return { score: reward.score, delta }
 }
 
+function buildDailyLogUpdate(parsed: ParsedJournalEntry) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const logUpdate: Record<string, any> = { updatedAt: new Date() }
+  // Energy
+  if (parsed.energy.nervousSystemState) logUpdate.nervousSystemState = parsed.energy.nervousSystemState
+  if (parsed.energy.bodyFelt) logUpdate.bodyFelt = parsed.energy.bodyFelt
+  if (parsed.energy.trainingTypes.length > 0) logUpdate.trainingTypes = parsed.energy.trainingTypes
+  if (parsed.energy.sleepHours != null) logUpdate.sleepHours = parsed.energy.sleepHours
+  // Output
+  if (parsed.output.focusHoursActual != null) logUpdate.focusHoursActual = parsed.output.focusHoursActual
+  if (parsed.output.whatShipped) logUpdate.whatShipped = parsed.output.whatShipped
+  // Intelligence
+  if (parsed.intelligence.discoveryConversationsCount != null) logUpdate.discoveryConversationsCount = parsed.intelligence.discoveryConversationsCount
+  if (parsed.intelligence.insightsExtracted != null) logUpdate.insightsExtracted = parsed.intelligence.insightsExtracted
+  if (parsed.intelligence.problemSelected) logUpdate.problemSelected = parsed.intelligence.problemSelected
+  // Network
+  if (parsed.network.warmIntrosMade != null) logUpdate.warmIntrosMade = parsed.network.warmIntrosMade
+  if (parsed.network.warmIntrosReceived != null) logUpdate.warmIntrosReceived = parsed.network.warmIntrosReceived
+  if (parsed.network.meetingsBooked != null) logUpdate.meetingsBooked = parsed.network.meetingsBooked
+  // Revenue
+  if (parsed.revenue.revenueAsksCount != null) logUpdate.revenueAsksCount = parsed.revenue.revenueAsksCount
+  if (parsed.revenue.revenueThisSession != null) logUpdate.revenueThisSession = parsed.revenue.revenueThisSession
+  if (parsed.revenue.revenueStreamType) logUpdate.revenueStreamType = parsed.revenue.revenueStreamType
+  if (parsed.revenue.feedbackLoopClosed != null) logUpdate.feedbackLoopClosed = parsed.revenue.feedbackLoopClosed
+  // Skill Building
+  if (parsed.skill.deliberatePracticeMinutes != null) logUpdate.deliberatePracticeMinutes = parsed.skill.deliberatePracticeMinutes
+  if (parsed.skill.newTechniqueApplied != null) logUpdate.newTechniqueApplied = parsed.skill.newTechniqueApplied
+  if (parsed.skill.automationCreated != null) logUpdate.automationCreated = parsed.skill.automationCreated
+  // PsyCap
+  if (parsed.psyCap.hope != null) logUpdate.psyCapHope = parsed.psyCap.hope
+  if (parsed.psyCap.efficacy != null) logUpdate.psyCapEfficacy = parsed.psyCap.efficacy
+  if (parsed.psyCap.resilience != null) logUpdate.psyCapResilience = parsed.psyCap.resilience
+  if (parsed.psyCap.optimism != null) logUpdate.psyCapOptimism = parsed.psyCap.optimism
+  // Cadence
+  if (parsed.cadenceCompleted.length > 0) logUpdate.cadenceCompleted = parsed.cadenceCompleted
+  return logUpdate
+}
+
+function hasStructuredItems(parsed: ParsedJournalEntry): boolean {
+  return parsed.contacts.length > 0 ||
+    parsed.decisions.length > 0 ||
+    parsed.principles.length > 0 ||
+    parsed.beliefs.length > 0 ||
+    parsed.notes.length > 0
+}
+
+async function saveJournalReviewRecord(
+  adminDb: FirebaseFirestore.Firestore,
+  uid: string,
+  today: string,
+  journalText: string,
+  parsed: ParsedJournalEntry,
+  savedIds: SavedIds,
+  chatId: number
+): Promise<string> {
+  const reviewRef = adminDb.collection('users').doc(uid).collection('journal_reviews').doc()
+  await reviewRef.set({
+    uid,
+    date: today,
+    journalText,
+    contacts: parsed.contacts.map((c, i) => ({ ...c, docId: savedIds.contactDocIds[i], status: 'saved' })),
+    decisions: parsed.decisions.map((d, i) => ({ ...d, docId: savedIds.decisionDocIds[i], status: 'saved' })),
+    principles: parsed.principles.map((p, i) => ({ ...p, docId: savedIds.principleDocIds[i], status: 'saved' })),
+    beliefs: parsed.beliefs.map((b, i) => ({ ...b, docId: savedIds.beliefDocIds[i], status: 'saved' })),
+    notes: parsed.notes.map((n, i) => ({ ...n, docId: savedIds.noteDocIds[i], status: 'saved' })),
+    status: 'saved',
+    telegramChatId: chatId,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  })
+  return reviewRef.id
+}
+
 async function handleJournal(uid: string, text: string, chatId: number) {
   const adminDb = await getAdminDb()
   const today = getTodayKey()
@@ -394,155 +609,15 @@ async function handleJournal(uid: string, text: string, chatId: number) {
     const existingLog = existingSnap.data() || {}
     const newJournal = appendJournalText(existingLog.journalEntry || '', text)
 
-    // Build daily log update from parsed data
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const logUpdate: Record<string, any> = {
-      journalEntry: newJournal,
-      updatedAt: new Date(),
-    }
-
-    // Energy
-    if (parsed.energy.nervousSystemState) logUpdate.nervousSystemState = parsed.energy.nervousSystemState
-    if (parsed.energy.bodyFelt) logUpdate.bodyFelt = parsed.energy.bodyFelt
-    if (parsed.energy.trainingTypes.length > 0) logUpdate.trainingTypes = parsed.energy.trainingTypes
-    if (parsed.energy.sleepHours != null) logUpdate.sleepHours = parsed.energy.sleepHours
-    // Output
-    if (parsed.output.focusHoursActual != null) logUpdate.focusHoursActual = parsed.output.focusHoursActual
-    if (parsed.output.whatShipped) logUpdate.whatShipped = parsed.output.whatShipped
-    // Intelligence
-    if (parsed.intelligence.discoveryConversationsCount != null) logUpdate.discoveryConversationsCount = parsed.intelligence.discoveryConversationsCount
-    if (parsed.intelligence.insightsExtracted != null) logUpdate.insightsExtracted = parsed.intelligence.insightsExtracted
-    if (parsed.intelligence.problemSelected) logUpdate.problemSelected = parsed.intelligence.problemSelected
-    // Network
-    if (parsed.network.warmIntrosMade != null) logUpdate.warmIntrosMade = parsed.network.warmIntrosMade
-    if (parsed.network.warmIntrosReceived != null) logUpdate.warmIntrosReceived = parsed.network.warmIntrosReceived
-    if (parsed.network.meetingsBooked != null) logUpdate.meetingsBooked = parsed.network.meetingsBooked
-    // Revenue
-    if (parsed.revenue.revenueAsksCount != null) logUpdate.revenueAsksCount = parsed.revenue.revenueAsksCount
-    if (parsed.revenue.revenueThisSession != null) logUpdate.revenueThisSession = parsed.revenue.revenueThisSession
-    if (parsed.revenue.revenueStreamType) logUpdate.revenueStreamType = parsed.revenue.revenueStreamType
-    if (parsed.revenue.feedbackLoopClosed != null) logUpdate.feedbackLoopClosed = parsed.revenue.feedbackLoopClosed
-    // Skill Building
-    if (parsed.skill.deliberatePracticeMinutes != null) logUpdate.deliberatePracticeMinutes = parsed.skill.deliberatePracticeMinutes
-    if (parsed.skill.newTechniqueApplied != null) logUpdate.newTechniqueApplied = parsed.skill.newTechniqueApplied
-    if (parsed.skill.automationCreated != null) logUpdate.automationCreated = parsed.skill.automationCreated
-    // PsyCap
-    if (parsed.psyCap.hope != null) logUpdate.psyCapHope = parsed.psyCap.hope
-    if (parsed.psyCap.efficacy != null) logUpdate.psyCapEfficacy = parsed.psyCap.efficacy
-    if (parsed.psyCap.resilience != null) logUpdate.psyCapResilience = parsed.psyCap.resilience
-    if (parsed.psyCap.optimism != null) logUpdate.psyCapOptimism = parsed.psyCap.optimism
-    // Cadence
-    if (parsed.cadenceCompleted.length > 0) logUpdate.cadenceCompleted = parsed.cadenceCompleted
-
-    // Save to daily log (merge to avoid overwriting existing fields)
+    // Save metrics immediately (energy, output, intelligence, etc.)
+    const logUpdate = buildDailyLogUpdate(parsed)
+    logUpdate.journalEntry = newJournal
     await logRef.set(logUpdate, { merge: true })
 
-    // Create decisions
-    for (const d of parsed.decisions) {
-      const reviewDate = new Date()
-      reviewDate.setDate(reviewDate.getDate() + 90)
-      const decisionRef = adminDb.collection('users').doc(uid).collection('decisions').doc()
-      await decisionRef.set({
-        title: d.title,
-        hypothesis: d.hypothesis,
-        options: [d.chosenOption],
-        chosenOption: d.chosenOption,
-        reasoning: d.reasoning,
-        confidenceLevel: d.confidenceLevel,
-        killCriteria: [],
-        premortem: '',
-        domain: d.domain,
-        linkedProjectIds: [],
-        linkedSignalIds: [],
-        status: 'active',
-        reviewDate: reviewDate.toISOString().split('T')[0],
-        decidedAt: today,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      })
-    }
-
-    // Create principles
-    for (const p of parsed.principles) {
-      const principleRef = adminDb.collection('users').doc(uid).collection('principles').doc()
-      await principleRef.set({
-        text: p.text,
-        shortForm: p.shortForm,
-        source: 'manual',
-        sourceDescription: 'Extracted from Telegram journal',
-        domain: p.domain,
-        dateFirstApplied: today,
-        linkedDecisionIds: [],
-        lastReinforcedAt: today,
-        reinforcementCount: 0,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      })
-    }
-
-    // Upsert contacts (create or update lastConversationDate)
-    for (const c of parsed.contacts) {
-      const contactsRef = adminDb.collection('users').doc(uid).collection('contacts')
-      const existing = await contactsRef.where('name', '==', c.name).limit(1).get()
-      if (existing.empty) {
-        await contactsRef.doc().set({
-          name: c.name,
-          lastConversationDate: today,
-          notes: c.context,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        })
-      } else {
-        const doc = existing.docs[0]
-        const prevNotes = doc.data().notes || ''
-        await doc.ref.update({
-          lastConversationDate: today,
-          notes: prevNotes ? `${prevNotes}\n${today}: ${c.context}` : `${today}: ${c.context}`,
-          updatedAt: new Date(),
-        })
-      }
-    }
-
-    // Save notes as external signals (type: telegram, status: inbox)
-    for (const n of parsed.notes) {
-      const signalRef = adminDb.collection('users').doc(uid).collection('external_signals').doc()
-      await signalRef.set({
-        title: n.text.slice(0, 120),
-        aiSummary: n.text,
-        keyTakeaway: n.text,
-        valueBullets: [],
-        sourceUrl: '',
-        sourceName: 'Journal note',
-        source: 'telegram',
-        relevanceScore: n.actionRequired ? 0.8 : 0.4,
-        thesisPillars: [],
-        status: 'inbox',
-        readStatus: 'unread',
-        publishedAt: new Date().toISOString(),
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      })
-    }
-
-    // Create beliefs + trigger antithesis in background
-    for (const b of parsed.beliefs) {
-      const attentionDate = new Date()
-      attentionDate.setDate(attentionDate.getDate() + 21)
-      const beliefRef = adminDb.collection('users').doc(uid).collection('beliefs').doc()
-      await beliefRef.set({
-        statement: b.statement,
-        confidence: b.confidence,
-        domain: b.domain,
-        evidenceFor: b.evidenceFor,
-        evidenceAgainst: b.evidenceAgainst,
-        status: 'active',
-        linkedDecisionIds: [],
-        linkedPrincipleIds: [],
-        sourceJournalDate: today,
-        attentionDate: attentionDate.toISOString().split('T')[0],
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      })
+    // Save structured items immediately (contacts, decisions, principles, beliefs, notes)
+    let savedIds: SavedIds | null = null
+    if (hasStructuredItems(parsed)) {
+      savedIds = await persistStructuredItems(adminDb, uid, today, parsed)
     }
 
     // Fetch existing beliefs + decisions for framework coaching
@@ -563,8 +638,29 @@ async function handleJournal(uid: string, text: string, chatId: number) {
     const deltaStr = delta != null ? (delta >= 0 ? ` (+${delta})` : ` (${delta})`) : ''
     const scoreLine = `\n\n*g* = ${score.toFixed(1)}${deltaStr}`
 
-    // Reply with summary + score + coaching
-    await sendTelegramReply(chatId, buildJournalReply(parsed) + scoreLine + coachingSection)
+    // Build reply
+    const reply = buildJournalReply(parsed) + scoreLine + coachingSection
+
+    // If there are structured items, save a review record and offer "Review & Edit" link
+    if (savedIds && hasStructuredItems(parsed)) {
+      const reviewId = await saveJournalReviewRecord(adminDb, uid, today, text, parsed, savedIds, chatId)
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://sovereignangel.github.io')
+      const reviewUrl = `${baseUrl}/thesis/review/${reviewId}`
+
+      const itemSummary = [
+        parsed.contacts.length && `${parsed.contacts.length} contacts`,
+        parsed.decisions.length && `${parsed.decisions.length} decisions`,
+        parsed.principles.length && `${parsed.principles.length} principles`,
+        parsed.beliefs.length && `${parsed.beliefs.length} beliefs`,
+        parsed.notes.length && `${parsed.notes.length} notes`,
+      ].filter(Boolean).join(', ')
+
+      await sendTelegramReplyWithKeyboard(chatId, reply + `\n\n---\nSaved: ${itemSummary}`, [
+        [{ text: '✏️ Review & Edit', url: reviewUrl }],
+      ])
+    } else {
+      await sendTelegramReply(chatId, reply)
+    }
   } catch (error) {
     console.error('Journal parsing error:', error)
     // Still save the raw text even if AI parsing fails (also append)
@@ -588,117 +684,15 @@ async function handleJournalFromVoice(uid: string, transcript: string, parsed: P
     const existingLog = existingSnap.data() || {}
     const newJournal = appendJournalText(existingLog.journalEntry || '', transcript)
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const logUpdate: Record<string, any> = {
-      journalEntry: newJournal,
-      updatedAt: new Date(),
-    }
-
-    // Energy
-    if (parsed.energy.nervousSystemState) logUpdate.nervousSystemState = parsed.energy.nervousSystemState
-    if (parsed.energy.bodyFelt) logUpdate.bodyFelt = parsed.energy.bodyFelt
-    if (parsed.energy.trainingTypes.length > 0) logUpdate.trainingTypes = parsed.energy.trainingTypes
-    if (parsed.energy.sleepHours != null) logUpdate.sleepHours = parsed.energy.sleepHours
-    // Output
-    if (parsed.output.focusHoursActual != null) logUpdate.focusHoursActual = parsed.output.focusHoursActual
-    if (parsed.output.whatShipped) logUpdate.whatShipped = parsed.output.whatShipped
-    // Intelligence
-    if (parsed.intelligence.discoveryConversationsCount != null) logUpdate.discoveryConversationsCount = parsed.intelligence.discoveryConversationsCount
-    if (parsed.intelligence.insightsExtracted != null) logUpdate.insightsExtracted = parsed.intelligence.insightsExtracted
-    if (parsed.intelligence.problemSelected) logUpdate.problemSelected = parsed.intelligence.problemSelected
-    // Network
-    if (parsed.network.warmIntrosMade != null) logUpdate.warmIntrosMade = parsed.network.warmIntrosMade
-    if (parsed.network.warmIntrosReceived != null) logUpdate.warmIntrosReceived = parsed.network.warmIntrosReceived
-    if (parsed.network.meetingsBooked != null) logUpdate.meetingsBooked = parsed.network.meetingsBooked
-    // Revenue
-    if (parsed.revenue.revenueAsksCount != null) logUpdate.revenueAsksCount = parsed.revenue.revenueAsksCount
-    if (parsed.revenue.revenueThisSession != null) logUpdate.revenueThisSession = parsed.revenue.revenueThisSession
-    if (parsed.revenue.revenueStreamType) logUpdate.revenueStreamType = parsed.revenue.revenueStreamType
-    if (parsed.revenue.feedbackLoopClosed != null) logUpdate.feedbackLoopClosed = parsed.revenue.feedbackLoopClosed
-    // Skill Building
-    if (parsed.skill.deliberatePracticeMinutes != null) logUpdate.deliberatePracticeMinutes = parsed.skill.deliberatePracticeMinutes
-    if (parsed.skill.newTechniqueApplied != null) logUpdate.newTechniqueApplied = parsed.skill.newTechniqueApplied
-    if (parsed.skill.automationCreated != null) logUpdate.automationCreated = parsed.skill.automationCreated
-    // PsyCap
-    if (parsed.psyCap.hope != null) logUpdate.psyCapHope = parsed.psyCap.hope
-    if (parsed.psyCap.efficacy != null) logUpdate.psyCapEfficacy = parsed.psyCap.efficacy
-    if (parsed.psyCap.resilience != null) logUpdate.psyCapResilience = parsed.psyCap.resilience
-    if (parsed.psyCap.optimism != null) logUpdate.psyCapOptimism = parsed.psyCap.optimism
-    // Cadence
-    if (parsed.cadenceCompleted.length > 0) logUpdate.cadenceCompleted = parsed.cadenceCompleted
-
+    // Save metrics immediately
+    const logUpdate = buildDailyLogUpdate(parsed)
+    logUpdate.journalEntry = newJournal
     await logRef.set(logUpdate, { merge: true })
 
-    // Create decisions
-    for (const d of parsed.decisions) {
-      const reviewDate = new Date()
-      reviewDate.setDate(reviewDate.getDate() + 90)
-      const decisionRef = adminDb.collection('users').doc(uid).collection('decisions').doc()
-      await decisionRef.set({
-        title: d.title, hypothesis: d.hypothesis, options: [d.chosenOption],
-        chosenOption: d.chosenOption, reasoning: d.reasoning, confidenceLevel: d.confidenceLevel,
-        killCriteria: [], premortem: '', domain: d.domain,
-        linkedProjectIds: [], linkedSignalIds: [], status: 'active',
-        reviewDate: reviewDate.toISOString().split('T')[0], decidedAt: today,
-        createdAt: new Date(), updatedAt: new Date(),
-      })
-    }
-
-    // Create principles
-    for (const p of parsed.principles) {
-      const principleRef = adminDb.collection('users').doc(uid).collection('principles').doc()
-      await principleRef.set({
-        text: p.text, shortForm: p.shortForm, source: 'manual',
-        sourceDescription: 'Extracted from Telegram voice journal', domain: p.domain,
-        dateFirstApplied: today, linkedDecisionIds: [], lastReinforcedAt: today,
-        reinforcementCount: 0, createdAt: new Date(), updatedAt: new Date(),
-      })
-    }
-
-    // Upsert contacts
-    for (const c of parsed.contacts) {
-      const contactsRef = adminDb.collection('users').doc(uid).collection('contacts')
-      const existing = await contactsRef.where('name', '==', c.name).limit(1).get()
-      if (existing.empty) {
-        await contactsRef.doc().set({
-          name: c.name, lastConversationDate: today, notes: c.context,
-          createdAt: new Date(), updatedAt: new Date(),
-        })
-      } else {
-        const doc = existing.docs[0]
-        const prevNotes = doc.data().notes || ''
-        await doc.ref.update({
-          lastConversationDate: today,
-          notes: prevNotes ? `${prevNotes}\n${today}: ${c.context}` : `${today}: ${c.context}`,
-          updatedAt: new Date(),
-        })
-      }
-    }
-
-    // Save notes as external signals
-    for (const n of parsed.notes) {
-      const signalRef = adminDb.collection('users').doc(uid).collection('external_signals').doc()
-      await signalRef.set({
-        title: n.text.slice(0, 120), aiSummary: n.text, keyTakeaway: n.text,
-        valueBullets: [], sourceUrl: '', sourceName: 'Voice journal note',
-        source: 'telegram', relevanceScore: n.actionRequired ? 0.8 : 0.4,
-        thesisPillars: [], status: 'inbox', readStatus: 'unread',
-        publishedAt: new Date().toISOString(), createdAt: new Date(), updatedAt: new Date(),
-      })
-    }
-
-    // Create beliefs + trigger antithesis in background
-    for (const b of parsed.beliefs) {
-      const attentionDate = new Date()
-      attentionDate.setDate(attentionDate.getDate() + 21)
-      const beliefRef = adminDb.collection('users').doc(uid).collection('beliefs').doc()
-      await beliefRef.set({
-        statement: b.statement, confidence: b.confidence, domain: b.domain,
-        evidenceFor: b.evidenceFor, evidenceAgainst: b.evidenceAgainst,
-        status: 'active', linkedDecisionIds: [], linkedPrincipleIds: [],
-        sourceJournalDate: today, attentionDate: attentionDate.toISOString().split('T')[0],
-        createdAt: new Date(), updatedAt: new Date(),
-      })
+    // Save structured items immediately
+    let savedIds: SavedIds | null = null
+    if (hasStructuredItems(parsed)) {
+      savedIds = await persistStructuredItems(adminDb, uid, today, parsed)
     }
 
     // Fetch existing beliefs + decisions for framework coaching
@@ -719,10 +713,29 @@ async function handleJournalFromVoice(uid: string, transcript: string, parsed: P
     const deltaStr = delta != null ? (delta >= 0 ? ` (+${delta})` : ` (${delta})`) : ''
     const scoreLine = `\n\n*g* = ${score.toFixed(1)}${deltaStr}`
 
-    // Reply with transcript + structured summary + score + coaching
+    // Reply with transcript
     const journalReply = buildJournalReply(parsed)
-    const fullReply = `*Transcript:*\n_"${transcript}"_\n\n${journalReply}${scoreLine}${coachingSection}`
-    await sendTelegramReply(chatId, fullReply)
+    const baseReply = `*Transcript:*\n_"${transcript}"_\n\n${journalReply}${scoreLine}${coachingSection}`
+
+    if (savedIds && hasStructuredItems(parsed)) {
+      const reviewId = await saveJournalReviewRecord(adminDb, uid, today, transcript, parsed, savedIds, chatId)
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://sovereignangel.github.io')
+      const reviewUrl = `${baseUrl}/thesis/review/${reviewId}`
+
+      const itemSummary = [
+        parsed.contacts.length && `${parsed.contacts.length} contacts`,
+        parsed.decisions.length && `${parsed.decisions.length} decisions`,
+        parsed.principles.length && `${parsed.principles.length} principles`,
+        parsed.beliefs.length && `${parsed.beliefs.length} beliefs`,
+        parsed.notes.length && `${parsed.notes.length} notes`,
+      ].filter(Boolean).join(', ')
+
+      await sendTelegramReplyWithKeyboard(chatId, baseReply + `\n\n---\nSaved: ${itemSummary}`, [
+        [{ text: '✏️ Review & Edit', url: reviewUrl }],
+      ])
+    } else {
+      await sendTelegramReply(chatId, baseReply)
+    }
   } catch (error) {
     console.error('Voice journal save error:', error)
     // Append even on failure
@@ -2450,6 +2463,16 @@ export async function POST(req: NextRequest) {
 
   try {
     const update: TelegramUpdate = await req.json()
+
+    // --- Handle callback queries (inline keyboard button presses) ---
+    if (update.callback_query) {
+      const cbq = update.callback_query
+      // Acknowledge to stop loading spinner
+      await answerCallbackQuery(cbq.id)
+      return NextResponse.json({ ok: true })
+    }
+
+    // --- Handle regular messages ---
     const message = update.message
 
     if (!message?.text && !message?.voice) {
@@ -2554,7 +2577,7 @@ export async function POST(req: NextRequest) {
         '`/signal <text>` — Create external signal',
         '`/signal #ai <text>` — Signal with pillar',
         '`/note <text>` — Quick note',
-        '`/journal <text>` — Journal entry (AI-parsed)',
+        '`/journal <text>` — Journal entry (AI-parsed, review before save)',
         '`/predict <text>` — Log a prediction (AI-analyzed)',
         '',
         '*Venture Builder:*',
