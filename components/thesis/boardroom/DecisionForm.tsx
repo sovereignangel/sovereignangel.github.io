@@ -7,6 +7,14 @@ interface DecisionFormProps {
   decision: Decision | null
   onSave: (data: Partial<Decision>) => Promise<void>
   onClose: () => void
+  /** Pre-fill from a belief — used by "Act on this" */
+  prefill?: {
+    title?: string
+    hypothesis?: string
+    domain?: DecisionDomain
+    confidenceLevel?: number
+    linkedBeliefIds?: string[]
+  }
 }
 
 const DOMAINS: { key: DecisionDomain; label: string }[] = [
@@ -17,19 +25,19 @@ const DOMAINS: { key: DecisionDomain; label: string }[] = [
   { key: 'thesis', label: 'Thesis' },
 ]
 
-export default function DecisionForm({ decision, onSave, onClose }: DecisionFormProps) {
+export default function DecisionForm({ decision, onSave, onClose, prefill }: DecisionFormProps) {
   const today = new Date().toISOString().split('T')[0]
   const reviewDate = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
 
-  const [title, setTitle] = useState(decision?.title || '')
-  const [hypothesis, setHypothesis] = useState(decision?.hypothesis || '')
+  const [title, setTitle] = useState(decision?.title || prefill?.title || '')
+  const [hypothesis, setHypothesis] = useState(decision?.hypothesis || prefill?.hypothesis || '')
   const [options, setOptions] = useState(decision?.options?.join('\n') || '')
   const [chosenOption, setChosenOption] = useState(decision?.chosenOption || '')
   const [reasoning, setReasoning] = useState(decision?.reasoning || '')
-  const [confidenceLevel, setConfidenceLevel] = useState(decision?.confidenceLevel ?? 50)
+  const [confidenceLevel, setConfidenceLevel] = useState(decision?.confidenceLevel ?? prefill?.confidenceLevel ?? 50)
   const [killCriteria, setKillCriteria] = useState(decision?.killCriteria?.join('\n') || '')
   const [premortem, setPremortem] = useState(decision?.premortem || '')
-  const [domain, setDomain] = useState<DecisionDomain>(decision?.domain || 'portfolio')
+  const [domain, setDomain] = useState<DecisionDomain>(decision?.domain || prefill?.domain || 'portfolio')
   const [saving, setSaving] = useState(false)
   const savingRef = useRef(false)
 
@@ -57,6 +65,7 @@ export default function DecisionForm({ decision, onSave, onClose }: DecisionForm
         domain,
         linkedProjectIds: decision?.linkedProjectIds || [],
         linkedSignalIds: decision?.linkedSignalIds || [],
+        linkedBeliefIds: decision?.linkedBeliefIds || prefill?.linkedBeliefIds || [],
         decidedAt: decision?.decidedAt || today,
         reviewDate: decision?.reviewDate || reviewDate,
       }

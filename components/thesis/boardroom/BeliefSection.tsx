@@ -3,10 +3,12 @@
 import { useState } from 'react'
 import { useAuth } from '@/components/auth/AuthProvider'
 import { useBeliefs } from '@/hooks/useBeliefs'
+import { useDecisions } from '@/hooks/useDecisions'
 import { saveBelief } from '@/lib/firestore'
 import type { Belief, DecisionDomain } from '@/lib/types'
 import { authFetch } from '@/lib/auth-fetch'
 import BeliefForm from './BeliefForm'
+import DecisionForm from './DecisionForm'
 
 const DOMAIN_COLORS: Record<string, string> = {
   portfolio: 'text-burgundy bg-burgundy-bg border-burgundy/20',
@@ -31,6 +33,7 @@ interface BeliefSectionProps {
 export default function BeliefSection({ onActOnBelief }: BeliefSectionProps) {
   const { user } = useAuth()
   const { beliefs, untested, stale, loading, save, remove, refresh } = useBeliefs(user?.uid)
+  const { save: saveDecision } = useDecisions(user?.uid)
   const [filter, setFilter] = useState('all')
   const [showForm, setShowForm] = useState(false)
   const [expandedId, setExpandedId] = useState<string | null>(null)
@@ -39,6 +42,11 @@ export default function BeliefSection({ onActOnBelief }: BeliefSectionProps) {
   const [sharpeningId, setSharpeningId] = useState<string | null>(null)
   const [sharpenResult, setSharpenResult] = useState<{ refined: string; reasoning: string } | null>(null)
   const [sharpenLoading, setSharpenLoading] = useState(false)
+  const [editingStatementId, setEditingStatementId] = useState<string | null>(null)
+  const [editedStatement, setEditedStatement] = useState('')
+  const [showHistoryId, setShowHistoryId] = useState<string | null>(null)
+  // "Act on this" modal state
+  const [actOnBelief, setActOnBelief] = useState<Belief | null>(null)
 
   const today = new Date().toISOString().split('T')[0]
 
@@ -143,9 +151,62 @@ export default function BeliefSection({ onActOnBelief }: BeliefSectionProps) {
 
   async function handleAcceptSharpen(belief: Belief) {
     if (!belief.id || !sharpenResult?.refined) return
-    await save({ statement: sharpenResult.refined }, belief.id)
+    // Preserve current statement in history
+    const previousStatements = [...(belief.previousStatements || []), {
+      statement: belief.statement,
+      sharpenedAt: today,
+      reasoning: sharpenResult.reasoning,
+    }]
+    await save({ statement: sharpenResult.refined, previousStatements }, belief.id)
     setSharpeningId(null)
     setSharpenResult(null)
+    // Enter edit mode so user can fix dates, etc.
+    setEditingStatementId(belief.id)
+    setEditedStatement(sharpenResult.refined)
+  }
+
+  async function handleSaveEditedStatement(belief: Belief) {
+    if (!belief.id || !editedStatement.trim()) return
+    await save({ statement: editedStatement.trim() }, belief.id)
+    setEditingStatementId(null)
+    setEditedStatement('')
+  }
+
+  async function handleActOnBelief(belief: Belief) {
+    setActOnBelief(belief)
+  }
+
+  async function handleSaveDecisionFromBelief(data: Partial<import('@/lib/types').Decision>) {
+    if (!actOnBelief?.id) return
+    const decisionId = await saveDecision(data)
+    // Link the decision back to the belief
+    if (decisionId && actOnBelief.id) {
+      const updatedLinked = [...(actOnBelief.linkedDecisionIds || []), decisionId]
+      await save({ linkedDecisionIds: updatedLinked }, actOnBelief.id)
+    }
+    setActOnBelief(null)
+    // Generate antithesis in background
+    if (data.title && data.chosenOption) {
+      authFetch('/api/decisions/antithesis', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: data.title,
+          hypothesis: data.hypothesis,
+          chosenOption: data.chosenOption,
+          reasoning: data.reasoning,
+          options: data.options,
+          premortem: data.premortem,
+        }),
+      })
+        .then(res => res.json())
+        .then(result => {
+          if (result.antithesis && decisionId) {
+            saveDecision({ antithesis: result.antithesis, antithesisConfidence: result.confidence }, decisionId)
+          }
+        })
+        .catch(() => {})
+    }
   }
 
   if (loading) {
@@ -206,6 +267,9 @@ export default function BeliefSection({ onActOnBelief }: BeliefSectionProps) {
             const isUntested = !belief.antithesis && belief.status === 'active'
             const domainStyle = DOMAIN_COLORS[belief.domain] || DOMAIN_COLORS.thesis
             const isSharpeningThis = sharpeningId === belief.id
+            const isEditingThis = editingStatementId === belief.id
+            const hasHistory = belief.previousStatements && belief.previousStatements.length > 0
+            const showingHistory = showHistoryId === belief.id
 
             return (
               <div
@@ -230,7 +294,8 @@ export default function BeliefSection({ onActOnBelief }: BeliefSectionProps) {
                   <span className={`font-mono text-[7px] uppercase px-1 py-0.5 rounded-sm border shrink-0 ${domainStyle}`}>
                     {belief.domain}
                   </span>
-                  <span className="font-serif text-[11px] text-ink flex-1 truncate">
+                  {/* Statement: truncate when collapsed, full text when expanded */}
+                  <span className={`font-serif text-[11px] text-ink flex-1 ${isExpanded ? '' : 'truncate'}`}>
                     {belief.statement}
                   </span>
                   <span className={`font-mono text-[9px] font-semibold shrink-0 ${
@@ -260,6 +325,57 @@ export default function BeliefSection({ onActOnBelief }: BeliefSectionProps) {
                 {/* Expanded detail */}
                 {isExpanded && (
                   <div className="px-2 pb-2 border-t border-rule-light space-y-1.5 mt-0.5 pt-1.5">
+                    {/* Editable statement (after sharpen or manual edit) */}
+                    {isEditingThis ? (
+                      <div className="space-y-1">
+                        <label className="font-serif text-[8px] text-burgundy uppercase tracking-[0.5px]">Edit Statement</label>
+                        <textarea
+                          value={editedStatement}
+                          onChange={e => setEditedStatement(e.target.value)}
+                          className="w-full h-16 bg-white border border-burgundy rounded-sm p-1.5 font-serif text-[10px] text-ink resize-none focus:outline-none"
+                          autoFocus
+                        />
+                        <div className="flex gap-1">
+                          <button
+                            onClick={() => handleSaveEditedStatement(belief)}
+                            disabled={!editedStatement.trim()}
+                            className="font-serif text-[8px] font-medium px-2 py-1 rounded-sm border bg-burgundy text-paper border-burgundy disabled:opacity-40"
+                          >
+                            Save
+                          </button>
+                          <button
+                            onClick={() => { setEditingStatementId(null); setEditedStatement('') }}
+                            className="font-serif text-[8px] font-medium px-2 py-1 rounded-sm border border-rule text-ink-muted"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    ) : null}
+
+                    {/* Previous statements history (sharpen trail) */}
+                    {hasHistory && (
+                      <div>
+                        <button
+                          onClick={() => setShowHistoryId(showingHistory ? null : (belief.id || null))}
+                          className="font-serif text-[8px] text-ink-muted hover:text-burgundy transition-colors"
+                        >
+                          {showingHistory ? '▾' : '▸'} {belief.previousStatements!.length} previous version{belief.previousStatements!.length > 1 ? 's' : ''}
+                        </button>
+                        {showingHistory && (
+                          <div className="mt-1 space-y-1 pl-2 border-l border-rule-light">
+                            {belief.previousStatements!.map((prev, i) => (
+                              <div key={i} className="space-y-0.5">
+                                <p className="font-serif text-[9px] text-ink-muted line-through leading-relaxed">{prev.statement}</p>
+                                <p className="font-serif text-[8px] text-ink-faint italic">{prev.reasoning}</p>
+                                <span className="font-mono text-[7px] text-ink-faint">Replaced {prev.sharpenedAt}</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
                     {/* Evidence for */}
                     {belief.evidenceFor.length > 0 && (
                       <div>
@@ -407,14 +523,21 @@ export default function BeliefSection({ onActOnBelief }: BeliefSectionProps) {
                       >
                         {sharpenLoading && isSharpeningThis ? 'Sharpening...' : 'Sharpen'}
                       </button>
-                      {onActOnBelief && (
-                        <button
-                          onClick={() => onActOnBelief(belief)}
-                          className="font-serif text-[9px] font-medium text-burgundy hover:text-burgundy/70 transition-colors"
-                        >
-                          Act on this
-                        </button>
-                      )}
+                      <button
+                        onClick={() => {
+                          setEditingStatementId(belief.id || null)
+                          setEditedStatement(belief.statement)
+                        }}
+                        className="font-serif text-[9px] font-medium text-ink-muted hover:text-burgundy transition-colors"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => handleActOnBelief(belief)}
+                        className="font-serif text-[9px] font-medium text-burgundy hover:text-burgundy/70 transition-colors"
+                      >
+                        Act on this
+                      </button>
                       <button
                         onClick={() => handleArchive(belief)}
                         className="font-serif text-[9px] font-medium text-ink-muted hover:text-red-ink transition-colors"
@@ -431,6 +554,22 @@ export default function BeliefSection({ onActOnBelief }: BeliefSectionProps) {
             )
           })}
         </div>
+      )}
+
+      {/* "Act on this" Decision Modal */}
+      {actOnBelief && (
+        <DecisionForm
+          decision={null}
+          prefill={{
+            title: `Decision: ${actOnBelief.statement.slice(0, 60)}${actOnBelief.statement.length > 60 ? '...' : ''}`,
+            hypothesis: actOnBelief.statement,
+            domain: actOnBelief.domain,
+            confidenceLevel: actOnBelief.confidence,
+            linkedBeliefIds: actOnBelief.id ? [actOnBelief.id] : [],
+          }}
+          onSave={handleSaveDecisionFromBelief}
+          onClose={() => setActOnBelief(null)}
+        />
       )}
     </div>
   )
