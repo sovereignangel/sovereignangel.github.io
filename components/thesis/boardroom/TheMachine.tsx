@@ -4,7 +4,9 @@ import { useState, useRef, useCallback } from 'react'
 import { useAuth } from '@/components/auth/AuthProvider'
 import { useBeliefs } from '@/hooks/useBeliefs'
 import { useDecisions } from '@/hooks/useDecisions'
+import { usePrinciples } from '@/hooks/usePrinciples'
 import FlowPipeline from './FlowPipeline'
+import BeliefReviewQueue from './BeliefReviewQueue'
 import DailyJournal from './DailyJournal'
 import JournalLedger from './JournalLedger'
 import BeliefSection from './BeliefSection'
@@ -17,10 +19,29 @@ type SectionId = typeof SECTIONS[number]
 
 export default function TheMachine() {
   const { user } = useAuth()
-  const { active: activeBeliefs, untested, stale } = useBeliefs(user?.uid)
-  const { decisions, pendingReview } = useDecisions(user?.uid)
-  const activePrinciples = [] // Will be counted from PrinciplesLedger
+  const { active: activeBeliefs, untested, stale, beliefs } = useBeliefs(user?.uid)
+  const { decisions, pendingReview, reviewed } = useDecisions(user?.uid)
+  const { active: activePrinciples, principles } = usePrinciples(user?.uid)
   const activeDecisions = decisions.filter(d => d.status === 'active')
+
+  // Calibration gap for header
+  const calibrationGap = reviewed.length > 0
+    ? Math.round(
+        reviewed.reduce((sum, d) => sum + Math.abs(d.confidenceLevel - (d.outcomeScore || 0)), 0) / reviewed.length
+      )
+    : null
+
+  // Reinforced principles count
+  const reinforcedCount = principles.filter(p => p.reinforcementCount > 0).length
+
+  // Beliefs with linked decisions (ready to advance)
+  const testedWithoutDecisions = beliefs.filter(
+    b => b.antithesis && b.status === 'active' && b.linkedDecisionIds.length === 0
+  )
+  // Reviewed decisions without linked principles (ready to codify)
+  const reviewedWithoutPrinciples = reviewed.filter(
+    d => !d.learnings?.trim()
+  )
 
   const [expanded, setExpanded] = useState<Record<SectionId, boolean>>({
     journal: true,
@@ -49,10 +70,8 @@ export default function TheMachine() {
 
   const scrollToSection = useCallback((id: string) => {
     const sectionId = id as SectionId
-    // Expand the section if collapsed
     setExpanded(prev => ({ ...prev, [sectionId]: true }))
     setActiveSection(sectionId)
-    // Scroll after a tick to allow expansion
     setTimeout(() => {
       sectionRefs[sectionId]?.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
     }, 50)
@@ -62,17 +81,45 @@ export default function TheMachine() {
     scrollToSection('decisions')
   }, [scrollToSection])
 
-  // Today's journal entries count (approximate from JournalLedger)
-  const journalCount = 0 // DailyJournal handles this internally
+  const journalCount = 0
 
   const pipelineStages = [
     { id: 'observe', label: 'Observe', count: journalCount, scrollTo: 'journal' },
     { id: 'believe', label: 'Believe', count: activeBeliefs.length, scrollTo: 'beliefs' },
-    { id: 'test', label: 'Test', count: untested.length, alert: untested.length, scrollTo: 'beliefs' },
+    {
+      id: 'test', label: 'Test', count: untested.length,
+      alert: untested.length, scrollTo: 'beliefs',
+      ready: testedWithoutDecisions.length,
+    },
     { id: 'decide', label: 'Decide', count: activeDecisions.length, scrollTo: 'decisions' },
-    { id: 'review', label: 'Review', count: pendingReview.length, alert: pendingReview.length, scrollTo: 'decisions' },
-    { id: 'codify', label: 'Codify', count: 0, scrollTo: 'principles' },
+    {
+      id: 'review', label: 'Review', count: pendingReview.length,
+      alert: pendingReview.length, scrollTo: 'decisions',
+      ready: reviewedWithoutPrinciples.length,
+    },
+    { id: 'codify', label: 'Codify', count: activePrinciples.length, scrollTo: 'principles' },
   ]
+
+  // Build section subtitles with merged Flow Health data
+  const beliefSubtitle = [
+    `${activeBeliefs.length} active`,
+    untested.length > 0 ? `${untested.length} untested` : null,
+    stale.length > 0 ? `${stale.length} stale` : null,
+  ].filter(Boolean).join(' · ')
+
+  const decisionSubtitle = [
+    `${activeDecisions.length} active`,
+    pendingReview.length > 0 ? `${pendingReview.length} review due` : null,
+    calibrationGap != null ? `±${calibrationGap} cal` : null,
+  ].filter(Boolean).join(' · ')
+
+  const principleSubtitle = [
+    `${activePrinciples.length} active`,
+    reinforcedCount > 0 ? `${reinforcedCount} reinforced` : null,
+  ].filter(Boolean).join(' · ')
+
+  // Loop status for pipeline
+  const openLoops = untested.length + stale.length + pendingReview.length
 
   return (
     <div className="space-y-1">
@@ -83,7 +130,20 @@ export default function TheMachine() {
           activeSection={activeSection}
           onStageClick={scrollToSection}
         />
+        {/* Loop status indicator */}
+        <div className="px-2 pb-1.5">
+          {openLoops === 0 ? (
+            <span className="font-serif text-[8px] text-green-ink italic">All loops closed. Machine running clean.</span>
+          ) : (
+            <span className="font-serif text-[8px] text-amber-ink italic">
+              {openLoops} open loop{openLoops > 1 ? 's' : ''}
+            </span>
+          )}
+        </div>
       </div>
+
+      {/* Anki-style belief review queue */}
+      <BeliefReviewQueue />
 
       {/* Collapsible Sections */}
       <CollapsibleSection
@@ -103,7 +163,7 @@ export default function TheMachine() {
         ref={beliefsRef}
         id="beliefs"
         title="BELIEVE"
-        subtitle={`${activeBeliefs.length} active`}
+        subtitle={beliefSubtitle}
         alert={untested.length > 0 ? `${untested.length} untested` : stale.length > 0 ? `${stale.length} stale` : undefined}
         expanded={expanded.beliefs}
         onToggle={() => toggle('beliefs')}
@@ -118,7 +178,7 @@ export default function TheMachine() {
         ref={decisionsRef}
         id="decisions"
         title="DECIDE"
-        subtitle={`${activeDecisions.length} active`}
+        subtitle={decisionSubtitle}
         alert={pendingReview.length > 0 ? `${pendingReview.length} review due` : undefined}
         expanded={expanded.decisions}
         onToggle={() => toggle('decisions')}
@@ -131,7 +191,7 @@ export default function TheMachine() {
         ref={principlesRef}
         id="principles"
         title="CODIFY"
-        subtitle="Principles"
+        subtitle={principleSubtitle}
         expanded={expanded.principles}
         onToggle={() => toggle('principles')}
         onClick={() => setActiveSection('principles')}

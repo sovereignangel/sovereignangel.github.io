@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import IntelligenceReviewQueue from '@/components/thesis/intelligence/IntelligenceReviewQueue'
 import PillarBriefCard from '@/components/thesis/intelligence/PillarBriefCard'
 import PillarResearchFeed from '@/components/thesis/intelligence/PillarResearchFeed'
 import IntelligenceLibrary from '@/components/thesis/intelligence/IntelligenceLibrary'
@@ -50,6 +51,9 @@ export default function IntelligencePage() {
 
       {/* Content */}
       <div className="flex-1 min-h-0 overflow-y-auto py-2">
+        {/* Anki-style review queue — surfaces due insights, signals, knowledge */}
+        <IntelligenceReviewQueue />
+
         {showLibrary ? (
           <IntelligenceLibrary />
         ) : (

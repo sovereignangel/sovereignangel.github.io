@@ -16,6 +16,10 @@
  *   /cbuild [#] [with skills]   — Claude-powered build (composable skills)
  *   /citerate <project> <changes> — Claude-powered iterate on deployed venture
  *   /skill <subcommand>          — Manage composable builder skills
+ *   /sbuild [#]                    — Start Superpowers structured build
+ *   /srespond <text>               — Respond to structured build questions
+ *   /sapprove                      — Approve structured build design
+ *   /discipline                    — Toggle superpowers-methodology as default skill
  *
  * Pillar hashtags: #ai, #markets, #mind
  */
@@ -23,7 +27,7 @@
 import type { ThesisPillar } from '@/lib/types'
 
 export interface ParsedTelegramMessage {
-  command: 'signal' | 'note' | 'journal' | 'rss' | 'predict' | 'venture' | 'build' | 'approve' | 'feedback' | 'iterate' | 'reset' | 'brief' | 'memo' | 'morning' | 'cbuild' | 'citerate' | 'skill' | 'unknown'
+  command: 'signal' | 'note' | 'journal' | 'rss' | 'predict' | 'venture' | 'build' | 'approve' | 'feedback' | 'iterate' | 'reset' | 'brief' | 'memo' | 'morning' | 'cbuild' | 'citerate' | 'skill' | 'sbuild' | 'srespond' | 'sapprove' | 'discipline' | 'unknown'
   text: string
   pillars: ThesisPillar[]
   raw: string
@@ -135,6 +139,29 @@ export function parseTelegramMessage(text: string): ParsedTelegramMessage {
   if (raw.startsWith('/citerate')) {
     const body = raw.slice('/citerate'.length).trim()
     return { command: 'citerate', text: body, pillars: [], raw }
+  }
+
+  // /sbuild command — Superpowers structured build (optional number: /sbuild 3)
+  if (raw.startsWith('/sbuild')) {
+    const body = raw.slice('/sbuild'.length).trim()
+    return { command: 'sbuild', text: body, pillars: [], raw }
+  }
+
+  // /srespond command — respond to structured build brainstorm/design questions
+  if (raw.startsWith('/srespond')) {
+    const body = raw.slice('/srespond'.length).trim()
+    return { command: 'srespond', text: body, pillars: [], raw }
+  }
+
+  // /sapprove command — approve structured build design
+  if (raw.startsWith('/sapprove')) {
+    const body = raw.slice('/sapprove'.length).trim()
+    return { command: 'sapprove', text: body, pillars: [], raw }
+  }
+
+  // /discipline command — toggle superpowers-methodology as default skill
+  if (raw.startsWith('/discipline')) {
+    return { command: 'discipline', text: '', pillars: [], raw }
   }
 
   // /skill command — manage composable builder skills

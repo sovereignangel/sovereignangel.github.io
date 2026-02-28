@@ -61,6 +61,10 @@ export interface ExternalSignal {
 
   status: ExternalSignalStatus
 
+  // Spaced repetition
+  lastReviewedAt?: string      // YYYY-MM-DD
+  reviewInterval?: number      // days until next review
+
   createdAt: Timestamp
   updatedAt: Timestamp
 }

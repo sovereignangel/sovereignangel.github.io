@@ -183,6 +183,64 @@ export const DEFAULT_SKILLS: Omit<BuilderSkill, 'id' | 'createdAt' | 'updatedAt'
     isDefault: false,
   },
 
+  // ─── Methodology Skills ────────────────────────────────────────
+  {
+    name: 'superpowers-methodology',
+    label: 'Superpowers Methodology',
+    category: 'methodology',
+    description: 'Enforces disciplined development: architecture-first design, TDD with red-green-refactor, verification before completion. Based on obra/superpowers framework.',
+    systemPrompt: `## Methodology: Superpowers (Disciplined Development)
+
+### Architecture First
+Before writing ANY implementation code, design the system:
+1. Define component tree and data flow (props, state, API calls)
+2. Identify the minimal set of files needed — no premature abstractions
+3. Plan the testing strategy: what to test, what framework (Vitest + @testing-library/react)
+4. List all environment variables required and document them in .env.example
+
+### Test-Driven Development (TDD)
+For EVERY feature or component:
+1. **RED** — Write a failing test that describes the desired behavior
+2. **GREEN** — Write the minimal code to make the test pass
+3. **REFACTOR** — Clean up while keeping tests green
+
+Generate test files alongside implementation:
+- \`app/api/foo/route.ts\` → \`app/api/foo/route.test.ts\`
+- \`components/Foo.tsx\` → \`components/Foo.test.tsx\`
+- \`lib/utils.ts\` → \`lib/utils.test.ts\`
+
+Include a \`vitest.config.ts\` in the project root.
+
+### File Organization
+- Each file has a single responsibility
+- Keep files under 200 lines where possible
+- Export clean public APIs — keep internal helpers unexported
+- Group related files in directories (components/, lib/, hooks/)
+
+### Code Quality Standards
+- Functions under 30 lines. If longer, extract helpers.
+- Descriptive variable names — no single-letter variables except loop indices
+- Handle edge cases: empty states, loading, errors, null/undefined
+- No \`any\` types — use proper TypeScript generics or union types
+- No \`console.log\` in production code
+- All async operations have error handling (try/catch or .catch())
+
+### Verification Checklist (REQUIRED before completing build)
+Generate code that satisfies ALL of these:
+- [ ] Every exported function/component has at least one test
+- [ ] All tests pass (\`npm test\`)
+- [ ] No TypeScript errors (\`npx tsc --noEmit\`)
+- [ ] No unused imports or variables
+- [ ] Responsive on mobile and desktop (use Tailwind breakpoints)
+- [ ] Error states handled gracefully (not just console.error)
+- [ ] Environment variables documented in .env.example
+- [ ] README.md includes setup instructions and test commands`,
+    dependencies: [],
+    techStack: ['Vitest', '@testing-library/react', '@testing-library/jest-dom'],
+    filePatterns: ['**/*.test.ts', '**/*.test.tsx', 'vitest.config.ts', '.env.example'],
+    isDefault: false,
+  },
+
   // ─── Pattern Skills ────────────────────────────────────────────
   {
     name: 'landing-page',

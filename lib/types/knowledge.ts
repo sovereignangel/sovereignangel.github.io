@@ -19,6 +19,11 @@ export interface KnowledgeItem {
   linkedSignalIds: string[]
   linkedPrincipleIds: string[]
   impactRating?: number          // 1-5
+
+  // Spaced repetition
+  lastReviewedAt?: string      // YYYY-MM-DD
+  reviewInterval?: number      // days until next review
+
   createdAt: Timestamp
   updatedAt: Timestamp
 }

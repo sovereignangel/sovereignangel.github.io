@@ -9,6 +9,12 @@ export interface BeliefExtension {
   newAttentionDate: string      // YYYY-MM-DD
 }
 
+export interface BeliefPreviousStatement {
+  statement: string             // the old statement text
+  sharpenedAt: string           // YYYY-MM-DD when it was replaced
+  reasoning: string             // AI reasoning for the change
+}
+
 export interface Belief {
   id?: string
   statement: string               // "I believe that..."
@@ -24,6 +30,9 @@ export interface Belief {
   sourceJournalDate: string       // YYYY-MM-DD
   attentionDate: string           // YYYY-MM-DD — 21 days from creation, extended with reason
   extensions?: BeliefExtension[]  // audit trail of extensions
+  previousStatements?: BeliefPreviousStatement[]  // sharpen history
+  lastReviewedAt?: string         // YYYY-MM-DD — for spaced repetition
+  reviewInterval?: number         // days until next review (Anki-style)
   createdAt: Timestamp
   updatedAt: Timestamp
 }
