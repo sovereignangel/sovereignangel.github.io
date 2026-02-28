@@ -1,16 +1,13 @@
 /**
  * POST /api/ventures/claude-build
  *
- * Triggers a Claude-powered venture build. Replaces the GitHub Actions
- * dispatch workflow with inline code generation via Anthropic API.
+ * Triggers a Claude-powered venture build.
  *
- * Flow:
- * 1. Validate venture has a PRD
- * 2. Load attached skills (or defaults)
- * 3. Build via Claude API → generate files → push to GitHub → deploy
- * 4. Update venture document with results
+ * Supports two auth modes:
+ * 1. Firebase ID token (from dashboard)
+ * 2. INTERNAL_API_SECRET (from Telegram webhook dispatch)
  *
- * Body: { ventureId: string, skills?: string[], iterate?: boolean, changes?: string }
+ * Body: { ventureId, uid?, skillNames?, iterate?, changes?, chatId? }
  */
 
 import { NextRequest, NextResponse } from 'next/server'
@@ -21,18 +18,40 @@ export const runtime = 'nodejs'
 export const maxDuration = 300 // 5 minutes — code generation can take time
 
 export async function POST(req: NextRequest) {
-  const auth = await verifyAuth(req)
-  if (auth instanceof NextResponse) return auth
+  const authHeader = req.headers.get('authorization')
+  const internalSecret = process.env.INTERNAL_API_SECRET
 
-  const uid = auth.uid
+  let uid: string
+  let body: Record<string, unknown>
+
+  if (internalSecret && authHeader === `Bearer ${internalSecret}`) {
+    // Internal auth (from Telegram webhook) — uid comes from body
+    body = await req.json()
+    if (!body.uid || typeof body.uid !== 'string') {
+      return NextResponse.json({ error: 'Missing uid' }, { status: 400 })
+    }
+    uid = body.uid
+  } else {
+    // Firebase auth (from dashboard)
+    const auth = await verifyAuth(req)
+    if (auth instanceof NextResponse) return auth
+    uid = auth.uid
+    body = await req.json()
+  }
+
+  const { ventureId, skillNames, iterate, changes, chatId } = body as {
+    ventureId?: string
+    skillNames?: string[]
+    iterate?: boolean
+    changes?: string
+    chatId?: string
+  }
+
+  if (!ventureId) {
+    return NextResponse.json({ error: 'Missing ventureId' }, { status: 400 })
+  }
 
   try {
-    const { ventureId, skillNames, iterate, changes } = await req.json()
-
-    if (!ventureId) {
-      return NextResponse.json({ error: 'Missing ventureId' }, { status: 400 })
-    }
-
     // Load venture from Firestore
     const { adminDb } = await import('@/lib/firebase-admin')
     const ventureRef = adminDb.collection('users').doc(uid).collection('ventures').doc(ventureId)
@@ -44,19 +63,21 @@ export async function POST(req: NextRequest) {
 
     const venture = snap.data()
 
-    // Validate stage
+    // Validate stage — for Telegram dispatches the webhook already set stage to 'building',
+    // so accept 'building' as well
     if (iterate) {
-      if (venture?.stage !== 'deployed') {
+      const canIterate = venture?.stage === 'deployed' || venture?.stage === 'building'
+      if (!canIterate) {
         return NextResponse.json({ error: 'Venture must be deployed to iterate' }, { status: 400 })
       }
       if (!changes?.trim()) {
         return NextResponse.json({ error: 'Missing changes description' }, { status: 400 })
       }
     } else {
-      const canBuild = venture?.stage === 'prd_draft' ||
+      const canBuild = venture?.stage === 'prd_draft' || venture?.stage === 'building' ||
         (venture?.stage === 'building' && venture?.build?.status === 'failed')
       if (!canBuild) {
-        return NextResponse.json({ error: 'Venture must be in prd_draft stage or failed build' }, { status: 400 })
+        return NextResponse.json({ error: 'Venture must be in prd_draft or building stage' }, { status: 400 })
       }
     }
 
@@ -64,10 +85,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Venture has no PRD — generate one first' }, { status: 400 })
     }
 
-    // Mark as building
+    // Mark as building (may already be set by Telegram handler, but ensure it's set for dashboard calls)
     if (iterate) {
       const iterations = venture.iterations || []
-      iterations.push({ request: changes.trim(), completedAt: null })
+      // Only add iteration entry if not already added by Telegram handler
+      if (venture.stage !== 'building') {
+        iterations.push({ request: changes!.trim(), completedAt: null })
+      }
       await ventureRef.update({
         stage: 'building',
         iterations,
@@ -77,7 +101,7 @@ export async function POST(req: NextRequest) {
         'build.buildLog': ['Build started (Claude)'],
         updatedAt: new Date(),
       })
-    } else {
+    } else if (venture.stage !== 'building') {
       await ventureRef.update({
         stage: 'building',
         'build.status': 'generating',
@@ -96,32 +120,22 @@ export async function POST(req: NextRequest) {
     let skills: BuilderSkillLike[] = []
 
     if (skillNames && Array.isArray(skillNames) && skillNames.length > 0) {
-      // Load user's custom skills from Firestore
       const skillsSnap = await adminDb.collection('users').doc(uid).collection('builder_skills').get()
       const userSkills = skillsSnap.docs.map(d => ({ id: d.id, ...d.data() })) as BuilderSkillLike[]
-
-      // Match by name
       const matched = userSkills.filter(s => skillNames.includes(s.name))
-
-      // Also add any default skills requested but not found in user collection
       const userSkillNames = new Set(matched.map(s => s.name))
       const defaultMatches = getDefaultSkillsByNames(
         skillNames.filter((n: string) => !userSkillNames.has(n))
       ).map(s => ({ ...s, createdAt: new Date(), updatedAt: new Date() }))
-
       skills = [...matched, ...defaultMatches] as BuilderSkillLike[]
     }
 
-    // If no skills specified, use defaults (auto-attach)
     if (skills.length === 0) {
-      // Check user's default skills first
       const defaultSnap = await adminDb.collection('users').doc(uid).collection('builder_skills')
         .where('isDefault', '==', true).get()
-
       if (!defaultSnap.empty) {
         skills = defaultSnap.docs.map(d => ({ id: d.id, ...d.data() })) as BuilderSkillLike[]
       } else {
-        // Use hardcoded defaults
         skills = DEFAULT_SKILLS
           .filter(s => s.isDefault)
           .map(s => ({ ...s, createdAt: new Date(), updatedAt: new Date() })) as BuilderSkillLike[]
@@ -137,22 +151,23 @@ export async function POST(req: NextRequest) {
       skills: skills as import('@/lib/types').BuilderSkill[],
       iterate: iterate ? {
         repoName: venture.build?.repoName || venture.prd.projectName,
-        changes: changes.trim(),
+        changes: changes!.trim(),
         existingFiles: [],
       } : undefined,
     })
 
     // Resolve Telegram chatId for notifications
-    let chatId: string | undefined
-    try {
-      const userDoc = await adminDb.collection('users').doc(uid).get()
-      chatId = userDoc.data()?.settings?.telegramChatId
-    } catch { /* no chat ID available */ }
+    let resolvedChatId = chatId
+    if (!resolvedChatId) {
+      try {
+        const userDoc = await adminDb.collection('users').doc(uid).get()
+        resolvedChatId = userDoc.data()?.settings?.telegramChatId
+      } catch { /* no chat ID available */ }
+    }
 
     const ventureName = venture.spec?.name || 'venture'
     const vNum = venture.ventureNumber ? `#${venture.ventureNumber} ` : ''
 
-    // Update venture with results
     if (result.success) {
       await ventureRef.update({
         stage: 'deployed',
@@ -167,7 +182,7 @@ export async function POST(req: NextRequest) {
         updatedAt: new Date(),
       })
 
-      // Auto-log the ship to today's daily_log
+      // Auto-log the ship
       try {
         const now = new Date()
         const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
@@ -182,9 +197,9 @@ export async function POST(req: NextRequest) {
       }
 
       // Notify via Telegram
-      if (chatId) {
+      if (resolvedChatId) {
         const liveUrl = result.customDomain ? `https://${result.customDomain}` : result.previewUrl || result.repoUrl
-        await sendTelegramMessage(chatId, [
+        await sendTelegramMessage(resolvedChatId, [
           `${vNum}${ventureName} is LIVE`,
           '',
           liveUrl || '',
@@ -208,18 +223,19 @@ export async function POST(req: NextRequest) {
         'build.errorMessage': result.errorMessage,
         'build.completedAt': new Date(),
         'build.buildLog': result.buildLog,
-        ...(iterate ? { stage: 'deployed' } : {}),
+        // Revert stage: if iterating revert to deployed, if fresh build revert to prd_draft
+        stage: iterate ? 'deployed' : 'prd_draft',
         updatedAt: new Date(),
       })
 
       // Notify via Telegram
-      if (chatId) {
-        await sendTelegramMessage(chatId, [
+      if (resolvedChatId) {
+        await sendTelegramMessage(resolvedChatId, [
           `${vNum}${ventureName} build FAILED`,
           '',
           result.errorMessage || 'Unknown error',
           '',
-          iterate ? 'Use /citerate to retry' : 'Use /cbuild to retry or /feedback to adjust the PRD',
+          iterate ? 'Use /iterate to retry' : 'Use /build to retry or /feedback to adjust the PRD',
         ].join('\n'))
       }
 
@@ -231,6 +247,35 @@ export async function POST(req: NextRequest) {
     }
   } catch (error) {
     console.error('Claude build error:', error)
+
+    // Try to notify via Telegram on unexpected errors
+    try {
+      const { adminDb } = await import('@/lib/firebase-admin')
+      // Revert venture stage
+      if (ventureId) {
+        const ventureRef = adminDb.collection('users').doc(uid).collection('ventures').doc(ventureId)
+        await ventureRef.update({
+          'build.status': 'failed',
+          'build.errorMessage': error instanceof Error ? error.message : 'Unknown error',
+          'build.completedAt': new Date(),
+          stage: iterate ? 'deployed' : 'prd_draft',
+          updatedAt: new Date(),
+        })
+      }
+
+      let resolvedChatId = chatId
+      if (!resolvedChatId) {
+        const userDoc = await adminDb.collection('users').doc(uid).get()
+        resolvedChatId = userDoc.data()?.settings?.telegramChatId
+      }
+      if (resolvedChatId) {
+        await sendTelegramMessage(resolvedChatId,
+          `Build failed: ${error instanceof Error ? error.message : 'Unknown error'}\n\nUse /build to retry.`)
+      }
+    } catch (notifyErr) {
+      console.error('Failed to send failure notification:', notifyErr)
+    }
+
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Internal error' },
       { status: 500 }
