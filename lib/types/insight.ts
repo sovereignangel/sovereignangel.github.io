@@ -34,6 +34,10 @@ export interface Insight {
   // Status tracking
   status: InsightStatus
 
+  // Spaced repetition
+  lastReviewedAt?: string      // YYYY-MM-DD
+  reviewInterval?: number      // days until next review
+
   // Timestamps
   createdAt: Timestamp
   updatedAt: Timestamp

@@ -1,7 +1,8 @@
 import type { DecisionDomain } from './decision'
 import type { Timestamp } from './shared'
 
-export type PrincipleSource = 'decision' | 'synthesis' | 'conversation' | 'manual' | 'book'
+export type PrincipleSource = 'decision' | 'synthesis' | 'conversation' | 'manual' | 'book' | 'framework'
+export type PrincipleMaturity = 'draft' | 'emerging' | 'established'
 
 export interface Principle {
   id?: string
@@ -15,6 +16,7 @@ export interface Principle {
   reinforcementCount: number
   lastReinforcedAt: string
   linkedDecisionIds: string[]
+  linkedBeliefIds?: string[]
   isActive: boolean
   createdAt: Timestamp
   updatedAt: Timestamp

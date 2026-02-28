@@ -40,7 +40,7 @@ function VentureCard({ venture, onClick }: { venture: Venture; onClick: () => vo
       <p className="font-mono text-[9px] text-ink-muted leading-snug line-clamp-2 mb-1.5">
         {venture.spec.oneLiner}
       </p>
-      <div className="flex items-center gap-1.5">
+      <div className="flex items-center gap-1.5 flex-wrap">
         <span className="font-mono text-[8px] uppercase px-1 py-0.5 rounded-sm border bg-burgundy-bg text-burgundy border-burgundy/20">
           {venture.spec.category}
         </span>
@@ -49,6 +49,11 @@ function VentureCard({ venture, onClick }: { venture: Venture; onClick: () => vo
             {p}
           </span>
         ))}
+        {venture.build.methodology === 'superpowers' && (
+          <span className="font-mono text-[8px] uppercase px-1 py-0.5 rounded-sm border bg-green-bg text-green-ink border-green-ink/20">
+            TDD
+          </span>
+        )}
       </div>
       {venture.build.status !== 'pending' && (
         <div className="mt-1.5 pt-1 border-t border-rule">
