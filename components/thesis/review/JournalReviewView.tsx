@@ -51,16 +51,20 @@ function ItemActions({ status, onDelete }: { status: ReviewItemStatus; onDelete:
   )
 }
 
-export default function JournalReviewView({ reviewId }: { reviewId: string }) {
+export default function JournalReviewView({ reviewId, publicMode = false }: { reviewId: string; publicMode?: boolean }) {
   const [review, setReview] = useState<JournalReviewData | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [done, setDone] = useState(false)
 
+  const apiPath = publicMode ? `/api/review/${reviewId}` : `/api/journal-review/${reviewId}`
+
   const fetchReview = useCallback(async () => {
     try {
-      const res = await authFetch(`/api/journal-review/${reviewId}`)
+      const res = publicMode
+        ? await fetch(apiPath)
+        : await authFetch(apiPath)
       if (!res.ok) throw new Error('Failed to load review')
       const data = await res.json()
       setReview(data)
@@ -69,7 +73,7 @@ export default function JournalReviewView({ reviewId }: { reviewId: string }) {
     } finally {
       setLoading(false)
     }
-  }, [reviewId])
+  }, [reviewId, publicMode, apiPath])
 
   useEffect(() => { fetchReview() }, [fetchReview])
 
@@ -136,7 +140,7 @@ export default function JournalReviewView({ reviewId }: { reviewId: string }) {
     if (!review) return
     setSaving(true)
     try {
-      const res = await authFetch(`/api/journal-review/${reviewId}`, {
+      const patchOptions: RequestInit = {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -146,7 +150,10 @@ export default function JournalReviewView({ reviewId }: { reviewId: string }) {
           beliefs: review.beliefs,
           notes: review.notes,
         }),
-      })
+      }
+      const res = publicMode
+        ? await fetch(apiPath, patchOptions)
+        : await authFetch(apiPath, patchOptions)
       if (!res.ok) throw new Error('Failed to save')
       setDone(true)
     } catch (err) {

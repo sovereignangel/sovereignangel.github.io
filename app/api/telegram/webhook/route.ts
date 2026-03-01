@@ -645,7 +645,7 @@ async function handleJournal(uid: string, text: string, chatId: number) {
     if (savedIds && hasStructuredItems(parsed)) {
       const reviewId = await saveJournalReviewRecord(adminDb, uid, today, text, parsed, savedIds, chatId)
       const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://sovereignangel.github.io')
-      const reviewUrl = `${baseUrl}/thesis/review/${reviewId}`
+      const reviewUrl = `${baseUrl}/review/${reviewId}`
 
       const itemSummary = [
         parsed.contacts.length && `${parsed.contacts.length} contacts`,
@@ -720,7 +720,7 @@ async function handleJournalFromVoice(uid: string, transcript: string, parsed: P
     if (savedIds && hasStructuredItems(parsed)) {
       const reviewId = await saveJournalReviewRecord(adminDb, uid, today, transcript, parsed, savedIds, chatId)
       const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://sovereignangel.github.io')
-      const reviewUrl = `${baseUrl}/thesis/review/${reviewId}`
+      const reviewUrl = `${baseUrl}/review/${reviewId}`
 
       const itemSummary = [
         parsed.contacts.length && `${parsed.contacts.length} contacts`,

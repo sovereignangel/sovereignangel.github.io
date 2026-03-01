@@ -104,6 +104,9 @@ export default function OutputsSection() {
 
       {activeTab === 'projects' && (
         <div>
+          <p className="text-[13px] text-[#888] italic mb-5">
+            These are areas I&apos;ve been tinkering to learn edges of AI Product Engineering — right now my full focus has been architecting and automating discretionary strategies for emerging hedge funds.
+          </p>
           {projects.map((project, i) => (
             <div key={i} className={`${i < projects.length - 1 ? 'mb-7' : ''}`}>
               <h3 className="text-[17px] font-medium mb-1">

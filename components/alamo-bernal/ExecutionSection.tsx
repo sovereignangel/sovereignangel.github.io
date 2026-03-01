@@ -89,61 +89,6 @@ export default function ExecutionSection() {
           Risk Matrix
         </div>
 
-        {/* Visual heatmap grid */}
-        <div className="mb-3">
-          <div className="flex gap-1 items-end">
-            {/* Y-axis label */}
-            <div className="flex flex-col items-center justify-center w-[60px] shrink-0">
-              <span className="text-[8px] text-ink-muted uppercase tracking-[0.5px] -rotate-90 whitespace-nowrap">
-                Impact &rarr;
-              </span>
-            </div>
-            {/* Grid */}
-            <div className="flex-1">
-              <div className="grid grid-cols-5 gap-px">
-                {[5, 4, 3, 2, 1].map((impact) =>
-                  [1, 2, 3, 4, 5].map((prob) => {
-                    const score = prob * impact
-                    const risksInCell = sortedRisks.filter(
-                      (r) => r.probability === prob && r.impact === impact
-                    )
-                    const bg =
-                      score >= 15
-                        ? 'bg-red-ink/15'
-                        : score >= 9
-                        ? 'bg-amber-ink/15'
-                        : score >= 4
-                        ? 'bg-ink/5'
-                        : 'bg-green-ink/8'
-
-                    return (
-                      <div
-                        key={`${prob}-${impact}`}
-                        className={`aspect-square rounded-sm flex items-center justify-center relative ${bg}`}
-                        title={`P:${prob} I:${impact} = ${score}`}
-                      >
-                        {risksInCell.length > 0 && (
-                          <span className="font-mono text-[8px] font-bold text-ink">
-                            {risksInCell.length}
-                          </span>
-                        )}
-                      </div>
-                    )
-                  })
-                )}
-              </div>
-              <div className="flex justify-between mt-0.5 px-1">
-                {[1, 2, 3, 4, 5].map((p) => (
-                  <span key={p} className="text-[7px] text-ink-muted">{p}</span>
-                ))}
-              </div>
-              <div className="text-center text-[8px] text-ink-muted uppercase tracking-[0.5px] mt-0.5">
-                Probability &rarr;
-              </div>
-            </div>
-          </div>
-        </div>
-
         {/* Risk list */}
         <div className="space-y-1.5">
           {sortedRisks.map((risk) => {
