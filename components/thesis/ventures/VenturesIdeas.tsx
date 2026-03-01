@@ -40,6 +40,7 @@ export default function VenturesIdeas({ onSelectVenture }: { onSelectVenture: (i
 
   return (
     <div className="p-3">
+      <div className="bg-cream/80 border border-rule rounded-sm p-3">
       <table className="w-full">
         <thead>
           <tr className="border-b border-rule">
@@ -81,6 +82,7 @@ export default function VenturesIdeas({ onSelectVenture }: { onSelectVenture: (i
           ))}
         </tbody>
       </table>
+      </div>
     </div>
   )
 }

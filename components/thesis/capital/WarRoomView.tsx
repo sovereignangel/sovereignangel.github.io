@@ -21,7 +21,8 @@ export default function WarRoomView() {
     if (!user) return
     setLoading(true)
     try {
-      const month = new Date().toISOString().slice(0, 7)
+      const now = new Date()
+      const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
       const [snap, debts] = await Promise.all([
         getFinancialSnapshot(user.uid, month),
         getDebtItems(user.uid),
@@ -35,7 +36,7 @@ export default function WarRoomView() {
         setPosition(buildCapitalPosition(effectiveSnap, debts))
       }
       setLoading(false)
-    } catch { setLoading(false) }
+    } catch (err) { console.error('WarRoomView load error:', err); setLoading(false) }
   }, [user])
 
   useEffect(() => { loadData() }, [loadData])
