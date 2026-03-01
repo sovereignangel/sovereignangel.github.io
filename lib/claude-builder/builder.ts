@@ -186,7 +186,8 @@ export async function buildVenture(request: ClaudeBuildRequest): Promise<ClaudeB
     const commitMessage = request.iterate
       ? `iterate: ${request.iterate.changes}`
       : `feat: initial build — ${request.spec.name}`
-    await pushFiles(repoName, files, commitMessage)
+    // Fresh builds: replace all files (clean tree). Iterations: additive merge.
+    await pushFiles(repoName, files, commitMessage, !request.iterate)
     log(`Pushed ${files.length} files`)
 
     // 6. Configure custom domain (non-blocking)

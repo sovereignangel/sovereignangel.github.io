@@ -61,11 +61,18 @@ export async function createRepo(repoName: string, description: string): Promise
   return `https://github.com/${owner}/${repoName}`
 }
 
-/** Push files to a GitHub repo using the Git Trees API (single commit, all files at once) */
+/**
+ * Push files to a GitHub repo using the Git Trees API (single commit, all files at once).
+ *
+ * @param replaceAll - If true, creates a clean tree with ONLY the new files (removes old files).
+ *                     Use for fresh builds. If false, merges new files into existing tree (additive).
+ *                     Use for iterations.
+ */
 export async function pushFiles(
   repoName: string,
   files: GeneratedFile[],
-  commitMessage: string
+  commitMessage: string,
+  replaceAll = false
 ): Promise<void> {
   const owner = getOwner()
   const headers = getGitHubHeaders()
@@ -78,10 +85,13 @@ export async function pushFiles(
   const refData = await refRes.json()
   const latestCommitSha = refData.object.sha
 
-  // Get the tree SHA of the latest commit
-  const commitRes = await fetch(`${GITHUB_API}/repos/${owner}/${repoName}/git/commits/${latestCommitSha}`, { headers })
-  const commitData = await commitRes.json()
-  const baseTreeSha = commitData.tree.sha
+  // Get the tree SHA of the latest commit (needed for additive mode)
+  let baseTreeSha: string | undefined
+  if (!replaceAll) {
+    const commitRes = await fetch(`${GITHUB_API}/repos/${owner}/${repoName}/git/commits/${latestCommitSha}`, { headers })
+    const commitData = await commitRes.json()
+    baseTreeSha = commitData.tree.sha
+  }
 
   // Create blobs for each file
   const treeItems = await Promise.all(
@@ -107,14 +117,15 @@ export async function pushFiles(
     })
   )
 
-  // Create tree
+  // Create tree — omit base_tree for clean replacement, include for additive
+  const treeBody: Record<string, unknown> = { tree: treeItems }
+  if (baseTreeSha) {
+    treeBody.base_tree = baseTreeSha
+  }
   const treeRes = await fetch(`${GITHUB_API}/repos/${owner}/${repoName}/git/trees`, {
     method: 'POST',
     headers,
-    body: JSON.stringify({
-      base_tree: baseTreeSha,
-      tree: treeItems,
-    }),
+    body: JSON.stringify(treeBody),
   })
   if (!treeRes.ok) {
     throw new Error(`[Deployer] Failed to create tree: ${await treeRes.text()}`)
