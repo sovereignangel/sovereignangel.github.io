@@ -53,15 +53,28 @@ export interface ValueMetric {
   impact: string
 }
 
+export interface ValueMapEntry {
+  dimension: string
+  current: string
+  withTech: string
+  freed: string
+  impact: string
+  note?: string
+}
+
 export interface ProposalPhase {
   id: string
   phase: number
   title: string
+  subtitle: string
   status: PhaseStatus
   timeline: string
   description: string
   deliverables: string[]
   valueMetrics: ValueMetric[]
+  workingRhythm: string[]
+  valueMap?: ValueMapEntry[]
+  scalingNotes?: string[]
   loriValue: string
   seanCommitment: string
   financialTerms: string
