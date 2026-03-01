@@ -65,8 +65,7 @@ export default function StrategySection() {
           to investment R&amp;D. Phase 1 proves value by automating Sean&apos;s screening workflow and
           building trust through working together. Phase 2 formalizes the fund structure (ERA filing,
           GP/partner agreement, Series 65) and accelerates fundraising toward $3M+ AUM. Phase 3
-          applies frontier AI to discover new alpha and diversify the strategy portfolio. Lori&apos;s
-          compensation scales with the partnership — monthly retainer, then fund role, then equity.
+          applies frontier AI to discover new alpha and diversify the strategy portfolio.
         </p>
       </div>
 
@@ -135,7 +134,7 @@ export default function StrategySection() {
                   <td className="py-1.5 px-2 text-right font-mono text-ink">{fmt(s.aum)}</td>
                   <td className="py-1.5 px-2 text-right font-mono text-ink">{fmt(s.monthlyDividendRevenue)}</td>
                   <td className="py-1.5 px-2 text-right font-mono text-green-ink">{fmt(s.seanMonthlyTake)}</td>
-                  <td className="py-1.5 px-2 text-right font-mono text-burgundy">{fmt(s.loriMonthlyTake)}</td>
+                  <td className="py-1.5 px-2 text-right font-mono text-burgundy">{s.aum > 1_500_000 ? 'TBD' : fmt(s.loriMonthlyTake)}</td>
                   <td className="py-1.5 px-2 text-right font-mono text-ink-muted">{fmt(s.operatingCosts)}</td>
                   <td className="py-1.5 px-2 text-right font-mono text-ink-muted">{s.investorReturns}</td>
                   <td className="py-1.5 pl-2 text-right font-mono text-ink font-semibold">{fmt(s.netToFund)}</td>

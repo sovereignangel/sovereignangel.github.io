@@ -62,9 +62,11 @@ export default function IntelligenceSection() {
           The strategy buys stocks before ex-dividend dates and sells the next morning, generating
           $80-104K/month in dividend revenue. All investor capital is collateralized by U.S. Treasury bonds,
           with trading executed on a line of credit — creating a de-risked structure with bond-like
-          investor returns (11-14% annualized). This proposal outlines a technology and capital markets
-          partnership to automate Sean&apos;s screening workflow, accelerate fundraising, and build
-          institutional-grade infrastructure for the next phase of growth.
+          investor returns (11-14% annualized). This proposal outlines a progressive partnership starting
+          with a technology proof of value, with expanding scope as each phase clears its gate — from
+          tech build-out to capital markets support to investment R&amp;D. It serves as a basis for
+          discussion, with the immediate focus on Phase 1: Proof of Value, and the remaining
+          phases as directional drafts.
         </p>
       </div>
 
