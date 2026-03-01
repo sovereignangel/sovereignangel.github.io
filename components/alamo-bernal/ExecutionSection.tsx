@@ -100,8 +100,11 @@ export default function ExecutionSection() {
 
       {/* ── Risk Matrix ── */}
       <div className="bg-white border border-rule rounded-sm p-3">
-        <div className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-2 pb-1.5 border-b-2 border-rule">
+        <div className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-2 pb-1.5 border-b-2 border-rule flex items-center gap-2">
           Risk Matrix
+          <span className="font-mono text-[8px] uppercase px-1.5 py-0.5 rounded-sm border text-amber-ink bg-amber-bg border-amber-ink/20">
+            Draft
+          </span>
         </div>
 
         {/* Risk list */}
@@ -190,15 +193,15 @@ export default function ExecutionSection() {
           This demonstrates the full-stack engineering, AI/ML, and financial technology capabilities
           that would be applied to Alamo Bernal.
         </p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           <DemoCard
-            title="Command Center"
-            description="Live reward scoring engine computing daily performance across 8 weighted components. Real-time data visualization with Recharts."
+            title="Surfaced Opportunities"
+            description="Automated screening and ranking of dividend capture candidates. Daily filtered lists delivered via text or email with risk scores and historical performance data."
             tech={['Next.js 14', 'Firebase', 'Recharts', 'TypeScript']}
           />
           <DemoCard
-            title="Intelligence System"
-            description="AI-powered signal extraction from conversations, market data, and research. Automated insight categorization and confidence scoring."
+            title="Macro Signals"
+            description="AI-powered signal extraction from market data, earnings calls, and macro indicators. Automated categorization with confidence scoring to flag regime changes and sector rotations."
             tech={['Google Gemini API', 'NLP', 'Signal Processing']}
           />
           <DemoCard
@@ -207,19 +210,9 @@ export default function ExecutionSection() {
             tech={['Risk Models', 'Stress Testing', 'Alert Engine']}
           />
           <DemoCard
-            title="Automated Data Sync"
-            description="ETL pipelines for Garmin health data, Google Calendar, Stripe revenue, and GitHub activity. Background cron jobs with error monitoring."
-            tech={['Cron Jobs', 'ETL', 'Vercel Functions']}
-          />
-          <DemoCard
-            title="Options Trading Tool"
-            description="Built for a separate client — full equities universe browser, options chain analysis, AI-powered analyst consensus, portfolio management."
-            tech={['Options Pricing', 'Portfolio Analytics', 'AI Analysis']}
-          />
-          <DemoCard
-            title="What This Means for Alamo Bernal"
-            description="The same engineering capabilities applied to: automated stock screening, historical dividend analysis, AI-driven buy/sell signals, investor reporting, and risk management dashboards."
-            tech={['Your Tools', 'Your Edge', 'Built for You']}
+            title="Automated Data Feeds"
+            description="ETL pipelines for stock universe data, ex-dividend calendars, historical price behavior, dividend yield feeds, and volume/liquidity metrics. Background cron jobs with error monitoring."
+            tech={['Cron Jobs', 'ETL', 'Market Data APIs', 'Vercel Functions']}
           />
         </div>
       </div>
