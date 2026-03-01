@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useEffect, useCallback } from 'react'
 import { useAuth } from '@/components/auth/AuthProvider'
-import { getFinancialHistory, getDebtItems } from '@/lib/firestore'
+import { getFinancialSnapshot, getFinancialHistory, getDebtItems } from '@/lib/firestore'
 import { currency } from '@/lib/formatters'
 import {
   buildCapitalPosition, projectScenario, computeExpectedValue, compareScenarios,
@@ -17,19 +17,25 @@ export default function WarRoomView() {
   const [position, setPosition] = useState<CapitalPosition | null>(null)
   const [loading, setLoading] = useState(true)
 
-  const loadData = useCallback(() => {
+  const loadData = useCallback(async () => {
     if (!user) return
     setLoading(true)
-    Promise.all([
-      getFinancialHistory(user.uid, 12),
-      getDebtItems(user.uid),
-    ]).then(([snapshots, debts]) => {
-      if (snapshots.length > 0) {
-        const latest = snapshots[snapshots.length - 1]
-        setPosition(buildCapitalPosition(latest, debts))
+    try {
+      const month = new Date().toISOString().slice(0, 7)
+      const [snap, debts] = await Promise.all([
+        getFinancialSnapshot(user.uid, month),
+        getDebtItems(user.uid),
+      ])
+      let effectiveSnap = snap
+      if (!effectiveSnap) {
+        const history = await getFinancialHistory(user.uid, 1)
+        if (history.length > 0) effectiveSnap = history[history.length - 1]
+      }
+      if (effectiveSnap) {
+        setPosition(buildCapitalPosition(effectiveSnap, debts))
       }
       setLoading(false)
-    }).catch(() => setLoading(false))
+    } catch { setLoading(false) }
   }, [user])
 
   useEffect(() => { loadData() }, [loadData])
