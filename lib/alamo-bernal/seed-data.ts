@@ -172,7 +172,7 @@ export const PROPOSAL_PHASES: ProposalPhase[] = [
     ],
     loriValue: 'Full-stack engineering + AI/ML expertise + financial markets experience',
     seanCommitment: 'Domain knowledge transfer, strategy documentation, weekly tech review call, historical trade data access, API/data costs (~$200-300/month — Lori helps diligence providers)',
-    financialTerms: '$2K startup to build initial infrastructure + monthly retainer from there to own the full tech piece. Sean covers API/data costs (~$200-300/mo). Skin in the game via fund capital allocation on milestones.',
+    financialTerms: '$2K startup + monthly retainer to own the full tech piece. Sean covers API/data costs (~$200-300/mo). Skin in the game via fund capital allocation on milestones.',
     gateToNext: 'Tools deployed and actively reducing Sean\'s daily workflow by 50%+. Lori has deep understanding of dividend capture mechanics.',
   },
   {
@@ -209,7 +209,7 @@ export const PROPOSAL_PHASES: ProposalPhase[] = [
     ],
     loriValue: '$220M+ fundraising experience, investor network, pitch strategy, materials creation, Series 65 licensed',
     seanCommitment: 'Investor meetings, relationship management, ERA filing + securities attorney engagement (~$2-5K legal costs)',
-    financialTerms: 'Retainer + % of capital raised (TBD)',
+    financialTerms: 'Retainer continues + formal fund role / advisory compensation. Structure TBD based on ERA filing and partnership agreement.',
     workingRhythm: [
       'Weekly investor pipeline review',
       'Monthly performance reports for prospects',
@@ -251,7 +251,7 @@ export const PROPOSAL_PHASES: ProposalPhase[] = [
     ],
     loriValue: 'AI/ML research, strategy development, quantitative analysis, frontier technology',
     seanCommitment: 'Capital allocation decisions, strategy approval, risk oversight',
-    financialTerms: 'Equity stake / revenue share in new strategies (TBD)',
+    financialTerms: 'Equity stake and/or revenue share in fund management entity and new strategies. Vesting and terms TBD.',
     workingRhythm: [
       'Quarterly strategy review and backtest evaluation',
       'Ongoing R&D sprints on new strategy candidates',

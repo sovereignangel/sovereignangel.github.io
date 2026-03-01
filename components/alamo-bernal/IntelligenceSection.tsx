@@ -52,6 +52,22 @@ export default function IntelligenceSection() {
 
   return (
     <div className="space-y-3">
+      {/* ── Executive Summary ── */}
+      <div className="bg-white border border-rule rounded-sm p-3">
+        <div className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-2 pb-1.5 border-b-2 border-rule">
+          Executive Summary
+        </div>
+        <p className="text-[10px] text-ink leading-relaxed">
+          Alamo Bernal is a dividend capture fund managing $1.5M AUM with a target of $3M+.
+          The strategy buys stocks before ex-dividend dates and sells the next morning, generating
+          $80-104K/month in dividend revenue. All investor capital is collateralized by U.S. Treasury bonds,
+          with trading executed on a line of credit — creating a de-risked structure with bond-like
+          investor returns (11-14% annualized). This proposal outlines a technology and capital markets
+          partnership to automate Sean&apos;s screening workflow, accelerate fundraising, and build
+          institutional-grade infrastructure for the next phase of growth.
+        </p>
+      </div>
+
       {/* ── Key Metrics Strip ── */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
         <MetricCard label="AUM" value={fmt(metrics.aum)} sub={`Target: ${fmt(metrics.targetAum)}`} />

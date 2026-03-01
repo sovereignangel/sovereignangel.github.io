@@ -55,6 +55,21 @@ export default function StrategySection() {
 
   return (
     <div className="space-y-3">
+      {/* ── Executive Summary ── */}
+      <div className="bg-white border border-rule rounded-sm p-3">
+        <div className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-2 pb-1.5 border-b-2 border-rule">
+          Strategy Overview
+        </div>
+        <p className="text-[10px] text-ink leading-relaxed">
+          A three-phase partnership that evolves from technology build-out to capital markets support
+          to investment R&amp;D. Phase 1 proves value by automating Sean&apos;s screening workflow and
+          building trust through working together. Phase 2 formalizes the fund structure (ERA filing,
+          GP/partner agreement, Series 65) and accelerates fundraising toward $3M+ AUM. Phase 3
+          applies frontier AI to discover new alpha and diversify the strategy portfolio. Lori&apos;s
+          compensation scales with the partnership — monthly retainer, then fund role, then equity.
+        </p>
+      </div>
+
       {/* ── Partnership Phases ── */}
       <div className="bg-white border border-rule rounded-sm p-3">
         <div className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-2 pb-1.5 border-b-2 border-rule">
@@ -141,7 +156,7 @@ export default function StrategySection() {
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <div className="text-[11px] font-semibold text-ink mb-1">Core Constraint</div>
+            <div className="text-[11px] font-semibold text-ink mb-1">North Star</div>
             <p className="text-[10px] text-ink leading-relaxed">
               Sean must still net <span className="font-mono font-semibold">$25K/month</span> at{' '}
               <span className="font-mono font-semibold">$250K/month</span> dividend revenue (10%).
@@ -167,11 +182,11 @@ export default function StrategySection() {
             </ul>
           </div>
           <div>
-            <div className="text-[11px] font-semibold text-ink mb-1">Fee Evolution</div>
+            <div className="text-[11px] font-semibold text-ink mb-1">Compensation Evolution</div>
             <div className="space-y-1">
-              <FeeRow phase="Phase 1" fee="Milestone-based from fund" note="Skin in the game" />
-              <FeeRow phase="Phase 2" fee="Retainer + % of capital raised" note="Success-based alignment" />
-              <FeeRow phase="Phase 3" fee="Equity + revenue share" note="Long-term partnership" />
+              <FeeRow phase="Phase 1" fee="Monthly retainer" note="Skin in the game" />
+              <FeeRow phase="Phase 2" fee="Retainer + fund role / advisory" note="Institutional alignment" />
+              <FeeRow phase="Phase 3" fee="Equity / revenue share" note="Long-term partnership" />
             </div>
           </div>
           <div>

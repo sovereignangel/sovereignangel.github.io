@@ -83,7 +83,22 @@ export default function ExecutionSection() {
 
   return (
     <div className="space-y-3">
-      {/* ── Risk Matrix Heatmap ── */}
+      {/* ── Executive Summary ── */}
+      <div className="bg-white border border-rule rounded-sm p-3">
+        <div className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-2 pb-1.5 border-b-2 border-rule">
+          Execution Overview
+        </div>
+        <p className="text-[10px] text-ink leading-relaxed">
+          This section covers risk management, draft collaboration terms, technology capabilities,
+          and next steps. Key risks include strategy crowding, liquidity constraints at scale, and
+          regulatory changes to Section 475 tax treatment. All agreement clauses are preliminary
+          and subject to discussion — nothing constitutes a binding commitment. The technology
+          demo showcases the engineering capabilities that would be applied to Alamo Bernal&apos;s
+          infrastructure needs.
+        </p>
+      </div>
+
+      {/* ── Risk Matrix ── */}
       <div className="bg-white border border-rule rounded-sm p-3">
         <div className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-2 pb-1.5 border-b-2 border-rule">
           Risk Matrix
