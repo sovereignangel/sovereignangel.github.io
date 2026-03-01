@@ -87,6 +87,8 @@ export interface PolicyRule {
   avgRewardWhenIgnored: number | null
   linkedPrincipleId?: string
   isActive: boolean
+  lastReviewedAt?: string       // YYYY-MM-DD — for spaced repetition
+  reviewInterval?: number       // days until next review
   createdAt: Timestamp
   updatedAt: Timestamp
 }
@@ -132,6 +134,8 @@ export interface RLModuleProgress {
   completedAt?: string
   exerciseCompleted: boolean
   notes?: string
+  lastReviewedAt?: string       // YYYY-MM-DD — for spaced repetition
+  reviewInterval?: number       // days until next review
 }
 
 export interface RLCurriculumProgress {

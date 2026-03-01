@@ -15,6 +15,8 @@ export interface MarketBelief {
   evidence: string[]
   counterEvidence: string[]
   lastRevisedAt: string
+  lastReviewedAt?: string       // YYYY-MM-DD — for spaced repetition
+  reviewInterval?: number       // days until next review
   createdAt: string
 }
 

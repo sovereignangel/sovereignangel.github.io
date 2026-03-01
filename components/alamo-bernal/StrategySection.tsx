@@ -4,18 +4,16 @@ import { useState, useEffect } from 'react'
 import {
   getProposalPhases,
   getFinancialScenarios,
-  getScalingMilestones,
 } from '@/lib/alamo-bernal/firestore'
 import {
   PROPOSAL_PHASES,
   FINANCIAL_SCENARIOS,
-  SCALING_MILESTONES,
 } from '@/lib/alamo-bernal/seed-data'
 import type {
   ProposalPhase,
   FinancialScenario,
-  ScalingMilestone,
   ValueMetric,
+  ValueMapEntry,
   PhaseStatus,
 } from '@/lib/alamo-bernal/types'
 
@@ -35,19 +33,17 @@ function fmt(n: number): string {
 export default function StrategySection() {
   const [phases, setPhases] = useState<ProposalPhase[]>(PROPOSAL_PHASES)
   const [scenarios, setScenarios] = useState<FinancialScenario[]>(FINANCIAL_SCENARIOS)
-  const [milestones, setMilestones] = useState<ScalingMilestone[]>(SCALING_MILESTONES)
+  const [activePhase, setActivePhase] = useState(1)
 
   useEffect(() => {
     async function load() {
       try {
-        const [p, s, m] = await Promise.all([
+        const [p, s] = await Promise.all([
           getProposalPhases(),
           getFinancialScenarios(),
-          getScalingMilestones(),
         ])
         if (p.length > 0) setPhases(p)
         if (s.length > 0) setScenarios(s)
-        if (m.length > 0) setMilestones(m)
       } catch {
         // Fall back to seed data
       }
@@ -55,18 +51,47 @@ export default function StrategySection() {
     load()
   }, [])
 
+  const currentPhase = phases.find((p) => p.phase === activePhase) ?? phases[0]
+
   return (
     <div className="space-y-3">
-      {/* ── Phased Proposal ── */}
+      {/* ── Partnership Phases ── */}
       <div className="bg-white border border-rule rounded-sm p-3">
         <div className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-2 pb-1.5 border-b-2 border-rule">
-          Phased Proposal
+          Partnership Phases
         </div>
-        <div className="space-y-3">
+
+        {/* Phase tab bar */}
+        <div className="flex gap-1 mb-3">
           {phases.map((phase) => (
-            <PhaseCard key={phase.id} phase={phase} />
+            <button
+              key={phase.id}
+              onClick={() => setActivePhase(phase.phase)}
+              className={`text-left px-3 py-1.5 rounded-sm border transition-colors flex-1 ${
+                activePhase === phase.phase
+                  ? 'bg-burgundy text-paper border-burgundy'
+                  : 'bg-transparent text-ink-muted border-rule hover:border-ink-faint'
+              }`}
+            >
+              <div className="flex items-center gap-1.5">
+                <span className="font-serif text-[13px] font-medium">Phase {phase.phase}</span>
+                <span className={`text-[11px] font-semibold ${
+                  activePhase === phase.phase ? 'text-paper' : 'text-ink'
+                }`}>
+                  {phase.title}
+                </span>
+              </div>
+              <div className={`text-[9px] leading-tight mt-0.5 ${
+                activePhase === phase.phase ? 'text-paper/80' : 'text-ink-muted'
+              }`}>
+                {phase.subtitle}
+              </div>
+            </button>
           ))}
         </div>
+
+        {/* Active phase content */}
+        <PhaseContent phase={currentPhase} />
       </div>
 
       {/* ── Financial Model ── */}
@@ -83,7 +108,7 @@ export default function StrategySection() {
                 <th className="text-right font-semibold text-ink-muted uppercase tracking-[0.5px] py-1 px-2">Monthly Div Rev</th>
                 <th className="text-right font-semibold text-ink-muted uppercase tracking-[0.5px] py-1 px-2">Sean (10%)</th>
                 <th className="text-right font-semibold text-ink-muted uppercase tracking-[0.5px] py-1 px-2">Lori</th>
-                <th className="text-right font-semibold text-ink-muted uppercase tracking-[0.5px] py-1 px-2">Op. Costs</th>
+                <th className="text-right font-semibold text-ink-muted uppercase tracking-[0.5px] py-1 px-2">Op. Costs (est.)</th>
                 <th className="text-right font-semibold text-ink-muted uppercase tracking-[0.5px] py-1 px-2">Investor Returns</th>
                 <th className="text-right font-semibold text-ink-muted uppercase tracking-[0.5px] py-1 pl-2">Net to Fund</th>
               </tr>
@@ -144,7 +169,7 @@ export default function StrategySection() {
           <div>
             <div className="text-[11px] font-semibold text-ink mb-1">Fee Evolution</div>
             <div className="space-y-1">
-              <FeeRow phase="Phase 1" fee="Monthly retainer" note="For dedicated tech development" />
+              <FeeRow phase="Phase 1" fee="Milestone-based from fund" note="Skin in the game" />
               <FeeRow phase="Phase 2" fee="Retainer + % of capital raised" note="Success-based alignment" />
               <FeeRow phase="Phase 3" fee="Equity + revenue share" note="Long-term partnership" />
             </div>
@@ -152,23 +177,10 @@ export default function StrategySection() {
           <div>
             <div className="text-[11px] font-semibold text-ink mb-1">Skin in the Game</div>
             <p className="text-[10px] text-ink leading-relaxed">
-              Lori invests personal capital into the fund on same terms as other investors.
-              Amount TBD. This aligns incentives, demonstrates conviction, and signals
-              credibility to future investors.
+              Sean allocates capital from the fund for Lori, distributed based on agreed technology milestones.
+              This aligns incentives and lets Lori build conviction through real exposure to the strategy.
             </p>
           </div>
-        </div>
-      </div>
-
-      {/* ── Scaling Vision ── */}
-      <div className="bg-white border border-rule rounded-sm p-3">
-        <div className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-2 pb-1.5 border-b-2 border-rule">
-          Scaling Vision
-        </div>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
-          {milestones.map((ms) => (
-            <MilestoneCard key={ms.id} milestone={ms} />
-          ))}
         </div>
       </div>
     </div>
@@ -177,17 +189,14 @@ export default function StrategySection() {
 
 // ── Sub-components ──────────────────────────────────────────────
 
-function PhaseCard({ phase }: { phase: ProposalPhase }) {
+function PhaseContent({ phase }: { phase: ProposalPhase }) {
   const statusColor = PHASE_STATUS_COLORS[phase.status]
 
   return (
-    <div className="border border-rule rounded-sm p-3">
-      {/* Phase header */}
-      <div className="flex items-center justify-between mb-2">
+    <div className="space-y-3">
+      {/* Header: title + status + timeline */}
+      <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <span className="font-mono text-[9px] font-semibold text-burgundy bg-burgundy-bg border border-burgundy/20 px-1.5 py-0.5 rounded-sm">
-            Phase {phase.phase}
-          </span>
           <span className="text-[12px] font-semibold text-ink">{phase.title}</span>
           <span className={`font-mono text-[8px] uppercase px-1.5 py-0.5 rounded-sm border ${statusColor}`}>
             {phase.status}
@@ -197,13 +206,18 @@ function PhaseCard({ phase }: { phase: ProposalPhase }) {
       </div>
 
       {/* Description */}
-      <p className="text-[10px] text-ink leading-relaxed mb-2">{phase.description}</p>
+      <p className="text-[10px] text-ink leading-relaxed">{phase.description}</p>
+
+      {/* Value Map (Phase 1 only) */}
+      {phase.valueMap && phase.valueMap.length > 0 && (
+        <ValueMapTable entries={phase.valueMap} />
+      )}
 
       {/* Value Metrics (before → after) */}
       {phase.valueMetrics.length > 0 && (
-        <div className="mb-2">
+        <div>
           <div className="text-[9px] font-semibold text-ink-muted uppercase mb-1">Value Metrics</div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-1.5">
             {phase.valueMetrics.map((vm, i) => (
               <ValueMetricRow key={i} metric={vm} />
             ))}
@@ -211,24 +225,108 @@ function PhaseCard({ phase }: { phase: ProposalPhase }) {
         </div>
       )}
 
-      {/* Deliverables */}
-      <div className="mb-2">
-        <div className="text-[9px] font-semibold text-ink-muted uppercase mb-0.5">Deliverables</div>
-        <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-3 gap-y-0.5">
-          {phase.deliverables.map((d, i) => (
-            <li key={i} className="text-[10px] text-ink flex items-start gap-1">
-              <span className="text-ink-muted shrink-0">-</span>
-              <span>{d}</span>
-            </li>
-          ))}
-        </ul>
+      {/* Two-column: Deliverables + Working Rhythm */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div>
+          <div className="text-[9px] font-semibold text-ink-muted uppercase mb-0.5">Deliverables</div>
+          <ul className="space-y-0.5">
+            {phase.deliverables.map((d, i) => (
+              <li key={i} className="text-[10px] text-ink flex items-start gap-1">
+                <span className="text-ink-muted shrink-0">-</span>
+                <span>{d}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+        {phase.workingRhythm && phase.workingRhythm.length > 0 && (
+          <div>
+            <div className="text-[9px] font-semibold text-ink-muted uppercase mb-0.5">Working Rhythm</div>
+            <ul className="space-y-0.5">
+              {phase.workingRhythm.map((item, i) => (
+                <li key={i} className="text-[10px] text-ink flex items-start gap-1">
+                  <span className="text-ink-muted shrink-0">-</span>
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </div>
 
-      {/* Gate to next */}
-      <div className="border-t border-rule-light pt-1.5 mt-1.5">
-        <span className="text-[9px] font-semibold text-ink-muted uppercase">Gate to next: </span>
-        <span className="text-[9px] text-ink">{phase.gateToNext}</span>
+      {/* Scaling Notes */}
+      {phase.scalingNotes && phase.scalingNotes.length > 0 && (
+        <div>
+          <div className="text-[9px] font-semibold text-ink-muted uppercase mb-0.5">Infrastructure at This Stage</div>
+          <ul className="space-y-0.5">
+            {phase.scalingNotes.map((item, i) => (
+              <li key={i} className="text-[10px] text-ink flex items-start gap-1">
+                <span className="text-ink-muted shrink-0">-</span>
+                <span>{item}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {/* Bottom row: terms + gate */}
+      <div className="border-t border-rule-light pt-1.5 grid grid-cols-1 sm:grid-cols-2 gap-2">
+        <div>
+          <span className="text-[9px] font-semibold text-ink-muted uppercase">Financial Terms: </span>
+          <span className="text-[9px] text-ink">{phase.financialTerms}</span>
+        </div>
+        <div>
+          <span className="text-[9px] font-semibold text-ink-muted uppercase">Gate to Next: </span>
+          <span className="text-[9px] text-ink">{phase.gateToNext}</span>
+        </div>
       </div>
+    </div>
+  )
+}
+
+function ValueMapTable({ entries }: { entries: ValueMapEntry[] }) {
+  return (
+    <div>
+      <div className="text-[11px] font-semibold text-ink mb-1.5 flex items-center gap-2">
+        Value Map
+        <span className="font-mono text-[8px] uppercase px-1.5 py-0.5 rounded-sm border text-amber-ink bg-amber-bg border-amber-ink/20">
+          Draft Framework
+        </span>
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full text-[10px]">
+          <thead>
+            <tr className="border-b border-rule">
+              <th className="text-left font-semibold text-ink-muted uppercase tracking-[0.5px] py-1 pr-2 text-[9px]">Dimension</th>
+              <th className="text-left font-semibold text-ink-muted uppercase tracking-[0.5px] py-1 px-2 text-[9px]">Current</th>
+              <th className="text-left font-semibold text-ink-muted uppercase tracking-[0.5px] py-1 px-2 text-[9px]">With Tech</th>
+              <th className="text-left font-semibold text-ink-muted uppercase tracking-[0.5px] py-1 px-2 text-[9px]">Freed</th>
+              <th className="text-left font-semibold text-ink-muted uppercase tracking-[0.5px] py-1 pl-2 text-[9px]">Impact</th>
+            </tr>
+          </thead>
+          <tbody>
+            {entries.map((entry, i) => (
+              <tr key={i} className="border-b border-rule-light">
+                <td className="py-1.5 pr-2 font-semibold text-ink">{entry.dimension}</td>
+                <td className="py-1.5 px-2 text-ink-muted">{entry.current}</td>
+                <td className="py-1.5 px-2 font-semibold text-green-ink">{entry.withTech}</td>
+                <td className="py-1.5 px-2 font-mono text-burgundy">{entry.freed}</td>
+                <td className="py-1.5 pl-2 text-ink">{entry.impact}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      {entries.some((e) => e.note) && (
+        <div className="mt-1.5 space-y-0.5">
+          {entries
+            .filter((e) => e.note)
+            .map((entry, i) => (
+              <p key={i} className="text-[9px] text-amber-ink italic border-l-2 border-amber-ink/30 pl-2">
+                {entry.dimension}: {entry.note}
+              </p>
+            ))}
+        </div>
+      )}
     </div>
   )
 }
@@ -257,37 +355,6 @@ function FeeRow({ phase, fee, note }: { phase: string; fee: string; note: string
         <span className="text-[10px] font-medium text-ink">{fee}</span>
         <span className="text-[9px] text-ink-muted ml-1">— {note}</span>
       </div>
-    </div>
-  )
-}
-
-function MilestoneCard({ milestone }: { milestone: ScalingMilestone }) {
-  return (
-    <div className="border border-rule rounded-sm p-2">
-      <div className="font-mono text-[12px] font-bold text-burgundy mb-1.5">{milestone.aumThreshold}</div>
-
-      <MilestoneSection label="Operations" items={milestone.operationalNeeds} />
-      <MilestoneSection label="Infrastructure" items={milestone.infrastructureNeeds} />
-      <MilestoneSection label="Compliance" items={milestone.complianceNeeds} />
-      <MilestoneSection label="Team" items={milestone.teamNeeds} />
-      <MilestoneSection label="Technology" items={milestone.technologyDeliverables} />
-    </div>
-  )
-}
-
-function MilestoneSection({ label, items }: { label: string; items: string[] }) {
-  if (items.length === 0) return null
-  return (
-    <div className="mb-1.5">
-      <div className="text-[9px] font-semibold text-ink-muted uppercase mb-0.5">{label}</div>
-      <ul className="space-y-0">
-        {items.map((item, i) => (
-          <li key={i} className="text-[9px] text-ink flex items-start gap-1">
-            <span className="text-ink-faint shrink-0">-</span>
-            <span>{item}</span>
-          </li>
-        ))}
-      </ul>
     </div>
   )
 }

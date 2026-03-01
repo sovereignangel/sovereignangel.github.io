@@ -18,6 +18,8 @@ export interface Principle {
   linkedDecisionIds: string[]
   linkedBeliefIds?: string[]
   isActive: boolean
+  lastReviewedAt?: string       // YYYY-MM-DD — for spaced repetition
+  reviewInterval?: number       // days until next review
   createdAt: Timestamp
   updatedAt: Timestamp
 }

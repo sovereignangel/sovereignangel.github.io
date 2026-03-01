@@ -1,4 +1,4 @@
-import { collection, doc, getDocs, setDoc, deleteDoc, query, orderBy, serverTimestamp } from 'firebase/firestore'
+import { collection, doc, getDocs, setDoc, updateDoc, deleteDoc, query, orderBy, serverTimestamp } from 'firebase/firestore'
 import { db } from '../firebase'
 import type { ResearchNote } from '../types'
 
@@ -14,6 +14,10 @@ export async function saveResearchNote(uid: string, note: Omit<ResearchNote, 'id
   const ref = doc(notesRef(uid))
   await setDoc(ref, { ...note, updatedAt: serverTimestamp() })
   return ref.id
+}
+
+export async function updateResearchNote(uid: string, noteId: string, data: Partial<ResearchNote>): Promise<void> {
+  await updateDoc(doc(notesRef(uid), noteId), { ...data, updatedAt: serverTimestamp() })
 }
 
 export async function deleteResearchNote(uid: string, noteId: string): Promise<void> {

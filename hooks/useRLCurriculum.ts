@@ -53,9 +53,22 @@ export function useRLCurriculum(uid: string | undefined) {
     await refresh()
   }, [uid, progress, refresh])
 
+  const reviewModule = useCallback(async (moduleId: RLModuleId, lastReviewedAt: string, reviewInterval: number) => {
+    if (!uid) return
+    const modules = progress?.modules || {}
+    const existing = modules[moduleId] || { moduleId, completed: false, exerciseCompleted: false }
+    await updateRLCurriculumProgress(uid, {
+      modules: {
+        ...modules,
+        [moduleId]: { ...existing, moduleId, lastReviewedAt, reviewInterval },
+      },
+    })
+    await refresh()
+  }, [uid, progress, refresh])
+
   const completedCount = progress
     ? Object.values(progress.modules).filter(m => m?.completed).length
     : 0
 
-  return { progress, loading, completeModule, completeExercise, completedCount, refresh }
+  return { progress, loading, completeModule, completeExercise, reviewModule, completedCount, refresh }
 }

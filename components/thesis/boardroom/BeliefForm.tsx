@@ -12,6 +12,13 @@ interface BeliefFormProps {
     evidenceAgainst: string[]
   }) => Promise<void>
   onCancel: () => void
+  prefill?: {
+    statement?: string
+    confidence?: number
+    domain?: DecisionDomain
+    evidenceFor?: string[]
+    evidenceAgainst?: string[]
+  }
 }
 
 const DOMAINS: { key: DecisionDomain; label: string }[] = [
@@ -22,12 +29,12 @@ const DOMAINS: { key: DecisionDomain; label: string }[] = [
   { key: 'thesis', label: 'Thesis' },
 ]
 
-export default function BeliefForm({ onSave, onCancel }: BeliefFormProps) {
-  const [statement, setStatement] = useState('')
-  const [confidence, setConfidence] = useState(60)
-  const [domain, setDomain] = useState<DecisionDomain>('thesis')
-  const [evidenceFor, setEvidenceFor] = useState('')
-  const [evidenceAgainst, setEvidenceAgainst] = useState('')
+export default function BeliefForm({ onSave, onCancel, prefill }: BeliefFormProps) {
+  const [statement, setStatement] = useState(prefill?.statement || '')
+  const [confidence, setConfidence] = useState(prefill?.confidence ?? 60)
+  const [domain, setDomain] = useState<DecisionDomain>(prefill?.domain || 'thesis')
+  const [evidenceFor, setEvidenceFor] = useState(prefill?.evidenceFor?.join('\n') || '')
+  const [evidenceAgainst, setEvidenceAgainst] = useState(prefill?.evidenceAgainst?.join('\n') || '')
   const [saving, setSaving] = useState(false)
 
   async function handleSubmit(e: React.FormEvent) {

@@ -4,6 +4,7 @@ import { useState } from 'react'
 import TheMachine from '@/components/thesis/boardroom/TheMachine'
 import MachineDial from '@/components/thesis/boardroom/MachineDial'
 import ResearchNorthStarView from '@/components/thesis/boardroom/ResearchNorthStarView'
+import HypothesisQueue from '@/components/thesis/boardroom/HypothesisQueue'
 import MarketThesisView from '@/components/thesis/boardroom/MarketThesisView'
 import ConceptsView from '@/components/thesis/rl/ConceptsView'
 import TransitionsView from '@/components/thesis/rl/TransitionsView'
@@ -87,7 +88,12 @@ export default function BoardRoomPage() {
         {/* Tab Content */}
         <div className="flex-1 overflow-y-auto min-h-0">
           {isMachine && <TheMachine />}
-          {isResearch && <ResearchNorthStarView />}
+          {isResearch && (
+            <div className="space-y-2 p-2">
+              <HypothesisQueue />
+              <ResearchNorthStarView />
+            </div>
+          )}
           {isThesis && <MarketThesisView />}
           {isRL && rlSubTab === 'concepts' && <ConceptsView />}
           {isRL && rlSubTab === 'transitions' && <TransitionsView />}

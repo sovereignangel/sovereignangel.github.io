@@ -39,6 +39,8 @@ export interface ResearchNote {
   linkedPaperId?: string
   createdAt: string
   domain?: string
+  lastReviewedAt?: string       // YYYY-MM-DD — for spaced repetition
+  reviewInterval?: number       // days until next review
 }
 
 export interface ResearchDomain {

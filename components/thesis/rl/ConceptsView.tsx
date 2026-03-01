@@ -8,7 +8,7 @@ import type { RLModuleId } from '@/lib/types'
 
 // ─── Module Content ───────────────────────────────────────────────────
 
-const MODULE_CONTENT: Record<RLModuleId, {
+export const MODULE_CONTENT: Record<RLModuleId, {
   definition: React.ReactNode
   intuition: React.ReactNode
   systemMapping: React.ReactNode
