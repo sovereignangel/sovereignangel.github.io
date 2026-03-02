@@ -7,6 +7,7 @@ import ABAuthGate from '@/components/alamo-bernal/ABAuthGate'
 const ALLOWED_EMAILS = [
   'sean@alamobernal.com',
   'loricorpuz@gmail.com',
+  'seanlouisbecker@gmail.com',
 ]
 
 function ABSkeleton() {
