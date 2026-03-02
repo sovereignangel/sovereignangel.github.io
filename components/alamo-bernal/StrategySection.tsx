@@ -17,6 +17,12 @@ import type {
   PhaseStatus,
 } from '@/lib/alamo-bernal/types'
 
+const PHASE_TAGS: Record<number, { label: string; type: 'focus' | 'draft' }> = {
+  1: { label: 'Active Focus', type: 'focus' },
+  2: { label: 'Directional', type: 'draft' },
+  3: { label: 'Directional', type: 'draft' },
+}
+
 const PHASE_STATUS_COLORS: Record<PhaseStatus, string> = {
   proposed: 'text-amber-ink bg-amber-bg border-amber-ink/20',
   active: 'text-green-ink bg-green-bg border-green-ink/20',
@@ -87,13 +93,24 @@ export default function StrategySection() {
                   : 'bg-transparent text-ink-muted border-rule hover:border-ink-faint'
               }`}
             >
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1.5 flex-wrap">
                 <span className="font-serif text-[13px] font-medium">Phase {phase.phase}</span>
                 <span className={`text-[11px] font-semibold ${
                   activePhase === phase.phase ? 'text-paper' : 'text-ink'
                 }`}>
                   {phase.title}
                 </span>
+                {PHASE_TAGS[phase.phase] && (
+                  <span className={`font-mono text-[8px] uppercase px-1 py-0.5 rounded-sm border ${
+                    activePhase === phase.phase
+                      ? 'bg-paper/10 text-paper/80 border-paper/20'
+                      : PHASE_TAGS[phase.phase].type === 'focus'
+                        ? 'text-green-ink bg-green-bg border-green-ink/20'
+                        : 'text-amber-ink bg-amber-bg border-amber-ink/20'
+                  }`}>
+                    {PHASE_TAGS[phase.phase].label}
+                  </span>
+                )}
               </div>
               <div className={`text-[9px] leading-tight mt-0.5 ${
                 activePhase === phase.phase ? 'text-paper/80' : 'text-ink-muted'

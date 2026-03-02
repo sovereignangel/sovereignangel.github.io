@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { parseTelegramMessage, type TelegramUpdate } from '@/lib/telegram-parser'
-import { parseJournalEntry, transcribeAndParseVoiceNote, parsePrediction, parseVentureIdea, generateVenturePRD, generateVentureMemo, type ParsedJournalEntry } from '@/lib/ai-extraction'
+import { parseJournalEntry, transcribeAndParseVoiceNote, parsePrediction, parseVentureIdea, generateVenturePRD, generateVentureMemo, extractFromTranscript, type ParsedJournalEntry } from '@/lib/ai-extraction'
+import type { TranscriptTemplateType } from '@/lib/transcript-templates'
 import type { VentureSpec } from '@/lib/types'
 import { computeReward } from '@/lib/reward'
 import { DEFAULT_SETTINGS } from '@/lib/constants'
@@ -22,6 +23,44 @@ async function sendTelegramReply(chatId: number, text: string) {
   if (!res.ok) {
     console.error('Telegram sendMessage failed:', await res.text())
   }
+}
+
+async function sendTelegramInlineKeyboard(
+  chatId: number,
+  text: string,
+  keyboard: Array<Array<{ text: string; callback_data: string }>>
+) {
+  if (!BOT_TOKEN) return
+  const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      chat_id: chatId,
+      text,
+      reply_markup: { inline_keyboard: keyboard },
+    }),
+  })
+  if (!res.ok) {
+    console.error('sendTelegramInlineKeyboard failed:', await res.text())
+  }
+}
+
+async function answerCallbackQuery(callbackQueryId: string) {
+  if (!BOT_TOKEN) return
+  await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/answerCallbackQuery`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ callback_query_id: callbackQueryId }),
+  })
+}
+
+async function editTelegramMessage(chatId: number, messageId: number, text: string) {
+  if (!BOT_TOKEN) return
+  await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/editMessageText`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ chat_id: chatId, message_id: messageId, text }),
+  })
 }
 
 async function getAdminDb() {
@@ -1984,6 +2023,337 @@ async function handleSkill(uid: string, text: string, chatId: number) {
   await sendTelegramReply(chatId, `Unknown skill command: ${subcommand}\n\nUse /skill for help.`)
 }
 
+// ---------------------------------------------------------------------------
+// /transcript — Wave.ai meeting transcript processing
+// ---------------------------------------------------------------------------
+
+const TRANSCRIPT_KEYBOARD = [
+  [
+    { text: 'Partnership', callback_data: 'trxtemplate:partnership' },
+    { text: 'Research/Reading', callback_data: 'trxtemplate:research' },
+    { text: 'Discovery', callback_data: 'trxtemplate:discovery' },
+  ],
+  [
+    { text: 'Investor', callback_data: 'trxtemplate:investor' },
+    { text: 'Advisor', callback_data: 'trxtemplate:advisor' },
+    { text: 'Internal', callback_data: 'trxtemplate:internal' },
+    { text: 'General', callback_data: 'trxtemplate:general' },
+  ],
+]
+
+async function handleTranscript(uid: string, transcriptText: string, chatId: number) {
+  if (!transcriptText || transcriptText.trim().length < 100) {
+    await sendTelegramReply(chatId, 'Transcript too short. Paste your full Wave.ai transcript after /transcript')
+    return
+  }
+
+  // Save draft to Firestore, then ask for template type
+  const adminDb = await getAdminDb()
+  const draftRef = adminDb.collection('users').doc(uid).collection('transcript_drafts').doc()
+  await draftRef.set({
+    text: transcriptText,
+    chatId,
+    createdAt: new Date(),
+  })
+
+  const preview = transcriptText.slice(0, 120).replace(/\n+/g, ' ')
+  await sendTelegramInlineKeyboard(
+    chatId,
+    `Transcript received (${transcriptText.length} chars)\n"${preview}..."\n\nWhat type of call was this?`,
+    TRANSCRIPT_KEYBOARD.map(row =>
+      row.map(btn => ({
+        text: btn.text,
+        callback_data: `trx:${draftRef.id}:${btn.callback_data.replace('trxtemplate:', '')}`,
+      }))
+    )
+  )
+}
+
+async function handleTranscriptCallback(chatId: number, messageId: number, callbackData: string) {
+  // callbackData format: trx:{draftId}:{templateType}
+  const parts = callbackData.split(':')
+  if (parts.length < 3) return
+
+  const draftId = parts[1]
+  const templateType = parts[2] as TranscriptTemplateType
+
+  const uid = await findUserByChatId(chatId)
+  if (!uid) {
+    await sendTelegramReply(chatId, 'Not linked. Add your chat ID in Thesis Engine > Settings > Telegram.')
+    return
+  }
+
+  // Fetch + delete the draft
+  const adminDb = await getAdminDb()
+  const draftRef = adminDb.collection('users').doc(uid).collection('transcript_drafts').doc(draftId)
+  const draftSnap = await draftRef.get()
+
+  if (!draftSnap.exists) {
+    await sendTelegramReply(chatId, 'Draft expired or not found. Please paste the transcript again.')
+    return
+  }
+
+  const transcriptText = draftSnap.data()?.text as string
+  await draftRef.delete()
+
+  const templateLabels: Record<string, string> = {
+    partnership: 'Partnership',
+    research: 'Research/Reading Club',
+    discovery: 'Customer Discovery',
+    investor: 'Investor',
+    advisor: 'Advisor',
+    internal: 'Internal',
+    general: 'General',
+  }
+
+  await editTelegramMessage(chatId, messageId, `Processing ${templateLabels[templateType] || templateType} transcript...\n\nExtracting insights, decisions, and key learnings.`)
+
+  try {
+    // Extract structured data using template-specific prompt
+    const extracted = await extractFromTranscript(transcriptText, templateType)
+
+    const now = new Date().toISOString().split('T')[0]
+    const date = extracted.inferredDate || now
+    const title = extracted.inferredTitle
+    const userRef = adminDb.collection('users').doc(uid)
+
+    const counts = { hypotheses: 0, beliefs: 0, decisions: 0, insights: 0, contacts: 0, ventures: 0 }
+
+    // Save action items as insights
+    for (const item of extracted.actionItems) {
+      await userRef.collection('insights').add({
+        type: 'action_item',
+        content: item.owner ? `${item.task} (Owner: ${item.owner}${item.deadline ? ', by ' + item.deadline : ''})` : item.task,
+        summary: item.task.slice(0, 80),
+        sourceConversationTitle: title,
+        sourceConversationDate: date,
+        linkedProjectIds: [],
+        linkedProjectNames: [],
+        tags: ['action_item'],
+        thesisPillars: [],
+        status: 'active',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+      counts.insights++
+    }
+
+    // Save template-specific insights
+    for (const insight of extracted.insights || []) {
+      await userRef.collection('insights').add({
+        type: insight.type,
+        content: insight.content,
+        summary: insight.summary,
+        sourceConversationTitle: title,
+        sourceConversationDate: date,
+        linkedProjectIds: [],
+        linkedProjectNames: [],
+        tags: insight.tags || [],
+        thesisPillars: [],
+        status: 'active',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+      counts.insights++
+    }
+
+    // Save hypotheses (research template)
+    for (const h of extracted.hypotheses || []) {
+      await userRef.collection('hypotheses').add({
+        question: h.question,
+        context: h.context,
+        domain: h.domain,
+        status: 'open',
+        priority: h.priority,
+        evidence: [],
+        resolution: h.resolution || null,
+        sourceType: 'transcript',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+      counts.hypotheses++
+    }
+
+    // Save beliefs (research template)
+    for (const b of extracted.beliefs || []) {
+      const attentionDate = new Date()
+      attentionDate.setDate(attentionDate.getDate() + 21)
+      await userRef.collection('beliefs').add({
+        statement: b.statement,
+        confidence: Math.min(100, Math.max(0, b.confidence)),
+        domain: b.domain,
+        evidenceFor: b.evidenceFor,
+        evidenceAgainst: b.evidenceAgainst,
+        status: 'active',
+        linkedDecisionIds: [],
+        linkedPrincipleIds: [],
+        sourceJournalDate: date,
+        attentionDate: attentionDate.toISOString().split('T')[0],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+      counts.beliefs++
+    }
+
+    // Save decisions (partnership/investor/internal templates)
+    for (const d of extracted.decisions || []) {
+      const reviewDate = new Date()
+      reviewDate.setDate(reviewDate.getDate() + 90)
+      await userRef.collection('decisions').add({
+        title: d.title,
+        hypothesis: '',
+        options: [d.chosenOption],
+        chosenOption: d.chosenOption,
+        reasoning: d.reasoning,
+        confidenceLevel: Math.min(100, Math.max(0, d.confidenceLevel)),
+        killCriteria: [],
+        premortem: '',
+        domain: d.domain,
+        linkedProjectIds: [],
+        linkedSignalIds: [],
+        status: 'active',
+        reviewDate: reviewDate.toISOString().split('T')[0],
+        decidedAt: date,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+      counts.decisions++
+    }
+
+    // Save venture ideas
+    for (const rawIdea of extracted.ventureIdeas || []) {
+      try {
+        const parsed = await parseVentureIdea(rawIdea, [])
+        const nextNum = await getNextVentureNumber(adminDb, uid)
+        await userRef.collection('ventures').add({
+          ventureNumber: nextNum,
+          rawInput: rawIdea,
+          inputSource: 'telegram_text',
+          spec: {
+            name: parsed.name,
+            oneLiner: parsed.oneLiner,
+            problem: parsed.problem,
+            targetCustomer: parsed.targetCustomer,
+            solution: parsed.solution,
+            category: parsed.category,
+            thesisPillars: parsed.thesisPillars,
+            revenueModel: parsed.revenueModel,
+            pricingIdea: parsed.pricingIdea,
+            marketSize: parsed.marketSize,
+            techStack: parsed.techStack,
+            mvpFeatures: parsed.mvpFeatures,
+            apiIntegrations: parsed.apiIntegrations,
+            existingAlternatives: parsed.existingAlternatives,
+            unfairAdvantage: parsed.unfairAdvantage,
+            killCriteria: parsed.killCriteria,
+          },
+          prd: null,
+          memo: null,
+          build: { status: 'pending', repoUrl: null, previewUrl: null, customDomain: null, repoName: null, buildLog: [], startedAt: null, completedAt: null, errorMessage: null, filesGenerated: null },
+          iterations: [],
+          linkedProjectId: null,
+          notes: '',
+          stage: 'idea',
+          score: parsed.suggestedScore || 50,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        })
+        counts.ventures++
+      } catch (err) {
+        console.error('Failed to parse venture idea:', err)
+      }
+    }
+
+    // Save contacts
+    for (const contact of extracted.contacts) {
+      if (contact.name && contact.name.trim()) {
+        try {
+          const existing = await userRef.collection('contacts').where('name', '==', contact.name.trim()).limit(1).get()
+          if (existing.empty) {
+            await userRef.collection('contacts').add({
+              name: contact.name.trim(),
+              notes: contact.context,
+              interactions: [{ date, type: 'meeting', summary: `${templateLabels[templateType]} call: ${title}` }],
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            })
+          } else {
+            const existingRef = existing.docs[0].ref
+            const existingData = existing.docs[0].data()
+            await existingRef.update({
+              interactions: [...(existingData.interactions || []), { date, type: 'meeting', summary: `${templateLabels[templateType]} call: ${title}` }],
+              updatedAt: new Date(),
+            })
+          }
+          counts.contacts++
+        } catch (err) {
+          console.error('Failed to save contact:', contact.name, err)
+        }
+      }
+    }
+
+    // Save conversation document
+    const templateToConvType: Record<string, string> = {
+      partnership: 'partnership',
+      research: 'other',
+      discovery: 'customer_discovery',
+      investor: 'investor',
+      advisor: 'advisor',
+      internal: 'other',
+      general: 'other',
+    }
+    await userRef.collection('conversations').add({
+      title,
+      date,
+      participants: extracted.participants,
+      transcriptText,
+      durationMinutes: 0,
+      conversationType: templateToConvType[templateType] || 'other',
+      processInsights: extracted.keyTakeaways,
+      featureIdeas: [],
+      actionItems: extracted.actionItems.map(a => a.task),
+      valueSignals: [],
+      aiProcessed: true,
+      aiProcessedAt: new Date(),
+      linkedSignalIds: [],
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    })
+
+    // Build summary reply
+    const lines: string[] = [`Transcript processed: ${title}`]
+
+    const storedItems: string[] = []
+    if (counts.hypotheses > 0) storedItems.push(`${counts.hypotheses} hypothesis${counts.hypotheses > 1 ? 'es' : ''}`)
+    if (counts.beliefs > 0) storedItems.push(`${counts.beliefs} belief${counts.beliefs > 1 ? 's' : ''}`)
+    if (counts.decisions > 0) storedItems.push(`${counts.decisions} decision${counts.decisions > 1 ? 's' : ''}`)
+    if (counts.insights > 0) storedItems.push(`${counts.insights} insight${counts.insights > 1 ? 's' : ''}`)
+    if (counts.ventures > 0) storedItems.push(`${counts.ventures} venture idea${counts.ventures > 1 ? 's' : ''}`)
+    if (counts.contacts > 0) storedItems.push(`${counts.contacts} contact${counts.contacts > 1 ? 's' : ''}`)
+
+    if (storedItems.length > 0) {
+      lines.push('', 'Stored:', ...storedItems.map(s => `  + ${s}`))
+    }
+
+    if (extracted.alignmentAreas?.length) {
+      lines.push('', 'Alignment areas:', ...extracted.alignmentAreas.slice(0, 3).map(a => `  - ${a}`))
+    }
+
+    if (extracted.dealPoints?.length) {
+      lines.push('', 'Deal points:', ...extracted.dealPoints.slice(0, 3).map(d => `  - ${d}`))
+    }
+
+    if (extracted.keyTakeaways.length > 0) {
+      lines.push('', 'Key takeaways:', ...extracted.keyTakeaways.slice(0, 3).map(t => `  - ${t}`))
+    }
+
+    await sendTelegramReply(chatId, lines.join('\n'))
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : String(error)
+    await sendTelegramReply(chatId, `Error processing transcript: ${msg.slice(0, 200)}`)
+  }
+}
+
 export async function POST(req: NextRequest) {
   if (!BOT_TOKEN) {
     return NextResponse.json({ error: 'Bot not configured' }, { status: 500 })
@@ -1998,6 +2368,19 @@ export async function POST(req: NextRequest) {
 
   try {
     const update: TelegramUpdate = await req.json()
+
+    // --- Callback query handling (inline keyboard button presses) ---
+    if (update.callback_query) {
+      const cbq = update.callback_query
+      await answerCallbackQuery(cbq.id)
+      const cbChatId = cbq.message?.chat.id
+      const cbMessageId = cbq.message?.message_id
+      if (cbChatId && cbMessageId && cbq.data?.startsWith('trx:')) {
+        await handleTranscriptCallback(cbChatId, cbMessageId, cbq.data)
+      }
+      return NextResponse.json({ ok: true })
+    }
+
     const message = update.message
 
     if (!message?.text && !message?.voice) {
@@ -2115,6 +2498,7 @@ export async function POST(req: NextRequest) {
         '',
         '`/brief <text>` — Feedback on morning brief',
         '`/rss <url> #pillar` — Subscribe to RSS feed',
+        '`/transcript <text>` — Process a Wave.ai meeting transcript (AI extracts insights, decisions, hypotheses)',
         '`/id` — Show your chat ID (for settings)',
         '',
         'Reply to a morning brief to send feedback.',
@@ -2283,6 +2667,12 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ ok: true })
       }
       await saveBriefFeedback(uid, parsed.text, chatId)
+      return NextResponse.json({ ok: true })
+    }
+
+    // Handle transcript command (/transcript <paste transcript here>)
+    if (parsed.command === 'transcript') {
+      await handleTranscript(uid, parsed.text, chatId)
       return NextResponse.json({ ok: true })
     }
 

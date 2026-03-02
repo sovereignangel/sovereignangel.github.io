@@ -1836,3 +1836,135 @@ Return ONLY valid JSON (no markdown, no code blocks):
     return EMPTY_CAPITAL_COMMAND
   }
 }
+
+// ---------------------------------------------------------------------------
+// Transcript extraction (Wave.ai meeting transcripts)
+// ---------------------------------------------------------------------------
+
+import type { TranscriptTemplateType } from './transcript-templates'
+import { getExtractionPrompt } from './transcript-templates'
+
+export interface TranscriptInsight {
+  type: 'process_insight' | 'feature_idea' | 'value_signal' | 'market_pattern' | 'arbitrage_opportunity'
+  content: string
+  summary: string
+  tags: string[]
+}
+
+export interface TranscriptDecision {
+  title: string
+  chosenOption: string
+  reasoning: string
+  domain: 'portfolio' | 'product' | 'revenue' | 'personal' | 'thesis'
+  confidenceLevel: number
+}
+
+export interface TranscriptHypothesis {
+  question: string
+  context: string
+  domain: 'portfolio' | 'product' | 'revenue' | 'personal' | 'thesis'
+  priority: 'high' | 'medium' | 'low'
+  resolution: 'belief' | 'blog' | 'both' | null
+}
+
+export interface TranscriptBelief {
+  statement: string
+  confidence: number
+  domain: 'portfolio' | 'product' | 'revenue' | 'personal' | 'thesis'
+  evidenceFor: string[]
+  evidenceAgainst: string[]
+}
+
+export interface TranscriptSignal {
+  title: string
+  description: string
+  thesisPillar: 'ai' | 'markets' | 'mind' | null
+}
+
+export interface TranscriptActionItem {
+  task: string
+  owner: string | null
+  deadline: string | null
+}
+
+export interface TranscriptContact {
+  name: string
+  context: string
+}
+
+export interface TranscriptExtractionResult {
+  inferredTitle: string
+  inferredDate: string | null
+  participants: string[]
+  contacts: TranscriptContact[]
+  actionItems: TranscriptActionItem[]
+  keyTakeaways: string[]
+  // Template-specific (present based on type)
+  hypotheses?: TranscriptHypothesis[]
+  beliefs?: TranscriptBelief[]
+  decisions?: TranscriptDecision[]
+  insights?: TranscriptInsight[]
+  ventureIdeas?: string[]
+  signals?: TranscriptSignal[]
+  // Partnership-specific
+  alignmentAreas?: string[]
+  dealPoints?: string[]
+  dueDiligenceItems?: string[]
+}
+
+const EMPTY_TRANSCRIPT_RESULT: TranscriptExtractionResult = {
+  inferredTitle: 'Untitled Meeting',
+  inferredDate: null,
+  participants: [],
+  contacts: [],
+  actionItems: [],
+  keyTakeaways: [],
+}
+
+export async function extractFromTranscript(
+  transcriptText: string,
+  templateType: TranscriptTemplateType,
+): Promise<TranscriptExtractionResult> {
+  try {
+    const prompt = getExtractionPrompt(templateType)
+    const fullPrompt = `${prompt}
+
+---
+TRANSCRIPT:
+${transcriptText}
+---
+
+Return ONLY valid JSON, no markdown, no code fences.`
+
+    const raw = await callLLM(fullPrompt, { temperature: 0.2, maxTokens: 4000 })
+
+    // Strip any accidental markdown fences
+    const cleaned = raw.trim().replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/\s*```$/i, '').trim()
+    const parsed = JSON.parse(cleaned)
+
+    // Validate and sanitize
+    const result: TranscriptExtractionResult = {
+      inferredTitle: typeof parsed.inferredTitle === 'string' ? parsed.inferredTitle.slice(0, 100) : 'Untitled Meeting',
+      inferredDate: typeof parsed.inferredDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(parsed.inferredDate) ? parsed.inferredDate : null,
+      participants: Array.isArray(parsed.participants) ? parsed.participants.filter((p: unknown) => typeof p === 'string') : [],
+      contacts: Array.isArray(parsed.contacts) ? parsed.contacts.filter((c: unknown) => c && typeof (c as TranscriptContact).name === 'string') : [],
+      actionItems: Array.isArray(parsed.actionItems) ? parsed.actionItems.filter((a: unknown) => a && typeof (a as TranscriptActionItem).task === 'string') : [],
+      keyTakeaways: Array.isArray(parsed.keyTakeaways) ? parsed.keyTakeaways.filter((t: unknown) => typeof t === 'string') : [],
+    }
+
+    if (Array.isArray(parsed.hypotheses)) result.hypotheses = parsed.hypotheses
+    if (Array.isArray(parsed.beliefs)) result.beliefs = parsed.beliefs
+    if (Array.isArray(parsed.decisions)) result.decisions = parsed.decisions
+    if (Array.isArray(parsed.insights)) result.insights = parsed.insights
+    if (Array.isArray(parsed.ventureIdeas)) result.ventureIdeas = parsed.ventureIdeas.filter((v: unknown) => typeof v === 'string')
+    if (Array.isArray(parsed.signals)) result.signals = parsed.signals
+    if (Array.isArray(parsed.alignmentAreas)) result.alignmentAreas = parsed.alignmentAreas.filter((a: unknown) => typeof a === 'string')
+    if (Array.isArray(parsed.dealPoints)) result.dealPoints = parsed.dealPoints.filter((d: unknown) => typeof d === 'string')
+    if (Array.isArray(parsed.dueDiligenceItems)) result.dueDiligenceItems = parsed.dueDiligenceItems.filter((d: unknown) => typeof d === 'string')
+
+    return result
+  } catch (error) {
+    console.error('Error extracting from transcript:', error)
+    return EMPTY_TRANSCRIPT_RESULT
+  }
+}

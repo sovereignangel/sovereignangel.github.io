@@ -27,7 +27,7 @@
 import type { ThesisPillar } from '@/lib/types'
 
 export interface ParsedTelegramMessage {
-  command: 'signal' | 'note' | 'journal' | 'rss' | 'predict' | 'venture' | 'build' | 'approve' | 'feedback' | 'iterate' | 'reset' | 'brief' | 'memo' | 'morning' | 'cbuild' | 'citerate' | 'skill' | 'sbuild' | 'srespond' | 'sapprove' | 'discipline' | 'unknown'
+  command: 'signal' | 'note' | 'journal' | 'rss' | 'predict' | 'venture' | 'build' | 'approve' | 'feedback' | 'iterate' | 'reset' | 'brief' | 'memo' | 'morning' | 'cbuild' | 'citerate' | 'skill' | 'sbuild' | 'srespond' | 'sapprove' | 'discipline' | 'transcript' | 'unknown'
   text: string
   pillars: ThesisPillar[]
   raw: string
@@ -168,6 +168,12 @@ export function parseTelegramMessage(text: string): ParsedTelegramMessage {
   if (raw.startsWith('/skill')) {
     const body = raw.slice('/skill'.length).trim()
     return { command: 'skill', text: body, pillars: [], raw }
+  }
+
+  // /transcript command — process a meeting transcript from Wave.ai
+  if (raw.startsWith('/transcript')) {
+    const body = raw.slice('/transcript'.length).trim()
+    return { command: 'transcript', text: body, pillars: [], raw }
   }
 
   // Plain text — treat as signal
