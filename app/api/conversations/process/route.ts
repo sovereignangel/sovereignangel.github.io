@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { extractInsightsV2 } from '@/lib/ai-extraction'
-import { saveConversation, saveContact, getContactByName, saveInsights, saveMacroPattern } from '@/lib/firestore'
+import { saveConversation, saveInsights, saveMacroPattern, addInteractionToContact } from '@/lib/firestore'
 import { ConversationType } from '@/lib/types'
 import { Timestamp } from 'firebase-admin/firestore'
 import { verifyAuth } from '@/lib/api-auth'
+import { resolveContactsBatch } from '@/lib/entity-resolution'
+import { embedConversation, embedInsight } from '@/lib/embed-on-save'
 
 export async function POST(request: NextRequest) {
   const auth = await verifyAuth(request)
@@ -41,21 +43,22 @@ export async function POST(request: NextRequest) {
       activeProjectNames
     )
 
-    // Create/update contacts for participants
-    for (const name of participants) {
-      const existing = await getContactByName(uid, name)
-      if (existing) {
-        await saveContact(uid, {
-          ...existing,
-          lastConversationDate: date,
-        })
-      } else {
-        await saveContact(uid, {
-          name,
-          lastConversationDate: date,
-          notes: '',
-        })
-      }
+    // Resolve participants + AI-suggested contacts via entity resolution
+    const allContactNames = [
+      ...participants.map((name: string) => ({ name, context: `Participant in conversation: ${title}` })),
+      ...(insights.suggestedContacts || [])
+        .filter((name: string) => !participants.includes(name))
+        .map((name: string) => ({ name, context: `Mentioned in conversation: ${title}` })),
+    ]
+    const resolvedContacts = await resolveContactsBatch(uid, allContactNames, 'transcript', date)
+
+    // Log interactions on resolved contacts
+    for (let i = 0; i < resolvedContacts.length; i++) {
+      await addInteractionToContact(uid, resolvedContacts[i].contactId, {
+        date,
+        source: 'transcript',
+        summary: allContactNames[i].context,
+      })
     }
 
     // Save conversation with legacy insight arrays
@@ -139,6 +142,23 @@ export async function POST(request: NextRequest) {
         confidence: mp.confidence,
       })
       macroPatternIds.push(patternId)
+    }
+
+    // Embed conversation transcript and insights into vector index
+    const resolvedContactInfo = resolvedContacts.map(r => ({
+      contactId: r.contactId,
+      canonicalName: r.contact.canonicalName,
+    }))
+    embedConversation(uid, conversationId, transcriptText, date, resolvedContactInfo, activeProjectNames).catch(
+      err => console.error('[embed] conversation embedding failed:', err)
+    )
+    for (let i = 0; i < insightIds.length; i++) {
+      const si = insights.structuredInsights[i]
+      if (si) {
+        embedInsight(uid, insightIds[i], si.content, date, si.thesisPillars, si.linkedProjectNames).catch(
+          err => console.error('[embed] insight embedding failed:', err)
+        )
+      }
     }
 
     return NextResponse.json({

@@ -4,6 +4,9 @@ import { parseJournalEntry, transcribeAndParseVoiceNote, parsePrediction, parseV
 import type { VentureSpec } from '@/lib/types'
 import { computeReward } from '@/lib/reward'
 import { DEFAULT_SETTINGS } from '@/lib/constants'
+import { resolveContactsBatch } from '@/lib/entity-resolution'
+import { addInteractionToContact } from '@/lib/firestore'
+import { embedJournalEntry } from '@/lib/embed-on-save'
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN
 
@@ -614,10 +617,109 @@ async function handleJournal(uid: string, text: string, chatId: number) {
     logUpdate.journalEntry = newJournal
     await logRef.set(logUpdate, { merge: true })
 
-    // Save structured items immediately (contacts, decisions, principles, beliefs, notes)
-    let savedIds: SavedIds | null = null
-    if (hasStructuredItems(parsed)) {
-      savedIds = await persistStructuredItems(adminDb, uid, today, parsed)
+    // Create decisions
+    for (const d of parsed.decisions) {
+      const reviewDate = new Date()
+      reviewDate.setDate(reviewDate.getDate() + 90)
+      const decisionRef = adminDb.collection('users').doc(uid).collection('decisions').doc()
+      await decisionRef.set({
+        title: d.title,
+        hypothesis: d.hypothesis,
+        options: [d.chosenOption],
+        chosenOption: d.chosenOption,
+        reasoning: d.reasoning,
+        confidenceLevel: d.confidenceLevel,
+        killCriteria: [],
+        premortem: '',
+        domain: d.domain,
+        linkedProjectIds: [],
+        linkedSignalIds: [],
+        status: 'active',
+        reviewDate: reviewDate.toISOString().split('T')[0],
+        decidedAt: today,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+    }
+
+    // Create principles
+    for (const p of parsed.principles) {
+      const principleRef = adminDb.collection('users').doc(uid).collection('principles').doc()
+      await principleRef.set({
+        text: p.text,
+        shortForm: p.shortForm,
+        source: 'manual',
+        sourceDescription: 'Extracted from Telegram journal',
+        domain: p.domain,
+        dateFirstApplied: today,
+        linkedDecisionIds: [],
+        lastReinforcedAt: today,
+        reinforcementCount: 0,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+    }
+
+    // Resolve contacts via entity resolution (unified_contacts)
+    let resolvedContactInfo: { contactId: string; canonicalName: string }[] = []
+    if (parsed.contacts.length > 0) {
+      const contactInputs = parsed.contacts.map(c => ({ name: c.name, context: c.context }))
+      const resolved = await resolveContactsBatch(uid, contactInputs, 'journal', today)
+      resolvedContactInfo = resolved.map(r => ({ contactId: r.contactId, canonicalName: r.contact.canonicalName }))
+      for (let i = 0; i < resolved.length; i++) {
+        await addInteractionToContact(uid, resolved[i].contactId, {
+          date: today,
+          source: 'journal',
+          summary: parsed.contacts[i].context,
+        })
+      }
+    }
+
+    // Embed journal text into vector index (fire-and-forget)
+    embedJournalEntry(uid, today, newJournal, resolvedContactInfo).catch(
+      err => console.error('[embed] journal embedding failed:', err)
+    )
+
+    // Save notes as external signals (type: telegram, status: inbox)
+    for (const n of parsed.notes) {
+      const signalRef = adminDb.collection('users').doc(uid).collection('external_signals').doc()
+      await signalRef.set({
+        title: n.text.slice(0, 120),
+        aiSummary: n.text,
+        keyTakeaway: n.text,
+        valueBullets: [],
+        sourceUrl: '',
+        sourceName: 'Journal note',
+        source: 'telegram',
+        relevanceScore: n.actionRequired ? 0.8 : 0.4,
+        thesisPillars: [],
+        status: 'inbox',
+        readStatus: 'unread',
+        publishedAt: new Date().toISOString(),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+    }
+
+    // Create beliefs + trigger antithesis in background
+    for (const b of parsed.beliefs) {
+      const attentionDate = new Date()
+      attentionDate.setDate(attentionDate.getDate() + 21)
+      const beliefRef = adminDb.collection('users').doc(uid).collection('beliefs').doc()
+      await beliefRef.set({
+        statement: b.statement,
+        confidence: b.confidence,
+        domain: b.domain,
+        evidenceFor: b.evidenceFor,
+        evidenceAgainst: b.evidenceAgainst,
+        status: 'active',
+        linkedDecisionIds: [],
+        linkedPrincipleIds: [],
+        sourceJournalDate: today,
+        attentionDate: attentionDate.toISOString().split('T')[0],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
     }
 
     // Fetch existing beliefs + decisions for framework coaching
@@ -689,10 +791,76 @@ async function handleJournalFromVoice(uid: string, transcript: string, parsed: P
     logUpdate.journalEntry = newJournal
     await logRef.set(logUpdate, { merge: true })
 
-    // Save structured items immediately
-    let savedIds: SavedIds | null = null
-    if (hasStructuredItems(parsed)) {
-      savedIds = await persistStructuredItems(adminDb, uid, today, parsed)
+    // Create decisions
+    for (const d of parsed.decisions) {
+      const reviewDate = new Date()
+      reviewDate.setDate(reviewDate.getDate() + 90)
+      const decisionRef = adminDb.collection('users').doc(uid).collection('decisions').doc()
+      await decisionRef.set({
+        title: d.title, hypothesis: d.hypothesis, options: [d.chosenOption],
+        chosenOption: d.chosenOption, reasoning: d.reasoning, confidenceLevel: d.confidenceLevel,
+        killCriteria: [], premortem: '', domain: d.domain,
+        linkedProjectIds: [], linkedSignalIds: [], status: 'active',
+        reviewDate: reviewDate.toISOString().split('T')[0], decidedAt: today,
+        createdAt: new Date(), updatedAt: new Date(),
+      })
+    }
+
+    // Create principles
+    for (const p of parsed.principles) {
+      const principleRef = adminDb.collection('users').doc(uid).collection('principles').doc()
+      await principleRef.set({
+        text: p.text, shortForm: p.shortForm, source: 'manual',
+        sourceDescription: 'Extracted from Telegram voice journal', domain: p.domain,
+        dateFirstApplied: today, linkedDecisionIds: [], lastReinforcedAt: today,
+        reinforcementCount: 0, createdAt: new Date(), updatedAt: new Date(),
+      })
+    }
+
+    // Resolve contacts via entity resolution (unified_contacts)
+    let voiceResolvedContactInfo: { contactId: string; canonicalName: string }[] = []
+    if (parsed.contacts.length > 0) {
+      const contactInputs = parsed.contacts.map(c => ({ name: c.name, context: c.context }))
+      const resolved = await resolveContactsBatch(uid, contactInputs, 'journal', today)
+      voiceResolvedContactInfo = resolved.map(r => ({ contactId: r.contactId, canonicalName: r.contact.canonicalName }))
+      for (let i = 0; i < resolved.length; i++) {
+        await addInteractionToContact(uid, resolved[i].contactId, {
+          date: today,
+          source: 'journal',
+          summary: parsed.contacts[i].context,
+        })
+      }
+    }
+
+    // Embed voice journal text into vector index (fire-and-forget)
+    embedJournalEntry(uid, today, newJournal, voiceResolvedContactInfo).catch(
+      err => console.error('[embed] voice journal embedding failed:', err)
+    )
+
+    // Save notes as external signals
+    for (const n of parsed.notes) {
+      const signalRef = adminDb.collection('users').doc(uid).collection('external_signals').doc()
+      await signalRef.set({
+        title: n.text.slice(0, 120), aiSummary: n.text, keyTakeaway: n.text,
+        valueBullets: [], sourceUrl: '', sourceName: 'Voice journal note',
+        source: 'telegram', relevanceScore: n.actionRequired ? 0.8 : 0.4,
+        thesisPillars: [], status: 'inbox', readStatus: 'unread',
+        publishedAt: new Date().toISOString(), createdAt: new Date(), updatedAt: new Date(),
+      })
+    }
+
+    // Create beliefs + trigger antithesis in background
+    for (const b of parsed.beliefs) {
+      const attentionDate = new Date()
+      attentionDate.setDate(attentionDate.getDate() + 21)
+      const beliefRef = adminDb.collection('users').doc(uid).collection('beliefs').doc()
+      await beliefRef.set({
+        statement: b.statement, confidence: b.confidence, domain: b.domain,
+        evidenceFor: b.evidenceFor, evidenceAgainst: b.evidenceAgainst,
+        status: 'active', linkedDecisionIds: [], linkedPrincipleIds: [],
+        sourceJournalDate: today, attentionDate: attentionDate.toISOString().split('T')[0],
+        createdAt: new Date(), updatedAt: new Date(),
+      })
     }
 
     // Fetch existing beliefs + decisions for framework coaching

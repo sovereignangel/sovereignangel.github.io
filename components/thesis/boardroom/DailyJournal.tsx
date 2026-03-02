@@ -6,7 +6,6 @@ import { useDailyLogContext } from '@/components/thesis/DailyLogProvider'
 import { useCadence } from '@/hooks/useCadence'
 import { saveDecision } from '@/lib/firestore/decisions'
 import { savePrinciple } from '@/lib/firestore/principles'
-import { saveContact, getContactByName, updateContact } from '@/lib/firestore/contacts'
 import { saveExternalSignal } from '@/lib/firestore/external-signals'
 import { authFetch } from '@/lib/auth-fetch'
 import { saveBelief } from '@/lib/firestore/beliefs'
@@ -259,24 +258,21 @@ export default function DailyJournal() {
         })
       }
 
-      // Contacts (upsert — create or update lastConversationDate)
-      for (let i = 0; i < parsed.contacts.length; i++) {
-        if (!isEnabled(`contact.${i}`)) continue
-        const c = parsed.contacts[i]
-        const existing = await getContactByName(user.uid, c.name)
-        if (existing?.id) {
-          const prevNotes = existing.notes || ''
-          await updateContact(user.uid, existing.id, {
-            lastConversationDate: today,
-            notes: prevNotes ? `${prevNotes}\n${today}: ${c.context}` : `${today}: ${c.context}`,
-          })
-        } else {
-          await saveContact(user.uid, {
-            name: c.name,
-            lastConversationDate: today,
-            notes: `${today}: ${c.context}`,
-          })
-        }
+      // Contacts — resolve via entity resolution API (unified_contacts)
+      const enabledContacts = parsed.contacts
+        .filter((_: { name: string; context: string }, i: number) => isEnabled(`contact.${i}`))
+        .map((c: { name: string; context: string }) => ({ name: c.name, context: c.context }))
+      if (enabledContacts.length > 0) {
+        await authFetch('/api/contacts/resolve', {
+          method: 'POST',
+          body: JSON.stringify({
+            contacts: enabledContacts,
+            source: 'journal',
+            date: today,
+            addInteraction: true,
+            sourceCollection: 'daily_logs',
+          }),
+        })
       }
 
       // Beliefs
