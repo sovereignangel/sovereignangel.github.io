@@ -24,47 +24,6 @@ async function sendTelegramReply(chatId: number, text: string) {
   }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function sendTelegramReplyWithKeyboard(chatId: number, text: string, inlineKeyboard: any[][]) {
-  if (!BOT_TOKEN) return
-  // Try with Markdown parse_mode first
-  let res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      chat_id: chatId,
-      text,
-      parse_mode: 'Markdown',
-      reply_markup: { inline_keyboard: inlineKeyboard },
-    }),
-  })
-  if (!res.ok) {
-    // If Markdown fails, retry without parse_mode (plain text but keeps keyboard)
-    console.error('Telegram keyboard+Markdown failed, retrying plain:', await res.text())
-    res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        chat_id: chatId,
-        text,
-        reply_markup: { inline_keyboard: inlineKeyboard },
-      }),
-    })
-    if (!res.ok) {
-      console.error('Telegram keyboard+plain also failed:', await res.text())
-    }
-  }
-}
-
-async function answerCallbackQuery(callbackQueryId: string, text?: string) {
-  if (!BOT_TOKEN) return
-  await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/answerCallbackQuery`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ callback_query_id: callbackQueryId, text }),
-  })
-}
-
 async function getAdminDb() {
   const { adminDb } = await import('@/lib/firebase-admin')
   return adminDb
@@ -308,107 +267,6 @@ function buildFrameworkCoaching(
   return '\n\n*The Machine:*\n' + prompts.slice(0, 3).map(q => `-> _${q}_`).join('\n')
 }
 
-// ---------------------------------------------------------------------------
-// Persist structured items immediately and return created doc IDs
-// ---------------------------------------------------------------------------
-interface SavedIds {
-  contactDocIds: string[]
-  decisionDocIds: string[]
-  principleDocIds: string[]
-  beliefDocIds: string[]
-  noteDocIds: string[]
-}
-
-async function persistStructuredItems(
-  adminDb: FirebaseFirestore.Firestore,
-  uid: string,
-  today: string,
-  parsed: ParsedJournalEntry
-): Promise<SavedIds> {
-  const ids: SavedIds = { contactDocIds: [], decisionDocIds: [], principleDocIds: [], beliefDocIds: [], noteDocIds: [] }
-
-  // Create decisions
-  for (const d of parsed.decisions) {
-    const reviewDate = new Date()
-    reviewDate.setDate(reviewDate.getDate() + 90)
-    const ref = adminDb.collection('users').doc(uid).collection('decisions').doc()
-    await ref.set({
-      title: d.title, hypothesis: d.hypothesis, options: [d.chosenOption],
-      chosenOption: d.chosenOption, reasoning: d.reasoning, confidenceLevel: d.confidenceLevel,
-      killCriteria: [], premortem: '', domain: d.domain,
-      linkedProjectIds: [], linkedSignalIds: [], status: 'active',
-      reviewDate: reviewDate.toISOString().split('T')[0], decidedAt: today,
-      createdAt: new Date(), updatedAt: new Date(),
-    })
-    ids.decisionDocIds.push(ref.id)
-  }
-
-  // Create principles
-  for (const p of parsed.principles) {
-    const ref = adminDb.collection('users').doc(uid).collection('principles').doc()
-    await ref.set({
-      text: p.text, shortForm: p.shortForm, source: 'manual',
-      sourceDescription: 'Extracted from Telegram journal', domain: p.domain,
-      dateFirstApplied: today, linkedDecisionIds: [], lastReinforcedAt: today,
-      reinforcementCount: 0, createdAt: new Date(), updatedAt: new Date(),
-    })
-    ids.principleDocIds.push(ref.id)
-  }
-
-  // Upsert contacts
-  for (const c of parsed.contacts) {
-    const contactsRef = adminDb.collection('users').doc(uid).collection('contacts')
-    const existing = await contactsRef.where('name', '==', c.name).limit(1).get()
-    if (existing.empty) {
-      const ref = contactsRef.doc()
-      await ref.set({
-        name: c.name, lastConversationDate: today, notes: c.context,
-        createdAt: new Date(), updatedAt: new Date(),
-      })
-      ids.contactDocIds.push(ref.id)
-    } else {
-      const doc = existing.docs[0]
-      const prevNotes = doc.data().notes || ''
-      await doc.ref.update({
-        lastConversationDate: today,
-        notes: prevNotes ? `${prevNotes}\n${today}: ${c.context}` : `${today}: ${c.context}`,
-        updatedAt: new Date(),
-      })
-      ids.contactDocIds.push(doc.id)
-    }
-  }
-
-  // Save notes as external signals
-  for (const n of parsed.notes) {
-    const ref = adminDb.collection('users').doc(uid).collection('external_signals').doc()
-    await ref.set({
-      title: n.text.slice(0, 120), aiSummary: n.text, keyTakeaway: n.text,
-      valueBullets: [], sourceUrl: '', sourceName: 'Journal note',
-      source: 'telegram', relevanceScore: n.actionRequired ? 0.8 : 0.4,
-      thesisPillars: [], status: 'inbox', readStatus: 'unread',
-      publishedAt: new Date().toISOString(), createdAt: new Date(), updatedAt: new Date(),
-    })
-    ids.noteDocIds.push(ref.id)
-  }
-
-  // Create beliefs
-  for (const b of parsed.beliefs) {
-    const attentionDate = new Date()
-    attentionDate.setDate(attentionDate.getDate() + 21)
-    const ref = adminDb.collection('users').doc(uid).collection('beliefs').doc()
-    await ref.set({
-      statement: b.statement, confidence: b.confidence, domain: b.domain,
-      evidenceFor: b.evidenceFor, evidenceAgainst: b.evidenceAgainst,
-      status: 'active', linkedDecisionIds: [], linkedPrincipleIds: [],
-      sourceJournalDate: today, attentionDate: attentionDate.toISOString().split('T')[0],
-      createdAt: new Date(), updatedAt: new Date(),
-    })
-    ids.beliefDocIds.push(ref.id)
-  }
-
-  return ids
-}
-
 function appendJournalText(existing: string, newText: string): string {
   const now = new Date()
   const timeStr = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })
@@ -522,79 +380,6 @@ async function computeAndSaveReward(
   return { score: reward.score, delta }
 }
 
-function buildDailyLogUpdate(parsed: ParsedJournalEntry) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const logUpdate: Record<string, any> = { updatedAt: new Date() }
-  // Energy
-  if (parsed.energy.nervousSystemState) logUpdate.nervousSystemState = parsed.energy.nervousSystemState
-  if (parsed.energy.bodyFelt) logUpdate.bodyFelt = parsed.energy.bodyFelt
-  if (parsed.energy.trainingTypes.length > 0) logUpdate.trainingTypes = parsed.energy.trainingTypes
-  if (parsed.energy.sleepHours != null) logUpdate.sleepHours = parsed.energy.sleepHours
-  // Output
-  if (parsed.output.focusHoursActual != null) logUpdate.focusHoursActual = parsed.output.focusHoursActual
-  if (parsed.output.whatShipped) logUpdate.whatShipped = parsed.output.whatShipped
-  // Intelligence
-  if (parsed.intelligence.discoveryConversationsCount != null) logUpdate.discoveryConversationsCount = parsed.intelligence.discoveryConversationsCount
-  if (parsed.intelligence.insightsExtracted != null) logUpdate.insightsExtracted = parsed.intelligence.insightsExtracted
-  if (parsed.intelligence.problemSelected) logUpdate.problemSelected = parsed.intelligence.problemSelected
-  // Network
-  if (parsed.network.warmIntrosMade != null) logUpdate.warmIntrosMade = parsed.network.warmIntrosMade
-  if (parsed.network.warmIntrosReceived != null) logUpdate.warmIntrosReceived = parsed.network.warmIntrosReceived
-  if (parsed.network.meetingsBooked != null) logUpdate.meetingsBooked = parsed.network.meetingsBooked
-  // Revenue
-  if (parsed.revenue.revenueAsksCount != null) logUpdate.revenueAsksCount = parsed.revenue.revenueAsksCount
-  if (parsed.revenue.revenueThisSession != null) logUpdate.revenueThisSession = parsed.revenue.revenueThisSession
-  if (parsed.revenue.revenueStreamType) logUpdate.revenueStreamType = parsed.revenue.revenueStreamType
-  if (parsed.revenue.feedbackLoopClosed != null) logUpdate.feedbackLoopClosed = parsed.revenue.feedbackLoopClosed
-  // Skill Building
-  if (parsed.skill.deliberatePracticeMinutes != null) logUpdate.deliberatePracticeMinutes = parsed.skill.deliberatePracticeMinutes
-  if (parsed.skill.newTechniqueApplied != null) logUpdate.newTechniqueApplied = parsed.skill.newTechniqueApplied
-  if (parsed.skill.automationCreated != null) logUpdate.automationCreated = parsed.skill.automationCreated
-  // PsyCap
-  if (parsed.psyCap.hope != null) logUpdate.psyCapHope = parsed.psyCap.hope
-  if (parsed.psyCap.efficacy != null) logUpdate.psyCapEfficacy = parsed.psyCap.efficacy
-  if (parsed.psyCap.resilience != null) logUpdate.psyCapResilience = parsed.psyCap.resilience
-  if (parsed.psyCap.optimism != null) logUpdate.psyCapOptimism = parsed.psyCap.optimism
-  // Cadence
-  if (parsed.cadenceCompleted.length > 0) logUpdate.cadenceCompleted = parsed.cadenceCompleted
-  return logUpdate
-}
-
-function hasStructuredItems(parsed: ParsedJournalEntry): boolean {
-  return parsed.contacts.length > 0 ||
-    parsed.decisions.length > 0 ||
-    parsed.principles.length > 0 ||
-    parsed.beliefs.length > 0 ||
-    parsed.notes.length > 0
-}
-
-async function saveJournalReviewRecord(
-  adminDb: FirebaseFirestore.Firestore,
-  uid: string,
-  today: string,
-  journalText: string,
-  parsed: ParsedJournalEntry,
-  savedIds: SavedIds,
-  chatId: number
-): Promise<string> {
-  const reviewRef = adminDb.collection('users').doc(uid).collection('journal_reviews').doc()
-  await reviewRef.set({
-    uid,
-    date: today,
-    journalText,
-    contacts: parsed.contacts.map((c, i) => ({ ...c, docId: savedIds.contactDocIds[i], status: 'saved' })),
-    decisions: parsed.decisions.map((d, i) => ({ ...d, docId: savedIds.decisionDocIds[i], status: 'saved' })),
-    principles: parsed.principles.map((p, i) => ({ ...p, docId: savedIds.principleDocIds[i], status: 'saved' })),
-    beliefs: parsed.beliefs.map((b, i) => ({ ...b, docId: savedIds.beliefDocIds[i], status: 'saved' })),
-    notes: parsed.notes.map((n, i) => ({ ...n, docId: savedIds.noteDocIds[i], status: 'saved' })),
-    status: 'saved',
-    telegramChatId: chatId,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  })
-  return reviewRef.id
-}
-
 async function handleJournal(uid: string, text: string, chatId: number) {
   const adminDb = await getAdminDb()
   const today = getTodayKey()
@@ -612,9 +397,47 @@ async function handleJournal(uid: string, text: string, chatId: number) {
     const existingLog = existingSnap.data() || {}
     const newJournal = appendJournalText(existingLog.journalEntry || '', text)
 
-    // Save metrics immediately (energy, output, intelligence, etc.)
-    const logUpdate = buildDailyLogUpdate(parsed)
-    logUpdate.journalEntry = newJournal
+    // Build daily log update from parsed data
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const logUpdate: Record<string, any> = {
+      journalEntry: newJournal,
+      updatedAt: new Date(),
+    }
+
+    // Energy
+    if (parsed.energy.nervousSystemState) logUpdate.nervousSystemState = parsed.energy.nervousSystemState
+    if (parsed.energy.bodyFelt) logUpdate.bodyFelt = parsed.energy.bodyFelt
+    if (parsed.energy.trainingTypes.length > 0) logUpdate.trainingTypes = parsed.energy.trainingTypes
+    if (parsed.energy.sleepHours != null) logUpdate.sleepHours = parsed.energy.sleepHours
+    // Output
+    if (parsed.output.focusHoursActual != null) logUpdate.focusHoursActual = parsed.output.focusHoursActual
+    if (parsed.output.whatShipped) logUpdate.whatShipped = parsed.output.whatShipped
+    // Intelligence
+    if (parsed.intelligence.discoveryConversationsCount != null) logUpdate.discoveryConversationsCount = parsed.intelligence.discoveryConversationsCount
+    if (parsed.intelligence.insightsExtracted != null) logUpdate.insightsExtracted = parsed.intelligence.insightsExtracted
+    if (parsed.intelligence.problemSelected) logUpdate.problemSelected = parsed.intelligence.problemSelected
+    // Network
+    if (parsed.network.warmIntrosMade != null) logUpdate.warmIntrosMade = parsed.network.warmIntrosMade
+    if (parsed.network.warmIntrosReceived != null) logUpdate.warmIntrosReceived = parsed.network.warmIntrosReceived
+    if (parsed.network.meetingsBooked != null) logUpdate.meetingsBooked = parsed.network.meetingsBooked
+    // Revenue
+    if (parsed.revenue.revenueAsksCount != null) logUpdate.revenueAsksCount = parsed.revenue.revenueAsksCount
+    if (parsed.revenue.revenueThisSession != null) logUpdate.revenueThisSession = parsed.revenue.revenueThisSession
+    if (parsed.revenue.revenueStreamType) logUpdate.revenueStreamType = parsed.revenue.revenueStreamType
+    if (parsed.revenue.feedbackLoopClosed != null) logUpdate.feedbackLoopClosed = parsed.revenue.feedbackLoopClosed
+    // Skill Building
+    if (parsed.skill.deliberatePracticeMinutes != null) logUpdate.deliberatePracticeMinutes = parsed.skill.deliberatePracticeMinutes
+    if (parsed.skill.newTechniqueApplied != null) logUpdate.newTechniqueApplied = parsed.skill.newTechniqueApplied
+    if (parsed.skill.automationCreated != null) logUpdate.automationCreated = parsed.skill.automationCreated
+    // PsyCap
+    if (parsed.psyCap.hope != null) logUpdate.psyCapHope = parsed.psyCap.hope
+    if (parsed.psyCap.efficacy != null) logUpdate.psyCapEfficacy = parsed.psyCap.efficacy
+    if (parsed.psyCap.resilience != null) logUpdate.psyCapResilience = parsed.psyCap.resilience
+    if (parsed.psyCap.optimism != null) logUpdate.psyCapOptimism = parsed.psyCap.optimism
+    // Cadence
+    if (parsed.cadenceCompleted.length > 0) logUpdate.cadenceCompleted = parsed.cadenceCompleted
+
+    // Save to daily log (merge to avoid overwriting existing fields)
     await logRef.set(logUpdate, { merge: true })
 
     // Create decisions
@@ -740,29 +563,8 @@ async function handleJournal(uid: string, text: string, chatId: number) {
     const deltaStr = delta != null ? (delta >= 0 ? ` (+${delta})` : ` (${delta})`) : ''
     const scoreLine = `\n\n*g* = ${score.toFixed(1)}${deltaStr}`
 
-    // Build reply
-    const reply = buildJournalReply(parsed) + scoreLine + coachingSection
-
-    // If there are structured items, save a review record and offer "Review & Edit" link
-    if (savedIds && hasStructuredItems(parsed)) {
-      const reviewId = await saveJournalReviewRecord(adminDb, uid, today, text, parsed, savedIds, chatId)
-      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://sovereignangel.github.io')
-      const reviewUrl = `${baseUrl}/review/${reviewId}`
-
-      const itemSummary = [
-        parsed.contacts.length && `${parsed.contacts.length} contacts`,
-        parsed.decisions.length && `${parsed.decisions.length} decisions`,
-        parsed.principles.length && `${parsed.principles.length} principles`,
-        parsed.beliefs.length && `${parsed.beliefs.length} beliefs`,
-        parsed.notes.length && `${parsed.notes.length} notes`,
-      ].filter(Boolean).join(', ')
-
-      await sendTelegramReplyWithKeyboard(chatId, reply + `\n\n---\nSaved: ${itemSummary}`, [
-        [{ text: '✏️ Review & Edit', url: reviewUrl }],
-      ])
-    } else {
-      await sendTelegramReply(chatId, reply)
-    }
+    // Reply with summary + score + coaching
+    await sendTelegramReply(chatId, buildJournalReply(parsed) + scoreLine + coachingSection)
   } catch (error) {
     console.error('Journal parsing error:', error)
     // Still save the raw text even if AI parsing fails (also append)
@@ -786,9 +588,45 @@ async function handleJournalFromVoice(uid: string, transcript: string, parsed: P
     const existingLog = existingSnap.data() || {}
     const newJournal = appendJournalText(existingLog.journalEntry || '', transcript)
 
-    // Save metrics immediately
-    const logUpdate = buildDailyLogUpdate(parsed)
-    logUpdate.journalEntry = newJournal
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const logUpdate: Record<string, any> = {
+      journalEntry: newJournal,
+      updatedAt: new Date(),
+    }
+
+    // Energy
+    if (parsed.energy.nervousSystemState) logUpdate.nervousSystemState = parsed.energy.nervousSystemState
+    if (parsed.energy.bodyFelt) logUpdate.bodyFelt = parsed.energy.bodyFelt
+    if (parsed.energy.trainingTypes.length > 0) logUpdate.trainingTypes = parsed.energy.trainingTypes
+    if (parsed.energy.sleepHours != null) logUpdate.sleepHours = parsed.energy.sleepHours
+    // Output
+    if (parsed.output.focusHoursActual != null) logUpdate.focusHoursActual = parsed.output.focusHoursActual
+    if (parsed.output.whatShipped) logUpdate.whatShipped = parsed.output.whatShipped
+    // Intelligence
+    if (parsed.intelligence.discoveryConversationsCount != null) logUpdate.discoveryConversationsCount = parsed.intelligence.discoveryConversationsCount
+    if (parsed.intelligence.insightsExtracted != null) logUpdate.insightsExtracted = parsed.intelligence.insightsExtracted
+    if (parsed.intelligence.problemSelected) logUpdate.problemSelected = parsed.intelligence.problemSelected
+    // Network
+    if (parsed.network.warmIntrosMade != null) logUpdate.warmIntrosMade = parsed.network.warmIntrosMade
+    if (parsed.network.warmIntrosReceived != null) logUpdate.warmIntrosReceived = parsed.network.warmIntrosReceived
+    if (parsed.network.meetingsBooked != null) logUpdate.meetingsBooked = parsed.network.meetingsBooked
+    // Revenue
+    if (parsed.revenue.revenueAsksCount != null) logUpdate.revenueAsksCount = parsed.revenue.revenueAsksCount
+    if (parsed.revenue.revenueThisSession != null) logUpdate.revenueThisSession = parsed.revenue.revenueThisSession
+    if (parsed.revenue.revenueStreamType) logUpdate.revenueStreamType = parsed.revenue.revenueStreamType
+    if (parsed.revenue.feedbackLoopClosed != null) logUpdate.feedbackLoopClosed = parsed.revenue.feedbackLoopClosed
+    // Skill Building
+    if (parsed.skill.deliberatePracticeMinutes != null) logUpdate.deliberatePracticeMinutes = parsed.skill.deliberatePracticeMinutes
+    if (parsed.skill.newTechniqueApplied != null) logUpdate.newTechniqueApplied = parsed.skill.newTechniqueApplied
+    if (parsed.skill.automationCreated != null) logUpdate.automationCreated = parsed.skill.automationCreated
+    // PsyCap
+    if (parsed.psyCap.hope != null) logUpdate.psyCapHope = parsed.psyCap.hope
+    if (parsed.psyCap.efficacy != null) logUpdate.psyCapEfficacy = parsed.psyCap.efficacy
+    if (parsed.psyCap.resilience != null) logUpdate.psyCapResilience = parsed.psyCap.resilience
+    if (parsed.psyCap.optimism != null) logUpdate.psyCapOptimism = parsed.psyCap.optimism
+    // Cadence
+    if (parsed.cadenceCompleted.length > 0) logUpdate.cadenceCompleted = parsed.cadenceCompleted
+
     await logRef.set(logUpdate, { merge: true })
 
     // Create decisions
@@ -881,29 +719,10 @@ async function handleJournalFromVoice(uid: string, transcript: string, parsed: P
     const deltaStr = delta != null ? (delta >= 0 ? ` (+${delta})` : ` (${delta})`) : ''
     const scoreLine = `\n\n*g* = ${score.toFixed(1)}${deltaStr}`
 
-    // Reply with transcript
+    // Reply with transcript + structured summary + score + coaching
     const journalReply = buildJournalReply(parsed)
-    const baseReply = `*Transcript:*\n_"${transcript}"_\n\n${journalReply}${scoreLine}${coachingSection}`
-
-    if (savedIds && hasStructuredItems(parsed)) {
-      const reviewId = await saveJournalReviewRecord(adminDb, uid, today, transcript, parsed, savedIds, chatId)
-      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://sovereignangel.github.io')
-      const reviewUrl = `${baseUrl}/review/${reviewId}`
-
-      const itemSummary = [
-        parsed.contacts.length && `${parsed.contacts.length} contacts`,
-        parsed.decisions.length && `${parsed.decisions.length} decisions`,
-        parsed.principles.length && `${parsed.principles.length} principles`,
-        parsed.beliefs.length && `${parsed.beliefs.length} beliefs`,
-        parsed.notes.length && `${parsed.notes.length} notes`,
-      ].filter(Boolean).join(', ')
-
-      await sendTelegramReplyWithKeyboard(chatId, baseReply + `\n\n---\nSaved: ${itemSummary}`, [
-        [{ text: '✏️ Review & Edit', url: reviewUrl }],
-      ])
-    } else {
-      await sendTelegramReply(chatId, baseReply)
-    }
+    const fullReply = `*Transcript:*\n_"${transcript}"_\n\n${journalReply}${scoreLine}${coachingSection}`
+    await sendTelegramReply(chatId, fullReply)
   } catch (error) {
     console.error('Voice journal save error:', error)
     // Append even on failure
@@ -1312,6 +1131,205 @@ async function handleFeedback(uid: string, text: string, chatId: number) {
   }
 }
 
+async function handleIterate(uid: string, text: string, chatId: number) {
+  const adminDb = await getAdminDb()
+
+  if (!text.trim()) {
+    await sendTelegramReply(chatId, 'Usage: `/iterate project-name add dark mode`\n\nFirst word is the project name, rest is the change request.')
+    return
+  }
+
+  // Parse: first word = project name slug, rest = changes
+  const parts = text.trim().split(/\s+/)
+  const projectSlug = parts[0].toLowerCase()
+  const changes = parts.slice(1).join(' ')
+
+  if (!changes) {
+    await sendTelegramReply(chatId, 'Missing change description. Usage: `/iterate project-name add dark mode`')
+    return
+  }
+
+  // Find venture by matching prd.projectName or spec.name
+  const venturesSnap = await adminDb.collection('users').doc(uid).collection('ventures')
+    .where('stage', '==', 'deployed')
+    .get()
+
+  const matchedDoc = venturesSnap.docs.find(d => {
+    const data = d.data()
+    const prdName = data.prd?.projectName?.toLowerCase()
+    const specName = data.spec?.name?.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-+$/, '')
+    return prdName === projectSlug || specName === projectSlug ||
+      data.spec?.name?.toLowerCase() === projectSlug
+  })
+
+  if (!matchedDoc) {
+    await sendTelegramReply(chatId, `No deployed venture found matching "${projectSlug}".\n\nUse the project name from the PRD (kebab-case).`)
+    return
+  }
+
+  const venture = matchedDoc.data()
+  const ventureId = matchedDoc.id
+
+  // Update stage to building, append to iterations
+  const iterations = venture.iterations || []
+  iterations.push({ request: changes, completedAt: null })
+
+  await matchedDoc.ref.update({
+    stage: 'building',
+    iterations,
+    'build.status': 'generating',
+    'build.startedAt': new Date(),
+    'build.errorMessage': null,
+    updatedAt: new Date(),
+  })
+
+  await sendTelegramReply(chatId, `*Iterating on ${venture.spec.name}...*\n\n_"${changes}"_\n\nThis may take a few minutes.`)
+
+  // Fire repository_dispatch for iterate
+  const githubToken = process.env.GITHUB_TOKEN
+  const githubOwner = process.env.GITHUB_OWNER || 'sovereignangel'
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '')
+  const callbackUrl = `${baseUrl}/api/ventures/build/callback`
+
+  if (!githubToken) {
+    await matchedDoc.ref.update({
+      'build.status': 'failed',
+      'build.errorMessage': 'GITHUB_TOKEN not configured',
+      'build.completedAt': new Date(),
+      stage: 'deployed', // revert
+      updatedAt: new Date(),
+    })
+    await sendTelegramReply(chatId, 'Iterate failed: GITHUB_TOKEN not configured on server.')
+    return
+  }
+
+  try {
+    const dispatchRes = await fetch(`https://api.github.com/repos/${githubOwner}/venture-builder/dispatches`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${githubToken}`,
+        'Accept': 'application/vnd.github.v3+json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        event_type: 'iterate-venture',
+        client_payload: {
+          uid,
+          ventureId,
+          repoName: venture.build.repoName,
+          changes,
+          spec: venture.spec,
+          prd: venture.prd,
+          chatId,
+          callbackUrl,
+        },
+      }),
+    })
+
+    if (!dispatchRes.ok) {
+      const errText = await dispatchRes.text()
+      throw new Error(`GitHub dispatch failed (${dispatchRes.status}): ${errText}`)
+    }
+  } catch (error) {
+    console.error('Iterate dispatch error:', error)
+    await matchedDoc.ref.update({
+      'build.status': 'failed',
+      'build.errorMessage': error instanceof Error ? error.message : 'Dispatch failed',
+      'build.completedAt': new Date(),
+      stage: 'deployed', // revert
+      updatedAt: new Date(),
+    })
+    await sendTelegramReply(chatId,
+      `Iterate dispatch failed for ${venture.spec.name}.\n\n_${error instanceof Error ? error.message : 'Unknown error'}_`)
+  }
+}
+
+async function handleBuild(uid: string, text: string, chatId: number) {
+  const adminDb = await getAdminDb()
+
+  try {
+    const { num } = parseVentureNumber(text.trim())
+    const ventureDoc = await findVentureByNumberOrStage(adminDb, uid, num, 'prd_draft')
+
+    if (!ventureDoc) {
+      await sendTelegramReply(chatId, num
+        ? `Venture #${num} not found.`
+        : 'No venture with a PRD ready to build.\n\nUse /venture to spec one first.')
+      return
+    }
+
+    const venture = ventureDoc.data()
+    const ventureId = ventureDoc.id
+    const spec = venture.spec
+    const vNum = venture.ventureNumber ? `#${venture.ventureNumber} ` : ''
+
+    if (!venture.prd) {
+      await sendTelegramReply(chatId, `${vNum}${spec.name} has no PRD yet.\n\nUse /feedback ${venture.ventureNumber || ''} <text> to generate one.`)
+      return
+    }
+
+    if (venture.stage === 'building' || venture.stage === 'deployed') {
+      await sendTelegramReply(chatId, `${vNum}${spec.name} is already in "${venture.stage}" stage.`)
+      return
+    }
+
+    // Mark as building
+    await ventureDoc.ref.update({
+      stage: 'building',
+      'build.status': 'generating',
+      'build.startedAt': new Date(),
+      updatedAt: new Date(),
+    })
+
+    await sendTelegramReply(chatId, `${vNum}Build started for ${spec.name}\n\nGenerating codebase... This may take a few minutes.`)
+
+    // Fire repository_dispatch to the builder repo (fire-and-forget)
+    const githubToken = process.env.GITHUB_TOKEN
+    const githubOwner = process.env.GITHUB_OWNER || 'sovereignangel'
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '')
+    const callbackUrl = `${baseUrl}/api/ventures/build/callback`
+
+    if (!githubToken) {
+      await ventureDoc.ref.update({
+        'build.status': 'failed',
+        'build.errorMessage': 'GITHUB_TOKEN not configured',
+        'build.completedAt': new Date(),
+        updatedAt: new Date(),
+      })
+      await sendTelegramReply(chatId, 'Build failed: GITHUB_TOKEN not configured on server.')
+      return
+    }
+
+    const dispatchRes = await fetch(`https://api.github.com/repos/${githubOwner}/venture-builder/dispatches`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${githubToken}`,
+        'Accept': 'application/vnd.github.v3+json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        event_type: 'build-venture',
+        client_payload: {
+          uid,
+          ventureId,
+          spec,
+          prd: venture.prd,
+          chatId,
+          callbackUrl,
+        },
+      }),
+    })
+
+    if (!dispatchRes.ok) {
+      const errText = await dispatchRes.text()
+      throw new Error(`GitHub dispatch failed (${dispatchRes.status}): ${errText}`)
+    }
+  } catch (error) {
+    console.error('Build error:', error)
+    await sendTelegramReply(chatId, `Build failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
+  }
+}
+
 async function handleMemo(uid: string, text: string, chatId: number) {
   const adminDb = await getAdminDb()
 
@@ -1478,6 +1496,7 @@ async function handleClaudeBuild(uid: string, text: string, chatId: number) {
 
   try {
     // Parse: optional venture number + optional skill names (comma-separated after "with")
+    // Examples: /cbuild 3, /cbuild 3 with armstrong-brand,stripe-payments, /cbuild with dark-saas
     const withMatch = text.match(/^(.*?)(?:\s+with\s+(.+))?$/)
     const numPart = withMatch?.[1]?.trim() || ''
     const skillsPart = withMatch?.[2]?.trim() || ''
@@ -1507,12 +1526,12 @@ async function handleClaudeBuild(uid: string, text: string, chatId: number) {
     }
 
     if (venture.stage === 'building') {
-      await sendTelegramReply(chatId, `${vNum}${spec.name} is already building. Use /reset ${venture.ventureNumber || ''} to unstick.`)
+      await sendTelegramReply(chatId, `${vNum}${spec.name} is already building.`)
       return
     }
 
     if (venture.stage === 'deployed') {
-      await sendTelegramReply(chatId, `${vNum}${spec.name} is already deployed. Use /iterate to modify it.`)
+      await sendTelegramReply(chatId, `${vNum}${spec.name} is already deployed. Use /citerate to modify it.`)
       return
     }
 
@@ -1529,43 +1548,109 @@ async function handleClaudeBuild(uid: string, text: string, chatId: number) {
     const skillsLabel = skillNames.length > 0 ? `\nSkills: ${skillNames.join(', ')}` : '\nSkills: base-nextjs, clean-design (defaults)'
     await sendTelegramReply(chatId, `${vNum}Claude build started for ${spec.name}${skillsLabel}\n\nGenerating codebase... This may take 2-5 minutes.`)
 
-    // Dispatch to /api/ventures/claude-build (has maxDuration=300).
-    // We fire-and-forget so the webhook returns immediately.
-    // The claude-build endpoint handles Telegram notifications on completion.
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '')
-    const internalSecret = process.env.INTERNAL_API_SECRET
+    // Load skills
+    const { buildVenture } = await import('@/lib/claude-builder')
+    const { DEFAULT_SKILLS } = await import('@/lib/claude-builder/default-skills')
 
-    if (!baseUrl || !internalSecret) {
-      await sendTelegramReply(chatId, 'Build config error: NEXT_PUBLIC_BASE_URL or INTERNAL_API_SECRET not set.')
-      await ventureDoc.ref.update({
-        stage: 'prd_draft',
-        'build.status': 'failed',
-        'build.errorMessage': 'Server misconfigured: missing BASE_URL or INTERNAL_API_SECRET',
-        'build.completedAt': new Date(),
-        updatedAt: new Date(),
-      })
-      return
+    let skills: import('@/lib/types').BuilderSkill[] = []
+
+    if (skillNames.length > 0) {
+      // Load user's custom skills
+      const skillsSnap = await adminDb.collection('users').doc(uid).collection('builder_skills').get()
+      const userSkills = skillsSnap.docs.map(d => ({ id: d.id, ...d.data() })) as import('@/lib/types').BuilderSkill[]
+
+      // Match by name
+      const matched = userSkills.filter(s => skillNames.includes(s.name))
+
+      // Also check defaults for unmatched names
+      const userNames = new Set(matched.map(s => s.name))
+      const defaultMatches = DEFAULT_SKILLS
+        .filter(s => skillNames.includes(s.name) && !userNames.has(s.name))
+        .map(s => ({ ...s, id: `default-${s.name}`, createdAt: new Date(), updatedAt: new Date() }))
+
+      skills = [...matched, ...defaultMatches] as import('@/lib/types').BuilderSkill[]
     }
 
-    // Fire the build request — don't await the response
-    fetch(`${baseUrl}/api/ventures/claude-build`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${internalSecret}`,
-      },
-      body: JSON.stringify({
-        ventureId,
-        uid,
-        skillNames: skillNames.length > 0 ? skillNames : undefined,
-        chatId: String(chatId),
-      }),
-    }).catch(err => {
-      console.error('Failed to dispatch claude-build:', err)
+    // Use auto-attach defaults if no skills specified
+    if (skills.length === 0) {
+      const defaultSnap = await adminDb.collection('users').doc(uid).collection('builder_skills')
+        .where('isDefault', '==', true).get()
+
+      if (!defaultSnap.empty) {
+        skills = defaultSnap.docs.map(d => ({ id: d.id, ...d.data() })) as import('@/lib/types').BuilderSkill[]
+      } else {
+        skills = DEFAULT_SKILLS
+          .filter(s => s.isDefault)
+          .map(s => ({ ...s, id: `default-${s.name}`, createdAt: new Date(), updatedAt: new Date() })) as import('@/lib/types').BuilderSkill[]
+      }
+    }
+
+    // Build with Claude
+    const result = await buildVenture({
+      ventureId,
+      uid,
+      spec: venture.spec,
+      prd: venture.prd,
+      skills,
     })
+
+    if (result.success) {
+      await ventureDoc.ref.update({
+        stage: 'deployed',
+        'build.status': 'live',
+        'build.repoUrl': result.repoUrl,
+        'build.previewUrl': result.previewUrl,
+        'build.customDomain': result.customDomain,
+        'build.repoName': result.repoName,
+        'build.filesGenerated': result.filesGenerated,
+        'build.completedAt': new Date(),
+        'build.buildLog': result.buildLog,
+        updatedAt: new Date(),
+      })
+
+      // Auto-log the ship
+      try {
+        const now = new Date()
+        const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+        const logRef = adminDb.collection('users').doc(uid).collection('daily_logs').doc(today)
+        await logRef.set({
+          whatShipped: `Deployed ${spec.name} to ${result.previewUrl || result.repoUrl || 'live'} (Claude build)`,
+          publicIteration: true,
+          updatedAt: new Date(),
+        }, { merge: true })
+      } catch (logErr) {
+        console.error('Auto-ship log failed:', logErr)
+      }
+
+      const lines: string[] = [
+        `${vNum}${spec.name} deployed!`,
+        '',
+        `Files: ${result.filesGenerated}`,
+        `Repo: ${result.repoUrl}`,
+      ]
+      if (result.customDomain) {
+        lines.push(`Live: https://${result.customDomain}`)
+      } else if (result.previewUrl) {
+        lines.push(`Preview: ${result.previewUrl}`)
+      }
+      lines.push('', `Reply /citerate ${venture.prd.projectName} <changes> to iterate`)
+
+      await sendTelegramReply(chatId, lines.join('\n'))
+    } else {
+      await ventureDoc.ref.update({
+        'build.status': 'failed',
+        'build.errorMessage': result.errorMessage,
+        'build.completedAt': new Date(),
+        'build.buildLog': result.buildLog,
+        updatedAt: new Date(),
+      })
+
+      await sendTelegramReply(chatId,
+        `${vNum}Claude build failed for ${spec.name}\n\n${result.errorMessage}\n\nUse /cbuild ${venture.ventureNumber || ''} to retry.`)
+    }
   } catch (error) {
     console.error('Claude build error:', error)
-    await sendTelegramReply(chatId, `Build failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    await sendTelegramReply(chatId, `Claude build failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
   }
 }
 
@@ -1573,7 +1658,7 @@ async function handleClaudeIterate(uid: string, text: string, chatId: number) {
   const adminDb = await getAdminDb()
 
   if (!text.trim()) {
-    await sendTelegramReply(chatId, 'Usage: /iterate project-name add dark mode\n\nOptional skills: /iterate project-name add dark mode with armstrong-brand')
+    await sendTelegramReply(chatId, 'Usage: /citerate project-name add dark mode\n\nOptional skills: /citerate project-name add dark mode with armstrong-brand')
     return
   }
 
@@ -1588,7 +1673,7 @@ async function handleClaudeIterate(uid: string, text: string, chatId: number) {
   const skillNames = skillsPart ? skillsPart.split(',').map(s => s.trim()).filter(Boolean) : []
 
   if (!changes) {
-    await sendTelegramReply(chatId, 'Missing change description.\n\nUsage: /iterate project-name add dark mode')
+    await sendTelegramReply(chatId, 'Missing change description.\n\nUsage: /citerate project-name add dark mode')
     return
   }
 
@@ -1626,42 +1711,93 @@ async function handleClaudeIterate(uid: string, text: string, chatId: number) {
     updatedAt: new Date(),
   })
 
-  await sendTelegramReply(chatId, `${vNum}Iterating on ${venture.spec.name}...\n\n"${changes}"\n\nThis may take 2-5 minutes.`)
+  await sendTelegramReply(chatId, `${vNum}Iterating on ${venture.spec.name} with Claude...\n\n"${changes}"\n\nThis may take 2-5 minutes.`)
 
-  // Dispatch to /api/ventures/claude-build (has maxDuration=300).
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '')
-  const internalSecret = process.env.INTERNAL_API_SECRET
+  try {
+    const { buildVenture } = await import('@/lib/claude-builder')
+    const { DEFAULT_SKILLS } = await import('@/lib/claude-builder/default-skills')
 
-  if (!baseUrl || !internalSecret) {
-    await sendTelegramReply(chatId, 'Build config error: NEXT_PUBLIC_BASE_URL or INTERNAL_API_SECRET not set.')
-    await matchedDoc.ref.update({
-      stage: 'deployed',
-      'build.status': 'failed',
-      'build.errorMessage': 'Server misconfigured: missing BASE_URL or INTERNAL_API_SECRET',
-      'build.completedAt': new Date(),
-      updatedAt: new Date(),
-    })
-    return
-  }
+    // Load skills (same logic as handleClaudeBuild)
+    let skills: import('@/lib/types').BuilderSkill[] = []
+    if (skillNames.length > 0) {
+      const skillsSnap = await adminDb.collection('users').doc(uid).collection('builder_skills').get()
+      const userSkills = skillsSnap.docs.map(d => ({ id: d.id, ...d.data() })) as import('@/lib/types').BuilderSkill[]
+      const matched = userSkills.filter(s => skillNames.includes(s.name))
+      const userNames = new Set(matched.map(s => s.name))
+      const defaultMatches = DEFAULT_SKILLS
+        .filter(s => skillNames.includes(s.name) && !userNames.has(s.name))
+        .map(s => ({ ...s, id: `default-${s.name}`, createdAt: new Date(), updatedAt: new Date() }))
+      skills = [...matched, ...defaultMatches] as import('@/lib/types').BuilderSkill[]
+    }
+    if (skills.length === 0) {
+      skills = DEFAULT_SKILLS
+        .filter(s => s.isDefault)
+        .map(s => ({ ...s, id: `default-${s.name}`, createdAt: new Date(), updatedAt: new Date() })) as import('@/lib/types').BuilderSkill[]
+    }
 
-  // Fire the iterate request — don't await the response
-  fetch(`${baseUrl}/api/ventures/claude-build`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${internalSecret}`,
-    },
-    body: JSON.stringify({
+    const result = await buildVenture({
       ventureId,
       uid,
-      iterate: true,
-      changes,
-      skillNames: skillNames.length > 0 ? skillNames : undefined,
-      chatId: String(chatId),
-    }),
-  }).catch(err => {
-    console.error('Failed to dispatch claude-build iterate:', err)
-  })
+      spec: venture.spec,
+      prd: venture.prd,
+      skills,
+      iterate: {
+        repoName: venture.build?.repoName || venture.prd.projectName,
+        changes,
+      },
+    })
+
+    if (result.success) {
+      // Mark last iteration as completed
+      iterations[iterations.length - 1].completedAt = new Date()
+      await matchedDoc.ref.update({
+        stage: 'deployed',
+        iterations,
+        'build.status': 'live',
+        'build.repoUrl': result.repoUrl,
+        'build.previewUrl': result.previewUrl,
+        'build.customDomain': result.customDomain,
+        'build.repoName': result.repoName,
+        'build.filesGenerated': result.filesGenerated,
+        'build.completedAt': new Date(),
+        'build.buildLog': result.buildLog,
+        updatedAt: new Date(),
+      })
+
+      const lines = [
+        `${vNum}${venture.spec.name} updated!`,
+        '',
+        `Changes: "${changes}"`,
+        `Files modified: ${result.filesGenerated}`,
+      ]
+      if (result.customDomain) lines.push(`Live: https://${result.customDomain}`)
+      else if (result.previewUrl) lines.push(`Preview: ${result.previewUrl}`)
+
+      await sendTelegramReply(chatId, lines.join('\n'))
+    } else {
+      await matchedDoc.ref.update({
+        'build.status': 'failed',
+        'build.errorMessage': result.errorMessage,
+        'build.completedAt': new Date(),
+        'build.buildLog': result.buildLog,
+        stage: 'deployed', // revert
+        updatedAt: new Date(),
+      })
+      await sendTelegramReply(chatId,
+        `${vNum}Claude iterate failed for ${venture.spec.name}\n\n${result.errorMessage}`)
+    }
+  } catch (error) {
+    console.error('Claude iterate error:', error)
+    await matchedDoc.ref.update({
+      'build.status': 'failed',
+      'build.errorMessage': error instanceof Error ? error.message : 'Unknown error',
+      'build.completedAt': new Date(),
+      stage: 'deployed',
+      updatedAt: new Date(),
+    })
+    await sendTelegramReply(chatId,
+      `Claude iterate failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
+  }
 }
 
 async function handleSkill(uid: string, text: string, chatId: number) {
@@ -1679,7 +1815,7 @@ async function handleSkill(uid: string, text: string, chatId: number) {
       '  /skill info <name> — Show skill details',
       '',
       'Use in builds:',
-      '  /build 3 with armstrong-brand,stripe-payments',
+      '  /cbuild 3 with armstrong-brand,stripe-payments',
     ].join('\n'))
     return
   }
@@ -1744,7 +1880,7 @@ async function handleSkill(uid: string, text: string, chatId: number) {
       updatedAt: new Date(),
     })
 
-    await sendTelegramReply(chatId, `Skill created: ${name}\n\nUse it: /build 3 with ${name}`)
+    await sendTelegramReply(chatId, `Skill created: ${name}\n\nUse it: /cbuild 3 with ${name}`)
     return
   }
 
@@ -1848,458 +1984,6 @@ async function handleSkill(uid: string, text: string, chatId: number) {
   await sendTelegramReply(chatId, `Unknown skill command: ${subcommand}\n\nUse /skill for help.`)
 }
 
-// ─── Superpowers Structured Build Handlers ────────────────────────────
-
-async function handleStructuredBuild(uid: string, text: string, chatId: number) {
-  const adminDb = await getAdminDb()
-
-  try {
-    const { num } = parseVentureNumber(text)
-    const ventureDoc = await findVentureByNumberOrStage(adminDb, uid, num, 'prd_draft')
-
-    if (!ventureDoc) {
-      await sendTelegramReply(chatId, num
-        ? `Venture #${num} not found.`
-        : 'No venture with a PRD ready to build.\n\nUse /venture to spec one first.')
-      return
-    }
-
-    const venture = ventureDoc.data()
-    const ventureId = ventureDoc.id
-    const spec = venture.spec
-    const vNum = venture.ventureNumber ? `#${venture.ventureNumber} ` : ''
-
-    if (!venture.prd) {
-      await sendTelegramReply(chatId, `${vNum}${spec.name} has no PRD yet.`)
-      return
-    }
-
-    if (venture.stage === 'building') {
-      await sendTelegramReply(chatId, `${vNum}${spec.name} is already building.`)
-      return
-    }
-
-    if (venture.stage === 'deployed') {
-      await sendTelegramReply(chatId, `${vNum}${spec.name} is already deployed. Use /citerate to modify it.`)
-      return
-    }
-
-    // Check for existing active session
-    const existingSnap = await adminDb.collection('users').doc(uid).collection('build_sessions')
-      .where('ventureId', '==', ventureId)
-      .where('stage', 'not-in', ['complete'])
-      .limit(1)
-      .get()
-
-    if (!existingSnap.empty) {
-      const existing = existingSnap.docs[0].data()
-      await sendTelegramReply(chatId,
-        `${vNum}${spec.name} already has an active structured build in "${existing.stage}" stage.\n\nUse /srespond to continue or /sapprove to approve the design.`)
-      return
-    }
-
-    // Create build session
-    const sessionRef = adminDb.collection('users').doc(uid).collection('build_sessions').doc()
-    await sessionRef.set({
-      ventureId,
-      uid,
-      stage: 'brainstorming',
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    })
-
-    await sendTelegramReply(chatId, `${vNum}Superpowers build started for ${spec.name}\n\nPhase 1: Brainstorming — generating clarifying questions...`)
-
-    // Generate brainstorming questions
-    const { generateBrainstormQuestions } = await import('@/lib/claude-builder/structured-workflow')
-    const questions = await generateBrainstormQuestions(spec, venture.prd)
-
-    // Save questions to session
-    await sessionRef.update({
-      'brainstorm.questions': questions,
-      'brainstorm.answers': [],
-      updatedAt: new Date(),
-    })
-
-    const questionsList = questions.map((q: string, i: number) => `${i + 1}. ${q}`).join('\n')
-    await sendTelegramReply(chatId,
-      `${vNum}Before building, help me refine the spec:\n\n${questionsList}\n\nReply with /srespond <your answers> to continue.\nOr /sapprove to skip brainstorming and go straight to design.`)
-
-  } catch (error) {
-    console.error('Structured build error:', error)
-    await sendTelegramReply(chatId, `Structured build failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
-  }
-}
-
-async function handleStructuredRespond(uid: string, text: string, chatId: number) {
-  const adminDb = await getAdminDb()
-
-  try {
-    if (!text.trim()) {
-      await sendTelegramReply(chatId, 'Usage: /srespond <your answers to the brainstorming questions>')
-      return
-    }
-
-    // Find active session
-    const sessionsSnap = await adminDb.collection('users').doc(uid).collection('build_sessions')
-      .where('stage', 'in', ['brainstorming', 'design'])
-      .orderBy('createdAt', 'desc')
-      .limit(1)
-      .get()
-
-    if (sessionsSnap.empty) {
-      await sendTelegramReply(chatId, 'No active structured build session.\n\nStart one with /sbuild [#]')
-      return
-    }
-
-    const sessionDoc = sessionsSnap.docs[0]
-    const session = sessionDoc.data()
-    const ventureRef = adminDb.collection('users').doc(uid).collection('ventures').doc(session.ventureId)
-    const ventureSnap = await ventureRef.get()
-
-    if (!ventureSnap.exists) {
-      await sendTelegramReply(chatId, 'Venture not found for this build session.')
-      return
-    }
-
-    const venture = ventureSnap.data()!
-    const spec = venture.spec
-    const vNum = venture.ventureNumber ? `#${venture.ventureNumber} ` : ''
-
-    if (session.stage === 'brainstorming') {
-      // Store answer and check if we should move to design
-      const answers = [...(session.brainstorm?.answers || []), text.trim()]
-      await sessionDoc.ref.update({
-        'brainstorm.answers': answers,
-        updatedAt: new Date(),
-      })
-
-      // Generate design doc from spec + answers
-      await sendTelegramReply(chatId, `${vNum}Phase 2: Design — generating architecture document...`)
-
-      const { generateDesignDoc } = await import('@/lib/claude-builder/structured-workflow')
-      const design = await generateDesignDoc(spec, venture.prd, answers)
-
-      await sessionDoc.ref.update({
-        stage: 'design',
-        design: {
-          architecture: design.architecture,
-          components: design.components,
-          approved: false,
-        },
-        updatedAt: new Date(),
-      })
-
-      // Send design in sections (Telegram has 4096 char limit)
-      const archText = design.architecture.length > 3500
-        ? design.architecture.slice(0, 3500) + '\n\n...(truncated)'
-        : design.architecture
-      await sendTelegramReply(chatId, `${vNum}Architecture:\n\n${archText}`)
-
-      if (design.components.length > 0) {
-        await sendTelegramReply(chatId, `Components to build:\n${design.components.map((c: string) => `  - ${c}`).join('\n')}`)
-      }
-
-      await sendTelegramReply(chatId,
-        `${vNum}Review the design above.\n\n/sapprove — approve and start building\n/srespond <feedback> — request design changes`)
-
-    } else if (session.stage === 'design') {
-      // Regenerate design with feedback
-      await sendTelegramReply(chatId, `${vNum}Revising design based on feedback...`)
-
-      const answers = [...(session.brainstorm?.answers || []), `Design feedback: ${text.trim()}`]
-      const { generateDesignDoc } = await import('@/lib/claude-builder/structured-workflow')
-      const design = await generateDesignDoc(spec, venture.prd, answers)
-
-      await sessionDoc.ref.update({
-        'brainstorm.answers': answers,
-        design: {
-          architecture: design.architecture,
-          components: design.components,
-          approved: false,
-        },
-        updatedAt: new Date(),
-      })
-
-      const archText = design.architecture.length > 3500
-        ? design.architecture.slice(0, 3500) + '\n\n...(truncated)'
-        : design.architecture
-      await sendTelegramReply(chatId, `${vNum}Revised architecture:\n\n${archText}`)
-      await sendTelegramReply(chatId,
-        `${vNum}/sapprove — approve and start building\n/srespond <feedback> — request more changes`)
-    }
-
-  } catch (error) {
-    console.error('Structured respond error:', error)
-    await sendTelegramReply(chatId, `Error: ${error instanceof Error ? error.message : 'Unknown error'}`)
-  }
-}
-
-async function handleStructuredApprove(uid: string, chatId: number) {
-  const adminDb = await getAdminDb()
-
-  try {
-    // Find active session in brainstorming or design stage
-    const sessionsSnap = await adminDb.collection('users').doc(uid).collection('build_sessions')
-      .where('stage', 'in', ['brainstorming', 'design'])
-      .orderBy('createdAt', 'desc')
-      .limit(1)
-      .get()
-
-    if (sessionsSnap.empty) {
-      await sendTelegramReply(chatId, 'No active structured build session to approve.\n\nStart one with /sbuild [#]')
-      return
-    }
-
-    const sessionDoc = sessionsSnap.docs[0]
-    const session = sessionDoc.data()
-    const ventureRef = adminDb.collection('users').doc(uid).collection('ventures').doc(session.ventureId)
-    const ventureSnap = await ventureRef.get()
-
-    if (!ventureSnap.exists) {
-      await sendTelegramReply(chatId, 'Venture not found.')
-      return
-    }
-
-    const venture = ventureSnap.data()!
-    const spec = venture.spec
-    const vNum = venture.ventureNumber ? `#${venture.ventureNumber} ` : ''
-
-    // If still in brainstorming (no design yet), generate design first
-    if (session.stage === 'brainstorming') {
-      await sendTelegramReply(chatId, `${vNum}Skipping to design...`)
-
-      const { generateDesignDoc } = await import('@/lib/claude-builder/structured-workflow')
-      const answers = session.brainstorm?.answers || []
-      const design = await generateDesignDoc(spec, venture.prd, answers)
-
-      await sessionDoc.ref.update({
-        stage: 'design',
-        design: {
-          architecture: design.architecture,
-          components: design.components,
-          approved: false,
-        },
-        updatedAt: new Date(),
-      })
-
-      // Show design briefly before continuing
-      const summary = design.architecture.length > 1500
-        ? design.architecture.slice(0, 1500) + '\n\n...'
-        : design.architecture
-      await sendTelegramReply(chatId, `${vNum}Design summary:\n\n${summary}`)
-    }
-
-    // Move to planning
-    await sendTelegramReply(chatId, `${vNum}Phase 3: Planning — generating task breakdown...`)
-
-    const designArch = session.design?.architecture || ''
-    const designComponents = session.design?.components || []
-
-    const { generateTaskBreakdown } = await import('@/lib/claude-builder/structured-workflow')
-    const tasks = await generateTaskBreakdown(designArch, designComponents)
-
-    await sessionDoc.ref.update({
-      stage: 'planning',
-      'design.approved': true,
-      plan: { tasks, currentTask: 0 },
-      updatedAt: new Date(),
-    })
-
-    if (tasks.length > 0) {
-      const taskList = tasks.slice(0, 10).map((t: { name: string; files: string[] }, i: number) =>
-        `${i + 1}. ${t.name} (${t.files.join(', ')})`
-      ).join('\n')
-      await sendTelegramReply(chatId, `${vNum}Build plan (${tasks.length} tasks):\n${taskList}${tasks.length > 10 ? '\n...' : ''}`)
-    }
-
-    // Move to building
-    await sendTelegramReply(chatId, `${vNum}Phase 4: Building — generating codebase with Superpowers methodology...\nThis may take 2-5 minutes.`)
-
-    await sessionDoc.ref.update({ stage: 'building', updatedAt: new Date() })
-
-    // Mark venture as building
-    await ventureRef.update({
-      stage: 'building',
-      'build.status': 'generating',
-      'build.startedAt': new Date(),
-      'build.errorMessage': null,
-      'build.methodology': 'superpowers',
-      'build.buildLog': ['Superpowers structured build started'],
-      updatedAt: new Date(),
-    })
-
-    // Load skills — always include superpowers-methodology
-    const { buildVenture } = await import('@/lib/claude-builder')
-    const { DEFAULT_SKILLS } = await import('@/lib/claude-builder/default-skills')
-
-    const defaultSnap = await adminDb.collection('users').doc(uid).collection('builder_skills')
-      .where('isDefault', '==', true).get()
-
-    let skills: import('@/lib/types').BuilderSkill[]
-    if (!defaultSnap.empty) {
-      skills = defaultSnap.docs.map(d => ({ id: d.id, ...d.data() })) as import('@/lib/types').BuilderSkill[]
-    } else {
-      skills = DEFAULT_SKILLS
-        .filter(s => s.isDefault)
-        .map(s => ({ ...s, id: `default-${s.name}`, createdAt: new Date(), updatedAt: new Date() })) as import('@/lib/types').BuilderSkill[]
-    }
-
-    // Ensure superpowers-methodology is included
-    const hasMethodology = skills.some(s => s.name === 'superpowers-methodology')
-    if (!hasMethodology) {
-      const methodologySkill = DEFAULT_SKILLS.find(s => s.name === 'superpowers-methodology')
-      if (methodologySkill) {
-        skills.push({ ...methodologySkill, id: 'default-superpowers-methodology', createdAt: new Date(), updatedAt: new Date() } as import('@/lib/types').BuilderSkill)
-      }
-    }
-
-    const skillNames = skills.map(s => s.name)
-
-    // Build with Claude
-    const result = await buildVenture({
-      ventureId: session.ventureId,
-      uid,
-      spec: venture.spec,
-      prd: venture.prd,
-      skills,
-    })
-
-    if (result.success) {
-      // Phase 5: Review
-      await sendTelegramReply(chatId, `${vNum}Phase 5: Code Review...`)
-
-      const { reviewBuildOutput } = await import('@/lib/claude-builder/structured-workflow')
-      const review = await reviewBuildOutput(designArch, result.files)
-
-      await sessionDoc.ref.update({
-        stage: 'complete',
-        buildResult: {
-          success: result.success,
-          filesGenerated: result.filesGenerated,
-          repoUrl: result.repoUrl,
-          previewUrl: result.previewUrl,
-          customDomain: result.customDomain,
-          repoName: result.repoName,
-        },
-        review: {
-          specCompliance: review.specCompliance,
-          codeQuality: review.codeQuality,
-          passed: review.passed,
-        },
-        updatedAt: new Date(),
-      })
-
-      await ventureRef.update({
-        stage: 'deployed',
-        'build.status': 'live',
-        'build.repoUrl': result.repoUrl,
-        'build.previewUrl': result.previewUrl,
-        'build.customDomain': result.customDomain,
-        'build.repoName': result.repoName,
-        'build.filesGenerated': result.filesGenerated,
-        'build.completedAt': new Date(),
-        'build.buildLog': result.buildLog,
-        'build.methodology': 'superpowers',
-        'build.skills': skillNames,
-        updatedAt: new Date(),
-      })
-
-      // Auto-log ship
-      try {
-        const today = getTodayKey()
-        const logRef = adminDb.collection('users').doc(uid).collection('daily_logs').doc(today)
-        await logRef.set({
-          whatShipped: `Deployed ${spec.name} to ${result.previewUrl || result.repoUrl || 'live'} (Superpowers build)`,
-          publicIteration: true,
-          updatedAt: new Date(),
-        }, { merge: true })
-      } catch (logErr) {
-        console.error('Auto-ship log failed:', logErr)
-      }
-
-      const lines: string[] = [
-        `${vNum}${spec.name} deployed! (Superpowers)`,
-        '',
-        `Files: ${result.filesGenerated}`,
-        `Repo: ${result.repoUrl}`,
-      ]
-      if (result.customDomain) {
-        lines.push(`Live: https://${result.customDomain}`)
-      } else if (result.previewUrl) {
-        lines.push(`Preview: ${result.previewUrl}`)
-      }
-      lines.push('')
-      lines.push(`Review: ${review.passed ? 'PASSED' : 'NEEDS ATTENTION'}`)
-      lines.push(`Spec: ${review.specCompliance}`)
-      lines.push(`Quality: ${review.codeQuality}`)
-      lines.push('', `Reply /citerate ${venture.prd.projectName} <changes> to iterate`)
-
-      await sendTelegramReply(chatId, lines.join('\n'))
-    } else {
-      await sessionDoc.ref.update({
-        stage: 'complete',
-        buildResult: {
-          success: false,
-          errorMessage: result.errorMessage,
-        },
-        updatedAt: new Date(),
-      })
-
-      await ventureRef.update({
-        'build.status': 'failed',
-        'build.errorMessage': result.errorMessage,
-        'build.completedAt': new Date(),
-        'build.buildLog': result.buildLog,
-        updatedAt: new Date(),
-      })
-
-      await sendTelegramReply(chatId,
-        `${vNum}Superpowers build failed for ${spec.name}\n\n${result.errorMessage}\n\nUse /sbuild ${venture.ventureNumber || ''} to retry.`)
-    }
-
-  } catch (error) {
-    console.error('Structured approve error:', error)
-    await sendTelegramReply(chatId, `Build failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
-  }
-}
-
-async function handleDiscipline(uid: string, chatId: number) {
-  const adminDb = await getAdminDb()
-
-  try {
-    // Check if superpowers-methodology exists in user's skills
-    const snap = await adminDb.collection('users').doc(uid).collection('builder_skills')
-      .where('name', '==', 'superpowers-methodology').limit(1).get()
-
-    if (!snap.empty) {
-      // Toggle the isDefault flag
-      const doc = snap.docs[0]
-      const current = doc.data().isDefault ?? false
-      await doc.ref.update({ isDefault: !current, updatedAt: new Date() })
-      await sendTelegramReply(chatId,
-        !current
-          ? 'Superpowers methodology enabled as default for all builds.\n\nAll /cbuild commands will now include TDD and architecture-first discipline.'
-          : 'Superpowers methodology removed from defaults.\n\nBuilds will use standard skills only.')
-    } else {
-      // Copy from built-in defaults and enable
-      const { DEFAULT_SKILLS } = await import('@/lib/claude-builder/default-skills')
-      const builtin = DEFAULT_SKILLS.find(s => s.name === 'superpowers-methodology')
-      if (builtin) {
-        const ref = adminDb.collection('users').doc(uid).collection('builder_skills').doc()
-        await ref.set({ ...builtin, isDefault: true, createdAt: new Date(), updatedAt: new Date() })
-        await sendTelegramReply(chatId,
-          'Superpowers methodology enabled as default for all builds.\n\nAll /cbuild commands will now include TDD and architecture-first discipline.')
-      } else {
-        await sendTelegramReply(chatId, 'Superpowers methodology skill not found. This is a bug.')
-      }
-    }
-  } catch (error) {
-    console.error('Discipline toggle error:', error)
-    await sendTelegramReply(chatId, `Error: ${error instanceof Error ? error.message : 'Unknown error'}`)
-  }
-}
-
 export async function POST(req: NextRequest) {
   if (!BOT_TOKEN) {
     return NextResponse.json({ error: 'Bot not configured' }, { status: 500 })
@@ -2314,16 +1998,6 @@ export async function POST(req: NextRequest) {
 
   try {
     const update: TelegramUpdate = await req.json()
-
-    // --- Handle callback queries (inline keyboard button presses) ---
-    if (update.callback_query) {
-      const cbq = update.callback_query
-      // Acknowledge to stop loading spinner
-      await answerCallbackQuery(cbq.id)
-      return NextResponse.json({ ok: true })
-    }
-
-    // --- Handle regular messages ---
     const message = update.message
 
     if (!message?.text && !message?.voice) {
@@ -2380,7 +2054,7 @@ export async function POST(req: NextRequest) {
 
         // Detect if user said "build" at the start — route as build
         if (trimmedTranscript.startsWith('build')) {
-          await handleClaudeBuild(uid, trimmedTranscript.slice('build'.length).trim(), chatId)
+          await handleBuild(uid, trimmedTranscript.slice('build'.length).trim(), chatId)
           return NextResponse.json({ ok: true })
         }
 
@@ -2428,7 +2102,7 @@ export async function POST(req: NextRequest) {
         '`/signal <text>` — Create external signal',
         '`/signal #ai <text>` — Signal with pillar',
         '`/note <text>` — Quick note',
-        '`/journal <text>` — Journal entry (AI-parsed, review before save)',
+        '`/journal <text>` — Journal entry (AI-parsed)',
         '`/predict <text>` — Log a prediction (AI-analyzed)',
         '',
         '*Venture Builder:*',
@@ -2564,7 +2238,7 @@ export async function POST(req: NextRequest) {
     // Handle Claude iterate command
     if (parsed.command === 'citerate') {
       if (!parsed.text) {
-        await sendTelegramReply(chatId, 'Usage: /iterate project-name add dark mode')
+        await sendTelegramReply(chatId, 'Usage: /citerate project-name add dark mode')
         return NextResponse.json({ ok: true })
       }
       await handleClaudeIterate(uid, parsed.text, chatId)
@@ -2574,31 +2248,6 @@ export async function POST(req: NextRequest) {
     // Handle skill management command
     if (parsed.command === 'skill') {
       await handleSkill(uid, parsed.text, chatId)
-      return NextResponse.json({ ok: true })
-    }
-
-    // Handle Superpowers structured build commands
-    if (parsed.command === 'sbuild') {
-      await handleStructuredBuild(uid, parsed.text, chatId)
-      return NextResponse.json({ ok: true })
-    }
-
-    if (parsed.command === 'srespond') {
-      if (!parsed.text) {
-        await sendTelegramReply(chatId, 'Usage: /srespond <your answers to the brainstorming questions>')
-        return NextResponse.json({ ok: true })
-      }
-      await handleStructuredRespond(uid, parsed.text, chatId)
-      return NextResponse.json({ ok: true })
-    }
-
-    if (parsed.command === 'sapprove') {
-      await handleStructuredApprove(uid, chatId)
-      return NextResponse.json({ ok: true })
-    }
-
-    if (parsed.command === 'discipline') {
-      await handleDiscipline(uid, chatId)
       return NextResponse.json({ ok: true })
     }
 

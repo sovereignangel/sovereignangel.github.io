@@ -16,7 +16,6 @@ import type { NetworkContact, Decision, ExternalSignal, Venture, DailyLog } from
 import type { DailyAllocation } from '@/lib/types'
 import { MUSCLE_TARGETS } from '@/lib/constants'
 import { localDateString } from '@/lib/date-utils'
-import UnifiedReviewWidget from '@/components/thesis/review/UnifiedReviewWidget'
 
 // ─── Helpers ────────────────────────────────────────────────────────
 
@@ -319,9 +318,6 @@ export default function CommandCenter() {
           {stateOfPlay}
         </p>
       </div>
-
-      {/* ═══ RECALL ═══ */}
-      <UnifiedReviewWidget />
 
       {/* ═══ TWO-COLUMN LAYOUT ═══ */}
       <div className="grid grid-cols-1 lg:grid-cols-[3fr_2fr] gap-3">
