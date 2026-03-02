@@ -8,6 +8,7 @@ const ALLOWED_EMAILS = [
   'sean@alamobernal.com',
   'loricorpuz@gmail.com',
   'seanlouisbecker@gmail.com',
+  'lori.aretemgmt@gmail.com',
 ]
 
 function ABSkeleton() {
