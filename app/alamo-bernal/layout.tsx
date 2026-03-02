@@ -34,16 +34,21 @@ function ABSkeleton() {
 }
 
 function AccessDenied() {
-  const { signOut } = useAuth()
+  const { user, signOut } = useAuth()
   return (
     <div className="min-h-screen flex items-center justify-center">
       <div className="bg-paper border border-rule rounded-sm p-12 max-w-md w-full text-center">
         <h1 className="font-serif text-[22px] font-bold text-ink mb-2">
           Access Restricted
         </h1>
-        <p className="text-[13px] text-ink-muted mb-6">
+        <p className="text-[13px] text-ink-muted mb-2">
           This site is only accessible to authorized partners of Alamo Bernal Investments.
         </p>
+        {user?.email && (
+          <p className="text-[11px] font-mono text-ink-muted mb-6">
+            Signed in as: {user.email}
+          </p>
+        )}
         <button
           onClick={signOut}
           className="font-serif text-[12px] text-burgundy hover:underline"
