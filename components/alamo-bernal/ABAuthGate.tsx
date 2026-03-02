@@ -1,9 +1,23 @@
 'use client'
 
-import { useAuth } from '@/components/auth/AuthProvider'
+import { useState } from 'react'
+import { signInWithGooglePartner } from '@/lib/auth'
 
 export default function ABAuthGate() {
-  const { signIn, error, loading } = useAuth()
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  async function signIn() {
+    setLoading(true)
+    setError(null)
+    try {
+      await signInWithGooglePartner()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Sign in failed')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center">

@@ -32,6 +32,14 @@ export async function signInWithGoogle(): Promise<SignInResult | null> {
   return { user, calendarAccessToken }
 }
 
+// For partner sites (e.g. alamo-bernal) that manage their own allow-list
+export async function signInWithGooglePartner(): Promise<SignInResult | null> {
+  const provider = new GoogleAuthProvider()
+  const result = await signInWithPopup(auth, provider)
+  const credential = GoogleAuthProvider.credentialFromResult(result)
+  return { user: result.user, calendarAccessToken: credential?.accessToken || null }
+}
+
 export async function signOutUser(): Promise<void> {
   await firebaseSignOut(auth)
 }
