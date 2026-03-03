@@ -115,10 +115,6 @@ export default function OutputsSection() {
             industrialize your edge.
           </p>
 
-          <p className="text-[#333] mb-7">
-            Delivered as a fixed-scope engagement: I scope the system, build it, and hand it off
-            production-ready.
-          </p>
 
           <h3 className="text-[13px] font-semibold uppercase tracking-wide text-[#1a1a1a] mb-3">
             What I build
