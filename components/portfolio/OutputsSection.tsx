@@ -93,7 +93,7 @@ export default function OutputsSection() {
   const [activeTab, setActiveTab] = useState('services')
 
   return (
-    <section className="bg-[#faf8f4]/90 backdrop-blur-sm rounded-sm p-5 -mx-5">
+    <section className="bg-[#faf8f4]/50 backdrop-blur-sm rounded-sm p-5 -mx-5 font-serif">
       <SubTabs
         tabs={[
           { id: 'services', label: 'Services' },

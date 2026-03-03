@@ -1,6 +1,6 @@
 export default function AboutSection() {
   return (
-    <section className="bg-[#faf8f4]/90 backdrop-blur-sm rounded-sm p-5 -mx-5">
+    <section className="bg-[#faf8f4]/50 backdrop-blur-sm rounded-sm p-5 -mx-5 font-serif">
       <p className="text-[19px] font-medium text-[#1a1a1a] tracking-tight mb-4">
         I build software at the intersection of AI and markets.
       </p>
