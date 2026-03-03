@@ -29,14 +29,6 @@ const capabilities = [
 
 const caseStudies = [
   {
-    name: 'Dividend capture fund',
-    meta: 'Emerging hedge fund · ~$1.5M AUM',
-    summary:
-      'Built the full automation stack for a dividend capture strategy — weekly candidate screening, position sizing, trade monitoring, and next-morning exit execution.',
-    before: '4–6 hours/day of manual screening and execution',
-    after: '30-minute daily review',
-  },
-  {
     name: 'Options analytics platform',
     meta: 'Personal R&D · live 2 years',
     summary:
@@ -152,16 +144,7 @@ export default function OutputsSection() {
                 <h4 className="text-[17px] font-medium text-[#1a1a1a] mb-0.5">{cs.name}</h4>
                 <p className="text-[13px] text-[#888] mb-2">{cs.meta}</p>
                 <p className="text-[15px] text-[#555] mb-2.5">{cs.summary}</p>
-                {cs.before && cs.after && (
-                  <div className="text-sm text-[#444] py-3 px-4 bg-gradient-to-br from-[#f8f9fa] to-white border-l-[3px] border-[#1a1a1a] rounded-r">
-                    <span className="text-[#888]">Before:</span>{' '}
-                    <span className="text-[#555]">{cs.before}</span>
-                    <span className="mx-2 text-[#ccc]">·</span>
-                    <span className="text-[#888]">After:</span>{' '}
-                    <span className="font-semibold text-[#1a1a1a]">{cs.after}</span>
-                  </div>
-                )}
-                {cs.highlight && (
+{cs.highlight && (
                   <div className="text-sm text-[#444] py-3 px-4 bg-gradient-to-br from-[#f8f9fa] to-white border-l-[3px] border-[#1a1a1a] rounded-r">
                     <span className="font-semibold text-[#1a1a1a] tracking-tight">
                       {cs.highlight.metric}
