@@ -114,12 +114,11 @@ export const PROPOSAL_PHASES: ProposalPhase[] = [
     status: 'proposed',
     timeline: 'Months 1-3',
     description:
-      'Dual purpose: Lori builds technology that immediately reduces Sean\'s screening workload while getting deeply comfortable with the dividend capture strategy. Trust is built through working together — shipping real tools, reviewing trades, and understanding risk firsthand. Skin in the game: Sean allocates capital from the fund for Lori, distributed based on agreed technology milestones.',
+      'Dual purpose: Lori builds technology that immediately reduces Sean\'s screening workload while getting deeply comfortable with the dividend capture strategy. Trust is built through working together — shipping real tools, reviewing trades, and understanding risk firsthand. Skin in the game: Sean allocates capital from the fund for Lori on agreed milestones — giving Lori real exposure to the strategy and firsthand conviction when marketing the fund to investors.',
     deliverables: [
       'Automated dividend stock screener (NYSE + NASDAQ, 2,700+ universe)',
       'Historical ex-dividend price behavior database (3+ years)',
       'Daily candidate ranking dashboard with risk scores',
-      'Limit order optimization engine (dynamic 50% threshold)',
       'Portfolio tracking dashboard (positions, P&L, dividends)',
       'Market fund to friends and network to warm Phase 2 pipeline',
     ],
@@ -161,7 +160,7 @@ export const PROPOSAL_PHASES: ProposalPhase[] = [
         current: 'Gut feel on stock crash behavior',
         withTech: '3+ year backtest per stock',
         freed: 'Data-driven risk scoring',
-        impact: 'Better stock selection = fewer crash losses',
+        impact: 'Sean knows which stocks historically recover vs. crash — avoids the losers',
         note: 'TBD — needs discussion on methodology and data sources',
       },
     ],
@@ -172,7 +171,7 @@ export const PROPOSAL_PHASES: ProposalPhase[] = [
     ],
     loriValue: 'Full-stack engineering + AI/ML expertise + financial markets experience',
     seanCommitment: 'Domain knowledge transfer, strategy documentation, weekly tech review call, historical trade data access, API/data costs (~$200-300/month — Lori helps diligence providers)',
-    financialTerms: '$2K startup + monthly retainer to own the full tech piece. Sean covers API/data costs (~$200-300/mo). Skin in the game via fund capital allocation on milestones.',
+    financialTerms: '$2K/month technology subscription — includes full tech build. Sean covers API/data costs (~$200-300/mo). Skin in the game via fund capital allocation on milestones.',
     gateToNext: 'Tools deployed and actively reducing Sean\'s daily workflow by 50%+. Lori has deep understanding of dividend capture mechanics.',
   },
   {

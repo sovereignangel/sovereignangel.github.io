@@ -174,10 +174,10 @@ export default function StrategySection() {
           <div>
             <div className="text-[11px] font-semibold text-ink mb-1">North Star</div>
             <p className="text-[10px] text-ink leading-relaxed">
-              Sean must still net <span className="font-mono font-semibold">$25K/month</span> at{' '}
-              <span className="font-mono font-semibold">$250K/month</span> dividend revenue (10%).
-              Any compensation for Lori comes from <span className="font-semibold">incremental value created</span>,
-              not from Sean&apos;s existing take.
+              Hit <span className="font-mono font-semibold">$3M AUM</span> &rarr;{' '}
+              <span className="font-mono font-semibold">$250K/month</span> dividend revenue &rarr;{' '}
+              Sean nets <span className="font-mono font-semibold">$25K/month</span> (10%) and can leave
+              the law firm.
             </p>
           </div>
           <div>
@@ -188,7 +188,6 @@ export default function StrategySection() {
                 'Better stock selection → higher dividend capture rate → more revenue',
                 'Fundraising support → new capital → larger revenue base',
                 'New strategies → additional revenue streams → fund diversification',
-                'Risk reduction → lower drawdowns → better investor retention',
               ].map((item, i) => (
                 <li key={i} className="text-[10px] text-ink flex items-start gap-1">
                   <span className="text-burgundy shrink-0">&bull;</span>
@@ -208,8 +207,8 @@ export default function StrategySection() {
           <div>
             <div className="text-[11px] font-semibold text-ink mb-1">Skin in the Game</div>
             <p className="text-[10px] text-ink leading-relaxed">
-              Sean allocates capital from the fund for Lori, distributed based on agreed technology milestones.
-              This aligns incentives and lets Lori build conviction through real exposure to the strategy.
+              Sean allocates capital from the fund for Lori on agreed milestones — giving Lori real exposure
+              to the strategy and firsthand conviction when marketing the fund to investors.
             </p>
           </div>
         </div>
