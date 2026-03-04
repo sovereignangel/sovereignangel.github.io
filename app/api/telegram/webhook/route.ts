@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { waitUntil } from '@vercel/functions'
 import { parseTelegramMessage, type TelegramUpdate } from '@/lib/telegram-parser'
 import { parseJournalEntry, transcribeAndParseVoiceNote, parsePrediction, parseVentureIdea, generateVenturePRD, generateVentureMemo, extractFromTranscript, parseTodos, parseEditCommand, type EditAction, type ParsedJournalEntry } from '@/lib/ai-extraction'
 import type { TranscriptTemplateType } from '@/lib/transcript-templates'
@@ -9,6 +10,8 @@ import { resolveContactsBatch } from '@/lib/entity-resolution'
 import { addInteractionToContact } from '@/lib/firestore'
 import { embedJournalEntry } from '@/lib/embed-on-save'
 import { processTranscriptData, formatTranscriptSummary } from '@/lib/transcript-processing'
+
+export const maxDuration = 300
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN
 
@@ -1565,9 +1568,15 @@ async function handleClaudeBuild(uid: string, text: string, chatId: number) {
       return
     }
 
-    if (venture.stage === 'building') {
-      await sendTelegramReply(chatId, `${vNum}${spec.name} is already building.`)
-      return
+    if (venture.stage === 'building' && venture.build?.status !== 'failed') {
+      // Check if build started more than 10 minutes ago (likely stuck)
+      const startedAt = venture.build?.startedAt?.toDate?.() || venture.build?.startedAt
+      const tenMinAgo = Date.now() - 10 * 60 * 1000
+      if (startedAt && new Date(startedAt).getTime() > tenMinAgo) {
+        await sendTelegramReply(chatId, `${vNum}${spec.name} is already building. Wait a few minutes or /reset ${venture.ventureNumber || ''} to retry.`)
+        return
+      }
+      // Stale build (>10 min) — allow retry
     }
 
     if (venture.stage === 'deployed') {
@@ -2548,14 +2557,14 @@ export async function POST(req: NextRequest) {
         if (trimmedTranscript.startsWith('venture')) {
           const ventureText = transcript.trim().slice('venture'.length).trim()
           if (ventureText) {
-            await handleVenture(uid, ventureText, chatId)
+            waitUntil(handleVenture(uid, ventureText, chatId))
             return NextResponse.json({ ok: true })
           }
         }
 
-        // Detect if user said "build" at the start — route as build
+        // Detect if user said "build" at the start — route as build (Claude builder)
         if (trimmedTranscript.startsWith('build')) {
-          await handleBuild(uid, trimmedTranscript.slice('build'.length).trim(), chatId)
+          waitUntil(handleClaudeBuild(uid, trimmedTranscript.slice('build'.length).trim(), chatId))
           return NextResponse.json({ ok: true })
         }
 
@@ -2688,13 +2697,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: true })
     }
 
-    // Handle venture command
+    // Handle venture command (long-running: AI spec + PRD generation)
     if (parsed.command === 'venture') {
       if (!parsed.text) {
         await sendTelegramReply(chatId, 'Empty venture. Usage: `/venture AI tool that auto-generates landing pages from a product description`')
         return NextResponse.json({ ok: true })
       }
-      await handleVenture(uid, parsed.text, chatId)
+      waitUntil(handleVenture(uid, parsed.text, chatId))
       return NextResponse.json({ ok: true })
     }
 
@@ -2710,25 +2719,25 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: true })
     }
 
-    // Handle iterate command
+    // Handle iterate command (long-running: Claude API + deploy)
     if (parsed.command === 'iterate') {
       if (!parsed.text) {
         await sendTelegramReply(chatId, 'Usage: /iterate project-name add dark mode')
         return NextResponse.json({ ok: true })
       }
-      await handleClaudeIterate(uid, parsed.text, chatId)
+      waitUntil(handleClaudeIterate(uid, parsed.text, chatId))
       return NextResponse.json({ ok: true })
     }
 
-    // Handle memo command
+    // Handle memo command (long-running: AI generation)
     if (parsed.command === 'memo') {
-      await handleMemo(uid, parsed.text, chatId)
+      waitUntil(handleMemo(uid, parsed.text, chatId))
       return NextResponse.json({ ok: true })
     }
 
-    // Handle build command (routes to Claude builder)
+    // Handle build command (long-running: Claude API + GitHub + deploy)
     if (parsed.command === 'build') {
-      await handleClaudeBuild(uid, parsed.text, chatId)
+      waitUntil(handleClaudeBuild(uid, parsed.text, chatId))
       return NextResponse.json({ ok: true })
     }
 
@@ -2738,19 +2747,19 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: true })
     }
 
-    // Handle Claude build command
+    // Handle Claude build command (long-running: Claude API + GitHub + deploy)
     if (parsed.command === 'cbuild') {
-      await handleClaudeBuild(uid, parsed.text, chatId)
+      waitUntil(handleClaudeBuild(uid, parsed.text, chatId))
       return NextResponse.json({ ok: true })
     }
 
-    // Handle Claude iterate command
+    // Handle Claude iterate command (long-running: Claude API + deploy)
     if (parsed.command === 'citerate') {
       if (!parsed.text) {
         await sendTelegramReply(chatId, 'Usage: /citerate project-name add dark mode')
         return NextResponse.json({ ok: true })
       }
-      await handleClaudeIterate(uid, parsed.text, chatId)
+      waitUntil(handleClaudeIterate(uid, parsed.text, chatId))
       return NextResponse.json({ ok: true })
     }
 
