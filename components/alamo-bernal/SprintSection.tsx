@@ -10,13 +10,6 @@ import {
 } from '@/lib/alamo-bernal/firestore'
 import { SPRINT_ITEMS } from '@/lib/alamo-bernal/seed-data'
 
-const SECTIONS: { key: SprintItemStatus; label: string; defaultOpen: boolean }[] = [
-  { key: 'in_progress', label: 'In Progress', defaultOpen: true },
-  { key: 'sprint', label: 'This Sprint', defaultOpen: true },
-  { key: 'backlog', label: 'Backlog', defaultOpen: false },
-  { key: 'done', label: 'Done', defaultOpen: false },
-]
-
 const TYPE_BADGE: Record<SprintItemType, { label: string; color: string }> = {
   feature: { label: 'Feature', color: 'text-green-ink bg-green-bg border-green-ink/20' },
   bug: { label: 'Bug', color: 'text-red-ink bg-burgundy-bg border-red-ink/20' },
@@ -29,34 +22,19 @@ const PRIORITY_DOT: Record<string, string> = {
   low: 'bg-ink-faint',
 }
 
-const NEXT_STATUS: Record<SprintItemStatus, SprintItemStatus | null> = {
-  backlog: 'sprint',
-  sprint: 'in_progress',
-  in_progress: 'done',
-  done: null,
-}
-
-const PREV_STATUS: Record<SprintItemStatus, SprintItemStatus | null> = {
-  backlog: null,
-  sprint: 'backlog',
-  in_progress: 'sprint',
-  done: 'in_progress',
-}
-
-const NEXT_LABEL: Record<SprintItemStatus, string> = {
-  backlog: 'Add to Sprint',
-  sprint: 'Start',
-  in_progress: 'Done',
-  done: '',
-}
+const STATUS_OPTIONS: { key: SprintItemStatus; label: string; color: string }[] = [
+  { key: 'sprint', label: 'To Do', color: 'text-ink-muted bg-cream border-rule' },
+  { key: 'in_progress', label: 'In Progress', color: 'text-amber-ink bg-amber-bg border-amber-ink/20' },
+  { key: 'review', label: 'For Review', color: 'text-burgundy bg-burgundy-bg border-burgundy/20' },
+  { key: 'done', label: 'Completed', color: 'text-green-ink bg-green-bg border-green-ink/20' },
+]
 
 export default function SprintSection() {
   const [items, setItems] = useState<SprintItem[]>(SPRINT_ITEMS)
-  const [collapsed, setCollapsed] = useState<Record<string, boolean>>(() => {
-    const init: Record<string, boolean> = {}
-    SECTIONS.forEach((s) => { init[s.key] = !s.defaultOpen })
-    return init
-  })
+  const [planning, setPlanning] = useState(false)
+  const [selected, setSelected] = useState<Set<string>>(new Set())
+  const [backlogOpen, setBacklogOpen] = useState(false)
+  const [completedOpen, setCompletedOpen] = useState(false)
   const [showAdd, setShowAdd] = useState(false)
   const [newTitle, setNewTitle] = useState('')
   const [newDesc, setNewDesc] = useState('')
@@ -70,8 +48,34 @@ export default function SprintSection() {
     }).catch(() => {})
   }, [])
 
-  function toggleSection(key: string) {
-    setCollapsed((prev) => ({ ...prev, [key]: !prev[key] }))
+  // Items in the current sprint (to do, in progress, review — NOT done/backlog)
+  const sprintItems = items
+    .filter((i) => i.status === 'sprint' || i.status === 'in_progress' || i.status === 'review')
+    .sort((a, b) => {
+      const s = { in_progress: 0, review: 1, sprint: 2 }
+      const statusDiff = (s[a.status as keyof typeof s] ?? 3) - (s[b.status as keyof typeof s] ?? 3)
+      if (statusDiff !== 0) return statusDiff
+      const p = { high: 0, medium: 1, low: 2 }
+      return p[a.priority] - p[b.priority]
+    })
+
+  const backlogItems = items
+    .filter((i) => i.status === 'backlog')
+    .sort((a, b) => {
+      const p = { high: 0, medium: 1, low: 2 }
+      return p[a.priority] - p[b.priority]
+    })
+
+  const completedItems = items.filter((i) => i.status === 'done')
+
+  async function handleStatusChange(id: string, status: SprintItemStatus) {
+    setItems((prev) => prev.map((i) => (i.id === id ? { ...i, status } : i)))
+    try { await updateSprintItem(id, { status }) } catch {}
+  }
+
+  async function handleDelete(id: string) {
+    setItems((prev) => prev.filter((i) => i.id !== id))
+    try { await deleteSprintItem(id) } catch {}
   }
 
   async function handleAdd() {
@@ -93,14 +97,47 @@ export default function SprintSection() {
     try { await saveSprintItem(item) } catch {}
   }
 
-  async function handleMove(id: string, to: SprintItemStatus) {
-    setItems((prev) => prev.map((i) => (i.id === id ? { ...i, status: to } : i)))
-    try { await updateSprintItem(id, { status: to }) } catch {}
+  function toggleSelect(id: string) {
+    setSelected((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
   }
 
-  async function handleDelete(id: string) {
-    setItems((prev) => prev.filter((i) => i.id !== id))
-    try { await deleteSprintItem(id) } catch {}
+  async function handleCloseSprint() {
+    // Move completed (done) items stay done, move remaining sprint items back to backlog
+    const updates = sprintItems.map((item) => ({
+      id: item.id,
+      status: 'backlog' as SprintItemStatus,
+    }))
+    setItems((prev) =>
+      prev.map((i) => {
+        if (i.status === 'sprint' || i.status === 'in_progress' || i.status === 'review') {
+          return { ...i, status: 'backlog' as SprintItemStatus }
+        }
+        return i
+      })
+    )
+    setPlanning(true)
+    for (const u of updates) {
+      try { await updateSprintItem(u.id, { status: u.status }) } catch {}
+    }
+  }
+
+  async function handleStartSprint() {
+    // Move selected backlog items into sprint
+    setItems((prev) =>
+      prev.map((i) =>
+        selected.has(i.id) ? { ...i, status: 'sprint' as SprintItemStatus } : i
+      )
+    )
+    for (const id of selected) {
+      try { await updateSprintItem(id, { status: 'sprint' }) } catch {}
+    }
+    setSelected(new Set())
+    setPlanning(false)
   }
 
   return (
@@ -109,20 +146,28 @@ export default function SprintSection() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy">
-            Sprint Board
+            Tech Development
           </h2>
           <p className="text-[10px] text-ink-muted mt-0.5">
-            {items.filter((i) => i.status === 'sprint' || i.status === 'in_progress').length} active
-            {' \u00B7 '}
-            {items.filter((i) => i.status === 'backlog').length} backlog
+            Sprint 1 &middot; {sprintItems.length} items
           </p>
         </div>
-        <button
-          onClick={() => setShowAdd(true)}
-          className="font-mono text-[9px] font-medium px-2 py-1 rounded-sm bg-burgundy text-paper border border-burgundy hover:bg-burgundy/90 transition-colors"
-        >
-          + Add Item
-        </button>
+        <div className="flex gap-1">
+          <button
+            onClick={() => setShowAdd(true)}
+            className="font-mono text-[9px] font-medium px-2 py-1 rounded-sm border border-rule text-ink-muted hover:text-ink hover:border-ink-faint transition-colors"
+          >
+            + Add Item
+          </button>
+          {!planning && (
+            <button
+              onClick={handleCloseSprint}
+              className="font-mono text-[9px] font-medium px-2 py-1 rounded-sm bg-burgundy text-paper border border-burgundy hover:bg-burgundy/90 transition-colors"
+            >
+              Close &amp; Plan Next Sprint
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Add form */}
@@ -187,99 +232,236 @@ export default function SprintSection() {
         </div>
       )}
 
-      {/* Sections */}
-      {SECTIONS.map((section) => {
-        const sectionItems = items
-          .filter((i) => i.status === section.key)
-          .sort((a, b) => {
-            const p = { high: 0, medium: 1, low: 2 }
-            return p[a.priority] - p[b.priority]
-          })
-        const isCollapsed = !!collapsed[section.key]
-
-        return (
-          <div key={section.key} className="bg-white border border-rule rounded-sm">
-            {/* Section header — click to collapse */}
-            <button
-              onClick={() => toggleSection(section.key)}
-              className="w-full flex items-center justify-between px-3 py-2 hover:bg-cream/30 transition-colors"
-            >
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] text-ink-muted">{isCollapsed ? '\u25B6' : '\u25BC'}</span>
-                <span className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-burgundy">
-                  {section.label}
-                </span>
-                <span className="font-mono text-[9px] text-ink-faint">{sectionItems.length}</span>
-              </div>
-            </button>
-
-            {/* Items */}
-            {!isCollapsed && (
-              <div className="border-t border-rule">
-                {sectionItems.length === 0 && (
-                  <p className="text-[9px] text-ink-faint text-center py-3">No items</p>
-                )}
-                {sectionItems.map((item, idx) => (
-                  <div
-                    key={item.id}
-                    className={`flex items-center gap-3 px-3 py-2 group hover:bg-cream/30 transition-colors ${
-                      idx < sectionItems.length - 1 ? 'border-b border-rule-light' : ''
-                    }`}
-                  >
-                    {/* Priority dot */}
-                    <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${PRIORITY_DOT[item.priority]}`} />
-
-                    {/* Content */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="text-[10px] font-medium text-ink">{item.title}</span>
-                        <span className={`font-mono text-[7px] uppercase px-1 py-px rounded-sm border shrink-0 ${TYPE_BADGE[item.type].color}`}>
-                          {TYPE_BADGE[item.type].label}
-                        </span>
-                      </div>
-                      {item.description && (
-                        <p className="text-[8px] text-ink-muted leading-snug mt-0.5 line-clamp-1">{item.description}</p>
-                      )}
-                    </div>
-
-                    {/* Owner */}
-                    <span className="font-mono text-[8px] text-ink-faint uppercase shrink-0 w-[30px] text-right">
-                      {item.owner === 'both' ? 'Both' : item.owner}
-                    </span>
-
-                    {/* Actions — visible on hover */}
-                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-                      {PREV_STATUS[item.status] && (
-                        <button
-                          onClick={() => handleMove(item.id, PREV_STATUS[item.status]!)}
-                          className="text-[8px] text-ink-muted hover:text-ink px-1 py-px border border-rule rounded-sm"
-                          title={`Move to ${PREV_STATUS[item.status]}`}
-                        >
-                          &larr;
-                        </button>
-                      )}
-                      {NEXT_STATUS[item.status] && (
-                        <button
-                          onClick={() => handleMove(item.id, NEXT_STATUS[item.status]!)}
-                          className="text-[8px] text-paper bg-burgundy hover:bg-burgundy/80 px-1.5 py-px rounded-sm"
-                        >
-                          {NEXT_LABEL[item.status]}
-                        </button>
-                      )}
-                      <button
-                        onClick={() => handleDelete(item.id)}
-                        className="text-[8px] text-ink-faint hover:text-red-ink px-1 py-px"
-                      >
-                        &times;
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+      {/* ── Planning mode ── */}
+      {planning && (
+        <div className="bg-white border-2 border-burgundy rounded-sm p-3 space-y-2">
+          <div className="flex items-center justify-between">
+            <div>
+              <span className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-burgundy">
+                Plan Next Sprint
+              </span>
+              <p className="text-[9px] text-ink-muted mt-0.5">
+                Select items from the backlog to include in the next sprint.
+              </p>
+            </div>
+            <div className="flex gap-1">
+              <button
+                onClick={() => { setPlanning(false); setSelected(new Set()) }}
+                className="text-[9px] text-ink-muted hover:text-ink px-2 py-1"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleStartSprint}
+                disabled={selected.size === 0}
+                className={`font-mono text-[9px] font-medium px-2 py-1 rounded-sm border transition-colors ${
+                  selected.size > 0
+                    ? 'bg-burgundy text-paper border-burgundy hover:bg-burgundy/90'
+                    : 'bg-cream text-ink-faint border-rule cursor-not-allowed'
+                }`}
+              >
+                Start Sprint ({selected.size} selected)
+              </button>
+            </div>
           </div>
-        )
-      })}
+          <div className="border-t border-rule pt-1">
+            {backlogItems.length === 0 && (
+              <p className="text-[9px] text-ink-faint text-center py-3">Backlog is empty</p>
+            )}
+            {backlogItems.map((item, idx) => (
+              <label
+                key={item.id}
+                className={`flex items-center gap-3 px-2 py-1.5 cursor-pointer hover:bg-cream/30 transition-colors ${
+                  idx < backlogItems.length - 1 ? 'border-b border-rule-light' : ''
+                }`}
+              >
+                <input
+                  type="checkbox"
+                  checked={selected.has(item.id)}
+                  onChange={() => toggleSelect(item.id)}
+                  className="shrink-0 accent-burgundy"
+                />
+                <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${PRIORITY_DOT[item.priority]}`} />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-medium text-ink">{item.title}</span>
+                    <span className={`font-mono text-[7px] uppercase px-1 py-px rounded-sm border shrink-0 ${TYPE_BADGE[item.type].color}`}>
+                      {TYPE_BADGE[item.type].label}
+                    </span>
+                  </div>
+                  {item.description && (
+                    <p className="text-[8px] text-ink-muted leading-snug mt-0.5 line-clamp-1">{item.description}</p>
+                  )}
+                </div>
+                <span className="font-mono text-[8px] text-ink-faint uppercase shrink-0">
+                  {item.owner === 'both' ? 'Both' : item.owner}
+                </span>
+              </label>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── Current Sprint ── */}
+      {!planning && (
+        <div className="bg-white border border-rule rounded-sm">
+          <div className="px-3 py-2 border-b border-rule">
+            <span className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-burgundy">
+              This Sprint
+            </span>
+          </div>
+          {sprintItems.length === 0 && (
+            <p className="text-[9px] text-ink-faint text-center py-6">
+              No items in this sprint. Click &ldquo;Close &amp; Plan Next Sprint&rdquo; to add items from the backlog.
+            </p>
+          )}
+          {sprintItems.map((item, idx) => (
+            <div
+              key={item.id}
+              className={`flex items-center gap-3 px-3 py-2 group hover:bg-cream/30 transition-colors ${
+                idx < sprintItems.length - 1 ? 'border-b border-rule-light' : ''
+              }`}
+            >
+              <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${PRIORITY_DOT[item.priority]}`} />
+
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className={`text-[10px] font-medium ${item.status === 'done' ? 'text-ink-muted line-through' : 'text-ink'}`}>
+                    {item.title}
+                  </span>
+                  <span className={`font-mono text-[7px] uppercase px-1 py-px rounded-sm border shrink-0 ${TYPE_BADGE[item.type].color}`}>
+                    {TYPE_BADGE[item.type].label}
+                  </span>
+                </div>
+                {item.description && (
+                  <p className="text-[8px] text-ink-muted leading-snug mt-0.5 line-clamp-1">{item.description}</p>
+                )}
+              </div>
+
+              <span className="font-mono text-[8px] text-ink-faint uppercase shrink-0">
+                {item.owner === 'both' ? 'Both' : item.owner}
+              </span>
+
+              {/* Status selector */}
+              <select
+                value={item.status}
+                onChange={(e) => handleStatusChange(item.id, e.target.value as SprintItemStatus)}
+                className={`font-mono text-[8px] uppercase px-1.5 py-0.5 rounded-sm border shrink-0 appearance-none cursor-pointer ${
+                  STATUS_OPTIONS.find((s) => s.key === item.status)?.color || ''
+                }`}
+              >
+                {STATUS_OPTIONS.map((opt) => (
+                  <option key={opt.key} value={opt.key}>{opt.label}</option>
+                ))}
+              </select>
+
+              <button
+                onClick={() => handleDelete(item.id)}
+                className="text-[8px] text-ink-faint hover:text-red-ink px-1 py-px opacity-0 group-hover:opacity-100 transition-opacity"
+              >
+                &times;
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* ── Backlog (collapsible) ── */}
+      {!planning && (
+        <div className="bg-white border border-rule rounded-sm">
+          <button
+            onClick={() => setBacklogOpen(!backlogOpen)}
+            className="w-full flex items-center justify-between px-3 py-2 hover:bg-cream/30 transition-colors"
+          >
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] text-ink-muted">{backlogOpen ? '\u25BC' : '\u25B6'}</span>
+              <span className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-ink-muted">
+                Backlog
+              </span>
+              <span className="font-mono text-[9px] text-ink-faint">{backlogItems.length}</span>
+            </div>
+          </button>
+          {backlogOpen && (
+            <div className="border-t border-rule">
+              {backlogItems.length === 0 && (
+                <p className="text-[9px] text-ink-faint text-center py-3">Empty</p>
+              )}
+              {backlogItems.map((item, idx) => (
+                <div
+                  key={item.id}
+                  className={`flex items-center gap-3 px-3 py-2 group hover:bg-cream/30 transition-colors ${
+                    idx < backlogItems.length - 1 ? 'border-b border-rule-light' : ''
+                  }`}
+                >
+                  <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${PRIORITY_DOT[item.priority]}`} />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-medium text-ink">{item.title}</span>
+                      <span className={`font-mono text-[7px] uppercase px-1 py-px rounded-sm border shrink-0 ${TYPE_BADGE[item.type].color}`}>
+                        {TYPE_BADGE[item.type].label}
+                      </span>
+                    </div>
+                    {item.description && (
+                      <p className="text-[8px] text-ink-muted leading-snug mt-0.5 line-clamp-1">{item.description}</p>
+                    )}
+                  </div>
+                  <span className="font-mono text-[8px] text-ink-faint uppercase shrink-0">
+                    {item.owner === 'both' ? 'Both' : item.owner}
+                  </span>
+                  <button
+                    onClick={() => handleStatusChange(item.id, 'sprint')}
+                    className="font-mono text-[8px] text-burgundy hover:underline opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+                  >
+                    Add to Sprint
+                  </button>
+                  <button
+                    onClick={() => handleDelete(item.id)}
+                    className="text-[8px] text-ink-faint hover:text-red-ink px-1 py-px opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    &times;
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── Completed (collapsible) ── */}
+      {!planning && completedItems.length > 0 && (
+        <div className="bg-white border border-rule rounded-sm">
+          <button
+            onClick={() => setCompletedOpen(!completedOpen)}
+            className="w-full flex items-center justify-between px-3 py-2 hover:bg-cream/30 transition-colors"
+          >
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] text-ink-muted">{completedOpen ? '\u25BC' : '\u25B6'}</span>
+              <span className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-ink-muted">
+                Completed
+              </span>
+              <span className="font-mono text-[9px] text-ink-faint">{completedItems.length}</span>
+            </div>
+          </button>
+          {completedOpen && (
+            <div className="border-t border-rule">
+              {completedItems.map((item, idx) => (
+                <div
+                  key={item.id}
+                  className={`flex items-center gap-3 px-3 py-2 ${
+                    idx < completedItems.length - 1 ? 'border-b border-rule-light' : ''
+                  }`}
+                >
+                  <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${PRIORITY_DOT[item.priority]}`} />
+                  <span className="text-[10px] text-ink-muted line-through flex-1">{item.title}</span>
+                  <span className={`font-mono text-[7px] uppercase px-1 py-px rounded-sm border shrink-0 ${TYPE_BADGE[item.type].color}`}>
+                    {TYPE_BADGE[item.type].label}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }

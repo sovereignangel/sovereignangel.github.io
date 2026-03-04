@@ -140,7 +140,7 @@ export interface ActionItem {
 
 // ── Sprint Planning ─────────────────────────────────────────────
 export type SprintItemType = 'feature' | 'bug' | 'task'
-export type SprintItemStatus = 'backlog' | 'sprint' | 'in_progress' | 'done'
+export type SprintItemStatus = 'backlog' | 'sprint' | 'in_progress' | 'review' | 'done'
 
 export interface SprintItem {
   id: string
