@@ -44,8 +44,7 @@ const PREV_STATUS: Record<SprintItemStatus, SprintItemStatus | null> = {
 }
 
 export default function SprintSection() {
-  const [items, setItems] = useState<SprintItem[]>([])
-  const [loading, setLoading] = useState(true)
+  const [items, setItems] = useState<SprintItem[]>(SPRINT_ITEMS)
   const [showAdd, setShowAdd] = useState(false)
   const [newTitle, setNewTitle] = useState('')
   const [newType, setNewType] = useState<SprintItemType>('task')
@@ -54,11 +53,9 @@ export default function SprintSection() {
 
   useEffect(() => {
     getSprintItems().then((data) => {
-      setItems(data.length > 0 ? data : SPRINT_ITEMS)
-      setLoading(false)
+      if (data.length > 0) setItems(data)
     }).catch(() => {
-      setItems(SPRINT_ITEMS)
-      setLoading(false)
+      // Already using seed data
     })
   }, [])
 
@@ -87,10 +84,6 @@ export default function SprintSection() {
   async function handleDelete(id: string) {
     await deleteSprintItem(id)
     setItems((prev) => prev.filter((i) => i.id !== id))
-  }
-
-  if (loading) {
-    return <div className="text-[11px] text-ink-muted py-8 text-center">Loading sprint board...</div>
   }
 
   return (
