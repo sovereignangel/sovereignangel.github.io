@@ -8,6 +8,7 @@ import {
   updateSprintItem,
   deleteSprintItem,
 } from '@/lib/alamo-bernal/firestore'
+import { SPRINT_ITEMS } from '@/lib/alamo-bernal/seed-data'
 
 const COLUMNS: { key: SprintItemStatus; label: string }[] = [
   { key: 'backlog', label: 'Backlog' },
@@ -53,7 +54,10 @@ export default function SprintSection() {
 
   useEffect(() => {
     getSprintItems().then((data) => {
-      setItems(data)
+      setItems(data.length > 0 ? data : SPRINT_ITEMS)
+      setLoading(false)
+    }).catch(() => {
+      setItems(SPRINT_ITEMS)
       setLoading(false)
     })
   }, [])
@@ -203,6 +207,9 @@ export default function SprintSection() {
                       <span className={`w-1.5 h-1.5 rounded-full mt-1 shrink-0 ${PRIORITY_DOT[item.priority]}`} />
                       <div className="flex-1 min-w-0">
                         <p className="text-[10px] font-medium text-ink leading-tight">{item.title}</p>
+                        {item.description && (
+                          <p className="text-[8px] text-ink-muted leading-snug mt-0.5 line-clamp-2">{item.description}</p>
+                        )}
                         <div className="flex items-center gap-1 mt-1">
                           <span className={`font-mono text-[8px] uppercase px-1 py-px rounded-sm border ${TYPE_BADGE[item.type].color}`}>
                             {TYPE_BADGE[item.type].label}
