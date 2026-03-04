@@ -23,6 +23,7 @@
  *   /intent <text>                  — Set daily intent (plan of attack for the day)
  *   /todo <text>                    — Create todo items (AI-parsed, multi-item, project-matched)
  *   /done [#]                       — Mark a todo as completed (by position number)
+ *   /edit <text>                    — Edit todos/projects via natural language (AI-parsed)
  *
  * Pillar hashtags: #ai, #markets, #mind
  */
@@ -30,7 +31,7 @@
 import type { ThesisPillar } from '@/lib/types'
 
 export interface ParsedTelegramMessage {
-  command: 'signal' | 'note' | 'journal' | 'rss' | 'predict' | 'venture' | 'build' | 'approve' | 'feedback' | 'iterate' | 'reset' | 'brief' | 'memo' | 'morning' | 'cbuild' | 'citerate' | 'skill' | 'sbuild' | 'srespond' | 'sapprove' | 'discipline' | 'transcript' | 'intent' | 'todo' | 'done' | 'unknown'
+  command: 'signal' | 'note' | 'journal' | 'rss' | 'predict' | 'venture' | 'build' | 'approve' | 'feedback' | 'iterate' | 'reset' | 'brief' | 'memo' | 'morning' | 'cbuild' | 'citerate' | 'skill' | 'sbuild' | 'srespond' | 'sapprove' | 'discipline' | 'transcript' | 'intent' | 'todo' | 'done' | 'edit' | 'unknown'
   text: string
   pillars: ThesisPillar[]
   raw: string
@@ -195,6 +196,12 @@ export function parseTelegramMessage(text: string): ParsedTelegramMessage {
   if (raw.startsWith('/done')) {
     const body = raw.slice('/done'.length).trim()
     return { command: 'done', text: body, pillars: [], raw }
+  }
+
+  // /edit command — AI-parsed edits to todos/projects
+  if (raw.startsWith('/edit')) {
+    const body = raw.slice('/edit'.length).trim()
+    return { command: 'edit', text: body, pillars: [], raw }
   }
 
   // Plain text — treat as signal

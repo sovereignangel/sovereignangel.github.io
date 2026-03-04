@@ -2079,3 +2079,86 @@ Return ONLY valid JSON array (no markdown, no code blocks):
     return [{ text: rawText.slice(0, 200), projectName: null, quadrant: 'do_first' }]
   }
 }
+
+// ---------------------------------------------------------------------------
+// /edit — AI-parsed edit commands for todos and projects
+// ---------------------------------------------------------------------------
+
+export type EditAction =
+  | { type: 'complete_todo'; todoNumber: number }
+  | { type: 'uncomplete_todo'; todoNumber: number }
+  | { type: 'delete_todo'; todoNumber: number }
+  | { type: 'move_todo'; todoNumber: number; quadrant: TodoQuadrant }
+  | { type: 'retag_todo'; todoNumber: number; projectName: string | null }
+  | { type: 'edit_todo_text'; todoNumber: number; newText: string }
+  | { type: 'archive_project'; projectName: string }
+  | { type: 'unknown'; explanation: string }
+
+export interface ParsedEditResult {
+  actions: EditAction[]
+  summary: string
+}
+
+export async function parseEditCommand(
+  rawText: string,
+  todos: { number: number; text: string; quadrant: string; projectName: string | null; status: string }[],
+  projectNames: string[]
+): Promise<ParsedEditResult> {
+  const todoList = todos.length > 0
+    ? todos.map(t => `${t.number}. [${t.quadrant}] ${t.text}${t.projectName ? ` (${t.projectName})` : ''}${t.status === 'completed' ? ' ✓' : ''}`).join('\n')
+    : '(no todos)'
+
+  const projectList = projectNames.length > 0
+    ? projectNames.map(n => `- "${n}"`).join('\n')
+    : '(no projects)'
+
+  const prompt = `You are parsing a natural language edit command for a task/project management system.
+
+CURRENT OPEN TODOS:
+${todoList}
+
+ACTIVE PROJECTS:
+${projectList}
+
+USER COMMAND:
+${rawText}
+
+Parse this into one or more actions. Available action types:
+- "complete_todo" — mark a todo as done. Fields: todoNumber (1-indexed)
+- "uncomplete_todo" — reopen a completed todo. Fields: todoNumber
+- "delete_todo" — remove a todo entirely. Fields: todoNumber
+- "move_todo" — change a todo's Eisenhower quadrant. Fields: todoNumber, quadrant ("do_first"|"schedule"|"delegate"|"eliminate")
+- "retag_todo" — change which project a todo is linked to. Fields: todoNumber, projectName (matched to active projects above, or null to remove)
+- "edit_todo_text" — change the text of a todo. Fields: todoNumber, newText
+- "archive_project" — remove a project from the active list. Fields: projectName (matched to active projects)
+- "unknown" — can't understand. Fields: explanation
+
+Fuzzy match project names (e.g., "deep tech" → "Deep Tech Fund", "alamo" → "Alamo Bernal").
+Fuzzy match todo references by number or by description (e.g., "the manifold one" → find the todo linked to Manifold).
+
+Return ONLY valid JSON (no markdown, no code blocks):
+{
+  "actions": [{ "type": "move_todo", "todoNumber": 3, "quadrant": "schedule" }],
+  "summary": "Moved todo #3 to Schedule"
+}`
+
+  try {
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' })
+    const result = await model.generateContent(prompt)
+    const raw = result.response.text()
+    const cleaned = raw.trim().replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/\s*```$/i, '').trim()
+    const parsed = JSON.parse(cleaned)
+
+    if (!parsed.actions || !Array.isArray(parsed.actions)) {
+      return { actions: [{ type: 'unknown', explanation: 'Could not parse edit command' }], summary: 'Could not understand that edit.' }
+    }
+
+    return {
+      actions: parsed.actions,
+      summary: parsed.summary || 'Edit processed',
+    }
+  } catch (error) {
+    console.error('Error parsing edit command:', error)
+    return { actions: [{ type: 'unknown', explanation: 'AI parsing failed' }], summary: 'Failed to parse edit command.' }
+  }
+}

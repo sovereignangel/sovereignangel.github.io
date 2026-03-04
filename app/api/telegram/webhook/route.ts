@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { parseTelegramMessage, type TelegramUpdate } from '@/lib/telegram-parser'
-import { parseJournalEntry, transcribeAndParseVoiceNote, parsePrediction, parseVentureIdea, generateVenturePRD, generateVentureMemo, extractFromTranscript, parseTodos, type ParsedJournalEntry } from '@/lib/ai-extraction'
+import { parseJournalEntry, transcribeAndParseVoiceNote, parsePrediction, parseVentureIdea, generateVenturePRD, generateVentureMemo, extractFromTranscript, parseTodos, parseEditCommand, type EditAction, type ParsedJournalEntry } from '@/lib/ai-extraction'
 import type { TranscriptTemplateType } from '@/lib/transcript-templates'
 import type { VentureSpec } from '@/lib/types'
 import { computeReward } from '@/lib/reward'
@@ -2200,6 +2200,199 @@ async function handleDone(uid: string, text: string, chatId: number) {
   await sendTelegramReply(chatId, `Open todos:\n${lines.join('\n')}\n\nReply \`/done <number>\` to complete.`)
 }
 
+// ---------------------------------------------------------------------------
+// /edit — AI-parsed edits to todos and projects
+// ---------------------------------------------------------------------------
+
+async function handleEdit(uid: string, editText: string, chatId: number) {
+  const adminDb = await getAdminDb()
+
+  // Fetch open todos (sorted client-side)
+  const todoSnap = await adminDb.collection('users').doc(uid).collection('todos')
+    .where('status', '==', 'open')
+    .get()
+  const todoDocs = [...todoSnap.docs].sort((a, b) => ((a.data().sortOrder as number) || 0) - ((b.data().sortOrder as number) || 0))
+
+  // Fetch active projects
+  const projectSnap = await adminDb.collection('users').doc(uid).collection('projects')
+    .where('status', '==', 'active')
+    .get()
+  const projectDocs = projectSnap.docs
+
+  // If no text, show current state
+  if (!editText || editText.trim().length === 0) {
+    const quadrantAbbr: Record<string, string> = { do_first: 'DF', schedule: 'SC', delegate: 'DG', eliminate: 'EL' }
+    const todoLines = todoDocs.map((d, i) => {
+      const data = d.data()
+      const q = quadrantAbbr[data.quadrant as string] || '??'
+      const proj = data.linkedProjectName ? `[${data.linkedProjectName}] ` : ''
+      return `${i + 1}. [${q}] ${proj}${data.text}`
+    })
+    const projectLines = projectDocs.map(d => `- ${d.data().name}`)
+
+    const msg = [
+      '*Open Todos:*',
+      todoLines.length > 0 ? todoLines.join('\n') : '(none)',
+      '',
+      '*Active Projects:*',
+      projectLines.length > 0 ? projectLines.join('\n') : '(none)',
+      '',
+      'Say what you want to change:',
+      '_"complete todo 3"_',
+      '_"move todo 2 to schedule"_',
+      '_"change todo 1 to alamo project"_',
+      '_"delete todo 4"_',
+      '_"archive deep tech fund"_',
+    ]
+    await sendTelegramReply(chatId, msg.join('\n'))
+    return
+  }
+
+  await sendTelegramReply(chatId, '_Processing edit..._')
+
+  // Build todo list for AI
+  const todoList = todoDocs.map((d, i) => {
+    const data = d.data()
+    return {
+      number: i + 1,
+      text: data.text as string,
+      quadrant: data.quadrant as string,
+      projectName: (data.linkedProjectName as string) || null,
+      status: data.status as string,
+    }
+  })
+  const projectNames = projectDocs.map(d => d.data().name as string)
+
+  // AI parse
+  const result = await parseEditCommand(editText, todoList, projectNames)
+
+  if (result.actions.length === 0 || (result.actions.length === 1 && result.actions[0].type === 'unknown')) {
+    const msg = result.actions[0]?.type === 'unknown'
+      ? `Could not understand: ${(result.actions[0] as { type: 'unknown'; explanation: string }).explanation}`
+      : 'Could not parse edit command.'
+    await sendTelegramReply(chatId, msg)
+    return
+  }
+
+  // Execute each action
+  const results: string[] = []
+  const todayKey = getTodayKey()
+
+  for (const action of result.actions) {
+    try {
+      switch (action.type) {
+        case 'complete_todo': {
+          const a = action as EditAction & { type: 'complete_todo' }
+          if (a.todoNumber < 1 || a.todoNumber > todoDocs.length) {
+            results.push(`Todo #${a.todoNumber} not found`)
+            break
+          }
+          const doc = todoDocs[a.todoNumber - 1]
+          await doc.ref.update({ status: 'completed', completedAt: todayKey, updatedAt: new Date() })
+          results.push(`Done: "${doc.data().text}"`)
+          break
+        }
+        case 'uncomplete_todo': {
+          const a = action as EditAction & { type: 'uncomplete_todo' }
+          if (a.todoNumber < 1 || a.todoNumber > todoDocs.length) {
+            results.push(`Todo #${a.todoNumber} not found`)
+            break
+          }
+          const doc = todoDocs[a.todoNumber - 1]
+          await doc.ref.update({ status: 'open', completedAt: null, updatedAt: new Date() })
+          results.push(`Reopened: "${doc.data().text}"`)
+          break
+        }
+        case 'delete_todo': {
+          const a = action as EditAction & { type: 'delete_todo' }
+          if (a.todoNumber < 1 || a.todoNumber > todoDocs.length) {
+            results.push(`Todo #${a.todoNumber} not found`)
+            break
+          }
+          const doc = todoDocs[a.todoNumber - 1]
+          const text = doc.data().text
+          await doc.ref.delete()
+          results.push(`Deleted: "${text}"`)
+          break
+        }
+        case 'move_todo': {
+          const a = action as EditAction & { type: 'move_todo' }
+          if (a.todoNumber < 1 || a.todoNumber > todoDocs.length) {
+            results.push(`Todo #${a.todoNumber} not found`)
+            break
+          }
+          const validQ = ['do_first', 'schedule', 'delegate', 'eliminate']
+          if (!validQ.includes(a.quadrant)) {
+            results.push(`Invalid quadrant: ${a.quadrant}`)
+            break
+          }
+          const doc = todoDocs[a.todoNumber - 1]
+          await doc.ref.update({ quadrant: a.quadrant, updatedAt: new Date() })
+          const labels: Record<string, string> = { do_first: 'Do First', schedule: 'Schedule', delegate: 'Delegate', eliminate: 'Eliminate' }
+          results.push(`Moved "${doc.data().text}" → ${labels[a.quadrant]}`)
+          break
+        }
+        case 'retag_todo': {
+          const a = action as EditAction & { type: 'retag_todo' }
+          if (a.todoNumber < 1 || a.todoNumber > todoDocs.length) {
+            results.push(`Todo #${a.todoNumber} not found`)
+            break
+          }
+          const doc = todoDocs[a.todoNumber - 1]
+          if (a.projectName) {
+            // Find matching project
+            const match = projectDocs.find(p => (p.data().name as string).toLowerCase() === a.projectName!.toLowerCase())
+            if (match) {
+              await doc.ref.update({ linkedProjectId: match.id, linkedProjectName: match.data().name, updatedAt: new Date() })
+              results.push(`Retagged "${doc.data().text}" → ${match.data().name}`)
+            } else {
+              await doc.ref.update({ linkedProjectName: a.projectName, linkedProjectId: null, updatedAt: new Date() })
+              results.push(`Retagged "${doc.data().text}" → ${a.projectName} (no matching project found)`)
+            }
+          } else {
+            await doc.ref.update({ linkedProjectId: null, linkedProjectName: null, updatedAt: new Date() })
+            results.push(`Removed project tag from "${doc.data().text}"`)
+          }
+          break
+        }
+        case 'edit_todo_text': {
+          const a = action as EditAction & { type: 'edit_todo_text' }
+          if (a.todoNumber < 1 || a.todoNumber > todoDocs.length) {
+            results.push(`Todo #${a.todoNumber} not found`)
+            break
+          }
+          const doc = todoDocs[a.todoNumber - 1]
+          const old = doc.data().text
+          await doc.ref.update({ text: a.newText, updatedAt: new Date() })
+          results.push(`Updated: "${old}" → "${a.newText}"`)
+          break
+        }
+        case 'archive_project': {
+          const a = action as EditAction & { type: 'archive_project' }
+          const match = projectDocs.find(p => (p.data().name as string).toLowerCase().includes(a.projectName.toLowerCase()))
+          if (match) {
+            await match.ref.update({ status: 'archived', updatedAt: new Date() })
+            results.push(`Archived project: ${match.data().name}`)
+          } else {
+            results.push(`Project not found: "${a.projectName}"`)
+          }
+          break
+        }
+        case 'unknown': {
+          const a = action as EditAction & { type: 'unknown' }
+          results.push(`Could not understand: ${a.explanation}`)
+          break
+        }
+      }
+    } catch (err) {
+      console.error('Edit action error:', err)
+      results.push(`Error executing ${action.type}`)
+    }
+  }
+
+  await sendTelegramReply(chatId, results.join('\n'))
+}
+
 async function handleTranscript(uid: string, transcriptText: string, chatId: number) {
   if (!transcriptText || transcriptText.trim().length < 100) {
     await sendTelegramReply(chatId, 'Transcript too short. Paste your full Wave.ai transcript after /transcript')
@@ -2429,6 +2622,7 @@ export async function POST(req: NextRequest) {
         '*Todos:*',
         '`/todo <text>` — Create todos (voice-dictate naturally, AI parses + matches projects)',
         '`/done [#]` — List open todos or mark one complete by number',
+        '`/edit <text>` — Edit todos/projects (natural language: "move 3 to schedule", "archive deep tech fund")',
         '',
         '`/id` — Show your chat ID (for settings)',
         '',
@@ -2622,6 +2816,12 @@ export async function POST(req: NextRequest) {
     // Handle done command (/done [#])
     if (parsed.command === 'done') {
       await handleDone(uid, parsed.text, chatId)
+      return NextResponse.json({ ok: true })
+    }
+
+    // Handle edit command (/edit <natural language>)
+    if (parsed.command === 'edit') {
+      await handleEdit(uid, parsed.text, chatId)
       return NextResponse.json({ ok: true })
     }
 
