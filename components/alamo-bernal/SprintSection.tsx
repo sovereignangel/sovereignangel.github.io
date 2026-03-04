@@ -13,7 +13,7 @@ import { SPRINT_ITEMS } from '@/lib/alamo-bernal/seed-data'
 const TYPE_BADGE: Record<SprintItemType, { label: string; color: string }> = {
   feature: { label: 'Feature', color: 'text-green-ink bg-green-bg border-green-ink/20' },
   bug: { label: 'Bug', color: 'text-red-ink bg-forest-bg border-red-ink/20' },
-  task: { label: 'Task', color: 'text-ink-muted bg-paper border-rule' },
+  task: { label: 'Task', color: 'text-ink-muted bg-forest-surface border-rule' },
 }
 
 const PRIORITY_DOT: Record<string, string> = {
@@ -23,7 +23,7 @@ const PRIORITY_DOT: Record<string, string> = {
 }
 
 const STATUS_OPTIONS: { key: SprintItemStatus; label: string; color: string }[] = [
-  { key: 'sprint', label: 'To Do', color: 'text-ink-muted bg-cream border-rule' },
+  { key: 'sprint', label: 'To Do', color: 'text-ink-muted bg-forest-cream border-rule' },
   { key: 'review', label: 'For Review', color: 'text-forest bg-forest-bg border-forest/20' },
   { key: 'done', label: 'Completed', color: 'text-green-ink bg-green-bg border-green-ink/20' },
 ]
@@ -182,7 +182,7 @@ export default function SprintSection() {
 
       {/* Add form */}
       {showAdd && (
-        <div className="bg-white border border-rule rounded-sm p-3 space-y-2">
+        <div className="bg-forest-surface border border-rule rounded-sm p-3 space-y-2">
           <input
             autoFocus
             placeholder="Title"
@@ -201,7 +201,7 @@ export default function SprintSection() {
             <select
               value={newType}
               onChange={(e) => setNewType(e.target.value as SprintItemType)}
-              className="text-[10px] text-ink-muted bg-paper border border-rule rounded-sm px-1.5 py-0.5"
+              className="text-[10px] text-ink-muted bg-forest-surface border border-rule rounded-sm px-1.5 py-0.5"
             >
               <option value="feature">Feature</option>
               <option value="bug">Bug</option>
@@ -210,7 +210,7 @@ export default function SprintSection() {
             <select
               value={newOwner}
               onChange={(e) => setNewOwner(e.target.value as 'lori' | 'sean' | 'both')}
-              className="text-[10px] text-ink-muted bg-paper border border-rule rounded-sm px-1.5 py-0.5"
+              className="text-[10px] text-ink-muted bg-forest-surface border border-rule rounded-sm px-1.5 py-0.5"
             >
               <option value="lori">Lori</option>
               <option value="sean">Sean</option>
@@ -219,7 +219,7 @@ export default function SprintSection() {
             <select
               value={newPriority}
               onChange={(e) => setNewPriority(e.target.value as 'high' | 'medium' | 'low')}
-              className="text-[10px] text-ink-muted bg-paper border border-rule rounded-sm px-1.5 py-0.5"
+              className="text-[10px] text-ink-muted bg-forest-surface border border-rule rounded-sm px-1.5 py-0.5"
             >
               <option value="high">High</option>
               <option value="medium">Medium</option>
@@ -244,7 +244,7 @@ export default function SprintSection() {
 
       {/* ── Planning mode ── */}
       {planning && (
-        <div className="bg-white border-2 border-forest rounded-sm p-3 space-y-2">
+        <div className="bg-forest-surface border-2 border-forest rounded-sm p-3 space-y-2">
           <div className="flex items-center justify-between">
             <div>
               <span className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-forest">
@@ -267,7 +267,7 @@ export default function SprintSection() {
                 className={`font-mono text-[9px] font-medium px-2 py-1 rounded-sm border transition-colors ${
                   selected.size > 0
                     ? 'bg-forest text-paper border-forest hover:bg-forest/90'
-                    : 'bg-cream text-ink-faint border-rule cursor-not-allowed'
+                    : 'bg-forest-cream text-ink-faint border-rule cursor-not-allowed'
                 }`}
               >
                 Start Sprint ({selected.size} selected)
@@ -281,7 +281,7 @@ export default function SprintSection() {
             {backlogItems.map((item, idx) => (
               <label
                 key={item.id}
-                className={`flex items-center gap-3 px-2 py-1.5 cursor-pointer hover:bg-cream/30 transition-colors ${
+                className={`flex items-center gap-3 px-2 py-1.5 cursor-pointer hover:bg-forest-cream/30 transition-colors ${
                   idx < backlogItems.length - 1 ? 'border-b border-rule-light' : ''
                 }`}
               >
@@ -314,7 +314,7 @@ export default function SprintSection() {
 
       {/* ── Current Sprint ── */}
       {!planning && (
-        <div className="bg-white border border-rule rounded-sm">
+        <div className="bg-forest-surface border border-rule rounded-sm">
           <div className="px-3 py-2 border-b border-rule">
             <span className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-forest">
               This Sprint
@@ -328,7 +328,7 @@ export default function SprintSection() {
           {sprintItems.map((item, idx) => (
             <div
               key={item.id}
-              className={`flex items-center gap-3 px-3 py-2 group hover:bg-cream/30 transition-colors ${
+              className={`flex items-center gap-3 px-3 py-2 group hover:bg-forest-cream/30 transition-colors ${
                 idx < sprintItems.length - 1 ? 'border-b border-rule-light' : ''
               }`}
             >
@@ -390,10 +390,10 @@ export default function SprintSection() {
 
       {/* ── Backlog (collapsible) ── */}
       {!planning && (
-        <div className="bg-white border border-rule rounded-sm">
+        <div className="bg-forest-surface border border-rule rounded-sm">
           <button
             onClick={() => setBacklogOpen(!backlogOpen)}
-            className="w-full flex items-center justify-between px-3 py-2 hover:bg-cream/30 transition-colors"
+            className="w-full flex items-center justify-between px-3 py-2 hover:bg-forest-cream/30 transition-colors"
           >
             <div className="flex items-center gap-2">
               <span className="text-[10px] text-ink-muted">{backlogOpen ? '\u25BC' : '\u25B6'}</span>
@@ -411,7 +411,7 @@ export default function SprintSection() {
               {backlogItems.map((item, idx) => (
                 <div
                   key={item.id}
-                  className={`flex items-center gap-3 px-3 py-2 group hover:bg-cream/30 transition-colors ${
+                  className={`flex items-center gap-3 px-3 py-2 group hover:bg-forest-cream/30 transition-colors ${
                     idx < backlogItems.length - 1 ? 'border-b border-rule-light' : ''
                   }`}
                 >
@@ -451,10 +451,10 @@ export default function SprintSection() {
 
       {/* ── Completed (collapsible) ── */}
       {!planning && completedItems.length > 0 && (
-        <div className="bg-white border border-rule rounded-sm">
+        <div className="bg-forest-surface border border-rule rounded-sm">
           <button
             onClick={() => setCompletedOpen(!completedOpen)}
-            className="w-full flex items-center justify-between px-3 py-2 hover:bg-cream/30 transition-colors"
+            className="w-full flex items-center justify-between px-3 py-2 hover:bg-forest-cream/30 transition-colors"
           >
             <div className="flex items-center gap-2">
               <span className="text-[10px] text-ink-muted">{completedOpen ? '\u25BC' : '\u25B6'}</span>

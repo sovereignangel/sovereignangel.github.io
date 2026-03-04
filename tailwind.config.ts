@@ -32,6 +32,8 @@ const config: Config = {
         'burgundy-bg': 'rgba(124, 45, 45, 0.08)',
         forest: '#2d5a3d',
         'forest-bg': 'rgba(45, 90, 61, 0.08)',
+        'forest-cream': '#dfe8e1',
+        'forest-surface': '#f2f6f3',
       },
       fontFamily: {
         serif: ['var(--font-crimson)', 'Georgia', 'serif'],

@@ -18,10 +18,10 @@ import type {
 const RISK_CATEGORY_COLORS: Record<RiskCategory, string> = {
   technology: 'text-forest bg-forest-bg border-forest/20',
   operational: 'text-amber-ink bg-amber-bg border-amber-ink/20',
-  market: 'text-ink bg-cream border-rule',
+  market: 'text-ink bg-forest-cream border-rule',
   regulatory: 'text-red-ink bg-red-bg border-red-ink/20',
   partnership: 'text-green-ink bg-green-bg border-green-ink/20',
-  execution: 'text-ink-muted bg-paper border-rule',
+  execution: 'text-ink-muted bg-forest-surface border-rule',
 }
 
 function severityScore(r: Risk): number {
@@ -63,7 +63,7 @@ export default function ExecutionSection() {
   return (
     <div className="space-y-3">
       {/* ── Executive Summary ── */}
-      <div className="bg-white border border-rule rounded-sm p-3">
+      <div className="bg-forest-surface border border-rule rounded-sm p-3">
         <div className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-forest mb-2 pb-1.5 border-b-2 border-rule">
           Execution Overview
         </div>
@@ -75,7 +75,7 @@ export default function ExecutionSection() {
       </div>
 
       {/* ── Agreements ── */}
-      <div className="bg-white border border-rule rounded-sm p-3">
+      <div className="bg-forest-surface border border-rule rounded-sm p-3">
         <div className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-forest mb-2 pb-1.5 border-b-2 border-rule">
           Agreements
         </div>
@@ -96,7 +96,7 @@ export default function ExecutionSection() {
       </div>
 
       {/* ── Risk Matrix ── */}
-      <div className="bg-white border border-rule rounded-sm p-3">
+      <div className="bg-forest-surface border border-rule rounded-sm p-3">
         <div className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-forest mb-2 pb-1.5 border-b-2 border-rule flex items-center gap-2">
           Risk Matrix
           <span className="font-mono text-[8px] uppercase px-1.5 py-0.5 rounded-sm border text-amber-ink bg-amber-bg border-amber-ink/20">
@@ -114,7 +114,7 @@ export default function ExecutionSection() {
               <div key={risk.id} className="border border-rule rounded-sm">
                 <button
                   onClick={() => toggleRisk(risk.id)}
-                  className="w-full flex items-center justify-between px-2 py-1.5 hover:bg-cream/50 transition-colors"
+                  className="w-full flex items-center justify-between px-2 py-1.5 hover:bg-forest-cream/50 transition-colors"
                 >
                   <div className="flex items-center gap-2">
                     <span className={`font-mono text-[8px] uppercase px-1.5 py-0.5 rounded-sm border shrink-0 ${catColor}`}>
@@ -163,7 +163,7 @@ export default function ExecutionSection() {
       </div>
 
       {/* ── Next Steps & Action Items ── */}
-      <div className="bg-white border border-rule rounded-sm p-3">
+      <div className="bg-forest-surface border border-rule rounded-sm p-3">
         <div className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-forest mb-2 pb-1.5 border-b-2 border-rule">
           Next Steps & Action Items
         </div>
@@ -187,7 +187,7 @@ export default function ExecutionSection() {
                         ? 'text-forest bg-forest-bg border-forest/20'
                         : item.owner === 'sean'
                         ? 'text-green-ink bg-green-bg border-green-ink/20'
-                        : 'text-ink-muted bg-cream border-rule'
+                        : 'text-ink-muted bg-forest-cream border-rule'
                     }`}>
                       {item.owner}
                     </span>
@@ -199,7 +199,7 @@ export default function ExecutionSection() {
                         ? 'text-green-ink bg-green-bg border-green-ink/20'
                         : item.status === 'in_progress'
                         ? 'text-amber-ink bg-amber-bg border-amber-ink/20'
-                        : 'text-ink-muted bg-cream border-rule'
+                        : 'text-ink-muted bg-forest-cream border-rule'
                     }`}>
                       {item.status.replace('_', ' ')}
                     </span>
@@ -221,7 +221,7 @@ function DocEmbed({ title, url }: { title: string; url: string }) {
 
   return (
     <div className="border border-rule rounded-sm overflow-hidden">
-      <div className="flex items-center justify-between px-2 py-1.5 border-b border-rule bg-cream">
+      <div className="flex items-center justify-between px-2 py-1.5 border-b border-rule bg-forest-cream">
         <span className="text-[10px] font-semibold text-ink">{title}</span>
         <a
           href={url}

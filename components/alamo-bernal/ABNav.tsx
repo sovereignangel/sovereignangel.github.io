@@ -16,7 +16,7 @@ interface ABNavProps {
 
 export default function ABNav({ activeTab, onTabChange }: ABNavProps) {
   return (
-    <header className="bg-paper border-b-2 border-ink shrink-0">
+    <header className="bg-forest-surface border-b-2 border-ink shrink-0">
       <div className="max-w-[1200px] mx-auto px-4 sm:px-6">
         {/* Title row */}
         <div className="flex items-baseline justify-between pt-2 pb-1">
@@ -29,7 +29,7 @@ export default function ABNav({ activeTab, onTabChange }: ABNavProps) {
             </span>
           </div>
           <span className="font-mono text-[9px] text-ink-muted">
-            Draft — Feb 2026
+            Draft — Mar 2026
           </span>
         </div>
 

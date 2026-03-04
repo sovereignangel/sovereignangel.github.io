@@ -14,7 +14,7 @@ const ALLOWED_EMAILS = [
 function ABSkeleton() {
   return (
     <div className="h-screen overflow-hidden">
-      <header className="bg-paper border-b-2 border-ink">
+      <header className="bg-forest-surface border-b-2 border-ink">
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6">
           <div className="flex items-baseline justify-between pt-2 pb-1">
             <div className="h-5 w-40 bg-rule-light rounded-sm animate-pulse" />
@@ -28,7 +28,7 @@ function ABSkeleton() {
         </div>
       </header>
       <main className="max-w-[1200px] mx-auto px-4 sm:px-6 py-3">
-        <div className="h-[500px] bg-paper border border-rule rounded-sm animate-pulse" />
+        <div className="h-[500px] bg-forest-surface border border-rule rounded-sm animate-pulse" />
       </main>
     </div>
   )
@@ -38,7 +38,7 @@ function AccessDenied() {
   const { user, signOut } = useAuth()
   return (
     <div className="min-h-screen flex items-center justify-center">
-      <div className="bg-paper border border-rule rounded-sm p-12 max-w-md w-full text-center">
+      <div className="bg-forest-surface border border-rule rounded-sm p-12 max-w-md w-full text-center">
         <h1 className="font-serif text-[22px] font-bold text-ink mb-2">
           Access Restricted
         </h1>

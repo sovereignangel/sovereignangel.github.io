@@ -26,7 +26,7 @@ const PHASE_TAGS: Record<number, { label: string; type: 'focus' | 'draft' }> = {
 const PHASE_STATUS_COLORS: Record<PhaseStatus, string> = {
   proposed: 'text-amber-ink bg-amber-bg border-amber-ink/20',
   active: 'text-green-ink bg-green-bg border-green-ink/20',
-  completed: 'text-ink-muted bg-cream border-rule',
+  completed: 'text-ink-muted bg-forest-cream border-rule',
   future: 'text-ink-muted bg-paper border-rule',
 }
 
@@ -62,7 +62,7 @@ export default function StrategySection() {
   return (
     <div className="space-y-3">
       {/* ── Executive Summary ── */}
-      <div className="bg-white border border-rule rounded-sm p-3">
+      <div className="bg-forest-surface border border-rule rounded-sm p-3">
         <div className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-forest mb-2 pb-1.5 border-b-2 border-rule">
           Strategy Overview
         </div>
@@ -76,7 +76,7 @@ export default function StrategySection() {
       </div>
 
       {/* ── Partnership Phases ── */}
-      <div className="bg-white border border-rule rounded-sm p-3">
+      <div className="bg-forest-surface border border-rule rounded-sm p-3">
         <div className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-forest mb-2 pb-1.5 border-b-2 border-rule">
           Partnership Phases
         </div>
@@ -126,7 +126,7 @@ export default function StrategySection() {
       </div>
 
       {/* ── Financial Model ── */}
-      <div className="bg-white border border-rule rounded-sm p-3">
+      <div className="bg-forest-surface border border-rule rounded-sm p-3">
         <div className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-forest mb-2 pb-1.5 border-b-2 border-rule">
           Financial Model — AUM Scenarios
         </div>
@@ -166,7 +166,7 @@ export default function StrategySection() {
       </div>
 
       {/* ── Partnership Economics ── */}
-      <div className="bg-white border border-rule rounded-sm p-3">
+      <div className="bg-forest-surface border border-rule rounded-sm p-3">
         <div className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-forest mb-2 pb-1.5 border-b-2 border-rule">
           Partnership Economics
         </div>
@@ -363,7 +363,7 @@ function ValueMapTable({ entries }: { entries: ValueMapEntry[] }) {
 
 function ValueMetricRow({ metric }: { metric: ValueMetric }) {
   return (
-    <div className="bg-cream/50 border border-rule-light rounded-sm px-2 py-1.5">
+    <div className="bg-forest-cream/50 border border-rule-light rounded-sm px-2 py-1.5">
       <div className="text-[9px] font-semibold text-ink mb-0.5">{metric.label}</div>
       <div className="flex items-center gap-1.5">
         <span className="font-mono text-[9px] text-ink-muted line-through">{metric.before}</span>

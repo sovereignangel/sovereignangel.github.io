@@ -21,7 +21,7 @@ export default function ABAuthGate() {
 
   return (
     <div className="min-h-screen flex items-center justify-center">
-      <div className="bg-paper border border-rule rounded-sm p-12 max-w-md w-full text-center">
+      <div className="bg-forest-surface border border-rule rounded-sm p-12 max-w-md w-full text-center">
         <h1 className="font-serif text-[28px] font-bold text-ink tracking-tight mb-1">
           Alamo Bernal
         </h1>
