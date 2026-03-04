@@ -52,7 +52,7 @@ function AccessDenied() {
         )}
         <button
           onClick={signOut}
-          className="font-serif text-[12px] text-burgundy hover:underline"
+          className="font-serif text-[12px] text-forest hover:underline"
         >
           Sign out and try a different account
         </button>

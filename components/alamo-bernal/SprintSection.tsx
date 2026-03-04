@@ -12,7 +12,7 @@ import { SPRINT_ITEMS } from '@/lib/alamo-bernal/seed-data'
 
 const TYPE_BADGE: Record<SprintItemType, { label: string; color: string }> = {
   feature: { label: 'Feature', color: 'text-green-ink bg-green-bg border-green-ink/20' },
-  bug: { label: 'Bug', color: 'text-red-ink bg-burgundy-bg border-red-ink/20' },
+  bug: { label: 'Bug', color: 'text-red-ink bg-forest-bg border-red-ink/20' },
   task: { label: 'Task', color: 'text-ink-muted bg-paper border-rule' },
 }
 
@@ -24,8 +24,7 @@ const PRIORITY_DOT: Record<string, string> = {
 
 const STATUS_OPTIONS: { key: SprintItemStatus; label: string; color: string }[] = [
   { key: 'sprint', label: 'To Do', color: 'text-ink-muted bg-cream border-rule' },
-  { key: 'in_progress', label: 'In Progress', color: 'text-amber-ink bg-amber-bg border-amber-ink/20' },
-  { key: 'review', label: 'For Review', color: 'text-burgundy bg-burgundy-bg border-burgundy/20' },
+  { key: 'review', label: 'For Review', color: 'text-forest bg-forest-bg border-forest/20' },
   { key: 'done', label: 'Completed', color: 'text-green-ink bg-green-bg border-green-ink/20' },
 ]
 
@@ -48,12 +47,14 @@ export default function SprintSection() {
     }).catch(() => {})
   }, [])
 
-  // Items in the current sprint (to do, in progress, review — NOT done/backlog)
+  // Items in the current sprint (to do, review — NOT done/backlog)
   const sprintItems = items
-    .filter((i) => i.status === 'sprint' || i.status === 'in_progress' || i.status === 'review')
+    .filter((i) => i.status === 'sprint' || i.status === 'review')
     .sort((a, b) => {
-      const s = { in_progress: 0, review: 1, sprint: 2 }
-      const statusDiff = (s[a.status as keyof typeof s] ?? 3) - (s[b.status as keyof typeof s] ?? 3)
+      // In-progress items float to top, then by status, then priority
+      if (a.inProgress !== b.inProgress) return a.inProgress ? -1 : 1
+      const s = { review: 0, sprint: 1 }
+      const statusDiff = (s[a.status as keyof typeof s] ?? 2) - (s[b.status as keyof typeof s] ?? 2)
       if (statusDiff !== 0) return statusDiff
       const p = { high: 0, medium: 1, low: 2 }
       return p[a.priority] - p[b.priority]
@@ -69,8 +70,17 @@ export default function SprintSection() {
   const completedItems = items.filter((i) => i.status === 'done')
 
   async function handleStatusChange(id: string, status: SprintItemStatus) {
-    setItems((prev) => prev.map((i) => (i.id === id ? { ...i, status } : i)))
-    try { await updateSprintItem(id, { status }) } catch {}
+    // Clear inProgress flag when moving to done
+    const updates: Partial<SprintItem> = { status }
+    if (status === 'done') updates.inProgress = false
+    setItems((prev) => prev.map((i) => (i.id === id ? { ...i, ...updates } : i)))
+    try { await updateSprintItem(id, updates) } catch {}
+  }
+
+  async function toggleInProgress(id: string) {
+    setItems((prev) => prev.map((i) => (i.id === id ? { ...i, inProgress: !i.inProgress } : i)))
+    const item = items.find((i) => i.id === id)
+    try { await updateSprintItem(id, { inProgress: !(item?.inProgress) }) } catch {}
   }
 
   async function handleDelete(id: string) {
@@ -114,8 +124,8 @@ export default function SprintSection() {
     }))
     setItems((prev) =>
       prev.map((i) => {
-        if (i.status === 'sprint' || i.status === 'in_progress' || i.status === 'review') {
-          return { ...i, status: 'backlog' as SprintItemStatus }
+        if (i.status === 'sprint' || i.status === 'review') {
+          return { ...i, status: 'backlog' as SprintItemStatus, inProgress: false }
         }
         return i
       })
@@ -145,7 +155,7 @@ export default function SprintSection() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy">
+          <h2 className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-forest">
             Tech Development
           </h2>
           <p className="text-[10px] text-ink-muted mt-0.5">
@@ -162,7 +172,7 @@ export default function SprintSection() {
           {!planning && (
             <button
               onClick={handleCloseSprint}
-              className="font-mono text-[9px] font-medium px-2 py-1 rounded-sm bg-burgundy text-paper border border-burgundy hover:bg-burgundy/90 transition-colors"
+              className="font-mono text-[9px] font-medium px-2 py-1 rounded-sm bg-forest text-paper border border-forest hover:bg-forest/90 transition-colors"
             >
               Close &amp; Plan Next Sprint
             </button>
@@ -224,7 +234,7 @@ export default function SprintSection() {
             </button>
             <button
               onClick={handleAdd}
-              className="text-[10px] font-medium text-paper bg-burgundy px-2 py-0.5 rounded-sm hover:bg-burgundy/90"
+              className="text-[10px] font-medium text-paper bg-forest px-2 py-0.5 rounded-sm hover:bg-forest/90"
             >
               Add to Backlog
             </button>
@@ -234,10 +244,10 @@ export default function SprintSection() {
 
       {/* ── Planning mode ── */}
       {planning && (
-        <div className="bg-white border-2 border-burgundy rounded-sm p-3 space-y-2">
+        <div className="bg-white border-2 border-forest rounded-sm p-3 space-y-2">
           <div className="flex items-center justify-between">
             <div>
-              <span className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-burgundy">
+              <span className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-forest">
                 Plan Next Sprint
               </span>
               <p className="text-[9px] text-ink-muted mt-0.5">
@@ -256,7 +266,7 @@ export default function SprintSection() {
                 disabled={selected.size === 0}
                 className={`font-mono text-[9px] font-medium px-2 py-1 rounded-sm border transition-colors ${
                   selected.size > 0
-                    ? 'bg-burgundy text-paper border-burgundy hover:bg-burgundy/90'
+                    ? 'bg-forest text-paper border-forest hover:bg-forest/90'
                     : 'bg-cream text-ink-faint border-rule cursor-not-allowed'
                 }`}
               >
@@ -279,7 +289,7 @@ export default function SprintSection() {
                   type="checkbox"
                   checked={selected.has(item.id)}
                   onChange={() => toggleSelect(item.id)}
-                  className="shrink-0 accent-burgundy"
+                  className="shrink-0 accent-forest"
                 />
                 <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${PRIORITY_DOT[item.priority]}`} />
                 <div className="flex-1 min-w-0">
@@ -306,7 +316,7 @@ export default function SprintSection() {
       {!planning && (
         <div className="bg-white border border-rule rounded-sm">
           <div className="px-3 py-2 border-b border-rule">
-            <span className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-burgundy">
+            <span className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-forest">
               This Sprint
             </span>
           </div>
@@ -337,6 +347,18 @@ export default function SprintSection() {
                   <p className="text-[8px] text-ink-muted leading-snug mt-0.5 line-clamp-1">{item.description}</p>
                 )}
               </div>
+
+              {/* In Progress toggle */}
+              <button
+                onClick={() => toggleInProgress(item.id)}
+                className={`font-mono text-[7px] uppercase px-1.5 py-0.5 rounded-sm border shrink-0 transition-colors ${
+                  item.inProgress
+                    ? 'text-amber-ink bg-amber-bg border-amber-ink/20'
+                    : 'text-ink-faint bg-transparent border-rule-light opacity-0 group-hover:opacity-100'
+                }`}
+              >
+                {item.inProgress ? 'In Progress' : 'Start'}
+              </button>
 
               <span className="font-mono text-[8px] text-ink-faint uppercase shrink-0">
                 {item.owner === 'both' ? 'Both' : item.owner}
@@ -410,7 +432,7 @@ export default function SprintSection() {
                   </span>
                   <button
                     onClick={() => handleStatusChange(item.id, 'sprint')}
-                    className="font-mono text-[8px] text-burgundy hover:underline opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+                    className="font-mono text-[8px] text-forest hover:underline opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
                   >
                     Add to Sprint
                   </button>

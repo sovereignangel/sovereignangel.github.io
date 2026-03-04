@@ -41,7 +41,7 @@ export default function ABNav({ activeTab, onTabChange }: ABNavProps) {
               onClick={() => onTabChange(tab.key)}
               className={`font-serif text-[13px] font-medium px-3 py-1.5 transition-colors ${
                 activeTab === tab.key
-                  ? 'text-burgundy font-semibold border-b-2 border-burgundy -mb-px'
+                  ? 'text-forest font-semibold border-b-2 border-forest -mb-px'
                   : 'text-ink-muted hover:text-ink'
               }`}
             >

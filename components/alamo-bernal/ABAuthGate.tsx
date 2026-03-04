@@ -37,7 +37,7 @@ export default function ABAuthGate() {
         <button
           onClick={signIn}
           disabled={loading}
-          className="w-full bg-burgundy text-paper font-serif text-[14px] font-semibold rounded-sm px-5 py-3 hover:opacity-90 transition-opacity duration-150 disabled:opacity-50"
+          className="w-full bg-forest text-paper font-serif text-[14px] font-semibold rounded-sm px-5 py-3 hover:opacity-90 transition-opacity duration-150 disabled:opacity-50"
         >
           {loading ? 'Loading...' : 'Sign in with Google'}
         </button>

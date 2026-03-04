@@ -7,7 +7,7 @@ import type { FundMetrics, Meeting, MeetingInsight, InsightCategory } from '@/li
 
 const INSIGHT_COLORS: Record<InsightCategory, string> = {
   workflow: 'text-ink bg-cream border-rule',
-  ambition: 'text-burgundy bg-burgundy-bg border-burgundy/20',
+  ambition: 'text-forest bg-forest-bg border-forest/20',
   strategy: 'text-green-ink bg-green-bg border-green-ink/20',
   structure: 'text-ink bg-paper border-rule',
   risk: 'text-red-ink bg-red-bg border-red-ink/20',
@@ -56,7 +56,7 @@ export default function IntelligenceSection() {
     <div className="space-y-3">
       {/* ── Executive Summary ── */}
       <div className="bg-white border border-rule rounded-sm p-3">
-        <div className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-2 pb-1.5 border-b-2 border-rule">
+        <div className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-forest mb-2 pb-1.5 border-b-2 border-rule">
           Executive Summary
         </div>
         <p className="text-[10px] text-ink leading-relaxed">
@@ -104,7 +104,7 @@ export default function IntelligenceSection() {
 
       {/* ── Fund Structure Overview ── */}
       <div className="bg-white border border-rule rounded-sm p-3">
-        <div className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-2 pb-1.5 border-b-2 border-rule">
+        <div className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-forest mb-2 pb-1.5 border-b-2 border-rule">
           Fund Structure
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -125,7 +125,7 @@ export default function IntelligenceSection() {
 
       {/* ── Market Context ── */}
       <div className="bg-white border border-rule rounded-sm p-3">
-        <div className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-2 pb-1.5 border-b-2 border-rule">
+        <div className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-forest mb-2 pb-1.5 border-b-2 border-rule">
           Market Context
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -161,7 +161,7 @@ export default function IntelligenceSection() {
 
       {/* ── Meeting Minutes ── */}
       <div className="bg-white border border-rule rounded-sm p-3">
-        <div className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-2 pb-1.5 border-b-2 border-rule">
+        <div className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-forest mb-2 pb-1.5 border-b-2 border-rule">
           Meeting Minutes
         </div>
 
@@ -172,7 +172,7 @@ export default function IntelligenceSection() {
             placeholder="Search minutes..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="flex-1 text-[10px] text-ink bg-cream/50 border border-rule rounded-sm px-2 py-1 placeholder:text-ink-faint focus:outline-none focus:border-burgundy"
+            className="flex-1 text-[10px] text-ink bg-cream/50 border border-rule rounded-sm px-2 py-1 placeholder:text-ink-faint focus:outline-none focus:border-forest"
           />
           <button
             onClick={() => setSortAsc((prev) => !prev)}
@@ -307,7 +307,7 @@ function MeetingCard({
                 onClick={() => setView('insights')}
                 className={`font-serif text-[9px] font-medium px-2 py-1 rounded-sm border transition-colors ${
                   view === 'insights'
-                    ? 'bg-burgundy text-paper border-burgundy'
+                    ? 'bg-forest text-paper border-forest'
                     : 'bg-transparent text-ink-muted border-rule hover:border-ink-faint'
                 }`}
               >
@@ -317,7 +317,7 @@ function MeetingCard({
                 onClick={() => setView('transcript')}
                 className={`font-serif text-[9px] font-medium px-2 py-1 rounded-sm border transition-colors ${
                   view === 'transcript'
-                    ? 'bg-burgundy text-paper border-burgundy'
+                    ? 'bg-forest text-paper border-forest'
                     : 'bg-transparent text-ink-muted border-rule hover:border-ink-faint'
                 }`}
               >
@@ -373,7 +373,7 @@ function MeetingCard({
                         <span className={`font-mono text-[8px] uppercase px-1.5 py-0.5 rounded-sm border shrink-0 mt-0.5 ${
                           isSean
                             ? 'text-green-ink bg-green-bg border-green-ink/20'
-                            : 'text-burgundy bg-burgundy-bg border-burgundy/20'
+                            : 'text-forest bg-forest-bg border-forest/20'
                         }`}>
                           {speaker.split(' ')[0]}
                         </span>

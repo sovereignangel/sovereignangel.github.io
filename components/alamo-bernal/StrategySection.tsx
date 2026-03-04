@@ -63,7 +63,7 @@ export default function StrategySection() {
     <div className="space-y-3">
       {/* ── Executive Summary ── */}
       <div className="bg-white border border-rule rounded-sm p-3">
-        <div className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-2 pb-1.5 border-b-2 border-rule">
+        <div className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-forest mb-2 pb-1.5 border-b-2 border-rule">
           Strategy Overview
         </div>
         <p className="text-[10px] text-ink leading-relaxed">
@@ -77,7 +77,7 @@ export default function StrategySection() {
 
       {/* ── Partnership Phases ── */}
       <div className="bg-white border border-rule rounded-sm p-3">
-        <div className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-2 pb-1.5 border-b-2 border-rule">
+        <div className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-forest mb-2 pb-1.5 border-b-2 border-rule">
           Partnership Phases
         </div>
 
@@ -89,7 +89,7 @@ export default function StrategySection() {
               onClick={() => setActivePhase(phase.phase)}
               className={`text-left px-3 py-1.5 rounded-sm border transition-colors flex-1 ${
                 activePhase === phase.phase
-                  ? 'bg-burgundy text-paper border-burgundy'
+                  ? 'bg-forest text-paper border-forest'
                   : 'bg-transparent text-ink-muted border-rule hover:border-ink-faint'
               }`}
             >
@@ -127,7 +127,7 @@ export default function StrategySection() {
 
       {/* ── Financial Model ── */}
       <div className="bg-white border border-rule rounded-sm p-3">
-        <div className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-2 pb-1.5 border-b-2 border-rule">
+        <div className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-forest mb-2 pb-1.5 border-b-2 border-rule">
           Financial Model — AUM Scenarios
         </div>
         <div className="overflow-x-auto">
@@ -151,7 +151,7 @@ export default function StrategySection() {
                   <td className="py-1.5 px-2 text-right font-mono text-ink">{fmt(s.aum)}</td>
                   <td className="py-1.5 px-2 text-right font-mono text-ink">{fmt(s.monthlyDividendRevenue)}</td>
                   <td className="py-1.5 px-2 text-right font-mono text-green-ink">{fmt(s.seanMonthlyTake)}</td>
-                  <td className="py-1.5 px-2 text-right font-mono text-burgundy">{s.aum > 1_500_000 ? 'TBD' : fmt(s.loriMonthlyTake)}</td>
+                  <td className="py-1.5 px-2 text-right font-mono text-forest">{s.aum > 1_500_000 ? 'TBD' : fmt(s.loriMonthlyTake)}</td>
                   <td className="py-1.5 px-2 text-right font-mono text-ink-muted">{fmt(s.operatingCosts)}</td>
                   <td className="py-1.5 px-2 text-right font-mono text-ink-muted">{s.investorReturns}</td>
                   <td className="py-1.5 pl-2 text-right font-mono text-ink font-semibold">{fmt(s.netToFund)}</td>
@@ -167,7 +167,7 @@ export default function StrategySection() {
 
       {/* ── Partnership Economics ── */}
       <div className="bg-white border border-rule rounded-sm p-3">
-        <div className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-2 pb-1.5 border-b-2 border-rule">
+        <div className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-forest mb-2 pb-1.5 border-b-2 border-rule">
           Partnership Economics
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -190,7 +190,7 @@ export default function StrategySection() {
                 'New strategies → additional revenue streams → fund diversification',
               ].map((item, i) => (
                 <li key={i} className="text-[10px] text-ink flex items-start gap-1">
-                  <span className="text-burgundy shrink-0">&bull;</span>
+                  <span className="text-forest shrink-0">&bull;</span>
                   <span>{item}</span>
                 </li>
               ))}
@@ -339,7 +339,7 @@ function ValueMapTable({ entries }: { entries: ValueMapEntry[] }) {
                 <td className="py-1.5 pr-2 font-semibold text-ink">{entry.dimension}</td>
                 <td className="py-1.5 px-2 text-ink-muted">{entry.current}</td>
                 <td className="py-1.5 px-2 font-semibold text-green-ink">{entry.withTech}</td>
-                <td className="py-1.5 px-2 font-mono text-burgundy">{entry.freed}</td>
+                <td className="py-1.5 px-2 font-mono text-forest">{entry.freed}</td>
                 <td className="py-1.5 pl-2 text-ink">{entry.impact}</td>
               </tr>
             ))}
@@ -370,7 +370,7 @@ function ValueMetricRow({ metric }: { metric: ValueMetric }) {
         <span className="text-[9px] text-ink-muted">&rarr;</span>
         <span className="font-mono text-[9px] font-semibold text-green-ink">{metric.after}</span>
       </div>
-      <div className="text-[8px] text-burgundy font-medium mt-0.5">{metric.impact}</div>
+      <div className="text-[8px] text-forest font-medium mt-0.5">{metric.impact}</div>
     </div>
   )
 }
@@ -378,7 +378,7 @@ function ValueMetricRow({ metric }: { metric: ValueMetric }) {
 function FeeRow({ phase, fee, note }: { phase: string; fee: string; note: string }) {
   return (
     <div className="flex items-start gap-2">
-      <span className="font-mono text-[9px] text-burgundy bg-burgundy-bg border border-burgundy/20 px-1 py-0.5 rounded-sm shrink-0">
+      <span className="font-mono text-[9px] text-forest bg-forest-bg border border-forest/20 px-1 py-0.5 rounded-sm shrink-0">
         {phase}
       </span>
       <div>

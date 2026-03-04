@@ -16,7 +16,7 @@ import type {
 } from '@/lib/alamo-bernal/types'
 
 const RISK_CATEGORY_COLORS: Record<RiskCategory, string> = {
-  technology: 'text-burgundy bg-burgundy-bg border-burgundy/20',
+  technology: 'text-forest bg-forest-bg border-forest/20',
   operational: 'text-amber-ink bg-amber-bg border-amber-ink/20',
   market: 'text-ink bg-cream border-rule',
   regulatory: 'text-red-ink bg-red-bg border-red-ink/20',
@@ -64,7 +64,7 @@ export default function ExecutionSection() {
     <div className="space-y-3">
       {/* ── Executive Summary ── */}
       <div className="bg-white border border-rule rounded-sm p-3">
-        <div className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-2 pb-1.5 border-b-2 border-rule">
+        <div className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-forest mb-2 pb-1.5 border-b-2 border-rule">
           Execution Overview
         </div>
         <p className="text-[10px] text-ink leading-relaxed">
@@ -76,7 +76,7 @@ export default function ExecutionSection() {
 
       {/* ── Agreements ── */}
       <div className="bg-white border border-rule rounded-sm p-3">
-        <div className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-2 pb-1.5 border-b-2 border-rule">
+        <div className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-forest mb-2 pb-1.5 border-b-2 border-rule">
           Agreements
         </div>
         <p className="text-[10px] text-ink leading-relaxed mb-2">
@@ -97,7 +97,7 @@ export default function ExecutionSection() {
 
       {/* ── Risk Matrix ── */}
       <div className="bg-white border border-rule rounded-sm p-3">
-        <div className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-2 pb-1.5 border-b-2 border-rule flex items-center gap-2">
+        <div className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-forest mb-2 pb-1.5 border-b-2 border-rule flex items-center gap-2">
           Risk Matrix
           <span className="font-mono text-[8px] uppercase px-1.5 py-0.5 rounded-sm border text-amber-ink bg-amber-bg border-amber-ink/20">
             Draft
@@ -164,7 +164,7 @@ export default function ExecutionSection() {
 
       {/* ── Next Steps & Action Items ── */}
       <div className="bg-white border border-rule rounded-sm p-3">
-        <div className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-2 pb-1.5 border-b-2 border-rule">
+        <div className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-forest mb-2 pb-1.5 border-b-2 border-rule">
           Next Steps & Action Items
         </div>
         <div className="overflow-x-auto">
@@ -184,7 +184,7 @@ export default function ExecutionSection() {
                   <td className="py-1.5 px-2">
                     <span className={`font-mono text-[8px] uppercase px-1 py-0.5 rounded-sm border ${
                       item.owner === 'lori'
-                        ? 'text-burgundy bg-burgundy-bg border-burgundy/20'
+                        ? 'text-forest bg-forest-bg border-forest/20'
                         : item.owner === 'sean'
                         ? 'text-green-ink bg-green-bg border-green-ink/20'
                         : 'text-ink-muted bg-cream border-rule'
@@ -227,7 +227,7 @@ function DocEmbed({ title, url }: { title: string; url: string }) {
           href={url}
           target="_blank"
           rel="noopener noreferrer"
-          className="font-mono text-[8px] text-burgundy hover:underline"
+          className="font-mono text-[8px] text-forest hover:underline"
         >
           Open in Google Docs &rarr;
         </a>

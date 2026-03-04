@@ -152,4 +152,5 @@ export interface SprintItem {
   priority: 'high' | 'medium' | 'low'
   createdAt: string
   sprintNumber?: number
+  inProgress?: boolean
 }
