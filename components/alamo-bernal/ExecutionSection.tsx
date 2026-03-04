@@ -68,13 +68,31 @@ export default function ExecutionSection() {
           Execution Overview
         </div>
         <p className="text-[10px] text-ink leading-relaxed">
-          This section covers risk management, draft collaboration terms, technology capabilities,
-          and next steps. Key risks include strategy crowding, liquidity constraints at scale, and
-          regulatory changes to Section 475 tax treatment. All agreement clauses are preliminary
-          and subject to discussion — nothing constitutes a binding commitment. The technology
-          demo showcases the engineering capabilities that would be applied to Alamo Bernal&apos;s
-          infrastructure needs.
+          Live collaboration agreements, risk management, and action item tracking.
+          Key risks include strategy crowding, liquidity constraints at scale, and
+          regulatory changes to Section 475 tax treatment.
         </p>
+      </div>
+
+      {/* ── Agreements ── */}
+      <div className="bg-white border border-rule rounded-sm p-3">
+        <div className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-2 pb-1.5 border-b-2 border-rule">
+          Agreements
+        </div>
+        <p className="text-[10px] text-ink leading-relaxed mb-2">
+          Live documents — edit directly in Google Docs. Please use <span className="font-semibold">Suggesting mode</span> so
+          changes are tracked and visible to both parties.
+        </p>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
+          <DocEmbed
+            title="Statement of Work"
+            url="https://docs.google.com/document/d/1Mt1MKpu-DJBBQ71sYddc4nF2ERORcF33/edit?usp=sharing&ouid=115310759493663215170&rtpof=true&sd=true"
+          />
+          <DocEmbed
+            title="Side Letter"
+            url="https://docs.google.com/document/d/10mLzxSVF4ijsTSqSjWy_mTrkoNVP8ckE/edit?usp=sharing&ouid=115310759493663215170&rtpof=true&sd=true"
+          />
+        </div>
       </div>
 
       {/* ── Risk Matrix ── */}
@@ -85,8 +103,6 @@ export default function ExecutionSection() {
             Draft
           </span>
         </div>
-
-        {/* Risk list */}
         <div className="space-y-1.5">
           {sortedRisks.map((risk) => {
             const score = severityScore(risk)
@@ -143,27 +159,6 @@ export default function ExecutionSection() {
               </div>
             )
           })}
-        </div>
-      </div>
-
-      {/* ── Agreements ── */}
-      <div className="bg-white border border-rule rounded-sm p-3">
-        <div className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-2 pb-1.5 border-b-2 border-rule">
-          Agreements
-        </div>
-        <p className="text-[10px] text-ink leading-relaxed mb-2">
-          Live documents — edit directly in Google Docs. Please use <span className="font-semibold">Suggesting mode</span> so
-          changes are tracked and visible to both parties.
-        </p>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
-          <DocEmbed
-            title="Statement of Work"
-            url="https://docs.google.com/document/d/1Mt1MKpu-DJBBQ71sYddc4nF2ERORcF33/edit?usp=sharing&ouid=115310759493663215170&rtpof=true&sd=true"
-          />
-          <DocEmbed
-            title="Side Letter"
-            url="https://docs.google.com/document/d/10mLzxSVF4ijsTSqSjWy_mTrkoNVP8ckE/edit?usp=sharing&ouid=115310759493663215170&rtpof=true&sd=true"
-          />
         </div>
       </div>
 
