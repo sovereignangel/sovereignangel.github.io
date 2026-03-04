@@ -1,5 +1,5 @@
 import { GoogleGenerativeAI } from '@google/generative-ai'
-import type { InsightType, ThesisPillar, NervousSystemState, BodyFelt, TrainingType, DecisionDomain, PredictionDomain, VentureCategory, VentureSpec, VenturePRD, VenturePRDPriority, VentureMemo, VentureMemoMetric, MarketSizeRow, BusinessModelRow, GTMPhase, FinancialProjectionRow, UnitEconomicsRow, UseOfFundsRow, MilestoneRow, DebtItem, FinancialSnapshot, ParsedCapitalCommand, CapitalOperationType } from './types'
+import type { InsightType, ThesisPillar, NervousSystemState, BodyFelt, TrainingType, DecisionDomain, PredictionDomain, VentureCategory, VentureSpec, VenturePRD, VenturePRDPriority, VentureMemo, VentureMemoMetric, MarketSizeRow, BusinessModelRow, GTMPhase, FinancialProjectionRow, UnitEconomicsRow, UseOfFundsRow, MilestoneRow, DebtItem, FinancialSnapshot, ParsedCapitalCommand, CapitalOperationType, TodoQuadrant } from './types'
 import { callLLM } from './llm'
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '')
@@ -1966,5 +1966,73 @@ Return ONLY valid JSON, no markdown, no code fences.`
   } catch (error) {
     console.error('Error extracting from transcript:', error)
     return EMPTY_TRANSCRIPT_RESULT
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Todo Extraction — parse free-form text into structured todo items
+// ---------------------------------------------------------------------------
+
+export interface ParsedTodoItem {
+  text: string
+  projectName: string | null
+  quadrant: TodoQuadrant
+}
+
+export async function parseTodos(
+  rawText: string,
+  projectNames: string[]
+): Promise<ParsedTodoItem[]> {
+  const projectList = projectNames.length > 0
+    ? projectNames.map(n => `- "${n}"`).join('\n')
+    : '(no projects)'
+
+  const prompt = `You are parsing a free-form voice-dictated message into individual todo items.
+
+The user speaks naturally about tasks across different projects. Extract each distinct action item as a separate todo.
+
+ACTIVE PROJECTS:
+${projectList}
+
+USER INPUT:
+${rawText}
+
+For each todo item:
+1. "text": The action item, written as a clear imperative (e.g., "Finalize Phase 1 terms", "Research competitor positioning")
+2. "projectName": Match to one of the active project names above. Use fuzzy matching — "alamo" matches "Alamo Bernal", "thesis engine" or "armstrong" matches "Armstrong", etc. Use null if no project match.
+3. "quadrant": Classify into Eisenhower Matrix quadrant:
+   - "do_first" — urgent AND important (deadlines, blockers, revenue-impacting)
+   - "schedule" — important but NOT urgent (research, planning, relationship building)
+   - "delegate" — urgent but NOT important (admin, routine tasks someone else could do)
+   - "eliminate" — neither urgent nor important (nice-to-haves, low-value)
+   Default to "do_first" if unclear.
+
+Return ONLY valid JSON array (no markdown, no code blocks):
+[
+  { "text": "Finalize Phase 1 terms", "projectName": "Alamo Bernal", "quadrant": "do_first" },
+  { "text": "Research competitor positioning", "projectName": "Manifold", "quadrant": "schedule" }
+]`
+
+  try {
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' })
+    const result = await model.generateContent(prompt)
+    const raw = result.response.text()
+    const cleaned = raw.trim().replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/\s*```$/i, '').trim()
+    const parsed = JSON.parse(cleaned)
+
+    if (!Array.isArray(parsed)) return []
+
+    const validQuadrants = new Set(['do_first', 'schedule', 'delegate', 'eliminate'])
+
+    return parsed
+      .filter((item: unknown) => item && typeof (item as ParsedTodoItem).text === 'string')
+      .map((item: ParsedTodoItem) => ({
+        text: item.text.slice(0, 200),
+        projectName: typeof item.projectName === 'string' ? item.projectName : null,
+        quadrant: validQuadrants.has(item.quadrant) ? item.quadrant : 'do_first' as TodoQuadrant,
+      }))
+  } catch (error) {
+    console.error('Error parsing todos:', error)
+    return [{ text: rawText.slice(0, 200), projectName: null, quadrant: 'do_first' }]
   }
 }

@@ -55,6 +55,11 @@ export interface MorningBrief {
     weekAvg: number | null
     trend: 'up' | 'down' | 'flat'
   }
+  openTodos: Array<{
+    text: string
+    quadrant: string
+    projectName: string | null
+  }>
   discernmentPrompt: string
   aiSynthesis: string
 }
@@ -219,6 +224,23 @@ async function fetchPendingDecisions(uid: string) {
     .slice(0, 5)
 }
 
+async function fetchOpenTodos(uid: string) {
+  const db = await getAdminDb()
+  const snap = await db.collection('users').doc(uid).collection('todos')
+    .where('status', '==', 'open')
+    .orderBy('sortOrder', 'asc')
+    .get()
+
+  return snap.docs.map(d => {
+    const data = d.data()
+    return {
+      text: (data.text as string) || '',
+      quadrant: (data.quadrant as string) || 'do_first',
+      projectName: (data.linkedProjectName as string) || null,
+    }
+  })
+}
+
 async function fetchStalledProjects(uid: string) {
   const db = await getAdminDb()
   const todayKey = today()
@@ -373,7 +395,8 @@ async function generateTopPlaysAndSynthesis(
   rewardTrend: MorningBrief['rewardTrend'],
   recentSignal: string | null,
   projectNames: string[],
-  userFeedback: string[]
+  userFeedback: string[],
+  openTodos?: MorningBrief['openTodos']
 ): Promise<{
   topPlays: MorningBrief['topPlays']
   discernmentPrompt: string
@@ -402,6 +425,15 @@ ${stalledProjects.map(p => `- ${p.name} — ${p.daysSinceActivity} days idle, ne
 
 Reward Score: Yesterday ${rewardTrend.yesterday ?? 'N/A'} | Week avg ${rewardTrend.weekAvg ?? 'N/A'} | Trend: ${rewardTrend.trend}
 
+Open Todos (${openTodos?.length ?? 0}):
+${openTodos && openTodos.length > 0
+  ? openTodos.slice(0, 15).map(t => {
+      const proj = t.projectName ? `[${t.projectName}] ` : ''
+      const q = t.quadrant === 'do_first' ? 'DO FIRST' : t.quadrant === 'schedule' ? 'SCHEDULE' : t.quadrant.toUpperCase()
+      return `- [${q}] ${proj}${t.text}`
+    }).join('\n')
+  : 'None'}
+
 Recent Signal for Discernment: ${recentSignal || 'No recent signals available'}
 ${userFeedback.length > 0 ? `
 USER FEEDBACK ON PREVIOUS BRIEFS (apply these preferences):
@@ -409,7 +441,7 @@ ${userFeedback.map(f => `- "${f}"`).join('\n')}
 ` : ''}
 Generate these three things:
 
-1. TOP 3 PLAYS — The three highest-leverage actions for today, ranked by (opportunity value × readiness × energy mode). Each play should be specific and actionable (not vague). Consider the energy mode: if RECOVER, suggest lower-intensity actions. Format as JSON array.
+1. TOP 3 PLAYS — The three highest-leverage actions for today, ranked by (opportunity value × readiness × energy mode). Each play should be specific and actionable (not vague). Consider the energy mode: if RECOVER, suggest lower-intensity actions. IMPORTANT: Factor in the user's open todos — especially "DO FIRST" items. These represent what they've committed to working on. Top plays should align with or incorporate their highest-priority todos. Format as JSON array.
 
 2. DISCERNMENT PROMPT — Based on the recent signal, create a thought exercise: "If [signal] is true, what are the 2nd and 3rd order effects on (a) your current projects, (b) the broader market, (c) your positioning?" If no signal is available, create a strategic question based on the stale contacts or pending decisions.
 
@@ -477,6 +509,7 @@ export async function generateMorningBrief(uid: string): Promise<MorningBrief> {
     recentSignal,
     projectNames,
     userFeedback,
+    openTodos,
   ] = await Promise.all([
     safeGet<MorningBrief['energyState']>(() => fetchEnergyState(uid), { sleepHours: null, hrv: null, bodyBattery: null, stressLevel: null, nervousSystemState: null, mode: 'CONSERVE' as const, summary: 'Data unavailable' }),
     safeGet(() => fetchUnreadSignals(uid), []),
@@ -487,12 +520,13 @@ export async function generateMorningBrief(uid: string): Promise<MorningBrief> {
     safeGet(() => fetchRecentSignalForDiscernment(uid), null),
     safeGet(() => fetchProjectNames(uid), []),
     safeGet(() => fetchRecentBriefFeedback(uid), []),
+    safeGet(() => fetchOpenTodos(uid), []),
   ])
 
   // AI-generated components (top plays, discernment prompt, synthesis)
   const { topPlays, discernmentPrompt, aiSynthesis } = await generateTopPlaysAndSynthesis(
     energyState, signalDigest, staleContacts, pendingDecisions,
-    stalledProjects, rewardTrend, recentSignal, projectNames, userFeedback
+    stalledProjects, rewardTrend, recentSignal, projectNames, userFeedback, openTodos
   )
 
   return {
@@ -504,6 +538,7 @@ export async function generateMorningBrief(uid: string): Promise<MorningBrief> {
     pendingDecisions,
     stalledProjects,
     rewardTrend,
+    openTodos,
     discernmentPrompt,
     aiSynthesis,
   }

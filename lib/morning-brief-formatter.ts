@@ -38,6 +38,26 @@ export function formatMorningBrief(brief: MorningBrief): string {
     lines.push('')
   }
 
+  // Open Todos
+  if (brief.openTodos && brief.openTodos.length > 0) {
+    const doFirst = brief.openTodos.filter(t => t.quadrant === 'do_first')
+    const schedule = brief.openTodos.filter(t => t.quadrant === 'schedule')
+    lines.push('*OPEN TODOS*')
+    doFirst.forEach(t => {
+      const proj = t.projectName ? `[${t.projectName}] ` : ''
+      lines.push(`! ${proj}${t.text}`)
+    })
+    schedule.forEach(t => {
+      const proj = t.projectName ? `[${t.projectName}] ` : ''
+      lines.push(`> ${proj}${t.text}`)
+    })
+    const other = brief.openTodos.length - doFirst.length - schedule.length
+    if (other > 0) {
+      lines.push(`_+${other} more (delegate/eliminate)_`)
+    }
+    lines.push('')
+  }
+
   // Signal Digest
   if (brief.signalDigest.length > 0) {
     lines.push('*SIGNAL DIGEST*')
@@ -125,6 +145,13 @@ export function formatMorningBriefCompact(brief: MorningBrief, briefUrl: string)
       lines.push(`${i + 1}. *${play.action}*`)
       lines.push(`   ${play.reason}`)
     })
+    lines.push('')
+  }
+
+  // Todos summary
+  if (brief.openTodos && brief.openTodos.length > 0) {
+    const df = brief.openTodos.filter(t => t.quadrant === 'do_first').length
+    lines.push(`Todos: ${df} urgent, ${brief.openTodos.length} total`)
     lines.push('')
   }
 

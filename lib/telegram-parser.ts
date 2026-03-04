@@ -20,6 +20,8 @@
  *   /srespond <text>               — Respond to structured build questions
  *   /sapprove                      — Approve structured build design
  *   /discipline                    — Toggle superpowers-methodology as default skill
+ *   /todo <text>                    — Create todo items (AI-parsed, multi-item, project-matched)
+ *   /done [#]                       — Mark a todo as completed (by position number)
  *
  * Pillar hashtags: #ai, #markets, #mind
  */
@@ -27,7 +29,7 @@
 import type { ThesisPillar } from '@/lib/types'
 
 export interface ParsedTelegramMessage {
-  command: 'signal' | 'note' | 'journal' | 'rss' | 'predict' | 'venture' | 'build' | 'approve' | 'feedback' | 'iterate' | 'reset' | 'brief' | 'memo' | 'morning' | 'cbuild' | 'citerate' | 'skill' | 'sbuild' | 'srespond' | 'sapprove' | 'discipline' | 'transcript' | 'unknown'
+  command: 'signal' | 'note' | 'journal' | 'rss' | 'predict' | 'venture' | 'build' | 'approve' | 'feedback' | 'iterate' | 'reset' | 'brief' | 'memo' | 'morning' | 'cbuild' | 'citerate' | 'skill' | 'sbuild' | 'srespond' | 'sapprove' | 'discipline' | 'transcript' | 'todo' | 'done' | 'unknown'
   text: string
   pillars: ThesisPillar[]
   raw: string
@@ -174,6 +176,18 @@ export function parseTelegramMessage(text: string): ParsedTelegramMessage {
   if (raw.startsWith('/transcript')) {
     const body = raw.slice('/transcript'.length).trim()
     return { command: 'transcript', text: body, pillars: [], raw }
+  }
+
+  // /todo command — create todo items (AI-parsed)
+  if (raw.startsWith('/todo')) {
+    const body = raw.slice('/todo'.length).trim()
+    return { command: 'todo', text: body, pillars: [], raw }
+  }
+
+  // /done command — mark a todo as completed by number
+  if (raw.startsWith('/done')) {
+    const body = raw.slice('/done'.length).trim()
+    return { command: 'done', text: body, pillars: [], raw }
   }
 
   // Plain text — treat as signal

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '@/components/auth/AuthProvider'
 import { getProjects } from '@/lib/firestore'
 import { useDailyLogContext } from '@/components/thesis/DailyLogProvider'
+import { useTodos } from '@/hooks/useTodos'
 import type { Project } from '@/lib/types'
 import StatusIndicator from '@/components/thesis/StatusIndicator'
 import { percent, dayOfWeekShort } from '@/lib/formatters'
@@ -12,6 +13,7 @@ import Link from 'next/link'
 export default function FocusView() {
   const { user } = useAuth()
   const { log, recentLogs, dates } = useDailyLogContext()
+  const { byQuadrant, toggleComplete } = useTodos(user?.uid)
   const [projects, setProjects] = useState<Project[]>([])
 
   useEffect(() => {
@@ -134,6 +136,37 @@ export default function FocusView() {
               {log.whatShipped || 'Nothing shipped yet'}
             </p>
           </div>
+          {/* Do First Todos */}
+          {byQuadrant.do_first.length > 0 && (
+            <div className="col-span-2 mt-1">
+              <p className="font-serif text-[8px] italic uppercase tracking-wide text-red-ink mb-1">Do First</p>
+              <div className="space-y-0.5">
+                {byQuadrant.do_first.slice(0, 6).map(todo => (
+                  <div key={todo.id} className="flex items-start gap-1.5">
+                    <button
+                      onClick={() => toggleComplete(todo)}
+                      className={`font-mono text-[10px] flex-shrink-0 mt-px ${
+                        todo.status === 'completed' ? 'text-green-ink' : 'text-ink-muted hover:text-green-ink'
+                      }`}
+                    >
+                      {todo.status === 'completed' ? '\u2713' : '\u25CB'}
+                    </button>
+                    <span className={`font-mono text-[10px] ${todo.status === 'completed' ? 'line-through text-ink-muted' : 'text-ink'}`}>
+                      {todo.text}
+                    </span>
+                    {todo.linkedProjectName && (
+                      <span className="font-mono text-[7px] text-ink-faint flex-shrink-0 mt-0.5">
+                        {todo.linkedProjectName}
+                      </span>
+                    )}
+                  </div>
+                ))}
+                {byQuadrant.do_first.length > 6 && (
+                  <span className="font-mono text-[8px] text-ink-muted">+{byQuadrant.do_first.length - 6} more</span>
+                )}
+              </div>
+            </div>
+          )}
           {/* Quality badges */}
           <div className="col-span-2 flex gap-1.5">
             {log.publicIteration && (

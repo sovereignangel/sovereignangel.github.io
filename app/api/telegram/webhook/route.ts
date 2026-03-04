@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { parseTelegramMessage, type TelegramUpdate } from '@/lib/telegram-parser'
-import { parseJournalEntry, transcribeAndParseVoiceNote, parsePrediction, parseVentureIdea, generateVenturePRD, generateVentureMemo, extractFromTranscript, type ParsedJournalEntry } from '@/lib/ai-extraction'
+import { parseJournalEntry, transcribeAndParseVoiceNote, parsePrediction, parseVentureIdea, generateVenturePRD, generateVentureMemo, extractFromTranscript, parseTodos, type ParsedJournalEntry } from '@/lib/ai-extraction'
 import type { TranscriptTemplateType } from '@/lib/transcript-templates'
 import type { VentureSpec } from '@/lib/types'
 import { computeReward } from '@/lib/reward'
@@ -2041,6 +2041,130 @@ const TRANSCRIPT_KEYBOARD = [
   ],
 ]
 
+// ---------------------------------------------------------------------------
+// /todo — AI-parsed batch todo capture with project matching
+// ---------------------------------------------------------------------------
+
+async function handleTodo(uid: string, todoText: string, chatId: number) {
+  if (!todoText || todoText.trim().length === 0) {
+    await sendTelegramReply(chatId, 'Empty todo. Usage: `/todo For alamo I need to finalize terms, for armstrong I need to ship the feature`')
+    return
+  }
+
+  await sendTelegramReply(chatId, '_Parsing todos..._')
+
+  try {
+    const adminDb = await getAdminDb()
+
+    // Fetch user's active projects for name matching
+    const projectsSnap = await adminDb.collection('users').doc(uid).collection('projects').get()
+    const projects = projectsSnap.docs.map(d => ({ id: d.id, name: (d.data().name as string) || '' }))
+    const projectNames = projects.map(p => p.name)
+
+    // AI parses free-form text into structured todos
+    const parsed = await parseTodos(todoText, projectNames)
+
+    if (parsed.length === 0) {
+      await sendTelegramReply(chatId, 'Could not parse any todos from that. Try again?')
+      return
+    }
+
+    // Save each todo to Firestore
+    const savedLines: string[] = []
+    const quadrantLabels: Record<string, string> = {
+      do_first: 'Do First',
+      schedule: 'Schedule',
+      delegate: 'Delegate',
+      eliminate: 'Eliminate',
+    }
+
+    for (const item of parsed) {
+      // Match project name to ID
+      let linkedProjectId: string | undefined
+      let linkedProjectName: string | undefined
+      if (item.projectName) {
+        const match = projects.find(p =>
+          p.name.toLowerCase() === item.projectName!.toLowerCase()
+        )
+        if (match) {
+          linkedProjectId = match.id
+          linkedProjectName = match.name
+        } else {
+          linkedProjectName = item.projectName
+        }
+      }
+
+      const todoRef = adminDb.collection('users').doc(uid).collection('todos').doc()
+      await todoRef.set({
+        text: item.text,
+        quadrant: item.quadrant,
+        status: 'open',
+        sortOrder: Date.now(),
+        sourceType: 'telegram',
+        ...(linkedProjectId && { linkedProjectId }),
+        ...(linkedProjectName && { linkedProjectName }),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+
+      const projectTag = linkedProjectName ? `[${linkedProjectName}] ` : ''
+      savedLines.push(`${projectTag}${item.text} (${quadrantLabels[item.quadrant]})`)
+    }
+
+    await sendTelegramReply(
+      chatId,
+      `Saved ${parsed.length} todo${parsed.length > 1 ? 's' : ''}:\n${savedLines.map(l => `• ${l}`).join('\n')}`
+    )
+  } catch (error) {
+    console.error('[todo] Error:', error)
+    await sendTelegramReply(chatId, `Todo parsing failed: ${error instanceof Error ? error.message : String(error)}`)
+  }
+}
+
+// ---------------------------------------------------------------------------
+// /done — mark todo completed by position number
+// ---------------------------------------------------------------------------
+
+async function handleDone(uid: string, text: string, chatId: number) {
+  const adminDb = await getAdminDb()
+
+  const snap = await adminDb.collection('users').doc(uid).collection('todos')
+    .where('status', '==', 'open')
+    .orderBy('sortOrder', 'asc')
+    .get()
+
+  if (snap.empty) {
+    await sendTelegramReply(chatId, 'No open todos.')
+    return
+  }
+
+  const num = parseInt(text, 10)
+  if (!isNaN(num) && num >= 1 && num <= snap.docs.length) {
+    const targetDoc = snap.docs[num - 1]
+    const todayKey = getTodayKey()
+    await targetDoc.ref.update({
+      status: 'completed',
+      completedAt: todayKey,
+      updatedAt: new Date(),
+    })
+    const todoData = targetDoc.data()
+    const projectTag = todoData.linkedProjectName ? `[${todoData.linkedProjectName}] ` : ''
+    await sendTelegramReply(chatId, `Done: ${projectTag}"${todoData.text}"`)
+    return
+  }
+
+  // List open todos with numbers
+  const quadrantAbbr: Record<string, string> = { do_first: 'DF', schedule: 'SC', delegate: 'DG', eliminate: 'EL' }
+  const lines = snap.docs.map((d, i) => {
+    const data = d.data()
+    const q = quadrantAbbr[data.quadrant as string] || '??'
+    const proj = data.linkedProjectName ? `[${data.linkedProjectName}] ` : ''
+    return `${i + 1}. [${q}] ${proj}${data.text}`
+  })
+
+  await sendTelegramReply(chatId, `Open todos:\n${lines.join('\n')}\n\nReply \`/done <number>\` to complete.`)
+}
+
 async function handleTranscript(uid: string, transcriptText: string, chatId: number) {
   if (!transcriptText || transcriptText.trim().length < 100) {
     await sendTelegramReply(chatId, 'Transcript too short. Paste your full Wave.ai transcript after /transcript')
@@ -2378,6 +2502,7 @@ export async function POST(req: NextRequest) {
       if (cbChatId && cbMessageId && cbq.data?.startsWith('trx:')) {
         await handleTranscriptCallback(cbChatId, cbMessageId, cbq.data)
       }
+      // No callback queries needed for /todo — AI handles categorization directly
       return NextResponse.json({ ok: true })
     }
 
@@ -2499,6 +2624,11 @@ export async function POST(req: NextRequest) {
         '`/brief <text>` — Feedback on morning brief',
         '`/rss <url> #pillar` — Subscribe to RSS feed',
         '`/transcript <text>` — Process a Wave.ai meeting transcript (AI extracts insights, decisions, hypotheses)',
+        '',
+        '*Todos:*',
+        '`/todo <text>` — Create todos (voice-dictate naturally, AI parses + matches projects)',
+        '`/done [#]` — List open todos or mark one complete by number',
+        '',
         '`/id` — Show your chat ID (for settings)',
         '',
         'Reply to a morning brief to send feedback.',
@@ -2673,6 +2803,18 @@ export async function POST(req: NextRequest) {
     // Handle transcript command (/transcript <paste transcript here>)
     if (parsed.command === 'transcript') {
       await handleTranscript(uid, parsed.text, chatId)
+      return NextResponse.json({ ok: true })
+    }
+
+    // Handle todo command (/todo <free-form text>)
+    if (parsed.command === 'todo') {
+      await handleTodo(uid, parsed.text, chatId)
+      return NextResponse.json({ ok: true })
+    }
+
+    // Handle done command (/done [#])
+    if (parsed.command === 'done') {
+      await handleDone(uid, parsed.text, chatId)
       return NextResponse.json({ ok: true })
     }
 
