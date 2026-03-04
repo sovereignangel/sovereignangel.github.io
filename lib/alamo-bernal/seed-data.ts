@@ -119,6 +119,7 @@ export const PROPOSAL_PHASES: ProposalPhase[] = [
       'Automated dividend stock screener (NYSE + NASDAQ, 2,700+ universe)',
       'Historical ex-dividend price behavior database (3+ years)',
       'Daily candidate ranking dashboard with risk scores',
+      'Limit order optimization engine (dynamic 50% threshold)',
       'Portfolio tracking dashboard (positions, P&L, dividends)',
       'Market fund to friends and network to warm Phase 2 pipeline',
     ],
