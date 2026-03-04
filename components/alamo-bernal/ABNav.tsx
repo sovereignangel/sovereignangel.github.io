@@ -4,9 +4,9 @@ import type { ABTab } from '@/lib/alamo-bernal/types'
 
 const TABS: { key: ABTab; label: string }[] = [
   { key: 'intelligence', label: 'Intelligence' },
-  { key: 'strategy', label: 'Strategy' },
-  { key: 'execution', label: 'Execution' },
-  { key: 'sprint', label: 'Sprint' },
+  { key: 'strategy', label: 'Phases' },
+  { key: 'execution', label: 'Partnership' },
+  { key: 'sprint', label: 'Tech Development' },
 ]
 
 interface ABNavProps {
