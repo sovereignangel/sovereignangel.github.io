@@ -197,6 +197,277 @@ export const MEETINGS: Meeting[] = [
       'Lori: Introduce Sean to Alec (VC) at South by Southwest investment event',
     ],
     tags: ['technology', 'fundraising', 'strategy', 'operations'],
+    rawTranscript: `Sean Becker: Like, oh, I mean, let me not like, let me not notice all this like nose diving and stuff. Oh, my gosh. And how has that changed how you're feeling?
+
+Lori Corpuz: Did you buy anything today? Go shopping? I didn't go shopping on the market.
+
+Sean Becker: Oh, man.
+
+Lori Corpuz: It was a Yeah, I mean, it's a spicy day.
+
+Sean Becker: We'll just put it that way. But I mean, some beautiful, weather outside I'm going to the gym later and all will be well I had a cousin of mine like text me it's like hey I saw all these like investment fund documents that you sent to my dad because I had like my uncle with the stuff and she was like I want to get in on the class a like 11% returns like let's talk this week oh man that's great so how's your flow been with that in general It's been really good since I posted this Insta story, which I think was not, I mean, the one that you saw, I think, right?
+
+Sean Becker: So, I mean, I can't really like advertise this per se, but I was just saying something about my life of like, hey, this thing that I'm doing is blowing up. And then just the idea of like texting people these little, you know, screenshot photos of it rather than these big formal emails I've been doing. It's generating some good interest. I'm talking tomorrow with a friend of a friend who works at Wells Fargo, like, like placing people's money into investments like cool.
+
+Lori Corpuz: Oh, like a proper like, has serious all that stuff. Yeah, yeah, that would be like the legal most official way to fundraise, like scale your fundraising, because they have all the series licenses and stuff like that. Well, I mean, I don't know.
+
+Sean Becker: Yeah, I mean, it's not like he would be doing it on my behalf. I think he just sort of matches people. But then another guy, another friend of a friend at Schwab, I have a call with him like Thursday. In addition, I love this. Oh, my gosh.
+
+Lori Corpuz: Things are moving.
+
+Sean Becker: I don't know. But in the back of my mind, I always worry I'm not quite legit enough. To like get big money on board because I don't know, there's like the really big hedge funds out there, you know, they're classified as, you know, partnerships, and they're headquartered in Delaware, and they have an offshore version for international investors. And I'm kind of like, here's me in my Wyoming LLC.
+
+Lori Corpuz: Yeah, but I think it's like, I think these are different chapters. And it's worth looking at what you actually want to do, because there is a lot of value in being a solo GP that's doing quite well, you know, and is able to, you know, fund his lifestyle and kind of lifestyle fund, if you will. But then there's also different ways of approaching it, or it's like, you can bring in some GPs that you like to learn from are in a different strategy or something. Or if you really have big ambition, then it's worth, you know, looking at this stuff.
+
+Sean Becker: Yeah, that's right. Yeah, there's a lot of ways to do it. But I was really impressed with what you put together. What is the name of the platform that you use to do this?
+
+Lori Corpuz: So basically, it's all this code that I've been doing for Armstrong as well. There isn't a platform, I just built it. So badass. Yeah, well, it's kind of like my thinking is, especially in this day age that we're in, why not just kind of use a tool to keep all your minutes and everything and have it like synchronize, update stuff. You have a project management tool. You just log into your mobile. We can like update stuff together. I'm excited for this, Lori.
+
+Sean Becker: I feel like we've been like such good vibe friends for so many years and like how cool would it be if we actually, I don't know, like ended up working together and value for each other. It would be so cool to keep this going.
+
+Sean Becker: You know? Yeah, I love the idea.
+
+Lori Corpuz: And just before we jump into that, I want to give you some context on Alec. Yeah, yeah. Thanks for introducing me.
+
+Sean Becker: So he has this VC event at South by Southwest.
+
+Lori Corpuz: His whole priority is investments and startups. So, you know, to whatever extent, you know, you could add value that way. That's his general prerogative. But he's a super chill guy, very fun. When I met him, basically it was at primary and we were looking at different startups out of Halliburton Labs. So this was, Halliburton is like an oil and gas conglomerate out of Austin.
+
+Sean Becker: Do you remember them? Have you ever worked with them?
+
+Lori Corpuz: I mean, no, just like it's like a Dick Cheney thing, right?
+
+Sean Becker: That's my only association is like Dick Cheney went to war with Iraq for Halliburton.
+
+Lori Corpuz: No, no, I mean, that's like stuff I keep forgetting. And his VC is across the Capitol. So a lot of their sort of, quote unquote, competitive advantage as a VC is the fact that they can have very easy lobbying conversations. So they do a lot in defense and stuff like that.
+
+Lori Corpuz: That's a cool connection. I think he shared he's hosting this investment event thing. So there should be a lot of leads for you there, maybe.
+
+Sean Becker: I mean, I signed up for what it is. And I think it's just of an event more of like a space that people can kind of like use to whatever like you get in there. That's cool too. If that's the case, then you can have your meetings there.
+
+Lori Corpuz: Yes, I think so.
+
+Sean Becker: Yeah, that's cool. I mean, I really don't know exactly what to expect with something like this. And I know that I need to actually attend something that's more formally for investment funds. I think I need to like locate some some big conference in North America or wherever where this sort of thing happens, probably New York. But I need to ingratiate myself more into this world because I am like I am like a true outsider with this.
+
+Lori Corpuz: Well, OK, so I'm going to challenge you because this has been my world for like I don't even know how long when I was doing VC and investment banking. It's basically you're out there and you're socializing for a living.
+
+Lori Corpuz: Um, and before you, uh, before you jump into this stuff, it's worth kind of like identifying your quote unquote ICP, which is like startup language for like ideal customer profile, right? Cause there's, there's different dynamics. Like, why are you going out to these events? Are you just building relationships for folks that could be your LPs? Are you trying to learn from other hedge funds that may be larger than you maybe get some? Intel insights, develop peers that you can kind of like work with, and then each of these will be completely different goals and different like events that you go to, you know?
+
+Sean Becker: Yeah, well, God, I mean all of the above are, you know, valuable. I mean, for me, I guess the goal with these sort of events would be just to learn the language.
+
+Lori Corpuz: What it is that people are talking about, what they're caring about, so that I can not seem like, you know, dude in his basement who's like, just the two events I would have you like, jot down would be Michael Milken, like the Milken Institute ones. Those are like top notch. And then SALT is pretty good.
+
+Sean Becker: Oh, I have heard about that.
+
+Lori Corpuz: Yeah, I went when SPF was at its peak. He was like on stage with this Victoria's Secret model in the Bahamas.
+
+Sean Becker: I mean, I used to hang out in his childhood home because both of his parents are Stanford law professors and they used to have these book clubs.
+
+Lori Corpuz: Well, it all seems tainted now.
+
+Sean Becker: I mean, they were like in on it. His parents were like getting payments and all this stuff.
+
+Lori Corpuz: I mean, I don't think they actually saw the extent of his risk, but I'm sure they understood layers of it, you know?
+
+Lori Corpuz: Milken Global Conference? Any of those, even like the smaller subsets. Like I would say if you wanted to do All In Summit, that would be like a baby step in the direction of investors. But it's like it's not the high quality caliber ones.
+
+Sean Becker: Yeah, there's like a future of finance one happening today in DC.
+
+Lori Corpuz: So yeah, so those are the main things. Should we jump into any of this? How do we want to approach this? Basically, I guess from our last conversation, it was like, okay, what could working together look like, And I put like a phased idea. And by the way, phase two and three are just kind of like directional, which we can talk through the details which really comes down to the idea with this phase one is just like this tech idea that we've discussed since even our first conversation and the purpose of that is also building kind of like natural intuition and like awareness of the strategy so if anyone's speaking to it right they have to understand more and it takes some time to do that. And the other piece, so when I was doing investment banking, I would say like the top pro tips for fundraising generally were twofold. One is you have skin in the game. So basically like you invested in said person, if you will. So like we'd be going off and fundraising for clients, and then we'd bring the top investor that maybe had investments in all the clients and they'd like talk up the founder, and it'd be a lot easier for the investor to be interested. You know what I mean?
+
+Sean Becker: Yeah, no, it's true. Live back channel. Yeah, I mean, really, because like, this is it's already sort of happening informally, because my best friend and his wife have whatever, like, for 25k. And so he's like, He just tells people about it. His wife told her coworker, and then he told his brother and his sister, and he's just like, yeah, this is great. I mean, I get all this money every quarter, and we know Sean, and we like Sean, and it's really word of mouth.
+
+Lori Corpuz: Well, not even just word of mouth, but word of mouth from someone who's invested in it, right? If you have someone that's just selling it, you know what I mean? Yeah, skin in the game.
+
+Sean Becker: Then it's just noise.
+
+Lori Corpuz: So that's one piece. And the other idea of, yeah, skin in the game. And then I think, yeah, I think that was pretty much it. So it will take, yeah, it will take a little bit for me to understand a little bit. So understanding the strategy and skin in the game, right? And that will be a lot easier. For just socializing it because it's less of a sell and just more of a, this is what I'm doing and it's exciting and it's another option. And so that's been very successful in my personal experience as well as like others I know that have been doing this stuff for some time.
+
+Sean Becker: Yeah, so that can definitely, I mean, that's definitely achievable. Just you know what I'm doing is pretty unorthodox and unique so we can just you know it's easy to just sort of talk through it and you'll ask me clarification questions on what I'm doing and what the process looks like.
+
+Lori Corpuz: Yeah and so I think what's worth like talking through is the idea of like having tech. Have you thought through the idea of having a lot look like on your end? Do you think it would save a lot of time? Would you enjoy that? Is that something like that?
+
+Sean Becker: Yeah, well, okay. So I mean, it would definitely save me some time, I think, to go through and kind of, I mean, there is already this filter I use on Fidelity. And it's pretty good. I mean, in order to like, go through and actually manually pick my stocks for the week, that's really more just like, that takes about an hour or so per week. So that's, that's not a huge lift. There might, there is just kind of like this advanced form of screening where if you could access the data and implement it, it would, it would really help me in terms of assessing the whole like past three years of nosedive risk, we'll call it, you know, like How many times in the past three years, which is, you know, 12 dividend payments, like out of those 12, how many times did it nosedive? How many times did the next day on market open, which is when my limit orders are set to execute, how many times on market open was it below the value of the dividend? Like it dropped more than the value of the dividend paid and stayed down and never came up to like this 50 percent threshold that I've said. If we could put that metric into place and say, number one, how many times has that happened in the past 12 dividend payment cycles or three years? And number two, to layer on top of that, how much of that can be explained by general market forces? So maybe it happened five or six of the past 12 and I'd say, Oh shit, that's too many times. That's too big of a risk. And then we look and see, well, you know, one on four of those days, there actually was just a big drop in the market in general. It could happen anyway. So we, we assess the nosedive risk that way, if that's clear.
+
+Lori Corpuz: So what I'm saying is like, maybe you'd want an overlay of like, okay, against this stock trailing three years, nosedive risk, and then maybe you can map it against those. You could do a double-click. Okay, at these particular nosedive events, what was the S&P 500 or NASDAQ? What was VIX? What was their industry, macro, tailwind, headwind? I don't know, just different assessments.
+
+Sean Becker: I collect this informally on my own where I actually say, How much of the, what percentage of the dividend captured did I lose on the sale? And I also just write down how many, how many days did it take to execute? So I set these limit orders. You know, if it's trading for $30 per share, I paid a $1 per share dividend. I set my limit order for 2950. So I only lose half of the value of the dividend. And if it drops way down below on the first day, I measure how many days how many days does it take to get back up to 2950? And so I can kind of just informally go through and be like, oh, should I buy this one tomorrow? Let me look back and I'll say, oh, damn, yeah, last time I got this, it took 10 days to pop back up or something. That's too much of a risk.
+
+Lori Corpuz: And what's cool is I think even beyond this, now that we have AI, right? We could have those like, quantitative columns. And then we might also be able to pull in like, contextually, what might have been happening in the market with a business as well. Like maybe there was news that was within that timeframe.
+
+Sean Becker: If you swing it, yeah, I mean, maybe that'd be nice. But I don't know.
+
+Lori Corpuz: I guess the risk is to tinker with, you know, to see if it's like, is this Yeah, is this too much or valuable? Just to play with.
+
+Sean Becker: I mean, because my concern is that, you know, Fidelity, for instance, has just some of this kind of data on every single stock. And it's just a little too blunt. Like, it's just like, it's just kind of their like automated tool. And it, you know, I always kind of have to go in on my own and just double check anyway. So my fear in having you develop this sort of thing, and like, maybe AI is good enough that I can do it, but my fear is that I'll see the filtered list and I'll see all the stats I need to see, but ultimately I'm too nervous. I just need to go in and double check anyway and say, Oh, technically it's this way. You know what I mean? So I, so my fear is that like, I'm going to have to end up double checking against all of it anyway. So anything that gets developed would need to be like, I'd really need to be able to trust it and be able to place my trades based on it.
+
+Lori Corpuz: Um, so it would be kind of like, you know, that would, that would be kind of like, um, I think we'd have, uh, I don't know if I'd call it like a testing process, but like a, like, um, you and I working together process where there'd be like, uh, the term that you've been using is kind of like screening, but basically there will be one off things that neither of us have thought of to the intuition of that. And you might be like, hey, Lori, I actually go to Schwab when it comes to this particular nuance because, you know, for whatever reason, the stock split in five.
+
+Lori Corpuz: So these are these are small nuances that like on Armstrong, we have to work through and we look at the analyst reports, too.
+
+Sean Becker: I mean, that's really a thing, because, you know, sometimes I'll look at the dividend payment history. I'm like, whoa, there was a huge drop. And then I'll just, you know, like Google or chat, chat GPT, just like, hey, did so and so stock undergo a stock split like two years ago? Would that explain this? And sometimes they're like, yes, like, that's the reason. And then other times they're like, no, like, there's no history of that. And I'm like, oh, okay, this is, you know, sus that they're like, dropped a bunch or something. So, but again, it's all me.
+
+Lori Corpuz: And it's like, how long, you know, how long it took you to get to this level of, you know, whatever intuition you're at right now. You know, I don't, I don't think you have a list out there of like, every edge case, right?
+
+Sean Becker: No, I don't. But if you see it, it's like, Oh, I remember what this is looking like.
+
+Lori Corpuz: Yeah, totally.
+
+Sean Becker: Yeah, it's more kind of qualitative, which I guess is maybe a sort of selling point for my expertise is that I just do this, I just do this day in and day out. And that's my kind of value ad for somebody. Um, but yeah, so I guess, you know, in terms of kind of the pure, like amount of data that you'd have to like harness for all this, the, the screener process should go first so that we don't have to be doing the whole three years of of data for like every stock on the stock market. I mean like there's a ton of stocks that I'm just a large majority of the stocks listed on NASDAQ or New York Stock Exchange are just not of interest to me. Their dividend yield is too small or it's too big or their share price is really low or they don't pay it quarterly they pay at another frequencies or it's headquartered abroad where the dividend taxes get withheld. There's a number of different risk factors. So it's kind of like once we narrow that down for like my 15 stocks for the week or something like that, then those are the ones where we'd want to add another layer and say, how has it done the past three years on X dividend? Oh, great.
+
+Lori Corpuz: That can be I wonder if there's if you're. I don't know if this is the right term, de-scoping some of these abroad stock dividends because of the annoyance of working through all the tax calculations, et cetera, et cetera, like because, you know, that might be another obvious easy win from a tech perspective, which is like these countries that this is the calculation.
+
+Sean Becker: Is there a potential to still get them anyway, you mean, and still have it be worth it?
+
+Lori Corpuz: So that would be an idea of like it expanding your scope of like possibility.
+
+Sean Becker: I mean, maybe it's just that it's hard for me to keep track of the dividends I'm bringing in because they withhold it. So I actually get less in dividends right off the bat. Oh, so wait. So you're saying it's hard for you to track the dividends that Like if I write down, okay, this is paying a dollar per share and I got 5,000 shares, which means I should get $5,000 for this. You all of a sudden see on the payment day, well, it was, they're actually only paying you 4,000 because it would help 20% for dividends. Cause it was headquartered in, you know, God, let me, let me pull. I just had a few of this where it happened. I mean, um, Oh my God.
+
+Lori Corpuz: For instance.
+
+Sean Becker: It's really just Canadian ones. There's a ton of Canadian oil and gas companies and random Canadian ones where they withhold 25% because that's where you're going to owe to them, I guess, in taxes on it. I don't know. It's weird and it's annoying because I just don't have as much cash as I think I'm going to have, number one. And it's annoying, number two, because it fucks with my record keeping on all this. Oh, OK.
+
+Lori Corpuz: So it sounds like record keeping is going to be like a very good help.
+
+Sean Becker: Yeah, God, I have this massive spreadsheet that it's I've got I've got a system. It's my own little thing. Each day I go in, I record each thing. And then at the end of the month, I have a different sheet that I'm recording all this other stuff. And so I mean, yeah, really, I mean, someday that could all be automated. That probably takes me more time or, or just it takes me probably more time than the actual, um, screening process. Cause I go through and I say, okay, what did I buy this one for? What did I sell it for? How much did I capture? What percentage of the dividend I lose? I have all these columns and stuff. So, um, yeah. So, I mean, that's, that's another piece of it. That could be a value to me for sure. If that ended up being automated. Um, Hmm.
+
+Lori Corpuz: So I mean, there's a lot of directions for us to explore.
+
+Sean Becker: Yeah, that's great.
+
+Lori Corpuz: Yeah, that's great.
+
+Sean Becker: The thing about foreign stocks that you mentioned, too, is really interesting because it might be cool. I've had ideas about, you know, like real hedge funds aren't limited to the New York Stock Exchange or the Nasdaq. You can go buy stocks on, you know, the Indian Stock Exchange. You can buy in Singapore or whatever. So my thought is like, Like the New York Stock Exchange is super freaking volatile. What if we could do this dividend capture in a market that is super stable, like some Scandinavian country, like we're on the Stockholm, like, you know, Amsterdam Stock Exchange. And we're like capturing these things. And they're just these boring little, you know, like Dutch utilities or something.
+
+Sean Becker: I think when I look into it, there's probably some tax issues or there's there's something that might mess with that. But there's so many stock exchanges around the world that I wonder.
+
+Lori Corpuz: I wonder if there's arbitrage also across all of them.
+
+Sean Becker: And in what sense, like people are already doing that.
+
+Lori Corpuz: Well, the easiest one would basically just you be finding a better price point at a different stock exchange?
+
+Sean Becker: Well, I mean, most companies, I think are just listed on one exchange. I mean, maybe they have subsidiaries.
+
+Lori Corpuz: You mean, you mean specifically expanding scope outside of the US? So that that type of analysis would be very, would be very interesting to do. So it's almost like, okay, I kind of see from a perspective, there's the like, doing the automating a lot of the manual annoying stuff, right. And then there's another piece, which is sandboxing research, that can a scope that can expand a lot of scope with like, where you're generating alpha or like developing more of your intuition. So this would be kind of in this, like expanding scope.
+
+Sean Becker: Yeah, in the R&D, like bucket. Yeah, I mean, and that's probably beyond what I would ask you to do. I mean, every couple of weeks or so, I feed chat GPT a huge prompt, and I'm like, here's all the background of what I'm doing, and here are the ways that I'm exploring. Tell me what I should be doing. Just generate some massive memo on this kind of thing, and it gives me some ideas with stuff, but it hasn't changed my overall strategy a ton.
+
+Lori Corpuz: Like what part of the memo is actually valuable?
+
+Sean Becker: Yeah, there's just a tiny piece of it usually. Anyway, the screener stuff, the ex-dividend, like history piece number two. I guess now, yeah, like being able to automatically put this all, have all the data funneled into a spreadsheet would be really cool. I mean, there's, it's going to be time intensive. For me to explain all that. I mean, the limit order optimization would be the, that would be the key to everything, really. I'm just looking down your deliverables. I mean, I would say all the stuff that we've been talking about makes my life more convenient and easier. And maybe there's some monetary add, but the limit order I mean, man, that is, if there is some tech out there, some AI that can tell us the story, like, hey, this stock's about to fucking nosedive way more. It doesn't matter if you lost 90% of your dividend, you gotta just sell it now, just do it now. Or, on the opposite, hey, don't set a 50% of your dividend.
+
+Sean Becker: limit order, this thing has actually been going up and it's going to keep going up even on sex dividend date. Just don't set the order yet. Like, just wait, maybe you'll only lose 5% of your dividend or something. I mean, I that's like, you know, that's trying to like play God or whatever. I mean, there's probably you know, people just with all the charts up there on Bloomberg.
+
+Lori Corpuz: Yeah, yeah. I mean, you know, nuances with that, like, And I think that would be better able to like intuit after like being in your strategy for a little bit, but basically it comes down to like, you know, what are you optimizing for when you're, you know, limiting your orders and trying to increase your yield with these dividends. So, yeah, it's tricky. Like if we were to put this in an order, I would probably put that at the, you know, at the end, get more comfort in the first build out, and then there'll be intuition to start talking about what type of models would make the most sense.
+
+Sean Becker: Yeah, that's the big reward at the end of all this for me, using AI to actually execute my trades. I mean, it sounds kind of scary for me to my hand off the steering wheel, but I mean. Man, it's totally possible.
+
+Lori Corpuz: I would suggest that at that point, we involve a cybersecurity person as well, right?
+
+Sean Becker: I'm glad to hear that.
+
+Lori Corpuz: Because I can do all the build, and then I know the process where we can start, just to talk ahead there. I can do the build where where we can see the recommendation algorithm of when it would order whatever, and it could show what the portfolio could end up looking like if it all automated. And depending on if Fidelity has this, there could be paper trading that I'm actually doing it, but with no money. And you basically see both and you're like, okay, I'm getting a little bit more comfortable here. And then ideally you're doing this for a certain amount of time, so that random outliers come up, and then we can see what to do with it. And then we have an intuition to bake in, what do you call it, emergency holds and stuff like that. So that stuff I feel very comfortable with. What I don't feel comfortable with is just cybersecurity in general.
+
+Sean Becker: It's like, just write this all in code, write your whole thing into code, and they'll just do it all for you. And I'm like, man, that can fuck up everything so fast.
+
+Lori Corpuz: Well, yes. And just the infrastructure is so fragile these days, because everyone's like coding and throwing stuff out there. So people who are quite effective at hacking, they're seeing vulnerabilities everywhere. And they're just like, they're like ready to eat lunch, you know.
+
+Sean Becker: Oh, Jesus, that's a horror story. So but anyway, so just like building towards that direction, I feel pretty confident with. It's just a matter of, yeah, bringing in a like proper cybersecurity person. It's like, is this like up to snuff?
+
+Sean Becker: Yeah, it's down the line.
+
+Lori Corpuz: So you're going through this.
+
+Sean Becker: Yeah, but God, I'm just looking at this website you put together, which I should tell you is on my bookmarks tab now. I mean, there's a lot here and I'm like, okay, I want to be able to reference this.
+
+Lori Corpuz: Oh, yeah. So what was I going to say? The other tabs are kind more of a draft for us to start having conversations, but we don't need to talk on that now. I mean, I guess just on first glance, is there anything that strikes you that you'd want to just bring up or?
+
+Sean Becker: Yeah, I mean, it's just next steps. I mean, I emailed you at the last minute. I don't think I had done this last time, but I just emailed over like a PPM, private placement memorandum, and a subscription agreement that I have people sign.
+
+Lori Corpuz: Oh, great, yeah.
+
+Sean Becker: I can also... Let me actually just follow up now too and send you the operating agreement for the fund.
+
+Lori Corpuz: Okay, cool. That will be good.
+
+Sean Becker: And then...
+
+Lori Corpuz: Yeah, because I have questions with respect to... I guess the I forget the term that you use, but basically like what you have in place to reduce risk for investors, but you mentioned that and what was it? It's over here.
+
+Lori Corpuz: Treasury bonds.
+
+Sean Becker: Yeah, which is not maybe not something, it's not something that I advertise in my documents or whatever. Whatever, because I don't know, that piece is a little like untested, but that is how I do it. I mean, I literally just went in this morning and I bought eighty three thousand dollars worth of 30 year treasury bonds because that's how much cash I had on hand from the dividends I got last month. And so then I put it into my line of credit and said, hey, solid chunk out of this out and I'm going to use that cash to pump it back into Fidelity for buying more, more stocks. So that's, that's literally what I was just doing today. It's like the start of the month. So I do it every month. Um, but yeah, that's a piece of it. And I know you're not passing any of this information on to anybody yet, but we would want to just sort of like kind of screen, you know, what information gets shared in writing at least off the dock.
+
+Lori Corpuz: Yeah, totally. And also, like, from the perspective of like, even sharing it with folks, I think I'd want to have a conversation on like, how you're thinking about risk and mitigating different things. So, and that can be like some other time.
+
+Sean Becker: Yeah, I mean, it's not it's not even too complicated. I mean, it's mostly just that treasury bonds are the safest investment like out there. So, you know, if the stock market were to crash, those are stocks and, you know, treasury bonds typically go up in value during a stock market crash. And so I showed, you know, the screen to like my best friend and his wife. I was like, there's your money. There is the like 400k. Treasury bonds, you know, if you ever want it out, it's sitting right there. That is untouched. That's sitting there.
+
+Lori Corpuz: So the real risk is if we go into World War Three and we lose to China.
+
+Sean Becker: I tried to tell somebody I was in the offices yesterday of Merrill Lynch, and I was like, can I diversify my bonds? Like, what about the UK? What about Japan? They were just like, the US is the only one and I'm just like, bro, like, I don't know. Let me think that out.
+
+Lori Corpuz: Oh my god, Sean, your colors are showing. You're so short the US. Oh my gosh. Yeah, let's short the US. Oh, just kidding. But yeah, let's hope not.
+
+Sean Becker: Should we start our own fund called Short the US Fund? You and me?
+
+Lori Corpuz: I wouldn't call it that. I would call it the Global Fund.
+
+Sean Becker: Yeah, yeah, sure. I would like that.
+
+Sean Becker: I know we're like hopping off in five minutes or so. But I mean, if you want to look through the agreements I sent you, they're pretty long. I'm sure you can like summarize them somehow. I mean, that's those are just like the official things that my investors need to see and that they need to sign when they join.
+
+Sean Becker: But I also don't want you to do too much without getting paid. So please maybe put together like a proposal for how this would all look.
+
+Sean Becker: idea of like a 2,000 retainer and then a monthly charge or a $2,000 payment and then a monthly retainer, but...
+
+Lori Corpuz: Oh, sorry, I didn't update that. That would basically ignore the... That would be one solid thing, like subscription fee. But what I'm thinking is that it's kind of like... I don't know if you'd call it subscription fee or we could call it retainer.
+
+Lori Corpuz: there'd be the main part of just developing the main stuff and if we want to keep going we can keep adding the R&D and all that stuff to continue like expanding scope and then looking at other places where you could look at stock and so I looked into what I looked into the fees for these particular data feeds and they're around two to 300, but I want to like hone in on the exact numbers and then I can give them to you because it might be like 200 month.
+
+Sean Becker: Just, um, yeah, if there's, if there's something you want to put here in terms of like a proposal, I guess.
+
+Lori Corpuz: And then anything else?
+
+Sean Becker: I mean, just, I guess, keep me updated on this. I would love to develop this kind of automation technique. I would love to take advantage of all this and get the ball rolling. The price makes sense. There's a lot of things I would love to do with this fund that are out of reach, like hire an administrator to administer the fund, or to get a Bloomberg terminal, for instance. But I have to make sure the costs don't overrun the model that I have going.
+
+Lori Corpuz: Oh, yeah, totally. That makes sense. I'm sure what you're going to propose, though, is fine.
+
+Sean Becker: Yeah, it's basically this. I just, I don't know why I have monthly. I kind of wanted to frame it as more of tech subscription, but we can call it whatever we want, retainer or whatever. Let me get the actual numbers and the actual data feed so you know exactly what they are. And if for whatever reason you have other insight where you're like, you know what, I actually want to pay more, like 10 more, whatever, for this particular feed, because I know it or something like that, you can let me know. I'll send you that.
+
+Sean Becker: I know nothing about data feeds or how they work, so I'll rely on you then.
+
+Lori Corpuz: So I guess what I'm saying is, this is the stuff that you're looking at in Fidelity, you know? The only difference is we're pulling it ourselves.
+
+Sean Becker: We're pulling that raw kind of out of there and doing with it what we specifically want to be doing, not just using them.
+
+Sean Becker: Next week, if you want to, if that's the cadence you're thinking.
+
+Lori Corpuz: Yeah, I should be able to send you like a more simplified version based on these feet, I would call them maybe features or themes that you shared with me. Like in the next day, 12 hours.
+
+Sean Becker: I mean, no huge rush on it. But um, yeah, we can I'll look over whatever you send me and we can just chat more.
+
+Lori Corpuz: Oh, yeah. Sounds good. I'll ping you when I'm done with these docs.
+
+Sean Becker: All right, Sean.
+
+Lori Corpuz: Don't get lost in the stock market craziness.
+
+Sean Becker: Say hello to New York for me. I miss New York.
+
+Lori Corpuz: Is this your house right now? Are you working from home?
+
+Sean Becker: Yeah, this is one of the rooms. That's your office. Yeah, well, yeah, it's nice. Where are you? You're in Brentwood?
+
+Lori Corpuz: It's two blocks from Beverly Hills, right by Beverly Hills.
+
+Sean Becker: Oh, nice. That's a good area.
+
+Lori Corpuz: Not too far from the Grove either if you know the Grove.
+
+Lori Corpuz: All right, Sean.
+
+Sean Becker: All right, we'll talk again soon. Yeah, thanks.`,
   },
 ]
 

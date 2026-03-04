@@ -227,6 +227,9 @@ function MeetingCard({
   isExpanded: boolean
   onToggle: () => void
 }) {
+  const [view, setView] = useState<'insights' | 'transcript'>('insights')
+  const hasTranscript = !!meeting.rawTranscript
+
   return (
     <div className="border border-rule rounded-sm">
       {/* Header row */}
@@ -257,34 +260,90 @@ function MeetingCard({
       {/* Expanded content */}
       {isExpanded && (
         <div className="border-t border-rule px-3 py-2 space-y-2">
-          {/* Summary */}
-          <div>
-            <div className="text-[10px] font-semibold text-ink-muted uppercase mb-0.5">Summary</div>
-            <p className="text-[11px] text-ink leading-relaxed">{meeting.summary}</p>
-          </div>
-
-          {/* Insights */}
-          <div>
-            <div className="text-[10px] font-semibold text-ink-muted uppercase mb-1">Key Insights</div>
-            <div className="space-y-1">
-              {meeting.insights.map((insight, i) => (
-                <InsightRow key={i} insight={insight} />
-              ))}
+          {/* View toggle */}
+          {hasTranscript && (
+            <div className="flex gap-1">
+              <button
+                onClick={() => setView('insights')}
+                className={`font-serif text-[9px] font-medium px-2 py-1 rounded-sm border transition-colors ${
+                  view === 'insights'
+                    ? 'bg-burgundy text-paper border-burgundy'
+                    : 'bg-transparent text-ink-muted border-rule hover:border-ink-faint'
+                }`}
+              >
+                Insights
+              </button>
+              <button
+                onClick={() => setView('transcript')}
+                className={`font-serif text-[9px] font-medium px-2 py-1 rounded-sm border transition-colors ${
+                  view === 'transcript'
+                    ? 'bg-burgundy text-paper border-burgundy'
+                    : 'bg-transparent text-ink-muted border-rule hover:border-ink-faint'
+                }`}
+              >
+                Transcript
+              </button>
             </div>
-          </div>
+          )}
 
-          {/* Next Steps */}
-          {meeting.nextSteps.length > 0 && (
-            <div>
-              <div className="text-[10px] font-semibold text-ink-muted uppercase mb-0.5">Next Steps</div>
-              <ul className="space-y-0.5">
-                {meeting.nextSteps.map((step, i) => (
-                  <li key={i} className="text-[10px] text-ink flex items-start gap-1.5">
-                    <span className="text-ink-muted shrink-0">-</span>
-                    <span>{step}</span>
-                  </li>
-                ))}
-              </ul>
+          {view === 'insights' ? (
+            <>
+              {/* Summary */}
+              <div>
+                <div className="text-[10px] font-semibold text-ink-muted uppercase mb-0.5">Summary</div>
+                <p className="text-[11px] text-ink leading-relaxed">{meeting.summary}</p>
+              </div>
+
+              {/* Insights */}
+              <div>
+                <div className="text-[10px] font-semibold text-ink-muted uppercase mb-1">Key Insights</div>
+                <div className="space-y-1">
+                  {meeting.insights.map((insight, i) => (
+                    <InsightRow key={i} insight={insight} />
+                  ))}
+                </div>
+              </div>
+
+              {/* Next Steps */}
+              {meeting.nextSteps.length > 0 && (
+                <div>
+                  <div className="text-[10px] font-semibold text-ink-muted uppercase mb-0.5">Next Steps</div>
+                  <ul className="space-y-0.5">
+                    {meeting.nextSteps.map((step, i) => (
+                      <li key={i} className="text-[10px] text-ink flex items-start gap-1.5">
+                        <span className="text-ink-muted shrink-0">-</span>
+                        <span>{step}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="max-h-[500px] overflow-y-auto">
+              <div className="text-[10px] font-semibold text-ink-muted uppercase mb-1">Raw Transcript</div>
+              <div className="space-y-2">
+                {meeting.rawTranscript!.split('\n\n').map((block, i) => {
+                  const speakerMatch = block.match(/^(.*?): (.*)$/s)
+                  if (speakerMatch) {
+                    const [, speaker, text] = speakerMatch
+                    const isSean = speaker.includes('Sean')
+                    return (
+                      <div key={i} className="flex items-start gap-2">
+                        <span className={`font-mono text-[8px] uppercase px-1.5 py-0.5 rounded-sm border shrink-0 mt-0.5 ${
+                          isSean
+                            ? 'text-green-ink bg-green-bg border-green-ink/20'
+                            : 'text-burgundy bg-burgundy-bg border-burgundy/20'
+                        }`}>
+                          {speaker.split(' ')[0]}
+                        </span>
+                        <p className="text-[10px] text-ink leading-relaxed">{text}</p>
+                      </div>
+                    )
+                  }
+                  return <p key={i} className="text-[10px] text-ink-muted leading-relaxed">{block}</p>
+                })}
+              </div>
             </div>
           )}
         </div>
