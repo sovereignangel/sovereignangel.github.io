@@ -19,6 +19,7 @@ import type {
   AgreementClause,
   ActionItem,
   FundMetrics,
+  SprintItem,
 } from './types'
 
 // ── Collection Refs ─────────────────────────────────────────────
@@ -126,4 +127,22 @@ export async function updateActionItem(id: string, data: Partial<ActionItem>): P
 
 export async function deleteActionItem(id: string): Promise<void> {
   await deleteDoc(doc(db, 'alamo_bernal', 'action_items', id))
+}
+
+// ── Sprint Items ────────────────────────────────────────────────
+export async function getSprintItems(): Promise<SprintItem[]> {
+  const snap = await getDocs(col('sprint_items'))
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as SprintItem)
+}
+
+export async function saveSprintItem(item: SprintItem): Promise<void> {
+  await setDoc(doc(db, 'alamo_bernal', 'sprint_items', item.id), item)
+}
+
+export async function updateSprintItem(id: string, data: Partial<SprintItem>): Promise<void> {
+  await updateDoc(doc(db, 'alamo_bernal', 'sprint_items', id), data)
+}
+
+export async function deleteSprintItem(id: string): Promise<void> {
+  await deleteDoc(doc(db, 'alamo_bernal', 'sprint_items', id))
 }

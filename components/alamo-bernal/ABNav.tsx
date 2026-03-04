@@ -6,6 +6,7 @@ const TABS: { key: ABTab; label: string }[] = [
   { key: 'intelligence', label: 'Intelligence' },
   { key: 'strategy', label: 'Strategy' },
   { key: 'execution', label: 'Execution' },
+  { key: 'sprint', label: 'Sprint' },
 ]
 
 interface ABNavProps {

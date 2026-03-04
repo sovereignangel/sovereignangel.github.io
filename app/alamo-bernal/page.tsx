@@ -5,6 +5,7 @@ import ABNav from '@/components/alamo-bernal/ABNav'
 import IntelligenceSection from '@/components/alamo-bernal/IntelligenceSection'
 import StrategySection from '@/components/alamo-bernal/StrategySection'
 import ExecutionSection from '@/components/alamo-bernal/ExecutionSection'
+import SprintSection from '@/components/alamo-bernal/SprintSection'
 import type { ABTab } from '@/lib/alamo-bernal/types'
 
 export default function AlamoBernalPage() {
@@ -18,6 +19,7 @@ export default function AlamoBernalPage() {
           {activeTab === 'intelligence' && <IntelligenceSection />}
           {activeTab === 'strategy' && <StrategySection />}
           {activeTab === 'execution' && <ExecutionSection />}
+          {activeTab === 'sprint' && <SprintSection />}
         </div>
       </main>
     </>

@@ -1,7 +1,7 @@
 // Alamo Bernal Partnership Site — Type Definitions
 
 // ── Tab Navigation ──────────────────────────────────────────────
-export type ABTab = 'intelligence' | 'strategy' | 'execution'
+export type ABTab = 'intelligence' | 'strategy' | 'execution' | 'sprint'
 
 // ── Enums ───────────────────────────────────────────────────────
 export type MeetingTag = 'strategy' | 'structure' | 'technology' | 'fundraising' | 'compliance' | 'operations'
@@ -136,4 +136,20 @@ export interface ActionItem {
   dueDate?: string
   status: 'pending' | 'in_progress' | 'completed'
   meetingId?: string
+}
+
+// ── Sprint Planning ─────────────────────────────────────────────
+export type SprintItemType = 'feature' | 'bug' | 'task'
+export type SprintItemStatus = 'backlog' | 'sprint' | 'in_progress' | 'done'
+
+export interface SprintItem {
+  id: string
+  title: string
+  description?: string
+  type: SprintItemType
+  status: SprintItemStatus
+  owner: 'lori' | 'sean' | 'both'
+  priority: 'high' | 'medium' | 'low'
+  createdAt: string
+  sprintNumber?: number
 }
