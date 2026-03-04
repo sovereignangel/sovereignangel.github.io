@@ -102,6 +102,102 @@ export const MEETINGS: Meeting[] = [
     ],
     tags: ['strategy', 'structure', 'technology', 'fundraising'],
   },
+  {
+    id: 'meeting-2026-03-04',
+    date: '2026-03-04',
+    title: 'Phase 1 Scoping & Fidelity Workflow Deep Dive',
+    participants: ['Lori Corpuz', 'Sean Becker'],
+    duration: '42 min',
+    summary:
+      'Follow-up focused on Phase 1 scoping. Sean clarified his actual Fidelity workflow: the screener itself is "pretty good" (~1 hr/week), but record keeping is the real time sink — a massive spreadsheet tracking buys, sells, capture rates, % dividend lost, and days to execute. Historical nosedive analysis is entirely informal (Google/ChatGPT per stock). Sean confirmed $2K/month pricing works and called limit order optimization "the key to everything." Fundraising momentum is strong: Instagram story driving organic inbound, with Wells Fargo and Schwab contacts this week. Sean sent PPM, subscription agreement, and operating agreement for review.',
+    insights: [
+      {
+        category: 'workflow',
+        text: 'PROBLEM: Record keeping takes MORE time than screening. Massive spreadsheet tracking buys, sells, capture rate, % dividend lost, days to execute. Manual entry at end of each day + monthly roll-up on separate sheet.',
+        confidence: 'high',
+      },
+      {
+        category: 'workflow',
+        text: 'Fidelity screener is "pretty good" — stock picking is ~1 hr/week (not the pain point). The 2,700→15 stock funnel works. But Fidelity\'s per-stock data is "too blunt" — Sean always double-checks manually.',
+        confidence: 'high',
+      },
+      {
+        category: 'workflow',
+        text: 'PROBLEM: Historical nosedive analysis is fully informal. Sean manually Googles or asks ChatGPT "did this stock undergo a stock split?" to explain price drops. No systematic data across the 12 dividend cycles per stock.',
+        confidence: 'high',
+      },
+      {
+        category: 'risk',
+        text: 'PROBLEM: Canadian stocks withhold 25% of dividends at source. Messes up cash flow projections ("I just don\'t have as much cash as I think I\'m going to have") AND record keeping. Currently excluded from universe to avoid complexity.',
+        confidence: 'high',
+      },
+      {
+        category: 'risk',
+        text: 'PROBLEM: Trust gap with automation. Sean fears he\'ll "end up double checking against all of it anyway." Any tool needs to be trustworthy enough to trade on directly — not just another layer to verify.',
+        confidence: 'high',
+      },
+      {
+        category: 'strategy',
+        text: 'Limit order optimization is "the key to everything" per Sean. Two scenarios: (1) stock nosediving — AI says sell now, don\'t wait for 50% threshold, cut losses. (2) stock rising — don\'t set limit order yet, wait and lose only 5% of dividend instead of 50%. Highest-value deliverable.',
+        confidence: 'high',
+      },
+      {
+        category: 'strategy',
+        text: 'Sean\'s nosedive risk framework: Out of 12 dividend cycles (3 years), how many times did the stock drop below 50% dividend threshold on market open? Then layer: how many of those were explained by general market forces (S&P drop, VIX spike, industry headwind)?',
+        confidence: 'high',
+      },
+      {
+        category: 'opportunity',
+        text: 'Fundraising momentum accelerating. Instagram story generated organic inbound. Cousin of existing investor wants Class A (11%). Calls scheduled with Wells Fargo contact and Schwab contact this week. Word of mouth from invested friends is the most effective channel.',
+        confidence: 'high',
+      },
+      {
+        category: 'ambition',
+        text: 'PROBLEM: Legitimacy gap for big money. Sean worries: "I\'m not quite legit enough" — Wyoming LLC vs. Delaware partnerships with offshore versions. Wants to "learn the language" at investment conferences.',
+        confidence: 'high',
+      },
+      {
+        category: 'opportunity',
+        text: 'Conference recommendations for Sean: Milken Global Conference (top tier), SALT, All-In Summit (baby step). Future of Finance (DC, happening today). Goal: learn institutional language, build peer network, identify LP prospects.',
+        confidence: 'medium',
+      },
+      {
+        category: 'structure',
+        text: 'Sean sent PPM, subscription agreement, and operating agreement for Lori to review. Treasury bond process: start of month, buys 30-year treasuries with prior month\'s dividend cash, then draws on line of credit for trading capital.',
+        confidence: 'high',
+      },
+      {
+        category: 'risk',
+        text: 'PROBLEM: Treasury bond concentration. Sean tried to diversify internationally (UK, Japan bonds) at Merrill Lynch — told "the US is the only one." Single-country sovereign exposure.',
+        confidence: 'medium',
+      },
+      {
+        category: 'risk',
+        text: 'PROBLEM: Cost ceiling. Can\'t afford Bloomberg terminal or fund administrator yet. Any tech costs must stay within what the model supports. $2K/month tech + $200-300/month data feeds confirmed as workable.',
+        confidence: 'high',
+      },
+      {
+        category: 'opportunity',
+        text: 'International exchanges as R&D opportunity. Idea: dividend capture on stable foreign markets (Scandinavian, Dutch utilities) where volatility is lower. Tax and regulatory complexity TBD. Sean\'s idea — filed as Phase 3 R&D.',
+        confidence: 'low',
+      },
+      {
+        category: 'workflow',
+        text: 'FIDELITY FLOW vs. TECH BUILD: Screening (Fidelity good, ~1hr/week) → Record keeping (massive pain, manual spreadsheet, biggest time sink) → Historical nosedive check (informal, per-stock Google/ChatGPT) → Limit orders (fixed 50%, no dynamic optimization) → Canadian withholding (excluded entirely, lost opportunity).',
+        confidence: 'high',
+      },
+    ],
+    nextSteps: [
+      'Lori: Review PPM, subscription agreement, and operating agreement',
+      'Lori: Finalize data feed provider research with exact costs for Sean',
+      'Lori: Send simplified Phase 1 proposal with feature themes from this call',
+      'Sean: Wells Fargo contact call (this week)',
+      'Sean: Schwab contact call (Thursday)',
+      'Both: Schedule next weekly call',
+      'Lori: Introduce Sean to Alec (VC) at South by Southwest investment event',
+    ],
+    tags: ['technology', 'fundraising', 'strategy', 'operations'],
+  },
 ]
 
 // ── Proposal Phases ─────────────────────────────────────────────
