@@ -31,6 +31,8 @@ export default function IntelligenceSection() {
   const [meetings, setMeetings] = useState<Meeting[]>(MEETINGS)
   const [expanded, setExpanded] = useState<Record<string, boolean>>({})
   const [loading, setLoading] = useState(true)
+  const [sortAsc, setSortAsc] = useState(false)
+  const [search, setSearch] = useState('')
 
   useEffect(() => {
     async function load() {
@@ -162,18 +164,56 @@ export default function IntelligenceSection() {
         <div className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-2 pb-1.5 border-b-2 border-rule">
           Meeting Minutes
         </div>
+
+        {/* Search + Sort controls */}
+        <div className="flex items-center gap-2 mb-2">
+          <input
+            type="text"
+            placeholder="Search minutes..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="flex-1 text-[10px] text-ink bg-cream/50 border border-rule rounded-sm px-2 py-1 placeholder:text-ink-faint focus:outline-none focus:border-burgundy"
+          />
+          <button
+            onClick={() => setSortAsc((prev) => !prev)}
+            className="font-serif text-[9px] font-medium px-2 py-1 rounded-sm border bg-transparent text-ink-muted border-rule hover:border-ink-faint transition-colors shrink-0"
+          >
+            {sortAsc ? 'Oldest first' : 'Newest first'}
+          </button>
+        </div>
+
         {loading && meetings.length === 0 ? (
           <div className="h-20 flex items-center justify-center text-[11px] text-ink-muted">Loading...</div>
         ) : (
           <div className="space-y-2">
-            {meetings.map((mtg) => (
-              <MeetingCard
-                key={mtg.id}
-                meeting={mtg}
-                isExpanded={!!expanded[mtg.id]}
-                onToggle={() => toggle(mtg.id)}
-              />
-            ))}
+            {(() => {
+              const q = search.toLowerCase()
+              const filtered = q
+                ? meetings.filter(
+                    (m) =>
+                      m.title.toLowerCase().includes(q) ||
+                      m.summary.toLowerCase().includes(q) ||
+                      m.insights.some((ins) => ins.text.toLowerCase().includes(q)) ||
+                      m.tags.some((t) => t.toLowerCase().includes(q)) ||
+                      (m.rawTranscript && m.rawTranscript.toLowerCase().includes(q))
+                  )
+                : meetings
+              const sorted = [...filtered].sort((a, b) =>
+                sortAsc ? a.date.localeCompare(b.date) : b.date.localeCompare(a.date)
+              )
+              return sorted.length === 0 ? (
+                <div className="text-[10px] text-ink-muted py-4 text-center">No meetings match &ldquo;{search}&rdquo;</div>
+              ) : (
+                sorted.map((mtg) => (
+                  <MeetingCard
+                    key={mtg.id}
+                    meeting={mtg}
+                    isExpanded={!!expanded[mtg.id]}
+                    onToggle={() => toggle(mtg.id)}
+                  />
+                ))
+              )
+            })()}
           </div>
         )}
       </div>
