@@ -57,7 +57,7 @@ export async function claudeGenerateExtended(options: ClaudeGenerateOptions): Pr
   const { systemPrompt, userPrompt, maxTokens = 64000 } = options
   const anthropic = getClient()
 
-  const response = await anthropic.messages.create({
+  const stream = anthropic.messages.stream({
     model: 'claude-sonnet-4-20250514',
     max_tokens: maxTokens,
     thinking: {
@@ -67,6 +67,8 @@ export async function claudeGenerateExtended(options: ClaudeGenerateOptions): Pr
     system: systemPrompt,
     messages: [{ role: 'user', content: userPrompt }],
   })
+
+  const response = await stream.finalMessage()
 
   // Get the text block (skip thinking blocks)
   const textBlock = response.content.find(b => b.type === 'text')
