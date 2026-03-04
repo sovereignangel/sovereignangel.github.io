@@ -228,10 +228,9 @@ async function fetchOpenTodos(uid: string) {
   const db = await getAdminDb()
   const snap = await db.collection('users').doc(uid).collection('todos')
     .where('status', '==', 'open')
-    .orderBy('sortOrder', 'asc')
     .get()
 
-  return snap.docs.map(d => {
+  return snap.docs.sort((a, b) => ((a.data().sortOrder as number) || 0) - ((b.data().sortOrder as number) || 0)).map(d => {
     const data = d.data()
     return {
       text: (data.text as string) || '',

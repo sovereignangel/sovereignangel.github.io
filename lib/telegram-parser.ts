@@ -20,6 +20,7 @@
  *   /srespond <text>               — Respond to structured build questions
  *   /sapprove                      — Approve structured build design
  *   /discipline                    — Toggle superpowers-methodology as default skill
+ *   /intent <text>                  — Set daily intent (plan of attack for the day)
  *   /todo <text>                    — Create todo items (AI-parsed, multi-item, project-matched)
  *   /done [#]                       — Mark a todo as completed (by position number)
  *
@@ -29,7 +30,7 @@
 import type { ThesisPillar } from '@/lib/types'
 
 export interface ParsedTelegramMessage {
-  command: 'signal' | 'note' | 'journal' | 'rss' | 'predict' | 'venture' | 'build' | 'approve' | 'feedback' | 'iterate' | 'reset' | 'brief' | 'memo' | 'morning' | 'cbuild' | 'citerate' | 'skill' | 'sbuild' | 'srespond' | 'sapprove' | 'discipline' | 'transcript' | 'todo' | 'done' | 'unknown'
+  command: 'signal' | 'note' | 'journal' | 'rss' | 'predict' | 'venture' | 'build' | 'approve' | 'feedback' | 'iterate' | 'reset' | 'brief' | 'memo' | 'morning' | 'cbuild' | 'citerate' | 'skill' | 'sbuild' | 'srespond' | 'sapprove' | 'discipline' | 'transcript' | 'intent' | 'todo' | 'done' | 'unknown'
   text: string
   pillars: ThesisPillar[]
   raw: string
@@ -176,6 +177,12 @@ export function parseTelegramMessage(text: string): ParsedTelegramMessage {
   if (raw.startsWith('/transcript')) {
     const body = raw.slice('/transcript'.length).trim()
     return { command: 'transcript', text: body, pillars: [], raw }
+  }
+
+  // /intent command — set daily intent (plan of attack)
+  if (raw.startsWith('/intent')) {
+    const body = raw.slice('/intent'.length).trim()
+    return { command: 'intent', text: body, pillars: [], raw }
   }
 
   // /todo command — create todo items (AI-parsed)

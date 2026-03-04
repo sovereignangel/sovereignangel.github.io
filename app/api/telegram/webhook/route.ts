@@ -8,6 +8,7 @@ import { DEFAULT_SETTINGS } from '@/lib/constants'
 import { resolveContactsBatch } from '@/lib/entity-resolution'
 import { addInteractionToContact } from '@/lib/firestore'
 import { embedJournalEntry } from '@/lib/embed-on-save'
+import { processTranscriptData, formatTranscriptSummary } from '@/lib/transcript-processing'
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN
 
@@ -2042,6 +2043,38 @@ const TRANSCRIPT_KEYBOARD = [
 ]
 
 // ---------------------------------------------------------------------------
+// /intent — set daily intent (plan of attack for the day)
+// ---------------------------------------------------------------------------
+
+async function handleIntent(uid: string, text: string, chatId: number) {
+  if (!text || text.trim().length === 0) {
+    // Show current intent
+    const adminDb = await getAdminDb()
+    const today = getTodayKey()
+    const logRef = adminDb.collection('users').doc(uid).collection('daily_logs').doc(today)
+    const snap = await logRef.get()
+    const current = snap.data()?.todayFocus || ''
+    if (current) {
+      await sendTelegramReply(chatId, `*Today's Intent:*\n${current}`)
+    } else {
+      await sendTelegramReply(chatId, 'No intent set. Usage: `/intent My plan for today is...`')
+    }
+    return
+  }
+
+  const adminDb = await getAdminDb()
+  const today = getTodayKey()
+  const logRef = adminDb.collection('users').doc(uid).collection('daily_logs').doc(today)
+
+  await logRef.set({
+    todayFocus: text.trim(),
+    updatedAt: new Date(),
+  }, { merge: true })
+
+  await sendTelegramReply(chatId, `Intent set for today:\n_${text.trim()}_`)
+}
+
+// ---------------------------------------------------------------------------
 // /todo — AI-parsed batch todo capture with project matching
 // ---------------------------------------------------------------------------
 
@@ -2128,10 +2161,12 @@ async function handleTodo(uid: string, todoText: string, chatId: number) {
 async function handleDone(uid: string, text: string, chatId: number) {
   const adminDb = await getAdminDb()
 
-  const snap = await adminDb.collection('users').doc(uid).collection('todos')
+  const rawSnap = await adminDb.collection('users').doc(uid).collection('todos')
     .where('status', '==', 'open')
-    .orderBy('sortOrder', 'asc')
     .get()
+
+  // Sort client-side to avoid composite index requirement
+  const snap = { ...rawSnap, docs: [...rawSnap.docs].sort((a, b) => ((a.data().sortOrder as number) || 0) - ((b.data().sortOrder as number) || 0)), empty: rawSnap.empty }
 
   if (snap.empty) {
     await sendTelegramReply(chatId, 'No open todos.')
@@ -2233,245 +2268,10 @@ async function handleTranscriptCallback(chatId: number, messageId: number, callb
   await editTelegramMessage(chatId, messageId, `Processing ${templateLabels[templateType] || templateType} transcript...\n\nExtracting insights, decisions, and key learnings.`)
 
   try {
-    // Extract structured data using template-specific prompt
     const extracted = await extractFromTranscript(transcriptText, templateType)
-
-    const now = new Date().toISOString().split('T')[0]
-    const date = extracted.inferredDate || now
-    const title = extracted.inferredTitle
-    const userRef = adminDb.collection('users').doc(uid)
-
-    const counts = { hypotheses: 0, beliefs: 0, decisions: 0, insights: 0, contacts: 0, ventures: 0 }
-
-    // Save action items as insights
-    for (const item of extracted.actionItems) {
-      await userRef.collection('insights').add({
-        type: 'action_item',
-        content: item.owner ? `${item.task} (Owner: ${item.owner}${item.deadline ? ', by ' + item.deadline : ''})` : item.task,
-        summary: item.task.slice(0, 80),
-        sourceConversationTitle: title,
-        sourceConversationDate: date,
-        linkedProjectIds: [],
-        linkedProjectNames: [],
-        tags: ['action_item'],
-        thesisPillars: [],
-        status: 'active',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      })
-      counts.insights++
-    }
-
-    // Save template-specific insights
-    for (const insight of extracted.insights || []) {
-      await userRef.collection('insights').add({
-        type: insight.type,
-        content: insight.content,
-        summary: insight.summary,
-        sourceConversationTitle: title,
-        sourceConversationDate: date,
-        linkedProjectIds: [],
-        linkedProjectNames: [],
-        tags: insight.tags || [],
-        thesisPillars: [],
-        status: 'active',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      })
-      counts.insights++
-    }
-
-    // Save hypotheses (research template)
-    for (const h of extracted.hypotheses || []) {
-      await userRef.collection('hypotheses').add({
-        question: h.question,
-        context: h.context,
-        domain: h.domain,
-        status: 'open',
-        priority: h.priority,
-        evidence: [],
-        resolution: h.resolution || null,
-        sourceType: 'transcript',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      })
-      counts.hypotheses++
-    }
-
-    // Save beliefs (research template)
-    for (const b of extracted.beliefs || []) {
-      const attentionDate = new Date()
-      attentionDate.setDate(attentionDate.getDate() + 21)
-      await userRef.collection('beliefs').add({
-        statement: b.statement,
-        confidence: Math.min(100, Math.max(0, b.confidence)),
-        domain: b.domain,
-        evidenceFor: b.evidenceFor,
-        evidenceAgainst: b.evidenceAgainst,
-        status: 'active',
-        linkedDecisionIds: [],
-        linkedPrincipleIds: [],
-        sourceJournalDate: date,
-        attentionDate: attentionDate.toISOString().split('T')[0],
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      })
-      counts.beliefs++
-    }
-
-    // Save decisions (partnership/investor/internal templates)
-    for (const d of extracted.decisions || []) {
-      const reviewDate = new Date()
-      reviewDate.setDate(reviewDate.getDate() + 90)
-      await userRef.collection('decisions').add({
-        title: d.title,
-        hypothesis: '',
-        options: [d.chosenOption],
-        chosenOption: d.chosenOption,
-        reasoning: d.reasoning,
-        confidenceLevel: Math.min(100, Math.max(0, d.confidenceLevel)),
-        killCriteria: [],
-        premortem: '',
-        domain: d.domain,
-        linkedProjectIds: [],
-        linkedSignalIds: [],
-        status: 'active',
-        reviewDate: reviewDate.toISOString().split('T')[0],
-        decidedAt: date,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      })
-      counts.decisions++
-    }
-
-    // Save venture ideas
-    for (const rawIdea of extracted.ventureIdeas || []) {
-      try {
-        const parsed = await parseVentureIdea(rawIdea, [])
-        const nextNum = await getNextVentureNumber(adminDb, uid)
-        await userRef.collection('ventures').add({
-          ventureNumber: nextNum,
-          rawInput: rawIdea,
-          inputSource: 'telegram_text',
-          spec: {
-            name: parsed.name,
-            oneLiner: parsed.oneLiner,
-            problem: parsed.problem,
-            targetCustomer: parsed.targetCustomer,
-            solution: parsed.solution,
-            category: parsed.category,
-            thesisPillars: parsed.thesisPillars,
-            revenueModel: parsed.revenueModel,
-            pricingIdea: parsed.pricingIdea,
-            marketSize: parsed.marketSize,
-            techStack: parsed.techStack,
-            mvpFeatures: parsed.mvpFeatures,
-            apiIntegrations: parsed.apiIntegrations,
-            existingAlternatives: parsed.existingAlternatives,
-            unfairAdvantage: parsed.unfairAdvantage,
-            killCriteria: parsed.killCriteria,
-          },
-          prd: null,
-          memo: null,
-          build: { status: 'pending', repoUrl: null, previewUrl: null, customDomain: null, repoName: null, buildLog: [], startedAt: null, completedAt: null, errorMessage: null, filesGenerated: null },
-          iterations: [],
-          linkedProjectId: null,
-          notes: '',
-          stage: 'idea',
-          score: parsed.suggestedScore || 50,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        })
-        counts.ventures++
-      } catch (err) {
-        console.error('Failed to parse venture idea:', err)
-      }
-    }
-
-    // Save contacts
-    for (const contact of extracted.contacts) {
-      if (contact.name && contact.name.trim()) {
-        try {
-          const existing = await userRef.collection('contacts').where('name', '==', contact.name.trim()).limit(1).get()
-          if (existing.empty) {
-            await userRef.collection('contacts').add({
-              name: contact.name.trim(),
-              notes: contact.context,
-              interactions: [{ date, type: 'meeting', summary: `${templateLabels[templateType]} call: ${title}` }],
-              createdAt: new Date(),
-              updatedAt: new Date(),
-            })
-          } else {
-            const existingRef = existing.docs[0].ref
-            const existingData = existing.docs[0].data()
-            await existingRef.update({
-              interactions: [...(existingData.interactions || []), { date, type: 'meeting', summary: `${templateLabels[templateType]} call: ${title}` }],
-              updatedAt: new Date(),
-            })
-          }
-          counts.contacts++
-        } catch (err) {
-          console.error('Failed to save contact:', contact.name, err)
-        }
-      }
-    }
-
-    // Save conversation document
-    const templateToConvType: Record<string, string> = {
-      partnership: 'partnership',
-      research: 'other',
-      discovery: 'customer_discovery',
-      investor: 'investor',
-      advisor: 'advisor',
-      internal: 'other',
-      general: 'other',
-    }
-    await userRef.collection('conversations').add({
-      title,
-      date,
-      participants: extracted.participants,
-      transcriptText,
-      durationMinutes: 0,
-      conversationType: templateToConvType[templateType] || 'other',
-      processInsights: extracted.keyTakeaways,
-      featureIdeas: [],
-      actionItems: extracted.actionItems.map(a => a.task),
-      valueSignals: [],
-      aiProcessed: true,
-      aiProcessedAt: new Date(),
-      linkedSignalIds: [],
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    })
-
-    // Build summary reply
-    const lines: string[] = [`Transcript processed: ${title}`]
-
-    const storedItems: string[] = []
-    if (counts.hypotheses > 0) storedItems.push(`${counts.hypotheses} hypothesis${counts.hypotheses > 1 ? 'es' : ''}`)
-    if (counts.beliefs > 0) storedItems.push(`${counts.beliefs} belief${counts.beliefs > 1 ? 's' : ''}`)
-    if (counts.decisions > 0) storedItems.push(`${counts.decisions} decision${counts.decisions > 1 ? 's' : ''}`)
-    if (counts.insights > 0) storedItems.push(`${counts.insights} insight${counts.insights > 1 ? 's' : ''}`)
-    if (counts.ventures > 0) storedItems.push(`${counts.ventures} venture idea${counts.ventures > 1 ? 's' : ''}`)
-    if (counts.contacts > 0) storedItems.push(`${counts.contacts} contact${counts.contacts > 1 ? 's' : ''}`)
-
-    if (storedItems.length > 0) {
-      lines.push('', 'Stored:', ...storedItems.map(s => `  + ${s}`))
-    }
-
-    if (extracted.alignmentAreas?.length) {
-      lines.push('', 'Alignment areas:', ...extracted.alignmentAreas.slice(0, 3).map(a => `  - ${a}`))
-    }
-
-    if (extracted.dealPoints?.length) {
-      lines.push('', 'Deal points:', ...extracted.dealPoints.slice(0, 3).map(d => `  - ${d}`))
-    }
-
-    if (extracted.keyTakeaways.length > 0) {
-      lines.push('', 'Key takeaways:', ...extracted.keyTakeaways.slice(0, 3).map(t => `  - ${t}`))
-    }
-
-    await sendTelegramReply(chatId, lines.join('\n'))
+    const result = await processTranscriptData(uid, transcriptText, templateType, extracted)
+    const summary = formatTranscriptSummary(result)
+    await sendTelegramReply(chatId, summary)
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error)
     await sendTelegramReply(chatId, `Error processing transcript: ${msg.slice(0, 200)}`)
@@ -2621,6 +2421,7 @@ export async function POST(req: NextRequest) {
         '`/iterate <project> <changes>` — Iterate on deployed venture',
         '`/reset [#]` — Roll back a venture to its previous stage',
         '',
+        '`/intent <text>` — Set your daily plan of attack',
         '`/brief <text>` — Feedback on morning brief',
         '`/rss <url> #pillar` — Subscribe to RSS feed',
         '`/transcript <text>` — Process a Wave.ai meeting transcript (AI extracts insights, decisions, hypotheses)',
@@ -2803,6 +2604,12 @@ export async function POST(req: NextRequest) {
     // Handle transcript command (/transcript <paste transcript here>)
     if (parsed.command === 'transcript') {
       await handleTranscript(uid, parsed.text, chatId)
+      return NextResponse.json({ ok: true })
+    }
+
+    // Handle intent command (/intent <plan for the day>)
+    if (parsed.command === 'intent') {
+      await handleIntent(uid, parsed.text, chatId)
       return NextResponse.json({ ok: true })
     }
 

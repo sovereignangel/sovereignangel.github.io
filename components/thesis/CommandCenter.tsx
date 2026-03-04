@@ -83,10 +83,10 @@ const logField = (l: DailyLog, k: string) => (l as any)[k] as number || 0
 
 export default function CommandCenter() {
   const { user } = useAuth()
-  const { log, updateField, saving, lastSaved, recentLogs } = useDailyLogContext()
+  const { log, recentLogs } = useDailyLogContext()
   const { plan, loading: planLoading } = useWeeklyPlan()
   const { today: calendarToday, loading: calLoading } = useCalendarTime(7)
-  const { byQuadrant, loading: todosLoading, toggleComplete, save: saveTodoItem } = useTodos(user?.uid)
+  const { byQuadrant, loading: todosLoading, toggleComplete, save: saveTodoItem, completedCount, openCount } = useTodos(user?.uid)
 
   const [contacts, setContacts] = useState<NetworkContact[]>([])
   const [decisions, setDecisions] = useState<Decision[]>([])
@@ -352,22 +352,12 @@ export default function CommandCenter() {
             onToggleComplete={toggleComplete}
             onAdd={handleAddTodo}
             loading={todosLoading}
+            completedCount={completedCount}
+            openCount={openCount}
           />
 
           {/* Prioritized Actions */}
           <ActionsList actions={actions} />
-
-          {/* Daily Intent */}
-          <DailyIntent
-            todayFocus={log.todayFocus}
-            todayOneAction={log.todayOneAction}
-            intentAligned={log.intentAligned}
-            deviationReason={log.deviationReason}
-            todayAllocation={todayAllocation}
-            updateField={updateField}
-            saving={saving}
-            lastSaved={lastSaved}
-          />
         </div>
       </div>
     </div>
@@ -690,9 +680,11 @@ interface EisenhowerMatrixProps {
   onToggleComplete: (todo: Todo) => void
   onAdd: (text: string, quadrant: TodoQuadrant) => void
   loading: boolean
+  completedCount: number
+  openCount: number
 }
 
-function EisenhowerMatrix({ byQuadrant, onToggleComplete, onAdd, loading }: EisenhowerMatrixProps) {
+function EisenhowerMatrix({ byQuadrant, onToggleComplete, onAdd, loading, completedCount, openCount }: EisenhowerMatrixProps) {
   const [addingTo, setAddingTo] = useState<TodoQuadrant | null>(null)
   const [newText, setNewText] = useState('')
 
@@ -703,15 +695,13 @@ function EisenhowerMatrix({ byQuadrant, onToggleComplete, onAdd, loading }: Eise
     setAddingTo(null)
   }
 
-  const totalOpen = Object.values(byQuadrant).flat().length
-
   return (
     <div className="bg-white border border-rule rounded-sm p-3">
       <SectionHeader>
         Eisenhower Matrix
-        {totalOpen > 0 && (
+        {(openCount > 0 || completedCount > 0) && (
           <span className="font-mono text-[9px] font-normal normal-case text-ink-muted ml-1">
-            ({totalOpen})
+            {openCount} open{completedCount > 0 && <span className="text-green-ink ml-1">{completedCount} done today</span>}
           </span>
         )}
       </SectionHeader>
@@ -820,121 +810,3 @@ function ActionsList({ actions }: { actions: ActionItem[] }) {
   )
 }
 
-// ─── Daily Intent ───────────────────────────────────────────────────
-
-interface DailyIntentProps {
-  todayFocus: string | undefined
-  todayOneAction: string | undefined
-  intentAligned: boolean | undefined
-  deviationReason: string | undefined
-  todayAllocation: DailyAllocation | undefined
-  updateField: (field: string, value: unknown) => void
-  saving: boolean
-  lastSaved: string | null
-}
-
-function DailyIntent({ todayFocus, todayOneAction, intentAligned, deviationReason, todayAllocation, updateField, saving, lastSaved }: DailyIntentProps) {
-  const hasPlan = !!todayAllocation
-  const hasFocus = !!(todayFocus && todayFocus.trim())
-  const showAlignmentCheck = hasPlan && hasFocus
-
-  return (
-    <div className="bg-white border border-rule rounded-sm p-3">
-      <SectionHeader>Intent</SectionHeader>
-
-      <div className="mt-2 space-y-3">
-        {/* Today's focus */}
-        <div>
-          <label className="font-serif text-[9px] italic text-ink-muted block mb-1">
-            What gets done today?
-          </label>
-          <textarea
-            value={todayFocus || ''}
-            onChange={e => updateField('todayFocus', e.target.value)}
-            className="w-full font-mono text-[11px] bg-transparent text-ink border-0 border-b border-rule-light focus:border-burgundy focus:outline-none resize-y min-h-[56px] py-1 placeholder:text-ink-faint"
-            placeholder="Write your intent..."
-            rows={3}
-          />
-        </div>
-
-        {/* One action */}
-        <div>
-          <label className="font-serif text-[9px] italic text-ink-muted block mb-1">
-            The single most important deliverable
-          </label>
-          <input
-            type="text"
-            value={todayOneAction || ''}
-            onChange={e => updateField('todayOneAction', e.target.value)}
-            className="w-full font-mono text-[11px] bg-transparent text-ink border-0 border-b border-rule-light focus:border-burgundy focus:outline-none py-1 placeholder:text-ink-faint"
-            placeholder="One action..."
-          />
-        </div>
-
-        {/* Plan alignment check */}
-        {showAlignmentCheck && (
-          <div className="pt-2 border-t border-rule-light">
-            <div className="font-mono text-[9px] text-ink-muted mb-1.5">
-              Plan says: <span className="font-semibold text-ink">{todayAllocation.theme}</span>
-              {todayAllocation.morningPrime && (
-                <span className="text-ink-muted"> &mdash; {todayAllocation.morningPrime}</span>
-              )}
-            </div>
-
-            <div className="flex items-center gap-1">
-              <span className="font-mono text-[9px] text-ink-muted mr-1">Aligned?</span>
-              <button
-                onClick={() => updateField('intentAligned', true)}
-                className={`font-mono text-[9px] px-2 py-0.5 rounded-sm border ${
-                  intentAligned === true
-                    ? 'bg-green-bg text-green-ink border-green-ink/20'
-                    : 'bg-transparent text-ink-muted border-rule hover:border-ink-faint'
-                }`}
-              >
-                Yes
-              </button>
-              <button
-                onClick={() => updateField('intentAligned', false)}
-                className={`font-mono text-[9px] px-2 py-0.5 rounded-sm border ${
-                  intentAligned === false
-                    ? 'bg-amber-bg text-amber-ink border-amber-ink/20'
-                    : 'bg-transparent text-ink-muted border-rule hover:border-ink-faint'
-                }`}
-              >
-                Deviating
-              </button>
-            </div>
-
-            {/* Deviation reason (required when deviating) */}
-            {intentAligned === false && (
-              <div className="mt-1.5">
-                <label className="font-serif text-[9px] italic text-amber-ink block mb-1">
-                  Why the pivot?
-                </label>
-                <textarea
-                  value={deviationReason || ''}
-                  onChange={e => updateField('deviationReason', e.target.value)}
-                  className="w-full font-mono text-[10px] bg-amber-bg/50 text-ink border border-amber-ink/20 rounded-sm focus:border-amber-ink focus:outline-none resize-y min-h-[40px] p-1.5 placeholder:text-amber-ink/40"
-                  placeholder="Reason for deviation..."
-                  rows={2}
-                />
-                {intentAligned === false && !deviationReason?.trim() && (
-                  <div className="font-mono text-[8px] text-red-ink mt-0.5">
-                    Reason required when deviating from plan.
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Save indicator */}
-        <div className="flex justify-end">
-          <span className="font-mono text-[8px] text-ink-muted">
-            {saving ? 'Saving...' : lastSaved ? `Saved ${lastSaved}` : ''}
-          </span>
-        </div>
-      </div>
-    </div>
-  )
-}

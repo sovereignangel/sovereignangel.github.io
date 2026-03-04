@@ -1,17 +1,17 @@
-import { collection, doc, getDocs, setDoc, updateDoc, deleteDoc, query, where, orderBy, serverTimestamp } from 'firebase/firestore'
+import { collection, doc, getDocs, setDoc, updateDoc, deleteDoc, query, where, serverTimestamp } from 'firebase/firestore'
 import { db } from '../firebase'
 import type { Todo } from '../types'
 
 export async function getTodos(uid: string, statusFilter?: string): Promise<Todo[]> {
   const ref = collection(db, 'users', uid, 'todos')
-  let q
-  if (statusFilter && statusFilter !== 'all') {
-    q = query(ref, where('status', '==', statusFilter), orderBy('sortOrder', 'asc'))
-  } else {
-    q = query(ref, orderBy('sortOrder', 'asc'))
-  }
+  // Use single-field where (no composite index needed), sort client-side
+  const q = statusFilter && statusFilter !== 'all'
+    ? query(ref, where('status', '==', statusFilter))
+    : query(ref)
   const snap = await getDocs(q)
-  return snap.docs.map(d => ({ id: d.id, ...d.data() }) as Todo)
+  return snap.docs
+    .map(d => ({ id: d.id, ...d.data() }) as Todo)
+    .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))
 }
 
 export async function saveTodo(uid: string, data: Partial<Todo>, todoId?: string): Promise<string> {

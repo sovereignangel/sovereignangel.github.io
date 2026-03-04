@@ -12,7 +12,8 @@ export function useTodos(uid: string | undefined) {
     if (!uid) return
     setLoading(true)
     try {
-      const data = await getTodos(uid, 'open')
+      // Fetch all todos (open + completed) — filter in JS
+      const data = await getTodos(uid, 'all')
       setTodos(data)
     } finally {
       setLoading(false)
@@ -45,12 +46,21 @@ export function useTodos(uid: string | undefined) {
     await refresh()
   }, [uid, refresh])
 
+  // Show open todos + today's completed (so you see what you knocked out)
+  const todayKey = new Date().toISOString().split('T')[0]
+  const openTodos = todos.filter(t => t.status === 'open')
+  const completedToday = todos.filter(t => t.status === 'completed' && t.completedAt === todayKey)
+  const activeTodos = [...openTodos, ...completedToday]
+
   const byQuadrant: Record<TodoQuadrant, Todo[]> = {
-    do_first: todos.filter(t => t.quadrant === 'do_first'),
-    schedule: todos.filter(t => t.quadrant === 'schedule'),
-    delegate: todos.filter(t => t.quadrant === 'delegate'),
-    eliminate: todos.filter(t => t.quadrant === 'eliminate'),
+    do_first: activeTodos.filter(t => t.quadrant === 'do_first'),
+    schedule: activeTodos.filter(t => t.quadrant === 'schedule'),
+    delegate: activeTodos.filter(t => t.quadrant === 'delegate'),
+    eliminate: activeTodos.filter(t => t.quadrant === 'eliminate'),
   }
 
-  return { todos, loading, save, remove, toggleComplete, refresh, byQuadrant }
+  const completedCount = completedToday.length
+  const openCount = openTodos.length
+
+  return { todos: activeTodos, loading, save, remove, toggleComplete, refresh, byQuadrant, completedCount, openCount }
 }

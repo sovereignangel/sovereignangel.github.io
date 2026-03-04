@@ -1,5 +1,6 @@
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import type { InsightType, ThesisPillar, NervousSystemState, BodyFelt, TrainingType, DecisionDomain, PredictionDomain, VentureCategory, VentureSpec, VenturePRD, VenturePRDPriority, VentureMemo, VentureMemoMetric, MarketSizeRow, BusinessModelRow, GTMPhase, FinancialProjectionRow, UnitEconomicsRow, UseOfFundsRow, MilestoneRow, DebtItem, FinancialSnapshot, ParsedCapitalCommand, CapitalOperationType, TodoQuadrant } from './types'
+import type { TranscriptTemplateType } from './transcript-templates'
 import { callLLM } from './llm'
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '')
@@ -1841,7 +1842,6 @@ Return ONLY valid JSON (no markdown, no code blocks):
 // Transcript extraction (Wave.ai meeting transcripts)
 // ---------------------------------------------------------------------------
 
-import type { TranscriptTemplateType } from './transcript-templates'
 import { getExtractionPrompt } from './transcript-templates'
 
 export interface TranscriptInsight {
@@ -1919,6 +1919,49 @@ const EMPTY_TRANSCRIPT_RESULT: TranscriptExtractionResult = {
   contacts: [],
   actionItems: [],
   keyTakeaways: [],
+}
+
+/**
+ * Auto-classify a transcript into one of 7 template types.
+ * Uses first ~800 chars for speed. Falls back to 'general' on error.
+ */
+export async function classifyTranscriptType(
+  text: string
+): Promise<TranscriptTemplateType> {
+  const VALID_TYPES: TranscriptTemplateType[] = [
+    'partnership', 'research', 'discovery', 'investor', 'advisor', 'internal', 'general'
+  ]
+
+  const snippet = text.slice(0, 800)
+
+  const prompt = `Classify this meeting transcript into exactly one type.
+
+Types:
+- partnership: Partnership, collaboration, deal structure discussions
+- research: Research discussions, reading clubs, intellectual exploration
+- discovery: Customer interviews, market research, problem exploration
+- investor: Investor meetings, fundraising conversations
+- advisor: Advisory sessions, mentorship, strategic guidance
+- internal: Team meetings, standups, internal planning
+- general: Anything else
+
+TRANSCRIPT SNIPPET:
+${snippet}
+
+Return ONLY the type name (one word, lowercase). Nothing else.`
+
+  try {
+    const raw = await callLLM(prompt, { temperature: 0.1, maxTokens: 20 })
+    const cleaned = raw.trim().toLowerCase().replace(/[^a-z]/g, '')
+    if (VALID_TYPES.includes(cleaned as TranscriptTemplateType)) {
+      return cleaned as TranscriptTemplateType
+    }
+    console.warn(`[classifyTranscriptType] LLM returned invalid type "${cleaned}", defaulting to general`)
+    return 'general'
+  } catch (error) {
+    console.error('[classifyTranscriptType] Failed, defaulting to general:', error)
+    return 'general'
+  }
 }
 
 export async function extractFromTranscript(
