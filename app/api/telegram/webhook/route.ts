@@ -527,17 +527,22 @@ async function handleJournal(uid: string, text: string, chatId: number) {
     }
 
     // Resolve contacts via entity resolution (unified_contacts)
+    // NOTE: entity-resolution uses client SDK which lacks auth server-side — wrap in try-catch
     let resolvedContactInfo: { contactId: string; canonicalName: string }[] = []
     if (parsed.contacts.length > 0) {
-      const contactInputs = parsed.contacts.map(c => ({ name: c.name, context: c.context }))
-      const resolved = await resolveContactsBatch(uid, contactInputs, 'journal', today)
-      resolvedContactInfo = resolved.map(r => ({ contactId: r.contactId, canonicalName: r.contact.canonicalName }))
-      for (let i = 0; i < resolved.length; i++) {
-        await addInteractionToContact(uid, resolved[i].contactId, {
-          date: today,
-          source: 'journal',
-          summary: parsed.contacts[i].context,
-        })
+      try {
+        const contactInputs = parsed.contacts.map(c => ({ name: c.name, context: c.context }))
+        const resolved = await resolveContactsBatch(uid, contactInputs, 'journal', today)
+        resolvedContactInfo = resolved.map(r => ({ contactId: r.contactId, canonicalName: r.contact.canonicalName }))
+        for (let i = 0; i < resolved.length; i++) {
+          await addInteractionToContact(uid, resolved[i].contactId, {
+            date: today,
+            source: 'journal',
+            summary: parsed.contacts[i].context,
+          })
+        }
+      } catch (contactErr) {
+        console.warn('[Journal] Contact resolution failed (client SDK on server):', (contactErr as Error).message)
       }
     }
 
@@ -699,17 +704,22 @@ async function handleJournalFromVoice(uid: string, transcript: string, parsed: P
     }
 
     // Resolve contacts via entity resolution (unified_contacts)
+    // NOTE: entity-resolution uses client SDK which lacks auth server-side — wrap in try-catch
     let voiceResolvedContactInfo: { contactId: string; canonicalName: string }[] = []
     if (parsed.contacts.length > 0) {
-      const contactInputs = parsed.contacts.map(c => ({ name: c.name, context: c.context }))
-      const resolved = await resolveContactsBatch(uid, contactInputs, 'journal', today)
-      voiceResolvedContactInfo = resolved.map(r => ({ contactId: r.contactId, canonicalName: r.contact.canonicalName }))
-      for (let i = 0; i < resolved.length; i++) {
-        await addInteractionToContact(uid, resolved[i].contactId, {
-          date: today,
-          source: 'journal',
-          summary: parsed.contacts[i].context,
-        })
+      try {
+        const contactInputs = parsed.contacts.map(c => ({ name: c.name, context: c.context }))
+        const resolved = await resolveContactsBatch(uid, contactInputs, 'journal', today)
+        voiceResolvedContactInfo = resolved.map(r => ({ contactId: r.contactId, canonicalName: r.contact.canonicalName }))
+        for (let i = 0; i < resolved.length; i++) {
+          await addInteractionToContact(uid, resolved[i].contactId, {
+            date: today,
+            source: 'journal',
+            summary: parsed.contacts[i].context,
+          })
+        }
+      } catch (contactErr) {
+        console.warn('[Journal/Voice] Contact resolution failed (client SDK on server):', (contactErr as Error).message)
       }
     }
 
