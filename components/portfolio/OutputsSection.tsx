@@ -81,12 +81,6 @@ const projects = [
     description:
       'A multimodal biosensing dashboard designed to make latent cognitive representations observable, reproducible, and learnable.',
   },
-  {
-    title: 'Prediction Markets',
-    meta: 'Coming soon',
-    description:
-      'Applied intelligence systems for extracting signal, belief dynamics, and edge from collective forecasts.',
-  },
 ]
 
 export default function OutputsSection() {
