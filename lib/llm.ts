@@ -62,6 +62,8 @@ export async function callLLM(
 ): Promise<string> {
   const { temperature = 0.3, maxTokens = 8000 } = options
 
+  const errors: string[] = []
+
   // --- Try Groq first ---
   const groq = getGroq()
   if (groq) {
@@ -75,14 +77,18 @@ export async function callLLM(
       const text = response.choices[0]?.message?.content
       if (text) return text
     } catch (error) {
-      console.warn('[LLM] Groq failed, falling back to Gemini:', (error as Error).message)
+      const msg = (error as Error).message
+      errors.push(`Groq: ${msg}`)
+      console.warn('[LLM] Groq failed, falling back to Gemini:', msg)
     }
+  } else {
+    errors.push('Groq: GROQ_API_KEY not set')
   }
 
   // --- Fallback to Gemini with retry on 429 ---
   const genAI = getGemini()
   if (!genAI) {
-    throw new Error('[LLM] No LLM provider available — set GROQ_API_KEY or GEMINI_API_KEY')
+    throw new Error(`[LLM] No LLM provider available — ${errors.join('; ')}; Gemini: GEMINI_API_KEY not set`)
   }
 
   const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' })
@@ -102,7 +108,9 @@ export async function callLLM(
         await sleep(delay)
         continue
       }
-      throw error
+      const msg = (error as Error).message
+      errors.push(`Gemini: ${msg}`)
+      throw new Error(`[LLM] All providers failed — ${errors.join('; ')}`)
     }
   }
 
