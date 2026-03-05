@@ -6,8 +6,7 @@ import type { TranscriptTemplateType } from '@/lib/transcript-templates'
 import type { VentureSpec } from '@/lib/types'
 import { computeReward } from '@/lib/reward'
 import { DEFAULT_SETTINGS } from '@/lib/constants'
-import { resolveContactsBatch } from '@/lib/entity-resolution'
-import { addInteractionToContact } from '@/lib/firestore'
+import { resolveContactsBatch, buildAdminContactAdapter } from '@/lib/entity-resolution'
 import { embedJournalEntry } from '@/lib/embed-on-save'
 import { processTranscriptData, formatTranscriptSummary } from '@/lib/transcript-processing'
 
@@ -526,23 +525,19 @@ async function handleJournal(uid: string, text: string, chatId: number) {
       })
     }
 
-    // Resolve contacts via entity resolution (unified_contacts)
-    // NOTE: entity-resolution uses client SDK which lacks auth server-side — wrap in try-catch
+    // Resolve contacts via entity resolution (unified_contacts) using admin SDK
+    const contactAdapter = buildAdminContactAdapter(adminDb)
     let resolvedContactInfo: { contactId: string; canonicalName: string }[] = []
     if (parsed.contacts.length > 0) {
-      try {
-        const contactInputs = parsed.contacts.map(c => ({ name: c.name, context: c.context }))
-        const resolved = await resolveContactsBatch(uid, contactInputs, 'journal', today)
-        resolvedContactInfo = resolved.map(r => ({ contactId: r.contactId, canonicalName: r.contact.canonicalName }))
-        for (let i = 0; i < resolved.length; i++) {
-          await addInteractionToContact(uid, resolved[i].contactId, {
-            date: today,
-            source: 'journal',
-            summary: parsed.contacts[i].context,
-          })
-        }
-      } catch (contactErr) {
-        console.warn('[Journal] Contact resolution failed (client SDK on server):', (contactErr as Error).message)
+      const contactInputs = parsed.contacts.map(c => ({ name: c.name, context: c.context }))
+      const resolved = await resolveContactsBatch(uid, contactInputs, 'journal', today, contactAdapter)
+      resolvedContactInfo = resolved.map(r => ({ contactId: r.contactId, canonicalName: r.contact.canonicalName }))
+      for (let i = 0; i < resolved.length; i++) {
+        await contactAdapter.addInteractionToContact(uid, resolved[i].contactId, {
+          date: today,
+          source: 'journal',
+          summary: parsed.contacts[i].context,
+        })
       }
     }
 
@@ -703,23 +698,19 @@ async function handleJournalFromVoice(uid: string, transcript: string, parsed: P
       })
     }
 
-    // Resolve contacts via entity resolution (unified_contacts)
-    // NOTE: entity-resolution uses client SDK which lacks auth server-side — wrap in try-catch
+    // Resolve contacts via entity resolution (unified_contacts) using admin SDK
+    const voiceContactAdapter = buildAdminContactAdapter(adminDb)
     let voiceResolvedContactInfo: { contactId: string; canonicalName: string }[] = []
     if (parsed.contacts.length > 0) {
-      try {
-        const contactInputs = parsed.contacts.map(c => ({ name: c.name, context: c.context }))
-        const resolved = await resolveContactsBatch(uid, contactInputs, 'journal', today)
-        voiceResolvedContactInfo = resolved.map(r => ({ contactId: r.contactId, canonicalName: r.contact.canonicalName }))
-        for (let i = 0; i < resolved.length; i++) {
-          await addInteractionToContact(uid, resolved[i].contactId, {
-            date: today,
-            source: 'journal',
-            summary: parsed.contacts[i].context,
-          })
-        }
-      } catch (contactErr) {
-        console.warn('[Journal/Voice] Contact resolution failed (client SDK on server):', (contactErr as Error).message)
+      const contactInputs = parsed.contacts.map(c => ({ name: c.name, context: c.context }))
+      const resolved = await resolveContactsBatch(uid, contactInputs, 'journal', today, voiceContactAdapter)
+      voiceResolvedContactInfo = resolved.map(r => ({ contactId: r.contactId, canonicalName: r.contact.canonicalName }))
+      for (let i = 0; i < resolved.length; i++) {
+        await voiceContactAdapter.addInteractionToContact(uid, resolved[i].contactId, {
+          date: today,
+          source: 'journal',
+          summary: parsed.contacts[i].context,
+        })
       }
     }
 

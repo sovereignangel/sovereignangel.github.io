@@ -10,12 +10,84 @@
 
 import type { UnifiedContact, ResolutionResult, ContactAlias, ContactInteraction } from './types'
 import {
-  getAllUnifiedContacts,
-  saveUnifiedContact,
-  addAliasToContact,
-  addInteractionToContact,
+  getAllUnifiedContacts as clientGetAll,
+  saveUnifiedContact as clientSave,
+  addAliasToContact as clientAddAlias,
+  addInteractionToContact as clientAddInteraction,
 } from './firestore'
 import { callLLM } from './llm'
+
+/**
+ * DB adapter so entity resolution works with either client or admin SDK.
+ * Default: client SDK functions (for browser). Pass admin versions for server routes.
+ */
+export interface ContactDbAdapter {
+  getAllUnifiedContacts: (uid: string) => Promise<UnifiedContact[]>
+  saveUnifiedContact: (uid: string, data: Partial<UnifiedContact>) => Promise<string>
+  addAliasToContact: (uid: string, contactId: string, alias: ContactAlias) => Promise<void>
+  addInteractionToContact: (uid: string, contactId: string, interaction: ContactInteraction) => Promise<void>
+}
+
+const defaultAdapter: ContactDbAdapter = {
+  getAllUnifiedContacts: clientGetAll,
+  saveUnifiedContact: clientSave,
+  addAliasToContact: clientAddAlias,
+  addInteractionToContact: clientAddInteraction,
+}
+
+const TIER_ORDER: Record<string, number> = { decision_maker: 0, connector: 1, peer_operator: 2, acquaintance: 3 }
+
+/**
+ * Build a ContactDbAdapter backed by Firebase Admin SDK.
+ * Use this in API routes / webhooks where client SDK has no auth context.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function buildAdminContactAdapter(adminDb: any): ContactDbAdapter {
+  return {
+    async getAllUnifiedContacts(uid: string): Promise<UnifiedContact[]> {
+      const snap = await adminDb.collection('users').doc(uid).collection('unified_contacts').get()
+      const contacts = snap.docs.map((d: { id: string; data: () => Record<string, unknown> }) =>
+        ({ id: d.id, ...d.data() }) as UnifiedContact
+      )
+      return contacts.sort((a: UnifiedContact, b: UnifiedContact) =>
+        (TIER_ORDER[a.tier] ?? 9) - (TIER_ORDER[b.tier] ?? 9)
+        || b.relationshipStrength - a.relationshipStrength
+      )
+    },
+
+    async saveUnifiedContact(uid: string, data: Partial<UnifiedContact>): Promise<string> {
+      const ref = adminDb.collection('users').doc(uid).collection('unified_contacts').doc()
+      await ref.set({ ...data, createdAt: new Date(), updatedAt: new Date() })
+      return ref.id
+    },
+
+    async addAliasToContact(uid: string, contactId: string, alias: ContactAlias): Promise<void> {
+      const ref = adminDb.collection('users').doc(uid).collection('unified_contacts').doc(contactId)
+      const snap = await ref.get()
+      if (!snap.exists) return
+      const contact = snap.data() as UnifiedContact
+      const existing = contact.aliases || []
+      if (existing.some((a: ContactAlias) => a.normalizedName === alias.normalizedName)) return
+      await ref.update({ aliases: [...existing, alias], updatedAt: new Date() })
+    },
+
+    async addInteractionToContact(uid: string, contactId: string, interaction: ContactInteraction): Promise<void> {
+      const ref = adminDb.collection('users').doc(uid).collection('unified_contacts').doc(contactId)
+      const snap = await ref.get()
+      if (!snap.exists) return
+      const contact = snap.data() as UnifiedContact
+      const existing = contact.interactions || []
+      const updated = [interaction, ...existing].slice(0, 50)
+      await ref.update({
+        interactions: updated,
+        interactionCount: (contact.interactionCount || 0) + 1,
+        lastTouchDate: interaction.date,
+        touchCount: (contact.touchCount || 0) + 1,
+        updatedAt: new Date(),
+      })
+    },
+  }
+}
 
 // ─── NAME NORMALIZATION ──────────────────────────────────────────────
 
@@ -216,14 +288,15 @@ export async function resolveContact(
   context: string,
   source: 'journal' | 'transcript' | 'note' | 'screenshot' | 'manual',
   date: string,
-  allContacts?: UnifiedContact[]
+  allContacts?: UnifiedContact[],
+  adapter: ContactDbAdapter = defaultAdapter
 ): Promise<ResolutionResult> {
   const normalized = normalizeName(extractedName)
   if (!normalized) {
     throw new Error(`Cannot resolve empty name: "${extractedName}"`)
   }
 
-  const contacts = allContacts ?? await getAllUnifiedContacts(uid)
+  const contacts = allContacts ?? await adapter.getAllUnifiedContacts(uid)
 
   // Tier 1: Exact match on canonical name or alias
   const exactMatch = findExactMatch(normalized, contacts)
@@ -231,7 +304,7 @@ export async function resolveContact(
     // Add alias if the raw form is new
     if (normalized !== exactMatch.normalizedName
         && !exactMatch.aliases?.some(a => a.normalizedName === normalized)) {
-      await addAliasToContact(uid, exactMatch.id!, {
+      await adapter.addAliasToContact(uid, exactMatch.id!, {
         name: extractedName.trim(),
         normalizedName: normalized,
         source,
@@ -252,7 +325,7 @@ export async function resolveContact(
       const secondBest = fuzzyCandidates[1]
       if (!secondBest || secondBest.score < FUZZY_REVIEW_THRESHOLD) {
         // Clear winner — auto-match and add alias
-        await addAliasToContact(uid, best.contact.id!, {
+        await adapter.addAliasToContact(uid, best.contact.id!, {
           name: extractedName.trim(),
           normalizedName: normalized,
           source,
@@ -274,7 +347,7 @@ export async function resolveContact(
       if (llmResult) {
         const matched = contacts.find(c => c.id === llmResult.contactId)
         if (matched) {
-          await addAliasToContact(uid, matched.id!, {
+          await adapter.addAliasToContact(uid, matched.id!, {
             name: extractedName.trim(),
             normalizedName: normalized,
             source,
@@ -317,7 +390,7 @@ export async function resolveContact(
     needsReview: hasCloseCandidates,
   }
 
-  const contactId = await saveUnifiedContact(uid, newContact)
+  const contactId = await adapter.saveUnifiedContact(uid, newContact)
   const savedContact = { ...newContact, id: contactId } as UnifiedContact
 
   return {
@@ -335,18 +408,19 @@ export async function resolveContactsBatch(
   uid: string,
   names: { name: string; context: string }[],
   source: 'journal' | 'transcript' | 'note' | 'screenshot' | 'manual',
-  date: string
+  date: string,
+  adapter: ContactDbAdapter = defaultAdapter
 ): Promise<ResolutionResult[]> {
   // Load contacts once for the batch
-  let allContacts = await getAllUnifiedContacts(uid)
+  let allContacts = await adapter.getAllUnifiedContacts(uid)
   const results: ResolutionResult[] = []
 
   for (const { name, context } of names) {
-    const result = await resolveContact(uid, name, context, source, date, allContacts)
+    const result = await resolveContact(uid, name, context, source, date, allContacts, adapter)
     results.push(result)
     // Refresh list if a new contact was created (so subsequent resolutions see it)
     if (result.isNew) {
-      allContacts = await getAllUnifiedContacts(uid)
+      allContacts = await adapter.getAllUnifiedContacts(uid)
     }
   }
 
