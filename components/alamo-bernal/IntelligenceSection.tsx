@@ -6,10 +6,10 @@ import { FUND_METRICS, MEETINGS } from '@/lib/alamo-bernal/seed-data'
 import type { FundMetrics, Meeting, MeetingInsight, InsightCategory } from '@/lib/alamo-bernal/types'
 
 const INSIGHT_COLORS: Record<InsightCategory, string> = {
-  workflow: 'text-ink bg-forest-cream border-rule',
+  workflow: 'text-forest-ink bg-forest-cream border-forest-rule',
   ambition: 'text-forest bg-forest-bg border-forest/20',
   strategy: 'text-green-ink bg-green-bg border-green-ink/20',
-  structure: 'text-ink bg-forest-surface border-rule',
+  structure: 'text-forest-ink bg-forest-surface border-forest-rule',
   risk: 'text-red-ink bg-red-bg border-red-ink/20',
   opportunity: 'text-amber-ink bg-amber-bg border-amber-ink/20',
 }
@@ -55,11 +55,11 @@ export default function IntelligenceSection() {
   return (
     <div className="space-y-3">
       {/* ── Executive Summary ── */}
-      <div className="bg-forest-surface border border-rule rounded-sm p-3">
-        <div className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-forest mb-2 pb-1.5 border-b-2 border-rule">
+      <div className="bg-forest-surface border border-forest-rule rounded-sm p-3">
+        <div className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-forest mb-2 pb-1.5 border-b-2 border-forest-rule">
           Executive Summary
         </div>
-        <p className="text-[10px] text-ink leading-relaxed">
+        <p className="text-[10px] text-forest-ink leading-relaxed">
           Alamo Bernal is a dividend capture fund managing $1.5M AUM with a target of $3M+.
           The strategy buys stocks before ex-dividend dates and sells the next morning, generating
           $80-104K/month in dividend revenue. All investor capital is collateralized by U.S. Treasury bonds,
@@ -103,8 +103,8 @@ export default function IntelligenceSection() {
       </div>
 
       {/* ── Fund Structure Overview ── */}
-      <div className="bg-forest-surface border border-rule rounded-sm p-3">
-        <div className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-forest mb-2 pb-1.5 border-b-2 border-rule">
+      <div className="bg-forest-surface border border-forest-rule rounded-sm p-3">
+        <div className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-forest mb-2 pb-1.5 border-b-2 border-forest-rule">
           Fund Structure
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -124,8 +124,8 @@ export default function IntelligenceSection() {
       </div>
 
       {/* ── Market Context ── */}
-      <div className="bg-forest-surface border border-rule rounded-sm p-3">
-        <div className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-forest mb-2 pb-1.5 border-b-2 border-rule">
+      <div className="bg-forest-surface border border-forest-rule rounded-sm p-3">
+        <div className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-forest mb-2 pb-1.5 border-b-2 border-forest-rule">
           Market Context
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -160,8 +160,8 @@ export default function IntelligenceSection() {
       </div>
 
       {/* ── Meeting Minutes ── */}
-      <div className="bg-forest-surface border border-rule rounded-sm p-3">
-        <div className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-forest mb-2 pb-1.5 border-b-2 border-rule">
+      <div className="bg-forest-surface border border-forest-rule rounded-sm p-3">
+        <div className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-forest mb-2 pb-1.5 border-b-2 border-forest-rule">
           Meeting Minutes
         </div>
 
@@ -172,18 +172,18 @@ export default function IntelligenceSection() {
             placeholder="Search minutes..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="flex-1 text-[10px] text-ink bg-forest-cream/50 border border-rule rounded-sm px-2 py-1 placeholder:text-ink-faint focus:outline-none focus:border-forest"
+            className="flex-1 text-[10px] text-forest-ink bg-forest-surface border border-forest-rule rounded-sm px-2 py-1 placeholder:text-forest-ink-faint focus:outline-none focus:border-forest"
           />
           <button
             onClick={() => setSortAsc((prev) => !prev)}
-            className="font-serif text-[9px] font-medium px-2 py-1 rounded-sm border bg-transparent text-ink-muted border-rule hover:border-ink-faint transition-colors shrink-0"
+            className="font-serif text-[9px] font-medium px-2 py-1 rounded-sm border bg-transparent text-forest-ink-muted border-forest-rule hover:border-forest-ink-faint transition-colors shrink-0"
           >
             {sortAsc ? 'Oldest first' : 'Newest first'}
           </button>
         </div>
 
         {loading && meetings.length === 0 ? (
-          <div className="h-20 flex items-center justify-center text-[11px] text-ink-muted">Loading...</div>
+          <div className="h-20 flex items-center justify-center text-[11px] text-forest-ink-muted">Loading...</div>
         ) : (
           <div className="space-y-2">
             {(() => {
@@ -202,7 +202,7 @@ export default function IntelligenceSection() {
                 sortAsc ? a.date.localeCompare(b.date) : b.date.localeCompare(a.date)
               )
               return sorted.length === 0 ? (
-                <div className="text-[10px] text-ink-muted py-4 text-center">No meetings match &ldquo;{search}&rdquo;</div>
+                <div className="text-[10px] text-forest-ink-muted py-4 text-center">No meetings match &ldquo;{search}&rdquo;</div>
               ) : (
                 sorted.map((mtg) => (
                   <MeetingCard
@@ -225,10 +225,10 @@ export default function IntelligenceSection() {
 
 function MetricCard({ label, value, sub }: { label: string; value: string; sub: string }) {
   return (
-    <div className="bg-forest-surface border border-rule rounded-sm p-2">
-      <div className="text-[9px] text-ink-muted uppercase tracking-[0.5px] mb-0.5">{label}</div>
-      <div className="font-mono text-[14px] font-semibold text-ink">{value}</div>
-      <div className="text-[9px] text-ink-muted mt-0.5">{sub}</div>
+    <div className="bg-forest-surface border border-forest-rule rounded-sm p-2">
+      <div className="text-[9px] text-forest-ink-muted uppercase tracking-[0.5px] mb-0.5">{label}</div>
+      <div className="font-mono text-[14px] font-semibold text-forest-ink">{value}</div>
+      <div className="text-[9px] text-forest-ink-muted mt-0.5">{sub}</div>
     </div>
   )
 }
@@ -236,8 +236,8 @@ function MetricCard({ label, value, sub }: { label: string; value: string; sub: 
 function StructureRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-start gap-2">
-      <span className="text-[10px] text-ink-muted w-[100px] shrink-0">{label}</span>
-      <span className="text-[11px] font-medium text-ink">{value}</span>
+      <span className="text-[10px] text-forest-ink-muted w-[100px] shrink-0">{label}</span>
+      <span className="text-[11px] font-medium text-forest-ink">{value}</span>
     </div>
   )
 }
@@ -245,11 +245,11 @@ function StructureRow({ label, value }: { label: string; value: string }) {
 function ContextCard({ title, items }: { title: string; items: string[] }) {
   return (
     <div>
-      <div className="text-[11px] font-semibold text-ink mb-1">{title}</div>
+      <div className="text-[11px] font-semibold text-forest-ink mb-1">{title}</div>
       <ul className="space-y-0.5">
         {items.map((item, i) => (
-          <li key={i} className="text-[10px] text-ink-muted flex items-start gap-1">
-            <span className="text-ink-faint mt-0.5 shrink-0">-</span>
+          <li key={i} className="text-[10px] text-forest-ink-muted flex items-start gap-1">
+            <span className="text-forest-ink-faint mt-0.5 shrink-0">-</span>
             <span>{item}</span>
           </li>
         ))}
@@ -271,20 +271,20 @@ function MeetingCard({
   const hasTranscript = !!meeting.rawTranscript
 
   return (
-    <div className="border border-rule rounded-sm">
+    <div className="border border-forest-rule rounded-sm">
       {/* Header row */}
       <button
         onClick={onToggle}
         className="w-full flex items-center justify-between px-3 py-2 hover:bg-forest-cream/50 transition-colors"
       >
         <div className="flex items-center gap-2">
-          <span className="font-mono text-[10px] text-ink-muted">{meeting.date}</span>
-          <span className="text-[11px] font-semibold text-ink">{meeting.title}</span>
+          <span className="font-mono text-[10px] text-forest-ink-muted">{meeting.date}</span>
+          <span className="text-[11px] font-semibold text-forest-ink">{meeting.title}</span>
           <div className="hidden sm:flex gap-1">
             {meeting.tags.map((tag) => (
               <span
                 key={tag}
-                className="font-mono text-[8px] uppercase px-1.5 py-0.5 rounded-sm border bg-forest-cream text-ink-muted border-rule"
+                className="font-mono text-[8px] uppercase px-1.5 py-0.5 rounded-sm border bg-forest-cream text-forest-ink-muted border-forest-rule"
               >
                 {tag}
               </span>
@@ -292,14 +292,14 @@ function MeetingCard({
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-[9px] text-ink-muted">{meeting.participants.join(', ')}</span>
-          <span className="text-[10px] text-ink-muted">{isExpanded ? '\u25B2' : '\u25BC'}</span>
+          <span className="text-[9px] text-forest-ink-muted">{meeting.participants.join(', ')}</span>
+          <span className="text-[10px] text-forest-ink-muted">{isExpanded ? '\u25B2' : '\u25BC'}</span>
         </div>
       </button>
 
       {/* Expanded content */}
       {isExpanded && (
-        <div className="border-t border-rule px-3 py-2 space-y-2">
+        <div className="border-t border-forest-rule px-3 py-2 space-y-2">
           {/* View toggle */}
           {hasTranscript && (
             <div className="flex gap-1">
@@ -308,7 +308,7 @@ function MeetingCard({
                 className={`font-serif text-[9px] font-medium px-2 py-1 rounded-sm border transition-colors ${
                   view === 'insights'
                     ? 'bg-forest text-paper border-forest'
-                    : 'bg-transparent text-ink-muted border-rule hover:border-ink-faint'
+                    : 'bg-transparent text-forest-ink-muted border-forest-rule hover:border-forest-ink-faint'
                 }`}
               >
                 Insights
@@ -318,7 +318,7 @@ function MeetingCard({
                 className={`font-serif text-[9px] font-medium px-2 py-1 rounded-sm border transition-colors ${
                   view === 'transcript'
                     ? 'bg-forest text-paper border-forest'
-                    : 'bg-transparent text-ink-muted border-rule hover:border-ink-faint'
+                    : 'bg-transparent text-forest-ink-muted border-forest-rule hover:border-forest-ink-faint'
                 }`}
               >
                 Transcript
@@ -330,13 +330,13 @@ function MeetingCard({
             <>
               {/* Summary */}
               <div>
-                <div className="text-[10px] font-semibold text-ink-muted uppercase mb-0.5">Summary</div>
-                <p className="text-[11px] text-ink leading-relaxed">{meeting.summary}</p>
+                <div className="text-[10px] font-semibold text-forest-ink-muted uppercase mb-0.5">Summary</div>
+                <p className="text-[11px] text-forest-ink leading-relaxed">{meeting.summary}</p>
               </div>
 
               {/* Insights */}
               <div>
-                <div className="text-[10px] font-semibold text-ink-muted uppercase mb-1">Key Insights</div>
+                <div className="text-[10px] font-semibold text-forest-ink-muted uppercase mb-1">Key Insights</div>
                 <div className="space-y-1">
                   {meeting.insights.map((insight, i) => (
                     <InsightRow key={i} insight={insight} />
@@ -347,11 +347,11 @@ function MeetingCard({
               {/* Next Steps */}
               {meeting.nextSteps.length > 0 && (
                 <div>
-                  <div className="text-[10px] font-semibold text-ink-muted uppercase mb-0.5">Next Steps</div>
+                  <div className="text-[10px] font-semibold text-forest-ink-muted uppercase mb-0.5">Next Steps</div>
                   <ul className="space-y-0.5">
                     {meeting.nextSteps.map((step, i) => (
-                      <li key={i} className="text-[10px] text-ink flex items-start gap-1.5">
-                        <span className="text-ink-muted shrink-0">-</span>
+                      <li key={i} className="text-[10px] text-forest-ink flex items-start gap-1.5">
+                        <span className="text-forest-ink-muted shrink-0">-</span>
                         <span>{step}</span>
                       </li>
                     ))}
@@ -361,7 +361,7 @@ function MeetingCard({
             </>
           ) : (
             <div className="max-h-[500px] overflow-y-auto">
-              <div className="text-[10px] font-semibold text-ink-muted uppercase mb-1">Raw Transcript</div>
+              <div className="text-[10px] font-semibold text-forest-ink-muted uppercase mb-1">Raw Transcript</div>
               <div className="space-y-2">
                 {meeting.rawTranscript!.split('\n\n').map((block, i) => {
                   const speakerMatch = block.match(/^(.*?): (.*)$/s)
@@ -377,11 +377,11 @@ function MeetingCard({
                         }`}>
                           {speaker.split(' ')[0]}
                         </span>
-                        <p className="text-[10px] text-ink leading-relaxed">{text}</p>
+                        <p className="text-[10px] text-forest-ink leading-relaxed">{text}</p>
                       </div>
                     )
                   }
-                  return <p key={i} className="text-[10px] text-ink-muted leading-relaxed">{block}</p>
+                  return <p key={i} className="text-[10px] text-forest-ink-muted leading-relaxed">{block}</p>
                 })}
               </div>
             </div>
@@ -403,7 +403,7 @@ function InsightRow({ insight }: { insight: MeetingInsight }) {
       >
         {insight.category}
       </span>
-      <span className="text-[10px] text-ink flex-1">{insight.text}</span>
+      <span className="text-[10px] text-forest-ink flex-1">{insight.text}</span>
       <span className={`w-1.5 h-1.5 rounded-full shrink-0 mt-1 ${dot}`} title={insight.confidence} />
     </div>
   )

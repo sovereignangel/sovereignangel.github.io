@@ -14,21 +14,21 @@ const ALLOWED_EMAILS = [
 function ABSkeleton() {
   return (
     <div className="h-screen overflow-hidden">
-      <header className="bg-forest-surface border-b-2 border-ink">
+      <header className="bg-forest-surface border-b-2 border-forest-ink">
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6">
           <div className="flex items-baseline justify-between pt-2 pb-1">
-            <div className="h-5 w-40 bg-rule-light rounded-sm animate-pulse" />
-            <div className="h-3 w-20 bg-rule-light/60 rounded-sm animate-pulse" />
+            <div className="h-5 w-40 bg-forest-rule-light rounded-sm animate-pulse" />
+            <div className="h-3 w-20 bg-forest-rule-light/60 rounded-sm animate-pulse" />
           </div>
           <div className="flex gap-1 pb-1">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="h-7 w-28 bg-rule-light/40 rounded-t-sm animate-pulse" />
+              <div key={i} className="h-7 w-28 bg-forest-rule-light/40 rounded-t-sm animate-pulse" />
             ))}
           </div>
         </div>
       </header>
       <main className="max-w-[1200px] mx-auto px-4 sm:px-6 py-3">
-        <div className="h-[500px] bg-forest-surface border border-rule rounded-sm animate-pulse" />
+        <div className="h-[500px] bg-forest-surface border border-forest-rule rounded-sm animate-pulse" />
       </main>
     </div>
   )
@@ -38,15 +38,15 @@ function AccessDenied() {
   const { user, signOut } = useAuth()
   return (
     <div className="min-h-screen flex items-center justify-center">
-      <div className="bg-forest-surface border border-rule rounded-sm p-12 max-w-md w-full text-center">
-        <h1 className="font-serif text-[22px] font-bold text-ink mb-2">
+      <div className="bg-forest-surface border border-forest-rule rounded-sm p-12 max-w-md w-full text-center">
+        <h1 className="font-serif text-[22px] font-bold text-forest-ink mb-2">
           Access Restricted
         </h1>
-        <p className="text-[13px] text-ink-muted mb-2">
+        <p className="text-[13px] text-forest-ink-muted mb-2">
           This site is only accessible to authorized partners of Alamo Bernal Investments.
         </p>
         {user?.email && (
-          <p className="text-[11px] font-mono text-ink-muted mb-6">
+          <p className="text-[11px] font-mono text-forest-ink-muted mb-6">
             Signed in as: {user.email}
           </p>
         )}
@@ -74,7 +74,7 @@ function ABLayoutInner({ children }: { children: React.ReactNode }) {
   if (!ALLOWED_EMAILS.includes(user.email || '')) return <AccessDenied />
 
   return (
-    <div className="h-screen overflow-hidden flex flex-col">
+    <div className="h-screen overflow-hidden flex flex-col bg-forest-cream">
       {children}
     </div>
   )

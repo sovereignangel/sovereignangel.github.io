@@ -21,18 +21,18 @@ export default function ABAuthGate() {
 
   return (
     <div className="min-h-screen flex items-center justify-center">
-      <div className="bg-forest-surface border border-rule rounded-sm p-12 max-w-md w-full text-center">
-        <h1 className="font-serif text-[28px] font-bold text-ink tracking-tight mb-1">
+      <div className="bg-forest-surface border border-forest-rule rounded-sm p-12 max-w-md w-full text-center">
+        <h1 className="font-serif text-[28px] font-bold text-forest-ink tracking-tight mb-1">
           Alamo Bernal
         </h1>
-        <p className="font-serif text-[14px] italic text-ink-muted mb-1">
+        <p className="font-serif text-[14px] italic text-forest-ink-muted mb-1">
           Investments
         </p>
-        <p className="font-mono text-[10px] text-ink-muted uppercase tracking-[1px] mb-8">
+        <p className="font-mono text-[10px] text-forest-ink-muted uppercase tracking-[1px] mb-8">
           Technology Partnership Proposal
         </p>
 
-        <div className="w-full h-px bg-rule mb-8" />
+        <div className="w-full h-px bg-forest-rule mb-8" />
 
         <button
           onClick={signIn}
@@ -48,7 +48,7 @@ export default function ABAuthGate() {
           </p>
         )}
 
-        <p className="mt-6 text-[11px] font-serif italic text-ink-muted">
+        <p className="mt-6 text-[11px] font-serif italic text-forest-ink-muted">
           Access restricted to authorized partners.
         </p>
       </div>

@@ -16,19 +16,19 @@ interface ABNavProps {
 
 export default function ABNav({ activeTab, onTabChange }: ABNavProps) {
   return (
-    <header className="bg-forest-surface border-b-2 border-ink shrink-0">
+    <header className="bg-forest-surface border-b-2 border-forest-ink shrink-0">
       <div className="max-w-[1200px] mx-auto px-4 sm:px-6">
         {/* Title row */}
         <div className="flex items-baseline justify-between pt-2 pb-1">
           <div className="flex items-baseline gap-2">
-            <h1 className="font-serif text-[18px] font-bold text-ink tracking-tight">
+            <h1 className="font-serif text-[18px] font-bold text-forest-ink tracking-tight">
               Alamo Bernal
             </h1>
-            <span className="hidden sm:inline font-mono text-[9px] text-ink-muted uppercase tracking-[1px]">
+            <span className="hidden sm:inline font-mono text-[9px] text-forest-ink-muted uppercase tracking-[1px]">
               Technology Partnership Proposal
             </span>
           </div>
-          <span className="font-mono text-[9px] text-ink-muted">
+          <span className="font-mono text-[9px] text-forest-ink-muted">
             Draft — Mar 2026
           </span>
         </div>
@@ -42,7 +42,7 @@ export default function ABNav({ activeTab, onTabChange }: ABNavProps) {
               className={`font-serif text-[13px] font-medium px-3 py-1.5 transition-colors ${
                 activeTab === tab.key
                   ? 'text-forest font-semibold border-b-2 border-forest -mb-px'
-                  : 'text-ink-muted hover:text-ink'
+                  : 'text-forest-ink-muted hover:text-forest-ink'
               }`}
             >
               {tab.label}

@@ -26,8 +26,8 @@ const PHASE_TAGS: Record<number, { label: string; type: 'focus' | 'draft' }> = {
 const PHASE_STATUS_COLORS: Record<PhaseStatus, string> = {
   proposed: 'text-amber-ink bg-amber-bg border-amber-ink/20',
   active: 'text-green-ink bg-green-bg border-green-ink/20',
-  completed: 'text-ink-muted bg-forest-cream border-rule',
-  future: 'text-ink-muted bg-paper border-rule',
+  completed: 'text-forest-ink-muted bg-forest-cream border-forest-rule',
+  future: 'text-forest-ink-muted bg-paper border-forest-rule',
 }
 
 function fmt(n: number): string {
@@ -62,11 +62,11 @@ export default function StrategySection() {
   return (
     <div className="space-y-3">
       {/* ── Executive Summary ── */}
-      <div className="bg-forest-surface border border-rule rounded-sm p-3">
-        <div className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-forest mb-2 pb-1.5 border-b-2 border-rule">
+      <div className="bg-forest-surface border border-forest-rule rounded-sm p-3">
+        <div className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-forest mb-2 pb-1.5 border-b-2 border-forest-rule">
           Strategy Overview
         </div>
-        <p className="text-[10px] text-ink leading-relaxed">
+        <p className="text-[10px] text-forest-ink leading-relaxed">
           A three-phase partnership that evolves from technology build-out to capital markets support
           to investment R&amp;D. Phase 1 proves value by automating Sean&apos;s screening workflow and
           building trust through working together. Phase 2 formalizes the fund structure (ERA filing,
@@ -76,8 +76,8 @@ export default function StrategySection() {
       </div>
 
       {/* ── Partnership Phases ── */}
-      <div className="bg-forest-surface border border-rule rounded-sm p-3">
-        <div className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-forest mb-2 pb-1.5 border-b-2 border-rule">
+      <div className="bg-forest-surface border border-forest-rule rounded-sm p-3">
+        <div className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-forest mb-2 pb-1.5 border-b-2 border-forest-rule">
           Partnership Phases
         </div>
 
@@ -90,13 +90,13 @@ export default function StrategySection() {
               className={`text-left px-3 py-1.5 rounded-sm border transition-colors flex-1 ${
                 activePhase === phase.phase
                   ? 'bg-forest text-paper border-forest'
-                  : 'bg-transparent text-ink-muted border-rule hover:border-ink-faint'
+                  : 'bg-transparent text-forest-ink-muted border-forest-rule hover:border-forest-ink-faint'
               }`}
             >
               <div className="flex items-center gap-1.5 flex-wrap">
                 <span className="font-serif text-[13px] font-medium">Phase {phase.phase}</span>
                 <span className={`text-[11px] font-semibold ${
-                  activePhase === phase.phase ? 'text-paper' : 'text-ink'
+                  activePhase === phase.phase ? 'text-paper' : 'text-forest-ink'
                 }`}>
                   {phase.title}
                 </span>
@@ -113,7 +113,7 @@ export default function StrategySection() {
                 )}
               </div>
               <div className={`text-[9px] leading-tight mt-0.5 ${
-                activePhase === phase.phase ? 'text-paper/80' : 'text-ink-muted'
+                activePhase === phase.phase ? 'text-paper/80' : 'text-forest-ink-muted'
               }`}>
                 {phase.subtitle}
               </div>
@@ -126,54 +126,54 @@ export default function StrategySection() {
       </div>
 
       {/* ── Financial Model ── */}
-      <div className="bg-forest-surface border border-rule rounded-sm p-3">
-        <div className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-forest mb-2 pb-1.5 border-b-2 border-rule">
+      <div className="bg-forest-surface border border-forest-rule rounded-sm p-3">
+        <div className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-forest mb-2 pb-1.5 border-b-2 border-forest-rule">
           Financial Model — AUM Scenarios
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-[10px]">
             <thead>
-              <tr className="border-b border-rule">
-                <th className="text-left font-semibold text-ink-muted uppercase tracking-[0.5px] py-1 pr-3">Scenario</th>
-                <th className="text-right font-semibold text-ink-muted uppercase tracking-[0.5px] py-1 px-2">AUM</th>
-                <th className="text-right font-semibold text-ink-muted uppercase tracking-[0.5px] py-1 px-2">Monthly Div Rev</th>
-                <th className="text-right font-semibold text-ink-muted uppercase tracking-[0.5px] py-1 px-2">Sean (10%)</th>
-                <th className="text-right font-semibold text-ink-muted uppercase tracking-[0.5px] py-1 px-2">Lori</th>
-                <th className="text-right font-semibold text-ink-muted uppercase tracking-[0.5px] py-1 px-2">Op. Costs (est.)</th>
-                <th className="text-right font-semibold text-ink-muted uppercase tracking-[0.5px] py-1 px-2">Investor Returns</th>
-                <th className="text-right font-semibold text-ink-muted uppercase tracking-[0.5px] py-1 pl-2">Net to Fund</th>
+              <tr className="border-b border-forest-rule">
+                <th className="text-left font-semibold text-forest-ink-muted uppercase tracking-[0.5px] py-1 pr-3">Scenario</th>
+                <th className="text-right font-semibold text-forest-ink-muted uppercase tracking-[0.5px] py-1 px-2">AUM</th>
+                <th className="text-right font-semibold text-forest-ink-muted uppercase tracking-[0.5px] py-1 px-2">Monthly Div Rev</th>
+                <th className="text-right font-semibold text-forest-ink-muted uppercase tracking-[0.5px] py-1 px-2">Sean (10%)</th>
+                <th className="text-right font-semibold text-forest-ink-muted uppercase tracking-[0.5px] py-1 px-2">Lori</th>
+                <th className="text-right font-semibold text-forest-ink-muted uppercase tracking-[0.5px] py-1 px-2">Op. Costs (est.)</th>
+                <th className="text-right font-semibold text-forest-ink-muted uppercase tracking-[0.5px] py-1 px-2">Investor Returns</th>
+                <th className="text-right font-semibold text-forest-ink-muted uppercase tracking-[0.5px] py-1 pl-2">Net to Fund</th>
               </tr>
             </thead>
             <tbody>
               {scenarios.map((s) => (
-                <tr key={s.id} className="border-b border-rule-light">
-                  <td className="py-1.5 pr-3 font-semibold text-ink">{s.label}</td>
-                  <td className="py-1.5 px-2 text-right font-mono text-ink">{fmt(s.aum)}</td>
-                  <td className="py-1.5 px-2 text-right font-mono text-ink">{fmt(s.monthlyDividendRevenue)}</td>
+                <tr key={s.id} className="border-b border-forest-rule-light">
+                  <td className="py-1.5 pr-3 font-semibold text-forest-ink">{s.label}</td>
+                  <td className="py-1.5 px-2 text-right font-mono text-forest-ink">{fmt(s.aum)}</td>
+                  <td className="py-1.5 px-2 text-right font-mono text-forest-ink">{fmt(s.monthlyDividendRevenue)}</td>
                   <td className="py-1.5 px-2 text-right font-mono text-green-ink">{fmt(s.seanMonthlyTake)}</td>
                   <td className="py-1.5 px-2 text-right font-mono text-forest">{s.aum > 1_500_000 ? 'TBD' : fmt(s.loriMonthlyTake)}</td>
-                  <td className="py-1.5 px-2 text-right font-mono text-ink-muted">{fmt(s.operatingCosts)}</td>
-                  <td className="py-1.5 px-2 text-right font-mono text-ink-muted">{s.investorReturns}</td>
-                  <td className="py-1.5 pl-2 text-right font-mono text-ink font-semibold">{fmt(s.netToFund)}</td>
+                  <td className="py-1.5 px-2 text-right font-mono text-forest-ink-muted">{fmt(s.operatingCosts)}</td>
+                  <td className="py-1.5 px-2 text-right font-mono text-forest-ink-muted">{s.investorReturns}</td>
+                  <td className="py-1.5 pl-2 text-right font-mono text-forest-ink font-semibold">{fmt(s.netToFund)}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-        <p className="text-[9px] text-ink-muted mt-2 italic">
+        <p className="text-[9px] text-forest-ink-muted mt-2 italic">
           Note: Monthly dividend revenue assumes ~100% annualized return on AUM (based on historical performance). Lori&apos;s take evolves across phases — retainer in Phase 1, success fee in Phase 2, equity/rev-share in Phase 3.
         </p>
       </div>
 
       {/* ── Partnership Economics ── */}
-      <div className="bg-forest-surface border border-rule rounded-sm p-3">
-        <div className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-forest mb-2 pb-1.5 border-b-2 border-rule">
+      <div className="bg-forest-surface border border-forest-rule rounded-sm p-3">
+        <div className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-forest mb-2 pb-1.5 border-b-2 border-forest-rule">
           Partnership Economics
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <div className="text-[11px] font-semibold text-ink mb-1">North Star</div>
-            <p className="text-[10px] text-ink leading-relaxed">
+            <div className="text-[11px] font-semibold text-forest-ink mb-1">North Star</div>
+            <p className="text-[10px] text-forest-ink leading-relaxed">
               Hit <span className="font-mono font-semibold">$3M AUM</span> &rarr;{' '}
               <span className="font-mono font-semibold">$250K/month</span> dividend revenue &rarr;{' '}
               Sean nets <span className="font-mono font-semibold">$25K/month</span> (10%) and can leave
@@ -181,7 +181,7 @@ export default function StrategySection() {
             </p>
           </div>
           <div>
-            <div className="text-[11px] font-semibold text-ink mb-1">Value Sources</div>
+            <div className="text-[11px] font-semibold text-forest-ink mb-1">Value Sources</div>
             <ul className="space-y-0.5">
               {[
                 'Time savings → more hours for fundraising → faster AUM growth',
@@ -189,7 +189,7 @@ export default function StrategySection() {
                 'Fundraising support → new capital → larger revenue base',
                 'New strategies → additional revenue streams → fund diversification',
               ].map((item, i) => (
-                <li key={i} className="text-[10px] text-ink flex items-start gap-1">
+                <li key={i} className="text-[10px] text-forest-ink flex items-start gap-1">
                   <span className="text-forest shrink-0">&bull;</span>
                   <span>{item}</span>
                 </li>
@@ -197,7 +197,7 @@ export default function StrategySection() {
             </ul>
           </div>
           <div>
-            <div className="text-[11px] font-semibold text-ink mb-1">Compensation Evolution</div>
+            <div className="text-[11px] font-semibold text-forest-ink mb-1">Compensation Evolution</div>
             <div className="space-y-1">
               <FeeRow phase="Phase 1" fee="Monthly retainer" note="Skin in the game" />
               <FeeRow phase="Phase 2" fee="Retainer + fund role / advisory" note="Institutional alignment" />
@@ -205,8 +205,8 @@ export default function StrategySection() {
             </div>
           </div>
           <div>
-            <div className="text-[11px] font-semibold text-ink mb-1">Skin in the Game</div>
-            <p className="text-[10px] text-ink leading-relaxed">
+            <div className="text-[11px] font-semibold text-forest-ink mb-1">Skin in the Game</div>
+            <p className="text-[10px] text-forest-ink leading-relaxed">
               Sean allocates capital from the fund for Lori on agreed milestones — giving Lori real exposure
               to the strategy and firsthand conviction when marketing the fund to investors.
             </p>
@@ -227,16 +227,16 @@ function PhaseContent({ phase }: { phase: ProposalPhase }) {
       {/* Header: title + status + timeline */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <span className="text-[12px] font-semibold text-ink">{phase.title}</span>
+          <span className="text-[12px] font-semibold text-forest-ink">{phase.title}</span>
           <span className={`font-mono text-[8px] uppercase px-1.5 py-0.5 rounded-sm border ${statusColor}`}>
             {phase.status}
           </span>
         </div>
-        <span className="text-[9px] text-ink-muted font-mono">{phase.timeline}</span>
+        <span className="text-[9px] text-forest-ink-muted font-mono">{phase.timeline}</span>
       </div>
 
       {/* Description */}
-      <p className="text-[10px] text-ink leading-relaxed">{phase.description}</p>
+      <p className="text-[10px] text-forest-ink leading-relaxed">{phase.description}</p>
 
       {/* Value Map (Phase 1 only) */}
       {phase.valueMap && phase.valueMap.length > 0 && (
@@ -246,7 +246,7 @@ function PhaseContent({ phase }: { phase: ProposalPhase }) {
       {/* Value Metrics (before → after) */}
       {phase.valueMetrics.length > 0 && (
         <div>
-          <div className="text-[9px] font-semibold text-ink-muted uppercase mb-1">Value Metrics</div>
+          <div className="text-[9px] font-semibold text-forest-ink-muted uppercase mb-1">Value Metrics</div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-1.5">
             {phase.valueMetrics.map((vm, i) => (
               <ValueMetricRow key={i} metric={vm} />
@@ -258,11 +258,11 @@ function PhaseContent({ phase }: { phase: ProposalPhase }) {
       {/* Two-column: Deliverables + Working Rhythm */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
-          <div className="text-[9px] font-semibold text-ink-muted uppercase mb-0.5">Deliverables</div>
+          <div className="text-[9px] font-semibold text-forest-ink-muted uppercase mb-0.5">Deliverables</div>
           <ul className="space-y-0.5">
             {phase.deliverables.map((d, i) => (
-              <li key={i} className="text-[10px] text-ink flex items-start gap-1">
-                <span className="text-ink-muted shrink-0">-</span>
+              <li key={i} className="text-[10px] text-forest-ink flex items-start gap-1">
+                <span className="text-forest-ink-muted shrink-0">-</span>
                 <span>{d}</span>
               </li>
             ))}
@@ -270,11 +270,11 @@ function PhaseContent({ phase }: { phase: ProposalPhase }) {
         </div>
         {phase.workingRhythm && phase.workingRhythm.length > 0 && (
           <div>
-            <div className="text-[9px] font-semibold text-ink-muted uppercase mb-0.5">Working Rhythm</div>
+            <div className="text-[9px] font-semibold text-forest-ink-muted uppercase mb-0.5">Working Rhythm</div>
             <ul className="space-y-0.5">
               {phase.workingRhythm.map((item, i) => (
-                <li key={i} className="text-[10px] text-ink flex items-start gap-1">
-                  <span className="text-ink-muted shrink-0">-</span>
+                <li key={i} className="text-[10px] text-forest-ink flex items-start gap-1">
+                  <span className="text-forest-ink-muted shrink-0">-</span>
                   <span>{item}</span>
                 </li>
               ))}
@@ -286,11 +286,11 @@ function PhaseContent({ phase }: { phase: ProposalPhase }) {
       {/* Scaling Notes */}
       {phase.scalingNotes && phase.scalingNotes.length > 0 && (
         <div>
-          <div className="text-[9px] font-semibold text-ink-muted uppercase mb-0.5">Infrastructure at This Stage</div>
+          <div className="text-[9px] font-semibold text-forest-ink-muted uppercase mb-0.5">Infrastructure at This Stage</div>
           <ul className="space-y-0.5">
             {phase.scalingNotes.map((item, i) => (
-              <li key={i} className="text-[10px] text-ink flex items-start gap-1">
-                <span className="text-ink-muted shrink-0">-</span>
+              <li key={i} className="text-[10px] text-forest-ink flex items-start gap-1">
+                <span className="text-forest-ink-muted shrink-0">-</span>
                 <span>{item}</span>
               </li>
             ))}
@@ -299,14 +299,14 @@ function PhaseContent({ phase }: { phase: ProposalPhase }) {
       )}
 
       {/* Bottom row: terms + gate */}
-      <div className="border-t border-rule-light pt-1.5 grid grid-cols-1 sm:grid-cols-2 gap-2">
+      <div className="border-t border-forest-rule-light pt-1.5 grid grid-cols-1 sm:grid-cols-2 gap-2">
         <div>
-          <span className="text-[9px] font-semibold text-ink-muted uppercase">Financial Terms: </span>
-          <span className="text-[9px] text-ink">{phase.financialTerms}</span>
+          <span className="text-[9px] font-semibold text-forest-ink-muted uppercase">Financial Terms: </span>
+          <span className="text-[9px] text-forest-ink">{phase.financialTerms}</span>
         </div>
         <div>
-          <span className="text-[9px] font-semibold text-ink-muted uppercase">Gate to Next: </span>
-          <span className="text-[9px] text-ink">{phase.gateToNext}</span>
+          <span className="text-[9px] font-semibold text-forest-ink-muted uppercase">Gate to Next: </span>
+          <span className="text-[9px] text-forest-ink">{phase.gateToNext}</span>
         </div>
       </div>
     </div>
@@ -316,7 +316,7 @@ function PhaseContent({ phase }: { phase: ProposalPhase }) {
 function ValueMapTable({ entries }: { entries: ValueMapEntry[] }) {
   return (
     <div>
-      <div className="text-[11px] font-semibold text-ink mb-1.5 flex items-center gap-2">
+      <div className="text-[11px] font-semibold text-forest-ink mb-1.5 flex items-center gap-2">
         Value Map
         <span className="font-mono text-[8px] uppercase px-1.5 py-0.5 rounded-sm border text-amber-ink bg-amber-bg border-amber-ink/20">
           Draft Framework
@@ -325,22 +325,22 @@ function ValueMapTable({ entries }: { entries: ValueMapEntry[] }) {
       <div className="overflow-x-auto">
         <table className="w-full text-[10px]">
           <thead>
-            <tr className="border-b border-rule">
-              <th className="text-left font-semibold text-ink-muted uppercase tracking-[0.5px] py-1 pr-2 text-[9px]">Dimension</th>
-              <th className="text-left font-semibold text-ink-muted uppercase tracking-[0.5px] py-1 px-2 text-[9px]">Current</th>
-              <th className="text-left font-semibold text-ink-muted uppercase tracking-[0.5px] py-1 px-2 text-[9px]">With Tech</th>
-              <th className="text-left font-semibold text-ink-muted uppercase tracking-[0.5px] py-1 px-2 text-[9px]">Freed</th>
-              <th className="text-left font-semibold text-ink-muted uppercase tracking-[0.5px] py-1 pl-2 text-[9px]">Impact</th>
+            <tr className="border-b border-forest-rule">
+              <th className="text-left font-semibold text-forest-ink-muted uppercase tracking-[0.5px] py-1 pr-2 text-[9px]">Dimension</th>
+              <th className="text-left font-semibold text-forest-ink-muted uppercase tracking-[0.5px] py-1 px-2 text-[9px]">Current</th>
+              <th className="text-left font-semibold text-forest-ink-muted uppercase tracking-[0.5px] py-1 px-2 text-[9px]">With Tech</th>
+              <th className="text-left font-semibold text-forest-ink-muted uppercase tracking-[0.5px] py-1 px-2 text-[9px]">Freed</th>
+              <th className="text-left font-semibold text-forest-ink-muted uppercase tracking-[0.5px] py-1 pl-2 text-[9px]">Impact</th>
             </tr>
           </thead>
           <tbody>
             {entries.map((entry, i) => (
-              <tr key={i} className="border-b border-rule-light">
-                <td className="py-1.5 pr-2 font-semibold text-ink">{entry.dimension}</td>
-                <td className="py-1.5 px-2 text-ink-muted">{entry.current}</td>
+              <tr key={i} className="border-b border-forest-rule-light">
+                <td className="py-1.5 pr-2 font-semibold text-forest-ink">{entry.dimension}</td>
+                <td className="py-1.5 px-2 text-forest-ink-muted">{entry.current}</td>
                 <td className="py-1.5 px-2 font-semibold text-green-ink">{entry.withTech}</td>
                 <td className="py-1.5 px-2 font-mono text-forest">{entry.freed}</td>
-                <td className="py-1.5 pl-2 text-ink">{entry.impact}</td>
+                <td className="py-1.5 pl-2 text-forest-ink">{entry.impact}</td>
               </tr>
             ))}
           </tbody>
@@ -363,11 +363,11 @@ function ValueMapTable({ entries }: { entries: ValueMapEntry[] }) {
 
 function ValueMetricRow({ metric }: { metric: ValueMetric }) {
   return (
-    <div className="bg-forest-cream/50 border border-rule-light rounded-sm px-2 py-1.5">
-      <div className="text-[9px] font-semibold text-ink mb-0.5">{metric.label}</div>
+    <div className="bg-forest-cream/50 border border-forest-rule-light rounded-sm px-2 py-1.5">
+      <div className="text-[9px] font-semibold text-forest-ink mb-0.5">{metric.label}</div>
       <div className="flex items-center gap-1.5">
-        <span className="font-mono text-[9px] text-ink-muted line-through">{metric.before}</span>
-        <span className="text-[9px] text-ink-muted">&rarr;</span>
+        <span className="font-mono text-[9px] text-forest-ink-muted line-through">{metric.before}</span>
+        <span className="text-[9px] text-forest-ink-muted">&rarr;</span>
         <span className="font-mono text-[9px] font-semibold text-green-ink">{metric.after}</span>
       </div>
       <div className="text-[8px] text-forest font-medium mt-0.5">{metric.impact}</div>
@@ -382,8 +382,8 @@ function FeeRow({ phase, fee, note }: { phase: string; fee: string; note: string
         {phase}
       </span>
       <div>
-        <span className="text-[10px] font-medium text-ink">{fee}</span>
-        <span className="text-[9px] text-ink-muted ml-1">— {note}</span>
+        <span className="text-[10px] font-medium text-forest-ink">{fee}</span>
+        <span className="text-[9px] text-forest-ink-muted ml-1">— {note}</span>
       </div>
     </div>
   )
