@@ -153,26 +153,26 @@ export default function SprintSection() {
   return (
     <div className="space-y-3">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
         <div>
-          <h2 className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-forest">
+          <h2 className="font-serif text-[15px] sm:text-[13px] font-semibold uppercase tracking-[0.5px] text-forest">
             Tech Development
           </h2>
-          <p className="text-[10px] text-forest-ink-muted mt-0.5">
+          <p className="text-[11px] sm:text-[10px] text-forest-ink-muted mt-0.5">
             Sprint 1 &middot; {sprintItems.length} items
           </p>
         </div>
         <div className="flex gap-1">
           <button
             onClick={() => setShowAdd(true)}
-            className="font-mono text-[9px] font-medium px-2 py-1 rounded-sm border border-forest-rule text-forest-ink-muted hover:text-forest-ink hover:border-forest-ink-faint transition-colors"
+            className="font-mono text-[10px] sm:text-[9px] font-medium px-2 py-1.5 sm:py-1 rounded-sm border border-forest-rule text-forest-ink-muted hover:text-forest-ink hover:border-forest-ink-faint transition-colors"
           >
             + Add Item
           </button>
           {!planning && (
             <button
               onClick={handleCloseSprint}
-              className="font-mono text-[9px] font-medium px-2 py-1 rounded-sm bg-forest text-paper border border-forest hover:bg-forest/90 transition-colors"
+              className="font-mono text-[10px] sm:text-[9px] font-medium px-2 py-1.5 sm:py-1 rounded-sm bg-forest text-paper border border-forest hover:bg-forest/90 transition-colors"
             >
               Close &amp; Plan Next Sprint
             </button>
@@ -197,11 +197,11 @@ export default function SprintSection() {
             onChange={(e) => setNewDesc(e.target.value)}
             className="w-full text-[10px] text-forest-ink-muted bg-transparent border-b border-forest-rule-light pb-1 outline-none placeholder:text-forest-ink-faint"
           />
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <select
               value={newType}
               onChange={(e) => setNewType(e.target.value as SprintItemType)}
-              className="text-[10px] text-forest-ink-muted bg-forest-surface border border-forest-rule rounded-sm px-1.5 py-0.5"
+              className="text-[11px] sm:text-[10px] text-forest-ink-muted bg-forest-surface border border-forest-rule rounded-sm px-1.5 py-1 sm:py-0.5"
             >
               <option value="feature">Feature</option>
               <option value="bug">Bug</option>
@@ -210,7 +210,7 @@ export default function SprintSection() {
             <select
               value={newOwner}
               onChange={(e) => setNewOwner(e.target.value as 'lori' | 'sean' | 'both')}
-              className="text-[10px] text-forest-ink-muted bg-forest-surface border border-forest-rule rounded-sm px-1.5 py-0.5"
+              className="text-[11px] sm:text-[10px] text-forest-ink-muted bg-forest-surface border border-forest-rule rounded-sm px-1.5 py-1 sm:py-0.5"
             >
               <option value="lori">Lori</option>
               <option value="sean">Sean</option>
@@ -219,22 +219,22 @@ export default function SprintSection() {
             <select
               value={newPriority}
               onChange={(e) => setNewPriority(e.target.value as 'high' | 'medium' | 'low')}
-              className="text-[10px] text-forest-ink-muted bg-forest-surface border border-forest-rule rounded-sm px-1.5 py-0.5"
+              className="text-[11px] sm:text-[10px] text-forest-ink-muted bg-forest-surface border border-forest-rule rounded-sm px-1.5 py-1 sm:py-0.5"
             >
               <option value="high">High</option>
               <option value="medium">Medium</option>
               <option value="low">Low</option>
             </select>
-            <div className="flex-1" />
+            <div className="flex-1 basis-full sm:basis-0" />
             <button
               onClick={() => { setShowAdd(false); setNewTitle(''); setNewDesc('') }}
-              className="text-[10px] text-forest-ink-muted hover:text-forest-ink px-2 py-0.5"
+              className="text-[11px] sm:text-[10px] text-forest-ink-muted hover:text-forest-ink px-2 py-1 sm:py-0.5"
             >
               Cancel
             </button>
             <button
               onClick={handleAdd}
-              className="text-[10px] font-medium text-paper bg-forest px-2 py-0.5 rounded-sm hover:bg-forest/90"
+              className="text-[11px] sm:text-[10px] font-medium text-paper bg-forest px-2 py-1 sm:py-0.5 rounded-sm hover:bg-forest/90"
             >
               Add to Backlog
             </button>
@@ -245,26 +245,26 @@ export default function SprintSection() {
       {/* ── Planning mode ── */}
       {planning && (
         <div className="bg-forest-surface border-2 border-forest rounded-sm p-3 space-y-2">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div>
-              <span className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-forest">
+              <span className="font-serif text-[13px] sm:text-[11px] font-semibold uppercase tracking-[0.5px] text-forest">
                 Plan Next Sprint
               </span>
-              <p className="text-[9px] text-forest-ink-muted mt-0.5">
+              <p className="text-[10px] sm:text-[9px] text-forest-ink-muted mt-0.5">
                 Select items from the backlog to include in the next sprint.
               </p>
             </div>
             <div className="flex gap-1">
               <button
                 onClick={() => { setPlanning(false); setSelected(new Set()) }}
-                className="text-[9px] text-forest-ink-muted hover:text-forest-ink px-2 py-1"
+                className="text-[10px] sm:text-[9px] text-forest-ink-muted hover:text-forest-ink px-2 py-1.5 sm:py-1"
               >
                 Cancel
               </button>
               <button
                 onClick={handleStartSprint}
                 disabled={selected.size === 0}
-                className={`font-mono text-[9px] font-medium px-2 py-1 rounded-sm border transition-colors ${
+                className={`font-mono text-[10px] sm:text-[9px] font-medium px-2 py-1.5 sm:py-1 rounded-sm border transition-colors ${
                   selected.size > 0
                     ? 'bg-forest text-paper border-forest hover:bg-forest/90'
                     : 'bg-forest-cream text-forest-ink-faint border-forest-rule cursor-not-allowed'
@@ -281,7 +281,7 @@ export default function SprintSection() {
             {backlogItems.map((item, idx) => (
               <label
                 key={item.id}
-                className={`flex items-center gap-3 px-2 py-1.5 cursor-pointer hover:bg-forest-cream/30 transition-colors ${
+                className={`flex items-start gap-2 px-2 py-2 sm:py-1.5 cursor-pointer hover:bg-forest-cream/30 transition-colors ${
                   idx < backlogItems.length - 1 ? 'border-b border-forest-rule-light' : ''
                 }`}
               >
@@ -289,23 +289,23 @@ export default function SprintSection() {
                   type="checkbox"
                   checked={selected.has(item.id)}
                   onChange={() => toggleSelect(item.id)}
-                  className="shrink-0 accent-forest"
+                  className="shrink-0 accent-forest mt-0.5"
                 />
-                <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${PRIORITY_DOT[item.priority]}`} />
+                <span className={`w-1.5 h-1.5 rounded-full shrink-0 mt-1 ${PRIORITY_DOT[item.priority]}`} />
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-medium text-forest-ink">{item.title}</span>
-                    <span className={`font-mono text-[7px] uppercase px-1 py-px rounded-sm border shrink-0 ${TYPE_BADGE[item.type].color}`}>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-[12px] sm:text-[10px] font-medium text-forest-ink">{item.title}</span>
+                    <span className={`font-mono text-[8px] sm:text-[7px] uppercase px-1 py-px rounded-sm border shrink-0 ${TYPE_BADGE[item.type].color}`}>
                       {TYPE_BADGE[item.type].label}
+                    </span>
+                    <span className="font-mono text-[8px] text-forest-ink-faint uppercase shrink-0">
+                      {item.owner === 'both' ? 'Both' : item.owner}
                     </span>
                   </div>
                   {item.description && (
-                    <p className="text-[8px] text-forest-ink-muted leading-snug mt-0.5 line-clamp-1">{item.description}</p>
+                    <p className="text-[10px] sm:text-[8px] text-forest-ink-muted leading-snug mt-0.5 line-clamp-2 sm:line-clamp-1">{item.description}</p>
                   )}
                 </div>
-                <span className="font-mono text-[8px] text-forest-ink-faint uppercase shrink-0">
-                  {item.owner === 'both' ? 'Both' : item.owner}
-                </span>
               </label>
             ))}
           </div>
@@ -328,61 +328,76 @@ export default function SprintSection() {
           {sprintItems.map((item, idx) => (
             <div
               key={item.id}
-              className={`flex items-center gap-3 px-3 py-2 group hover:bg-forest-cream/30 transition-colors ${
+              className={`px-3 py-2.5 sm:py-2 group hover:bg-forest-cream/30 transition-colors ${
                 idx < sprintItems.length - 1 ? 'border-b border-forest-rule-light' : ''
               }`}
             >
-              <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${PRIORITY_DOT[item.priority]}`} />
-
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className={`text-[10px] font-medium ${item.status === 'done' ? 'text-forest-ink-muted line-through' : 'text-forest-ink'}`}>
-                    {item.title}
-                  </span>
-                  <span className={`font-mono text-[7px] uppercase px-1 py-px rounded-sm border shrink-0 ${TYPE_BADGE[item.type].color}`}>
-                    {TYPE_BADGE[item.type].label}
-                  </span>
+              {/* Top row: priority dot + title + badge */}
+              <div className="flex items-start gap-2">
+                <span className={`w-1.5 h-1.5 rounded-full shrink-0 mt-1 ${PRIORITY_DOT[item.priority]}`} />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className={`text-[12px] sm:text-[10px] font-medium ${item.status === 'done' ? 'text-forest-ink-muted line-through' : 'text-forest-ink'}`}>
+                      {item.title}
+                    </span>
+                    <span className={`font-mono text-[8px] sm:text-[7px] uppercase px-1 py-px rounded-sm border shrink-0 ${TYPE_BADGE[item.type].color}`}>
+                      {TYPE_BADGE[item.type].label}
+                    </span>
+                  </div>
+                  {item.description && (
+                    <p className="text-[10px] sm:text-[8px] text-forest-ink-muted leading-snug mt-0.5 line-clamp-2 sm:line-clamp-1">{item.description}</p>
+                  )}
                 </div>
-                {item.description && (
-                  <p className="text-[8px] text-forest-ink-muted leading-snug mt-0.5 line-clamp-1">{item.description}</p>
-                )}
+                {/* Delete — desktop only (inline) */}
+                <button
+                  onClick={() => handleDelete(item.id)}
+                  className="hidden sm:block text-[8px] text-forest-ink-faint hover:text-red-ink px-1 py-px opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+                >
+                  &times;
+                </button>
               </div>
 
-              {/* In Progress toggle */}
-              <button
-                onClick={() => toggleInProgress(item.id)}
-                className={`font-mono text-[7px] uppercase px-1.5 py-0.5 rounded-sm border shrink-0 transition-colors ${
-                  item.inProgress
-                    ? 'text-amber-ink bg-amber-bg border-amber-ink/20'
-                    : 'text-forest-ink-faint bg-transparent border-forest-rule-light opacity-0 group-hover:opacity-100'
-                }`}
-              >
-                {item.inProgress ? 'In Progress' : 'Start'}
-              </button>
+              {/* Bottom row: controls */}
+              <div className="flex items-center gap-2 mt-1.5 ml-3.5">
+                {/* In Progress toggle */}
+                <button
+                  onClick={() => toggleInProgress(item.id)}
+                  className={`font-mono text-[9px] sm:text-[7px] uppercase px-1.5 py-0.5 rounded-sm border shrink-0 transition-colors ${
+                    item.inProgress
+                      ? 'text-amber-ink bg-amber-bg border-amber-ink/20'
+                      : 'text-forest-ink-faint bg-transparent border-forest-rule-light sm:opacity-0 sm:group-hover:opacity-100'
+                  }`}
+                >
+                  {item.inProgress ? 'In Progress' : 'Start'}
+                </button>
 
-              <span className="font-mono text-[8px] text-forest-ink-faint uppercase shrink-0">
-                {item.owner === 'both' ? 'Both' : item.owner}
-              </span>
+                <span className="font-mono text-[9px] sm:text-[8px] text-forest-ink-faint uppercase shrink-0">
+                  {item.owner === 'both' ? 'Both' : item.owner}
+                </span>
 
-              {/* Status selector */}
-              <select
-                value={item.status}
-                onChange={(e) => handleStatusChange(item.id, e.target.value as SprintItemStatus)}
-                className={`font-mono text-[8px] uppercase px-1.5 py-0.5 rounded-sm border shrink-0 appearance-none cursor-pointer ${
-                  STATUS_OPTIONS.find((s) => s.key === item.status)?.color || ''
-                }`}
-              >
-                {STATUS_OPTIONS.map((opt) => (
-                  <option key={opt.key} value={opt.key}>{opt.label}</option>
-                ))}
-              </select>
+                {/* Status selector */}
+                <select
+                  value={item.status}
+                  onChange={(e) => handleStatusChange(item.id, e.target.value as SprintItemStatus)}
+                  className={`font-mono text-[9px] sm:text-[8px] uppercase px-1.5 py-0.5 rounded-sm border shrink-0 appearance-none cursor-pointer ${
+                    STATUS_OPTIONS.find((s) => s.key === item.status)?.color || ''
+                  }`}
+                >
+                  {STATUS_OPTIONS.map((opt) => (
+                    <option key={opt.key} value={opt.key}>{opt.label}</option>
+                  ))}
+                </select>
 
-              <button
-                onClick={() => handleDelete(item.id)}
-                className="text-[8px] text-forest-ink-faint hover:text-red-ink px-1 py-px opacity-0 group-hover:opacity-100 transition-opacity"
-              >
-                &times;
-              </button>
+                <div className="flex-1" />
+
+                {/* Delete — mobile only */}
+                <button
+                  onClick={() => handleDelete(item.id)}
+                  className="sm:hidden text-[9px] text-forest-ink-faint hover:text-red-ink px-1 py-px shrink-0"
+                >
+                  &times;
+                </button>
+              </div>
             </div>
           ))}
         </div>
@@ -411,37 +426,42 @@ export default function SprintSection() {
               {backlogItems.map((item, idx) => (
                 <div
                   key={item.id}
-                  className={`flex items-center gap-3 px-3 py-2 group hover:bg-forest-cream/30 transition-colors ${
+                  className={`px-3 py-2.5 sm:py-2 group hover:bg-forest-cream/30 transition-colors ${
                     idx < backlogItems.length - 1 ? 'border-b border-forest-rule-light' : ''
                   }`}
                 >
-                  <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${PRIORITY_DOT[item.priority]}`} />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="text-[10px] font-medium text-forest-ink">{item.title}</span>
-                      <span className={`font-mono text-[7px] uppercase px-1 py-px rounded-sm border shrink-0 ${TYPE_BADGE[item.type].color}`}>
-                        {TYPE_BADGE[item.type].label}
-                      </span>
+                  <div className="flex items-start gap-2">
+                    <span className={`w-1.5 h-1.5 rounded-full shrink-0 mt-1 ${PRIORITY_DOT[item.priority]}`} />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-[12px] sm:text-[10px] font-medium text-forest-ink">{item.title}</span>
+                        <span className={`font-mono text-[8px] sm:text-[7px] uppercase px-1 py-px rounded-sm border shrink-0 ${TYPE_BADGE[item.type].color}`}>
+                          {TYPE_BADGE[item.type].label}
+                        </span>
+                      </div>
+                      {item.description && (
+                        <p className="text-[10px] sm:text-[8px] text-forest-ink-muted leading-snug mt-0.5 line-clamp-2 sm:line-clamp-1">{item.description}</p>
+                      )}
                     </div>
-                    {item.description && (
-                      <p className="text-[8px] text-forest-ink-muted leading-snug mt-0.5 line-clamp-1">{item.description}</p>
-                    )}
                   </div>
-                  <span className="font-mono text-[8px] text-forest-ink-faint uppercase shrink-0">
-                    {item.owner === 'both' ? 'Both' : item.owner}
-                  </span>
-                  <button
-                    onClick={() => handleStatusChange(item.id, 'sprint')}
-                    className="font-mono text-[8px] text-forest hover:underline opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
-                  >
-                    Add to Sprint
-                  </button>
-                  <button
-                    onClick={() => handleDelete(item.id)}
-                    className="text-[8px] text-forest-ink-faint hover:text-red-ink px-1 py-px opacity-0 group-hover:opacity-100 transition-opacity"
-                  >
-                    &times;
-                  </button>
+                  <div className="flex items-center gap-2 mt-1.5 ml-3.5">
+                    <span className="font-mono text-[9px] sm:text-[8px] text-forest-ink-faint uppercase shrink-0">
+                      {item.owner === 'both' ? 'Both' : item.owner}
+                    </span>
+                    <button
+                      onClick={() => handleStatusChange(item.id, 'sprint')}
+                      className="font-mono text-[9px] sm:text-[8px] text-forest hover:underline sm:opacity-0 sm:group-hover:opacity-100 transition-opacity shrink-0"
+                    >
+                      Add to Sprint
+                    </button>
+                    <div className="flex-1" />
+                    <button
+                      onClick={() => handleDelete(item.id)}
+                      className="text-[9px] sm:text-[8px] text-forest-ink-faint hover:text-red-ink px-1 py-px sm:opacity-0 sm:group-hover:opacity-100 transition-opacity shrink-0"
+                    >
+                      &times;
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
