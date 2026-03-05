@@ -71,6 +71,11 @@ export interface UnifiedContact {
   yourValueToThem: string
   notes?: string
 
+  // Warmth & tags (CRM)
+  warmth: 'hot' | 'warm' | 'cool' | 'cold'  // Decays weekly without contact
+  tags: string[]                             // ['professor', 'researcher', 'hf-operator', etc.]
+  warmthUpdatedAt?: string                   // YYYY-MM-DD, set each time warmth is decayed
+
   // Resolution metadata
   needsReview: boolean               // True if fuzzy match was ambiguous
   lastResolvedAt?: string            // ISO timestamp of last resolution

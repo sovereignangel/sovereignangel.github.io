@@ -189,3 +189,135 @@ export interface RLWeeklyAudit {
 
   createdAt: Timestamp
 }
+
+// ─── Role Lab ────────────────────────────────────────────────────────
+
+export type RoleLabAlgorithmId =
+  | 'multi_armed_bandit'
+  | 'q_learning'
+  | 'dqn'
+  | 'reinforce'
+  | 'ppo'
+
+export type RoleLabAlgorithmStatus = 'not_started' | 'in_progress' | 'completed'
+
+export type RoleLabEnvironmentId = 'thesis_engine_mdp' | 'options_multistrategy' | 'eeg_neurofeedback'
+
+export type RoleLabDeliverableStatus = 'pending' | 'in_progress' | 'completed' | 'skipped'
+
+export type RoleLabDeliverableType = 'code' | 'blog' | 'video'
+
+export interface RoleLabAlgorithm {
+  id: RoleLabAlgorithmId
+  status: RoleLabAlgorithmStatus
+  repoUrl?: string
+  notes?: string
+  completedAt?: string
+}
+
+export interface RoleLabEnvironment {
+  id: RoleLabEnvironmentId
+  name: string
+  stateDescription: string
+  actionDescription: string
+  rewardDescription: string
+  milestones: string[]
+  currentMilestoneIndex: number
+  repoUrl?: string
+  notes?: string
+}
+
+export interface RoleLabDeliverable {
+  week: number
+  type: RoleLabDeliverableType
+  title: string
+  status: RoleLabDeliverableStatus
+  url?: string
+  completedAt?: string
+}
+
+export interface RoleLabMilestone {
+  week: number
+  title: string
+  description: string
+  isComplete: boolean
+}
+
+export interface RoleLabData {
+  id?: string
+  sprintStartDate: string
+  milestones: RoleLabMilestone[]
+  environments: RoleLabEnvironment[]
+  deliverables: RoleLabDeliverable[]
+  algorithms: RoleLabAlgorithm[]
+  notes?: string
+  updatedAt: Timestamp
+}
+
+export const ROLE_LAB_ALGORITHMS: { id: RoleLabAlgorithmId; name: string; description: string }[] = [
+  { id: 'multi_armed_bandit', name: 'Multi-Armed Bandit', description: 'Epsilon-greedy, UCB, Thompson Sampling' },
+  { id: 'q_learning', name: 'Q-Learning', description: 'Tabular Q-learning with epsilon-greedy exploration' },
+  { id: 'dqn', name: 'DQN', description: 'Deep Q-Network with experience replay & target network' },
+  { id: 'reinforce', name: 'REINFORCE', description: 'Monte Carlo policy gradient with baseline' },
+  { id: 'ppo', name: 'PPO', description: 'Proximal Policy Optimization — clip objective' },
+]
+
+export const DEFAULT_ROLE_LAB_MILESTONES: RoleLabMilestone[] = [
+  { week: 1, title: 'Foundation', description: 'Gymnasium API, bandit implementations, Thesis Engine env wrapper started', isComplete: false },
+  { week: 2, title: 'Tabular Methods', description: 'Q-learning on Thesis Engine MDP, first blog post published', isComplete: false },
+  { week: 3, title: 'Deep Q-Learning', description: 'DQN on CartPole + Thesis Engine, video walkthrough', isComplete: false },
+  { week: 4, title: 'Policy Gradients', description: 'REINFORCE implementation, options env prototype started', isComplete: false },
+  { week: 5, title: 'PPO + Options', description: 'PPO on Thesis Engine, options/multi-strategy env prototype, mid-sprint video', isComplete: false },
+  { week: 6, title: 'Options Agent', description: 'Train RL agent on options & multi-strategy env, blog on custom envs', isComplete: false },
+  { week: 7, title: 'Integration', description: 'End-to-end pipeline, comparison of algorithms across envs', isComplete: false },
+  { week: 8, title: 'Ship', description: 'Final video, all repos public, capstone blog post', isComplete: false },
+]
+
+export const DEFAULT_ROLE_LAB_ENVIRONMENTS: RoleLabEnvironment[] = [
+  {
+    id: 'thesis_engine_mdp',
+    name: 'Thesis Engine MDP',
+    stateDescription: '10-dim RLState (GE, GI, GVC, kappa, O, GD, GN, J, sigma, gate)',
+    actionDescription: '6 actions: ship, ask, signal, regulate, explore, compound',
+    rewardDescription: 'g* in [0, 10] from computeReward()',
+    milestones: [
+      'Export daily logs to CSV',
+      'Gymnasium env wrapper in Python',
+      'Run tabular Q-learning',
+      'Run DQN',
+      'Run PPO',
+      'Compare algorithm performance',
+    ],
+    currentMilestoneIndex: 0,
+  },
+  {
+    id: 'options_multistrategy',
+    name: 'Options & Multi-Strategy',
+    stateDescription: 'Market features (IV, Greeks, price, volume) + portfolio state (positions, P&L, margin)',
+    actionDescription: 'Trade options (buy/sell/exercise), rebalance strategies, capture dividends, hedge',
+    rewardDescription: 'Risk-adjusted returns (Sharpe), dividend yield, drawdown penalty',
+    milestones: [
+      'Define state space & data pipeline',
+      'Build Gymnasium env with historical data',
+      'Implement dividend capture logic',
+      'Train DQN agent on single-strategy',
+      'Multi-strategy allocation agent (PPO)',
+      'Backtest & publish results',
+    ],
+    currentMilestoneIndex: 0,
+  },
+  {
+    id: 'eeg_neurofeedback',
+    name: 'EEG Neurofeedback (TBD)',
+    stateDescription: 'Brainwave PSD: alpha, beta, theta, delta, gamma power',
+    actionDescription: 'Interventions: breathwork, focus music, break, meditation',
+    rewardDescription: 'Cumulative time in desired brain state (e.g., high alpha/theta ratio)',
+    milestones: [
+      'Acquire consumer EEG device',
+      'Stream raw EEG data to Python',
+      'Build Gymnasium env',
+      'Train baseline agent',
+    ],
+    currentMilestoneIndex: 0,
+  },
+]

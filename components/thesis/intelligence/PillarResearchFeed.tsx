@@ -4,40 +4,9 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '@/components/auth/AuthProvider'
 import { useResearchFeeds } from '@/hooks/useResearchFeeds'
 import { getInboxExternalSignals } from '@/lib/firestore/external-signals'
-import { getRecentDailyLogs } from '@/lib/firestore/daily-logs'
-import { PROFESSORS, RESEARCH_KEYWORDS, EMERGENCE_KEYWORDS, MIND_KEYWORDS } from '@/lib/research-constants'
+import { PROFESSORS } from '@/lib/research-constants'
 import type { ThesisPillarExtended } from '@/lib/types/pillar-brief'
 import type { ExternalSignal } from '@/lib/types'
-import type { DailyLog } from '@/lib/types'
-
-interface JournalSignal {
-  date: string
-  excerpt: string
-  keywords: string[]
-}
-
-function extractKeywordSignals(logs: DailyLog[], keywords: string[]): JournalSignal[] {
-  const signals: JournalSignal[] = []
-  for (const log of logs) {
-    const entry = (log.journalEntry || '').toLowerCase()
-    if (!entry) continue
-    const matched = keywords.filter(kw => entry.includes(kw))
-    if (matched.length === 0) continue
-    const sentences = (log.journalEntry || '').split(/[.!?\n]+/).filter(s => s.trim().length > 15)
-    const relevant = sentences.filter(s => {
-      const lower = s.toLowerCase()
-      return matched.some(kw => lower.includes(kw))
-    }).slice(0, 2)
-    if (relevant.length > 0) {
-      signals.push({
-        date: log.date || log.id || '',
-        excerpt: relevant.map(s => s.trim()).join('. '),
-        keywords: matched.slice(0, 4),
-      })
-    }
-  }
-  return signals.slice(0, 8)
-}
 
 function SignalCard({ signal }: { signal: ExternalSignal }) {
   const [expanded, setExpanded] = useState(false)
@@ -79,24 +48,6 @@ function SignalCard({ signal }: { signal: ExternalSignal }) {
             ))}
           </div>
         </div>
-      </div>
-    </div>
-  )
-}
-
-function JournalSignalCard({ signal, color }: { signal: JournalSignal; color: string }) {
-  return (
-    <div className={`border-l-2 ${color} pl-2 py-0.5`}>
-      <div className="text-[8px] text-ink-faint font-mono">{signal.date}</div>
-      <div className="text-[10px] text-ink leading-tight mt-0.5">
-        {signal.excerpt.length > 160 ? signal.excerpt.slice(0, 160) + '...' : signal.excerpt}
-      </div>
-      <div className="flex gap-1 mt-0.5">
-        {signal.keywords.map(kw => (
-          <span key={kw} className="font-mono text-[7px] uppercase px-1 py-0.5 rounded-sm bg-green-bg text-green-ink border border-green-ink/10">
-            {kw}
-          </span>
-        ))}
       </div>
     </div>
   )
@@ -154,28 +105,18 @@ function ProfessorFeed() {
 export default function PillarResearchFeed({ pillar }: { pillar: ThesisPillarExtended }) {
   const { user } = useAuth()
   const [signals, setSignals] = useState<ExternalSignal[]>([])
-  const [journalSignals, setJournalSignals] = useState<JournalSignal[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     if (!user?.uid) return
     setLoading(true)
 
-    const keywords = pillar === 'ai' ? RESEARCH_KEYWORDS
-      : pillar === 'emergence' ? EMERGENCE_KEYWORDS
-      : pillar === 'mind' ? MIND_KEYWORDS
-      : []
-
-    Promise.all([
-      getInboxExternalSignals(user.uid).then(all =>
-        all.filter(s => s.thesisPillars?.includes(pillar as typeof s.thesisPillars[number]))
-      ).catch(() => []),
-      pillar !== 'markets'
-        ? getRecentDailyLogs(user.uid, 30).then(logs => extractKeywordSignals(logs, keywords)).catch(() => [])
-        : Promise.resolve([]),
-    ]).then(([sigs, jSigs]) => {
+    getInboxExternalSignals(user.uid).then(all =>
+      all.filter(s => s.thesisPillars?.includes(pillar as typeof s.thesisPillars[number]))
+    ).then(sigs => {
       setSignals(sigs.slice(0, 10))
-      setJournalSignals(jSigs)
+    }).catch(() => {
+      setSignals([])
     }).finally(() => setLoading(false))
   }, [user?.uid, pillar])
 
@@ -197,16 +138,14 @@ export default function PillarResearchFeed({ pillar }: { pillar: ThesisPillarExt
         Research Feed
       </div>
 
-      {/* AI tab gets professor papers section */}
       {pillar === 'ai' && (
         <div className="mb-3">
           <ProfessorFeed />
         </div>
       )}
 
-      {/* External signals for this pillar */}
       {signals.length > 0 && (
-        <div className="mb-3">
+        <div>
           <div className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-1.5">
             {pillar === 'ai' ? 'ArXiv & Research Signals' :
              pillar === 'markets' ? 'Market & Filing Signals' :
@@ -221,29 +160,9 @@ export default function PillarResearchFeed({ pillar }: { pillar: ThesisPillarExt
         </div>
       )}
 
-      {/* Journal pattern signals */}
-      {journalSignals.length > 0 && (
-        <div>
-          <div className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-1.5">
-            Journal Signals
-          </div>
-          <div className="space-y-1.5">
-            {journalSignals.map((s, i) => (
-              <JournalSignalCard
-                key={i}
-                signal={s}
-                color={pillar === 'ai' ? 'border-burgundy/30' :
-                       pillar === 'emergence' ? 'border-amber-ink/30' :
-                       'border-green-ink/30'}
-              />
-            ))}
-          </div>
-        </div>
-      )}
-
-      {signals.length === 0 && journalSignals.length === 0 && pillar !== 'ai' && (
+      {signals.length === 0 && pillar !== 'ai' && (
         <div className="text-[10px] text-ink-faint">
-          No signals yet. Fetch RSS feeds, sync ArXiv papers, or write journal entries mentioning {pillar} topics.
+          No signals yet. Fetch RSS feeds or sync ArXiv papers for {pillar} topics.
         </div>
       )}
     </div>

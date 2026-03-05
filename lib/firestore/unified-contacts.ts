@@ -1,4 +1,4 @@
-import { collection, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, query, where, serverTimestamp } from 'firebase/firestore'
+import { collection, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, query, where, serverTimestamp, writeBatch } from 'firebase/firestore'
 import { db } from '../firebase'
 import type { UnifiedContact, ContactAlias, ContactInteraction } from '../types'
 
@@ -94,4 +94,47 @@ export async function addInteractionToContact(
 export async function deleteUnifiedContact(uid: string, contactId: string): Promise<void> {
   const ref = doc(db, 'users', uid, 'unified_contacts', contactId)
   await deleteDoc(ref)
+}
+
+export async function setContactWarmth(
+  uid: string,
+  contactId: string,
+  warmth: 'hot' | 'warm' | 'cool' | 'cold'
+): Promise<void> {
+  const today = new Date().toISOString().split('T')[0]
+  await updateUnifiedContact(uid, contactId, { warmth, warmthUpdatedAt: today })
+}
+
+/** Decay warmth one level for contacts not touched in ≥7 days. Skips contacts updated today. */
+export async function decayAllContactWarmth(uid: string): Promise<void> {
+  const contacts = await getAllUnifiedContacts(uid)
+  const today = new Date().toISOString().split('T')[0]
+  const sevenDaysAgo = new Date()
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
+  const threshold = sevenDaysAgo.toISOString().split('T')[0]
+
+  const DECAY: Record<string, 'warm' | 'cool' | 'cold'> = {
+    hot: 'warm',
+    warm: 'cool',
+    cool: 'cold',
+  }
+
+  const toDecay = contacts.filter(c => {
+    if (!c.warmth || c.warmth === 'cold') return false
+    const lastUpdated = c.warmthUpdatedAt ?? c.lastTouchDate ?? '2000-01-01'
+    return lastUpdated <= threshold
+  })
+
+  if (toDecay.length === 0) return
+
+  const batch = writeBatch(db)
+  for (const c of toDecay) {
+    const ref = doc(db, 'users', uid, 'unified_contacts', c.id!)
+    batch.update(ref, {
+      warmth: DECAY[c.warmth!] ?? 'cold',
+      warmthUpdatedAt: today,
+      updatedAt: serverTimestamp(),
+    })
+  }
+  await batch.commit()
 }

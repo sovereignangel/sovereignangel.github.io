@@ -1,22 +1,22 @@
 /**
- * Claude API client for venture code generation.
+ * LLM client for venture code generation.
  *
- * Uses Anthropic's API directly (not the CLI) for server-side code generation.
- * This replaces the Gemini-based venture-builder GitHub Actions workflow.
+ * Uses Gemini 2.5 Flash for server-side code generation.
+ * Fast, high-output-token model ideal for generating full codebases.
  */
 
-import Anthropic from '@anthropic-ai/sdk'
+import { GoogleGenerativeAI } from '@google/generative-ai'
 
-let client: Anthropic | null = null
+let genAI: GoogleGenerativeAI | null = null
 
-function getClient(): Anthropic {
-  if (!process.env.ANTHROPIC_API_KEY) {
-    throw new Error('[ClaudeBuilder] ANTHROPIC_API_KEY not configured')
+function getClient(): GoogleGenerativeAI {
+  if (!process.env.GEMINI_API_KEY) {
+    throw new Error('[Builder] GEMINI_API_KEY not configured')
   }
-  if (!client) {
-    client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+  if (!genAI) {
+    genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY)
   }
-  return client
+  return genAI
 }
 
 export interface ClaudeGenerateOptions {
@@ -27,53 +27,44 @@ export interface ClaudeGenerateOptions {
 }
 
 /**
- * Call Claude to generate structured output (JSON).
- * Uses claude-sonnet-4-20250514 for speed/cost balance on code generation.
+ * Generate structured output (JSON) for code generation.
  */
 export async function claudeGenerate(options: ClaudeGenerateOptions): Promise<string> {
   const { systemPrompt, userPrompt, maxTokens = 16000, temperature = 0.3 } = options
-  const anthropic = getClient()
+  const ai = getClient()
 
-  const response = await anthropic.messages.create({
-    model: 'claude-sonnet-4-20250514',
-    max_tokens: maxTokens,
-    temperature,
-    system: systemPrompt,
-    messages: [{ role: 'user', content: userPrompt }],
+  const model = ai.getGenerativeModel({
+    model: 'gemini-2.5-flash',
+    systemInstruction: systemPrompt,
+    generationConfig: {
+      maxOutputTokens: maxTokens,
+      temperature,
+    },
   })
 
-  const textBlock = response.content.find(b => b.type === 'text')
-  if (!textBlock || textBlock.type !== 'text') {
-    throw new Error('[ClaudeBuilder] No text response from Claude')
-  }
-  return textBlock.text
+  const result = await model.generateContent(userPrompt)
+  const response = await result.response
+  return response.text()
 }
 
 /**
- * Call Claude for extended code generation (large codebases).
- * Uses extended thinking for complex multi-file generation.
+ * Generate large codebases (extended output).
+ * Uses Gemini 2.5 Flash with high token limit for multi-file generation.
  */
 export async function claudeGenerateExtended(options: ClaudeGenerateOptions): Promise<string> {
-  const { systemPrompt, userPrompt, maxTokens = 64000 } = options
-  const anthropic = getClient()
+  const { systemPrompt, userPrompt, maxTokens = 65536, temperature = 0.2 } = options
+  const ai = getClient()
 
-  const stream = anthropic.messages.stream({
-    model: 'claude-sonnet-4-20250514',
-    max_tokens: maxTokens,
-    thinking: {
-      type: 'enabled',
-      budget_tokens: 10000,
+  const model = ai.getGenerativeModel({
+    model: 'gemini-2.5-flash',
+    systemInstruction: systemPrompt,
+    generationConfig: {
+      maxOutputTokens: maxTokens,
+      temperature,
     },
-    system: systemPrompt,
-    messages: [{ role: 'user', content: userPrompt }],
   })
 
-  const response = await stream.finalMessage()
-
-  // Get the text block (skip thinking blocks)
-  const textBlock = response.content.find(b => b.type === 'text')
-  if (!textBlock || textBlock.type !== 'text') {
-    throw new Error('[ClaudeBuilder] No text response from Claude')
-  }
-  return textBlock.text
+  const result = await model.generateContent(userPrompt)
+  const response = await result.response
+  return response.text()
 }

@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  launchd config for iMessage → Thesis Engine warmth sync
+
+  Install:
+    cp scripts/imessage-sync.plist ~/Library/LaunchAgents/com.thesis.imessage-sync.plist
+    launchctl load ~/Library/LaunchAgents/com.thesis.imessage-sync.plist
+
+  Uninstall:
+    launchctl unload ~/Library/LaunchAgents/com.thesis.imessage-sync.plist
+    rm ~/Library/LaunchAgents/com.thesis.imessage-sync.plist
+
+  The script itself guards against running more than once per week,
+  so firing every 6 hours just ensures it catches up after the Mac wakes.
+-->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.thesis.imessage-sync</string>
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>/usr/local/bin/node</string>
+    <string>/Users/loricorpuz/Website/scripts/imessage-sync.js</string>
+  </array>
+
+  <!-- Fire every 6 hours while Mac is awake (21600 seconds) -->
+  <key>StartInterval</key>
+  <integer>21600</integer>
+
+  <key>StandardOutPath</key>
+  <string>/tmp/thesis-imessage-sync.log</string>
+
+  <key>StandardErrorPath</key>
+  <string>/tmp/thesis-imessage-sync.err</string>
+
+  <key>RunAtLoad</key>
+  <true/>
+</dict>
+</plist>

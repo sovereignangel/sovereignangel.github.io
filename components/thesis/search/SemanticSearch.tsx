@@ -113,7 +113,7 @@ export default function SemanticSearch() {
         fullText = log?.journalEntry || 'No journal text found.'
       } else if (result.collection === 'conversations') {
         const conv = await getConversation(user.uid, result.documentId)
-        fullText = conv?.transcript || conv?.aiSummary || 'No transcript found.'
+        fullText = conv?.transcriptText || 'No transcript found.'
       } else {
         // For insights, signals, etc. — show the preview (full text not easily fetchable)
         fullText = result.textPreview

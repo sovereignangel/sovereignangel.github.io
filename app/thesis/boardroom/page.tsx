@@ -11,6 +11,7 @@ import TransitionsView from '@/components/thesis/rl/TransitionsView'
 import PolicyView from '@/components/thesis/rl/PolicyView'
 import ValueView from '@/components/thesis/rl/ValueView'
 import AuditView from '@/components/thesis/rl/AuditView'
+import RoleLabView from '@/components/thesis/rl/RoleLabView'
 import RLStatusDial from '@/components/thesis/rl/RLStatusDial'
 import AlphaFeedView from '@/components/thesis/alpha/AlphaFeedView'
 import AlphaThesesView from '@/components/thesis/alpha/AlphaThesesView'
@@ -20,7 +21,7 @@ import AlphaDial from '@/components/thesis/alpha/AlphaDial'
 import { getSignals, getHypotheses } from '@/lib/firestore'
 
 type BoardRoomTab = 'machine' | 'rl' | 'research' | 'thesis' | 'alpha'
-type RLSubTab = 'concepts' | 'transitions' | 'policy' | 'value' | 'audit'
+type RLSubTab = 'concepts' | 'transitions' | 'policy' | 'value' | 'audit' | 'role_lab'
 type AlphaSubTab = 'feed' | 'theses' | 'lab' | 'tracker'
 
 const TABS: { key: BoardRoomTab; label: string }[] = [
@@ -37,6 +38,7 @@ const RL_TABS: { key: RLSubTab; label: string }[] = [
   { key: 'policy', label: 'Policy' },
   { key: 'value', label: 'Value' },
   { key: 'audit', label: 'Audit' },
+  { key: 'role_lab', label: 'Role Lab' },
 ]
 
 const ALPHA_TABS: { key: AlphaSubTab; label: string }[] = [
@@ -148,6 +150,7 @@ export default function BoardRoomPage() {
           {isRL && rlSubTab === 'policy' && <PolicyView />}
           {isRL && rlSubTab === 'value' && <ValueView />}
           {isRL && rlSubTab === 'audit' && <AuditView />}
+          {isRL && rlSubTab === 'role_lab' && <RoleLabView />}
           {isAlpha && alphaSubTab === 'feed' && <AlphaFeedView />}
           {isAlpha && alphaSubTab === 'theses' && <AlphaThesesView onExperimentCreated={refreshCounts} />}
           {isAlpha && alphaSubTab === 'lab' && <AlphaLabView />}
