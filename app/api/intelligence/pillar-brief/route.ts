@@ -167,7 +167,9 @@ async function fetchNervousSystemPattern(uid: string) {
 
 function buildAIPrompt(signals: ReturnType<typeof fetchSignalsByPillar> extends Promise<infer T> ? T : never, journals: Array<{ date: string; entry: string }>, ventures: ReturnType<typeof fetchActiveVentures> extends Promise<infer T> ? T : never, decisions: ReturnType<typeof fetchRecentDecisions> extends Promise<infer T> ? T : never) {
   const aiVentures = ventures.filter(v => v.pillars.includes('ai'))
-  return `You are a research analyst specializing in Computational Cognitive Science × Reinforcement Learning. Generate a daily intelligence brief.
+  return `You are a research analyst specializing in Computational Cognitive Science × Reinforcement Learning. Generate a daily AI research intelligence brief.
+
+IMPORTANT: This is an AI RESEARCH brief — focus exclusively on papers, algorithms, architectures, research directions, and technical insights. Do NOT discuss financial markets, portfolio strategy, or psychological self-reflection unless directly relevant to AI research.
 
 RESEARCH DIRECTION: How does intelligence structure itself to expand agency over time?
 KEY DOMAINS: Empowerment theory, intrinsic motivation, hierarchical RL, meta-RL, active inference, world models, multi-objective RL
@@ -188,25 +190,32 @@ ${BRIEF_FORMAT_INSTRUCTIONS}`
 }
 
 function buildMarketsPrompt(signals: ReturnType<typeof fetchSignalsByPillar> extends Promise<infer T> ? T : never, journals: Array<{ date: string; entry: string }>, ventures: ReturnType<typeof fetchActiveVentures> extends Promise<infer T> ? T : never, decisions: ReturnType<typeof fetchRecentDecisions> extends Promise<infer T> ? T : never) {
+  const marketVentures = ventures.filter(v => v.pillars.includes('markets'))
+  const allVentures = marketVentures.length > 0 ? marketVentures : ventures
+  const marketDecisions = decisions.filter(d => ['portfolio', 'revenue', 'capital'].includes(d.domain))
   return `You are a portfolio intelligence analyst. Generate a daily markets intelligence brief focused on capital allocation, 10-K patterns, and venture economics.
+
+IMPORTANT: This is a MARKETS brief — focus exclusively on financial performance, revenue signals, portfolio construction, capital allocation strategy, and venture economics. Do NOT discuss AI research, cognitive science, or mind/psychology topics unless they have direct financial implications.
 
 MARKET SIGNALS (${signals.length}):
 ${signals.map(s => `- [${s.source}] ${s.title} (relevance: ${s.relevance.toFixed(2)})\n  ${s.summary}`).join('\n') || 'None'}
 
-JOURNAL EXCERPTS (revenue/market mentions):
+JOURNAL EXCERPTS (focus on revenue, capital, and market mentions):
 ${journals.map(j => `[${j.date}]: ${j.entry}`).join('\n\n') || 'No journal entries'}
 
-VENTURE PIPELINE (${ventures.length}):
-${ventures.map(v => `- ${v.name}: ${v.oneLiner} (stage: ${v.stage}, score: ${v.score ?? 'n/a'})`).join('\n') || 'None'}
+VENTURE PIPELINE (${allVentures.length}):
+${allVentures.map(v => `- ${v.name}: ${v.oneLiner} (stage: ${v.stage}, score: ${v.score ?? 'n/a'})`).join('\n') || 'None'}
 
 ACTIVE DECISIONS:
-${decisions.filter(d => ['portfolio', 'revenue'].includes(d.domain)).map(d => `- ${d.title} (confidence: ${d.confidence}%): ${d.hypothesis}`).join('\n') || 'None'}
+${marketDecisions.map(d => `- ${d.title} (confidence: ${d.confidence}%): ${d.hypothesis}`).join('\n') || 'None'}
 
 ${BRIEF_FORMAT_INSTRUCTIONS}`
 }
 
 function buildMindPrompt(journals: Array<{ date: string; entry: string }>, decisions: ReturnType<typeof fetchRecentDecisions> extends Promise<infer T> ? T : never, beliefs: ReturnType<typeof fetchRecentBeliefs> extends Promise<infer T> ? T : never, psycap: ReturnType<typeof fetchPsyCapTrend> extends Promise<infer T> ? T : never, nsPattern: ReturnType<typeof fetchNervousSystemPattern> extends Promise<infer T> ? T : never) {
-  return `You are a cognitive coach and decision quality analyst. Generate a daily mind intelligence brief focused on journal patterns, decision calibration, belief evolution, and nervous system regulation.
+  return `You are a cognitive coach and decision quality analyst. Generate a daily MIND intelligence brief focused on journal patterns, decision calibration, belief evolution, and nervous system regulation.
+
+IMPORTANT: This is a MIND brief — focus exclusively on psychological patterns, decision quality, belief calibration, emotional regulation, and nervous system states. Do NOT discuss AI research, financial markets, or complexity science unless they reveal something about the user's inner state.
 
 JOURNAL ENTRIES (last 14 days):
 ${journals.map(j => `[${j.date}]: ${j.entry}`).join('\n\n') || 'No journal entries'}
@@ -229,7 +238,9 @@ ${BRIEF_FORMAT_INSTRUCTIONS}`
 }
 
 function buildEmergencePrompt(signals: ReturnType<typeof fetchSignalsByPillar> extends Promise<infer T> ? T : never, journals: Array<{ date: string; entry: string }>, ventures: ReturnType<typeof fetchActiveVentures> extends Promise<infer T> ? T : never) {
-  return `You are a complexity scientist and systems thinker, in the tradition of the Santa Fe Institute. Generate a daily emergence intelligence brief focused on physics, chaos theory, complex adaptive systems, and how emergence patterns connect to the user's work.
+  return `You are a complexity scientist and systems thinker, in the tradition of the Santa Fe Institute. Generate a daily EMERGENCE intelligence brief focused on physics, chaos theory, complex adaptive systems, and how emergence patterns connect to the user's work.
+
+IMPORTANT: This is an EMERGENCE brief — focus exclusively on complexity science, phase transitions, scaling laws, self-organization, and systems thinking. Do NOT discuss AI research specifics, financial markets, or psychological self-reflection unless they illustrate emergence patterns.
 
 EMERGENCE SIGNALS (${signals.length}):
 ${signals.map(s => `- [${s.source}] ${s.title} (relevance: ${s.relevance.toFixed(2)})\n  ${s.summary}`).join('\n') || 'None'}
@@ -324,6 +335,8 @@ export async function POST(request: NextRequest) {
       dataSourceCount = signals.length + journals.length + ventures.length
       prompt = buildEmergencePrompt(signals, journals, ventures)
     }
+
+    console.log(`[pillar-brief] Generating ${pillar} brief for ${uid} — ${dataSourceCount} data sources`)
 
     // Generate via LLM
     const text = await callLLM(prompt, { temperature: 0.4, maxTokens: 4000 })

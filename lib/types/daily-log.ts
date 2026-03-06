@@ -1,4 +1,4 @@
-import type { NervousSystemState, BodyFelt, TrainingType, RevenueStreamType, ThesisPillar, ActionType, Timestamp } from './shared'
+import type { NervousSystemState, BodyFelt, TrainingType, MovementType, RevenueStreamType, ThesisPillar, ActionType, Timestamp } from './shared'
 import type { RewardScore } from './reward'
 
 export interface Problem {
@@ -40,6 +40,7 @@ export interface DailyLog {
   calendarFocusHours: number | null
   relationalBoundary: string
   bodyFelt: BodyFelt
+  movementType: MovementType
   todayFocus: string
   todayOneAction: string
   pillarsTouched: ThesisPillar[]

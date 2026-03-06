@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '@/components/auth/AuthProvider'
-import { getPillarBrief, markPillarBriefReviewed } from '@/lib/firestore/pillar-briefs'
+import { getPillarBrief, getRecentPillarBriefs, markPillarBriefReviewed } from '@/lib/firestore/pillar-briefs'
 import type { PillarBrief, ThesisPillarExtended } from '@/lib/types/pillar-brief'
 import { getAuth } from 'firebase/auth'
 
@@ -14,17 +14,26 @@ function todayDate(): string {
 export function usePillarBrief(pillar: ThesisPillarExtended) {
   const { user } = useAuth()
   const [brief, setBrief] = useState<PillarBrief | null>(null)
+  const [recentBriefs, setRecentBriefs] = useState<PillarBrief[]>([])
   const [loading, setLoading] = useState(true)
   const [generating, setGenerating] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // Fetch today's brief on mount or pillar change
+  // Fetch today's brief + recent history on mount or pillar change
   useEffect(() => {
     if (!user?.uid) return
     setLoading(true)
     setError(null)
-    getPillarBrief(user.uid, todayDate(), pillar)
-      .then(b => setBrief(b))
+    Promise.all([
+      getPillarBrief(user.uid, todayDate(), pillar),
+      getRecentPillarBriefs(user.uid, pillar, 10),
+    ])
+      .then(([todayBrief, recent]) => {
+        setBrief(todayBrief)
+        // Exclude today's brief from history
+        const today = todayDate()
+        setRecentBriefs(recent.filter(b => b.date !== today))
+      })
       .catch(e => setError(e instanceof Error ? e.message : 'Failed to load brief'))
       .finally(() => setLoading(false))
   }, [user?.uid, pillar])
@@ -54,6 +63,13 @@ export function usePillarBrief(pillar: ThesisPillarExtended) {
 
       const data = await res.json()
       setBrief(data.brief)
+      // Refresh history (new brief becomes today's, previous today moves to history)
+      if (user?.uid) {
+        const today = todayDate()
+        getRecentPillarBriefs(user.uid, pillar, 10).then(recent => {
+          setRecentBriefs(recent.filter(b => b.date !== today))
+        })
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Generation failed')
     } finally {
@@ -72,5 +88,5 @@ export function usePillarBrief(pillar: ThesisPillarExtended) {
     }
   }, [user?.uid, pillar, brief])
 
-  return { brief, loading, generating, error, generate, markReviewed }
+  return { brief, recentBriefs, loading, generating, error, generate, markReviewed }
 }

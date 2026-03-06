@@ -1,7 +1,8 @@
 'use client'
 
+import { useState } from 'react'
 import { usePillarBrief } from '@/hooks/usePillarBrief'
-import type { ThesisPillarExtended } from '@/lib/types/pillar-brief'
+import type { PillarBrief, ThesisPillarExtended } from '@/lib/types/pillar-brief'
 
 const PILLAR_LABELS: Record<ThesisPillarExtended, string> = {
   ai: 'AI Research',
@@ -26,7 +27,8 @@ const SOURCE_LABELS: Record<string, string> = {
 }
 
 export default function PillarBriefCard({ pillar }: { pillar: ThesisPillarExtended }) {
-  const { brief, loading, generating, error, generate, markReviewed } = usePillarBrief(pillar)
+  const { brief, recentBriefs, loading, generating, error, generate, markReviewed } = usePillarBrief(pillar)
+  const [expandedHistoryId, setExpandedHistoryId] = useState<string | null>(null)
 
   if (loading) {
     return (
@@ -187,6 +189,81 @@ export default function PillarBriefCard({ pillar }: { pillar: ThesisPillarExtend
         >
           Mark Reviewed
         </button>
+      )}
+
+      {/* History Ledger */}
+      {recentBriefs.length > 0 && (
+        <div className="mt-3 pt-2 border-t border-rule">
+          <div className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-1.5">
+            Past Briefs
+          </div>
+          <div className="space-y-1">
+            {recentBriefs.map((hb) => (
+              <div key={hb.id} className="border border-rule-light rounded-sm">
+                <button
+                  onClick={() => setExpandedHistoryId(expandedHistoryId === hb.id ? null : (hb.id ?? null))}
+                  className="w-full flex items-center justify-between px-2 py-1.5 hover:bg-cream/50 transition-colors"
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono text-[10px] text-ink">{hb.date}</span>
+                    {hb.reviewed && (
+                      <span className="font-mono text-[8px] uppercase px-1 py-0.5 rounded-sm bg-green-bg text-green-ink border border-green-ink/10">
+                        Reviewed
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[9px] text-ink-faint font-mono">{hb.dataSourceCount} src</span>
+                    <span className="text-[10px] text-ink-muted">{expandedHistoryId === hb.id ? '−' : '+'}</span>
+                  </div>
+                </button>
+
+                {expandedHistoryId === hb.id && (
+                  <div className="px-2 pb-2 border-t border-rule-light">
+                    <div className="text-[10px] text-ink leading-relaxed mt-1.5 whitespace-pre-line">
+                      {hb.synthesis}
+                    </div>
+
+                    {hb.keyFindings.length > 0 && (
+                      <div className="mt-2">
+                        <div className="text-[9px] font-semibold uppercase text-ink-muted mb-1">Findings</div>
+                        {hb.keyFindings.map((f, i) => (
+                          <div key={i} className="flex items-start gap-1 mb-1">
+                            <span className="font-mono text-[8px] uppercase px-1 py-0.5 rounded-sm bg-cream border border-rule-light text-ink-muted shrink-0 mt-0.5">
+                              {SOURCE_LABELS[f.source] || f.source}
+                            </span>
+                            <span className="text-[9px] text-ink leading-tight">{f.finding}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {hb.actionItems.length > 0 && (
+                      <div className="mt-2">
+                        <div className="text-[9px] font-semibold uppercase text-ink-muted mb-1">Actions</div>
+                        {hb.actionItems.map((a, i) => (
+                          <div key={i} className="text-[9px] text-ink leading-tight mb-0.5">
+                            <span className={`font-mono text-[8px] uppercase mr-1 ${
+                              a.priority === 'high' ? 'text-burgundy' : 'text-ink-muted'
+                            }`}>{a.priority}</span>
+                            {a.action}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {hb.openQuestion && (
+                      <div className="mt-2 bg-cream border border-rule-light rounded-sm p-1.5">
+                        <div className="text-[8px] font-semibold uppercase text-ink-muted mb-0.5">What if you're wrong?</div>
+                        <div className="text-[9px] font-serif italic text-ink leading-relaxed">{hb.openQuestion}</div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
       )}
     </div>
   )
