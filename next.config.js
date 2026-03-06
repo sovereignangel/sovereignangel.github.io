@@ -5,7 +5,7 @@ const nextConfig = {
   },
   async rewrites() {
     return {
-      beforeFiles: [
+      afterFiles: [
         {
           source: '/',
           has: [{ type: 'host', value: 'arc.loricorpuz.com' }],
