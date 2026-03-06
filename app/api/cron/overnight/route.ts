@@ -44,9 +44,10 @@ export async function GET(request: NextRequest) {
 
   console.log(`[overnight] Starting consolidated pipeline for ${today}`)
 
-  // Check if briefing already exists (idempotent)
+  // Check if briefing already exists (idempotent) — skip with ?force=true for testing
+  const force = request.nextUrl.searchParams.get('force') === 'true'
   const existingBriefing = await adminDb.collection('users').doc(uid).collection('thesis_briefings').doc(today).get()
-  if (existingBriefing.exists) {
+  if (existingBriefing.exists && !force) {
     return NextResponse.json({ skipped: true, reason: 'Briefing already generated today', date: today })
   }
 
