@@ -11,6 +11,13 @@ export function middleware(request: NextRequest) {
     return NextResponse.rewrite(url)
   }
 
+  // arc.loricorpuz.com → rewrite to /arc
+  if (host === 'arc.loricorpuz.com') {
+    const url = request.nextUrl.clone()
+    url.pathname = `/arc${url.pathname === '/' ? '' : url.pathname}`
+    return NextResponse.rewrite(url)
+  }
+
   return NextResponse.next()
 }
 
