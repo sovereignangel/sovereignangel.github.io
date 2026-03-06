@@ -138,21 +138,25 @@ export async function runProcessPhase(uid: string): Promise<OvernightPhaseResult
   // 3. Check research papers against existing beliefs (research stream)
   try {
     const db = await getAdminDb()
+    // Simple query — filter/sort in code to avoid composite index requirements
     const signalSnap = await db.collection('users').doc(uid).collection('external_signals')
       .where('status', '==', 'inbox')
-      .where('readStatus', '==', 'unread')
-      .where('source', '==', 'arxiv')
-      .orderBy('relevanceScore', 'desc')
-      .limit(5)
+      .limit(50)
       .get()
+
+    const arxivPapers = signalSnap.docs
+      .map(d => d.data())
+      .filter(d => d.readStatus === 'unread' && d.source === 'arxiv')
+      .sort((a, b) => (b.relevanceScore || 0) - (a.relevanceScore || 0))
+      .slice(0, 5)
 
     const beliefSnap = await db.collection('users').doc(uid).collection('beliefs')
       .where('status', '==', 'active')
       .limit(20)
       .get()
 
-    if (!signalSnap.empty && !beliefSnap.empty) {
-      const papers = signalSnap.docs.map(d => d.data())
+    if (arxivPapers.length > 0 && !beliefSnap.empty) {
+      const papers = arxivPapers
       const beliefs = beliefSnap.docs.map(d => d.data())
 
       const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' })
@@ -198,37 +202,40 @@ export async function runSynthesisPhase(uid: string): Promise<ThesisBriefing> {
   const db = await getAdminDb()
   const todayKey = today()
 
-  // Gather all overnight data
+  // Gather all overnight data — simple queries, filter/sort in code to avoid composite indexes
   const [signalSnap, paperSnap, beliefSnap, ventureSignalSnap] = await Promise.all([
     db.collection('users').doc(uid).collection('external_signals')
       .where('status', '==', 'inbox')
-      .where('readStatus', '==', 'unread')
-      .orderBy('relevanceScore', 'desc')
-      .limit(15)
+      .limit(50)
       .get(),
     db.collection('users').doc(uid).collection('paper_implementations')
       .where('status', '==', 'queued')
-      .orderBy('createdAt', 'desc')
-      .limit(10)
+      .limit(20)
       .get(),
     db.collection('users').doc(uid).collection('beliefs')
       .where('status', '==', 'active')
-      .orderBy('createdAt', 'desc')
-      .limit(10)
+      .limit(20)
       .get(),
     db.collection('users').doc(uid).collection('venture_signals')
       .where('date', '==', todayKey)
       .get(),
   ])
 
-  // Classify signals by stream
-  const researchSignals = signalSnap.docs
-    .filter(d => d.data().source === 'arxiv')
-    .map(d => ({ title: d.data().title, summary: d.data().aiSummary || d.data().keyTakeaway, relevance: d.data().relevanceScore }))
+  // Classify signals by stream — filter unread and sort by relevance in code
+  const unreadSignals = signalSnap.docs
+    .map(d => d.data())
+    .filter(d => d.readStatus === 'unread')
+    .sort((a, b) => (b.relevanceScore || 0) - (a.relevanceScore || 0))
 
-  const marketSignals = signalSnap.docs
-    .filter(d => ['blog', 'twitter_list', 'edgar'].includes(d.data().source))
-    .map(d => ({ title: d.data().title, summary: d.data().aiSummary || d.data().keyTakeaway, relevance: d.data().relevanceScore }))
+  const researchSignals = unreadSignals
+    .filter(d => d.source === 'arxiv')
+    .slice(0, 10)
+    .map(d => ({ title: d.title, summary: d.aiSummary || d.keyTakeaway, relevance: d.relevanceScore }))
+
+  const marketSignals = unreadSignals
+    .filter(d => ['blog', 'twitter_list', 'edgar'].includes(d.source))
+    .slice(0, 10)
+    .map(d => ({ title: d.title, summary: d.aiSummary || d.keyTakeaway, relevance: d.relevanceScore }))
 
   const beliefs = beliefSnap.docs.map(d => ({
     statement: d.data().statement,
@@ -321,8 +328,7 @@ Return ONLY valid JSON:
   const processRunSnap = await db.collection('users').doc(uid).collection('overnight_runs')
     .where('date', '==', todayKey)
     .where('phase', '==', 'process')
-    .orderBy('createdAt', 'desc')
-    .limit(1)
+    .limit(5)
     .get()
 
   const convictionShifts: ConvictionShift[] = processRunSnap.empty
