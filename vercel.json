@@ -23,6 +23,22 @@
     {
       "path": "/api/cron/build-watchdog",
       "schedule": "0 6 * * *"
+    },
+    {
+      "path": "/api/cron/overnight-harvest",
+      "schedule": "0 4 * * *"
+    },
+    {
+      "path": "/api/cron/overnight-process",
+      "schedule": "0 6 * * *"
+    },
+    {
+      "path": "/api/cron/overnight-synthesis",
+      "schedule": "0 12 * * *"
+    },
+    {
+      "path": "/api/cron/overnight-synthesis",
+      "schedule": "0 13 * * *"
     }
   ]
 }
