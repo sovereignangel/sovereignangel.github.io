@@ -6,10 +6,10 @@
  * 3. Blends of 1 & 2
  *
  * Fetches from ArXiv, scores relevance, optionally queues for reproduction
+ *
+ * Uses Firebase Admin SDK — safe for serverless/cron context
  */
 
-import { doc, setDoc, collection, serverTimestamp, query, where, getDocs } from 'firebase/firestore'
-import { db } from '@/lib/firebase'
 import { scoreArticleRelevance } from '@/lib/ai-extraction'
 import { RESEARCH_QUERIES } from '@/lib/overnight/watchlist'
 import type { PaperResearchDomain } from '@/lib/types/overnight'
@@ -82,15 +82,6 @@ async function fetchArxivPapers(searchQuery: string, maxResults: number = 3): Pr
   }
 }
 
-async function paperExists(uid: string, paperUrl: string): Promise<boolean> {
-  const q = query(
-    collection(db, 'users', uid, 'external_signals'),
-    where('sourceUrl', '==', paperUrl)
-  )
-  const snap = await getDocs(q)
-  return !snap.empty
-}
-
 const DOMAIN_TO_PILLARS: Record<PaperResearchDomain, ThesisPillar[]> = {
   'cognitive-science-ai': ['ai', 'mind'],
   'markets-econometrics-ai': ['ai', 'markets'],
@@ -102,6 +93,7 @@ const DOMAIN_TO_PILLARS: Record<PaperResearchDomain, ThesisPillar[]> = {
  * Returns count of new papers saved + count queued for reproduction
  */
 export async function syncResearchPapers(uid: string): Promise<{ saved: number; queued: number }> {
+  const { adminDb } = await import('@/lib/firebase-admin')
   let saved = 0
   let queued = 0
 
@@ -109,70 +101,77 @@ export async function syncResearchPapers(uid: string): Promise<{ saved: number; 
     const pillars = DOMAIN_TO_PILLARS[domain]
 
     for (const { query: searchQuery, label } of queries) {
-      const papers = await fetchArxivPapers(searchQuery, 3)
+      try {
+        const papers = await fetchArxivPapers(searchQuery, 3)
 
-      for (const paper of papers) {
-        if (await paperExists(uid, paper.url)) continue
+        for (const paper of papers) {
+          // Check for duplicates
+          const existing = await adminDb.collection('users').doc(uid).collection('external_signals')
+            .where('sourceUrl', '==', paper.url)
+            .limit(1)
+            .get()
+          if (!existing.empty) continue
 
-        try {
-          const relevance = await scoreArticleRelevance(
-            paper.title,
-            paper.summary,
-            DEFAULT_THESIS,
-            ALL_PILLARS
-          )
+          try {
+            const relevance = await scoreArticleRelevance(
+              paper.title,
+              paper.summary,
+              DEFAULT_THESIS,
+              ALL_PILLARS
+            )
 
-          if (relevance.relevanceScore < 0.5) continue
+            if (relevance.relevanceScore < 0.5) continue
 
-          // Save as external signal
-          const signalRef = doc(collection(db, 'users', uid, 'external_signals'))
-          await setDoc(signalRef, {
-            title: paper.title,
-            source: 'arxiv' as const,
-            sourceUrl: paper.url,
-            sourceName: `ArXiv — ${label} (${domain})`,
-            content: paper.summary,
-            publishedAt: paper.published,
-            relevanceScore: relevance.relevanceScore,
-            thesisPillars: relevance.matchedPillars || pillars,
-            aiSummary: relevance.summary || '',
-            keyTakeaway: relevance.keyTakeaway || '',
-            valueBullets: relevance.valueBullets || [],
-            readStatus: 'unread',
-            convertedToSignal: false,
-            status: 'inbox',
-            researchDomain: domain,
-            createdAt: serverTimestamp(),
-            updatedAt: serverTimestamp(),
-          })
-          saved++
-
-          // Auto-queue high-relevance papers for reproduction
-          if (relevance.relevanceScore >= 0.75) {
-            const paperRef = doc(collection(db, 'users', uid, 'paper_implementations'))
-            await setDoc(paperRef, {
+            // Save as external signal
+            await adminDb.collection('users').doc(uid).collection('external_signals').add({
               title: paper.title,
-              authors: paper.authors,
-              abstract: paper.summary,
-              paperUrl: paper.url,
-              year: parseInt(paper.published.split('-')[0]),
-              pillars,
-              domain,
-              keyConceptsToImplement: relevance.valueBullets?.slice(0, 3) || [],
-              status: 'queued',
-              difficulty: relevance.relevanceScore >= 0.9 ? 'high' : 'medium',
-              estimatedHours: relevance.relevanceScore >= 0.9 ? 8 : 4,
-              actualHours: 0,
-              queuedAt: new Date().toISOString().split('T')[0],
-              blogTitle: `Reproducing: ${paper.title.slice(0, 60)}`,
-              createdAt: serverTimestamp(),
-              updatedAt: serverTimestamp(),
+              source: 'arxiv',
+              sourceUrl: paper.url,
+              sourceName: `ArXiv — ${label} (${domain})`,
+              content: paper.summary,
+              publishedAt: paper.published,
+              relevanceScore: relevance.relevanceScore,
+              thesisPillars: relevance.matchedPillars || pillars,
+              aiSummary: relevance.summary || '',
+              keyTakeaway: relevance.keyTakeaway || '',
+              valueBullets: relevance.valueBullets || [],
+              readStatus: 'unread',
+              convertedToSignal: false,
+              status: 'inbox',
+              researchDomain: domain,
+              createdAt: new Date(),
+              updatedAt: new Date(),
             })
-            queued++
+            saved++
+
+            // Auto-queue high-relevance papers for reproduction
+            if (relevance.relevanceScore >= 0.75) {
+              await adminDb.collection('users').doc(uid).collection('paper_implementations').add({
+                title: paper.title,
+                authors: paper.authors,
+                abstract: paper.summary,
+                paperUrl: paper.url,
+                year: parseInt(paper.published.split('-')[0]),
+                pillars,
+                domain,
+                keyConceptsToImplement: relevance.valueBullets?.slice(0, 3) || [],
+                status: 'queued',
+                difficulty: relevance.relevanceScore >= 0.9 ? 'high' : 'medium',
+                estimatedHours: relevance.relevanceScore >= 0.9 ? 8 : 4,
+                actualHours: 0,
+                queuedAt: new Date().toISOString().split('T')[0],
+                blogTitle: `Reproducing: ${paper.title.slice(0, 60)}`,
+                createdAt: new Date(),
+                updatedAt: new Date(),
+              })
+              queued++
+            }
+          } catch (error) {
+            console.error(`[research-papers] Error processing "${paper.title}", continuing:`, error)
           }
-        } catch (error) {
-          console.error(`[research-papers] Error processing "${paper.title}":`, error)
         }
+      } catch (error) {
+        console.error(`[research-papers] Error fetching query "${label}", continuing:`, error)
       }
 
       // ArXiv rate limit: 3s between queries

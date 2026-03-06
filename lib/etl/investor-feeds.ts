@@ -2,10 +2,10 @@
  * Investor/Founder Feed ETL
  * Scrapes blogs and RSS feeds from the watchlist
  * Scores relevance, stores as ExternalSignal
+ *
+ * Uses Firebase Admin SDK — safe for serverless/cron context
  */
 
-import { doc, setDoc, collection, serverTimestamp, query, where, getDocs } from 'firebase/firestore'
-import { db } from '@/lib/firebase'
 import { scoreArticleRelevance } from '@/lib/ai-extraction'
 import { WATCHLIST } from '@/lib/overnight/watchlist'
 
@@ -80,21 +80,13 @@ function parseRssFeed(xml: string, authorName: string): FeedItem[] {
 }
 
 /**
- * Check if a signal URL already exists to avoid duplicates
- */
-async function signalExists(uid: string, sourceUrl: string): Promise<boolean> {
-  const q = query(
-    collection(db, 'users', uid, 'external_signals'),
-    where('sourceUrl', '==', sourceUrl)
-  )
-  const snap = await getDocs(q)
-  return !snap.empty
-}
-
-/**
  * Fetch and process RSS feed for a watchlist entry
  */
-async function processFeed(uid: string, entry: typeof WATCHLIST[number]): Promise<number> {
+async function processFeed(
+  adminDb: FirebaseFirestore.Firestore,
+  uid: string,
+  entry: typeof WATCHLIST[number]
+): Promise<number> {
   const feedUrl = entry.rssFeedUrl || (entry.blogUrl ? `${entry.blogUrl}/feed` : null)
   if (!feedUrl) return 0
 
@@ -110,7 +102,12 @@ async function processFeed(uid: string, entry: typeof WATCHLIST[number]): Promis
     const items = parseRssFeed(xml, entry.name)
 
     for (const item of items) {
-      if (await signalExists(uid, item.url)) continue
+      // Check for duplicates
+      const existing = await adminDb.collection('users').doc(uid).collection('external_signals')
+        .where('sourceUrl', '==', item.url)
+        .limit(1)
+        .get()
+      if (!existing.empty) continue
 
       const relevance = await scoreArticleRelevance(
         item.title,
@@ -121,10 +118,9 @@ async function processFeed(uid: string, entry: typeof WATCHLIST[number]): Promis
 
       if (relevance.relevanceScore < 0.4) continue
 
-      const signalRef = doc(collection(db, 'users', uid, 'external_signals'))
-      await setDoc(signalRef, {
+      await adminDb.collection('users').doc(uid).collection('external_signals').add({
         title: item.title,
-        source: 'blog' as const,
+        source: 'blog',
         sourceUrl: item.url,
         sourceName: `${entry.name} — ${entry.role}`,
         content: item.content,
@@ -137,8 +133,8 @@ async function processFeed(uid: string, entry: typeof WATCHLIST[number]): Promis
         readStatus: 'unread',
         convertedToSignal: false,
         status: 'inbox',
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
+        createdAt: new Date(),
+        updatedAt: new Date(),
       })
       saved++
     }
@@ -153,11 +149,16 @@ async function processFeed(uid: string, entry: typeof WATCHLIST[number]): Promis
  * Sync all investor/founder feeds
  */
 export async function syncInvestorFeeds(uid: string): Promise<number> {
+  const { adminDb } = await import('@/lib/firebase-admin')
   let totalSaved = 0
 
   for (const entry of WATCHLIST) {
-    const saved = await processFeed(uid, entry)
-    totalSaved += saved
+    try {
+      const saved = await processFeed(adminDb, uid, entry)
+      totalSaved += saved
+    } catch (error) {
+      console.error(`[investor-feeds] Stream error for ${entry.name}, continuing:`, error)
+    }
     // Rate limit between feeds
     await new Promise(resolve => setTimeout(resolve, 1000))
   }
