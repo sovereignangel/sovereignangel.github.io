@@ -235,6 +235,28 @@ export default function PaperQueueView() {
     ? STATUS_ORDER.flatMap(s => byStatus(s))
     : byStatus(filter)
 
+  const [seeding, setSeeding] = useState(false)
+
+  const seedQueue = async () => {
+    setSeeding(true)
+    const seeds = [
+      { title: 'Implement PPO / DQN from Scratch', authors: ['Schulman et al.', 'Mnih et al.'], abstract: 'Implement Proximal Policy Optimization or Deep Q-Network from scratch using PyTorch and train on Gymnasium environments.', paperUrl: 'https://arxiv.org/abs/1707.06347', year: 2017, pillars: ['ai'] as ThesisPillar[], domain: 'classic-rl', keyConceptsToImplement: ['policy gradient', 'clipped surrogate', 'GAE', 'experience replay', 'target network'], difficulty: 'medium' as PaperDifficulty, estimatedHours: 8, blogTitle: 'PPO from Scratch: What the Training Loop Actually Does' },
+      { title: 'Custom RL Environment: Attention Allocation', authors: ['Self-designed'], abstract: 'Design a custom Gymnasium environment for attention/time allocation across projects. Train with Stable Baselines3 and evaluate reward functions.', paperUrl: '', year: 2026, pillars: ['ai', 'mind'] as ThesisPillar[], domain: 'environment-design', keyConceptsToImplement: ['custom gym env', 'reward shaping', 'multi-objective reward', 'Stable Baselines3'], difficulty: 'medium' as PaperDifficulty, estimatedHours: 10, blogTitle: 'Designing My Own RL Environment: Attention as a Scarce Resource' },
+      { title: 'Reproduce a Recent ML/RL Paper', authors: ['TBD'], abstract: 'Pick a recent ML or RL paper and reproduce results. Document hyperparameters, training curves, and deviations from reported results.', paperUrl: '', year: 2025, pillars: ['ai'] as ThesisPillar[], domain: 'reproducibility', keyConceptsToImplement: ['hyperparameter search', 'training curves', 'ablation study', 'reproducibility checklist'], difficulty: 'high' as PaperDifficulty, estimatedHours: 12, blogTitle: 'Paper Reproduction Log: What the Authors Didn\'t Tell You' },
+      { title: 'Transformer Architecture from Scratch', authors: ['Vaswani et al.'], abstract: 'Implement a simplified Transformer from scratch in PyTorch. Train on a small dataset and analyze attention patterns.', paperUrl: 'https://arxiv.org/abs/1706.03762', year: 2017, pillars: ['ai'] as ThesisPillar[], domain: 'deep-learning-fundamentals', keyConceptsToImplement: ['multi-head attention', 'positional encoding', 'layer norm', 'attention visualization'], difficulty: 'medium' as PaperDifficulty, estimatedHours: 8, blogTitle: 'The Annotated Transformer: Building Attention from First Principles' },
+      { title: 'RL for Tool-Using Agents', authors: ['Schick et al.', 'Yao et al.'], abstract: 'Train an agent to choose tools or APIs to solve tasks. Connects RL with modern AI agent architectures — ReAct, Toolformer, function calling.', paperUrl: 'https://arxiv.org/abs/2210.03629', year: 2023, pillars: ['ai'] as ThesisPillar[], domain: 'agent-architectures', keyConceptsToImplement: ['tool selection policy', 'ReAct loop', 'action space over APIs', 'reward from task completion'], difficulty: 'high' as PaperDifficulty, estimatedHours: 12, blogTitle: 'Teaching an Agent to Use Tools: RL Meets Function Calling' },
+      { title: 'Mechanistic Interpretability Experiment', authors: ['Neel Nanda', 'Anthropic'], abstract: 'Replicate mechanistic interpretability work — analyze neuron activations in a trained model. Probe for features, circuits, and superposition.', paperUrl: 'https://arxiv.org/abs/2211.00593', year: 2022, pillars: ['ai'] as ThesisPillar[], domain: 'interpretability', keyConceptsToImplement: ['activation patching', 'probing classifiers', 'feature visualization', 'superposition'], difficulty: 'high' as PaperDifficulty, estimatedHours: 10, blogTitle: 'Looking Inside the Black Box: A Mechanistic Interpretability Experiment' },
+      { title: 'Training Efficiency Experiment', authors: ['Self-designed'], abstract: 'Systematic experiment with batch sizes, learning rates, optimizers. Compare results across runs with proper statistical reporting.', paperUrl: '', year: 2026, pillars: ['ai'] as ThesisPillar[], domain: 'training-dynamics', keyConceptsToImplement: ['learning rate schedules', 'optimizer comparison', 'loss landscape', 'W&B logging'], difficulty: 'medium' as PaperDifficulty, estimatedHours: 6, blogTitle: 'The Training Efficiency Handbook: What Actually Matters' },
+      { title: 'Multi-Agent RL Simulation', authors: ['Lowe et al.', 'Lanctot et al.'], abstract: 'Create a simple environment where multiple agents interact. Implement MADDPG or independent learners. Study emergent behaviors.', paperUrl: 'https://arxiv.org/abs/1706.02275', year: 2017, pillars: ['ai'] as ThesisPillar[], domain: 'multi-agent-rl', keyConceptsToImplement: ['MADDPG', 'centralized critic', 'decentralized execution', 'emergent communication'], difficulty: 'high' as PaperDifficulty, estimatedHours: 12, blogTitle: 'When Agents Meet: Emergent Behavior in Multi-Agent RL' },
+      { title: 'Offline RL: Learning from Logged Data', authors: ['Levine et al.', 'Kumar et al.'], abstract: 'Train policies from logged datasets instead of live environments. Implement CQL or Decision Transformer.', paperUrl: 'https://arxiv.org/abs/2005.01643', year: 2020, pillars: ['ai'] as ThesisPillar[], domain: 'offline-rl', keyConceptsToImplement: ['CQL', 'Decision Transformer', 'distributional shift', 'D4RL benchmarks'], difficulty: 'high' as PaperDifficulty, estimatedHours: 10, blogTitle: 'Offline RL: Training Without the Environment' },
+      { title: 'Open-Source Contribution to CleanRL', authors: ['Huang et al.'], abstract: 'Contribute improvements or experiments to CleanRL. Could be a new algorithm, benchmark result, or documentation improvement.', paperUrl: 'https://github.com/vwxyzjn/cleanrl', year: 2022, pillars: ['ai'] as ThesisPillar[], domain: 'open-source', keyConceptsToImplement: ['single-file implementation', 'W&B integration', 'reproducible benchmarks', 'PR workflow'], difficulty: 'medium' as PaperDifficulty, estimatedHours: 8, blogTitle: 'My First Open-Source RL Contribution: What I Learned' },
+    ]
+    for (const s of seeds) {
+      await queue(s)
+    }
+    setSeeding(false)
+  }
+
   const inProgress = byStatus('implementing').length + byStatus('reading').length
   const queuedCount = byStatus('queued').length
 
@@ -406,8 +428,17 @@ export default function PaperQueueView() {
       ) : displayed.length === 0 ? (
         <div className="bg-white border border-rule rounded-sm p-3">
           <div className="text-[10px] text-ink-faint">
-            No papers {filter !== 'all' ? `with status "${STATUS_LABELS[filter as PaperImplementationStatus]}"` : 'in queue'}. Add papers from the research feed or manually.
+            No papers {filter !== 'all' ? `with status "${STATUS_LABELS[filter as PaperImplementationStatus]}"` : 'in queue'}.
           </div>
+          {filter === 'all' && papers.length === 0 && (
+            <button
+              onClick={seedQueue}
+              disabled={seeding}
+              className="mt-2 font-serif text-[9px] font-semibold px-3 py-1 rounded-sm bg-burgundy text-paper hover:bg-burgundy/90 transition-colors disabled:opacity-50"
+            >
+              {seeding ? 'Seeding...' : 'Seed 10 RL Research Projects'}
+            </button>
+          )}
         </div>
       ) : (
         <div className="bg-white border border-rule rounded-sm p-3 space-y-1">
