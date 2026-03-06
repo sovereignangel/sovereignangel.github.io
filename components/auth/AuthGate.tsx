@@ -11,8 +11,11 @@ export default function AuthGate() {
         <h1 className="font-serif text-[28px] font-bold text-ink tracking-tight mb-2">
           Thesis Engine
         </h1>
-        <p className="font-serif text-[14px] italic text-ink-muted mb-8">
-          Applied RL lab — designing reward functions for single-agent human optimization
+        <p className="font-serif text-[14px] italic text-ink-muted mb-1">
+          Applied RL Lab
+        </p>
+        <p className="font-serif text-[12px] italic text-ink-muted mb-8">
+          Designing reward functions for single-agent human optimization
         </p>
 
         <div className="w-full h-px bg-rule mb-8" />
