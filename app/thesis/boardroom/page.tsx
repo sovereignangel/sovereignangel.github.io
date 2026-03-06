@@ -18,6 +18,7 @@ import AlphaThesesView from '@/components/thesis/alpha/AlphaThesesView'
 import AlphaLabView from '@/components/thesis/alpha/AlphaLabView'
 import AlphaTrackerView from '@/components/thesis/alpha/AlphaTrackerView'
 import AlphaDial from '@/components/thesis/alpha/AlphaDial'
+import GovernanceLedger from '@/components/thesis/boardroom/GovernanceLedger'
 import { getSignals, getHypotheses } from '@/lib/firestore'
 
 type BoardRoomTab = 'machine' | 'rl' | 'research' | 'thesis' | 'alpha'
@@ -142,7 +143,12 @@ export default function BoardRoomPage() {
 
         {/* Tab Content */}
         <div className="flex-1 overflow-y-auto min-h-0">
-          {isMachine && <TheMachine />}
+          {isMachine && (
+            <div className="space-y-3 py-2">
+              <TheMachine />
+              <GovernanceLedger />
+            </div>
+          )}
           {isResearch && <ResearchNorthStarView />}
           {isThesis && <MarketThesisView />}
           {isRL && rlSubTab === 'concepts' && <ConceptsView />}

@@ -7,6 +7,7 @@ import PillarBriefCard from '@/components/thesis/intelligence/PillarBriefCard'
 import PillarResearchFeed from '@/components/thesis/intelligence/PillarResearchFeed'
 import IntelligenceGauge from '@/components/thesis/intelligence/IntelligenceGauge'
 import CRMView from '@/components/thesis/crm/CRMView'
+import PaperQueueView from '@/components/thesis/intelligence/PaperQueueView'
 import SemanticSearch from '@/components/thesis/search/SemanticSearch'
 import type { ThesisPillarExtended } from '@/lib/types/pillar-brief'
 import type { SignalType } from '@/lib/types'
@@ -25,11 +26,12 @@ const SIGNAL_TYPES: { value: SignalType; label: string }[] = [
   { value: 'research', label: 'Res' },
 ]
 
-type ActiveTab = 'briefing' | 'signals' | 'network' | 'search'
+type ActiveTab = 'briefing' | 'signals' | 'papers' | 'network' | 'search'
 
 const TABS: Array<{ key: ActiveTab; label: string }> = [
   { key: 'briefing', label: 'Briefing' },
   { key: 'signals', label: 'Signals' },
+  { key: 'papers', label: 'Papers' },
   { key: 'network', label: 'Network' },
   { key: 'search', label: 'Search' },
 ]
@@ -156,6 +158,9 @@ export default function IntelligencePage() {
             <IntelligenceGauge refreshKey={refreshKey} />
           </div>
         )}
+
+        {/* Papers */}
+        {activeTab === 'papers' && <PaperQueueView />}
 
         {/* Network */}
         {activeTab === 'network' && <CRMView />}

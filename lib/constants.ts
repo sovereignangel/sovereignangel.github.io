@@ -300,4 +300,6 @@ export const MUSCLE_TARGETS = {
   asksPerDay: 3,
   asksPerWeek: 15,
   postsPerWeek: 7,
+  papersPerDay: 1,
+  papersPerWeek: 7,
 }

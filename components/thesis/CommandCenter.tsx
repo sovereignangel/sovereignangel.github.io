@@ -12,11 +12,13 @@ import {
   getInboxExternalSignals,
   getVentures,
   updateExternalSignal,
+  getTodayPublishedPapers,
 } from '@/lib/firestore'
 import type { NetworkContact, Decision, ExternalSignal, Venture, DailyLog, Todo, TodoQuadrant } from '@/lib/types'
 import type { DailyAllocation } from '@/lib/types'
 import { MUSCLE_TARGETS } from '@/lib/constants'
 import { localDateString } from '@/lib/date-utils'
+import ScoreAttribution from '@/components/thesis/ScoreAttribution'
 
 // ─── Helpers ────────────────────────────────────────────────────────
 
@@ -92,6 +94,7 @@ export default function CommandCenter() {
   const [decisions, setDecisions] = useState<Decision[]>([])
   const [signals, setSignals] = useState<ExternalSignal[]>([])
   const [ventures, setVentures] = useState<Venture[]>([])
+  const [papersToday, setPapersToday] = useState(0)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -99,16 +102,19 @@ export default function CommandCenter() {
     setLoading(true)
     const safe = <T,>(p: Promise<T>, fallback: T): Promise<T> =>
       p.catch(err => { console.error('CommandCenter fetch:', err); return fallback })
+    const todayStr = localDateString(new Date())
     Promise.all([
       safe(getNetworkContacts(user.uid), []),
       safe(getDecisions(user.uid, 'active'), []),
       safe(getInboxExternalSignals(user.uid), []),
       safe(getVentures(user.uid), []),
-    ]).then(([c, d, s, v]) => {
+      safe(getTodayPublishedPapers(user.uid, todayStr), []),
+    ]).then(([c, d, s, v, p]) => {
       setContacts(c)
       setDecisions(d)
       setSignals(s)
       setVentures(v)
+      setPapersToday(p.length)
       setLoading(false)
     })
   }, [user])
@@ -127,6 +133,14 @@ export default function CommandCenter() {
 
   const currentScore = log.rewardScore?.score ?? null
   const currentDelta = log.rewardScore?.delta ?? null
+
+  // Yesterday's score for attribution
+  const yesterdayScore = useMemo(() => {
+    const yesterdayLog = sortedLogs
+      .filter(l => l.date && l.date < today && l.rewardScore)
+      .pop()
+    return yesterdayLog?.rewardScore ?? null
+  }, [sortedLogs, today])
 
   // Weekly muscles
   const weeklyShips = logs.reduce((s, l) => {
@@ -219,6 +233,10 @@ export default function CommandCenter() {
       items.push({ id: 'pace-own', priority: 'pacing', text: `Post publicly`, meta: `${weeklyOwn}/${MUSCLE_TARGETS.postsPerWeek} this week` })
     }
 
+    if (papersToday < MUSCLE_TARGETS.papersPerDay) {
+      items.push({ id: 'pace-repro', priority: 'urgent', text: `Reproduce a paper + publish to Substack`, meta: `${papersToday}/${MUSCLE_TARGETS.papersPerDay} today` })
+    }
+
     // Incomplete weekly goals for today
     if (plan?.goals) {
       plan.goals.forEach(goal => {
@@ -231,7 +249,7 @@ export default function CommandCenter() {
     }
 
     return items.slice(0, 8)
-  }, [overdueDecisions, staleContacts, failedVentures, weeklyShips, weeklyAsks, weeklyOwn, dayOfWeek, plan, today, todayDayName])
+  }, [overdueDecisions, staleContacts, failedVentures, weeklyShips, weeklyAsks, weeklyOwn, papersToday, dayOfWeek, plan, today, todayDayName])
 
   // ─── State of Play ──────────────────────────────────────────────
 
@@ -261,6 +279,11 @@ export default function CommandCenter() {
       lines.push(`${overdue.length} decision${overdue.length > 1 ? 's' : ''} overdue for review.`)
     }
 
+    // Paper reproduction
+    if (papersToday < MUSCLE_TARGETS.papersPerDay) {
+      lines.push(`No paper reproduced today. Open the queue.`)
+    }
+
     // Score trend
     if (scores.length >= 3) {
       const recent3 = scores.slice(-3)
@@ -274,7 +297,7 @@ export default function CommandCenter() {
       return 'All systems nominal. Press the advantage.'
     }
     return lines.join(' ')
-  }, [weeklyShips, weeklyAsks, staleContacts, overdueDecisions, scores, dayOfWeek])
+  }, [weeklyShips, weeklyAsks, papersToday, staleContacts, overdueDecisions, scores, dayOfWeek])
 
   const stateIsGreen = stateOfPlay === 'All systems nominal. Press the advantage.'
 
@@ -315,6 +338,7 @@ export default function CommandCenter() {
         weeklyShips={weeklyShips}
         weeklyAsks={weeklyAsks}
         weeklyOwn={weeklyOwn}
+        papersToday={papersToday}
         scores={scores}
       />
 
@@ -335,6 +359,12 @@ export default function CommandCenter() {
             spineResolution={plan?.spineResolution}
             planLoading={planLoading}
             today={today}
+          />
+
+          {/* Score Attribution */}
+          <ScoreAttribution
+            todayScore={log.rewardScore ?? null}
+            yesterdayScore={yesterdayScore}
           />
 
           {/* Curated Signals */}
@@ -405,10 +435,11 @@ interface SituationStripProps {
   weeklyShips: number
   weeklyAsks: number
   weeklyOwn: number
+  papersToday: number
   scores: { date: string; score: number }[]
 }
 
-function SituationStrip({ score, delta, sleepHours, nsState, calendarToday, calLoading, weeklyShips, weeklyAsks, weeklyOwn, scores }: SituationStripProps) {
+function SituationStrip({ score, delta, sleepHours, nsState, calendarToday, calLoading, weeklyShips, weeklyAsks, weeklyOwn, papersToday, scores }: SituationStripProps) {
   const ns = NS_LABELS[nsState || ''] || { label: '—', color: 'bg-ink-muted' }
 
   return (
@@ -462,6 +493,7 @@ function SituationStrip({ score, delta, sleepHours, nsState, calendarToday, calL
             { label: 'Ship', val: weeklyShips, target: MUSCLE_TARGETS.shipsPerWeek },
             { label: 'Ask', val: weeklyAsks, target: MUSCLE_TARGETS.asksPerWeek },
             { label: 'Own', val: weeklyOwn, target: MUSCLE_TARGETS.postsPerWeek },
+            { label: 'Repro', val: papersToday, target: MUSCLE_TARGETS.papersPerDay },
           ].map(m => (
             <div key={m.label} className="flex items-center gap-0.5">
               <span className="font-mono text-[9px] text-ink-muted">{m.label}</span>
