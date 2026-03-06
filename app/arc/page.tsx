@@ -1,173 +1,257 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 const DIMENSIONS = [
-  {
-    name: 'Energy',
-    description: 'Sleep, recovery, nervous system. The foundation everything else runs on.',
-    example: 'Syncs with Garmin, Whoop, or Apple Health automatically.',
-  },
-  {
-    name: 'Growth',
-    description: 'What you are learning, who you are talking to, what you are reading.',
-    example: 'AI scans research papers and articles matched to your interests overnight.',
-  },
-  {
-    name: 'Output',
-    description: 'Deep work hours, things shipped, revenue generated.',
-    example: 'Connects to your calendar, GitHub, and Stripe.',
-  },
-  {
-    name: 'Direction',
-    description: 'Are your daily actions aligned with what you say matters?',
-    example: 'Journal freely. Arc extracts your beliefs, patterns, and decision tendencies.',
-  },
+  { key: 'energy', label: 'Energy', value: '82', unit: '%', description: 'Sleep, recovery, nervous system state' },
+  { key: 'growth', label: 'Growth', value: '3', unit: 'signals', description: 'New insights processed overnight' },
+  { key: 'output', label: 'Output', value: '5.2', unit: 'hrs', description: 'Deep work logged today' },
+  { key: 'direction', label: 'Direction', value: '0.91', unit: '', description: 'Action-to-intention alignment' },
 ]
+
+function ArcScoreRing({ score }: { score: number }) {
+  const radius = 58
+  const circumference = 2 * Math.PI * radius
+  const progress = (score / 10) * circumference
+  const dashOffset = circumference - progress
+
+  return (
+    <div className="relative w-[160px] h-[160px] mx-auto">
+      <svg className="w-full h-full -rotate-90" viewBox="0 0 140 140">
+        {/* Track */}
+        <circle
+          cx="70" cy="70" r={radius}
+          fill="none"
+          stroke="#1f1f1d"
+          strokeWidth="3"
+        />
+        {/* Progress arc */}
+        <circle
+          cx="70" cy="70" r={radius}
+          fill="none"
+          stroke="#c8a55a"
+          strokeWidth="3"
+          strokeLinecap="round"
+          strokeDasharray={circumference}
+          strokeDashoffset={dashOffset}
+          className="transition-all duration-1000 ease-out"
+        />
+      </svg>
+      <div className="absolute inset-0 flex flex-col items-center justify-center">
+        <span className="font-mono text-[40px] font-light tracking-tight" style={{ color: '#e8e4de' }}>
+          {score.toFixed(1)}
+        </span>
+        <span className="font-mono text-[10px] uppercase tracking-[2px]" style={{ color: '#6b6560' }}>
+          arc score
+        </span>
+      </div>
+    </div>
+  )
+}
 
 export default function ArcPage() {
   const [email, setEmail] = useState('')
   const [submitted, setSubmitted] = useState(false)
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    document.body.classList.add('arc-active')
+    setMounted(true)
+    return () => document.body.classList.remove('arc-active')
+  }, [])
 
   return (
-    <div className="max-w-[640px] mx-auto px-6 py-16">
-      {/* Hero */}
-      <header className="mb-16">
-        <h1 className="font-serif text-[28px] font-semibold text-ink tracking-tight mb-3">
+    <div className={`transition-opacity duration-700 ${mounted ? 'opacity-100' : 'opacity-0'}`}>
+      {/* Nav */}
+      <nav className="max-w-[600px] mx-auto px-6 py-6 flex items-center justify-between">
+        <span className="font-mono text-[14px] font-medium tracking-[3px] uppercase" style={{ color: '#c8a55a' }}>
           Arc
+        </span>
+        <span className="font-mono text-[10px] tracking-[1px]" style={{ color: '#4a4640' }}>
+          v0.1
+        </span>
+      </nav>
+
+      {/* Hero */}
+      <header className="max-w-[600px] mx-auto px-6 pt-12 pb-16 text-center">
+        <ArcScoreRing score={7.2} />
+        <h1 className="font-sans text-[28px] font-light tracking-tight mt-8 mb-3" style={{ color: '#e8e4de' }}>
+          Know your trajectory
         </h1>
-        <p className="text-[18px] text-ink leading-relaxed mb-6">
-          Know your trajectory.
-        </p>
-        <p className="text-[14px] text-ink-muted leading-relaxed">
-          One daily score that tells you if you are actually getting closer
-          to the life you want. Think Garmin for your whole life — not just
-          your body, but your mind, your work, your growth, your direction.
+        <p className="font-sans text-[15px] leading-relaxed max-w-[420px] mx-auto" style={{ color: '#6b6560' }}>
+          One daily score across everything that matters.
+          Sleep, focus, learning, alignment.
+          Not what you did — whether it moved the needle.
         </p>
       </header>
 
-      {/* The Problem */}
-      <section className="mb-14">
-        <h2 className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-3 pb-1.5 border-b-2 border-rule">
-          The Problem
-        </h2>
-        <p className="text-[13px] text-ink leading-relaxed mb-3">
-          You track your sleep on one app, your workouts on another, your habits
-          in a third, your finances in a spreadsheet, and your goals in a notebook.
-        </p>
-        <p className="text-[13px] text-ink leading-relaxed mb-3">
-          None of them talk to each other. You have more data than ever but
-          no honest answer to the only question that matters:
-        </p>
-        <p className="text-[15px] text-ink font-medium italic">
-          Am I actually making progress on the life I want?
-        </p>
-      </section>
-
-      {/* How It Works */}
-      <section className="mb-14">
-        <h2 className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-3 pb-1.5 border-b-2 border-rule">
-          How It Works
-        </h2>
-        <div className="space-y-4">
+      {/* Dimension Grid */}
+      <section className="max-w-[600px] mx-auto px-6 mb-16">
+        <div className="grid grid-cols-2 gap-[1px]" style={{ background: '#1f1f1d' }}>
           {DIMENSIONS.map((dim) => (
-            <div key={dim.name} className="border border-rule rounded-sm p-3 bg-white">
-              <div className="font-serif text-[12px] font-semibold text-ink mb-1">
-                {dim.name}
+            <div key={dim.key} className="p-5" style={{ background: '#141413' }}>
+              <div className="font-mono text-[9px] uppercase tracking-[2px] mb-3" style={{ color: '#4a4640' }}>
+                {dim.label}
               </div>
-              <p className="text-[11px] text-ink-muted leading-relaxed mb-1.5">
+              <div className="flex items-baseline gap-1.5 mb-2">
+                <span className="font-mono text-[28px] font-light" style={{ color: '#e8e4de' }}>
+                  {dim.value}
+                </span>
+                {dim.unit && (
+                  <span className="font-mono text-[10px]" style={{ color: '#4a4640' }}>
+                    {dim.unit}
+                  </span>
+                )}
+              </div>
+              <div className="font-sans text-[11px] leading-relaxed" style={{ color: '#5a5550' }}>
                 {dim.description}
-              </p>
-              <p className="text-[10px] text-burgundy">
-                {dim.example}
-              </p>
+              </div>
             </div>
           ))}
         </div>
       </section>
 
-      {/* Overnight Agents */}
-      <section className="mb-14">
-        <h2 className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-3 pb-1.5 border-b-2 border-rule">
-          While You Sleep
-        </h2>
-        <p className="text-[13px] text-ink leading-relaxed mb-3">
-          Every night, Arc runs AI agents that scan research, market signals,
-          and your own journal entries. By morning, you wake up to a briefing:
-        </p>
-        <div className="border border-rule rounded-sm p-3 bg-white space-y-2">
-          <div className="flex items-start gap-2">
-            <span className="text-[10px] text-burgundy font-semibold mt-0.5">1.</span>
-            <span className="text-[11px] text-ink">What shifted overnight — beliefs that got stronger or weaker based on new evidence</span>
+      {/* How It Works */}
+      <section className="max-w-[600px] mx-auto px-6 mb-16">
+        <div className="font-mono text-[9px] uppercase tracking-[2px] mb-6" style={{ color: '#4a4640' }}>
+          How it works
+        </div>
+        <div className="space-y-8">
+          <div>
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-5 h-[1px]" style={{ background: '#c8a55a' }} />
+              <span className="font-sans text-[14px] font-medium" style={{ color: '#e8e4de' }}>
+                Connect what you already track
+              </span>
+            </div>
+            <p className="font-sans text-[13px] leading-relaxed pl-8" style={{ color: '#5a5550' }}>
+              Garmin, Whoop, Apple Health, your calendar, your journal. Arc reads the signals you are already generating and stops making you enter things twice.
+            </p>
           </div>
-          <div className="flex items-start gap-2">
-            <span className="text-[10px] text-burgundy font-semibold mt-0.5">2.</span>
-            <span className="text-[11px] text-ink">Connections you would have missed — patterns across different areas of your life</span>
+          <div>
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-5 h-[1px]" style={{ background: '#c8a55a' }} />
+              <span className="font-sans text-[14px] font-medium" style={{ color: '#e8e4de' }}>
+                AI works while you sleep
+              </span>
+            </div>
+            <p className="font-sans text-[13px] leading-relaxed pl-8" style={{ color: '#5a5550' }}>
+              Every night, agents scan research, trends, and your own journal for patterns. By morning you get a briefing — what shifted, what connects, where to aim today.
+            </p>
           </div>
-          <div className="flex items-start gap-2">
-            <span className="text-[10px] text-burgundy font-semibold mt-0.5">3.</span>
-            <span className="text-[11px] text-ink">Where to focus today — based on your energy, your priorities, and what the world just told you</span>
+          <div>
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-5 h-[1px]" style={{ background: '#c8a55a' }} />
+              <span className="font-sans text-[14px] font-medium" style={{ color: '#e8e4de' }}>
+                One number that adapts to you
+              </span>
+            </div>
+            <p className="font-sans text-[13px] leading-relaxed pl-8" style={{ color: '#5a5550' }}>
+              Your score reflects YOUR definition of progress — not someone else's formula. It learns what moves the needle for you and weights accordingly.
+            </p>
           </div>
         </div>
       </section>
 
-      {/* Who It Is For */}
-      <section className="mb-14">
-        <h2 className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-3 pb-1.5 border-b-2 border-rule">
-          Who This Is For
-        </h2>
-        <p className="text-[13px] text-ink leading-relaxed mb-3">
-          Arc is for people who already track things and want them to mean
-          something. Founders who want to know if they are building the right
-          life, not just the right company. Investors who think about risk across
-          every dimension, not just their portfolio. Athletes who know that
-          performance is a whole-life game.
-        </p>
-        <p className="text-[13px] text-ink-muted leading-relaxed">
-          If you have ever looked at your Garmin data and wished you had the
-          same clarity about the rest of your life — this is for you.
+      {/* Morning Briefing Preview */}
+      <section className="max-w-[600px] mx-auto px-6 mb-16">
+        <div className="font-mono text-[9px] uppercase tracking-[2px] mb-4" style={{ color: '#4a4640' }}>
+          Your morning briefing
+        </div>
+        <div className="rounded-sm p-5 space-y-3" style={{ background: '#141413', border: '1px solid #1f1f1d' }}>
+          <div className="font-mono text-[10px] uppercase tracking-[1px]" style={{ color: '#c8a55a' }}>
+            March 6, 2026
+          </div>
+          <div className="font-sans text-[13px] leading-relaxed" style={{ color: '#e8e4de' }}>
+            Sleep recovery strong at 82%. A paper on causal inference in RL connects to your portfolio thesis from Tuesday — worth a deeper look.
+          </div>
+          <div className="flex gap-3 pt-1">
+            <div className="flex items-center gap-1.5">
+              <div className="w-1.5 h-1.5 rounded-full" style={{ background: '#4ade80' }} />
+              <span className="font-mono text-[10px]" style={{ color: '#5a5550' }}>2 beliefs strengthened</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="w-1.5 h-1.5 rounded-full" style={{ background: '#c8a55a' }} />
+              <span className="font-mono text-[10px]" style={{ color: '#5a5550' }}>1 cross-domain link</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Who */}
+      <section className="max-w-[600px] mx-auto px-6 mb-16">
+        <div className="font-mono text-[9px] uppercase tracking-[2px] mb-4" style={{ color: '#4a4640' }}>
+          Built for
+        </div>
+        <p className="font-sans text-[15px] leading-[1.8]" style={{ color: '#6b6560' }}>
+          People who already track things and want them to mean something.
+          If you have ever looked at your Garmin data and wished you had
+          the same clarity about the rest of your life.
         </p>
       </section>
 
-      {/* Waitlist */}
-      <section className="mb-14">
-        <h2 className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-3 pb-1.5 border-b-2 border-rule">
-          Early Access
-        </h2>
-        {submitted ? (
-          <div className="border border-rule rounded-sm p-3 bg-white">
-            <p className="text-[12px] text-green-ink font-medium">
-              You are on the list. We will reach out when Arc is ready for you.
-            </p>
-          </div>
-        ) : (
-          <div className="flex gap-2">
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && email.includes('@')) setSubmitted(true)
-              }}
-              className="flex-1 font-sans text-[12px] bg-white border border-rule rounded-sm px-3 py-2 focus:outline-none focus:border-burgundy"
-              placeholder="your@email.com"
-            />
-            <button
-              onClick={() => { if (email.includes('@')) setSubmitted(true) }}
-              disabled={!email.includes('@')}
-              className="bg-burgundy text-paper font-serif text-[11px] font-semibold rounded-sm px-4 py-2 hover:bg-burgundy/90 transition-colors disabled:opacity-50"
-            >
-              Get Early Access
-            </button>
-          </div>
-        )}
+      {/* CTA */}
+      <section className="max-w-[600px] mx-auto px-6 mb-20">
+        <div className="rounded-sm p-6 text-center" style={{ background: '#141413', border: '1px solid #1f1f1d' }}>
+          {submitted ? (
+            <div>
+              <div className="font-mono text-[11px] mb-1" style={{ color: '#4ade80' }}>
+                You are on the list.
+              </div>
+              <div className="font-mono text-[10px]" style={{ color: '#4a4640' }}>
+                We will reach out when Arc is ready.
+              </div>
+            </div>
+          ) : (
+            <>
+              <div className="font-sans text-[15px] font-medium mb-4" style={{ color: '#e8e4de' }}>
+                Get early access
+              </div>
+              <div className="flex gap-2 max-w-[360px] mx-auto">
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && email.includes('@')) setSubmitted(true)
+                  }}
+                  className="flex-1 font-mono text-[12px] rounded-sm px-3 py-2.5 focus:outline-none"
+                  style={{
+                    background: '#0c0c0b',
+                    border: '1px solid #2a2a27',
+                    color: '#e8e4de',
+                  }}
+                  placeholder="your@email.com"
+                />
+                <button
+                  onClick={() => { if (email.includes('@')) setSubmitted(true) }}
+                  disabled={!email.includes('@')}
+                  className="font-mono text-[11px] font-medium rounded-sm px-5 py-2.5 transition-opacity disabled:opacity-30"
+                  style={{
+                    background: '#c8a55a',
+                    color: '#0c0c0b',
+                  }}
+                >
+                  Join
+                </button>
+              </div>
+            </>
+          )}
+        </div>
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-rule pt-4">
-        <p className="text-[10px] text-ink-muted">
-          Arc is built by Lori Corpuz. Currently in daily use. Coming to early access soon.
-        </p>
+      <footer className="max-w-[600px] mx-auto px-6 pb-8">
+        <div className="pt-4" style={{ borderTop: '1px solid #1a1a18' }}>
+          <div className="flex items-center justify-between">
+            <span className="font-mono text-[10px]" style={{ color: '#3a3835' }}>
+              Built by Lori Corpuz
+            </span>
+            <span className="font-mono text-[10px]" style={{ color: '#3a3835' }}>
+              Currently in daily use
+            </span>
+          </div>
+        </div>
       </footer>
     </div>
   )

@@ -49,6 +49,15 @@ body.alamo-active::after {
   background: rgba(245, 241, 234, 0.50);
 }
 
+/* Arc pages get solid dark background — no bleed-through */
+body.arc-active::before {
+  background-image: none;
+  background: #0c0c0b;
+}
+body.arc-active::after {
+  background: #0c0c0b;
+}
+
 /* Ensure all form inputs have visible text color */
 input, textarea, select {
   color: #2a2522;
