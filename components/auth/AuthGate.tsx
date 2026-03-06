@@ -12,7 +12,7 @@ export default function AuthGate() {
           Thesis Engine
         </h1>
         <p className="font-serif text-[14px] italic text-ink-muted mb-8">
-          Portfolio Management System
+          Applied RL lab — designing reward functions for single-agent human optimization
         </p>
 
         <div className="w-full h-px bg-rule mb-8" />
