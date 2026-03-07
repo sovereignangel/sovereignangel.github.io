@@ -11,6 +11,26 @@ async function getAdminDb() {
   return adminDb
 }
 
+export async function GET(request: NextRequest) {
+  const secret = request.nextUrl.searchParams.get('secret')
+  if (secret !== process.env.TRANSCRIPT_WEBHOOK_UID) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  const collection = request.nextUrl.searchParams.get('collection') || 'conversations'
+  const limit = parseInt(request.nextUrl.searchParams.get('limit') || '10')
+  const uid = process.env.TRANSCRIPT_WEBHOOK_UID!
+  const db = await getAdminDb()
+
+  const snap = await db.collection('users').doc(uid).collection(collection)
+    .orderBy('createdAt', 'desc')
+    .limit(limit)
+    .get()
+
+  const docs = snap.docs.map(d => ({ id: d.id, ...d.data(), createdAt: d.data().createdAt?.toDate?.()?.toISOString(), updatedAt: d.data().updatedAt?.toDate?.()?.toISOString() }))
+  return NextResponse.json({ count: docs.length, docs })
+}
+
 export async function POST(request: NextRequest) {
   const secret = request.headers.get('x-admin-secret')
   if (secret !== process.env.TRANSCRIPT_WEBHOOK_UID) {
