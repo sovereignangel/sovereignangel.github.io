@@ -47,9 +47,9 @@ export function useDailyLogData(uid: string | undefined, logDate: string) {
         }
       }
 
-      // Compute baseline reward if none stored yet (now includes sleep)
+      // Compute baseline reward if none stored yet (now includes sleep + steps)
       if (!merged.rewardScore) {
-        merged.rewardScore = computeReward(merged)
+        merged.rewardScore = computeReward(merged, undefined, { garminData: garmin })
       }
 
       setLog(merged)

@@ -1,4 +1,4 @@
-import type { DailyLog, NervousSystemState, BodyFelt, RevenueStreamType, TrainingType } from './types'
+import type { DailyLog, NervousSystemState, BodyFelt, RevenueStreamType, TrainingType, MovementType } from './types'
 
 /**
  * Default values for new DailyLog entries.
@@ -34,6 +34,7 @@ export const DEFAULT_DAILY_LOG: Partial<DailyLog> = {
   calendarFocusHours: null,
   relationalBoundary: '',
   bodyFelt: 'neutral' as BodyFelt,
+  movementType: 'none' as MovementType,
   todayFocus: '',
   todayOneAction: '',
   pillarsTouched: [],

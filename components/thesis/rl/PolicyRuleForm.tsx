@@ -5,7 +5,7 @@ import type { PolicyRule, PolicyCondition, PolicyConditionOperator } from '@/lib
 import type { ActionType } from '@/lib/types'
 
 const ACTIONS: ActionType[] = ['ship', 'ask', 'signal', 'regulate', 'explore', 'compound']
-const COMPONENTS = ['ge', 'gi', 'gvc', 'kappa', 'optionality', 'gd', 'gn', 'j', 'sigma', 'gate'] as const
+const COMPONENTS = ['sleep', 'movement', 'regulation', 'gi', 'gd', 'sigma', 'j', 'gvc', 'kappa', 'gn', 'optionality', 'gate'] as const
 const OPERATORS: PolicyConditionOperator[] = ['>', '<', '>=', '<=']
 
 interface PolicyRuleFormProps {
@@ -19,11 +19,11 @@ export default function PolicyRuleForm({ rule, onSave, onCancel }: PolicyRuleFor
   const [action, setAction] = useState<ActionType>(rule?.action || 'ship')
   const [reasoning, setReasoning] = useState(rule?.reasoning || '')
   const [conditions, setConditions] = useState<PolicyCondition[]>(
-    rule?.conditions || [{ component: 'ge', operator: '>', value: 0.5 }]
+    rule?.conditions || [{ component: 'sleep', operator: '>', value: 0.5 }]
   )
 
   const addCondition = () => {
-    setConditions([...conditions, { component: 'ge', operator: '>', value: 0.5 }])
+    setConditions([...conditions, { component: 'sleep', operator: '>', value: 0.5 }])
   }
 
   const removeCondition = (idx: number) => {

@@ -80,7 +80,7 @@ export async function generateRLAudit(input: AuditInput): Promise<Partial<RLWeek
 
   // Build AI prompt
   const dailySummaries = weekTransitions.map(t => {
-    const stateStr = `GE=${t.state.ge.toFixed(2)} GI=${t.state.gi.toFixed(2)} GVC=${t.state.gvc.toFixed(2)} K=${t.state.kappa.toFixed(2)} GD=${t.state.gd.toFixed(2)} GN=${t.state.gn.toFixed(2)} J=${t.state.j.toFixed(2)} S=${t.state.sigma.toFixed(2)} Gate=${t.state.gate}`
+    const stateStr = `Sleep=${t.state.sleep.toFixed(2)} Move=${t.state.movement.toFixed(2)} Reg=${t.state.regulation.toFixed(2)} GI=${t.state.gi.toFixed(2)} GVC=${t.state.gvc.toFixed(2)} K=${t.state.kappa.toFixed(2)} GD=${t.state.gd.toFixed(2)} GN=${t.state.gn.toFixed(2)} J=${t.state.j.toFixed(2)} S=${t.state.sigma.toFixed(2)} Gate=${t.state.gate}`
     const cluster = STATE_CLUSTER_DISPLAY[t.cluster]?.name || t.cluster
     return `${t.date}: r=${t.reward.toFixed(1)} | ${cluster} | actions=[${t.actions.join(',')}] | state=[${stateStr}] | td=${t.tdError?.toFixed(2) || 'N/A'}`
   }).join('\n')

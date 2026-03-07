@@ -1,7 +1,7 @@
 import type { RewardComponents } from '@/lib/types'
 import { REWARD_PILLARS, REWARD_COMPONENT_META } from '@/lib/constants'
 
-const ALL_KEYS = ['ge', 'gi', 'gvc', 'kappa', 'optionality', 'gd', 'gn', 'j', 'sigma'] as const
+const ALL_KEYS = ['sleep', 'movement', 'regulation', 'gi', 'gd', 'sigma', 'j', 'gvc', 'kappa', 'gn', 'optionality'] as const
 
 export default function PortfolioDecomposition({ components }: { components: RewardComponents }) {
   // Log-space marginal contribution (geometric mean attribution)
@@ -9,7 +9,7 @@ export default function PortfolioDecomposition({ components }: { components: Rew
   const totalLog = logVals.reduce((s, l) => s + l, 0)
   const contrib = new Map<string, number>()
   ALL_KEYS.forEach((k, i) => {
-    contrib.set(k, totalLog !== 0 ? (logVals[i] / totalLog) * 100 : 100 / 9)
+    contrib.set(k, totalLog !== 0 ? (logVals[i] / totalLog) * 100 : 100 / 11)
   })
 
   // Find weakest component for risk callout

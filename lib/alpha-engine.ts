@@ -55,12 +55,15 @@ function classifyTrend(slope: number): TrendDirection {
 }
 
 const COMPONENT_KEYS: (keyof RewardComponents)[] = [
-  'ge', 'gi', 'gvc', 'kappa', 'gd', 'gn', 'j', 'optionality', 'sigma',
+  'sleep', 'movement', 'regulation',
+  'gi', 'gd', 'sigma', 'j',
+  'gvc', 'kappa', 'gn', 'optionality',
 ]
 
 const COMPONENT_LABELS: Record<string, string> = {
-  ge: 'GE', gi: 'GI', gvc: 'GVC', kappa: 'κ',
-  gd: 'GD', gn: 'GN', j: 'J', optionality: '𝒪', sigma: 'Σ',
+  sleep: 'S', movement: 'M', regulation: 'R',
+  gi: 'GI', gd: 'GD', sigma: 'Σ', j: 'J',
+  gvc: 'GVC', kappa: 'κ', gn: 'GN', optionality: '𝒪',
 }
 
 /** Compute alpha/beta for all components from recent reward scores */

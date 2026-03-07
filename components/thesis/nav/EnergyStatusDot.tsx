@@ -2,8 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { useDailyLogContext } from '@/components/thesis/DailyLogProvider'
-import { computeGE } from '@/lib/reward'
-import { BODY_FELT_SCORE, NS_STATE_ENERGY_SCORE, TRAINING_SCORE } from '@/lib/constants'
+import { MOVEMENT_SCORE, NS_STATE_ENERGY_SCORE, STEPS_TARGET } from '@/lib/constants'
 import EnergySlideOut from './EnergySlideOut'
 
 interface SubComponent {
@@ -19,25 +18,21 @@ export default function EnergyStatusDot() {
   const hoverRef = useRef<HTMLDivElement>(null)
   const timeoutRef = useRef<ReturnType<typeof setTimeout>>()
 
-  const geScore = log.rewardScore?.components?.ge ?? null
+  const bodyPillar = log.rewardScore?.components?.body ?? null
   const gateValue = log.rewardScore?.components?.gate ?? 1.0
 
   // Compute sub-component scores for dots
   const sleepScore = log.sleepHours ? Math.min(log.sleepHours / 7.5, 1) : 0
-  const trainingTypes = log.trainingTypes && log.trainingTypes.length > 0
-    ? log.trainingTypes
-    : log.trainingType ? [log.trainingType] : []
-  const trainingScore = trainingTypes.length > 0
-    ? Math.max(...trainingTypes.map(t => TRAINING_SCORE[t] ?? 0.2))
-    : 0.2
+  const steps = garminData?.steps ?? 0
+  const stepsScore = Math.min(steps / STEPS_TARGET, 1)
+  const movementScore = MOVEMENT_SCORE[log.movementType || 'none'] ?? 0.1
+  const combinedMovement = Math.pow(stepsScore, 0.6) * Math.pow(movementScore, 0.4)
   const nsScore = NS_STATE_ENERGY_SCORE[log.nervousSystemState || 'regulated'] ?? 1.0
-  const bodyScore = BODY_FELT_SCORE[log.bodyFelt || 'neutral'] ?? 0.6
 
   const subComponents: SubComponent[] = [
     { label: 'Sleep', value: log.sleepHours ? `${log.sleepHours}h` : '—', score: sleepScore },
-    { label: 'Training', value: trainingTypes.length > 0 ? trainingTypes.join(', ') : 'None', score: trainingScore },
-    { label: 'NS State', value: log.nervousSystemState === 'regulated' ? 'Regulated' : log.nervousSystemState === 'slightly_spiked' ? 'Slight' : log.nervousSystemState === 'spiked' ? 'Spiked' : log.nervousSystemState === 'sick' ? 'Sick' : '—', score: nsScore },
-    { label: 'Body', value: log.bodyFelt ? log.bodyFelt.charAt(0).toUpperCase() + log.bodyFelt.slice(1) : '—', score: bodyScore },
+    { label: 'Movement', value: steps > 0 ? `${(steps / 1000).toFixed(1)}k steps` : '—', score: combinedMovement },
+    { label: 'Regulation', value: log.nervousSystemState === 'regulated' ? 'Regulated' : log.nervousSystemState === 'slightly_spiked' ? 'Slight' : log.nervousSystemState === 'spiked' ? 'Spiked' : log.nervousSystemState === 'sick' ? 'Sick' : '—', score: nsScore },
   ]
 
   const dotColor = (score: number) => {
@@ -75,7 +70,7 @@ export default function EnergyStatusDot() {
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
       >
-        <span className="font-mono text-[9px] text-ink-muted mr-0.5">GE</span>
+        <span className="font-mono text-[9px] text-ink-muted mr-0.5">Body</span>
         {subComponents.map((c, i) => (
           <div
             key={i}
@@ -96,8 +91,8 @@ export default function EnergyStatusDot() {
               <span className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-burgundy">
                 Vitality
               </span>
-              <span className={`font-mono text-[12px] font-bold ${geScore !== null ? scoreColor(geScore) : 'text-ink-muted'}`}>
-                GE {geScore !== null ? (geScore * 100).toFixed(0) : '—'}
+              <span className={`font-mono text-[12px] font-bold ${bodyPillar !== null ? scoreColor(bodyPillar) : 'text-ink-muted'}`}>
+                Body {bodyPillar !== null ? (bodyPillar * 100).toFixed(0) : '—'}
               </span>
             </div>
 

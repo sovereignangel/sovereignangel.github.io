@@ -194,8 +194,17 @@ export const TRAINING_SCHEDULE: Record<string, { type: string; label: string; ti
   Thursday:  { type: 'strength', label: 'Pull', time: '7–8a' },
   Friday:    { type: 'strength', label: 'Glutes', time: '7–8a' },
   Saturday:  { type: 'zone2',    label: 'Zone 2 run (60min)', time: '9–10a' },
-  Sunday:    { type: 'vo2',      label: 'VO2 Max intervals', time: '7–8a' },
+  Sunday:    { type: 'rest',     label: 'Rest / Social', time: '—' },
 }
+
+// Movement scoring: program > some movement > nothing
+export const MOVEMENT_SCORE: Record<string, number> = {
+  program: 1.0,
+  movement: 0.5,
+  none: 0.1,
+}
+
+export const STEPS_TARGET = 15000
 
 export const BODY_FELT_SCORE: Record<string, number> = {
   open: 1.0,
@@ -222,29 +231,29 @@ export const REWARD_PILLARS = [
     key: 'body' as PillarKey,
     label: 'Body',
     question: 'Can I perform?',
-    weight: '2/9',
+    weight: '3/11',
     color: 'text-green-ink',
     bgColor: 'bg-green-bg',
     barColor: 'bg-green-ink',
     borderColor: 'border-green-ink/20',
-    components: ['ge', 'j'] as const,
+    components: ['sleep', 'movement', 'regulation'] as const,
   },
   {
     key: 'brain' as PillarKey,
     label: 'Brain',
     question: 'Am I getting smarter?',
-    weight: '3/9',
+    weight: '4/11',
     color: 'text-navy',
     bgColor: 'bg-navy-bg',
     barColor: 'bg-navy',
     borderColor: 'border-navy/20',
-    components: ['gi', 'gd', 'sigma'] as const,
+    components: ['gi', 'gd', 'sigma', 'j'] as const,
   },
   {
     key: 'build' as PillarKey,
     label: 'Build',
     question: 'Am I creating & capturing?',
-    weight: '4/9',
+    weight: '4/11',
     color: 'text-burgundy',
     bgColor: 'bg-burgundy-bg',
     barColor: 'bg-burgundy',
@@ -259,11 +268,13 @@ export const REWARD_COMPONENT_META: Record<string, {
   pillar: PillarKey
   barColor: string
 }> = {
-  ge:          { symbol: 'GE', label: 'Generative Energy', pillar: 'body', barColor: 'bg-green-ink' },
-  j:           { symbol: 'J', label: 'Judgment & Cognition', pillar: 'body', barColor: 'bg-green-ink/60' },
+  sleep:       { symbol: 'S', label: 'Sleep', pillar: 'body', barColor: 'bg-green-ink' },
+  movement:    { symbol: 'M', label: 'Movement', pillar: 'body', barColor: 'bg-green-ink/70' },
+  regulation:  { symbol: 'R', label: 'Regulation', pillar: 'body', barColor: 'bg-green-ink/40' },
   gi:          { symbol: 'GI', label: 'Intelligence Growth', pillar: 'brain', barColor: 'bg-navy' },
-  gd:          { symbol: 'GD', label: 'Discovery', pillar: 'brain', barColor: 'bg-navy/70' },
-  sigma:       { symbol: 'Σ', label: 'Skill Building', pillar: 'brain', barColor: 'bg-navy/50' },
+  gd:          { symbol: 'GD', label: 'Discovery', pillar: 'brain', barColor: 'bg-navy/80' },
+  sigma:       { symbol: 'Σ', label: 'Skill Building', pillar: 'brain', barColor: 'bg-navy/60' },
+  j:           { symbol: 'J', label: 'Judgment', pillar: 'brain', barColor: 'bg-navy/40' },
   gvc:         { symbol: 'GVC', label: 'Value Creation', pillar: 'build', barColor: 'bg-burgundy' },
   kappa:       { symbol: 'κ', label: 'Capture Ratio', pillar: 'build', barColor: 'bg-burgundy/80' },
   gn:          { symbol: 'GN', label: 'Network Capital', pillar: 'build', barColor: 'bg-burgundy/60' },

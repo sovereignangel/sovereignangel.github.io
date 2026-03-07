@@ -1,9 +1,9 @@
-import type { DailyLog, Project, RewardScore, RewardComponents } from './types'
+import type { DailyLog, GarminMetrics, Project, RewardScore, RewardComponents } from './types'
 import {
   NERVOUS_SYSTEM_GATE,
-  TRAINING_SCORE,
-  BODY_FELT_SCORE,
   NS_STATE_ENERGY_SCORE,
+  MOVEMENT_SCORE,
+  STEPS_TARGET,
   REWARD_FLOOR,
 } from './constants'
 
@@ -17,28 +17,26 @@ function floor(val: number): number {
 
 // ─── COMPONENT FUNCTIONS ────────────────────────────────────────────────
 
-/** Generative Energy: geometric mean of sleep × training × body × regulation */
-export function computeGE(log: Partial<DailyLog>, sleepTarget: number = 7.5): number {
-  const sleepScore = floor(sleepTarget > 0 ? clamp((log.sleepHours || 0) / sleepTarget, 0, 1) : 0)
+/** Sleep: hours vs target */
+export function computeSleep(log: Partial<DailyLog>, sleepTarget: number = 7.5): number {
+  return floor(sleepTarget > 0 ? clamp((log.sleepHours || 0) / sleepTarget, 0, 1) : 0)
+}
 
-  const types = log.trainingTypes && log.trainingTypes.length > 0
-    ? log.trainingTypes
-    : log.trainingType ? [log.trainingType] : []
-  const trainingScore = floor(types.length > 0
-    ? Math.max(...types.map(t => TRAINING_SCORE[t] ?? 0.2))
-    : 0.2)
+/** Movement: steps toward 15k + training program adherence
+ *  Steps from Garmin (60% weight), training program (40% weight)
+ *  Sunday is rest — program score is 1.0 if rest day */
+export function computeMovement(log: Partial<DailyLog>, garminData?: GarminMetrics | null): number {
+  const steps = garminData?.steps ?? 0
+  const stepsScore = clamp(steps / STEPS_TARGET, 0, 1)
+  const movementType = log.movementType || 'none'
+  const programScore = MOVEMENT_SCORE[movementType] ?? 0.1
 
-  const bodyScore = floor(BODY_FELT_SCORE[log.bodyFelt || 'neutral'] ?? 0.6)
-  const nsScore = floor(NS_STATE_ENERGY_SCORE[log.nervousSystemState || 'regulated'] ?? 1.0)
+  return floor(Math.pow(stepsScore, 0.6) * Math.pow(programScore, 0.4))
+}
 
-  // Weighted geometric mean: sleep^0.35 × training^0.2 × body^0.2 × ns^0.25
-  // If any sub-component is at floor (0.05), it drags the entire GE down
-  return floor(
-    Math.pow(sleepScore, 0.35) *
-    Math.pow(trainingScore, 0.2) *
-    Math.pow(bodyScore, 0.2) *
-    Math.pow(nsScore, 0.25)
-  )
+/** Regulation: nervous system state */
+export function computeRegulation(log: Partial<DailyLog>): number {
+  return floor(NS_STATE_ENERGY_SCORE[log.nervousSystemState || 'regulated'] ?? 1.0)
 }
 
 /** Intelligence Growth Rate: problems detected + problem selected for testing */
@@ -252,6 +250,7 @@ export function computeJ(log: Partial<DailyLog>): number {
 export interface RewardContext {
   recentLogs?: Partial<DailyLog>[]
   projects?: Project[]
+  garminData?: GarminMetrics | null
 }
 
 export function computeReward(
@@ -264,28 +263,41 @@ export function computeReward(
   const askQuota = settings?.revenueAskQuotaPerDay ?? 2
   const recentLogs = context?.recentLogs ?? []
   const projects = context?.projects ?? []
+  const garminData = context?.garminData ?? null
 
-  const ge = computeGE(log, sleepTarget)
+  // Body pillar (3 components)
+  const sleep = computeSleep(log, sleepTarget)
+  const movement = computeMovement(log, garminData)
+  const regulation = computeRegulation(log)
+
+  // Brain pillar (4 components)
   const gi = computeGI(log)
+  const gd = computeGD(log)
+  const sigma = computeSigma(log)
+  const j = computeJ(log)
+
+  // Build pillar (4 components)
   const gvc = computeGVC(log, focusTarget, recentLogs)
   const kappa = computeKappa(log, askQuota)
-  const optionality = computeOptionality(projects, log)
-  const fragmentation = computeFragmentation(log, projects)
-  const gd = computeGD(log)
   const gn = computeGN(log)
-  const j = computeJ(log)
-  const sigma = computeSigma(log)
+  const optionality = computeOptionality(projects, log)
 
+  const fragmentation = computeFragmentation(log, projects)
   const gate = NERVOUS_SYSTEM_GATE[log.nervousSystemState || 'regulated'] ?? 1.0
 
-  // Pillar sub-means (algebraically equivalent grouping)
-  const body = Math.pow(ge * j, 1 / 2)                              // 2 components
-  const brain = Math.pow(gi * gd * sigma, 1 / 3)                    // 3 components
+  // Pillar sub-means
+  const body = Math.pow(sleep * movement * regulation, 1 / 3)       // 3 components
+  const brain = Math.pow(gi * gd * sigma * j, 1 / 4)                // 4 components
   const build = Math.pow(gvc * kappa * gn * optionality, 1 / 4)     // 4 components
 
-  // Geometric mean of 9 multiplicative components
-  // Equivalently: body^(2/9) · brain^(3/9) · build^(4/9)
-  const geoMean = Math.pow(ge * gi * gvc * kappa * optionality * gd * gn * j * sigma, 1 / 9)
+  // Geometric mean of 11 multiplicative components
+  // body^(3/11) · brain^(4/11) · build^(4/11)
+  const geoMean = Math.pow(
+    sleep * movement * regulation *
+    gi * gd * sigma * j *
+    gvc * kappa * gn * optionality,
+    1 / 11
+  )
 
   // Apply gate and fragmentation penalty
   const rawScore = gate * geoMean - fragmentation * 0.3
@@ -293,7 +305,13 @@ export function computeReward(
   // Scale to 0-10 with one decimal place
   const score = clamp(Math.round(rawScore * 10 * 10) / 10, 0, 10)
 
-  const components: RewardComponents = { ge, gi, gvc, kappa, optionality, gd, gn, j, sigma, fragmentation, gate, body, brain, build }
+  const components: RewardComponents = {
+    sleep, movement, regulation,
+    gi, gd, sigma, j,
+    gvc, kappa, gn, optionality,
+    fragmentation, gate,
+    body, brain, build,
+  }
 
   return {
     score,

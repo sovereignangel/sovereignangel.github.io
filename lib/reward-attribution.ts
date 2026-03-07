@@ -39,11 +39,13 @@ const COMPONENT_META: Array<{
   label: string
   pillar: 'body' | 'brain' | 'build' | 'modifier'
 }> = [
-  { key: 'ge', label: 'Energy', pillar: 'body' },
-  { key: 'j', label: 'Judgment', pillar: 'body' },
+  { key: 'sleep', label: 'Sleep', pillar: 'body' },
+  { key: 'movement', label: 'Movement', pillar: 'body' },
+  { key: 'regulation', label: 'Regulation', pillar: 'body' },
   { key: 'gi', label: 'Intelligence', pillar: 'brain' },
   { key: 'gd', label: 'Discovery', pillar: 'brain' },
   { key: 'sigma', label: 'Skill', pillar: 'brain' },
+  { key: 'j', label: 'Judgment', pillar: 'brain' },
   { key: 'gvc', label: 'Output', pillar: 'build' },
   { key: 'kappa', label: 'Capture', pillar: 'build' },
   { key: 'gn', label: 'Network', pillar: 'build' },
@@ -67,7 +69,9 @@ function computeMarginalGain(
   actualScore: number
 ): number {
   const multiplicativeKeys: (keyof RewardComponents)[] = [
-    'ge', 'gi', 'gvc', 'kappa', 'optionality', 'gd', 'gn', 'j', 'sigma',
+    'sleep', 'movement', 'regulation',
+    'gi', 'gd', 'sigma', 'j',
+    'gvc', 'kappa', 'gn', 'optionality',
   ]
 
   if (componentKey === 'gate') {
@@ -94,9 +98,9 @@ function computeMarginalGain(
   if (currentValue <= 0) return 0
 
   const product = multiplicativeKeys.reduce((p, k) => p * (components[k] as number), 1)
-  const oldGeo = Math.pow(product, 1 / 9)
+  const oldGeo = Math.pow(product, 1 / 11)
   const newProduct = product / currentValue // replacing with 1.0
-  const newGeo = Math.pow(newProduct, 1 / 9)
+  const newGeo = Math.pow(newProduct, 1 / 11)
 
   return components.gate * (newGeo - oldGeo) * 10
 }

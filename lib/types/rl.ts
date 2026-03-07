@@ -3,24 +3,26 @@ import type { Timestamp } from './shared'
 
 // ─── State Representation ─────────────────────────────────────────────
 
-/** Compressed state vector: the 9 reward components + gate */
+/** Compressed state vector: the 11 reward components + gate */
 export interface RLState {
-  ge: number
+  sleep: number
+  movement: number
+  regulation: number
   gi: number
+  gd: number
+  sigma: number
+  j: number
   gvc: number
   kappa: number
-  optionality: number
-  gd: number
   gn: number
-  j: number
-  sigma: number
+  optionality: number
   gate: number
 }
 
 /** Named state cluster for V(s) estimation */
 export type StateClusterLabel =
-  | 'high_energy_shipping'    // ge>0.7, gvc>0.7
-  | 'low_energy_recovery'     // ge<0.4
+  | 'high_energy_shipping'    // body pillar>0.7, gvc>0.7
+  | 'low_energy_recovery'     // body pillar<0.4
   | 'intelligence_gathering'  // gi>0.7, gd>0.7
   | 'revenue_hunting'         // kappa>0.7, gn>0.5
   | 'fragmented_scattered'    // no strong pattern

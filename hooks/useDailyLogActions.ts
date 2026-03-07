@@ -16,6 +16,7 @@ interface UseDailyLogActionsProps {
   setRecentLogs: (setter: (prev: DailyLog[]) => DailyLog[]) => void
   projects: Project[]
   userSettings: UserSettings | undefined
+  garminData: GarminMetrics | null
   calendarAccessToken: string | null | undefined
   refreshCalendarToken: () => Promise<void>
 }
@@ -32,6 +33,7 @@ export function useDailyLogActions({
   setRecentLogs,
   projects,
   userSettings,
+  garminData,
   calendarAccessToken,
   refreshCalendarToken,
 }: UseDailyLogActionsProps) {
@@ -42,7 +44,7 @@ export function useDailyLogActions({
   const save = useCallback(async (updates: Partial<DailyLog>) => {
     if (!uid) return
     const newLog = { ...log, ...updates }
-    const rewardScore = computeReward(newLog, userSettings, { recentLogs, projects })
+    const rewardScore = computeReward(newLog, userSettings, { recentLogs, projects, garminData })
 
     // Compute day-over-day delta from yesterday's score
     const yesterdayDate = yesterdayString()
@@ -64,7 +66,7 @@ export function useDailyLogActions({
       const filtered = prev.filter(l => l.date !== logDate)
       return [...filtered, logWithReward as DailyLog].sort((a, b) => (a.date || '').localeCompare(b.date || ''))
     })
-  }, [uid, logDate, log, userSettings, recentLogs, projects, setLog, setRecentLogs])
+  }, [uid, logDate, log, userSettings, garminData, recentLogs, projects, setLog, setRecentLogs])
 
   const updateField = useCallback((field: string, value: unknown) => {
     save({ [field]: value })

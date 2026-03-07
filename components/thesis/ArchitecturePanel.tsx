@@ -33,7 +33,9 @@ interface ConnectionDef {
 // ─── PATH GROUPS ────────────────────────────────────────────────────────
 
 const REWARD_PATH_GROUPS: Record<string, string[]> = {
-  ge: ['sleep', 'training', 'bodyFelt', 'nsState', 'ge', 'geoMean', 'finalCalc', 'score'],
+  sleep: ['sleepInput', 'sleepComp', 'geoMean', 'finalCalc', 'score'],
+  movement: ['stepsInput', 'programInput', 'movementComp', 'geoMean', 'finalCalc', 'score'],
+  regulation: ['nsState', 'regulationComp', 'geoMean', 'finalCalc', 'score'],
   gi: ['problems', 'problemSelected', 'gi', 'geoMean', 'finalCalc', 'score'],
   gvc: ['focusHours', 'shipping', 'speed', 'gvc', 'geoMean', 'finalCalc', 'score'],
   kappa: ['revenueAsks', 'revenueSignal', 'feedbackLoop', 'kappa', 'geoMean', 'finalCalc', 'score'],
@@ -59,39 +61,50 @@ const SYSTEM_PATH_GROUPS: Record<string, string[]> = {
 
 const REWARD_NODES: NodeDef[] = [
   // Column 0 — Daily Inputs
-  { id: 'sleep', label: 'Sleep Hours', sublabel: 'Target: 7.5h', column: 0, type: 'input', group: 'ge', navigateTo: '/thesis', liveValueKey: 'sleepHours', liveFormatter: (v) => `${v}h` },
-  { id: 'training', label: 'Training Type', sublabel: 'Strength / VO2 / Zone2', column: 0, type: 'input', group: 'ge', navigateTo: '/thesis' },
-  { id: 'bodyFelt', label: 'Body Felt', sublabel: 'Open / Neutral / Tense', column: 0, type: 'input', group: 'ge', navigateTo: '/thesis' },
-  { id: 'nsState', label: 'Nervous System', sublabel: 'Regulated / Spiked', column: 0, type: 'input', group: 'ge', navigateTo: '/thesis' },
+  // Body inputs
+  { id: 'sleepInput', label: 'Sleep Hours', sublabel: 'Target: 7.5h', column: 0, type: 'input', group: 'sleep', navigateTo: '/thesis', liveValueKey: 'sleepHours', liveFormatter: (v) => `${v}h` },
+  { id: 'stepsInput', label: 'Steps (Garmin)', sublabel: 'Target: 15k', column: 0, type: 'input', group: 'movement', navigateTo: '/thesis' },
+  { id: 'programInput', label: 'Training Program', sublabel: 'Program / Movement / None', column: 0, type: 'input', group: 'movement', navigateTo: '/thesis' },
+  { id: 'nsState', label: 'Nervous System', sublabel: 'Regulated / Spiked', column: 0, type: 'input', group: 'regulation', navigateTo: '/thesis' },
+  // Brain inputs
   { id: 'problems', label: 'Problems Identified', sublabel: 'Pain points & solutions', column: 0, type: 'input', group: 'gi', navigateTo: '/thesis/intelligence' },
   { id: 'problemSelected', label: 'Problem Selected', sublabel: '48h test candidate', column: 0, type: 'input', group: 'gi', navigateTo: '/thesis/intelligence' },
-  { id: 'focusHours', label: 'Focus Hours', sublabel: 'Target: 6h/day', column: 0, type: 'input', group: 'gvc', navigateTo: '/thesis/output', liveValueKey: 'focusHoursActual', liveFormatter: (v) => `${v}h` },
-  { id: 'shipping', label: 'What Shipped', sublabel: 'Public iteration bonus', column: 0, type: 'input', group: 'gvc', navigateTo: '/thesis/output' },
-  { id: 'speed', label: 'Speed > Perfection', sublabel: 'Velocity bonus', column: 0, type: 'input', group: 'gvc', navigateTo: '/thesis/output' },
-  { id: 'revenueAsks', label: 'Revenue Asks', sublabel: 'Target: 2/day', column: 0, type: 'input', group: 'kappa', navigateTo: '/thesis/output', liveValueKey: 'revenueAsksCount' },
-  { id: 'revenueSignal', label: 'Revenue Earned', sublabel: 'Stream type multiplier', column: 0, type: 'input', group: 'kappa', navigateTo: '/thesis/output' },
-  { id: 'feedbackLoop', label: 'Feedback Loop', sublabel: 'Closed = +0.15', column: 0, type: 'input', group: 'kappa', navigateTo: '/thesis/output' },
   { id: 'conversations', label: 'Discovery Calls', sublabel: 'Target: 2/day', column: 0, type: 'input', group: 'gd', navigateTo: '/thesis/intelligence', liveValueKey: 'discoveryConversationsCount' },
   { id: 'extSignals', label: 'External Signals', sublabel: 'Target: 5/day', column: 0, type: 'input', group: 'gd', navigateTo: '/thesis/intelligence', liveValueKey: 'externalSignalsReviewed' },
   { id: 'insights', label: 'Insights Extracted', sublabel: 'From conversations', column: 0, type: 'input', group: 'gd', navigateTo: '/thesis/intelligence', liveValueKey: 'insightsExtracted' },
   { id: 'practice', label: 'Deliberate Practice', sublabel: 'Target: 30 min/day', column: 0, type: 'input', group: 'sigma', navigateTo: '/thesis/coherence', liveValueKey: 'deliberatePracticeMinutes', liveFormatter: (v) => `${v}m` },
   { id: 'technique', label: 'New Technique', sublabel: 'Applied today?', column: 0, type: 'input', group: 'sigma', navigateTo: '/thesis/coherence' },
   { id: 'automation', label: 'Automation Created', sublabel: 'Leverage built?', column: 0, type: 'input', group: 'sigma', navigateTo: '/thesis/coherence' },
+  { id: 'psycap', label: 'PsyCap HERO', sublabel: 'Hope/Efficacy/Resilience/Optimism', column: 0, type: 'input', group: 'j', navigateTo: '/thesis/boardroom' },
+  // Build inputs
+  { id: 'focusHours', label: 'Focus Hours', sublabel: 'Target: 6h/day', column: 0, type: 'input', group: 'gvc', navigateTo: '/thesis/output', liveValueKey: 'focusHoursActual', liveFormatter: (v) => `${v}h` },
+  { id: 'shipping', label: 'What Shipped', sublabel: 'Public iteration bonus', column: 0, type: 'input', group: 'gvc', navigateTo: '/thesis/output' },
+  { id: 'speed', label: 'Speed > Perfection', sublabel: 'Velocity bonus', column: 0, type: 'input', group: 'gvc', navigateTo: '/thesis/output' },
+  { id: 'revenueAsks', label: 'Revenue Asks', sublabel: 'Target: 2/day', column: 0, type: 'input', group: 'kappa', navigateTo: '/thesis/output', liveValueKey: 'revenueAsksCount' },
+  { id: 'revenueSignal', label: 'Revenue Earned', sublabel: 'Stream type multiplier', column: 0, type: 'input', group: 'kappa', navigateTo: '/thesis/output' },
+  { id: 'feedbackLoop', label: 'Feedback Loop', sublabel: 'Closed = +0.15', column: 0, type: 'input', group: 'kappa', navigateTo: '/thesis/output' },
   { id: 'projectAlloc', label: 'Project Allocation', sublabel: 'Time % per project', column: 0, type: 'input', group: 'optionality', navigateTo: '/thesis/coherence' },
 
   // Column 1 — Component Scores (0-1)
-  { id: 'ge', label: 'Generative Energy', symbol: 'GE', sublabel: 'sleep^0.35 * train^0.2 * body^0.2 * ns^0.25', column: 1, type: 'component', navigateTo: '/thesis', liveValueKey: 'comp_ge' },
+  // Body
+  { id: 'sleepComp', label: 'Sleep', symbol: 'S', sublabel: 'hours / target', column: 1, type: 'component', navigateTo: '/thesis', liveValueKey: 'comp_sleep' },
+  { id: 'movementComp', label: 'Movement', symbol: 'M', sublabel: 'steps^0.6 * program^0.4', column: 1, type: 'component', navigateTo: '/thesis', liveValueKey: 'comp_movement' },
+  { id: 'regulationComp', label: 'Regulation', symbol: 'R', sublabel: 'NS state score', column: 1, type: 'component', navigateTo: '/thesis', liveValueKey: 'comp_regulation' },
+  // Brain
   { id: 'gi', label: 'Intelligence Growth', symbol: 'GI', sublabel: 'Problems + selection bonus', column: 1, type: 'component', navigateTo: '/thesis/intelligence', liveValueKey: 'comp_gi' },
+  { id: 'gd', label: 'Discovery', symbol: 'GD', sublabel: 'Conversations + signals + insights', column: 1, type: 'component', navigateTo: '/thesis/intelligence', liveValueKey: 'comp_gd' },
+  { id: 'sigma', label: 'Skill Building', symbol: 'Sigma', sublabel: 'Practice + technique + automation', column: 1, type: 'component', navigateTo: '/thesis/coherence', liveValueKey: 'comp_sigma' },
+  { id: 'j', label: 'Judgment', symbol: 'J', sublabel: 'PsyCap HERO model', column: 1, type: 'component', navigateTo: '/thesis/boardroom', liveValueKey: 'comp_j' },
+  // Build
   { id: 'gvc', label: 'Value Creation', symbol: 'GVC', sublabel: 'Ship + focus + recency + speed', column: 1, type: 'component', navigateTo: '/thesis/output', liveValueKey: 'comp_gvc' },
   { id: 'kappa', label: 'Capture Ratio', symbol: 'K', sublabel: 'Asks + revenue + feedback', column: 1, type: 'component', navigateTo: '/thesis/output', liveValueKey: 'comp_kappa' },
-  { id: 'gd', label: 'Discovery', symbol: 'GD', sublabel: 'Conversations + signals + insights', column: 1, type: 'component', navigateTo: '/thesis/intelligence', liveValueKey: 'comp_gd' },
   { id: 'optionality', label: 'Optionality', symbol: 'O', sublabel: '1 - HHI + backup bonus', column: 1, type: 'component', navigateTo: '/thesis/coherence', liveValueKey: 'comp_optionality' },
-  { id: 'sigma', label: 'Skill Building', symbol: 'Sigma', sublabel: 'Practice + technique + automation', column: 1, type: 'component', navigateTo: '/thesis/coherence', liveValueKey: 'comp_sigma' },
+  // Modifiers
   { id: 'fragmentation', label: 'Fragmentation Tax', symbol: 'F', sublabel: 'KL divergence penalty', column: 1, type: 'component', navigateTo: '/thesis/coherence', liveValueKey: 'comp_fragmentation' },
   { id: 'gate', label: 'NS Gate', symbol: 'g(v)', sublabel: '1.0 / 0.7 / 0.3', column: 1, type: 'component', navigateTo: '/thesis', liveValueKey: 'comp_gate' },
 
   // Column 2 — Aggregation
-  { id: 'geoMean', label: 'Geometric Mean', sublabel: '(GE*GI*GVC*K*O*GD*GN*J*Σ) ^ 1/9', column: 2, type: 'operator' },
+  { id: 'geoMean', label: 'Geometric Mean', sublabel: '(S*M*R * GI*GD*Σ*J * GVC*κ*GN*𝒪) ^ 1/11', column: 2, type: 'operator' },
   { id: 'finalCalc', label: 'Final Computation', sublabel: 'gate * geoMean - F*0.3', column: 2, type: 'operator' },
 
   // Column 3 — Output
@@ -99,17 +112,24 @@ const REWARD_NODES: NodeDef[] = [
 ]
 
 const REWARD_CONNECTIONS: ConnectionDef[] = [
-  { from: 'sleep', to: 'ge' }, { from: 'training', to: 'ge' }, { from: 'bodyFelt', to: 'ge' }, { from: 'nsState', to: 'ge' },
+  // Body
+  { from: 'sleepInput', to: 'sleepComp' },
+  { from: 'stepsInput', to: 'movementComp' }, { from: 'programInput', to: 'movementComp' },
+  { from: 'nsState', to: 'regulationComp' }, { from: 'nsState', to: 'gate' },
+  // Brain
   { from: 'problems', to: 'gi' }, { from: 'problemSelected', to: 'gi' },
-  { from: 'focusHours', to: 'gvc' }, { from: 'shipping', to: 'gvc' }, { from: 'speed', to: 'gvc' },
-  { from: 'revenueAsks', to: 'kappa' }, { from: 'revenueSignal', to: 'kappa' }, { from: 'feedbackLoop', to: 'kappa' },
   { from: 'conversations', to: 'gd' }, { from: 'extSignals', to: 'gd' }, { from: 'insights', to: 'gd' },
   { from: 'practice', to: 'sigma' }, { from: 'technique', to: 'sigma' }, { from: 'automation', to: 'sigma' },
+  { from: 'psycap', to: 'j' },
+  // Build
+  { from: 'focusHours', to: 'gvc' }, { from: 'shipping', to: 'gvc' }, { from: 'speed', to: 'gvc' },
+  { from: 'revenueAsks', to: 'kappa' }, { from: 'revenueSignal', to: 'kappa' }, { from: 'feedbackLoop', to: 'kappa' },
   { from: 'projectAlloc', to: 'optionality' }, { from: 'projectAlloc', to: 'fragmentation' },
-  { from: 'nsState', to: 'gate' },
-  { from: 'ge', to: 'geoMean' }, { from: 'gi', to: 'geoMean' }, { from: 'gvc', to: 'geoMean' },
-  { from: 'kappa', to: 'geoMean' }, { from: 'gd', to: 'geoMean' }, { from: 'optionality', to: 'geoMean' },
-  { from: 'sigma', to: 'geoMean' },
+  // To geo mean
+  { from: 'sleepComp', to: 'geoMean' }, { from: 'movementComp', to: 'geoMean' }, { from: 'regulationComp', to: 'geoMean' },
+  { from: 'gi', to: 'geoMean' }, { from: 'gd', to: 'geoMean' }, { from: 'sigma', to: 'geoMean' }, { from: 'j', to: 'geoMean' },
+  { from: 'gvc', to: 'geoMean' }, { from: 'kappa', to: 'geoMean' }, { from: 'optionality', to: 'geoMean' },
+  // Final
   { from: 'geoMean', to: 'finalCalc' }, { from: 'gate', to: 'finalCalc' },
   { from: 'fragmentation', to: 'finalCalc' },
   { from: 'finalCalc', to: 'score' },

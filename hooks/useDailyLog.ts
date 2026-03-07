@@ -63,6 +63,7 @@ export function useDailyLog(): DailyLogContextValue {
     setRecentLogs,
     projects,
     userSettings: profile?.settings,
+    garminData,
     calendarAccessToken,
     refreshCalendarToken,
   })

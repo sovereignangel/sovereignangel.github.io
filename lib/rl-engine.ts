@@ -17,15 +17,17 @@ export function logToState(log: Partial<DailyLog>): RLState | null {
   if (!c) return null
   // Defensively default missing component values to 0
   return {
-    ge: c.ge ?? 0,
+    sleep: c.sleep ?? 0,
+    movement: c.movement ?? 0,
+    regulation: c.regulation ?? 0,
     gi: c.gi ?? 0,
+    gd: c.gd ?? 0,
+    sigma: c.sigma ?? 0,
+    j: c.j ?? 0,
     gvc: c.gvc ?? 0,
     kappa: c.kappa ?? 0,
-    optionality: c.optionality ?? 0,
-    gd: c.gd ?? 0,
     gn: c.gn ?? 0,
-    j: c.j ?? 0,
-    sigma: c.sigma ?? 0,
+    optionality: c.optionality ?? 0,
     gate: c.gate ?? 1.0,
   }
 }
@@ -45,18 +47,19 @@ export function classifyState(s: RLState): StateClusterLabel {
   if (s.gate < 1.0) return 'spiked_gated'
 
   // 2. Cold start: most components near floor
-  const vals = [s.ge, s.gi, s.gvc, s.kappa, s.gd, s.gn, s.j, s.sigma]
+  const bodyMean = Math.pow(s.sleep * s.movement * s.regulation, 1 / 3)
+  const vals = [bodyMean, s.gi, s.gvc, s.kappa, s.gd, s.gn, s.j, s.sigma]
   const belowThreshold = vals.filter(v => v < 0.3).length
   if (belowThreshold >= 5) return 'cold_start'
 
   // 3. Low energy recovery
-  if (s.ge < 0.4) return 'low_energy_recovery'
+  if (bodyMean < 0.4) return 'low_energy_recovery'
 
   // 4. Peak performance: all core components high
   if (vals.every(v => v > 0.7)) return 'peak_performance'
 
   // 5. High energy shipping
-  if (s.ge > 0.7 && s.gvc > 0.7) return 'high_energy_shipping'
+  if (bodyMean > 0.7 && s.gvc > 0.7) return 'high_energy_shipping'
 
   // 6. Intelligence gathering
   if (s.gi > 0.7 && s.gd > 0.7) return 'intelligence_gathering'
@@ -184,7 +187,7 @@ export function computeStateClusters(transitions: RLTransition[]): StateCluster[
     const { transitions: ts, forwardReturns } = group
 
     // Compute centroid (average state)
-    const centroid: RLState = { ge: 0, gi: 0, gvc: 0, kappa: 0, optionality: 0, gd: 0, gn: 0, j: 0, sigma: 0, gate: 0 }
+    const centroid: RLState = { sleep: 0, movement: 0, regulation: 0, gi: 0, gd: 0, sigma: 0, j: 0, gvc: 0, kappa: 0, gn: 0, optionality: 0, gate: 0 }
     for (const t of ts) {
       for (const key of Object.keys(centroid) as (keyof RLState)[]) {
         centroid[key] += t.state[key]
@@ -372,7 +375,7 @@ export interface ComponentStats {
 export function computeComponentStats(transitions: RLTransition[]): ComponentStats[] {
   if (transitions.length === 0) return []
 
-  const components: (keyof RLState)[] = ['ge', 'gi', 'gvc', 'kappa', 'optionality', 'gd', 'gn', 'j', 'sigma']
+  const components: (keyof RLState)[] = ['sleep', 'movement', 'regulation', 'gi', 'gd', 'sigma', 'j', 'gvc', 'kappa', 'gn', 'optionality']
 
   return components.map(comp => {
     const values = transitions.map(t => t.state[comp])

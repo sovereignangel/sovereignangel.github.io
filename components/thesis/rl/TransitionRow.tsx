@@ -3,7 +3,7 @@
 import type { RLTransition } from '@/lib/types'
 import { STATE_CLUSTER_DISPLAY } from '@/lib/types/rl'
 
-const COMPONENT_KEYS = ['ge', 'gi', 'gvc', 'kappa', 'gd', 'gn', 'j', 'sigma'] as const
+const COMPONENT_KEYS = ['sleep', 'movement', 'regulation', 'gi', 'gd', 'sigma', 'j', 'gvc', 'kappa', 'gn', 'optionality'] as const
 
 function componentColor(val: number): string {
   if (val >= 0.7) return 'bg-green-ink/20'

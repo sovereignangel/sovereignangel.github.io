@@ -89,10 +89,10 @@ function verifyWaveSignature(request: {
   const signatures = request.signature.split(' ')
   return signatures.some(sig => {
     const sigValue = sig.startsWith('v1,') ? sig.slice(3) : sig
-    return crypto.timingSafeEqual(
-      Buffer.from(expected),
-      Buffer.from(sigValue),
-    )
+    const expectedBuf = Buffer.from(expected)
+    const actualBuf = Buffer.from(sigValue)
+    if (expectedBuf.length !== actualBuf.length) return false
+    return crypto.timingSafeEqual(expectedBuf, actualBuf)
   })
 }
 
@@ -116,6 +116,7 @@ async function fetchWaveTranscript(sessionId: string): Promise<WaveTranscriptRes
 }
 
 export async function POST(request: NextRequest) {
+  try {
   const uid = process.env.TRANSCRIPT_WEBHOOK_UID
   if (!uid) {
     return NextResponse.json({ error: 'TRANSCRIPT_WEBHOOK_UID not configured' }, { status: 500 })
@@ -241,5 +242,10 @@ export async function POST(request: NextRequest) {
     } catch { /* swallow notification errors */ }
 
     return NextResponse.json({ error: 'Processing failed', detail: msg }, { status: 500 })
+  }
+  } catch (outerError) {
+    const msg = outerError instanceof Error ? outerError.message : String(outerError)
+    console.error('[webhooks/wave] Unhandled error:', msg)
+    return NextResponse.json({ error: 'Internal error', detail: msg }, { status: 500 })
   }
 }
