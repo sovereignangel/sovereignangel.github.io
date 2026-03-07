@@ -37,13 +37,20 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const { updates } = await request.json() as {
-    updates: Array<{
+  const body = await request.json() as {
+    updates?: Array<{
       collection: string
       query: { field: string; value: string }
       data: Record<string, unknown>
     }>
+    contacts?: Array<{
+      name: string
+      notes: string
+      tags?: string[]
+      interactions?: Array<{ date: string; source: string; summary: string }>
+    }>
   }
+  const updates = body.updates || []
 
   const uid = process.env.TRANSCRIPT_WEBHOOK_UID!
   const db = await getAdminDb()
@@ -69,7 +76,31 @@ export async function POST(request: NextRequest) {
     })
   }
 
-  return NextResponse.json({ results })
+  // Handle contact upserts
+  const contactResults: Array<{ name: string; action: string; id: string }> = []
+  for (const contact of body.contacts || []) {
+    const existing = await userRef.collection('contacts').where('name', '==', contact.name).limit(1).get()
+    if (existing.empty) {
+      const ref = await userRef.collection('contacts').add({
+        ...contact,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+      contactResults.push({ name: contact.name, action: 'created', id: ref.id })
+    } else {
+      const doc = existing.docs[0]
+      const data = doc.data()
+      await doc.ref.update({
+        notes: contact.notes,
+        tags: contact.tags || data.tags || [],
+        interactions: [...(data.interactions || []), ...(contact.interactions || [])],
+        updatedAt: new Date(),
+      })
+      contactResults.push({ name: contact.name, action: 'updated', id: doc.id })
+    }
+  }
+
+  return NextResponse.json({ results, contacts: contactResults })
 }
 
 export async function PUT(request: NextRequest) {
