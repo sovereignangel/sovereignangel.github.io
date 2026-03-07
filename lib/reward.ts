@@ -34,9 +34,26 @@ export function computeMovement(log: Partial<DailyLog>, garminData?: GarminMetri
   return floor(Math.pow(stepsScore, 0.6) * Math.pow(programScore, 0.4))
 }
 
-/** Regulation: nervous system state */
-export function computeRegulation(log: Partial<DailyLog>): number {
-  return floor(NS_STATE_ENERGY_SCORE[log.nervousSystemState || 'regulated'] ?? 1.0)
+/** Regulation: Garmin stress score + journal processing nuance
+ *  Garmin stress: 0-100, lower = more regulated
+ *  Journal: dampens the stress signal — processing stress = regulating it
+ *  e.g. stress=60 raw=0.20, but journaling lifts effective stress to ~0.40 */
+export function computeRegulation(log: Partial<DailyLog>, garminData?: GarminMetrics | null): number {
+  const stress = garminData?.stressLevel
+  if (stress == null) {
+    // Fallback to manual NS state toggle when no Garmin data
+    return floor(NS_STATE_ENERGY_SCORE[log.nervousSystemState || 'regulated'] ?? 1.0)
+  }
+
+  const rawScore = clamp(1 - (stress / 75), 0, 1)  // 0 stress = 1.0, 75+ = 0.0
+  const journaled = !!(log.journalEntry && log.journalEntry.trim().length > 20)
+
+  // Journaling dampens stress: lifts score 30% toward 1.0
+  // stress=60 → raw=0.20 → with journal: 0.20 + 0.30*(1-0.20) = 0.44
+  // stress=30 → raw=0.60 → with journal: 0.60 + 0.30*(1-0.60) = 0.72
+  const regulated = journaled ? rawScore + 0.3 * (1 - rawScore) : rawScore
+
+  return floor(clamp(regulated, 0.05, 1))
 }
 
 /** Intelligence Growth Rate: problems detected + problem selected for testing */
@@ -268,7 +285,7 @@ export function computeReward(
   // Body pillar (3 components)
   const sleep = computeSleep(log, sleepTarget)
   const movement = computeMovement(log, garminData)
-  const regulation = computeRegulation(log)
+  const regulation = computeRegulation(log, garminData)
 
   // Brain pillar (4 components)
   const gi = computeGI(log)

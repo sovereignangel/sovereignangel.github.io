@@ -27,12 +27,22 @@ export default function EnergyStatusDot() {
   const stepsScore = Math.min(steps / STEPS_TARGET, 1)
   const movementScore = MOVEMENT_SCORE[log.movementType || 'none'] ?? 0.1
   const combinedMovement = Math.pow(stepsScore, 0.6) * Math.pow(movementScore, 0.4)
-  const nsScore = NS_STATE_ENERGY_SCORE[log.nervousSystemState || 'regulated'] ?? 1.0
+  // Regulation: prefer Garmin stress, fallback to NS state toggle
+  const stress = garminData?.stressLevel
+  const regulationScore = stress != null
+    ? Math.max(1 - (stress / 75), 0)
+    : (NS_STATE_ENERGY_SCORE[log.nervousSystemState || 'regulated'] ?? 1.0)
+  const regulationValue = stress != null
+    ? `Stress ${stress}`
+    : log.nervousSystemState === 'regulated' ? 'Regulated'
+    : log.nervousSystemState === 'slightly_spiked' ? 'Slight'
+    : log.nervousSystemState === 'spiked' ? 'Spiked'
+    : log.nervousSystemState === 'sick' ? 'Sick' : '—'
 
   const subComponents: SubComponent[] = [
     { label: 'Sleep', value: log.sleepHours ? `${log.sleepHours}h` : '—', score: sleepScore },
     { label: 'Movement', value: steps > 0 ? `${(steps / 1000).toFixed(1)}k steps` : '—', score: combinedMovement },
-    { label: 'Regulation', value: log.nervousSystemState === 'regulated' ? 'Regulated' : log.nervousSystemState === 'slightly_spiked' ? 'Slight' : log.nervousSystemState === 'spiked' ? 'Spiked' : log.nervousSystemState === 'sick' ? 'Sick' : '—', score: nsScore },
+    { label: 'Regulation', value: regulationValue, score: regulationScore },
   ]
 
   const dotColor = (score: number) => {

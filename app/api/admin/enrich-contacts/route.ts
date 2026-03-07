@@ -71,3 +71,48 @@ export async function POST(request: NextRequest) {
 
   return NextResponse.json({ results })
 }
+
+export async function PUT(request: NextRequest) {
+  const secret = request.headers.get('x-admin-secret')
+  if (secret !== process.env.TRANSCRIPT_WEBHOOK_UID) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  const { contacts } = await request.json() as {
+    contacts: Array<{
+      name: string
+      notes: string
+      tags?: string[]
+      interactions?: Array<{ date: string; source: string; summary: string }>
+    }>
+  }
+
+  const uid = process.env.TRANSCRIPT_WEBHOOK_UID!
+  const db = await getAdminDb()
+  const userRef = db.collection('users').doc(uid)
+  const results: Array<{ name: string; action: string; id: string }> = []
+
+  for (const contact of contacts) {
+    const existing = await userRef.collection('contacts').where('name', '==', contact.name).limit(1).get()
+    if (existing.empty) {
+      const ref = await userRef.collection('contacts').add({
+        ...contact,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+      results.push({ name: contact.name, action: 'created', id: ref.id })
+    } else {
+      const doc = existing.docs[0]
+      const data = doc.data()
+      await doc.ref.update({
+        notes: contact.notes,
+        tags: contact.tags || data.tags || [],
+        interactions: [...(data.interactions || []), ...(contact.interactions || [])],
+        updatedAt: new Date(),
+      })
+      results.push({ name: contact.name, action: 'updated', id: doc.id })
+    }
+  }
+
+  return NextResponse.json({ results })
+}

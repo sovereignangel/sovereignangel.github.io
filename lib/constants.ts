@@ -178,15 +178,6 @@ export const NERVOUS_SYSTEM_GATE: Record<string, number> = {
   sick: 0.2,
 }
 
-export const TRAINING_SCORE: Record<string, number> = {
-  strength: 1.0,
-  yoga: 0.8,
-  vo2: 1.0,
-  zone2: 0.9,
-  rest: 0.5,
-  none: 0.2,
-}
-
 export const TRAINING_SCHEDULE: Record<string, { type: string; label: string; time: string }> = {
   Monday:    { type: 'strength', label: 'Push', time: '7–8a' },
   Tuesday:   { type: 'strength', label: 'Glutes', time: '7–8a' },
@@ -205,12 +196,6 @@ export const MOVEMENT_SCORE: Record<string, number> = {
 }
 
 export const STEPS_TARGET = 15000
-
-export const BODY_FELT_SCORE: Record<string, number> = {
-  open: 1.0,
-  neutral: 0.6,
-  tense: 0.2,
-}
 
 export const NS_STATE_ENERGY_SCORE: Record<string, number> = {
   regulated: 1.0,

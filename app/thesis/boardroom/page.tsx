@@ -18,11 +18,12 @@ import AlphaThesesView from '@/components/thesis/alpha/AlphaThesesView'
 import AlphaLabView from '@/components/thesis/alpha/AlphaLabView'
 import AlphaTrackerView from '@/components/thesis/alpha/AlphaTrackerView'
 import AlphaDial from '@/components/thesis/alpha/AlphaDial'
-import GovernanceLedger from '@/components/thesis/boardroom/GovernanceLedger'
+import GovernanceLedger from '@/components/thesis/rl/GovernanceLedger'
+import CalibrationView from '@/components/thesis/rl/CalibrationView'
 import { getSignals, getHypotheses } from '@/lib/firestore'
 
 type BoardRoomTab = 'machine' | 'rl' | 'research' | 'thesis' | 'alpha'
-type RLSubTab = 'concepts' | 'transitions' | 'policy' | 'value' | 'audit' | 'role_lab'
+type RLSubTab = 'transitions' | 'policy' | 'audit' | 'lab'
 type AlphaSubTab = 'feed' | 'theses' | 'lab' | 'tracker'
 
 const TABS: { key: BoardRoomTab; label: string }[] = [
@@ -34,12 +35,10 @@ const TABS: { key: BoardRoomTab; label: string }[] = [
 ]
 
 const RL_TABS: { key: RLSubTab; label: string }[] = [
-  { key: 'concepts', label: 'Concepts' },
   { key: 'transitions', label: 'Transitions' },
   { key: 'policy', label: 'Policy' },
-  { key: 'value', label: 'Value' },
   { key: 'audit', label: 'Audit' },
-  { key: 'role_lab', label: 'Role Lab' },
+  { key: 'lab', label: 'Lab' },
 ]
 
 const ALPHA_TABS: { key: AlphaSubTab; label: string }[] = [
@@ -52,7 +51,7 @@ const ALPHA_TABS: { key: AlphaSubTab; label: string }[] = [
 export default function BoardRoomPage() {
   const { user } = useAuth()
   const [activeTab, setActiveTab] = useState<BoardRoomTab>('machine')
-  const [rlSubTab, setRlSubTab] = useState<RLSubTab>('concepts')
+  const [rlSubTab, setRlSubTab] = useState<RLSubTab>('transitions')
   const [alphaSubTab, setAlphaSubTab] = useState<AlphaSubTab>('feed')
   const [signalCount, setSignalCount] = useState(0)
   const [thesisCount, setThesisCount] = useState(0)
@@ -146,17 +145,26 @@ export default function BoardRoomPage() {
           {isMachine && (
             <div className="space-y-3 py-2">
               <TheMachine />
-              <GovernanceLedger />
             </div>
           )}
           {isResearch && <ResearchNorthStarView />}
           {isThesis && <MarketThesisView />}
-          {isRL && rlSubTab === 'concepts' && <ConceptsView />}
           {isRL && rlSubTab === 'transitions' && <TransitionsView />}
           {isRL && rlSubTab === 'policy' && <PolicyView />}
-          {isRL && rlSubTab === 'value' && <ValueView />}
-          {isRL && rlSubTab === 'audit' && <AuditView />}
-          {isRL && rlSubTab === 'role_lab' && <RoleLabView />}
+          {isRL && rlSubTab === 'audit' && (
+            <div className="space-y-3 py-1">
+              <AuditView />
+              <ValueView />
+              <CalibrationView />
+              <GovernanceLedger />
+            </div>
+          )}
+          {isRL && rlSubTab === 'lab' && (
+            <div className="space-y-3 py-1">
+              <ConceptsView />
+              <RoleLabView />
+            </div>
+          )}
           {isAlpha && alphaSubTab === 'feed' && <AlphaFeedView />}
           {isAlpha && alphaSubTab === 'theses' && <AlphaThesesView onExperimentCreated={refreshCounts} />}
           {isAlpha && alphaSubTab === 'lab' && <AlphaLabView />}

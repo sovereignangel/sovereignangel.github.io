@@ -93,11 +93,11 @@ function computeMarginalGain(
   // new_product = product / component_i * 1.0
   // new_geo = (new_product)^(1/9)
   // marginal_gain = gate * (new_geo - old_geo) * 10
-  const currentValue = components[componentKey] as number
+  const currentValue = (components[componentKey] as number) ?? 0.05
   if (currentValue >= 1.0) return 0
   if (currentValue <= 0) return 0
 
-  const product = multiplicativeKeys.reduce((p, k) => p * (components[k] as number), 1)
+  const product = multiplicativeKeys.reduce((p, k) => p * ((components[k] as number) ?? 0.05), 1)
   const oldGeo = Math.pow(product, 1 / 11)
   const newProduct = product / currentValue // replacing with 1.0
   const newGeo = Math.pow(newProduct, 1 / 11)
@@ -125,8 +125,9 @@ export function computeAttribution(
 
   // Build component attributions
   const attributions: ComponentAttribution[] = COMPONENT_META.map(meta => {
-    const value = c[meta.key] as number
-    const yesterdayValue = yc ? (yc[meta.key] as number) : null
+    const value = (c[meta.key] as number) ?? 0.05
+    const rawYesterday = yc ? (yc[meta.key] as number) : null
+    const yesterdayValue = rawYesterday !== null && rawYesterday !== undefined ? rawYesterday : null
     const drag = computeDrag(c, meta.key, actualScore)
     const marginalGain = computeMarginalGain(c, meta.key, actualScore)
     const deltaFromYesterday = yesterdayValue !== null ? value - yesterdayValue : null
@@ -155,8 +156,9 @@ export function computeAttribution(
   const pillars: PillarAttribution[] = pillarDefs.map(def => {
     const components = multiplicativeAttrs.filter(a => a.pillar === def.pillar)
     const totalDrag = components.reduce((s, a) => s + a.drag, 0)
-    const value = c[def.valueKey] as number
-    const yesterdayValue = yc ? (yc[def.valueKey] as number) : null
+    const value = (c[def.valueKey] as number) ?? 0.05
+    const rawYV = yc ? (yc[def.valueKey] as number) : null
+    const yesterdayValue = rawYV !== null && rawYV !== undefined ? rawYV : null
 
     return {
       pillar: def.pillar,

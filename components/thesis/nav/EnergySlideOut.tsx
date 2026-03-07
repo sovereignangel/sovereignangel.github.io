@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from 'react'
 import { useDailyLogContext } from '@/components/thesis/DailyLogProvider'
-import type { NervousSystemState, BodyFelt, TrainingType } from '@/lib/types'
+import type { NervousSystemState, MovementType, TrainingType } from '@/lib/types'
 import { NERVOUS_SYSTEM_TRIGGERS, TRAINING_TYPES } from '@/lib/constants'
 import TwentyFourHourBanner from '@/components/thesis/TwentyFourHourBanner'
 
@@ -98,31 +98,37 @@ export default function EnergySlideOut({ onClose }: EnergySlideOutProps) {
             )}
           </div>
 
-          {/* Body Felt */}
+          {/* Movement Type */}
           <div>
             <label className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-burgundy block mb-1">
-              Body Felt
+              Movement
             </label>
             <div className="flex gap-1">
-              {(['open', 'neutral', 'tense'] as BodyFelt[]).map((state) => {
-                const styles = {
-                  open: { active: 'bg-green-ink text-paper border-green-ink', label: 'Open' },
-                  neutral: { active: 'bg-amber-ink text-paper border-amber-ink', label: 'Neutral' },
-                  tense: { active: 'bg-red-ink text-paper border-red-ink', label: 'Tense' },
-                }
-                return (
-                  <button
-                    key={state}
-                    onClick={() => updateField('bodyFelt', state)}
-                    className={`font-serif text-[9px] font-medium px-2 py-1 rounded-sm border transition-colors flex-1 ${
-                      log.bodyFelt === state ? styles[state].active : 'bg-transparent text-ink-light border-rule hover:border-ink-faint'
-                    }`}
-                  >
-                    {styles[state].label}
-                  </button>
-                )
-              })}
+              {([
+                { value: 'program' as MovementType, label: 'Program', desc: 'Followed training schedule' },
+                { value: 'movement' as MovementType, label: 'Movement', desc: 'General activity' },
+                { value: 'none' as MovementType, label: 'None', desc: 'Rest / no movement' },
+              ]).map((opt) => (
+                <button
+                  key={opt.value}
+                  onClick={() => updateField('movementType', opt.value)}
+                  title={opt.desc}
+                  className={`font-serif text-[9px] font-medium px-2 py-1 rounded-sm border transition-colors flex-1 ${
+                    log.movementType === opt.value
+                      ? 'bg-burgundy text-paper border-burgundy'
+                      : 'bg-transparent text-ink-light border-rule hover:border-ink-faint'
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
             </div>
+            {garminData?.steps != null && garminData.steps > 0 && (
+              <div className="flex items-center gap-1.5 mt-1">
+                <span className="font-mono text-[10px] text-ink">{(garminData.steps / 1000).toFixed(1)}k steps</span>
+                <span className="font-mono text-[8px] text-green-ink bg-green-bg px-1 py-0.5 rounded-sm">garmin</span>
+              </div>
+            )}
           </div>
 
           {/* NS State */}
@@ -152,6 +158,20 @@ export default function EnergySlideOut({ onClose }: EnergySlideOutProps) {
               })}
             </div>
           </div>
+
+          {/* Garmin Stress (regulation signal) */}
+          {garminData?.stressLevel != null && (
+            <div className="flex items-center gap-2">
+              <span className="font-mono text-[10px] text-ink-muted">Stress</span>
+              <span className={`font-mono text-[12px] font-bold ${
+                garminData.stressLevel <= 25 ? 'text-green-ink' :
+                garminData.stressLevel <= 50 ? 'text-amber-ink' : 'text-red-ink'
+              }`}>
+                {garminData.stressLevel}
+              </span>
+              <span className="font-mono text-[8px] text-green-ink bg-green-bg px-1 py-0.5 rounded-sm">garmin</span>
+            </div>
+          )}
 
           {/* NS Trigger (conditional) */}
           {(log.nervousSystemState === 'slightly_spiked' || log.nervousSystemState === 'spiked' || log.nervousSystemState === 'sick') && (
