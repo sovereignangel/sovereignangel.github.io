@@ -1,14 +1,8 @@
 /**
- * Overnight Pipeline — Phase 1: HARVEST
+ * Overnight Pipeline — Step 1: Harvest Feeds
  *
- * Ingests signals from all four streams.
- * On completion, chains to /api/cron/overnight/process.
- *
- * Hobby plan: each phase runs in its own 60s function invocation.
- * The cron triggers this endpoint, which chains the rest.
- *
- * Schedule: 0 12 * * * (12pm UTC / 7am ET)
- *           0 13 * * * (1pm UTC / 8am ET — DST guard)
+ * Scrapes investor/founder RSS feeds.
+ * Chains to: /api/cron/overnight/papers
  */
 
 import { NextRequest, NextResponse } from 'next/server'
@@ -23,70 +17,36 @@ export async function GET(request: NextRequest) {
   }
 
   const uid = process.env.FIREBASE_UID
-  if (!uid) {
-    return NextResponse.json({ error: 'FIREBASE_UID not set' }, { status: 500 })
-  }
+  if (!uid) return NextResponse.json({ error: 'FIREBASE_UID not set' }, { status: 500 })
 
   const { adminDb } = await import('@/lib/firebase-admin')
-  if (!adminDb) {
-    return NextResponse.json({ error: 'Firebase Admin not initialized' }, { status: 500 })
-  }
-
   const today = new Date().toISOString().split('T')[0]
   const force = request.nextUrl.searchParams.get('force') === 'true'
 
-  // Check if briefing already exists (idempotent)
-  const existing = await adminDb.collection('users').doc(uid).collection('thesis_briefings').doc(today).get()
-  if (existing.exists && !force) {
-    return NextResponse.json({ skipped: true, reason: 'Briefing already generated today', date: today })
+  // Idempotency check
+  if (!force) {
+    const briefing = await adminDb.collection('users').doc(uid).collection('thesis_briefings').doc(today).get()
+    if (briefing.exists) {
+      return NextResponse.json({ skipped: true, reason: 'Briefing already generated today' })
+    }
   }
 
-  console.log(`[overnight] HARVEST phase starting for ${today}`)
   const start = Date.now()
+  console.log(`[overnight] Step 1/4: Harvest feeds for ${today}`)
 
   let results = {}
-  const errors: string[] = []
-
   try {
-    const { runHarvestPhase } = await import('@/lib/overnight/orchestrator')
-    results = await runHarvestPhase(uid)
+    const { runHarvestFeeds } = await import('@/lib/overnight/orchestrator')
+    results = await runHarvestFeeds(uid)
   } catch (e: unknown) {
-    const msg = e instanceof Error ? e.message : 'Unknown error'
-    errors.push(`harvest: ${msg}`)
-    console.error('[overnight] HARVEST failed:', e)
+    console.error('[overnight] Harvest feeds failed:', e)
   }
 
-  // Save run record
-  await adminDb.collection('users').doc(uid).collection('overnight_runs').doc().set({
-    date: today,
-    phase: 'harvest',
-    status: errors.length ? 'failed' : 'completed',
-    stream: 'all',
-    startedAt: new Date(start).toISOString(),
-    completedAt: new Date().toISOString(),
-    durationMs: Date.now() - start,
-    results,
-    errors,
-    createdAt: new Date(),
-  })
+  // Chain to papers
+  const base = process.env.NEXT_PUBLIC_BASE_URL || 'https://www.loricorpuz.com'
+  fetch(`${base}/api/cron/overnight/papers${force ? '?force=true' : ''}`, {
+    headers: { Authorization: `Bearer ${process.env.CRON_SECRET}` },
+  }).catch(() => {})
 
-  // Chain to process phase (fire-and-forget)
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://www.loricorpuz.com'
-  try {
-    fetch(`${baseUrl}/api/cron/overnight/process${force ? '?force=true' : ''}`, {
-      headers: { Authorization: `Bearer ${process.env.CRON_SECRET}` },
-    }).catch(() => {})
-  } catch {}
-
-  console.log(`[overnight] HARVEST complete in ${Date.now() - start}ms, chaining to process`)
-
-  return NextResponse.json({
-    success: errors.length === 0,
-    phase: 'harvest',
-    date: today,
-    durationMs: Date.now() - start,
-    results,
-    errors,
-    nextPhase: 'process',
-  })
+  return NextResponse.json({ phase: 'harvest-feeds', durationMs: Date.now() - start, results })
 }

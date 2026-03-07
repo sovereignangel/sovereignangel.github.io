@@ -1,6 +1,8 @@
 /**
- * Overnight Pipeline — Phase 3: SYNTHESIS
- * Chained from process. Cross-links streams, generates briefing, notifies.
+ * Overnight Pipeline — Step 4: Synthesis
+ *
+ * Cross-links all streams, generates morning briefing, sends notification.
+ * Final step — no further chaining.
  */
 
 import { NextRequest, NextResponse } from 'next/server'
@@ -15,89 +17,62 @@ export async function GET(request: NextRequest) {
   }
 
   const uid = process.env.FIREBASE_UID
-  if (!uid) {
-    return NextResponse.json({ error: 'FIREBASE_UID not set' }, { status: 500 })
-  }
+  if (!uid) return NextResponse.json({ error: 'FIREBASE_UID not set' }, { status: 500 })
 
   const { adminDb } = await import('@/lib/firebase-admin')
   const today = new Date().toISOString().split('T')[0]
   const force = request.nextUrl.searchParams.get('force') === 'true'
   const start = Date.now()
 
-  // Check if briefing already exists
+  // Idempotency
   if (!force) {
-    const briefingDoc = await adminDb.collection('users').doc(uid).collection('thesis_briefings').doc(today).get()
-    if (briefingDoc.exists) {
+    const existing = await adminDb.collection('users').doc(uid).collection('thesis_briefings').doc(today).get()
+    if (existing.exists) {
       return NextResponse.json({ skipped: true, reason: 'Briefing already generated today' })
     }
   }
 
-  console.log(`[overnight] SYNTHESIS phase starting for ${today}`)
+  console.log(`[overnight] Step 4/4: Synthesis`)
 
   let briefing: Record<string, unknown> = {}
-  const errors: string[] = []
+  let failed = false
 
   try {
     const { runSynthesisPhase } = await import('@/lib/overnight/orchestrator')
     briefing = await runSynthesisPhase(uid) as unknown as Record<string, unknown>
   } catch (e: unknown) {
-    const msg = e instanceof Error ? e.message : 'Unknown error'
-    errors.push(`synthesis: ${msg}`)
-    console.error('[overnight] SYNTHESIS failed:', e)
+    failed = true
+    console.error('[overnight] Synthesis failed:', e)
   }
 
   // Save run record
   await adminDb.collection('users').doc(uid).collection('overnight_runs').doc().set({
-    date: today,
-    phase: 'synthesis',
-    status: errors.length ? 'failed' : 'completed',
-    stream: 'all',
-    startedAt: new Date(start).toISOString(),
-    completedAt: new Date().toISOString(),
-    durationMs: Date.now() - start,
-    results: errors.length ? {} : {
-      briefGenerated: true,
-      headline: briefing.headline,
-      signalsProcessed: briefing.signalsProcessed,
-      crossLinks: (briefing.crossLinks as unknown[])?.length || 0,
-      teachBackItems: (briefing.teachBackQueue as unknown[])?.length || 0,
-    },
-    errors,
-    createdAt: new Date(),
+    date: today, phase: 'synthesis', status: failed ? 'failed' : 'completed',
+    results: failed ? {} : { headline: briefing.headline, signalsProcessed: briefing.signalsProcessed },
+    durationMs: Date.now() - start, createdAt: new Date(),
   })
 
-  // Send Telegram notification (best-effort)
-  if (errors.length === 0) {
+  // Telegram notification (best-effort)
+  if (!failed) {
     try {
       const { sendTelegramMessage } = await import('@/lib/telegram')
       const chatId = process.env.TELEGRAM_CHAT_ID
       if (chatId) {
-        const msg = [
+        await sendTelegramMessage(chatId, [
           `THESIS BRIEFING — ${today}`,
           '',
           (briefing.headline as string) || 'Overnight processing complete',
+          `${briefing.signalsProcessed || 0} signals | ${briefing.actionRequired || 0} actions`,
           '',
-          `${briefing.signalsProcessed || 0} signals processed`,
-          `${briefing.actionRequired || 0} require action`,
-          '',
-          `Full briefing: ${process.env.NEXT_PUBLIC_BASE_URL || 'https://loricorpuz.com'}/thesis/briefing`,
-        ].join('\n')
-        await sendTelegramMessage(chatId, msg)
+          `${process.env.NEXT_PUBLIC_BASE_URL || 'https://loricorpuz.com'}/thesis/briefing`,
+        ].join('\n'))
       }
-    } catch (e) {
-      console.warn('[overnight] Telegram notification failed:', e)
-    }
+    } catch {}
   }
 
-  console.log(`[overnight] SYNTHESIS complete in ${Date.now() - start}ms`)
-
   return NextResponse.json({
-    success: errors.length === 0,
-    phase: 'synthesis',
-    date: today,
-    durationMs: Date.now() - start,
-    headline: briefing.headline,
-    signalsProcessed: briefing.signalsProcessed,
-    errors,
+    phase: 'synthesis', durationMs: Date.now() - start,
+    headline: briefing.headline, signalsProcessed: briefing.signalsProcessed,
+    success: !failed,
   })
 }

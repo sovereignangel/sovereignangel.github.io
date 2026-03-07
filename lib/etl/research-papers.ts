@@ -174,8 +174,8 @@ export async function syncResearchPapers(uid: string): Promise<{ saved: number; 
         console.error(`[research-papers] Error fetching query "${label}", continuing:`, error)
       }
 
-      // ArXiv rate limit: 3s between queries
-      await new Promise(resolve => setTimeout(resolve, 3000))
+      // ArXiv rate limit
+      await new Promise(resolve => setTimeout(resolve, 1000))
     }
   }
 

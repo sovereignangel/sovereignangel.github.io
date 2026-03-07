@@ -159,8 +159,8 @@ export async function syncInvestorFeeds(uid: string): Promise<number> {
     } catch (error) {
       console.error(`[investor-feeds] Stream error for ${entry.name}, continuing:`, error)
     }
-    // Rate limit between feeds
-    await new Promise(resolve => setTimeout(resolve, 1000))
+    // Brief rate limit between feeds
+    await new Promise(resolve => setTimeout(resolve, 200))
   }
 
   console.log(`[investor-feeds] Saved ${totalSaved} signals from ${WATCHLIST.length} sources`)

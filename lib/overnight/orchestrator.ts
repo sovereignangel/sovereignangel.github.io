@@ -37,49 +37,47 @@ function today(): string {
 // PHASE 1: HARVEST (11pm - 1am ET)
 // ---------------------------------------------------------------------------
 
-export async function runHarvestPhase(uid: string): Promise<OvernightPhaseResult> {
-  console.log('[overnight] HARVEST phase starting...')
+export async function runHarvestFeeds(uid: string): Promise<OvernightPhaseResult> {
+  console.log('[overnight] HARVEST feeds starting...')
 
   const results: OvernightPhaseResult = {
     signalsIngested: 0,
-    papersFound: 0,
     postsScraped: 0,
-    journalEntriesParsed: 0,
   }
 
-  const errors: string[] = []
-
-  // 1. Sync investor/founder feeds (market stream)
   try {
     const { syncInvestorFeeds } = await import('@/lib/etl/investor-feeds')
     const count = await syncInvestorFeeds(uid)
     results.postsScraped = count
-    results.signalsIngested! += count
+    results.signalsIngested = count
   } catch (e) {
-    errors.push(`Investor feeds: ${(e as Error).message}`)
+    console.error('[overnight] Investor feeds error:', e)
   }
 
-  // 2. Sync research papers across three domains
+  console.log(`[overnight] HARVEST feeds complete: ${results.postsScraped} posts`)
+  return results
+}
+
+export async function runHarvestPapers(uid: string): Promise<OvernightPhaseResult> {
+  console.log('[overnight] HARVEST papers starting...')
+
+  const results: OvernightPhaseResult = {
+    signalsIngested: 0,
+    papersFound: 0,
+    papersQueued: 0,
+  }
+
   try {
     const { syncResearchPapers } = await import('@/lib/etl/research-papers')
     const { saved, queued } = await syncResearchPapers(uid)
     results.papersFound = saved
     results.papersQueued = queued
-    results.signalsIngested! += saved
+    results.signalsIngested = saved
   } catch (e) {
-    errors.push(`Research papers: ${(e as Error).message}`)
+    console.error('[overnight] Research papers error:', e)
   }
 
-  // 3. Existing ETL syncs (Garmin, Calendar, GitHub, etc.)
-  try {
-    const { syncAllData } = await import('@/lib/etl/sync-all')
-    await syncAllData()
-  } catch (e) {
-    errors.push(`Daily sync: ${(e as Error).message}`)
-  }
-
-  console.log(`[overnight] HARVEST complete: ${results.signalsIngested} signals, ${results.papersFound} papers, ${results.postsScraped} posts`)
-
+  console.log(`[overnight] HARVEST papers complete: ${results.papersFound} papers, ${results.papersQueued} queued`)
   return results
 }
 

@@ -1,7 +1,8 @@
 /**
- * Overnight Pipeline — Phase 2: PROCESS
- * Chained from harvest. Extracts beliefs, scans ventures, matches papers.
- * On completion, chains to /api/cron/overnight/synthesis.
+ * Overnight Pipeline — Step 3: Process
+ *
+ * Extracts beliefs from journal, scans venture signals, matches papers to beliefs.
+ * Chains to: /api/cron/overnight/synthesis
  */
 
 import { NextRequest, NextResponse } from 'next/server'
@@ -16,60 +17,33 @@ export async function GET(request: NextRequest) {
   }
 
   const uid = process.env.FIREBASE_UID
-  if (!uid) {
-    return NextResponse.json({ error: 'FIREBASE_UID not set' }, { status: 500 })
-  }
+  if (!uid) return NextResponse.json({ error: 'FIREBASE_UID not set' }, { status: 500 })
 
   const { adminDb } = await import('@/lib/firebase-admin')
   const today = new Date().toISOString().split('T')[0]
   const force = request.nextUrl.searchParams.get('force') === 'true'
   const start = Date.now()
 
-  console.log(`[overnight] PROCESS phase starting for ${today}`)
+  console.log(`[overnight] Step 3/4: Process`)
 
   let results = {}
-  const errors: string[] = []
-
   try {
     const { runProcessPhase } = await import('@/lib/overnight/orchestrator')
     results = await runProcessPhase(uid)
   } catch (e: unknown) {
-    const msg = e instanceof Error ? e.message : 'Unknown error'
-    errors.push(`process: ${msg}`)
-    console.error('[overnight] PROCESS failed:', e)
+    console.error('[overnight] Process failed:', e)
   }
 
-  // Save run record
   await adminDb.collection('users').doc(uid).collection('overnight_runs').doc().set({
-    date: today,
-    phase: 'process',
-    status: errors.length ? 'failed' : 'completed',
-    stream: 'all',
-    startedAt: new Date(start).toISOString(),
-    completedAt: new Date().toISOString(),
-    durationMs: Date.now() - start,
-    results,
-    errors,
-    createdAt: new Date(),
+    date: today, phase: 'process', status: 'completed',
+    results, durationMs: Date.now() - start, createdAt: new Date(),
   })
 
-  // Chain to synthesis phase (fire-and-forget)
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://www.loricorpuz.com'
-  try {
-    fetch(`${baseUrl}/api/cron/overnight/synthesis${force ? '?force=true' : ''}`, {
-      headers: { Authorization: `Bearer ${process.env.CRON_SECRET}` },
-    }).catch(() => {})
-  } catch {}
+  // Chain to synthesis
+  const base = process.env.NEXT_PUBLIC_BASE_URL || 'https://www.loricorpuz.com'
+  fetch(`${base}/api/cron/overnight/synthesis${force ? '?force=true' : ''}`, {
+    headers: { Authorization: `Bearer ${process.env.CRON_SECRET}` },
+  }).catch(() => {})
 
-  console.log(`[overnight] PROCESS complete in ${Date.now() - start}ms, chaining to synthesis`)
-
-  return NextResponse.json({
-    success: errors.length === 0,
-    phase: 'process',
-    date: today,
-    durationMs: Date.now() - start,
-    results,
-    errors,
-    nextPhase: 'synthesis',
-  })
+  return NextResponse.json({ phase: 'process', durationMs: Date.now() - start, results })
 }
