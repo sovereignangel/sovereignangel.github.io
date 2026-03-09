@@ -1,10 +1,51 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useAuth } from '@/components/auth/AuthProvider'
+import { RadarChart, PolarGrid, PolarAngleAxis, Radar, ResponsiveContainer } from 'recharts'
 import { strategicPillars, computeMomentum, type StrategicPillar, VENTURES } from '@/lib/strategic-priorities'
 
-// ─── Types ─────────────────────────────────────────────────────────────
+// ─── Luck Surface Area Analysis ────────────────────────────────────────
+// The "area" of the radar polygon = your luck surface area.
+// Marginal luck gain = how much the polygon area grows if you push one pillar up.
+// Prioritize the pillar with the highest marginal gain per effort.
+
+function computeRadarArea(scores: number[]): number {
+  // Area of a polygon inscribed in a circle with vertices at angles 2πi/n and radii r_i
+  // A = 0.5 * Σ r_i * r_{i+1} * sin(2π/n)
+  const n = scores.length
+  if (n < 3) return 0
+  const angle = (2 * Math.PI) / n
+  let area = 0
+  for (let i = 0; i < n; i++) {
+    const next = (i + 1) % n
+    area += scores[i] * scores[next] * Math.sin(angle)
+  }
+  return Math.abs(area) / 2
+}
+
+function computeMarginalGains(scores: number[], weights: number[]): Array<{ key: string; gain: number; effort: number; roi: number }> {
+  const currentArea = computeRadarArea(scores)
+  const maxArea = computeRadarArea(scores.map(() => 100)) // perfect pentagon
+
+  return scores.map((score, i) => {
+    // What if this pillar went up by 20 points?
+    const bumped = [...scores]
+    bumped[i] = Math.min(100, score + 20)
+    const newArea = computeRadarArea(bumped)
+    const gain = newArea - currentArea
+
+    // Effort inversely proportional to current score (harder to improve what's already high)
+    const effort = Math.max(1, score / 20)
+
+    // ROI = gain per unit effort, weighted by strategic importance
+    const roi = (gain / effort) * (weights[i] / 100)
+
+    return { key: strategicPillars[i].key, gain, effort, roi }
+  })
+}
+
+// ─── Status helpers ────────────────────────────────────────────────────
 
 const VENTURE_STYLE: Record<string, string> = {
   active: 'text-green-ink bg-green-bg border-green-ink/20',
@@ -24,10 +65,12 @@ const STATUS_COLOR: Record<string, string> = {
   complete: 'text-green-ink',
 }
 
+// ─── Component ─────────────────────────────────────────────────────────
+
 export default function SurfaceAreaView() {
   const { user } = useAuth()
   const [pillars, setPillars] = useState<StrategicPillar[]>(strategicPillars)
-  const [expanded, setExpanded] = useState<string>('alpha')
+  const [expanded, setExpanded] = useState<string>('')
 
   const storageKey = user?.uid ? `strategic-v3-${user.uid}` : null
 
@@ -74,49 +117,125 @@ export default function SurfaceAreaView() {
 
   const { score: momentum, pillarScores } = computeMomentum(pillars)
 
+  // Radar data
+  const radarData = pillarScores.map(ps => ({
+    pillar: ps.title.split(' ')[0], // Short label
+    score: ps.score,
+    fullMark: 100,
+  }))
+
+  // Luck analysis
+  const scores = pillarScores.map(ps => ps.score)
+  const weights = pillarScores.map(ps => ps.weight)
+  const currentArea = computeRadarArea(scores)
+  const maxArea = computeRadarArea(scores.map(() => 100))
+  const coveragePct = maxArea > 0 ? Math.round((currentArea / maxArea) * 100) : 0
+
+  const marginalGains = useMemo(
+    () => computeMarginalGains(scores, weights).sort((a, b) => b.roi - a.roi),
+    [scores, weights]
+  )
+
+  // Top priority recommendation
+  const topPriority = marginalGains[0]
+  const topPillar = pillars.find(p => p.key === topPriority?.key)
+
   return (
     <div className="space-y-3 py-2">
-      {/* Header with momentum score */}
-      <div className="bg-burgundy-bg border border-burgundy/10 rounded-sm p-2">
-        <div className="flex items-center justify-between">
+      {/* Radar + Momentum */}
+      <div className="bg-white border border-rule rounded-sm p-3">
+        <div className="flex items-center justify-between mb-2">
           <h3 className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy">
-            Strategic Momentum
+            Luck Surface Area
           </h3>
-          <div className="flex items-baseline gap-1">
-            <span className="font-mono text-[22px] font-bold text-burgundy leading-none">{momentum}</span>
-            <span className="font-mono text-[9px] text-ink-muted">/ 100</span>
+          <div className="flex items-baseline gap-2">
+            <div className="flex items-baseline gap-1">
+              <span className="font-mono text-[9px] text-ink-muted">Coverage</span>
+              <span className={`font-mono text-[14px] font-bold leading-none ${
+                coveragePct >= 40 ? 'text-green-ink' : coveragePct >= 15 ? 'text-amber-ink' : 'text-red-ink'
+              }`}>{coveragePct}%</span>
+            </div>
+            <div className="flex items-baseline gap-1">
+              <span className="font-mono text-[9px] text-ink-muted">Momentum</span>
+              <span className="font-mono text-[14px] font-bold text-burgundy leading-none">{momentum}</span>
+            </div>
           </div>
         </div>
-        <p className="font-sans text-[9px] text-ink-muted mt-1">
-          Weighted progress across 5 strategic pillars. Simons rule: track the signal, not the noise.
-        </p>
-      </div>
 
-      {/* 5-pillar summary */}
-      <div className="bg-white border border-rule rounded-sm p-2">
-        <div className="space-y-1.5">
+        {/* Radar chart */}
+        <div className="h-[200px] -mx-2">
+          <ResponsiveContainer width="100%" height="100%">
+            <RadarChart data={radarData} cx="50%" cy="50%" outerRadius="75%">
+              <PolarGrid stroke="#d8d0c8" strokeWidth={0.5} />
+              <PolarAngleAxis
+                dataKey="pillar"
+                tick={{ fontSize: 9, fill: '#9a928a', fontFamily: 'var(--font-sans)' }}
+              />
+              <Radar
+                name="Score"
+                dataKey="score"
+                stroke="#7c2d2d"
+                fill="#7c2d2d"
+                fillOpacity={0.15}
+                strokeWidth={1.5}
+              />
+            </RadarChart>
+          </ResponsiveContainer>
+        </div>
+
+        {/* Pillar scores inline */}
+        <div className="flex justify-between mt-1 px-1">
           {pillarScores.map(ps => (
-            <div key={ps.key}>
-              <div className="flex items-center justify-between mb-0.5">
-                <div className="flex items-center gap-1.5">
-                  <span className="font-sans text-[10px] font-medium text-ink">{ps.title}</span>
-                  <span className="font-mono text-[7px] text-ink-faint">{ps.weight}%w</span>
-                </div>
-                <span className={`font-mono text-[10px] font-semibold ${
-                  ps.score >= 50 ? 'text-green-ink' : ps.score >= 20 ? 'text-amber-ink' : 'text-ink-muted'
-                }`}>{ps.score}</span>
-              </div>
-              <div className="h-1.5 bg-cream rounded-sm overflow-hidden">
-                <div
-                  className={`h-full rounded-sm transition-all ${
-                    ps.score >= 50 ? 'bg-green-ink' : ps.score >= 20 ? 'bg-amber-ink' : 'bg-ink-faint'
-                  }`}
-                  style={{ width: `${Math.max(ps.score, 2)}%` }}
-                />
-              </div>
+            <div key={ps.key} className="text-center">
+              <span className={`font-mono text-[11px] font-semibold ${
+                ps.score >= 50 ? 'text-green-ink' : ps.score >= 20 ? 'text-amber-ink' : 'text-ink-faint'
+              }`}>{ps.score}</span>
+              <div className="font-mono text-[7px] text-ink-muted">{ps.weight}%w</div>
             </div>
           ))}
         </div>
+      </div>
+
+      {/* Marginal Luck Analysis */}
+      <div className="bg-burgundy-bg border border-burgundy/10 rounded-sm p-2">
+        <h4 className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-1.5">
+          Highest Marginal Luck Gain
+        </h4>
+        <p className="font-sans text-[10px] text-ink leading-relaxed mb-2">
+          Push <strong>{topPillar?.title}</strong> next — it has the best ROI on luck surface area expansion
+          given its current score and strategic weight.
+        </p>
+        <div className="space-y-1">
+          {marginalGains.map((mg, i) => {
+            const pillar = pillars.find(p => p.key === mg.key)
+            const ps = pillarScores.find(s => s.key === mg.key)
+            const isTop = i === 0
+            return (
+              <div key={mg.key} className={`flex items-center gap-2 px-1.5 py-1 rounded-sm ${
+                isTop ? 'bg-white border border-burgundy/20' : ''
+              }`}>
+                <span className={`font-mono text-[10px] font-bold w-4 ${isTop ? 'text-burgundy' : 'text-ink-muted'}`}>
+                  {i + 1}
+                </span>
+                <span className="font-sans text-[10px] text-ink flex-1">{pillar?.title}</span>
+                <span className="font-mono text-[8px] text-ink-muted">score {ps?.score}</span>
+                <div className="w-12 h-1 bg-cream rounded-sm overflow-hidden">
+                  <div
+                    className={`h-full rounded-sm ${isTop ? 'bg-burgundy' : 'bg-ink-faint'}`}
+                    style={{ width: `${Math.min(100, (mg.roi / (marginalGains[0]?.roi || 1)) * 100)}%` }}
+                  />
+                </div>
+                <span className={`font-mono text-[8px] font-semibold w-6 text-right ${isTop ? 'text-burgundy' : 'text-ink-muted'}`}>
+                  {mg.roi > 0 ? mg.roi.toFixed(0) : '0'}
+                </span>
+              </div>
+            )
+          })}
+        </div>
+        <p className="font-sans text-[8px] text-ink-muted mt-1.5 italic">
+          ROI = (area gain from +20pts) / (effort at current level) × strategic weight.
+          Low score + high weight = highest marginal return.
+        </p>
       </div>
 
       {/* Venture status */}
@@ -133,30 +252,38 @@ export default function SurfaceAreaView() {
               <span className={`font-sans text-[10px] font-medium ${v.status === 'killed' ? 'text-ink-muted line-through' : 'text-ink'}`}>
                 {v.name}
               </span>
-              <span className="font-sans text-[8px] text-ink-muted ml-auto shrink-0 max-w-[200px] truncate">{v.note}</span>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Pillar cards */}
+      {/* Pillar drill-down cards */}
       {pillars.map(p => {
         const isExpanded = expanded === p.key
         const ps = pillarScores.find(s => s.key === p.key)
+        const mg = marginalGains.find(m => m.key === p.key)
+        const rank = marginalGains.findIndex(m => m.key === p.key) + 1
 
         return (
-          <div key={p.key} className="bg-white border border-rule rounded-sm">
+          <div key={p.key} className={`bg-white border rounded-sm ${rank === 1 ? 'border-burgundy/30' : 'border-rule'}`}>
             <button
               onClick={() => setExpanded(isExpanded ? '' : p.key)}
               className="w-full p-2 text-left"
             >
               <div className="flex items-center justify-between">
-                <h4 className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-burgundy">
-                  {p.title}
-                </h4>
+                <div className="flex items-center gap-2">
+                  {rank === 1 && (
+                    <span className="font-mono text-[7px] uppercase px-1 py-0.5 rounded-sm bg-burgundy text-paper">
+                      priority
+                    </span>
+                  )}
+                  <h4 className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-burgundy">
+                    {p.title}
+                  </h4>
+                </div>
                 <div className="flex items-center gap-2">
                   <span className={`font-mono text-[10px] font-semibold ${
-                    (ps?.score ?? 0) >= 50 ? 'text-green-ink' : (ps?.score ?? 0) >= 20 ? 'text-amber-ink' : 'text-ink-muted'
+                    (ps?.score ?? 0) >= 50 ? 'text-green-ink' : (ps?.score ?? 0) >= 20 ? 'text-amber-ink' : 'text-ink-faint'
                   }`}>{ps?.score ?? 0}</span>
                   <span className="font-sans text-[10px] text-ink-faint">{isExpanded ? '▾' : '▸'}</span>
                 </div>
