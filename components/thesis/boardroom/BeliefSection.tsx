@@ -26,6 +26,15 @@ const STATUS_FILTERS: { key: string; label: string }[] = [
   { key: 'invalidated', label: 'Invalidated' },
 ]
 
+const DOMAIN_FILTERS: { key: string; label: string }[] = [
+  { key: 'all', label: 'All' },
+  { key: 'portfolio', label: 'Portfolio' },
+  { key: 'product', label: 'Product' },
+  { key: 'revenue', label: 'Revenue' },
+  { key: 'personal', label: 'Personal' },
+  { key: 'thesis', label: 'Thesis' },
+]
+
 interface BeliefSectionProps {
   onActOnBelief?: (belief: Belief) => void
 }
@@ -35,6 +44,7 @@ export default function BeliefSection({ onActOnBelief }: BeliefSectionProps) {
   const { beliefs, untested, stale, loading, save, remove, refresh } = useBeliefs(user?.uid)
   const { save: saveDecision } = useDecisions(user?.uid)
   const [filter, setFilter] = useState('all')
+  const [domainFilter, setDomainFilter] = useState('all')
   const [showForm, setShowForm] = useState(false)
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [extendingId, setExtendingId] = useState<string | null>(null)
@@ -50,9 +60,11 @@ export default function BeliefSection({ onActOnBelief }: BeliefSectionProps) {
 
   const today = new Date().toISOString().split('T')[0]
 
-  const filtered = filter === 'all'
-    ? beliefs
-    : beliefs.filter(b => b.status === filter)
+  const filtered = beliefs.filter(b => {
+    if (filter !== 'all' && b.status !== filter) return false
+    if (domainFilter !== 'all' && b.domain !== domainFilter) return false
+    return true
+  })
 
   // Pin untested beliefs at top
   const sorted = [...filtered].sort((a, b) => {
@@ -242,6 +254,26 @@ export default function BeliefSection({ onActOnBelief }: BeliefSectionProps) {
         >
           + New Belief
         </button>
+      </div>
+
+      {/* Domain filter pills */}
+      <div className="flex items-center gap-1 flex-wrap">
+        {DOMAIN_FILTERS.map(f => {
+          const style = f.key === 'all'
+            ? (domainFilter === 'all' ? 'bg-burgundy text-paper border-burgundy' : 'bg-transparent text-ink-muted border-rule hover:border-ink-faint')
+            : (domainFilter === f.key
+              ? `${DOMAIN_COLORS[f.key]} border font-semibold`
+              : 'bg-transparent text-ink-muted border-rule hover:border-ink-faint')
+          return (
+            <button
+              key={f.key}
+              onClick={() => setDomainFilter(f.key)}
+              className={`font-mono text-[8px] uppercase px-1.5 py-0.5 rounded-sm border transition-colors ${style}`}
+            >
+              {f.label}
+            </button>
+          )
+        })}
       </div>
 
       {/* New belief form */}
