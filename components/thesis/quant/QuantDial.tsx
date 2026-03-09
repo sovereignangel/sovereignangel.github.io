@@ -87,19 +87,19 @@ export default function QuantDial() {
       {/* Target allocation */}
       <div className="bg-cream border border-rule rounded-sm p-2">
         <h4 className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-1">
-          Target Mix
+          Target Mix by Phase
         </h4>
         <div className="space-y-0.5">
           <div className="flex items-center justify-between">
-            <span className="font-sans text-[9px] text-ink-muted">Foundation phase</span>
-            <span className="font-mono text-[8px] text-ink-muted">40% Math · 30% Code · 20% Finance · 10% ML</span>
+            <span className="font-sans text-[9px] text-ink-muted">Systematize (now)</span>
+            <span className="font-mono text-[8px] text-ink-muted">10% Math · 50% Code · 30% Finance · 10% ML</span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="font-sans text-[9px] text-ink-muted">Specialization</span>
-            <span className="font-mono text-[8px] text-ink-muted">20% Math · 30% Code · 20% Finance · 30% ML</span>
+            <span className="font-sans text-[9px] text-ink-muted">Formalize (mo 3+)</span>
+            <span className="font-mono text-[8px] text-ink-muted">30% Math · 20% Code · 20% Finance · 30% ML</span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="font-sans text-[9px] text-ink-muted">Authority</span>
+            <span className="font-sans text-[9px] text-ink-muted">Scale (mo 8+)</span>
             <span className="font-mono text-[8px] text-ink-muted">10% Math · 20% Code · 40% Finance · 30% ML</span>
           </div>
         </div>
