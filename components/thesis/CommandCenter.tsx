@@ -19,6 +19,7 @@ import type { DailyAllocation } from '@/lib/types'
 import { MUSCLE_TARGETS } from '@/lib/constants'
 import { localDateString } from '@/lib/date-utils'
 import ScoreAttribution from '@/components/thesis/ScoreAttribution'
+import { strategicPillars, computeMomentum, type StrategicPillar } from '@/lib/strategic-priorities'
 
 // ─── Helpers ────────────────────────────────────────────────────────
 
@@ -342,6 +343,9 @@ export default function CommandCenter() {
         scores={scores}
       />
 
+      {/* ═══ STRATEGIC MOMENTUM ═══ */}
+      <MomentumStrip uid={user?.uid} />
+
       {/* ═══ STATE OF PLAY ═══ */}
       <div className={`px-3 py-2 rounded-sm ${stateIsGreen ? 'bg-green-bg border border-green-ink/10' : 'bg-cream border border-rule'}`}>
         <p className={`font-serif text-[11px] italic ${stateIsGreen ? 'text-green-ink' : 'text-ink'}`}>
@@ -389,6 +393,57 @@ export default function CommandCenter() {
           {/* Prioritized Actions */}
           <ActionsList actions={actions} />
         </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── Momentum Strip ─────────────────────────────────────────────────
+
+function MomentumStrip({ uid }: { uid: string | undefined }) {
+  const [pillars, setPillars] = useState<StrategicPillar[]>(strategicPillars)
+
+  useEffect(() => {
+    if (!uid) return
+    const saved = localStorage.getItem(`strategic-v3-${uid}`)
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved) as Array<{ id: string; status: string }>
+        setPillars(strategicPillars.map(p => ({
+          ...p,
+          activities: p.activities.map(a => {
+            const s = parsed.find(x => x.id === a.id)
+            return s ? { ...a, status: s.status as 'not_started' | 'active' | 'complete' } : a
+          }),
+        })))
+      } catch { /* ignore */ }
+    }
+  }, [uid])
+
+  const { score, pillarScores } = computeMomentum(pillars)
+
+  return (
+    <div className="bg-white border border-rule rounded-sm px-3 py-2">
+      <div className="flex items-center gap-3 flex-wrap">
+        {/* Aggregate */}
+        <div className="flex items-baseline gap-1">
+          <span className="font-mono text-[9px] text-ink-muted uppercase">Momentum</span>
+          <span className={`font-mono text-[16px] font-bold leading-none ${
+            score >= 50 ? 'text-green-ink' : score >= 25 ? 'text-amber-ink' : 'text-red-ink'
+          }`}>{score}</span>
+        </div>
+
+        <span className="text-rule">|</span>
+
+        {/* 5 pillars */}
+        {pillarScores.map(ps => (
+          <div key={ps.key} className="flex items-center gap-1">
+            <span className="font-mono text-[9px] text-ink-muted">{ps.title.split(' ')[0]}</span>
+            <span className={`font-mono text-[11px] font-semibold tabular-nums ${
+              ps.score >= 50 ? 'text-green-ink' : ps.score >= 20 ? 'text-amber-ink' : 'text-ink-faint'
+            }`}>{ps.score}</span>
+          </div>
+        ))}
       </div>
     </div>
   )

@@ -2,161 +2,14 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '@/components/auth/AuthProvider'
+import { strategicPillars, computeMomentum, type StrategicPillar, VENTURES } from '@/lib/strategic-priorities'
 
-// ─── Strategic Priorities ──────────────────────────────────────────────
-
-interface Activity {
-  id: string
-  label: string
-  status: 'not_started' | 'active' | 'complete'
-}
-
-interface Priority {
-  key: string
-  title: string
-  muscle: string
-  vehicle: string
-  activities: Activity[]
-}
-
-interface Venture {
-  name: string
-  status: 'active' | 'backlog' | 'killed'
-  note: string
-}
-
-const VENTURES: Venture[] = [
-  { name: 'Armstrong', status: 'active', note: 'Primary skill-building vehicle. CQL, quant research, IB automation.' },
-  { name: 'Alamo Bernal', status: 'active', note: 'Close the deal. Validates fund management credibility.' },
-  { name: 'Arc (consumer product)', status: 'active', note: 'Thesis Engine → consumer. arc.loricorpuz.com' },
-  { name: 'Deep Tech Fund', status: 'backlog', note: 'Parked. Revisit after Armstrong + Bernal are running.' },
-  { name: 'Manifold', status: 'killed', note: 'Killed. Resources redirected to Armstrong focus.' },
-]
-
-const PRIORITIES: Priority[] = [
-  {
-    key: 'skills-armstrong',
-    title: 'Build Skills with Armstrong',
-    muscle: 'Finance + Research + Code',
-    vehicle: 'Armstrong Fund',
-    activities: [
-      { id: 'sa1', label: 'IB paper trading automation (CQL → IB pipeline)', status: 'not_started' },
-      { id: 'sa2', label: 'Formalize CQL strategy documentation', status: 'active' },
-      { id: 'sa3', label: 'Compute Sharpe / tearsheet on 300+ position history', status: 'not_started' },
-      { id: 'sa4', label: 'Greeks monitoring dashboard for options book', status: 'not_started' },
-      { id: 'sa5', label: 'Risk guardrails (position limits, daily loss, correlation)', status: 'not_started' },
-    ],
-  },
-  {
-    key: 'close-bernal',
-    title: 'Close Bernal',
-    muscle: 'Sales + Finance',
-    vehicle: 'Alamo Bernal',
-    activities: [
-      { id: 'cb1', label: 'Finalize partnership terms', status: 'active' },
-      { id: 'cb2', label: 'Deliver pitch deck / proposal site', status: 'active' },
-      { id: 'cb3', label: 'Legal / compliance setup', status: 'not_started' },
-    ],
-  },
-  {
-    key: 'fund-sales',
-    title: 'Open HF / FO Opportunities',
-    muscle: 'Sales + Network',
-    vehicle: 'Outbound',
-    activities: [
-      { id: 'fs1', label: 'Build target list: hedge funds + family offices in Bay Area', status: 'not_started' },
-      { id: 'fs2', label: 'Craft outreach template (track record + CQL narrative)', status: 'not_started' },
-      { id: 'fs3', label: 'Attend 2 industry events / meetups', status: 'not_started' },
-      { id: 'fs4', label: 'Get 5 warm introductions via existing network', status: 'not_started' },
-    ],
-  },
-  {
-    key: 'job-apps',
-    title: 'Apply to AI Eng / Product Owner (Fintech)',
-    muscle: 'Career optionality',
-    vehicle: 'Job market',
-    activities: [
-      { id: 'ja1', label: 'Polish resume: emphasize Thesis Engine + Armstrong + AI stack', status: 'not_started' },
-      { id: 'ja2', label: 'Apply to 5 Applied AI Engineering roles (fintech focus)', status: 'not_started' },
-      { id: 'ja3', label: 'Apply to 5 Product Owner / PM roles (fintech / AI)', status: 'not_started' },
-      { id: 'ja4', label: 'Prep system design + product case interviews', status: 'not_started' },
-      { id: 'ja5', label: 'Build portfolio page showcasing Thesis Engine + Armstrong', status: 'not_started' },
-    ],
-  },
-  {
-    key: 'arc-product',
-    title: 'Thesis Engine → Arc Consumer Product',
-    muscle: 'Product + Code',
-    vehicle: 'arc.loricorpuz.com',
-    activities: [
-      { id: 'ap1', label: 'Define Arc MVP scope (what subset of Thesis Engine ships?)', status: 'not_started' },
-      { id: 'ap2', label: 'User-facing onboarding flow', status: 'not_started' },
-      { id: 'ap3', label: 'Landing page with clear value prop', status: 'active' },
-      { id: 'ap4', label: 'Get 5 beta users outside yourself', status: 'not_started' },
-    ],
-  },
-  {
-    key: 'venture-builder',
-    title: 'Venture Builder Muscle',
-    muscle: 'Pattern recognition + Taste',
-    vehicle: 'Value observation practice',
-    activities: [
-      { id: 'vb1', label: 'Weekly value observation log (market gaps, broken workflows)', status: 'active' },
-      { id: 'vb2', label: 'Evaluate 1 opportunity/week through venture lens', status: 'not_started' },
-      { id: 'vb3', label: 'Maintain venture ideas backlog with scoring', status: 'active' },
-    ],
-  },
-  {
-    key: 'research-muscle',
-    title: 'Research Muscle',
-    muscle: 'Intelligence + Discovery',
-    vehicle: 'Armstrong + Thesis Engine',
-    activities: [
-      { id: 'rm1', label: 'Weekly research deep-dive (quant paper, market thesis, or tech)', status: 'active' },
-      { id: 'rm2', label: 'Process intelligence feeds daily (pillar briefs, signals)', status: 'active' },
-      { id: 'rm3', label: 'Maintain hypothesis ledger with conviction updates', status: 'active' },
-    ],
-  },
-  {
-    key: 'finance-muscle',
-    title: 'Finance Muscle',
-    muscle: 'Capital + Risk',
-    vehicle: 'Armstrong + Personal',
-    activities: [
-      { id: 'fm1', label: 'Armstrong portfolio management (active)', status: 'active' },
-      { id: 'fm2', label: 'Personal finance optimization (tax, allocation, runway)', status: 'not_started' },
-      { id: 'fm3', label: 'Anki: reactivate actuarial/ME math foundations', status: 'not_started' },
-    ],
-  },
-  {
-    key: 'philosophy-taste',
-    title: 'Philosophy / Business / Taste',
-    muscle: 'Judgment + Coherence',
-    vehicle: 'Daily journaling system',
-    activities: [
-      { id: 'pt1', label: 'Daily journal → beliefs → decisions → principles pipeline', status: 'active' },
-      { id: 'pt2', label: 'Governance ledger: record reasoning at decision time', status: 'active' },
-      { id: 'pt3', label: 'Weekly review: what did I learn, what would I do differently?', status: 'active' },
-    ],
-  },
-  {
-    key: 'distribution',
-    title: 'Output for Distribution',
-    muscle: 'Network + Authority',
-    vehicle: 'X, Research, Saturday Pitches',
-    activities: [
-      { id: 'di1', label: 'Weekly X post (research insight, market take, or build update)', status: 'not_started' },
-      { id: 'di2', label: 'Saturday engineering group pitch (weekly)', status: 'active' },
-      { id: 'di3', label: 'Publish 1 research piece / month (Substack, SSRN, or blog)', status: 'not_started' },
-      { id: 'di4', label: 'Share Armstrong learnings in quant communities', status: 'not_started' },
-    ],
-  },
-]
+// ─── Types ─────────────────────────────────────────────────────────────
 
 const VENTURE_STYLE: Record<string, string> = {
   active: 'text-green-ink bg-green-bg border-green-ink/20',
   backlog: 'text-amber-ink bg-amber-bg border-amber-ink/20',
-  killed: 'text-ink-muted bg-cream border-rule line-through',
+  killed: 'text-ink-muted bg-cream border-rule',
 }
 
 const STATUS_ICON: Record<string, string> = {
@@ -173,10 +26,10 @@ const STATUS_COLOR: Record<string, string> = {
 
 export default function SurfaceAreaView() {
   const { user } = useAuth()
-  const [priorities, setPriorities] = useState<Priority[]>(PRIORITIES)
-  const [expanded, setExpanded] = useState<string>('skills-armstrong')
+  const [pillars, setPillars] = useState<StrategicPillar[]>(strategicPillars)
+  const [expanded, setExpanded] = useState<string>('alpha')
 
-  const storageKey = user?.uid ? `surface-area-v2-${user.uid}` : null
+  const storageKey = user?.uid ? `strategic-v3-${user.uid}` : null
 
   useEffect(() => {
     if (!storageKey) return
@@ -184,29 +37,29 @@ export default function SurfaceAreaView() {
     if (saved) {
       try {
         const parsed = JSON.parse(saved) as Array<{ id: string; status: string }>
-        setPriorities(PRIORITIES.map(p => ({
+        setPillars(strategicPillars.map(p => ({
           ...p,
           activities: p.activities.map(a => {
             const s = parsed.find(x => x.id === a.id)
-            return s ? { ...a, status: s.status as Activity['status'] } : a
+            return s ? { ...a, status: s.status as 'not_started' | 'active' | 'complete' } : a
           }),
         })))
       } catch { /* ignore */ }
     }
   }, [storageKey])
 
-  const persist = useCallback((updated: Priority[]) => {
-    setPriorities(updated)
+  const persist = useCallback((updated: StrategicPillar[]) => {
+    setPillars(updated)
     if (storageKey) {
       const flat = updated.flatMap(p => p.activities.map(a => ({ id: a.id, status: a.status })))
       localStorage.setItem(storageKey, JSON.stringify(flat))
     }
   }, [storageKey])
 
-  const cycleStatus = (priorityKey: string, activityId: string) => {
-    const order: Activity['status'][] = ['not_started', 'active', 'complete']
-    const updated = priorities.map(p => {
-      if (p.key !== priorityKey) return p
+  const cycleStatus = (pillarKey: string, activityId: string) => {
+    const order: Array<'not_started' | 'active' | 'complete'> = ['not_started', 'active', 'complete']
+    const updated = pillars.map(p => {
+      if (p.key !== pillarKey) return p
       return {
         ...p,
         activities: p.activities.map(a => {
@@ -219,33 +72,57 @@ export default function SurfaceAreaView() {
     persist(updated)
   }
 
-  // Compute scores
-  const priorityScores = priorities.map(p => {
-    const total = p.activities.length
-    const complete = p.activities.filter(a => a.status === 'complete').length
-    const active = p.activities.filter(a => a.status === 'active').length
-    const score = Math.round(((complete + active * 0.3) / total) * 100)
-    return { key: p.key, title: p.title, score, complete, active, total }
-  })
+  const { score: momentum, pillarScores } = computeMomentum(pillars)
 
   return (
     <div className="space-y-3 py-2">
-      {/* Header */}
+      {/* Header with momentum score */}
       <div className="bg-burgundy-bg border border-burgundy/10 rounded-sm p-2">
-        <h3 className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-1">
-          Strategic Surface Area
-        </h3>
-        <p className="font-sans text-[10px] text-ink leading-relaxed">
-          Every activity either builds a <strong>muscle</strong> or advances a <strong>vehicle</strong>.
-          Muscles compound across vehicles. The goal: maximize the probability surface for $300–500k outcomes
-          across quant, AI eng, product, and fund management.
+        <div className="flex items-center justify-between">
+          <h3 className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy">
+            Strategic Momentum
+          </h3>
+          <div className="flex items-baseline gap-1">
+            <span className="font-mono text-[22px] font-bold text-burgundy leading-none">{momentum}</span>
+            <span className="font-mono text-[9px] text-ink-muted">/ 100</span>
+          </div>
+        </div>
+        <p className="font-sans text-[9px] text-ink-muted mt-1">
+          Weighted progress across 5 strategic pillars. Simons rule: track the signal, not the noise.
         </p>
       </div>
 
-      {/* Venture status map */}
+      {/* 5-pillar summary */}
+      <div className="bg-white border border-rule rounded-sm p-2">
+        <div className="space-y-1.5">
+          {pillarScores.map(ps => (
+            <div key={ps.key}>
+              <div className="flex items-center justify-between mb-0.5">
+                <div className="flex items-center gap-1.5">
+                  <span className="font-sans text-[10px] font-medium text-ink">{ps.title}</span>
+                  <span className="font-mono text-[7px] text-ink-faint">{ps.weight}%w</span>
+                </div>
+                <span className={`font-mono text-[10px] font-semibold ${
+                  ps.score >= 50 ? 'text-green-ink' : ps.score >= 20 ? 'text-amber-ink' : 'text-ink-muted'
+                }`}>{ps.score}</span>
+              </div>
+              <div className="h-1.5 bg-cream rounded-sm overflow-hidden">
+                <div
+                  className={`h-full rounded-sm transition-all ${
+                    ps.score >= 50 ? 'bg-green-ink' : ps.score >= 20 ? 'bg-amber-ink' : 'bg-ink-faint'
+                  }`}
+                  style={{ width: `${Math.max(ps.score, 2)}%` }}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Venture status */}
       <div className="bg-white border border-rule rounded-sm p-2">
         <h4 className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-1.5">
-          Venture Status
+          Ventures
         </h4>
         <div className="space-y-1">
           {VENTURES.map(v => (
@@ -256,39 +133,16 @@ export default function SurfaceAreaView() {
               <span className={`font-sans text-[10px] font-medium ${v.status === 'killed' ? 'text-ink-muted line-through' : 'text-ink'}`}>
                 {v.name}
               </span>
-              <span className="font-sans text-[8px] text-ink-muted ml-auto shrink-0">{v.note}</span>
+              <span className="font-sans text-[8px] text-ink-muted ml-auto shrink-0 max-w-[200px] truncate">{v.note}</span>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Priority coverage */}
-      <div className="bg-white border border-rule rounded-sm p-2">
-        <h4 className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-1.5">
-          Priority Coverage
-        </h4>
-        <div className="space-y-1.5">
-          {priorityScores.map(p => (
-            <div key={p.key}>
-              <div className="flex items-center justify-between mb-0.5">
-                <span className="font-sans text-[9px] text-ink">{p.title}</span>
-                <span className="font-mono text-[8px] text-ink-muted">{p.complete}/{p.total}</span>
-              </div>
-              <div className="h-1 bg-cream rounded-sm overflow-hidden">
-                <div
-                  className={`h-full rounded-sm transition-all ${p.score >= 50 ? 'bg-green-ink' : p.score >= 20 ? 'bg-amber-ink' : 'bg-ink-faint'}`}
-                  style={{ width: `${Math.max(p.score, 2)}%` }}
-                />
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Priority cards */}
-      {priorities.map(p => {
+      {/* Pillar cards */}
+      {pillars.map(p => {
         const isExpanded = expanded === p.key
-        const score = priorityScores.find(s => s.key === p.key)
+        const ps = pillarScores.find(s => s.key === p.key)
 
         return (
           <div key={p.key} className="bg-white border border-rule rounded-sm">
@@ -297,26 +151,17 @@ export default function SurfaceAreaView() {
               className="w-full p-2 text-left"
             >
               <div className="flex items-center justify-between">
+                <h4 className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-burgundy">
+                  {p.title}
+                </h4>
                 <div className="flex items-center gap-2">
-                  <h4 className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-burgundy">
-                    {p.title}
-                  </h4>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="font-mono text-[10px] text-ink-muted">
-                    {score?.complete}/{score?.total}
-                  </span>
+                  <span className={`font-mono text-[10px] font-semibold ${
+                    (ps?.score ?? 0) >= 50 ? 'text-green-ink' : (ps?.score ?? 0) >= 20 ? 'text-amber-ink' : 'text-ink-muted'
+                  }`}>{ps?.score ?? 0}</span>
                   <span className="font-sans text-[10px] text-ink-faint">{isExpanded ? '▾' : '▸'}</span>
                 </div>
               </div>
-              <div className="flex gap-2 mt-0.5">
-                <span className="font-mono text-[7px] uppercase px-1 py-0.5 rounded-sm border text-burgundy bg-burgundy-bg border-burgundy/20">
-                  {p.muscle}
-                </span>
-                <span className="font-mono text-[7px] uppercase px-1 py-0.5 rounded-sm border text-ink-muted bg-cream border-rule">
-                  {p.vehicle}
-                </span>
-              </div>
+              <p className="font-sans text-[9px] text-ink-muted mt-0.5">{p.description}</p>
             </button>
 
             {isExpanded && (
