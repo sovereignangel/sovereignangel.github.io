@@ -20,11 +20,15 @@ import AlphaTrackerView from '@/components/thesis/alpha/AlphaTrackerView'
 import AlphaDial from '@/components/thesis/alpha/AlphaDial'
 import GovernanceLedger from '@/components/thesis/rl/GovernanceLedger'
 import CalibrationView from '@/components/thesis/rl/CalibrationView'
+import QuantPathView from '@/components/thesis/quant/QuantPathView'
+import SurfaceAreaView from '@/components/thesis/quant/SurfaceAreaView'
+import QuantDial from '@/components/thesis/quant/QuantDial'
 import { getSignals, getHypotheses } from '@/lib/firestore'
 
-type BoardRoomTab = 'machine' | 'rl' | 'research' | 'thesis' | 'alpha'
+type BoardRoomTab = 'machine' | 'rl' | 'research' | 'thesis' | 'alpha' | 'quant'
 type RLSubTab = 'transitions' | 'policy' | 'audit' | 'lab'
 type AlphaSubTab = 'feed' | 'theses' | 'lab' | 'tracker'
+type QuantSubTab = 'path' | 'surface'
 
 const TABS: { key: BoardRoomTab; label: string }[] = [
   { key: 'machine', label: 'The Machine' },
@@ -32,6 +36,7 @@ const TABS: { key: BoardRoomTab; label: string }[] = [
   { key: 'research', label: 'Research' },
   { key: 'thesis', label: 'Thesis' },
   { key: 'alpha', label: 'Alpha' },
+  { key: 'quant', label: 'Quant' },
 ]
 
 const RL_TABS: { key: RLSubTab; label: string }[] = [
@@ -48,11 +53,17 @@ const ALPHA_TABS: { key: AlphaSubTab; label: string }[] = [
   { key: 'tracker', label: 'Tracker' },
 ]
 
+const QUANT_TABS: { key: QuantSubTab; label: string }[] = [
+  { key: 'path', label: 'Quant Path' },
+  { key: 'surface', label: 'Surface Area' },
+]
+
 export default function BoardRoomPage() {
   const { user } = useAuth()
   const [activeTab, setActiveTab] = useState<BoardRoomTab>('machine')
   const [rlSubTab, setRlSubTab] = useState<RLSubTab>('transitions')
   const [alphaSubTab, setAlphaSubTab] = useState<AlphaSubTab>('feed')
+  const [quantSubTab, setQuantSubTab] = useState<QuantSubTab>('path')
   const [signalCount, setSignalCount] = useState(0)
   const [thesisCount, setThesisCount] = useState(0)
 
@@ -75,6 +86,7 @@ export default function BoardRoomPage() {
   const isResearch = activeTab === 'research'
   const isThesis = activeTab === 'thesis'
   const isAlpha = activeTab === 'alpha'
+  const isQuant = activeTab === 'quant'
   const isFullWidth = isResearch || isThesis
 
   return (
@@ -140,6 +152,25 @@ export default function BoardRoomPage() {
           </div>
         )}
 
+        {/* Quant sub-tabs */}
+        {isQuant && (
+          <div className="flex gap-1 border-b border-rule-light shrink-0 mt-1">
+            {QUANT_TABS.map((tab) => (
+              <button
+                key={tab.key}
+                onClick={() => setQuantSubTab(tab.key)}
+                className={`font-serif text-[11px] font-medium px-2 py-1 transition-colors ${
+                  quantSubTab === tab.key
+                    ? 'text-burgundy font-semibold border-b-2 border-burgundy -mb-px'
+                    : 'text-ink-muted hover:text-ink'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        )}
+
         {/* Tab Content */}
         <div className="flex-1 overflow-y-auto min-h-0">
           {isMachine && (
@@ -169,13 +200,15 @@ export default function BoardRoomPage() {
           {isAlpha && alphaSubTab === 'theses' && <AlphaThesesView onExperimentCreated={refreshCounts} />}
           {isAlpha && alphaSubTab === 'lab' && <AlphaLabView />}
           {isAlpha && alphaSubTab === 'tracker' && <AlphaTrackerView />}
+          {isQuant && quantSubTab === 'path' && <QuantPathView />}
+          {isQuant && quantSubTab === 'surface' && <SurfaceAreaView />}
         </div>
       </div>
 
       {/* Right Sidebar — hidden when full-width tabs are active */}
       {!isFullWidth && (
         <div className="min-h-0 overflow-y-auto">
-          {isMachine ? <MachineDial /> : isAlpha ? <AlphaDial signalCount={signalCount} thesisCount={thesisCount} /> : <RLStatusDial />}
+          {isMachine ? <MachineDial /> : isAlpha ? <AlphaDial signalCount={signalCount} thesisCount={thesisCount} /> : isQuant ? <QuantDial /> : <RLStatusDial />}
         </div>
       )}
     </div>
