@@ -48,15 +48,18 @@ const INITIAL_MILESTONES: Milestone[] = [
   { id: 's-greeks', phase: 'Systematize', skill: 'Greeks monitoring — live delta, gamma, theta, vega exposure across book', category: 'finance', target: 'Real-time portfolio Greeks dashboard', status: 'not_started' },
   { id: 's-cql-doc', phase: 'Systematize', skill: 'Document CQL strategy logic — what signals, what filters, what sizing', category: 'soft', target: 'Strategy spec that another quant could audit', status: 'in_progress' },
   { id: 's-reconcile', phase: 'Systematize', skill: 'Paper vs. live reconciliation — compare paper fills to what live would have been', category: 'code', target: '2 months of parallel tracking data', status: 'not_started' },
+  { id: 's-anki-prob', phase: 'Systematize', skill: 'Anki: Probability & stochastic processes — reactivate actuarial/ME foundations', category: 'math', target: '200+ cards, 20 min/day. Focus on options-relevant: distributions, conditional expectation, martingales', status: 'not_started' },
+  { id: 's-anki-la', phase: 'Systematize', skill: 'Anki: Linear algebra for portfolio math — PCA, covariance, eigendecomposition', category: 'math', target: '100+ cards. Apply directly to CQL correlation analysis', status: 'not_started' },
 
   // Phase 2: Formalize (Months 3-8)
   { id: 'f-sharpe', phase: 'Formalize', skill: 'Compute strategy Sharpe, Sortino, max drawdown, Calmar on historical CQL trades', category: 'math', target: 'Full tearsheet on 300+ position history', status: 'not_started' },
   { id: 'f-alpha-decomp', phase: 'Formalize', skill: 'Alpha decomposition — what % is timing, selection, sizing, vol?', category: 'math', target: 'Factor attribution (Brinson or regression-based)', status: 'not_started' },
   { id: 'f-regime', phase: 'Formalize', skill: 'Regime analysis — does CQL alpha persist in drawdowns, low vol, rate hikes?', category: 'ml', target: 'Hidden Markov or changepoint detection on strategy PnL', status: 'not_started' },
-  { id: 'f-options', phase: 'Formalize', skill: 'Options pricing theory — Black-Scholes, vol surfaces, skew dynamics', category: 'finance', target: 'Natenberg + apply to CQL call spread logic', status: 'not_started' },
+  { id: 'f-options', phase: 'Formalize', skill: 'Options Greeks deep-dive — vol surfaces, skew dynamics, term structure', category: 'finance', target: 'Natenberg + Anki deck. You know Black-Scholes — now apply to CQL spreads', status: 'not_started' },
   { id: 'f-sizing', phase: 'Formalize', skill: 'Position sizing formalization — Kelly criterion, risk parity, vol targeting', category: 'math', target: 'Replace intuitive sizing with optimal f', status: 'not_started' },
   { id: 'f-backtest', phase: 'Formalize', skill: 'Walk-forward backtest engine — out-of-sample validation, no lookahead bias', category: 'code', target: 'Prove CQL signals work out-of-sample', status: 'in_progress' },
   { id: 'f-deprado', phase: 'Formalize', skill: 'de Prado: Advances in Financial ML — triple barrier, meta-labeling, purged CV', category: 'ml', target: 'Apply 3+ techniques to CQL signal pipeline', status: 'not_started' },
+  { id: 'f-anki-stoch', phase: 'Formalize', skill: 'Anki: Stochastic calculus for derivatives — Itô, Brownian motion, SDEs', category: 'math', target: 'Reactivate from actuarial foundations. 150+ cards, interview-ready', status: 'not_started' },
   { id: 'f-publish', phase: 'Formalize', skill: 'Publish 1 piece — SSRN paper, Substack deep-dive, or conference talk', category: 'soft', target: 'Written artifact with real data, not toy examples', status: 'not_started' },
 
   // Phase 3: Scale (Months 8-18)
@@ -136,9 +139,10 @@ export default function QuantPathView() {
           Quant Path · Alpha-First Training
         </h3>
         <p className="font-sans text-[10px] text-ink leading-relaxed">
-          You have what most quants spend years chasing: <strong>10x returns on 300+ positions via CQL</strong>.
-          The path isn&apos;t &ldquo;study → find alpha.&rdquo; It&apos;s <strong>&ldquo;systematize alpha → formalize the math → scale capital.&rdquo;</strong>
-          Armstrong + Blockless are the lab. IB automation is the vehicle.
+          <strong>Background:</strong> Actuarial science + management engineering + CFA L1. Math foundations are there — reactivate via Anki, don&apos;t re-learn.
+          <strong> Edge:</strong> 10x returns on 300+ positions via CQL. The path isn&apos;t &ldquo;study → find alpha.&rdquo;
+          It&apos;s <strong>&ldquo;systematize alpha → formalize the math → scale capital.&rdquo;</strong>
+          Armstrong + Blockless are the lab. IB automation is the vehicle. Anki is the accelerant.
         </p>
       </div>
 
@@ -226,8 +230,8 @@ export default function QuantPathView() {
             { title: 'Quantitative Trading', author: 'Chan', tag: 'code', phase: 'Now' },
             { title: 'Advances in Financial Machine Learning', author: 'de Prado', tag: 'ml', phase: 'Mo 3' },
             { title: 'Active Portfolio Management', author: 'Grinold & Kahn', tag: 'finance', phase: 'Mo 3' },
-            { title: 'Trading & Exchanges', author: 'Harris', tag: 'finance', phase: 'Mo 6' },
-            { title: 'Convex Optimization', author: 'Boyd & Vandenberghe', tag: 'math', phase: 'Mo 6' },
+            { title: 'Dynamic Hedging', author: 'Taleb', tag: 'finance', phase: 'Mo 4' },
+            { title: 'Stochastic Calculus for Finance II', author: 'Shreve', tag: 'math', phase: 'Mo 5' },
           ].map(book => (
             <div key={book.title} className="flex items-center gap-1.5">
               <span className={`font-mono text-[7px] uppercase px-1 py-0.5 rounded-sm border ${CATEGORY_STYLE[book.tag]}`}>
