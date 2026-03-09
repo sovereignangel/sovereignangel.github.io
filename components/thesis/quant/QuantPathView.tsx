@@ -146,19 +146,108 @@ export default function QuantPathView() {
         </p>
       </div>
 
-      {/* Progress bar */}
-      <div className="bg-white border border-rule rounded-sm p-2">
-        <div className="flex items-center justify-between mb-1">
-          <span className="font-sans text-[10px] text-ink-muted">Overall Progress</span>
-          <span className="font-mono text-[11px] font-semibold text-ink">{pct}%</span>
+      {/* Visual Timeline */}
+      <div className="bg-white border border-rule rounded-sm p-3">
+        {/* Phase timeline bar */}
+        <div className="relative mb-3">
+          <div className="flex items-center">
+            {CAREER_PHASES.map((phase, i) => {
+              const pm = milestones.filter(m => m.phase === phase.phase)
+              const done = pm.filter(m => m.status === 'complete').length
+              const prog = pm.filter(m => m.status === 'in_progress').length
+              const phasePct = pm.length > 0 ? Math.round(((done + prog * 0.3) / pm.length) * 100) : 0
+              const isActive = phasePct > 0 && phasePct < 100
+              const isDone = phasePct === 100
+
+              return (
+                <div key={phase.phase} className="flex-1 flex flex-col items-center relative">
+                  {/* Connector line */}
+                  {i > 0 && (
+                    <div className={`absolute top-3 right-1/2 w-full h-px ${
+                      isDone || isActive ? 'bg-burgundy' : 'bg-rule'
+                    }`} />
+                  )}
+                  {/* Node */}
+                  <div className={`relative z-10 w-6 h-6 rounded-sm flex items-center justify-center text-[9px] font-mono font-semibold border ${
+                    isDone
+                      ? 'bg-green-ink text-paper border-green-ink'
+                      : isActive
+                        ? 'bg-burgundy text-paper border-burgundy'
+                        : 'bg-cream text-ink-muted border-rule'
+                  }`}>
+                    {isDone ? '✓' : i + 1}
+                  </div>
+                  {/* Label */}
+                  <span className={`font-serif text-[8px] uppercase tracking-[0.3px] mt-1 text-center leading-tight ${
+                    isActive ? 'text-burgundy font-semibold' : 'text-ink-muted'
+                  }`}>
+                    {phase.phase}
+                  </span>
+                  <span className="font-mono text-[7px] text-ink-faint mt-0.5">
+                    {phase.label.split('·')[0].trim()}
+                  </span>
+                  {/* Phase progress */}
+                  <div className="w-full mt-1.5 px-2">
+                    <div className="h-1 bg-cream rounded-sm overflow-hidden">
+                      <div
+                        className={`h-full rounded-sm transition-all ${isDone ? 'bg-green-ink' : 'bg-burgundy'}`}
+                        style={{ width: `${phasePct}%` }}
+                      />
+                    </div>
+                    <div className="text-center font-mono text-[7px] text-ink-muted mt-0.5">
+                      {done}/{pm.length}
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
         </div>
-        <div className="h-1.5 bg-cream rounded-sm overflow-hidden">
-          <div className="h-full bg-burgundy rounded-sm transition-all" style={{ width: `${pct}%` }} />
+
+        {/* Paper → Live roadmap */}
+        <div className="border-t border-rule-light pt-2">
+          <h4 className="font-serif text-[9px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-1.5">
+            Paper → Live Roadmap
+          </h4>
+          <div className="flex gap-0.5">
+            {[
+              { label: 'Paper Only', months: 'Mo 1–2', color: 'bg-burgundy-bg border-burgundy/20 text-burgundy', width: '25%' },
+              { label: 'Supervised', months: 'Mo 2–3', color: 'bg-amber-bg border-amber-ink/20 text-amber-ink', width: '25%' },
+              { label: 'Scale Up', months: 'Mo 3–4', color: 'bg-green-bg border-green-ink/20 text-green-ink', width: '25%' },
+              { label: 'Autonomous', months: 'Mo 4+', color: 'bg-green-bg border-green-ink/20 text-green-ink', width: '25%' },
+            ].map(stage => (
+              <div
+                key={stage.label}
+                className={`border rounded-sm px-1.5 py-1 text-center ${stage.color}`}
+                style={{ width: stage.width }}
+              >
+                <div className="font-mono text-[8px] font-semibold">{stage.label}</div>
+                <div className="font-mono text-[7px] opacity-70">{stage.months}</div>
+              </div>
+            ))}
+          </div>
+          <div className="grid grid-cols-4 gap-0.5 mt-1">
+            <p className="font-sans text-[7px] text-ink-muted leading-tight px-0.5">CQL → IB paper. Log fills.</p>
+            <p className="font-sans text-[7px] text-ink-muted leading-tight px-0.5">10% size. Human approves.</p>
+            <p className="font-sans text-[7px] text-ink-muted leading-tight px-0.5">50% if delta {'<'}2%.</p>
+            <p className="font-sans text-[7px] text-ink-muted leading-tight px-0.5">Risk limits enforce.</p>
+          </div>
         </div>
-        <div className="flex gap-3 mt-1.5">
-          <span className="font-mono text-[9px] text-green-ink">{complete} complete</span>
-          <span className="font-mono text-[9px] text-amber-ink">{inProgress} in progress</span>
-          <span className="font-mono text-[9px] text-ink-faint">{total - complete - inProgress} remaining</span>
+
+        {/* Overall progress */}
+        <div className="border-t border-rule-light pt-2 mt-2">
+          <div className="flex items-center justify-between mb-1">
+            <span className="font-sans text-[9px] text-ink-muted">Overall Milestone Progress</span>
+            <span className="font-mono text-[10px] font-semibold text-ink">{pct}%</span>
+          </div>
+          <div className="h-1 bg-cream rounded-sm overflow-hidden">
+            <div className="h-full bg-burgundy rounded-sm transition-all" style={{ width: `${pct}%` }} />
+          </div>
+          <div className="flex gap-3 mt-1">
+            <span className="font-mono text-[8px] text-green-ink">{complete} complete</span>
+            <span className="font-mono text-[8px] text-amber-ink">{inProgress} in progress</span>
+            <span className="font-mono text-[8px] text-ink-faint">{total - complete - inProgress} remaining</span>
+          </div>
         </div>
       </div>
 
@@ -245,30 +334,6 @@ export default function QuantPathView() {
         </div>
       </div>
 
-      {/* Paper trading timeline */}
-      <div className="bg-cream border border-rule rounded-sm p-2">
-        <h4 className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-1">
-          Paper → Live Timeline
-        </h4>
-        <div className="space-y-1.5">
-          <div className="flex gap-2">
-            <span className="font-mono text-[9px] text-burgundy w-14 shrink-0">Mo 1–2</span>
-            <span className="font-sans text-[9px] text-ink">Paper trading only. CQL signals → IB paper. Log every fill, compare to what manual execution got.</span>
-          </div>
-          <div className="flex gap-2">
-            <span className="font-mono text-[9px] text-amber-ink w-14 shrink-0">Mo 2–3</span>
-            <span className="font-sans text-[9px] text-ink">Supervised live. Small size (10% of target). Human approves each order. Paper continues in parallel.</span>
-          </div>
-          <div className="flex gap-2">
-            <span className="font-mono text-[9px] text-green-ink w-14 shrink-0">Mo 3–4</span>
-            <span className="font-sans text-[9px] text-ink">Scale up if paper-live delta is {'<'}2%. Increase to 50% size. Automated with human monitoring.</span>
-          </div>
-          <div className="flex gap-2">
-            <span className="font-mono text-[9px] text-green-ink w-14 shrink-0">Mo 4+</span>
-            <span className="font-sans text-[9px] text-ink">Full autonomous. Risk limits enforce discipline. You focus on signal research, not execution.</span>
-          </div>
-        </div>
-      </div>
     </div>
   )
 }
