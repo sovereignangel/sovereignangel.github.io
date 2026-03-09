@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useAuth } from '@/components/auth/AuthProvider'
-import { RadarChart, PolarGrid, PolarAngleAxis, Radar, ResponsiveContainer } from 'recharts'
+import { RadarChart, PolarGrid, PolarAngleAxis, Radar, ResponsiveContainer, Tooltip } from 'recharts'
 import { strategicPillars, computeMomentum, type StrategicPillar, VENTURES } from '@/lib/strategic-priorities'
 
 // ─── Luck Surface Area Analysis ────────────────────────────────────────
@@ -65,6 +65,55 @@ const STATUS_COLOR: Record<string, string> = {
   complete: 'text-green-ink',
 }
 
+// ─── Custom Radar Tooltip ──────────────────────────────────────────────
+
+interface RadarTooltipPayload {
+  pillar: string
+  score: number
+  fullMark: number
+  description: string
+  weight: number
+  complete: number
+  active: number
+  notStarted: number
+  total: number
+  activities: Array<{ label: string; status: string }>
+}
+
+function RadarTooltip({ active, payload }: { active?: boolean; payload?: Array<{ payload: RadarTooltipPayload }> }) {
+  if (!active || !payload?.[0]) return null
+  const d = payload[0].payload
+
+  return (
+    <div className="bg-white border border-rule rounded-sm p-2 shadow-sm max-w-[220px] pointer-events-none">
+      <div className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-1">
+        {d.pillar} <span className="font-mono text-[9px] text-ink-muted normal-case">({d.weight}% weight)</span>
+      </div>
+      <p className="font-sans text-[9px] text-ink-muted leading-relaxed mb-1.5">{d.description}</p>
+
+      {/* Score breakdown */}
+      <div className="font-mono text-[9px] text-ink mb-1.5 bg-cream rounded-sm px-1.5 py-1">
+        <span className="font-semibold">{d.score}</span>/100 =
+        ({d.complete} done × 1.0 + {d.active} active × 0.3) / {d.total} total
+      </div>
+
+      {/* Activity list */}
+      <div className="space-y-0.5">
+        {d.activities.map(a => (
+          <div key={a.label} className="flex items-start gap-1">
+            <span className={`font-mono text-[9px] mt-px shrink-0 ${
+              a.status === 'complete' ? 'text-green-ink' : a.status === 'active' ? 'text-amber-ink' : 'text-ink-faint'
+            }`}>
+              {a.status === 'complete' ? '✓' : a.status === 'active' ? '◐' : '○'}
+            </span>
+            <span className="font-sans text-[8px] text-ink leading-tight">{a.label}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 // ─── Component ─────────────────────────────────────────────────────────
 
 export default function SurfaceAreaView() {
@@ -117,12 +166,22 @@ export default function SurfaceAreaView() {
 
   const { score: momentum, pillarScores } = computeMomentum(pillars)
 
-  // Radar data
-  const radarData = pillarScores.map(ps => ({
-    pillar: ps.title.split(' ')[0], // Short label
-    score: ps.score,
-    fullMark: 100,
-  }))
+  // Radar data (enriched for tooltip)
+  const radarData = pillarScores.map(ps => {
+    const p = pillars.find(x => x.key === ps.key)!
+    return {
+      pillar: ps.title.split(' ')[0],
+      score: ps.score,
+      fullMark: 100,
+      description: p.description,
+      weight: ps.weight,
+      complete: ps.complete,
+      active: ps.active,
+      notStarted: ps.total - ps.complete - ps.active,
+      total: ps.total,
+      activities: p.activities.map(a => ({ label: a.label, status: a.status })),
+    }
+  })
 
   // Luck analysis
   const scores = pillarScores.map(ps => ps.score)
@@ -171,6 +230,7 @@ export default function SurfaceAreaView() {
                 dataKey="pillar"
                 tick={{ fontSize: 9, fill: '#9a928a', fontFamily: 'var(--font-sans)' }}
               />
+              <Tooltip content={<RadarTooltip />} wrapperStyle={{ zIndex: 10 }} />
               <Radar
                 name="Score"
                 dataKey="score"
@@ -178,6 +238,7 @@ export default function SurfaceAreaView() {
                 fill="#7c2d2d"
                 fillOpacity={0.15}
                 strokeWidth={1.5}
+                activeDot={{ r: 4, stroke: '#7c2d2d', strokeWidth: 1.5, fill: '#faf8f4' }}
               />
             </RadarChart>
           </ResponsiveContainer>
