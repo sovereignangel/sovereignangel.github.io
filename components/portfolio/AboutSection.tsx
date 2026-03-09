@@ -5,7 +5,7 @@ export default function AboutSection() {
         My career has been at the intersection of Product Engineering, Investments, and Strategy.
       </p>
       <p className="text-[#333] mb-4">
-        Now I&apos;m building tech for emerging hedge funds while self-studying Deep and Reinforcement Learning—currently applying Offline RL Signal Timing to a discretionary investment strategy.
+        Now I&apos;m building tech for emerging hedge funds while self-studying Deep and Reinforcement Learning.
       </p>
       <p className="text-[#333] mb-4">
         Previously, I built a portfolio management product from scratch at JP Morgan Asset Management that drove a $16.4B revenue line, and helped raise $220M+ across early-stage companies, venture capital, hedge funds, and investment banks.
