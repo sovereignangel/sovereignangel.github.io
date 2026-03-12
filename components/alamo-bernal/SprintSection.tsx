@@ -9,6 +9,9 @@ import {
   deleteSprintItem,
 } from '@/lib/alamo-bernal/firestore'
 import { SPRINT_ITEMS } from '@/lib/alamo-bernal/seed-data'
+import LimitOrderOptimization from './LimitOrderOptimization'
+
+type SprintSubtab = 'sprint-planning' | 'limit-order'
 
 const TYPE_BADGE: Record<SprintItemType, { label: string; color: string }> = {
   feature: { label: 'Feature', color: 'text-green-ink bg-green-bg border-green-ink/20' },
@@ -150,13 +153,42 @@ export default function SprintSection() {
     setPlanning(false)
   }
 
+  const [activeSubtab, setActiveSubtab] = useState<SprintSubtab>('sprint-planning')
+
   return (
     <div className="space-y-3">
+      {/* Subtab Navigation */}
+      <div className="flex gap-1 border-b border-forest-rule pb-2">
+        <button
+          onClick={() => setActiveSubtab('sprint-planning')}
+          className={`font-serif text-[14px] sm:text-[13px] py-1.5 px-3 transition-colors ${
+            activeSubtab === 'sprint-planning'
+              ? 'text-forest font-semibold border-b-2 border-forest'
+              : 'text-forest-ink-muted hover:text-forest-ink'
+          }`}
+        >
+          Sprint Planning
+        </button>
+        <button
+          onClick={() => setActiveSubtab('limit-order')}
+          className={`font-serif text-[14px] sm:text-[13px] py-1.5 px-3 transition-colors ${
+            activeSubtab === 'limit-order'
+              ? 'text-forest font-semibold border-b-2 border-forest'
+              : 'text-forest-ink-muted hover:text-forest-ink'
+          }`}
+        >
+          Limit Order Optimization
+        </button>
+      </div>
+
+      {activeSubtab === 'limit-order' && <LimitOrderOptimization />}
+
+      {activeSubtab === 'sprint-planning' && <>
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
         <div>
           <h2 className="font-serif text-[15px] sm:text-[13px] font-semibold uppercase tracking-[0.5px] text-forest">
-            Tech Development
+            Sprint Planning
           </h2>
           <p className="text-[11px] sm:text-[10px] text-forest-ink-muted mt-0.5">
             Sprint 1 &middot; {sprintItems.length} items
@@ -504,6 +536,7 @@ export default function SprintSection() {
           )}
         </div>
       )}
+      </>}
     </div>
   )
 }
