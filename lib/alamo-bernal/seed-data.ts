@@ -1351,7 +1351,7 @@ export const SPRINT_ITEMS: SprintItem[] = [
     title: 'Limit Order Agent',
     description: 'Instead of a fixed 50% threshold, suggests an optimized limit price per stock based on its specific historical recovery speed and depth.',
     type: 'feature',
-    status: 'sprint',
+    status: 'backlog',
     owner: 'lori',
     priority: 'high',
     createdAt: '2026-03-04',
