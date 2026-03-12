@@ -12,93 +12,91 @@ interface PreWorkItem {
   owner: 'lori' | 'sean' | 'both'
 }
 
-interface BuildItem {
+interface BuildStep {
   id: string
   title: string
   description: string
-  features: string[]
+  details: string[]
   status: 'planned' | 'in-progress' | 'shipped'
+  dependency?: string
 }
 
 const PRE_WORK_ITEMS: PreWorkItem[] = [
   {
     id: 'trade-data',
-    title: 'Trade Data',
-    description: 'Historical trade execution data — entries, exits, fill prices, slippage. Foundation for all signal & attribution work.',
+    title: 'Trade Data Export',
+    description: 'Sean exports historical trade log — ticker, entry price, exit price, quantity, timestamps. CSV or broker export. This is the single blocker for everything else.',
     status: 'not-started',
     owner: 'sean',
   },
   {
-    id: 'api-feed-massive',
-    title: 'API Feed — Massive',
-    description: 'Connect Massive data feed for real-time market data ingestion.',
+    id: 'api-market-data',
+    title: 'Market Data API',
+    description: 'Connect Alpha Vantage + Massive for intraday/daily price data around trade timestamps. Needed to compare Sean\'s fills vs. what was available.',
     status: 'not-started',
     owner: 'lori',
   },
   {
-    id: 'api-feed-alpha-vantage',
-    title: 'API Feed — Alpha Vantage',
-    description: 'Alpha Vantage integration for intraday quotes, technicals, and fundamental data.',
-    status: 'not-started',
-    owner: 'lori',
-  },
-  {
-    id: 'api-feed-vercel',
-    title: 'API Feed — Vercel',
-    description: 'Serverless API routes on Vercel for signal processing, cron jobs, and webhook endpoints.',
+    id: 'api-vercel',
+    title: 'Vercel API Routes',
+    description: 'Serverless endpoints for trade ingestion, analysis runs, and serving the dashboard. Infra already exists in this repo.',
     status: 'not-started',
     owner: 'lori',
   },
 ]
 
-const BUILD_ITEMS: BuildItem[] = [
+const BUILD_STEPS: BuildStep[] = [
   {
-    id: 'live-signals',
-    title: 'Live Intraday Signals',
-    description: 'Real-time signal generation engine that processes market data and outputs actionable limit order levels.',
-    features: [
-      'Intraday price feed ingestion',
-      'Signal computation pipeline',
-      'Alert delivery (dashboard + mobile push)',
-      'Confidence scoring per signal',
+    id: 'trade-analysis',
+    title: 'Trade Analysis Engine',
+    description: 'Ingest Sean\'s trades, pull market data around each trade, compute what a better entry/exit would have been.',
+    details: [
+      'Parse trade log (CSV/JSON) into structured format',
+      'Pull intraday price data for each trade window',
+      'Compare actual fill vs. optimal limit order placement',
+      'Score each trade: how much was left on the table',
     ],
     status: 'planned',
+    dependency: 'trade-data',
   },
   {
-    id: 'daily-dashboard',
-    title: 'Daily, Mobile-Friendly Dashboard',
-    description: 'At-a-glance view of today\'s signals, open orders, P&L, and market regime — optimized for phone.',
-    features: [
-      'Today\'s signal queue with entry/exit levels',
-      'Open position tracker',
-      'Daily P&L summary',
-      'Market regime indicator (risk-on / risk-off)',
+    id: 'suggested-orders',
+    title: 'Suggested Better Orders',
+    description: 'For each trade pattern, generate the limit order that would have captured more value — ideally auto-generate these going forward.',
+    details: [
+      'Pattern detection: recurring tickers, time-of-day, order sizes',
+      'Optimal limit price calculation based on historical fills',
+      'Forward-looking suggestions for active positions',
+      'Mobile-friendly daily view: "here\'s what to set today"',
     ],
     status: 'planned',
+    dependency: 'trade-analysis',
   },
   {
-    id: 'macro-kill-switch',
-    title: 'Macro Kill-Switch',
-    description: 'Binary gate: should we trade today? Aggregates macro signals (VIX, yield curve, news sentiment) into a go/no-go decision.',
-    features: [
-      'VIX threshold monitor',
-      'Yield curve inversion flag',
-      'News sentiment aggregator',
-      'Manual override toggle',
-    ],
-    status: 'planned',
-  },
-  {
-    id: 'attribution-tracker',
+    id: 'attribution',
     title: 'Attribution Tracker',
-    description: 'Baked-in revenue attribution — every trade logs the Alamo Bernal & Generative Intelligence cut automatically.',
-    features: [
-      'Per-trade P&L attribution',
-      'Alamo Bernal revenue share calculation',
-      'Generative Intelligence (tech) cut tracking',
-      'Monthly settlement summary',
+    description: 'Every trade logs the P&L delta from optimization. Auditable split between Alamo Bernal (capital + execution) and Generative Intelligence (signal + infra).',
+    details: [
+      'Per-trade: actual P&L vs. optimized P&L (the delta is the value created)',
+      'Running total: cumulative value added by limit order optimization',
+      'AB & GI revenue share computed automatically per trade',
+      'Monthly settlement export (PDF/CSV)',
     ],
     status: 'planned',
+    dependency: 'suggested-orders',
+  },
+  {
+    id: 'backtest-validation',
+    title: 'Backtest & Paper Trade',
+    description: 'If needed: run suggested orders against historical data to prove the optimization works before going live.',
+    details: [
+      'Replay historical trades with optimized limit orders',
+      'Compare: actual returns vs. optimized returns',
+      'Paper trade mode: run suggestions in parallel without real capital',
+      'Confidence threshold before switching to live suggestions',
+    ],
+    status: 'planned',
+    dependency: 'suggested-orders',
   },
 ]
 
@@ -151,7 +149,7 @@ export default function LimitOrderOptimization() {
       {activePhase === 'pre-work' && (
         <div className="space-y-2">
           <p className="text-[11px] sm:text-[10px] text-forest-ink-muted">
-            Data and API infrastructure required before signal development can begin.
+            Sean&apos;s trade data is the single blocker. Everything else follows from it.
           </p>
           {PRE_WORK_ITEMS.map((item) => (
             <div
@@ -185,12 +183,34 @@ export default function LimitOrderOptimization() {
       {activePhase === 'build-plan' && (
         <div className="space-y-2">
           <p className="text-[11px] sm:text-[10px] text-forest-ink-muted">
-            Four deliverables that compose the limit order optimization system.
+            Understand his trades, suggest better ones, track the value created.
           </p>
-          {BUILD_ITEMS.map((item, idx) => (
+
+          {/* Pipeline flow */}
+          <div className="bg-forest-surface border border-forest-rule rounded-sm p-3">
+            <div className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-forest mb-2 pb-1.5 border-b border-forest-rule">
+              Pipeline
+            </div>
+            <div className="flex items-center gap-1 flex-wrap">
+              {['Trade Data', 'Analysis', 'Suggestions', 'Attribution'].map((step, i) => (
+                <div key={step} className="flex items-center gap-1">
+                  <span className="font-mono text-[9px] sm:text-[8px] text-forest-ink px-1.5 py-0.5 rounded-sm border border-forest-rule bg-forest-cream">
+                    {step}
+                  </span>
+                  {i < 3 && <span className="text-[9px] text-forest-ink-faint">&rarr;</span>}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {BUILD_STEPS.map((item, idx) => (
             <div
               key={item.id}
-              className="bg-forest-surface border border-forest-rule rounded-sm p-3"
+              className={`bg-forest-surface border rounded-sm p-3 ${
+                idx === BUILD_STEPS.length - 1
+                  ? 'border-dashed border-forest-rule'
+                  : 'border-forest-rule'
+              }`}
             >
               <div className="flex items-start justify-between gap-2 mb-2">
                 <div className="flex items-center gap-2 flex-wrap">
@@ -203,40 +223,50 @@ export default function LimitOrderOptimization() {
                   <span className={`font-mono text-[8px] sm:text-[7px] uppercase px-1 py-px rounded-sm border shrink-0 ${STATUS_COLORS[item.status]}`}>
                     {STATUS_LABELS[item.status]}
                   </span>
+                  {idx === BUILD_STEPS.length - 1 && (
+                    <span className="font-mono text-[8px] sm:text-[7px] uppercase px-1 py-px rounded-sm border shrink-0 text-forest-ink-faint bg-transparent border-forest-rule">
+                      If Needed
+                    </span>
+                  )}
                 </div>
               </div>
               <p className="text-[10px] sm:text-[9px] text-forest-ink-muted leading-snug mb-2">
                 {item.description}
               </p>
               <div className="space-y-1">
-                {item.features.map((feature, fi) => (
-                  <div key={fi} className="flex items-start gap-1.5">
+                {item.details.map((detail, di) => (
+                  <div key={di} className="flex items-start gap-1.5">
                     <span className="text-[9px] sm:text-[8px] text-forest-ink-faint mt-px shrink-0">&#x2022;</span>
-                    <span className="text-[10px] sm:text-[9px] text-forest-ink-muted">{feature}</span>
+                    <span className="text-[10px] sm:text-[9px] text-forest-ink-muted">{detail}</span>
                   </div>
                 ))}
               </div>
             </div>
           ))}
 
-          {/* Attribution Summary */}
+          {/* Attribution Model */}
           <div className="bg-forest-surface border-2 border-forest rounded-sm p-3">
             <div className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-forest mb-2 pb-1.5 border-b border-forest-rule">
-              Revenue Attribution Model
+              Attribution Split
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div className="space-y-1">
-                <span className="text-[10px] sm:text-[9px] text-forest-ink-muted">Alamo Bernal</span>
-                <p className="text-[10px] sm:text-[9px] text-forest-ink leading-snug">
-                  Capital allocation, trade execution, risk management
+                <span className="text-[10px] sm:text-[9px] font-medium text-forest-ink">Alamo Bernal</span>
+                <p className="text-[10px] sm:text-[9px] text-forest-ink-muted leading-snug">
+                  Capital, execution, risk management, trade selection
                 </p>
               </div>
               <div className="space-y-1">
-                <span className="text-[10px] sm:text-[9px] text-forest-ink-muted">Generative Intelligence</span>
-                <p className="text-[10px] sm:text-[9px] text-forest-ink leading-snug">
-                  Signal engine, dashboard, optimization infrastructure
+                <span className="text-[10px] sm:text-[9px] font-medium text-forest-ink">Generative Intelligence</span>
+                <p className="text-[10px] sm:text-[9px] text-forest-ink-muted leading-snug">
+                  Optimization engine, signal generation, attribution infrastructure
                 </p>
               </div>
+            </div>
+            <div className="mt-2 pt-2 border-t border-forest-rule">
+              <p className="text-[9px] sm:text-[8px] text-forest-ink-faint">
+                Value measured = P&amp;L delta between actual fills and optimized limit orders. Attribution computed per trade, settled monthly.
+              </p>
             </div>
           </div>
         </div>
