@@ -354,7 +354,7 @@ export default function LimitOrderOptimization() {
           </div>
         </div>
         <div className="pt-2 border-t border-forest-rule">
-          <p className="text-[9px] sm:text-[8px] text-forest-ink-faint leading-snug">
+          <p className="text-[11px] sm:text-[10px] text-forest-ink-muted leading-snug">
             Value = P&amp;L delta between flat 50% baseline and optimized limit orders. Computed per trade, auditable end-to-end, settled monthly. Performance-based comp: half of savings below 40% loss baseline.
           </p>
         </div>

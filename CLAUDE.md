@@ -287,14 +287,17 @@ text-[16px] font-serif                                              // Tab navig
 
 // Labels (sans, muted)
 text-[11px] text-ink-muted  // Primary labels
-text-[10px] text-ink-muted  // Secondary labels
-text-[9px] text-ink-muted   // Tertiary labels
+text-[10px] text-ink-muted  // Secondary labels (MINIMUM for readable body text)
 
 // Values (mono, ink or status color)
 text-[11px] font-semibold text-ink         // Primary values
-text-[10px] font-medium text-ink           // Secondary values
-text-[9px] text-ink-muted                  // Meta info
-text-[8px] text-ink-muted                  // Badges, chips
+text-[10px] font-medium text-ink           // Secondary values (MINIMUM for readable text)
+text-[9px] text-ink-muted                  // Badges & chips ONLY (not body text)
+text-[8px] text-ink-muted                  // Badges & chips ONLY (not body text)
+
+// ⚠️ MINIMUM FONT SIZE: text-[10px]
+// Never use text-[9px] or text-[8px] for body text, descriptions, or paragraphs.
+// Those sizes are ONLY acceptable for badges, chips, and status labels.
 ```
 
 **Spacing (Compact, Not Loose):**
@@ -396,6 +399,7 @@ text-sm, text-lg, text-base
 - [ ] Active states use `bg-burgundy text-paper`
 - [ ] Spacing uses `gap-1` to `gap-3`, `p-3`, `py-2`
 - [ ] All font sizes explicit (`text-[Xpx]`), never generic (`text-sm`)
+- [ ] No body text smaller than `text-[10px]` — `text-[9px]`/`text-[8px]` only for badges/chips
 
 **If you violate ANY of these, the component is OFF-BRAND and must be fixed.**
 
