@@ -221,7 +221,11 @@ export default function LimitOrderOptimization() {
             </div>
           ))}
         </div>
-        <div className="mt-2 pt-2 border-t border-forest-rule">
+        <div className="mt-2 pt-2 border-t border-forest-rule flex flex-wrap gap-3">
+          <div>
+            <span className="text-[9px] text-forest-ink-faint uppercase tracking-wide">Est. Total</span>
+            <span className="text-[10px] font-medium text-forest-ink ml-1.5">2–4 months</span>
+          </div>
           <div>
             <span className="text-[9px] text-forest-ink-faint uppercase tracking-wide">First Blocker</span>
             <span className="text-[10px] font-medium text-forest-ink ml-1.5">Feasibility assessment (2 sessions)</span>
