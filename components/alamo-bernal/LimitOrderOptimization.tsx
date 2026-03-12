@@ -14,14 +14,14 @@ const PHASES = [
     subtitle: 'Historical Trade Analysis & Fidelity Flow',
     duration: '2–4 weeks',
     status: 'next' as const,
-    thesis: 'Before building anything, understand the data. Ingest Sean\'s historical trades, overlay intraday market data, and quantify how much value a smarter limit order would have captured per stock.',
+    thesis: 'Before building anything, we understand the data. Ingest historical trades, overlay intraday market data, and quantify how much value a smarter limit order would have captured per stock.',
     workstreams: [
       {
         title: 'Trade Data Ingestion',
         owner: 'sean' as const,
         items: [
-          'Export full trade history from Fidelity (Aug 2025 — present)',
-          'Fields needed: ticker, ex-div date, dividend amount, entry price, limit order price, fill price, exit timestamp',
+          'Full trade history exported from Fidelity (Aug 2025 — present)',
+          'Fields: ticker, ex-div date, dividend amount, entry price, limit order price, fill price, exit timestamp',
           'CSV or broker export — any format works',
         ],
       },
@@ -29,9 +29,9 @@ const PHASES = [
         title: 'Market Data Pipeline',
         owner: 'lori' as const,
         items: [
-          'Connect Alpha Vantage + Massive for intraday price data',
-          'Pull 1-min candles around each historical trade window',
-          'Build price context: what was available vs. what Sean got',
+          'Alpha Vantage + Massive connected for intraday price data',
+          '1-min candles pulled around each historical trade window',
+          'Price context built: what was available vs. what was captured',
         ],
       },
       {
@@ -39,17 +39,17 @@ const PHASES = [
         owner: 'lori' as const,
         items: [
           'Per-trade analysis: actual loss % vs. optimal achievable loss %',
-          'Cluster by stock characteristics (volatility, dividend yield, sector)',
-          'Identify which stocks systematically over/under-perform the flat 50% rule',
+          'Clustered by stock characteristics (volatility, dividend yield, sector)',
+          'Stocks that systematically over/under-perform the flat 50% rule identified',
         ],
       },
       {
-        title: 'Fidelity Workflow Documentation',
+        title: 'Fidelity Workflow Map',
         owner: 'both' as const,
         items: [
-          'Map Sean\'s current morning routine step-by-step',
-          'Identify manual touchpoints that can be automated',
-          'Document order types and constraints Fidelity supports',
+          'Current morning routine documented step-by-step',
+          'Manual touchpoints that can be automated flagged',
+          'Order types and constraints Fidelity supports catalogued',
         ],
       },
     ],
@@ -60,7 +60,7 @@ const PHASES = [
         'Enough historical data (6+ months) to be statistically meaningful',
         'Clear per-stock patterns emerge (not just noise)',
       ],
-      killCondition: 'If 50% flat rule is already near-optimal for most stocks, the optimization thesis is challenged — stop here and redirect effort.',
+      killCondition: 'If 50% flat rule is already near-optimal for most stocks, the optimization thesis is challenged — we stop here and redirect effort.',
     },
   },
   {
@@ -69,7 +69,7 @@ const PHASES = [
     subtitle: 'Optimization Model + Auditable Backtest',
     duration: '4–8 weeks',
     status: 'blocked' as const,
-    thesis: 'Build the per-stock dynamic threshold model. Backtest against Phase 1 data with a full audit trail. Simultaneously introduce Sean to Interactive Brokers for future API-driven execution.',
+    thesis: 'We build the per-stock dynamic threshold model and backtest it against Phase 1 data with a full audit trail. In parallel, we set up Interactive Brokers for future API-driven execution.',
     workstreams: [
       {
         title: 'Optimization Model',
@@ -77,34 +77,34 @@ const PHASES = [
         items: [
           'Per-stock dynamic limit price based on: historical recovery speed, dividend yield, sector volatility, market regime',
           'Output: "for TICKER X on ex-div day, set limit at Y% instead of flat 50%"',
-          'Model must be explainable — Sean needs to understand why each number',
+          'Every recommendation explainable — clear reasoning behind each number',
         ],
       },
       {
         title: 'Backtest Engine',
         owner: 'lori' as const,
         items: [
-          'Replay every historical trade with optimized limit orders',
+          'Every historical trade replayed with optimized limit orders',
           'Full audit trail: date, ticker, actual fill, model fill, delta, cumulative savings',
-          'Generate report: "here\'s what you did vs. what the model would have done"',
+          'Side-by-side report: what happened vs. what the model would have done',
         ],
       },
       {
-        title: 'Interactive Brokers Introduction',
+        title: 'Interactive Brokers Setup',
         owner: 'sean' as const,
         items: [
-          'Open IB account (paper trading first)',
-          'Transfer small test allocation',
-          'Learn the platform — order entry, limit order types, API concepts',
+          'IB account opened (paper trading first)',
+          'Small test allocation transferred',
+          'Platform familiarization — order entry, limit order types, API concepts',
         ],
       },
       {
         title: 'Attribution Framework',
         owner: 'lori' as const,
         items: [
-          'Define value created = P&L delta between flat 50% and optimized threshold',
-          'Automated AB & GI revenue share computation per trade',
-          'Monthly settlement summary (exportable PDF/CSV)',
+          'Value created defined as P&L delta between flat 50% and optimized threshold',
+          'AB & GI revenue share computed automatically per trade',
+          'Monthly settlement summary exportable (PDF/CSV)',
         ],
       },
     ],
@@ -113,10 +113,10 @@ const PHASES = [
       criteria: [
         'Model outperforms flat 50% on >60% of trades in backtest',
         'Cumulative savings are material (worth the operational complexity)',
-        'Sean has reviewed the backtest report and believes the numbers',
-        'Sean has opened an IB account with a test allocation',
+        'Backtest report reviewed and numbers validated',
+        'IB account open with a test allocation',
       ],
-      killCondition: 'If backtest shows marginal or inconsistent improvement, the model isn\'t ready. Iterate on the model or accept that flat 50% is good enough.',
+      killCondition: 'If backtest shows marginal or inconsistent improvement, the model isn\'t ready — we iterate or accept that flat 50% is good enough.',
     },
   },
   {
@@ -125,16 +125,16 @@ const PHASES = [
     subtitle: 'Daily Order Suggestions via Interactive Brokers',
     duration: '2–4 weeks to launch, then ongoing',
     status: 'blocked' as const,
-    thesis: 'Every morning, the system generates optimized limit orders for today\'s ex-dividend stocks. Sean reviews on his phone and approves each order in IB. Full attribution tracked automatically.',
+    thesis: 'Every morning, the system generates optimized limit orders for today\'s ex-dividend stocks. Review on phone, tap approve, order placed in IB via API. Full attribution tracked automatically.',
     workstreams: [
       {
         title: 'Morning Order Sheet',
         owner: 'lori' as const,
         items: [
-          'Automated daily run: pull today\'s ex-div stocks from watchlist',
-          'Compute optimal limit price per stock using the proven model',
-          'Push mobile-friendly notification with the order sheet',
-          'Sean reviews, taps approve — order placed in IB via API',
+          'Daily automated run pulls today\'s ex-div stocks from watchlist',
+          'Optimal limit price computed per stock using the proven model',
+          'Mobile-friendly notification pushed with the order sheet',
+          'One-tap approve — order placed in IB via API',
         ],
       },
       {
@@ -143,7 +143,7 @@ const PHASES = [
         items: [
           'Binary gate: should we trade today?',
           'Inputs: VIX level, broad market overnight moves, sector stress',
-          'If kill-switch is ON, no orders generated — Sean gets a "sit today out" message',
+          'If kill-switch is ON, no orders generated — "sit today out" message sent',
         ],
       },
       {
@@ -156,23 +156,23 @@ const PHASES = [
         ],
       },
       {
-        title: 'Trust & Handoff',
-        owner: 'sean' as const,
+        title: 'Trust & Graduation',
+        owner: 'both' as const,
         items: [
-          'Review every suggested order for first 2–4 weeks (supervised mode)',
-          'Flag disagreements — model learns from overrides',
-          'Graduate to "approve all" once confidence is established',
+          'Every suggested order reviewed for first 2–4 weeks (supervised mode)',
+          'Disagreements flagged — model learns from overrides',
+          'Graduate to "approve all" once confidence established',
         ],
       },
     ],
     gate: {
-      question: 'Is Sean comfortable enough to approve orders without second-guessing each one?',
+      question: 'Are we comfortable approving orders without second-guessing each one?',
       criteria: [
         'Enough live trades (30+) with consistent results',
-        'Sean\'s override rate drops below 10%',
+        'Override rate drops below 10%',
         'Monthly attribution report shows clear, positive value creation',
       ],
-      killCondition: 'If Sean overrides >50% of suggestions after 4 weeks, the model needs more work — return to Phase 2.',
+      killCondition: 'If override rate stays >50% after 4 weeks, the model needs more work — we return to Phase 2.',
     },
   },
 ]
@@ -204,7 +204,7 @@ export default function LimitOrderOptimization() {
           Limit Order Optimization
         </div>
         <p className="text-[10px] sm:text-[9px] text-forest-ink-muted leading-snug mb-2">
-          Phased approach to replacing Sean&apos;s flat 50% limit order rule with per-stock dynamic thresholds.
+          Phased approach to replacing the flat 50% limit order rule with per-stock dynamic thresholds.
           Each phase has a gate — we don&apos;t advance until the evidence supports it.
         </p>
         <div className="flex items-center gap-1 flex-wrap">
