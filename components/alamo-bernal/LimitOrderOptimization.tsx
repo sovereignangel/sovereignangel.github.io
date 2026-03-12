@@ -12,7 +12,7 @@ const PHASES = [
     id: 0,
     title: 'Discovery',
     subtitle: 'Feasibility Assessment — 2 Sessions, 1 Sprint',
-    duration: '2 weeks',
+    duration: '1 sprint',
     status: 'active' as const,
     thesis: 'Before committing to a multi-month build, we determine whether limit order optimization is even possible. Two working sessions with Sean, independent research between sessions, and a go/no-go decision at the end. This runs under the existing retainer — no new pricing.',
     workstreams: [
@@ -72,7 +72,7 @@ const PHASES = [
     id: 1,
     title: 'Learn & Build',
     subtitle: 'Historical Analysis + Optimization Model',
-    duration: '4–6 weeks',
+    duration: '',
     status: 'blocked' as const,
     thesis: 'With feasibility confirmed, we ingest the full trade history, build the market data pipeline, and develop the per-stock dynamic threshold model. Backtest everything with a full audit trail.',
     workstreams: [
@@ -126,64 +126,8 @@ const PHASES = [
   {
     id: 2,
     title: 'Supervised Live',
-    subtitle: 'Optimization Model + Auditable Backtest',
-    duration: '4–8 weeks',
-    status: 'blocked' as const,
-    thesis: 'We build the per-stock dynamic threshold model and backtest it against Phase 1 data with a full audit trail. In parallel, we set up Interactive Brokers for future API-driven execution.',
-    workstreams: [
-      {
-        title: 'Optimization Model',
-        owner: 'lori' as const,
-        items: [
-          'Per-stock dynamic limit price based on: historical recovery speed, dividend yield, sector volatility, market regime',
-          'Output: "for TICKER X on ex-div day, set limit at Y% instead of flat 50%"',
-          'Every recommendation explainable — clear reasoning behind each number',
-        ],
-      },
-      {
-        title: 'Backtest Engine',
-        owner: 'lori' as const,
-        items: [
-          'Every historical trade replayed with optimized limit orders',
-          'Full audit trail: date, ticker, actual fill, model fill, delta, cumulative savings',
-          'Side-by-side report: what happened vs. what the model would have done',
-        ],
-      },
-      {
-        title: 'Interactive Brokers Setup',
-        owner: 'sean' as const,
-        items: [
-          'IB account opened (paper trading first)',
-          'Small test allocation transferred',
-          'Platform familiarization — order entry, limit order types, API concepts',
-        ],
-      },
-      {
-        title: 'Attribution Framework',
-        owner: 'lori' as const,
-        items: [
-          'Value created defined as P&L delta between flat 50% and optimized threshold',
-          'AB & GI revenue share computed automatically per trade',
-          'Monthly settlement summary exportable (PDF/CSV)',
-        ],
-      },
-    ],
-    gate: {
-      question: 'Does the backtest show consistent, meaningful savings below the 40% loss baseline?',
-      criteria: [
-        'Model outperforms flat 50% on >60% of trades in backtest',
-        'Cumulative savings are material (worth the operational complexity)',
-        'Backtest report reviewed and numbers validated',
-        'IB account open with a test allocation',
-      ],
-      killCondition: 'If backtest shows marginal or inconsistent improvement, the model isn\'t ready — we iterate or accept that flat 50% is good enough.',
-    },
-  },
-  {
-    id: 2,
-    title: 'Supervised Live',
     subtitle: 'Daily Order Suggestions via Interactive Brokers',
-    duration: '2–4 weeks to launch, then ongoing',
+    duration: '',
     status: 'blocked' as const,
     thesis: 'Every morning, the system generates optimized limit orders for today\'s ex-dividend stocks. Review on phone, tap approve, order placed in IB via API. Full attribution tracked automatically.',
     workstreams: [
@@ -277,11 +221,7 @@ export default function LimitOrderOptimization() {
             </div>
           ))}
         </div>
-        <div className="mt-2 pt-2 border-t border-forest-rule flex flex-wrap gap-3">
-          <div>
-            <span className="text-[9px] text-forest-ink-faint uppercase tracking-wide">Est. Total</span>
-            <span className="text-[10px] font-medium text-forest-ink ml-1.5">2–4 months</span>
-          </div>
+        <div className="mt-2 pt-2 border-t border-forest-rule">
           <div>
             <span className="text-[9px] text-forest-ink-faint uppercase tracking-wide">First Blocker</span>
             <span className="text-[10px] font-medium text-forest-ink ml-1.5">Feasibility assessment (2 sessions)</span>
@@ -312,9 +252,11 @@ export default function LimitOrderOptimization() {
                     {STATUS_STYLES[phase.status].label}
                   </span>
                 </div>
-                <span className="font-mono text-[9px] sm:text-[8px] text-forest-ink-faint shrink-0">
-                  {phase.duration}
-                </span>
+                {phase.duration && (
+                  <span className="font-mono text-[9px] sm:text-[8px] text-forest-ink-faint shrink-0">
+                    {phase.duration}
+                  </span>
+                )}
               </div>
               <p className="text-[9px] text-forest-ink-faint uppercase tracking-wide mt-1.5 ml-5">{phase.subtitle}</p>
               {!isOpen && (
@@ -416,6 +358,21 @@ export default function LimitOrderOptimization() {
         <div className="pt-2 border-t border-forest-rule">
           <p className="text-[11px] sm:text-[10px] text-forest-ink-muted leading-snug">
             Value = P&amp;L delta between flat 50% baseline and optimized limit orders. Computed per trade, auditable end-to-end, settled monthly. Performance-based comp: half of savings below 40% loss baseline.
+          </p>
+        </div>
+      </div>
+
+      {/* ── SOW Note ── */}
+      <div className="bg-forest-cream border border-forest rounded-sm p-3">
+        <div className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-forest mb-1.5">
+          Scope of Work — Compensation Note
+        </div>
+        <div className="space-y-1.5">
+          <p className="text-[10px] text-forest-ink-muted leading-snug">
+            <span className="font-medium text-forest-ink">Validation phase:</span> 1 sprint (two weeks), 2 sessions with Sean. Covered under the existing retainer — no additional pricing. Purpose: determine whether limit order optimization is feasible before committing to a multi-month build.
+          </p>
+          <p className="text-[10px] text-forest-ink-muted leading-snug">
+            <span className="font-medium text-forest-ink">After feasibility is confirmed:</span> screener automation and limit order optimization proceed in parallel on separate compensation structures. Screener work continues under the retainer; optimization work transitions to the performance-based attribution model described above.
           </p>
         </div>
       </div>
