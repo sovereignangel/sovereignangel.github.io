@@ -22,13 +22,14 @@ import GovernanceLedger from '@/components/thesis/rl/GovernanceLedger'
 import CalibrationView from '@/components/thesis/rl/CalibrationView'
 import QuantPathView from '@/components/thesis/quant/QuantPathView'
 import SurfaceAreaView from '@/components/thesis/quant/SurfaceAreaView'
+import QuantLabView from '@/components/thesis/quant/QuantLabView'
 import QuantDial from '@/components/thesis/quant/QuantDial'
 import { getSignals, getHypotheses } from '@/lib/firestore'
 
 type BoardRoomTab = 'machine' | 'rl' | 'research' | 'thesis' | 'alpha' | 'quant'
 type RLSubTab = 'transitions' | 'policy' | 'audit' | 'lab'
 type AlphaSubTab = 'feed' | 'theses' | 'lab' | 'tracker'
-type QuantSubTab = 'path' | 'surface'
+type QuantSubTab = 'path' | 'lab' | 'surface'
 
 const TABS: { key: BoardRoomTab; label: string }[] = [
   { key: 'machine', label: 'The Machine' },
@@ -55,6 +56,7 @@ const ALPHA_TABS: { key: AlphaSubTab; label: string }[] = [
 
 const QUANT_TABS: { key: QuantSubTab; label: string }[] = [
   { key: 'path', label: 'Quant Path' },
+  { key: 'lab', label: 'Research Lab' },
   { key: 'surface', label: 'Surface Area' },
 ]
 
@@ -201,6 +203,7 @@ export default function BoardRoomPage() {
           {isAlpha && alphaSubTab === 'lab' && <AlphaLabView />}
           {isAlpha && alphaSubTab === 'tracker' && <AlphaTrackerView />}
           {isQuant && quantSubTab === 'path' && <QuantPathView />}
+          {isQuant && quantSubTab === 'lab' && <QuantLabView />}
           {isQuant && quantSubTab === 'surface' && <SurfaceAreaView />}
         </div>
       </div>

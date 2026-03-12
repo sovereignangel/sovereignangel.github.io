@@ -20,11 +20,15 @@ export default function ThesisSection() {
       </p>
 
       <p className="text-[#333] mb-4">
-        This is my digital laboratory — a reward function integrated across my second brain, tested on the only subject I have continuous access to: myself.
+        The mind is a compoundable asset. Like any portfolio, it can be measured, trained, and optimized — but only if you have the right ontology. Contemplative traditions (Buddhism, Stoicism, phenomenology) have spent millennia mapping the interior landscape. Modern cognitive science gives us the measurement layer: EEG, HRV, fMRI, and behavioral traces that make subjective states legible to computation.
+      </p>
+
+      <p className="text-[#333] mb-4">
+        My thesis is that these two traditions — ancient curriculum and modern biosignal data — can be fused into a single reinforcement learning framework. The agent is the practitioner. The reward signal is a composite of energy, cognition, output, and coherence. The policy is how you allocate attention, effort, and rest across every domain of life. The question isn&apos;t productivity — it&apos;s whether a human can use RL principles to discover better policies for living.
       </p>
 
       <p className="text-[#333] mb-6">
-        The engine tracks energy, cognition, output, and coherence across every domain of my life, then computes a single scalar reward. The question isn&apos;t productivity. It&apos;s whether a human can use RL principles to discover better policies for living.
+        This is the through-line connecting everything I build: Bodhi Engine (contemplative curriculum), Neurostack (EEG observatory), and the Thesis Engine (the reward function running on my own life as an N=1 experiment).
       </p>
 
       <div className="mb-6">

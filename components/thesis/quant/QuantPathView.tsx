@@ -17,58 +17,54 @@ interface Milestone {
 
 const CAREER_PHASES = [
   {
-    phase: 'Systematize',
-    label: 'Months 1–3 · Automate What Works',
-    comp: 'Current: Fund operator',
-    role: 'Quant Developer → Systematic Strategist',
-    description: 'You have 10x returns on 300+ positions via CQL. The job now is to turn discretionary alpha into a machine: IB paper trading, risk guardrails, audit trail. Learn by building, not by studying.',
+    phase: 'Build Portfolio',
+    label: 'Months 1–3 · Research Projects + Math Foundations',
+    comp: 'Target: Quant Developer roles',
+    role: 'Self-directed → Quant Developer',
+    description: 'Build 2–3 research projects with your APIs (Polygon, Benzinga, Alpha Vantage) that prove you can go from raw data to a validated signal. Reactivate math foundations via Anki — probability, linear algebra, stochastic processes. Your actuarial + ME background is the base.',
   },
   {
     phase: 'Formalize',
-    label: 'Months 3–8 · Prove It Statistically',
-    comp: '$200–350k equivalent',
-    role: 'Quant Researcher',
-    description: 'Backfill the theory behind what already works. Compute Sharpe, decompose alpha sources, stress-test across regimes. Publish findings. The math serves the track record, not the other way around.',
+    label: 'Months 3–6 · Deepen Stats + Publish',
+    comp: 'Target: Quant Analyst / Researcher roles',
+    role: 'Quant Developer → Quant Researcher',
+    description: 'Deepen statistics: hypothesis testing, time series, Bayesian inference. Publish 1–2 write-ups on your research findings (Substack/SSRN). Start grinding interview prep — Green Book, brainteasers, probability puzzles. The write-ups are your conversation starters.',
   },
   {
-    phase: 'Scale',
-    label: 'Months 8–18 · Run Real Capital',
-    comp: '$300–500k+',
-    role: 'Portfolio Manager / Senior Quant',
-    description: 'Go live supervised, then autonomous. Multi-strategy book across Armstrong + Blockless. Auditable track record is the credential — not a degree or cert.',
+    phase: 'Get Hired',
+    label: 'Months 6–12 · Interview + Network + Land Role',
+    comp: 'Target: $150–300k+ total comp',
+    role: 'Quant Researcher / Developer at a firm',
+    description: 'Apply to mid-tier quant firms and fintech first, not Citadel/Jane Street. Lead with your research portfolio. Your full-stack engineering + actuarial math + research projects = differentiated candidate. Network via quant Twitter, QuantConnect, local meetups.',
   },
 ]
 
 const INITIAL_MILESTONES: Milestone[] = [
-  // Phase 1: Systematize (Months 1-3)
-  { id: 's-ib-paper', phase: 'Systematize', skill: 'IB Paper Trading — connect CQL signals to IB paper account', category: 'code', target: 'ib_insync Python + paper account running for 2 months', status: 'not_started' },
-  { id: 's-pipeline', phase: 'Systematize', skill: 'Signal → Order pipeline — CQL output to IB order submission with risk checks', category: 'code', target: 'Automated: signal in → order out → fill logged', status: 'not_started' },
-  { id: 's-risk-guard', phase: 'Systematize', skill: 'Risk guardrails — max position size, daily loss limit, correlation checks', category: 'finance', target: 'Hard limits that halt trading automatically', status: 'not_started' },
-  { id: 's-audit', phase: 'Systematize', skill: 'Audit trail — every order logged with signal source, timestamp, fill quality', category: 'code', target: 'Database of every trade with full attribution', status: 'not_started' },
-  { id: 's-greeks', phase: 'Systematize', skill: 'Greeks monitoring — live delta, gamma, theta, vega exposure across book', category: 'finance', target: 'Real-time portfolio Greeks dashboard', status: 'not_started' },
-  { id: 's-cql-doc', phase: 'Systematize', skill: 'Document CQL strategy logic — what signals, what filters, what sizing', category: 'soft', target: 'Strategy spec that another quant could audit', status: 'in_progress' },
-  { id: 's-reconcile', phase: 'Systematize', skill: 'Paper vs. live reconciliation — compare paper fills to what live would have been', category: 'code', target: '2 months of parallel tracking data', status: 'not_started' },
-  { id: 's-anki-prob', phase: 'Systematize', skill: 'Anki: Probability & stochastic processes — reactivate actuarial/ME foundations', category: 'math', target: '200+ cards, 20 min/day. Focus on options-relevant: distributions, conditional expectation, martingales', status: 'not_started' },
-  { id: 's-anki-la', phase: 'Systematize', skill: 'Anki: Linear algebra for portfolio math — PCA, covariance, eigendecomposition', category: 'math', target: '100+ cards. Apply directly to CQL correlation analysis', status: 'not_started' },
+  // Phase 1: Build Portfolio (Months 1-3)
+  { id: 'bp-analyst', phase: 'Build Portfolio', skill: 'Analyst Alpha Decay Study — event study on Benzinga ratings + Polygon returns', category: 'code', target: 'Complete write-up with CAR analysis, analyst rankings, out-of-sample validation', status: 'not_started' },
+  { id: 'bp-vol', phase: 'Build Portfolio', skill: 'Options Vol Surface Explorer — implied vol computation, 3D surface, skew analysis', category: 'finance', target: 'Working tool that pulls live chains, computes IV, visualizes surface', status: 'not_started' },
+  { id: 'bp-micro', phase: 'Build Portfolio', skill: 'Order Flow Imbalance Signal — Lee-Ready classification, OFI, return prediction', category: 'code', target: 'Statistical test of OFI predictive power on short-term returns', status: 'not_started' },
+  { id: 'bp-anki-prob', phase: 'Build Portfolio', skill: 'Anki: Probability — reactivate actuarial foundations (distributions, conditional expectation, martingales)', category: 'math', target: '200+ cards, 20 min/day', status: 'not_started' },
+  { id: 'bp-anki-la', phase: 'Build Portfolio', skill: 'Anki: Linear algebra — PCA, covariance matrices, eigendecomposition', category: 'math', target: '100+ cards. Apply to portfolio correlation analysis', status: 'not_started' },
+  { id: 'bp-python', phase: 'Build Portfolio', skill: 'Python proficiency — pandas, numpy, scipy, statsmodels at speed', category: 'code', target: 'Can wrangle financial data + run statistical tests fluently', status: 'not_started' },
+  { id: 'bp-chan', phase: 'Build Portfolio', skill: 'Read: Quantitative Trading (Chan) — practical quant methodology', category: 'finance', target: 'Complete book, implement 2+ concepts in research projects', status: 'not_started' },
 
-  // Phase 2: Formalize (Months 3-8)
-  { id: 'f-sharpe', phase: 'Formalize', skill: 'Compute strategy Sharpe, Sortino, max drawdown, Calmar on historical CQL trades', category: 'math', target: 'Full tearsheet on 300+ position history', status: 'not_started' },
-  { id: 'f-alpha-decomp', phase: 'Formalize', skill: 'Alpha decomposition — what % is timing, selection, sizing, vol?', category: 'math', target: 'Factor attribution (Brinson or regression-based)', status: 'not_started' },
-  { id: 'f-regime', phase: 'Formalize', skill: 'Regime analysis — does CQL alpha persist in drawdowns, low vol, rate hikes?', category: 'ml', target: 'Hidden Markov or changepoint detection on strategy PnL', status: 'not_started' },
-  { id: 'f-options', phase: 'Formalize', skill: 'Options Greeks deep-dive — vol surfaces, skew dynamics, term structure', category: 'finance', target: 'Natenberg + Anki deck. You know Black-Scholes — now apply to CQL spreads', status: 'not_started' },
-  { id: 'f-sizing', phase: 'Formalize', skill: 'Position sizing formalization — Kelly criterion, risk parity, vol targeting', category: 'math', target: 'Replace intuitive sizing with optimal f', status: 'not_started' },
-  { id: 'f-backtest', phase: 'Formalize', skill: 'Walk-forward backtest engine — out-of-sample validation, no lookahead bias', category: 'code', target: 'Prove CQL signals work out-of-sample', status: 'in_progress' },
-  { id: 'f-deprado', phase: 'Formalize', skill: 'de Prado: Advances in Financial ML — triple barrier, meta-labeling, purged CV', category: 'ml', target: 'Apply 3+ techniques to CQL signal pipeline', status: 'not_started' },
-  { id: 'f-anki-stoch', phase: 'Formalize', skill: 'Anki: Stochastic calculus for derivatives — Itô, Brownian motion, SDEs', category: 'math', target: 'Reactivate from actuarial foundations. 150+ cards, interview-ready', status: 'not_started' },
-  { id: 'f-publish', phase: 'Formalize', skill: 'Publish 1 piece — SSRN paper, Substack deep-dive, or conference talk', category: 'soft', target: 'Written artifact with real data, not toy examples', status: 'not_started' },
+  // Phase 2: Formalize (Months 3-6)
+  { id: 'f-stats', phase: 'Formalize', skill: 'Deep statistics — hypothesis testing, time series, regression, Bayesian inference', category: 'math', target: 'Work through DeGroot & Schervish or Casella & Berger', status: 'not_started' },
+  { id: 'f-stoch', phase: 'Formalize', skill: 'Stochastic calculus — Itô, Brownian motion, SDEs (reactivate from actuarial)', category: 'math', target: 'Anki deck, 150+ cards. Interview-ready on derivatives math', status: 'not_started' },
+  { id: 'f-natenberg', phase: 'Formalize', skill: 'Options deep-dive — Natenberg: vol surfaces, skew dynamics, Greeks sensitivities', category: 'finance', target: 'Can discuss vol trading strategies fluently', status: 'not_started' },
+  { id: 'f-deprado', phase: 'Formalize', skill: 'de Prado: Advances in Financial ML — triple barrier, meta-labeling, purged CV', category: 'ml', target: 'Apply 3+ techniques to your research projects', status: 'not_started' },
+  { id: 'f-publish-1', phase: 'Formalize', skill: 'Publish research write-up #1 — analyst alpha study on Substack or SSRN', category: 'soft', target: 'Written artifact with real data, charts, methodology', status: 'not_started' },
+  { id: 'f-publish-2', phase: 'Formalize', skill: 'Publish research write-up #2 — vol surface or microstructure findings', category: 'soft', target: 'Second published piece showing depth', status: 'not_started' },
+  { id: 'f-brainteasers', phase: 'Formalize', skill: 'Interview prep: Green Book + Heard on the Street + 50 Challenging Problems', category: 'math', target: 'Can solve probability brainteasers under time pressure', status: 'not_started' },
+  { id: 'f-leetcode', phase: 'Formalize', skill: 'Coding interviews: LeetCode mediums + quant-flavored problems', category: 'code', target: '100+ problems solved, comfortable with timed coding', status: 'not_started' },
 
-  // Phase 3: Scale (Months 8-18)
-  { id: 'l-supervised', phase: 'Scale', skill: 'Supervised live trading — IB live account, human approves each order for 1 month', category: 'finance', target: 'Live fills with <2% slippage vs paper', status: 'not_started' },
-  { id: 'l-autonomous', phase: 'Scale', skill: 'Autonomous live trading — system runs with risk limits, human monitors only', category: 'code', target: 'Hands-off for 1+ month with alerts', status: 'not_started' },
-  { id: 'l-multi', phase: 'Scale', skill: 'Multi-strategy — add 2nd strategy alongside CQL (mean reversion, momentum, vol arb)', category: 'ml', target: 'Uncorrelated alpha streams', status: 'not_started' },
-  { id: 'l-track', phase: 'Scale', skill: 'Verified 12-month live track record with auditable PnL', category: 'finance', target: 'Sharpe > 1.5 on live capital', status: 'not_started' },
-  { id: 'l-aum', phase: 'Scale', skill: 'Scale AUM — Armstrong + Blockless combined book > $1M', category: 'finance', target: 'Demonstrate capacity without alpha decay', status: 'not_started' },
-  { id: 'l-network', phase: 'Scale', skill: 'Quant network — active in quant Twitter, QuantConnect, or local meetups', category: 'soft', target: '5+ quant relationships, 1+ collaboration', status: 'not_started' },
+  // Phase 3: Get Hired (Months 6-12)
+  { id: 'h-resume', phase: 'Get Hired', skill: 'Quant-optimized resume — lead with research projects, math background, engineering', category: 'soft', target: 'Resume reviewed by 2+ people in quant/finance', status: 'not_started' },
+  { id: 'h-network', phase: 'Get Hired', skill: 'Quant network — active on quant Twitter, QuantConnect forums, local meetups', category: 'soft', target: '5+ quant relationships, 1+ warm intro to a firm', status: 'not_started' },
+  { id: 'h-apply-mid', phase: 'Get Hired', skill: 'Apply to mid-tier quant firms and fintech (not Citadel/JS first)', category: 'soft', target: '20+ targeted applications with custom cover letters', status: 'not_started' },
+  { id: 'h-mock', phase: 'Get Hired', skill: 'Mock interviews — probability, coding, and "walk me through your research"', category: 'soft', target: '5+ mock interviews with feedback', status: 'not_started' },
+  { id: 'h-offer', phase: 'Get Hired', skill: 'Land a quant developer or quant analyst role', category: 'finance', target: 'Signed offer at a quant firm or fintech with quant team', status: 'not_started' },
 ]
 
 const CATEGORY_STYLE: Record<string, string> = {
@@ -136,13 +132,13 @@ export default function QuantPathView() {
       {/* Header */}
       <div className="bg-burgundy-bg border border-burgundy/10 rounded-sm p-2">
         <h3 className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-1">
-          Quant Path · Alpha-First Training
+          Quant Path · Get Hired
         </h3>
         <p className="font-sans text-[10px] text-ink leading-relaxed">
-          <strong>Background:</strong> Actuarial science + management engineering + CFA L1. Math foundations are there — reactivate via Anki, don&apos;t re-learn.
-          <strong> Edge:</strong> 10x returns on 300+ positions via CQL. The path isn&apos;t &ldquo;study → find alpha.&rdquo;
-          It&apos;s <strong>&ldquo;systematize alpha → formalize the math → scale capital.&rdquo;</strong>
-          Armstrong + Blockless are the lab. IB automation is the vehicle. Anki is the accelerant.
+          <strong>Background:</strong> 1 year actuarial science (WPI) + management engineering. Diff eq, calc sequence, probability, linear algebra.
+          <strong> Assets:</strong> Polygon (stocks + options), Benzinga analyst ratings, Alpha Vantage Pro.
+          <strong> Path:</strong> Build research portfolio → deepen math/stats → get hired as quant dev/analyst.
+          Full-stack engineering + actuarial math + published research = <strong>differentiated candidate</strong>.
         </p>
       </div>
 
@@ -204,17 +200,17 @@ export default function QuantPathView() {
           </div>
         </div>
 
-        {/* Paper → Live roadmap */}
+        {/* Hiring roadmap */}
         <div className="border-t border-rule-light pt-2">
           <h4 className="font-serif text-[9px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-1.5">
-            Paper → Live Roadmap
+            Hiring Roadmap
           </h4>
           <div className="flex gap-0.5">
             {[
-              { label: 'Paper Only', months: 'Mo 1–2', color: 'bg-burgundy-bg border-burgundy/20 text-burgundy', width: '25%' },
-              { label: 'Supervised', months: 'Mo 2–3', color: 'bg-amber-bg border-amber-ink/20 text-amber-ink', width: '25%' },
-              { label: 'Scale Up', months: 'Mo 3–4', color: 'bg-green-bg border-green-ink/20 text-green-ink', width: '25%' },
-              { label: 'Autonomous', months: 'Mo 4+', color: 'bg-green-bg border-green-ink/20 text-green-ink', width: '25%' },
+              { label: 'Build', months: 'Mo 1–3', color: 'bg-burgundy-bg border-burgundy/20 text-burgundy', width: '25%' },
+              { label: 'Publish', months: 'Mo 3–5', color: 'bg-amber-bg border-amber-ink/20 text-amber-ink', width: '25%' },
+              { label: 'Interview', months: 'Mo 5–8', color: 'bg-green-bg border-green-ink/20 text-green-ink', width: '25%' },
+              { label: 'Hired', months: 'Mo 8–12', color: 'bg-green-bg border-green-ink/20 text-green-ink', width: '25%' },
             ].map(stage => (
               <div
                 key={stage.label}
@@ -227,10 +223,10 @@ export default function QuantPathView() {
             ))}
           </div>
           <div className="grid grid-cols-4 gap-0.5 mt-1">
-            <p className="font-sans text-[7px] text-ink-muted leading-tight px-0.5">CQL → IB paper. Log fills.</p>
-            <p className="font-sans text-[7px] text-ink-muted leading-tight px-0.5">10% size. Human approves.</p>
-            <p className="font-sans text-[7px] text-ink-muted leading-tight px-0.5">50% if delta {'<'}2%.</p>
-            <p className="font-sans text-[7px] text-ink-muted leading-tight px-0.5">Risk limits enforce.</p>
+            <p className="font-sans text-[7px] text-ink-muted leading-tight px-0.5">API research projects. Anki math.</p>
+            <p className="font-sans text-[7px] text-ink-muted leading-tight px-0.5">Write-ups on findings. Deep stats.</p>
+            <p className="font-sans text-[7px] text-ink-muted leading-tight px-0.5">Prep + apply to mid-tier firms.</p>
+            <p className="font-sans text-[7px] text-ink-muted leading-tight px-0.5">Land quant dev/analyst role.</p>
           </div>
         </div>
 
@@ -315,12 +311,13 @@ export default function QuantPathView() {
         </h4>
         <div className="space-y-1">
           {[
-            { title: 'Option Volatility & Pricing', author: 'Natenberg', tag: 'finance', phase: 'Now' },
             { title: 'Quantitative Trading', author: 'Chan', tag: 'code', phase: 'Now' },
+            { title: 'Option Volatility & Pricing', author: 'Natenberg', tag: 'finance', phase: 'Now' },
+            { title: 'Heard on the Street', author: 'Crack', tag: 'math', phase: 'Mo 2' },
+            { title: '50 Challenging Problems in Probability', author: 'Mosteller', tag: 'math', phase: 'Mo 2' },
             { title: 'Advances in Financial Machine Learning', author: 'de Prado', tag: 'ml', phase: 'Mo 3' },
-            { title: 'Active Portfolio Management', author: 'Grinold & Kahn', tag: 'finance', phase: 'Mo 3' },
-            { title: 'Dynamic Hedging', author: 'Taleb', tag: 'finance', phase: 'Mo 4' },
-            { title: 'Stochastic Calculus for Finance II', author: 'Shreve', tag: 'math', phase: 'Mo 5' },
+            { title: 'Probability & Statistics', author: 'DeGroot & Schervish', tag: 'math', phase: 'Mo 3' },
+            { title: 'Stochastic Calculus for Finance II', author: 'Shreve', tag: 'math', phase: 'Mo 4' },
           ].map(book => (
             <div key={book.title} className="flex items-center gap-1.5">
               <span className={`font-mono text-[7px] uppercase px-1 py-0.5 rounded-sm border ${CATEGORY_STYLE[book.tag]}`}>

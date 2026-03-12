@@ -39,47 +39,44 @@ const caseStudies = [
 
 const projects = [
   {
-    title: 'Options Analytics Dashboard',
-    href: 'https://armstrong.loricorpuz.com',
-    meta: 'F&F Investors',
-    description:
-      'A decision-intelligence platform that fuses market data, analyst signals, and options pricing to surface asymmetric trades.',
-    highlight: { metric: '10x returns', text: 'over 2 years live. Currently backtesting to 2012.' },
-  },
-  {
     title: 'Manifold Careers',
     href: 'https://manifold.loricorpuz.com',
-    meta: 'AI Agent',
     description:
-      'An AI that scores job-resume fit, surfaces skill gaps, generates micro-projects to close them, and maps your fastest path to higher compensation.',
-    highlight: { metric: 'Launching Feb 2026', text: 'at $30/month' },
+      'AI agent that scores job-resume fit, surfaces skill gaps, generates micro-projects to close them, and maps your fastest path to higher compensation.',
+    status: 'In Beta',
     logo: '/manifoldlogo.svg',
+  },
+  {
+    title: 'Options Analytics Platform',
+    href: 'https://armstrong.loricorpuz.com',
+    description:
+      'Decision-intelligence system fusing market data, analyst signals, and options pricing to surface asymmetric trade opportunities.',
+    status: 'Live',
   },
   {
     title: 'Ride Atlas',
     href: 'https://rideatlas.loricorpuz.com',
-    meta: 'Bikepacking Planner',
     description:
-      'Plan bikepacking and bike touring adventures with friends—routes, logistics, and coordination in one place.',
-    highlight: { metric: '$10–30', text: 'per plan' },
+      'Plan bikepacking and bike touring adventures with friends — routes, logistics, and coordination in one place.',
+    status: 'Live',
+  },
+  {
+    title: 'Back of the Napkin',
+    description:
+      'Quick-sketch financial models for evaluating venture ideas — unit economics, TAM sizing, and scenario analysis in minutes.',
+    status: 'In Development',
   },
   {
     title: 'Bodhi Engine',
     href: 'https://bodhi.loricorpuz.com',
-    meta: 'Contemplative Technology',
     description: 'Translating perennial wisdom into modern architecture for mind training.',
-  },
-  {
-    title: 'Pocket Geneticist',
-    meta: 'Personalized Wellness · Concept',
-    description:
-      'Leverages your DNA to map an optimized plan for your greatest well-being—nutrition, fitness, and lifestyle tailored to your genome.',
+    status: 'Concept',
   },
   {
     title: 'Neurostack',
-    meta: 'EEG, N=1 · Concept',
     description:
       'A multimodal biosensing dashboard designed to make latent cognitive representations observable, reproducible, and learnable.',
+    status: 'Concept',
   },
 ]
 
@@ -161,43 +158,47 @@ export default function OutputsSection() {
       {activeTab === 'projects' && (
         <div>
           <p className="text-[13px] text-[#888] italic mb-5">
-            Side projects built to learn edges of AI, markets, and product engineering.
+            Products and side projects across AI, markets, and cognitive science.
           </p>
           {projects.map((project, i) => (
             <div key={i} className={`${i < projects.length - 1 ? 'mb-7' : ''}`}>
-              <h3 className="text-[17px] font-medium mb-1">
-                {project.logo && (
-                  <Image
-                    src={project.logo}
-                    alt={project.title}
-                    width={20}
-                    height={20}
-                    className="inline-block mr-2 align-middle h-5 w-auto"
-                  />
-                )}
-                {project.href ? (
-                  <a
-                    href={project.href}
-                    className="text-[#1a1a1a] no-underline border-b border-[#ccc] hover:border-[#1a1a1a] transition-colors duration-200"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    {project.title}
-                  </a>
-                ) : (
-                  project.title
-                )}
-              </h3>
-              <p className="text-[13px] text-[#888] mb-1.5">{project.meta}</p>
+              <div className="flex items-center gap-2 mb-1">
+                <h3 className="text-[17px] font-medium">
+                  {project.logo && (
+                    <Image
+                      src={project.logo}
+                      alt={project.title}
+                      width={20}
+                      height={20}
+                      className="inline-block mr-2 align-middle h-5 w-auto"
+                    />
+                  )}
+                  {project.href ? (
+                    <a
+                      href={project.href}
+                      className="text-[#1a1a1a] no-underline border-b border-[#ccc] hover:border-[#1a1a1a] transition-colors duration-200"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {project.title}
+                    </a>
+                  ) : (
+                    project.title
+                  )}
+                </h3>
+                <span className={`text-[11px] font-mono px-2 py-0.5 rounded-sm border ${
+                  project.status === 'Live'
+                    ? 'text-[#2d5f3f] border-[#2d5f3f]/20 bg-[#2d5f3f08]'
+                    : project.status === 'In Beta'
+                    ? 'text-[#8a6d2f] border-[#8a6d2f]/20 bg-[#8a6d2f08]'
+                    : project.status === 'In Development'
+                    ? 'text-[#8a6d2f] border-[#8a6d2f]/20 bg-[#8a6d2f08]'
+                    : 'text-[#888] border-[#ddd] bg-white'
+                }`}>
+                  {project.status}
+                </span>
+              </div>
               <p className="text-[#555] text-[15px]">{project.description}</p>
-              {project.highlight && (
-                <div className="mt-2.5 text-sm text-[#444] py-3 px-4 bg-gradient-to-br from-[#f8f9fa] to-white border-l-[3px] border-[#1a1a1a] rounded-r">
-                  <span className="font-semibold text-[#1a1a1a] tracking-tight">
-                    {project.highlight.metric}
-                  </span>{' '}
-                  {project.highlight.text}
-                </div>
-              )}
             </div>
           ))}
         </div>

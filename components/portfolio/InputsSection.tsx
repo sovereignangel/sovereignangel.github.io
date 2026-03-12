@@ -12,7 +12,7 @@ export default function InputsSection() {
       <SubTabs
         tabs={[
           { id: 'classes', label: 'Classes' },
-          { id: 'content', label: 'Content' },
+          { id: 'content', label: 'Writing' },
         ]}
         activeTab={activeTab}
         onTabChange={setActiveTab}
@@ -68,11 +68,13 @@ export default function InputsSection() {
       )}
 
       {activeTab === 'content' && (
-        <div className="mt-6 overflow-hidden rounded">
-          <iframe
-            src="https://v2-embednotion.com/1cc74dadd2774eb2a53eb5f57279f6e7"
-            className="w-[142%] h-[850px] border-none origin-top-left scale-[0.7]"
-          />
+        <div>
+          <p className="text-[19px] font-medium text-[#1a1a1a] tracking-tight mb-4 font-serif">
+            Writing &amp; Threads
+          </p>
+          <p className="text-[15px] text-[#555] italic">
+            Writing coming soon — essays on cognitive ontology, markets, and building in public.
+          </p>
         </div>
       )}
 

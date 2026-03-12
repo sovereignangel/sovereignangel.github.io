@@ -7,6 +7,14 @@
     {
       "path": "/api/cron/overnight",
       "schedule": "0 13 * * *"
+    },
+    {
+      "path": "/api/morning-brief/generate",
+      "schedule": "0 13 * * *"
+    },
+    {
+      "path": "/api/morning-brief/generate",
+      "schedule": "0 14 * * *"
     }
   ]
 }

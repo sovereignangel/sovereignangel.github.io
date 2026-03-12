@@ -118,23 +118,44 @@ export default function QuantDial() {
         />
       </div>
 
-      {/* Key metrics to track */}
+      {/* Interview prep tracker */}
       <div className="bg-white border border-rule rounded-sm p-2">
         <h4 className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-1.5">
-          Quant Readiness Signals
+          Interview Readiness
         </h4>
         <div className="space-y-1">
           {[
-            { label: 'Sharpe Ratio (live or paper)', target: '> 1.5' },
-            { label: 'Strategies Backtested', target: '≥ 5' },
-            { label: 'Papers Read (quant/ML)', target: '≥ 30' },
-            { label: 'Published Research', target: '≥ 2' },
-            { label: 'Live Track Record', target: '≥ 12 months' },
-            { label: 'AUM Managed', target: '> $1M' },
+            { label: 'Research projects completed', target: '≥ 2' },
+            { label: 'Write-ups published', target: '≥ 2' },
+            { label: 'Brainteaser problems solved', target: '≥ 100' },
+            { label: 'LeetCode mediums solved', target: '≥ 100' },
+            { label: 'Anki cards active', target: '≥ 300' },
+            { label: 'Mock interviews done', target: '≥ 5' },
+            { label: 'Applications sent', target: '≥ 20' },
+            { label: 'Quant contacts made', target: '≥ 5' },
           ].map(m => (
             <div key={m.label} className="flex items-center justify-between">
               <span className="font-sans text-[9px] text-ink">{m.label}</span>
               <span className="font-mono text-[8px] text-ink-muted">{m.target}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Target roles */}
+      <div className="bg-cream border border-rule rounded-sm p-2">
+        <h4 className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-1">
+          Target Roles
+        </h4>
+        <div className="space-y-1">
+          {[
+            { role: 'Quant Developer', fit: 'Best fit — engineering + math', color: 'text-green-ink' },
+            { role: 'Quant Analyst (risk/research)', fit: 'Strong — actuarial + stats', color: 'text-green-ink' },
+            { role: 'Quant Trader', fit: 'Stretch — needs track record', color: 'text-amber-ink' },
+          ].map(r => (
+            <div key={r.role}>
+              <div className="font-sans text-[10px] font-medium text-ink">{r.role}</div>
+              <div className={`font-sans text-[8px] ${r.color}`}>{r.fit}</div>
             </div>
           ))}
         </div>
