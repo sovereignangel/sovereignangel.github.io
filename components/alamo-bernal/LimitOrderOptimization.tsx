@@ -9,63 +9,123 @@ import { useState } from 'react'
 
 const PHASES = [
   {
-    id: 1,
-    title: 'Learn',
-    subtitle: 'Historical Trade Analysis & Fidelity Flow',
-    duration: '2–4 weeks',
-    status: 'next' as const,
-    thesis: 'Before building anything, we understand the data. Ingest historical trades, overlay intraday market data, and quantify how much value a smarter limit order would have captured per stock.',
+    id: 0,
+    title: 'Discovery',
+    subtitle: 'Feasibility Assessment — 2 Sessions, 1 Sprint',
+    duration: '2 weeks',
+    status: 'active' as const,
+    thesis: 'Before committing to a multi-month build, we determine whether limit order optimization is even possible. Two working sessions with Sean, independent research between sessions, and a go/no-go decision at the end. This runs under the existing retainer — no new pricing.',
     workstreams: [
       {
-        title: 'Trade Data Ingestion',
+        title: 'Account Setup',
         owner: 'sean' as const,
         items: [
-          'Full trade history exported from Fidelity (Aug 2025 — present)',
-          'Fields: ticker, ex-div date, dividend amount, entry price, limit order price, fill price, exit timestamp',
-          'CSV or broker export — any format works',
+          'Lori creates Alpha Vantage + Massive accounts and shares credentials',
+          'Sean logs in and adds payment method / subscribes',
+          'Accounts active before Session 1 so we can pull live data together',
         ],
       },
       {
-        title: 'Market Data Pipeline',
-        owner: 'lori' as const,
-        items: [
-          'Alpha Vantage + Massive connected for intraday price data',
-          '1-min candles pulled around each historical trade window',
-          'Price context built: what was available vs. what was captured',
-        ],
-      },
-      {
-        title: 'Trade Scorecard',
-        owner: 'lori' as const,
-        items: [
-          'Per-trade analysis: actual loss % vs. optimal achievable loss %',
-          'Clustered by stock characteristics (volatility, dividend yield, sector)',
-          'Stocks that systematically over/under-perform the flat 50% rule identified',
-        ],
-      },
-      {
-        title: 'Fidelity Workflow Map',
+        title: 'Session 1 — Trade Mechanics Deep Dive',
         owner: 'both' as const,
         items: [
-          'Current morning routine documented step-by-step',
-          'Manual touchpoints that can be automated flagged',
-          'Order types and constraints Fidelity supports catalogued',
+          'Walk through 5–10 actual trades together: what happened, why, what Sean was thinking',
+          'Map the morning routine end-to-end: screening → order entry → monitoring → exit',
+          'Identify: when a stock drops past 50%, how often does it recover same day?',
+          'Are there stocks where Sean knows 50% is wrong but sets it anyway?',
+          'Sean exports trade history from Fidelity (CSV or broker report) during or after session',
+        ],
+      },
+      {
+        title: 'Independent Research (Between Sessions)',
+        owner: 'lori' as const,
+        items: [
+          'Pull intraday data for 10–15 of Sean\'s most-traded tickers around ex-div dates',
+          'Quick analysis: was there a better limit price that would have been obvious in hindsight?',
+          'Check loss distribution: bimodal (hits 50% or barely moves) vs. continuous spread?',
+          'Estimated effort: 5–8 hours',
+        ],
+      },
+      {
+        title: 'Session 2 — Findings & Go/No-Go',
+        owner: 'both' as const,
+        items: [
+          'Present research: "here\'s what we found looking at your trades"',
+          'Show specific examples: stocks where a different threshold would have saved money',
+          'Go/no-go decision: is the signal strong enough to justify building?',
+          'If go: agree on Phase 1 scope, timeline, and the performance-based comp structure',
+          'If no-go: redirect effort to screening & recordkeeping automation (already on retainer)',
         ],
       },
     ],
     gate: {
-      question: 'Can we identify stocks where a different limit price would have materially improved outcome?',
+      question: 'Is there enough signal in the data to justify building an optimization engine?',
       criteria: [
-        'Trade scorecard shows consistent >5% improvement opportunity on subset of stocks',
-        'Enough historical data (6+ months) to be statistically meaningful',
-        'Clear per-stock patterns emerge (not just noise)',
+        'At least some stocks show clear, repeatable improvement opportunity vs. flat 50%',
+        'The improvement is large enough to matter (not just noise)',
+        'Sean agrees the findings are credible and wants to proceed',
       ],
-      killCondition: 'If 50% flat rule is already near-optimal for most stocks, the optimization thesis is challenged — we stop here and redirect effort.',
+      killCondition: 'If analysis shows the 50% rule is already near-optimal (market efficiency), we stop here and redirect all effort to screening & automation under the existing retainer. No time wasted.',
+    },
+  },
+  {
+    id: 1,
+    title: 'Learn & Build',
+    subtitle: 'Historical Analysis + Optimization Model',
+    duration: '4–6 weeks',
+    status: 'blocked' as const,
+    thesis: 'With feasibility confirmed, we ingest the full trade history, build the market data pipeline, and develop the per-stock dynamic threshold model. Backtest everything with a full audit trail.',
+    workstreams: [
+      {
+        title: 'Trade Data Pipeline',
+        owner: 'lori' as const,
+        items: [
+          'Full trade history parsed into structured format',
+          'Alpha Vantage + Massive pulling 1-min candles around each trade window',
+          'Per-trade scorecard: actual loss % vs. optimal achievable loss %',
+        ],
+      },
+      {
+        title: 'Optimization Model',
+        owner: 'lori' as const,
+        items: [
+          'Per-stock dynamic limit price based on: recovery speed, dividend yield, sector volatility, market regime',
+          'Output: "for TICKER X on ex-div day, set limit at Y% instead of flat 50%"',
+          'Every recommendation explainable — clear reasoning behind each number',
+        ],
+      },
+      {
+        title: 'Backtest & Audit Trail',
+        owner: 'lori' as const,
+        items: [
+          'Every historical trade replayed with optimized limit orders',
+          'Full audit trail: date, ticker, actual fill, model fill, delta, cumulative savings',
+          'Side-by-side report: what happened vs. what the model would have done',
+        ],
+      },
+      {
+        title: 'Attribution Framework',
+        owner: 'lori' as const,
+        items: [
+          'Value created = P&L delta between flat 50% and optimized threshold',
+          'AB & GI revenue share computed automatically per trade',
+          'Monthly settlement summary exportable (PDF/CSV)',
+        ],
+      },
+    ],
+    gate: {
+      question: 'Does the backtest show consistent, meaningful savings below the 40% loss baseline?',
+      criteria: [
+        'Model outperforms flat 50% on >60% of trades in backtest',
+        'Cumulative savings are material (worth the operational complexity)',
+        'Backtest report reviewed and numbers validated',
+      ],
+      killCondition: 'If backtest shows marginal or inconsistent improvement, the model isn\'t ready — we iterate or accept that flat 50% is good enough.',
     },
   },
   {
     id: 2,
-    title: 'Build & Prove',
+    title: 'Supervised Live',
     subtitle: 'Optimization Model + Auditable Backtest',
     duration: '4–8 weeks',
     status: 'blocked' as const,
@@ -120,13 +180,22 @@ const PHASES = [
     },
   },
   {
-    id: 3,
+    id: 2,
     title: 'Supervised Live',
     subtitle: 'Daily Order Suggestions via Interactive Brokers',
     duration: '2–4 weeks to launch, then ongoing',
     status: 'blocked' as const,
     thesis: 'Every morning, the system generates optimized limit orders for today\'s ex-dividend stocks. Review on phone, tap approve, order placed in IB via API. Full attribution tracked automatically.',
     workstreams: [
+      {
+        title: 'Interactive Brokers Setup',
+        owner: 'sean' as const,
+        items: [
+          'IB account opened (paper trading first)',
+          'Small test allocation transferred',
+          'Platform familiarization — order entry, limit order types, API concepts',
+        ],
+      },
       {
         title: 'Morning Order Sheet',
         owner: 'lori' as const,
@@ -147,15 +216,6 @@ const PHASES = [
         ],
       },
       {
-        title: 'Live Attribution Tracker',
-        owner: 'lori' as const,
-        items: [
-          'Every executed trade logged with: actual P&L, baseline P&L (flat 50%), delta',
-          'Running dashboard: cumulative value added, per-month breakdown',
-          'Auditable trail for AB & GI revenue share settlement',
-        ],
-      },
-      {
         title: 'Trust & Graduation',
         owner: 'both' as const,
         items: [
@@ -172,7 +232,7 @@ const PHASES = [
         'Override rate drops below 10%',
         'Monthly attribution report shows clear, positive value creation',
       ],
-      killCondition: 'If override rate stays >50% after 4 weeks, the model needs more work — we return to Phase 2.',
+      killCondition: 'If override rate stays >50% after 4 weeks, the model needs more work — we return to Phase 1.',
     },
   },
 ]
@@ -185,7 +245,7 @@ const STATUS_STYLES = {
 }
 
 export default function LimitOrderOptimization() {
-  const [openPhases, setOpenPhases] = useState<Set<number>>(new Set([1]))
+  const [openPhases, setOpenPhases] = useState<Set<number>>(new Set([0]))
 
   function togglePhase(id: number) {
     setOpenPhases((prev) => {
@@ -204,8 +264,8 @@ export default function LimitOrderOptimization() {
           Limit Order Optimization
         </div>
         <p className="text-[10px] sm:text-[9px] text-forest-ink-muted leading-snug mb-2">
-          Phased approach to replacing the flat 50% limit order rule with per-stock dynamic thresholds.
-          Each phase has a gate — we don&apos;t advance until the evidence supports it.
+          First: determine if limit order optimization is even feasible. Two sessions, one sprint. If the data supports it,
+          we build. If not, we redirect to screening &amp; automation. Each phase has a gate — we don&apos;t advance until the evidence supports it.
         </p>
         <div className="flex items-center gap-1 flex-wrap">
           {PHASES.map((phase, i) => (
@@ -224,7 +284,7 @@ export default function LimitOrderOptimization() {
           </div>
           <div>
             <span className="text-[9px] text-forest-ink-faint uppercase tracking-wide">First Blocker</span>
-            <span className="text-[10px] font-medium text-forest-ink ml-1.5">Sean&apos;s trade data export</span>
+            <span className="text-[10px] font-medium text-forest-ink ml-1.5">Feasibility assessment (2 sessions)</span>
           </div>
         </div>
       </div>
