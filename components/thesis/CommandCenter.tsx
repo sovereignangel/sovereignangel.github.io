@@ -19,6 +19,7 @@ import type { DailyAllocation } from '@/lib/types'
 import { MUSCLE_TARGETS } from '@/lib/constants'
 import { localDateString } from '@/lib/date-utils'
 import ScoreAttribution from '@/components/thesis/ScoreAttribution'
+import SignalAttribution from '@/components/thesis/SignalAttribution'
 import { strategicPillars, computeMomentum, type StrategicPillar } from '@/lib/strategic-priorities'
 
 // ─── Helpers ────────────────────────────────────────────────────────
@@ -370,6 +371,9 @@ export default function CommandCenter() {
             todayScore={log.rewardScore ?? null}
             yesterdayScore={yesterdayScore}
           />
+
+          {/* Signal → Value Attribution */}
+          <SignalAttribution />
 
           {/* Curated Signals */}
           <CuratedSignals
