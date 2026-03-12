@@ -28,6 +28,165 @@ export const FUND_METRICS: FundMetrics = {
 // ── Meetings ────────────────────────────────────────────────────
 export const MEETINGS: Meeting[] = [
   {
+    id: 'meeting-2026-03-10',
+    date: '2026-03-10',
+    title: 'Value Anchoring & Limit Order Optimization Scoping',
+    participants: ['Lori Corpuz', 'Sean Becker'],
+    duration: '60 min',
+    summary:
+      'Anchored on highest-value deliverable: Limit Order Optimization Engine. Sean shared concrete numbers — losing ~45-60% of dividends on stock sales monthly ($76.7K dividends in Feb, lost 47.6%; $66.5K in Jan, lost 45%; $83.2K in Dec, lost 59.7%). Current approach: flat 50% limit order since Aug 2025, replacing prior discretionary trading that was wildly inconsistent (some days +97%, others -664%). Agreed on three-tier compensation: (1) $1K/month flat for screening/record-keeping automation, (2) performance-based cut for limit order optimization — half of savings below 40% loss baseline, (3) capital raising via side letter investment + discretionary structure. Discussed fundraising legal constraints (no finder\'s fees without registration), workarounds (ERA status, advisory retainer, equity/partnership). Next meeting in 2 weeks after Lori researches limit order feasibility.',
+    insights: [
+      {
+        category: 'strategy',
+        text: 'HIGHEST VALUE: Limit Order Optimization Engine. Sean currently uses flat 50% limit orders on all stocks since Aug 2025. Before that, discretionary trading was catastrophic — losses ranged from -664% to gains of +97% of dividend value. The 50% rule stabilized but is "overly generalized."',
+        confidence: 'high',
+      },
+      {
+        category: 'strategy',
+        text: 'KEY INSIGHT: Optimal limit order % should vary per stock. Some stocks warrant 30% loss cap (stable, predictable), others 75% (massive dividend, high volatility). Need intraday historical data — daily close prices aren\'t granular enough to know if a stock hit the threshold during the trading day.',
+        confidence: 'high',
+      },
+      {
+        category: 'strategy',
+        text: 'Sean\'s dividend loss data: Feb $76.7K dividends / 47.6% lost, Jan $66.5K / 45% lost, Dec $83.2K / 59.7% lost. Average ~$75K/month dividends, losing ~45-50%. At $75K/month, each 1% improvement = $750/month saved.',
+        confidence: 'high',
+      },
+      {
+        category: 'risk',
+        text: 'Macro events can override all models. Example: "we bombed Iran over the weekend" — entire market drops regardless of stock-specific predictions. Need macro signal integration (Fed announcements, VIX spikes, geopolitical events) to suppress trading on high-risk days.',
+        confidence: 'high',
+      },
+      {
+        category: 'risk',
+        text: 'Attribution problem: Hard to distinguish optimization savings from market luck. Some days stocks gap up 200% of dividend value at open — skews monthly averages. Need robust baseline comparison methodology.',
+        confidence: 'high',
+      },
+      {
+        category: 'structure',
+        text: 'THREE-TIER COMPENSATION agreed in principle: (1) $1K/month flat fee for screening, filtering, record-keeping automation — bi-weekly meetings instead of weekly. (2) Performance-based: half of savings below 40% loss baseline on limit orders. (3) Capital raising: structure TBD (side letter, advisory retainer, or equity).',
+        confidence: 'high',
+      },
+      {
+        category: 'structure',
+        text: 'Performance comp example: If monthly dividends = $80K and loss drops from 40% ($32K) to 30% ($24K), Lori gets half the $8K savings = $4K that month. Potential to earn significantly more than flat $2K/month if model works.',
+        confidence: 'high',
+      },
+      {
+        category: 'opportunity',
+        text: 'Limit order optimization approach: (1) Ingest Sean\'s historical trades since Aug 2025, (2) back-test 50% rule against optimal per-stock thresholds using intraday price data, (3) layer in macro signals, (4) build model that recommends dynamic limit order % per stock per day.',
+        confidence: 'medium',
+      },
+      {
+        category: 'opportunity',
+        text: 'Sean has all trades logged since mid-August 2025 with 50% rule. Pre-August data shows wild discretionary results. Both datasets valuable — pre-Aug shows what NOT to do, post-Aug provides clean baseline for optimization.',
+        confidence: 'high',
+      },
+      {
+        category: 'workflow',
+        text: 'Sean\'s current morning routine: Set limit orders before market open (6:30 AM California). Previously woke up early to make discretionary calls — "guesses were so random." Now sets flat 50% and walks away. Optimization would replace the flat 50% with per-stock dynamic thresholds.',
+        confidence: 'high',
+      },
+      {
+        category: 'structure',
+        text: 'Capital raising legal constraints: Finder\'s fees for investment referrals are illegal without proper registration. Workarounds discussed: (1) Lori takes Series exam + ERA registration, (2) advisory retainer structure, (3) equity/partnership in fund, (4) $500/month side letter investment to build "skin in the game" for warm conversations.',
+        confidence: 'high',
+      },
+      {
+        category: 'opportunity',
+        text: 'Lori\'s network for fundraising: immediate network is AI researchers/engineers ("nerdy money"), longer-term play is warming up crypto investor relationships from career. Phase 1 focus on tech; fundraising conversations happen organically as Lori deepens fund knowledge.',
+        confidence: 'medium',
+      },
+      {
+        category: 'risk',
+        text: 'Limit order optimization may not be possible — market efficiency could mean 45-50% loss IS the probabilistic equilibrium. Need to investigate before committing to performance-based comp. Lori to do feasibility research.',
+        confidence: 'medium',
+      },
+    ],
+    nextSteps: [
+      'Lori: Research feasibility of limit order optimization engine — data sources, modeling approach, attribution methodology',
+      'Lori: Finalize SOW edits ($1K/month, 6-month term) and send for signature',
+      'Sean: Send historical trade data (Aug 2025 — present) with 50% limit order results',
+      'Sean: Think through capital raising side letter structure preferences',
+      'Both: Next meeting March 24, 2026 (bi-weekly cadence)',
+      'Lori: Investigate API data sources for intraday ex-dividend price behavior',
+      'Lori: Quantify potential savings range based on Sean\'s historical loss data',
+    ],
+    tags: ['strategy', 'technology', 'structure', 'fundraising'],
+    rawTranscript: `Lily: Hello, hello.
+
+Sean: What's up, Lily? How's it going?
+
+Lily: Good. Yesterday was like 68 degrees, so I went cycling. Went down at Prospect Park and there's like 10X people outside.
+
+Sean: Spring is here. Daylight savings time. The weather is so nice now.
+
+Lily: Is it the same over there?
+
+Sean: It's going to be like 90 on Thursday. I'll be in Austin. I'll be at South by Southwest when that hits.
+
+Lily: Nice. And you were able to connect with Alec. You're going to his event.
+
+Sean: Yeah. I think it's like just a sort of like permanent house. I should actually schedule time to get coffee with him.
+
+Lily: He's got a lot of connections. He's very easy to talk to. He's quite smart. I might even say the best thing would be to specifically ask for introductions.
+
+Sean: I don't know where it's gonna go. And you're tracking all of this right? You're manually tracking this?
+
+Lily: So for example I use this app called Wave AI and I've automatically built my own process where the transcript goes through an entire process for me and then stores it. Every single transcript thing has a version of a workflow that you can easily do.
+
+Sean: That's how I feel about some of this stuff too. I have to make time to take advantage of all these AI things.
+
+Lily: I'm plugging into the data that matters most. I'm even tracking my Garmin so it can give me a rating of how effective I'm going to be in the day. I call it a reward function, which is like reinforcement learning AI stuff.
+
+Lily: So I read through all your stuff. After reviewing all your comments, the highest value thing to talk about is what would move the needle for you from a value perspective.
+
+Sean: The limit order optimization engine is like, if you can figure out how to optimize my limit orders, that would make me real money because it would save me from losing when I sell. There's three buckets: (1) screeners and spreadsheet help, (2) limit order optimization engine using live charting and historical data, (3) capital fundraising.
+
+Lily: Let's say you had no job. This was your job. If you put your entire energy into limit orders, would you be able to know the rules to optimize it? I'm reverse engineering — if you aren't able to do this, the likelihood I'm able to is even less likely.
+
+Sean: I think it would take months of studying how all these different variables get charted and the live charting thing, combining that with historical data on how likely a stock is to nosedive on its ex-dividend date.
+
+Sean: The tracker stuff, automation of spreadsheet categories, filtering, screening, rankings, historical data — that would be like a thousand a month. But if there was something with the limit order optimization engine that kept me from losing too much each day, I'd definitely pay two grand a month for that.
+
+Lily: What can you say about this limit order optimization piece? Have you done retrospectives where you missed a variable?
+
+Sean: As a refresher, if I capture a stock worth $1 per share in dividends, I set a limit order to sell at $49.50 (50% loss cap). I just set that in the morning. I used to wake up early to try to do it, but my guesses were so random. So I just set these limit orders at 50%. Some days it dropped the whole value of the dividend. I'd wait till tomorrow and it just keeps going down.
+
+Sean: Ideally I would set a limit order based on how I think each stock is going to do. It might not always be 50%. Maybe 30% for some, 75% for massive but risky dividends. There needs to be some tool using historical data plus something that gets updated live.
+
+Lily: Those parts are normal coding. AI just makes it faster. It sounds like a question of what data is out there. Would have to do a back test against your trades and historicals, then train an algorithm to optimize. You'd want more than just that number — industry performance, company history, more metrics.
+
+Sean: So last month in February, I got $76,700 roughly of dividends and I lost 47.6% of that. Month prior: $66,500 in dividends, lost about 45%. December: $83,200 in dividends, lost about 59.7%.
+
+Sean: If I was losing instead of $37,000 only $30,000, that's huge value. Part of it is trying to control a stock market that's never fully controllable. But there are definitely tools I should be using that I'm not.
+
+Sean: Three types of compensation: flat fee for filtering/record keeping ($1K/month, bi-weekly meetings), performance-based cut for limit order optimization (anything under 40% loss, I get half the savings), and capital fundraising structure TBD.
+
+Sean: Example: If you improve me from 45% loss to 30% loss, that 15% improvement — maybe you get half, so 7% of dividends captured.
+
+Lily: I'll need to do more diligence to see if it's possible to track the nuance, but I like the direction.
+
+Sean: Any percentage loss you save me below 40%, maybe you get half. Let's say $80K dividends, 40% loss = $32K. If we get to 30% loss = $24K, you saved me $8K, you get $4K that month.
+
+Lily: I need to look into this limit order optimization engine. For capital market support, easiest options: (1) I take the test and get registered, (2) advisory retainer, (3) equity/partnership.
+
+Sean: When I first started, I told friends I'd pay 1-2% for referrals. My attorney said that's illegal. Only registered people can do that.
+
+Lily: I need to do a little bit more diligence on the feasibility. It could be really fast or could take five months.
+
+Sean: It'd be fine if it took five months or even eight months if it was really a model that worked. Over 40-60 trades a month, the average still comes down to losing about half.
+
+Sean: With all our modeling, there could be macro events. We bombed Iran, the whole market's down. We need to weed out macro events too. There are days where I just don't buy anything because it seems too fraught.
+
+Lily: There's so much data online that can give us that signal.
+
+Lily: My follow-up will be more thoughts on this limit order stuff. Once we start, I'd be executing what's possible and then the next ones go up in the list.
+
+Sean: Want to chat again in two weeks from today?
+
+Lily: March 24th, yeah. And then we can close out whatever via text.`,
+  },
+  {
     id: 'meeting-2026-02-26',
     date: '2026-02-26',
     title: 'Partnership Exploration & Fund Deep Dive',
