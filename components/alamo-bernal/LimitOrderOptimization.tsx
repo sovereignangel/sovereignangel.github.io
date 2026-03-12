@@ -1,5 +1,7 @@
 'use client'
 
+import { useState } from 'react'
+
 /* ────────────────────────────────────────────────────────────────
    Limit Order Optimization — Phased Roadmap
    Structured as a single-page briefing with phase gates.
@@ -183,6 +185,17 @@ const STATUS_STYLES = {
 }
 
 export default function LimitOrderOptimization() {
+  const [openPhases, setOpenPhases] = useState<Set<number>>(new Set([1]))
+
+  function togglePhase(id: number) {
+    setOpenPhases((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
   return (
     <div className="space-y-3">
       {/* ── Briefing Header ── */}
@@ -217,89 +230,109 @@ export default function LimitOrderOptimization() {
       </div>
 
       {/* ── Phases ── */}
-      {PHASES.map((phase) => (
-        <div key={phase.id} className="space-y-2">
-          {/* Phase Header */}
-          <div className="bg-forest-surface border border-forest-rule rounded-sm p-3">
-            <div className="flex items-start justify-between gap-2 mb-1.5">
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="font-mono text-[10px] sm:text-[9px] font-semibold text-forest">
-                  Phase {phase.id}
-                </span>
-                <span className="font-serif text-[12px] sm:text-[11px] font-semibold text-forest-ink">
-                  {phase.title}
-                </span>
-                <span className={`font-mono text-[8px] sm:text-[7px] uppercase px-1 py-px rounded-sm border shrink-0 ${STATUS_STYLES[phase.status].color}`}>
-                  {STATUS_STYLES[phase.status].label}
-                </span>
-              </div>
-              <span className="font-mono text-[9px] sm:text-[8px] text-forest-ink-faint shrink-0">
-                {phase.duration}
-              </span>
-            </div>
-            <p className="text-[9px] text-forest-ink-faint uppercase tracking-wide mb-1">{phase.subtitle}</p>
-            <p className="text-[10px] sm:text-[9px] text-forest-ink-muted leading-snug">
-              {phase.thesis}
-            </p>
-          </div>
-
-          {/* Workstreams */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            {phase.workstreams.map((ws) => (
-              <div key={ws.title} className="bg-white border border-forest-rule rounded-sm p-3">
-                <div className="flex items-center justify-between gap-2 mb-1.5 pb-1.5 border-b border-forest-rule">
-                  <span className="font-serif text-[11px] sm:text-[10px] font-semibold text-forest-ink">
-                    {ws.title}
+      {PHASES.map((phase) => {
+        const isOpen = openPhases.has(phase.id)
+        return (
+          <div key={phase.id} className="space-y-2">
+            {/* Phase Header (clickable) */}
+            <button
+              onClick={() => togglePhase(phase.id)}
+              className="w-full text-left bg-forest-surface border border-forest-rule rounded-sm p-3 hover:bg-forest-cream/30 transition-colors"
+            >
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-[10px] text-forest-ink-muted">{isOpen ? '\u25BC' : '\u25B6'}</span>
+                  <span className="font-mono text-[10px] sm:text-[9px] font-semibold text-forest">
+                    Phase {phase.id}
                   </span>
-                  <span className={`font-mono text-[8px] sm:text-[7px] uppercase px-1 py-px rounded-sm border shrink-0 ${
-                    ws.owner === 'sean'
-                      ? 'text-amber-ink bg-amber-bg border-amber-ink/20'
-                      : ws.owner === 'both'
-                        ? 'text-forest bg-forest-bg border-forest/20'
-                        : 'text-forest-ink-muted bg-forest-cream border-forest-rule'
-                  }`}>
-                    {ws.owner === 'both' ? 'Both' : ws.owner === 'sean' ? 'Sean' : 'Lori'}
+                  <span className="font-serif text-[12px] sm:text-[11px] font-semibold text-forest-ink">
+                    {phase.title}
+                  </span>
+                  <span className={`font-mono text-[8px] sm:text-[7px] uppercase px-1 py-px rounded-sm border shrink-0 ${STATUS_STYLES[phase.status].color}`}>
+                    {STATUS_STYLES[phase.status].label}
                   </span>
                 </div>
-                <div className="space-y-1">
-                  {ws.items.map((item, i) => (
-                    <div key={i} className="flex items-start gap-1.5">
-                      <span className="text-[8px] text-forest-ink-faint mt-0.5 shrink-0">&#x2022;</span>
-                      <span className="text-[10px] sm:text-[9px] text-forest-ink-muted leading-snug">{item}</span>
+                <span className="font-mono text-[9px] sm:text-[8px] text-forest-ink-faint shrink-0">
+                  {phase.duration}
+                </span>
+              </div>
+              <p className="text-[9px] text-forest-ink-faint uppercase tracking-wide mt-1.5 ml-5">{phase.subtitle}</p>
+              {!isOpen && (
+                <p className="text-[10px] sm:text-[9px] text-forest-ink-muted leading-snug mt-1 ml-5 line-clamp-2">
+                  {phase.thesis}
+                </p>
+              )}
+            </button>
+
+            {isOpen && (
+              <>
+                {/* Thesis */}
+                <div className="ml-5">
+                  <p className="text-[10px] sm:text-[9px] text-forest-ink-muted leading-snug">
+                    {phase.thesis}
+                  </p>
+                </div>
+
+                {/* Workstreams */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {phase.workstreams.map((ws) => (
+                    <div key={ws.title} className="bg-white border border-forest-rule rounded-sm p-3">
+                      <div className="flex items-center justify-between gap-2 mb-1.5 pb-1.5 border-b border-forest-rule">
+                        <span className="font-serif text-[11px] sm:text-[10px] font-semibold text-forest-ink">
+                          {ws.title}
+                        </span>
+                        <span className={`font-mono text-[8px] sm:text-[7px] uppercase px-1 py-px rounded-sm border shrink-0 ${
+                          ws.owner === 'sean'
+                            ? 'text-amber-ink bg-amber-bg border-amber-ink/20'
+                            : ws.owner === 'both'
+                              ? 'text-forest bg-forest-bg border-forest/20'
+                              : 'text-forest-ink-muted bg-forest-cream border-forest-rule'
+                        }`}>
+                          {ws.owner === 'both' ? 'Both' : ws.owner === 'sean' ? 'Sean' : 'Lori'}
+                        </span>
+                      </div>
+                      <div className="space-y-1">
+                        {ws.items.map((item, i) => (
+                          <div key={i} className="flex items-start gap-1.5">
+                            <span className="text-[8px] text-forest-ink-faint mt-0.5 shrink-0">&#x2022;</span>
+                            <span className="text-[10px] sm:text-[9px] text-forest-ink-muted leading-snug">{item}</span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   ))}
                 </div>
-              </div>
-            ))}
-          </div>
 
-          {/* Phase Gate */}
-          <div className="bg-forest-cream border border-forest rounded-sm p-3">
-            <div className="flex items-center gap-2 mb-1.5">
-              <span className="font-mono text-[9px] sm:text-[8px] font-semibold text-forest uppercase tracking-wide">
-                Gate {phase.id}
-              </span>
-              <span className="text-[10px] sm:text-[9px] font-medium text-forest-ink">
-                {phase.gate.question}
-              </span>
-            </div>
-            <div className="space-y-1 mb-2">
-              {phase.gate.criteria.map((c, i) => (
-                <div key={i} className="flex items-start gap-1.5">
-                  <span className="text-[9px] sm:text-[8px] text-forest mt-0.5 shrink-0">&#x25A2;</span>
-                  <span className="text-[10px] sm:text-[9px] text-forest-ink-muted leading-snug">{c}</span>
+                {/* Phase Gate */}
+                <div className="bg-forest-cream border border-forest rounded-sm p-3">
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <span className="font-mono text-[9px] sm:text-[8px] font-semibold text-forest uppercase tracking-wide">
+                      Gate {phase.id}
+                    </span>
+                    <span className="text-[10px] sm:text-[9px] font-medium text-forest-ink">
+                      {phase.gate.question}
+                    </span>
+                  </div>
+                  <div className="space-y-1 mb-2">
+                    {phase.gate.criteria.map((c, i) => (
+                      <div key={i} className="flex items-start gap-1.5">
+                        <span className="text-[9px] sm:text-[8px] text-forest mt-0.5 shrink-0">&#x25A2;</span>
+                        <span className="text-[10px] sm:text-[9px] text-forest-ink-muted leading-snug">{c}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="pt-1.5 border-t border-forest-rule">
+                    <div className="flex items-start gap-1.5">
+                      <span className="text-[9px] sm:text-[8px] text-red-ink mt-0.5 shrink-0">&#x2715;</span>
+                      <span className="text-[10px] sm:text-[9px] text-red-ink leading-snug">{phase.gate.killCondition}</span>
+                    </div>
+                  </div>
                 </div>
-              ))}
-            </div>
-            <div className="pt-1.5 border-t border-forest-rule">
-              <div className="flex items-start gap-1.5">
-                <span className="text-[9px] sm:text-[8px] text-red-ink mt-0.5 shrink-0">&#x2715;</span>
-                <span className="text-[10px] sm:text-[9px] text-red-ink leading-snug">{phase.gate.killCondition}</span>
-              </div>
-            </div>
+              </>
+            )}
           </div>
-        </div>
-      ))}
+        )
+      })}
 
       {/* ── Attribution Model ── */}
       <div className="bg-forest-surface border-2 border-forest rounded-sm p-3">
