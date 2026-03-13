@@ -89,11 +89,6 @@ export default function ExecutionSection() {
             title="Statement of Work"
             url="https://docs.google.com/document/d/1Mt1MKpu-DJBBQ71sYddc4nF2ERORcF33/edit?usp=sharing&ouid=115310759493663215170&rtpof=true&sd=true"
           />
-
-          <DocEmbed
-            title="Limit Order Optimization — Performance Contract"
-            url="https://docs.google.com/document/d/15FSBj7hR61b6fJuCtnQtJxNpCmv8V01lPZBL-H0QHlY/edit?usp=sharing"
-          />
         </div>
 
         {/* Side Letter — Deferred */}
