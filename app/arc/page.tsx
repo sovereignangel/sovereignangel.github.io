@@ -129,6 +129,56 @@ export default function ArcPage() {
         </div>
       </section>
 
+      {/* CTA — Early Access */}
+      <section className="max-w-[600px] mx-auto px-6 mb-16">
+        <div className="rounded-sm p-6 text-center" style={{ background: '#141413', border: '1px solid #1f1f1d' }}>
+          {submitted ? (
+            <div>
+              <div className="font-mono text-[11px] mb-1" style={{ color: '#4ade80' }}>
+                You are on the list.
+              </div>
+              <div className="font-mono text-[10px]" style={{ color: '#4a4640' }}>
+                We will reach out when Arc is ready.
+              </div>
+            </div>
+          ) : (
+            <>
+              <div className="font-sans text-[15px] font-medium mb-4" style={{ color: '#e8e4de' }}>
+                Get early access
+              </div>
+              <div className="flex gap-2 max-w-[360px] mx-auto">
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleSubmit()
+                  }}
+                  className="flex-1 font-mono text-[12px] rounded-sm px-3 py-2.5 focus:outline-none"
+                  style={{
+                    background: '#0c0c0b',
+                    border: '1px solid #2a2a27',
+                    color: '#e8e4de',
+                  }}
+                  placeholder="your@email.com"
+                />
+                <button
+                  onClick={handleSubmit}
+                  disabled={!email.includes('@') || submitting}
+                  className="font-mono text-[11px] font-medium rounded-sm px-5 py-2.5 transition-opacity disabled:opacity-30"
+                  style={{
+                    background: '#c8a55a',
+                    color: '#0c0c0b',
+                  }}
+                >
+                  {submitting ? '...' : 'Join'}
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      </section>
+
       {/* How It Works */}
       <section className="max-w-[600px] mx-auto px-6 mb-16">
         <div className="font-mono text-[9px] uppercase tracking-[2px] mb-6" style={{ color: '#4a4640' }}>
@@ -206,56 +256,6 @@ export default function ArcPage() {
           If you have ever looked at your Garmin data and wished you had
           the same clarity about the rest of your life.
         </p>
-      </section>
-
-      {/* CTA */}
-      <section className="max-w-[600px] mx-auto px-6 mb-20">
-        <div className="rounded-sm p-6 text-center" style={{ background: '#141413', border: '1px solid #1f1f1d' }}>
-          {submitted ? (
-            <div>
-              <div className="font-mono text-[11px] mb-1" style={{ color: '#4ade80' }}>
-                You are on the list.
-              </div>
-              <div className="font-mono text-[10px]" style={{ color: '#4a4640' }}>
-                We will reach out when Arc is ready.
-              </div>
-            </div>
-          ) : (
-            <>
-              <div className="font-sans text-[15px] font-medium mb-4" style={{ color: '#e8e4de' }}>
-                Get early access
-              </div>
-              <div className="flex gap-2 max-w-[360px] mx-auto">
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') handleSubmit()
-                  }}
-                  className="flex-1 font-mono text-[12px] rounded-sm px-3 py-2.5 focus:outline-none"
-                  style={{
-                    background: '#0c0c0b',
-                    border: '1px solid #2a2a27',
-                    color: '#e8e4de',
-                  }}
-                  placeholder="your@email.com"
-                />
-                <button
-                  onClick={handleSubmit}
-                  disabled={!email.includes('@') || submitting}
-                  className="font-mono text-[11px] font-medium rounded-sm px-5 py-2.5 transition-opacity disabled:opacity-30"
-                  style={{
-                    background: '#c8a55a',
-                    color: '#0c0c0b',
-                  }}
-                >
-                  {submitting ? '...' : 'Join'}
-                </button>
-              </div>
-            </>
-          )}
-        </div>
       </section>
 
       {/* Footer */}

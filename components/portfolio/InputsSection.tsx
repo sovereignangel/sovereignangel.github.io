@@ -70,11 +70,28 @@ export default function InputsSection() {
       {activeTab === 'content' && (
         <div>
           <p className="text-[19px] font-medium text-[#1a1a1a] tracking-tight mb-4 font-serif">
-            Writing &amp; Threads
+            Writing
           </p>
-          <p className="text-[15px] text-[#555] italic">
-            Writing coming soon — essays on cognitive ontology, markets, and building in public.
-          </p>
+          <div className="space-y-5">
+            <div>
+              <a
+                href="/blog/building-a-macro-signal-pipeline"
+                className="text-[17px] font-medium text-[#1a1a1a] no-underline border-b border-[#ccc] hover:border-[#1a1a1a] transition-colors duration-200"
+              >
+                Building a Macro Signal Pipeline from Scratch
+              </a>
+              <p className="text-[13px] text-[#888] mt-1">March 12, 2026 · 8 min</p>
+              <p className="text-[15px] text-[#555] mt-1">
+                How I&apos;m building systematic infrastructure to translate macroeconomic data into actionable investment signals.
+              </p>
+            </div>
+          </div>
+          <a
+            href="/blog"
+            className="inline-block mt-6 text-[13px] text-[#999] hover:text-[#1a1a1a] transition-colors no-underline border-b border-[#ddd] hover:border-[#1a1a1a]"
+          >
+            All posts →
+          </a>
         </div>
       )}
 

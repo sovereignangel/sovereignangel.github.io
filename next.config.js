@@ -16,6 +16,16 @@ const nextConfig = {
           has: [{ type: 'host', value: 'arc.loricorpuz.com' }],
           destination: '/arc/:path*',
         },
+        {
+          source: '/',
+          has: [{ type: 'host', value: 'blog.loricorpuz.com' }],
+          destination: '/blog',
+        },
+        {
+          source: '/:path*',
+          has: [{ type: 'host', value: 'blog.loricorpuz.com' }],
+          destination: '/blog/:path*',
+        },
       ],
     }
   },
