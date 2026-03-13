@@ -52,7 +52,25 @@ function ArcScoreRing({ score }: { score: number }) {
 export default function ArcPage() {
   const [email, setEmail] = useState('')
   const [submitted, setSubmitted] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
   const [mounted, setMounted] = useState(false)
+
+  const handleSubmit = async () => {
+    if (!email.includes('@') || submitting) return
+    setSubmitting(true)
+    try {
+      const res = await fetch('/api/arc/waitlist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      })
+      if (res.ok) setSubmitted(true)
+    } catch {
+      // silent fail — user can retry
+    } finally {
+      setSubmitting(false)
+    }
+  }
 
   useEffect(() => {
     document.body.classList.add('arc-active')
@@ -213,7 +231,7 @@ export default function ArcPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   onKeyDown={(e) => {
-                    if (e.key === 'Enter' && email.includes('@')) setSubmitted(true)
+                    if (e.key === 'Enter') handleSubmit()
                   }}
                   className="flex-1 font-mono text-[12px] rounded-sm px-3 py-2.5 focus:outline-none"
                   style={{
@@ -224,15 +242,15 @@ export default function ArcPage() {
                   placeholder="your@email.com"
                 />
                 <button
-                  onClick={() => { if (email.includes('@')) setSubmitted(true) }}
-                  disabled={!email.includes('@')}
+                  onClick={handleSubmit}
+                  disabled={!email.includes('@') || submitting}
                   className="font-mono text-[11px] font-medium rounded-sm px-5 py-2.5 transition-opacity disabled:opacity-30"
                   style={{
                     background: '#c8a55a',
                     color: '#0c0c0b',
                   }}
                 >
-                  Join
+                  {submitting ? '...' : 'Join'}
                 </button>
               </div>
             </>
