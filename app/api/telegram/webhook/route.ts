@@ -2775,22 +2775,32 @@ export async function POST(req: NextRequest) {
       await sendTelegramReply(chatId, 'Generating your morning brief...')
       try {
         const { generateMorningBrief } = await import('@/lib/morning-brief')
-        const { formatMorningBrief } = await import('@/lib/morning-brief-formatter')
+        const { formatMorningBriefCompact } = await import('@/lib/morning-brief-formatter')
         const { sendTelegramMessage } = await import('@/lib/telegram')
+        const { randomBytes } = await import('crypto')
+
         const brief = await generateMorningBrief(uid)
-        const formatted = formatMorningBrief(brief)
+
+        const publicToken = randomBytes(16).toString('hex')
+        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000')
+        const briefUrl = `${baseUrl}/brief/${brief.date}?token=${publicToken}`
+        const formatted = formatMorningBriefCompact(brief, briefUrl)
+
         const messageId = await sendTelegramMessage(chatId, formatted)
         const adminDb = await getAdminDb()
         await adminDb.collection('users').doc(uid).collection('daily_reports').doc(brief.date).set({
           type: 'morning_brief',
           brief,
           formatted,
+          publicToken,
           generatedAt: new Date(),
           ...(messageId ? { telegramMessageId: messageId, telegramChatId: chatId } : {}),
         }, { merge: true })
       } catch (error) {
         console.error('[morning] Manual brief failed:', error)
-        await sendTelegramReply(chatId, `Brief generation failed: ${error instanceof Error ? error.message : String(error)}`)
+        try {
+          await sendTelegramReply(chatId, `Brief generation failed: ${error instanceof Error ? error.message : String(error)}`)
+        } catch { /* ignore send failure */ }
       }
       return NextResponse.json({ ok: true })
     }

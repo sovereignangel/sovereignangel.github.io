@@ -98,8 +98,13 @@ async function getAdminDb() {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function safeGet<T>(fn: () => Promise<T>, fallback: T): Promise<T> {
-  try { return await fn() } catch (e) { console.error('[morning-brief] fetch error:', e); return fallback }
+async function safeGet<T>(fn: () => Promise<T>, fallback: T, timeoutMs = 20000): Promise<T> {
+  try {
+    return await Promise.race([
+      fn(),
+      new Promise<T>((_, reject) => setTimeout(() => reject(new Error('safeGet timed out')), timeoutMs)),
+    ])
+  } catch (e) { console.error('[morning-brief] fetch error:', e); return fallback }
 }
 
 // ---------------------------------------------------------------------------
@@ -111,10 +116,13 @@ async function fetchEnergyState(uid: string) {
   const todayKey = today()
   const yesterdayKey = yesterday()
 
-  // Fresh Garmin sync so body battery reflects current watch reading
+  // Fresh Garmin sync so body battery reflects current watch reading (15s timeout)
   try {
     const { syncGarminMetrics } = await import('@/lib/etl/garmin')
-    await syncGarminMetrics(todayKey)
+    await Promise.race([
+      syncGarminMetrics(todayKey),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('Garmin sync timed out after 15s')), 15000)),
+    ])
   } catch (e) {
     console.warn('[morning-brief] Garmin pre-sync failed, using cached data:', (e as Error).message)
   }
@@ -462,7 +470,10 @@ Return ONLY valid JSON (no markdown, no code blocks):
 }`
 
   try {
-    const result = await model.generateContent(prompt)
+    const result = await Promise.race([
+      model.generateContent(prompt),
+      new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Gemini timed out after 30s')), 30000)),
+    ])
     const response = await result.response
     const text = response.text()
       .replace(/```json\n?/g, '')
