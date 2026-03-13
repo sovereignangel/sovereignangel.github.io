@@ -205,7 +205,8 @@ export const NS_STATE_ENERGY_SCORE: Record<string, number> = {
 }
 
 // Floor to avoid log(0) = -infinity (ruin avoidance)
-export const REWARD_FLOOR = 0.05
+// 0.15 ensures unfilled components penalize but don't catastrophically destroy the score
+export const REWARD_FLOOR = 0.15
 
 // ─── PILLAR FRAMEWORK (Body / Brain / Build) ─────────────────────────
 
@@ -216,7 +217,7 @@ export const REWARD_PILLARS = [
     key: 'body' as PillarKey,
     label: 'Body',
     question: 'Can I perform?',
-    weight: '3/11',
+    weight: 'foundation',
     color: 'text-green-ink',
     bgColor: 'bg-green-bg',
     barColor: 'bg-green-ink',
@@ -227,7 +228,7 @@ export const REWARD_PILLARS = [
     key: 'brain' as PillarKey,
     label: 'Brain',
     question: 'Am I getting smarter?',
-    weight: '4/11',
+    weight: 'amplifier',
     color: 'text-navy',
     bgColor: 'bg-navy-bg',
     barColor: 'bg-navy',
@@ -238,7 +239,7 @@ export const REWARD_PILLARS = [
     key: 'build' as PillarKey,
     label: 'Build',
     question: 'Am I creating & capturing?',
-    weight: '4/11',
+    weight: 'output',
     color: 'text-burgundy',
     bgColor: 'bg-burgundy-bg',
     barColor: 'bg-burgundy',

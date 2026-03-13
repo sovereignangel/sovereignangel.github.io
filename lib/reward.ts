@@ -262,7 +262,66 @@ export function computeJ(log: Partial<DailyLog>): number {
   return floor(clamp(psycapScore, 0.05, 1))
 }
 
+// ─── COMPONENT LOGGING DETECTION ────────────────────────────────────────
+// Determines if a component has real user input vs sitting at defaults.
+// Unlogged components are excluded from their pillar's geometric mean
+// rather than dragging the score down — "score what you measure."
+
+function isComponentLogged(log: Partial<DailyLog>, component: string): boolean {
+  switch (component) {
+    case 'sleep': return (log.sleepHours || 0) > 0
+    case 'movement': return true  // Garmin auto-populates or user sets movementType
+    case 'regulation': return true  // Garmin stress or NS state toggle
+    case 'gi': return (log.problems || []).some(p => p.problem?.trim()) || !!(log.problemSelected?.trim())
+    case 'gd': return (log.discoveryConversationsCount || 0) > 0 || (log.externalSignalsReviewed || 0) > 0 || (log.insightsExtracted || 0) > 0
+    case 'sigma': return (log.deliberatePracticeMinutes || 0) > 0 || !!log.newTechniqueApplied || !!log.automationCreated
+    case 'j': return [log.psyCapHope, log.psyCapEfficacy, log.psyCapResilience, log.psyCapOptimism].some(v => v !== undefined && v > 0)
+    case 'gvc': return !!(log.whatShipped?.trim()) || (log.focusHoursActual || 0) > 0
+    case 'kappa': return (log.revenueAsksCount || 0) > 0 || (log.revenueThisSession || 0) > 0 || !!log.feedbackLoopClosed
+    case 'gn': return (log.warmIntrosMade || 0) > 0 || (log.warmIntrosReceived || 0) > 0 || (log.meetingsBooked || 0) > 0 || (log.publicPostsCount || 0) > 0 || (log.inboundInquiries || 0) > 0
+    case 'optionality': return true  // always compute from projects
+    default: return false
+  }
+}
+
+/** Geometric mean of only the values provided. Returns neutral 0.5 if empty. */
+function geoMeanOfLogged(values: number[]): number {
+  if (values.length === 0) return 0.5  // neutral prior — no data, no penalty
+  return Math.pow(values.reduce((p, v) => p * v, 1), 1 / values.length)
+}
+
+/** Count consecutive days with a recorded score, going backwards from most recent */
+function computeStreak(recentLogs: Partial<DailyLog>[], todayDate?: string): number {
+  const sorted = [...recentLogs]
+    .filter(l => l.date && l.date < (todayDate || '9'))
+    .sort((a, b) => (b.date || '').localeCompare(a.date || ''))
+  let streak = 0
+  for (const log of sorted) {
+    if (log.rewardScore && log.rewardScore.score > 0) streak++
+    else break
+  }
+  return streak
+}
+
 // ─── MAIN REWARD FUNCTION ───────────────────────────────────────────────
+//
+// Architecture: Cascading Compound (Body → Brain → Build)
+//
+// When you wake up, the reward begins with how well you rested (Body).
+// That foundation compounds throughout the day via intelligence growth
+// (Brain) and output (Build).
+//
+// Formula:
+//   compound = body × (1 + brain) × (1 + build) / 4
+//   score = 10 × gate × compound × (1 + streakBonus) − fragmentation_penalty
+//
+// Within each pillar: geometric mean of LOGGED components only.
+// Unlogged components are excluded (neutral prior), not floored at 0.15.
+// This scores what you measure — missing data widens uncertainty, not punishment.
+//
+// Cross-pillar: arithmetic cascade, not geometric mean.
+// A weak Brain day reduces but doesn't destroy a great Body + Build day.
+// Body is always multiplicative (foundation) — zero rest = zero score.
 
 export interface RewardContext {
   recentLogs?: Partial<DailyLog>[]
@@ -282,18 +341,16 @@ export function computeReward(
   const projects = context?.projects ?? []
   const garminData = context?.garminData ?? null
 
-  // Body pillar (3 components)
+  // ── Compute all 11 components (unchanged) ──
   const sleep = computeSleep(log, sleepTarget)
   const movement = computeMovement(log, garminData)
   const regulation = computeRegulation(log, garminData)
 
-  // Brain pillar (4 components)
   const gi = computeGI(log)
   const gd = computeGD(log)
   const sigma = computeSigma(log)
   const j = computeJ(log)
 
-  // Build pillar (4 components)
   const gvc = computeGVC(log, focusTarget, recentLogs)
   const kappa = computeKappa(log, askQuota)
   const gn = computeGN(log)
@@ -302,22 +359,39 @@ export function computeReward(
   const fragmentation = computeFragmentation(log, projects)
   const gate = NERVOUS_SYSTEM_GATE[log.nervousSystemState || 'regulated'] ?? 1.0
 
-  // Pillar sub-means
-  const body = Math.pow(sleep * movement * regulation, 1 / 3)       // 3 components
-  const brain = Math.pow(gi * gd * sigma * j, 1 / 4)                // 4 components
-  const build = Math.pow(gvc * kappa * gn * optionality, 1 / 4)     // 4 components
+  // ── Pillar sub-means (geo mean of LOGGED components only) ──
+  const bodyComponents = { sleep, movement, regulation }
+  const brainComponents = { gi, gd, sigma, j }
+  const buildComponents = { gvc, kappa, gn, optionality }
 
-  // Geometric mean of 11 multiplicative components
-  // body^(3/11) · brain^(4/11) · build^(4/11)
-  const geoMean = Math.pow(
-    sleep * movement * regulation *
-    gi * gd * sigma * j *
-    gvc * kappa * gn * optionality,
-    1 / 11
-  )
+  const bodyLogged = Object.entries(bodyComponents)
+    .filter(([key]) => isComponentLogged(log, key))
+    .map(([, val]) => val)
+  const brainLogged = Object.entries(brainComponents)
+    .filter(([key]) => isComponentLogged(log, key))
+    .map(([, val]) => val)
+  const buildLogged = Object.entries(buildComponents)
+    .filter(([key]) => isComponentLogged(log, key))
+    .map(([, val]) => val)
 
-  // Apply gate and fragmentation penalty
-  const rawScore = gate * geoMean - fragmentation * 0.3
+  const body = geoMeanOfLogged(bodyLogged)
+  const brain = geoMeanOfLogged(brainLogged)
+  const build = geoMeanOfLogged(buildLogged)
+
+  // ── Cascading compound ──
+  // Body is the foundation. Brain amplifies it. Build amplifies further.
+  // Max: 1.0 × 2.0 × 2.0 / 4 = 1.0
+  // Body-only (great rest, nothing else logged): 1.0 × 1.5 × 1.5 / 4 = 0.5625 → score ~5.6
+  // Zero body: 0 × anything = 0 → score 0
+  const compound = body * (1 + brain) * (1 + build) / 4
+
+  // ── Streak bonus (trajectory reward) ──
+  // Each consecutive day of logging adds 3%, capped at 15% (5-day streak)
+  const streak = computeStreak(recentLogs, log.date)
+  const streakBonus = Math.min(streak * 0.03, 0.15)
+
+  // ── Final score ──
+  const rawScore = gate * compound * (1 + streakBonus) - fragmentation * 0.15
 
   // Scale to 0-10 with one decimal place
   const score = clamp(Math.round(rawScore * 10 * 10) / 10, 0, 10)
@@ -328,6 +402,9 @@ export function computeReward(
     gvc, kappa, gn, optionality,
     fragmentation, gate,
     body, brain, build,
+    compound,
+    streak,
+    streakBonus,
   }
 
   return {

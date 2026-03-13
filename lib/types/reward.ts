@@ -15,11 +15,16 @@ export interface RewardComponents {
   optionality: number  // Optionality [0, 1]
   // Modifiers
   fragmentation: number // Fragmentation Tax [0, 1]
-  gate: number         // Nervous System Gate [0.3, 1.0]
-  // Pillar scores (derived geometric sub-means)
-  body: number         // (sleep · movement · regulation)^(1/3) [0, 1]
-  brain: number        // (GI · GD · Σ · J)^(1/4)              [0, 1]
-  build: number        // (GVC · κ · GN · 𝒪)^(1/4)             [0, 1]
+  gate: number         // Nervous System Gate [0.2, 1.0]
+  // Pillar scores (geometric sub-means of *logged* components)
+  body: number         // (sleep · movement · regulation)^(1/n) [0, 1]
+  brain: number        // geo_mean of logged brain components    [0, 1]
+  build: number        // geo_mean of logged build components    [0, 1]
+  // Cascading compound: body × (1 + brain) × (1 + build) / 4
+  compound: number     // Pre-gate cascading score [0, 1]
+  // Trajectory
+  streak: number       // Consecutive days logged (0+)
+  streakBonus: number  // Streak multiplier bonus [0, 0.15]
   // Legacy (kept for old data compatibility)
   ge?: number          // Former Generative Energy (deprecated)
   theta?: number       // Former Thesis Coherence (deprecated)

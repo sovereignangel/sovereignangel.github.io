@@ -57,8 +57,9 @@ const COMPONENT_META: Array<{
 // ─── Attribution computation ────────────────────────────────────────────
 
 /**
- * Compute marginal contribution of each component.
- * The score formula: gate * (product of 9 components)^(1/9) * 10 - fragmentation * 3
+ * Compute marginal contribution of each component using the cascading compound formula.
+ *
+ * Formula: score = 10 × gate × body × (1 + brain) × (1 + build) / 4 × (1 + streakBonus)
  *
  * Marginal gain = score_if_component_is_1 - actual_score
  * This tells you: "if you maxed out this component, how much would your score increase?"
@@ -68,41 +69,60 @@ function computeMarginalGain(
   componentKey: keyof RewardComponents,
   actualScore: number
 ): number {
-  const multiplicativeKeys: (keyof RewardComponents)[] = [
-    'sleep', 'movement', 'regulation',
-    'gi', 'gd', 'sigma', 'j',
-    'gvc', 'kappa', 'gn', 'optionality',
-  ]
+  const bodyKeys: (keyof RewardComponents)[] = ['sleep', 'movement', 'regulation']
+  const brainKeys: (keyof RewardComponents)[] = ['gi', 'gd', 'sigma', 'j']
+  const buildKeys: (keyof RewardComponents)[] = ['gvc', 'kappa', 'gn', 'optionality']
 
   if (componentKey === 'gate') {
-    // Gate is a direct multiplier
     const currentGate = components.gate
     if (currentGate >= 1.0) return 0
     return actualScore * (1.0 / currentGate - 1)
   }
 
   if (componentKey === 'fragmentation') {
-    // Removing fragmentation adds back the penalty
-    return components.fragmentation * 3
+    return components.fragmentation * 1.5
   }
 
-  if (!multiplicativeKeys.includes(componentKey)) return 0
+  const { body, brain, build, gate } = components
+  const streakMult = 1 + (components.streakBonus ?? 0)
 
-  // For multiplicative components: score ∝ (product)^(1/9)
-  // If we replace component_i with 1.0:
-  // new_product = product / component_i * 1.0
-  // new_geo = (new_product)^(1/9)
-  // marginal_gain = gate * (new_geo - old_geo) * 10
-  const currentValue = (components[componentKey] as number) ?? 0.05
+  // Determine which pillar this component belongs to
+  let pillarKeys: (keyof RewardComponents)[]
+  let pillarValue: number
+  let pillarRole: 'body' | 'brain' | 'build'
+
+  if (bodyKeys.includes(componentKey)) {
+    pillarKeys = bodyKeys; pillarValue = body; pillarRole = 'body'
+  } else if (brainKeys.includes(componentKey)) {
+    pillarKeys = brainKeys; pillarValue = brain; pillarRole = 'brain'
+  } else if (buildKeys.includes(componentKey)) {
+    pillarKeys = buildKeys; pillarValue = build; pillarRole = 'build'
+  } else {
+    return 0
+  }
+
+  const currentValue = (components[componentKey] as number) ?? 0.15
   if (currentValue >= 1.0) return 0
   if (currentValue <= 0) return 0
 
-  const product = multiplicativeKeys.reduce((p, k) => p * ((components[k] as number) ?? 0.05), 1)
-  const oldGeo = Math.pow(product, 1 / 11)
-  const newProduct = product / currentValue // replacing with 1.0
-  const newGeo = Math.pow(newProduct, 1 / 11)
+  // Compute new pillar value if this component were 1.0
+  const pillarProduct = pillarKeys.reduce((p, k) => p * ((components[k] as number) ?? 0.15), 1)
+  const n = pillarKeys.length
+  const newPillarProduct = pillarProduct / currentValue  // replacing with 1.0
+  const newPillarValue = Math.pow(newPillarProduct, 1 / n)
 
-  return components.gate * (newGeo - oldGeo) * 10
+  // Compute new compound with the improved pillar
+  let newCompound: number
+  if (pillarRole === 'body') {
+    newCompound = newPillarValue * (1 + brain) * (1 + build) / 4
+  } else if (pillarRole === 'brain') {
+    newCompound = body * (1 + newPillarValue) * (1 + build) / 4
+  } else {
+    newCompound = body * (1 + brain) * (1 + newPillarValue) / 4
+  }
+
+  const oldCompound = body * (1 + brain) * (1 + build) / 4
+  return gate * (newCompound - oldCompound) * 10 * streakMult
 }
 
 /**
