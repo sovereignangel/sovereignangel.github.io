@@ -42,8 +42,8 @@ const projects = [
     title: 'Manifold Careers',
     href: 'https://manifold.loricorpuz.com',
     description:
-      'AI agent that scores job-resume fit, surfaces skill gaps, generates micro-projects to close them, and maps your fastest path to higher compensation.',
-    status: 'In Beta',
+      'AI agent that scores job-resume fit, surfaces skill gaps, generates micro-projects to close them, and maps your fastest path to higher compensation. Built Jan–Feb 2026. Killed: red ocean, low motivation to develop moat, accelerated progress with investment engineering projects for hedge funds.',
+    status: 'Killed',
     logo: '/manifoldlogo.svg',
   },
   {
@@ -73,6 +73,13 @@ const projects = [
     status: 'Concept',
   },
   {
+    title: 'Arc',
+    href: 'https://arc.loricorpuz.com',
+    description:
+      'One daily score across everything that matters — sleep, focus, learning, alignment. Not what you did, whether it moved the needle.',
+    status: 'Concept',
+  },
+  {
     title: 'Neurostack',
     description:
       'A multimodal biosensing dashboard designed to make latent cognitive representations observable, reproducible, and learnable.',
@@ -88,7 +95,7 @@ export default function OutputsSection() {
       <SubTabs
         tabs={[
           { id: 'services', label: 'Services' },
-          { id: 'projects', label: 'Past Work' },
+          { id: 'projects', label: 'Projects' },
         ]}
         activeTab={activeTab}
         onTabChange={setActiveTab}
@@ -193,6 +200,8 @@ export default function OutputsSection() {
                     ? 'text-[#8a6d2f] border-[#8a6d2f]/20 bg-[#8a6d2f08]'
                     : project.status === 'In Development'
                     ? 'text-[#8a6d2f] border-[#8a6d2f]/20 bg-[#8a6d2f08]'
+                    : project.status === 'Killed'
+                    ? 'text-[#8c2d2d] border-[#8c2d2d]/20 bg-[#8c2d2d08]'
                     : 'text-[#888] border-[#ddd] bg-white'
                 }`}>
                   {project.status}
