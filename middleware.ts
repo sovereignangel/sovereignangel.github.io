@@ -19,7 +19,7 @@ export function middleware(request: NextRequest) {
   }
 
   // latentspace.loricorpuz.com → rewrite to /latent-space
-  if (host === 'latentspace.loricorpuz.com') {
+  if (host.startsWith('latentspace.')) {
     const url = request.nextUrl.clone()
     url.pathname = `/latent-space${url.pathname === '/' ? '' : url.pathname}`
     return NextResponse.rewrite(url)
