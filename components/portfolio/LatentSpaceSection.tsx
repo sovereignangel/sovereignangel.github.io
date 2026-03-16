@@ -187,7 +187,7 @@ export default function LatentSpaceSection() {
                 <strong style={{ fontWeight: 600 }}>From the Renaissance codex</strong> &mdash; the tradition of thinking on paper. Leonardo&apos;s notebooks were not organized by discipline; they were organized by obsession. Anatomy sat beside hydraulics sat beside optics sat beside military engineering. The codex was the original latent space &mdash; a representation where hidden structure could be surfaced by the right reader.
               </p>
               <div style={{ background: `linear-gradient(135deg, ${WARM_CREAM} 0%, #E8DFC5 100%)`, border: `1px solid ${RULE}`, padding: '24px 28px', marginTop: 28, position: 'relative' }}>
-                <div style={{ position: 'absolute', top: -1, left: 28, background: GOLD, color: CREAM, padding: '2px 10px', ...monoText('9px'), textTransform: 'uppercase' as const, letterSpacing: '0.15em' }}>
+                <div style={{ ...monoText('9px'), position: 'absolute', top: -1, left: 28, background: GOLD, color: CREAM, padding: '2px 10px', textTransform: 'uppercase' as const, letterSpacing: '0.15em' }}>
                   Core metaphor
                 </div>
                 <p style={{ ...codexText('18px', 500), fontStyle: 'italic', lineHeight: 1.6, marginTop: 8 }}>
