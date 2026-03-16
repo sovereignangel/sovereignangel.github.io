@@ -260,114 +260,7 @@ export default function LatentSpacePage() {
               </p>
             </Section>
 
-            <Section number="05 &middot; Staged Deployment" title="Capital formation roadmap">
-              <p style={{ marginBottom: 24 }}>
-                Each phase has a precise gate. No phase begins until the prior gate condition is met. Capital scales only with demonstrated edge.
-              </p>
-
-              {/* Gantt Chart */}
-              <div style={{ background: INK, padding: '32px 28px 24px', marginBottom: 24 }}>
-                {/* Timeline axis */}
-                <div style={{ display: 'flex', marginBottom: 4, paddingLeft: 140 }}>
-                  {['2024', '2025', '2026', '2027'].map((year, i) => (
-                    <div key={year} style={{ flex: 1, ...monoText('9px'), color: GOLD_LIGHT, letterSpacing: '0.15em', textTransform: 'uppercase' as const, opacity: 0.7 }}>
-                      {year}
-                    </div>
-                  ))}
-                </div>
-                {/* Grid lines */}
-                <div style={{ position: 'relative', paddingLeft: 140 }}>
-                  <div style={{ display: 'flex', position: 'absolute', top: 0, bottom: 0, left: 140, right: 0 }}>
-                    {[0, 1, 2, 3].map((i) => (
-                      <div key={i} style={{ flex: 1, borderLeft: `1px solid ${FADED_INK}22` }} />
-                    ))}
-                  </div>
-
-                  {/* Phase 0 */}
-                  <div style={{ display: 'flex', alignItems: 'center', marginBottom: 12, position: 'relative', height: 44 }}>
-                    <div style={{ position: 'absolute', left: -140, width: 132, textAlign: 'right', paddingRight: 12 }}>
-                      <div style={{ ...monoText('10px'), color: CREAM, letterSpacing: '0.08em', fontWeight: 400 }}>PHASE 0</div>
-                      <div style={{ ...codexText('11px'), color: GOLD_LIGHT, fontStyle: 'italic' }}>Pilot Capital</div>
-                    </div>
-                    {/* Bar: Jan 2024 → Mar 2026 = 0% to ~56% of 4-year span */}
-                    <div style={{ position: 'absolute', left: '0%', width: '56%', height: 28, background: `linear-gradient(90deg, ${GOLD}30, ${GOLD}50)`, border: `1px solid ${GOLD}60`, display: 'flex', alignItems: 'center', paddingLeft: 10 }}>
-                      <span style={{ ...monoText('8px'), color: GOLD_LIGHT, letterSpacing: '0.1em', whiteSpace: 'nowrap' }}>DAVE&apos;S CAPITAL · LIVE TRADING · 24 MO</span>
-                    </div>
-                  </div>
-
-                  {/* Phase 1a */}
-                  <div style={{ display: 'flex', alignItems: 'center', marginBottom: 12, position: 'relative', height: 44 }}>
-                    <div style={{ position: 'absolute', left: -140, width: 132, textAlign: 'right', paddingRight: 12 }}>
-                      <div style={{ ...monoText('10px'), color: CREAM, letterSpacing: '0.08em', fontWeight: 400 }}>PHASE 1A</div>
-                      <div style={{ ...codexText('11px'), color: GOLD_LIGHT, fontStyle: 'italic' }}>Paper Trading</div>
-                    </div>
-                    {/* Bar: Mar 15 2026 → Jun 15 2026 — widened for legibility */}
-                    <div style={{ position: 'absolute', left: '55%', width: '14%', height: 28, background: `linear-gradient(90deg, ${FADED_INK}40, ${FADED_INK}60)`, border: `1px solid ${FADED_INK}80`, display: 'flex', alignItems: 'center', paddingLeft: 10 }}>
-                      <span style={{ ...monoText('8px'), color: CREAM, letterSpacing: '0.1em', whiteSpace: 'nowrap' }}>STRATEGY VALIDATION · 3 MO</span>
-                    </div>
-                  </div>
-
-                  {/* Phase 1b */}
-                  <div style={{ display: 'flex', alignItems: 'center', marginBottom: 12, position: 'relative', height: 44 }}>
-                    <div style={{ position: 'absolute', left: -140, width: 132, textAlign: 'right', paddingRight: 12 }}>
-                      <div style={{ ...monoText('10px'), color: CREAM, letterSpacing: '0.08em', fontWeight: 400 }}>PHASE 1B</div>
-                      <div style={{ ...codexText('11px'), color: ACCENT, fontStyle: 'italic' }}>Friends &amp; Family</div>
-                    </div>
-                    {/* Bar: Apr 2026 → Apr 2027 = ~56.5% to ~81% */}
-                    <div style={{ position: 'absolute', left: '56.5%', width: '25%', height: 28, background: `linear-gradient(90deg, ${ACCENT}25, ${ACCENT}40)`, border: `1px solid ${ACCENT}60`, display: 'flex', alignItems: 'center', paddingLeft: 10 }}>
-                      <span style={{ ...monoText('8px'), color: '#daa', letterSpacing: '0.1em', whiteSpace: 'nowrap' }}>FIRST EXTERNAL CAPITAL · $1–3M · 12 MO</span>
-                    </div>
-                  </div>
-
-                  {/* Phase 2 */}
-                  <div style={{ display: 'flex', alignItems: 'center', marginBottom: 8, position: 'relative', height: 44 }}>
-                    <div style={{ position: 'absolute', left: -140, width: 132, textAlign: 'right', paddingRight: 12 }}>
-                      <div style={{ ...monoText('10px'), color: CREAM, letterSpacing: '0.08em', fontWeight: 400 }}>PHASE 2</div>
-                      <div style={{ ...codexText('11px'), color: CREAM, fontStyle: 'italic' }}>Growth</div>
-                    </div>
-                    {/* Bar: Jul 2026 onward = ~62% to 100% with arrow */}
-                    <div style={{ position: 'absolute', left: '62.5%', right: 0, height: 28, background: `linear-gradient(90deg, ${SEPIA}00, ${GOLD}20, ${GOLD}35)`, borderTop: `1px solid ${GOLD}50`, borderBottom: `1px solid ${GOLD}50`, borderLeft: `1px solid ${GOLD}50`, display: 'flex', alignItems: 'center', paddingLeft: 10 }}>
-                      <span style={{ ...monoText('8px'), color: GOLD_LIGHT, letterSpacing: '0.1em', whiteSpace: 'nowrap' }}>$13–30M AUM · INSTITUTIONAL LPS</span>
-                      <div style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', width: 0, height: 0, borderTop: '5px solid transparent', borderBottom: '5px solid transparent', borderLeft: `8px solid ${GOLD_LIGHT}` }} />
-                    </div>
-                  </div>
-
-                  {/* NOW marker */}
-                  <div style={{ position: 'absolute', left: '55.2%', top: -8, bottom: -8, width: 1, background: ACCENT, opacity: 0.8 }} />
-                  <div style={{ position: 'absolute', left: '55.2%', top: -20, transform: 'translateX(-50%)', ...monoText('7px'), color: ACCENT, textTransform: 'uppercase' as const, letterSpacing: '0.2em' }}>
-                    NOW
-                  </div>
-                </div>
-              </div>
-
-              {/* Gate conditions */}
-              <div style={{ ...monoText('9px'), textTransform: 'uppercase' as const, letterSpacing: '0.15em', color: GOLD, marginBottom: 12 }}>
-                Gate conditions
-              </div>
-              <div style={{ display: 'grid', gap: 12 }}>
-                {[
-                  { gate: 'Gate 0 → 1a', condition: 'Pilot capital returned. Strategy logic codified. Paper trading infrastructure operational.', date: 'Mar 15, 2026' },
-                  { gate: 'Gate 1a → 1b', condition: 'Paper Sharpe ≥ 1.5 over 3-month window. Max drawdown < 8%. Strategy replicable without discretionary override.', date: 'Apr 1, 2026' },
-                  { gate: 'Gate 1b → 2', condition: 'Live Sharpe ≥ 1.2 with F&F capital. Operational track record ≥ 6 months. Compliance and reporting infrastructure institutional-grade.', date: 'TBD — earned, not scheduled' },
-                ].map((item) => (
-                  <div key={item.gate} style={{ display: 'flex', gap: 16, padding: '12px 16px', border: `1px solid ${RULE}`, background: WARM_CREAM }}>
-                    <div style={{ minWidth: 100 }}>
-                      <div style={{ ...monoText('10px'), color: INK, fontWeight: 400 }}>{item.gate}</div>
-                      <div style={{ ...monoText('8px'), color: GOLD, marginTop: 2 }}>{item.date}</div>
-                    </div>
-                    <div style={{ ...codexText('13px'), color: FADED_INK, lineHeight: 1.6 }}>{item.condition}</div>
-                  </div>
-                ))}
-              </div>
-
-              <div style={{ marginTop: 20, padding: '16px 20px', background: `${INK}08`, border: `1px solid ${RULE}` }}>
-                <p style={{ ...codexText('14px', 500), fontStyle: 'italic', color: FADED_INK, lineHeight: 1.7, margin: 0 }}>
-                  &ldquo;The key is not to predict the future but to be positioned so that the range of possibilities works in your favor.&rdquo; Each gate is a falsifiable checkpoint. Capital advances only when the evidence does.
-                </p>
-              </div>
-            </Section>
-
-            <Section number="06 &middot; Mark" title="The codex symbol">
+            <Section number="05 &middot; Mark" title="The codex symbol">
               <p style={{ marginBottom: 24 }}>
                 No logo at launch. The brand is the attendee list, the invitation quality, and the intellectual signal of the evening. A mark emerges after the third dinner &mdash; earned, not designed.
               </p>
@@ -396,7 +289,7 @@ export default function LatentSpacePage() {
         {/* Design System Tab */}
         {activeTab === 'system' && (
           <div>
-            <Section number="07 &middot; Palette" title="Color system">
+            <Section number="06 &middot; Palette" title="Color system">
               <p style={{ marginBottom: 24 }}>
                 The palette is drawn from two sources: the aged parchment and iron gall ink of Leonardo&apos;s notebooks, and the deep blacks and metallic accents of frontier VC editorial design.
               </p>
@@ -418,7 +311,7 @@ export default function LatentSpacePage() {
               </div>
             </Section>
 
-            <Section number="08 &middot; Typography" title="Type system">
+            <Section number="07 &middot; Typography" title="Type system">
               <p style={{ marginBottom: 24 }}>
                 Two families. One for the human voice &mdash; the editorial, the philosophical, the invitational. One for the technical signal &mdash; data, annotations, meta-information.
               </p>
@@ -428,7 +321,7 @@ export default function LatentSpacePage() {
               <TypeSample label="Annotation &middot; Cormorant Garamond 400 Italic" fontStyle={{ fontFamily: '"Cormorant Garamond", Georgia, serif', fontSize: 14, fontWeight: 400, fontStyle: 'italic', color: FADED_INK, lineHeight: 1.6 }} sample="cf. Codex Atlanticus f. 283v — the earliest known diagram of a self-sustaining feedback mechanism" />
             </Section>
 
-            <Section number="09 &middot; Texture" title="The codex layer">
+            <Section number="08 &middot; Texture" title="The codex layer">
               <p style={{ marginBottom: 20 }}>
                 Every touchpoint carries a subtle codex texture &mdash; the feeling that you&apos;re looking at a page from a living notebook. This is not decoration. It&apos;s the brand&apos;s way of saying: this is a space where thinking happens on paper, where sketches sit beside equations, where the unfinished idea is honored alongside the published result.
               </p>
@@ -454,7 +347,7 @@ export default function LatentSpacePage() {
         {/* Touchpoints Tab */}
         {activeTab === 'touchpoints' && (
           <div>
-            <Section number="10 &middot; Invitation" title="The invitation as artifact">
+            <Section number="09 &middot; Invitation" title="The invitation as artifact">
               <p style={{ marginBottom: 20 }}>
                 The invitation is the brand&apos;s first and most important touchpoint. It should feel like receiving a page torn from a private notebook &mdash; something you would keep, not discard. Physical for the first dinner. Digital thereafter, but always with the codex register.
               </p>
@@ -481,7 +374,7 @@ export default function LatentSpacePage() {
               </div>
             </Section>
 
-            <Section number="11 &middot; Post-event" title="The dispatch">
+            <Section number="10 &middot; Post-event" title="The dispatch">
               <p style={{ marginBottom: 20 }}>
                 After each dinner, a one-page &ldquo;dispatch&rdquo; is sent to attendees only &mdash; a distillation of the evening&apos;s key ideas, written in the codex register. Not a summary. Not a recap. A notebook entry. This becomes the series&apos; living archive, building institutional memory across dinners.
               </p>
@@ -490,7 +383,7 @@ export default function LatentSpacePage() {
               </p>
             </Section>
 
-            <Section number="12 &middot; Extension" title="Adventure series">
+            <Section number="11 &middot; Extension" title="Adventure series">
               <p style={{ marginBottom: 20 }}>
                 The adventure extension inherits the brand register but shifts the physical context. The codex travels. The notebook goes to the mountain, the ocean, the field station. The intellectual seriousness remains; the setting becomes the shared challenge.
               </p>
@@ -515,7 +408,7 @@ export default function LatentSpacePage() {
         {/* Voice Tab */}
         {activeTab === 'voice' && (
           <div>
-            <Section number="13 &middot; Tone" title="The voice of the codex">
+            <Section number="12 &middot; Tone" title="The voice of the codex">
               <p style={{ marginBottom: 20 }}>
                 The brand voice is a specific blend: Lux Capital&apos;s editorial confidence (ideas stated clearly, without hedging) meets the Renaissance scholar&apos;s precision (every word chosen, nothing wasted) meets the warmth of a handwritten invitation (personal, not institutional).
               </p>
@@ -534,7 +427,7 @@ export default function LatentSpacePage() {
               </div>
             </Section>
 
-            <Section number="14 &middot; Lexicon" title="Language choices">
+            <Section number="13 &middot; Lexicon" title="Language choices">
               <p style={{ marginBottom: 20 }}>
                 Specific words and phrases that define the brand&apos;s linguistic territory. This is not a glossary &mdash; it&apos;s a set of deliberate choices that signal the community&apos;s intellectual register.
               </p>
@@ -554,7 +447,7 @@ export default function LatentSpacePage() {
               </div>
             </Section>
 
-            <Section number="15 &middot; Principles" title="Brand operating rules">
+            <Section number="14 &middot; Principles" title="Brand operating rules">
               <div style={{ display: 'grid', gap: 20, marginTop: 8 }}>
                 {[
                   { num: 'I', title: 'The brand is the attendee list', body: 'No amount of design compensates for a mediocre room. Curate ruthlessly. One extraordinary person at the table is worth more than any visual identity.' },
