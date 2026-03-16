@@ -16,7 +16,7 @@ export default function LatentSpaceLayout({
   children: React.ReactNode
 }) {
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-[#e8e4de]">
+    <div className="min-h-screen bg-[#F5EDD6]">
       {children}
     </div>
   )
