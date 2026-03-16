@@ -301,9 +301,9 @@ export default function LatentSpacePage() {
                       <div style={{ ...monoText('10px'), color: CREAM, letterSpacing: '0.08em', fontWeight: 400 }}>PHASE 1A</div>
                       <div style={{ ...codexText('11px'), color: GOLD_LIGHT, fontStyle: 'italic' }}>Paper Trading</div>
                     </div>
-                    {/* Bar: Mar 15 2026 → Jun 15 2026 = ~55% to ~62% */}
-                    <div style={{ position: 'absolute', left: '55%', width: '6.25%', height: 28, background: `linear-gradient(90deg, ${FADED_INK}40, ${FADED_INK}60)`, border: `1px solid ${FADED_INK}80`, display: 'flex', alignItems: 'center', paddingLeft: 8 }}>
-                      <span style={{ ...monoText('8px'), color: CREAM, letterSpacing: '0.1em', whiteSpace: 'nowrap' }}>3 MO</span>
+                    {/* Bar: Mar 15 2026 → Jun 15 2026 — widened for legibility */}
+                    <div style={{ position: 'absolute', left: '55%', width: '14%', height: 28, background: `linear-gradient(90deg, ${FADED_INK}40, ${FADED_INK}60)`, border: `1px solid ${FADED_INK}80`, display: 'flex', alignItems: 'center', paddingLeft: 10 }}>
+                      <span style={{ ...monoText('8px'), color: CREAM, letterSpacing: '0.1em', whiteSpace: 'nowrap' }}>STRATEGY VALIDATION · 3 MO</span>
                     </div>
                   </div>
 
