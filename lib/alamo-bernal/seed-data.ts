@@ -639,7 +639,7 @@ export const PROPOSAL_PHASES: ProposalPhase[] = [
     title: 'Proof of Value',
     subtitle: 'Build trust, prove tech value, warm fundraising pipeline',
     status: 'proposed',
-    timeline: 'Months 1-3',
+    timeline: 'Mar – May 2026',
     description:
       'Dual purpose: Lori builds technology that immediately reduces Sean\'s screening workload while getting deeply comfortable with the dividend capture strategy. Trust is built through working together — shipping real tools, reviewing trades, and understanding risk firsthand. Skin in the game: Sean allocates capital from the fund for Lori on agreed milestones — giving Lori real exposure to the strategy and firsthand conviction when marketing the fund to investors.',
     deliverables: [
@@ -708,7 +708,7 @@ export const PROPOSAL_PHASES: ProposalPhase[] = [
     title: 'Capital Markets Support',
     subtitle: 'Formalize fund structure, regulatory compliance, and accelerate AUM growth',
     status: 'future',
-    timeline: 'Months 4-8',
+    timeline: 'Jun – Oct 2026',
     description:
       'With technology proven and strategy deeply understood, shift focus to institutional readiness and fundraising. Establish proper regulatory framework (ERA filing, partnership structure, Series 65), then leverage Lori\'s $220M+ capital raising experience to accelerate AUM from $1.5M toward $3M+. This phase transforms Alamo Bernal from an informal operation into a professionally structured investment firm.',
     deliverables: [
@@ -759,7 +759,7 @@ export const PROPOSAL_PHASES: ProposalPhase[] = [
     title: 'Investment R&D',
     subtitle: 'Apply frontier AI to discover new alpha and diversify strategy portfolio',
     status: 'future',
-    timeline: 'Month 9+',
+    timeline: 'Nov 2026 +',
     description:
       'With stable AUM and proven technology, expand into research & development of new trading strategies. Apply frontier AI to discover novel alpha, enhance risk management, and build portfolio of complementary strategies.',
     deliverables: [
