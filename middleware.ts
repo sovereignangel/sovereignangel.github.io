@@ -18,6 +18,13 @@ export function middleware(request: NextRequest) {
     return NextResponse.rewrite(url)
   }
 
+  // latentspace.loricorpuz.com → rewrite to /latent-space
+  if (host === 'latentspace.loricorpuz.com') {
+    const url = request.nextUrl.clone()
+    url.pathname = `/latent-space${url.pathname === '/' ? '' : url.pathname}`
+    return NextResponse.rewrite(url)
+  }
+
   return NextResponse.next()
 }
 
