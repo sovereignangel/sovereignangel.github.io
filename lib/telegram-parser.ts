@@ -31,7 +31,7 @@
 import type { ThesisPillar } from '@/lib/types'
 
 export interface ParsedTelegramMessage {
-  command: 'signal' | 'note' | 'journal' | 'rss' | 'predict' | 'venture' | 'build' | 'approve' | 'feedback' | 'iterate' | 'reset' | 'brief' | 'memo' | 'morning' | 'cbuild' | 'citerate' | 'skill' | 'sbuild' | 'srespond' | 'sapprove' | 'discipline' | 'transcript' | 'intent' | 'todo' | 'done' | 'edit' | 'unknown'
+  command: 'signal' | 'note' | 'journal' | 'rss' | 'predict' | 'venture' | 'build' | 'approve' | 'feedback' | 'iterate' | 'reset' | 'brief' | 'memo' | 'morning' | 'cbuild' | 'citerate' | 'skill' | 'sbuild' | 'srespond' | 'sapprove' | 'discipline' | 'transcript' | 'intent' | 'todo' | 'done' | 'edit' | 'pipeline' | 'apply' | 'unknown'
   text: string
   pillars: ThesisPillar[]
   raw: string
@@ -202,6 +202,18 @@ export function parseTelegramMessage(text: string): ParsedTelegramMessage {
   if (raw.startsWith('/edit')) {
     const body = raw.slice('/edit'.length).trim()
     return { command: 'edit', text: body, pillars: [], raw }
+  }
+
+  // /pipeline command — view job pipeline
+  if (raw.startsWith('/pipeline')) {
+    const body = raw.slice('/pipeline'.length).trim()
+    return { command: 'pipeline', text: body, pillars: [], raw }
+  }
+
+  // /apply command — add new job to pipeline
+  if (raw.startsWith('/apply')) {
+    const body = raw.slice('/apply'.length).trim()
+    return { command: 'apply', text: body, pillars: [], raw }
   }
 
   // Plain text — treat as signal

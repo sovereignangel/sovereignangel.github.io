@@ -5,10 +5,31 @@
 import type { MorningBrief } from './morning-brief'
 
 const TREND_ARROW: Record<string, string> = { up: '↑', down: '↓', flat: '→' }
-const MODE_LABEL: Record<string, string> = {
-  GO: 'Push hard today.',
-  CONSERVE: 'Pace yourself — protect your energy.',
-  RECOVER: 'Recovery day. Low intensity only.',
+const MODE_LABEL: Record<string, Record<string, string>> = {
+  weekday: {
+    GO: 'Push hard today.',
+    CONSERVE: 'Pace yourself — protect your energy.',
+    RECOVER: 'Recovery day. Low intensity only.',
+  },
+  saturday: {
+    GO: 'Energy is high — enjoy it. Train, explore, connect.',
+    CONSERVE: 'Easy Saturday. Recharge and restore.',
+    RECOVER: 'Full recovery mode. Rest is productive.',
+  },
+  sunday: {
+    GO: 'Strong foundation — set up an elite week.',
+    CONSERVE: 'Calm prep day. Admin and relationships.',
+    RECOVER: 'Gentle Sunday. Light admin, early night.',
+  },
+}
+const DAY_HEADER: Record<string, string> = {
+  weekday: 'MORNING BRIEF',
+  saturday: 'SATURDAY RECHARGE',
+  sunday: 'SUNDAY — SET THE WEEK',
+}
+const JOB_STAGE_EMOJI: Record<string, string> = {
+  researching: '🔍', applied: '📨', phone_screen: '📞', interview: '🎤',
+  take_home: '💻', final_round: '🏁', offer: '💰',
 }
 
 export function formatMorningBrief(brief: MorningBrief): string {
@@ -19,14 +40,18 @@ export function formatMorningBrief(brief: MorningBrief): string {
 
   const lines: string[] = []
 
+  const dayType = brief.dayOfWeek || 'weekday'
+  const header = DAY_HEADER[dayType] || 'MORNING BRIEF'
+
   // Header
-  lines.push(`*MORNING BRIEF — ${dateLabel}*`)
+  lines.push(`*${header} — ${dateLabel}*`)
   lines.push('')
 
   // Energy State
   lines.push('*YOUR STATE*')
   lines.push(brief.energyState.summary)
-  lines.push(`_${MODE_LABEL[brief.energyState.mode] || ''}_`)
+  const modeLabels = MODE_LABEL[dayType] || MODE_LABEL.weekday
+  lines.push(`_${modeLabels[brief.energyState.mode] || ''}_`)
   lines.push('')
 
   // Top Plays
@@ -96,6 +121,18 @@ export function formatMorningBrief(brief: MorningBrief): string {
     lines.push('')
   }
 
+  // Job Pipeline
+  if (brief.jobPipeline && brief.jobPipeline.length > 0) {
+    lines.push('*JOB PIPELINE*')
+    brief.jobPipeline.forEach(j => {
+      const emoji = JOB_STAGE_EMOJI[j.stage] || '·'
+      const stale = j.daysSinceUpdate > 5 ? ' ⚠' : ''
+      const next = j.nextAction ? ` → ${j.nextAction}` : ''
+      lines.push(`${emoji} ${j.company} — ${j.role} [${j.stage}]${next}${stale}`)
+    })
+    lines.push('')
+  }
+
   // Reward Trend
   const yScore = brief.rewardTrend.yesterday != null ? brief.rewardTrend.yesterday.toFixed(1) : '—'
   const wAvg = brief.rewardTrend.weekAvg != null ? brief.rewardTrend.weekAvg.toFixed(1) : '—'
@@ -135,7 +172,9 @@ export function formatMorningBriefCompact(brief: MorningBrief, briefUrl: string)
 
   const lines: string[] = []
 
-  lines.push(`*MORNING BRIEF — ${dateLabel}*`)
+  const dayType2 = brief.dayOfWeek || 'weekday'
+  const header2 = DAY_HEADER[dayType2] || 'MORNING BRIEF'
+  lines.push(`*${header2} — ${dateLabel}*`)
   lines.push(`${brief.energyState.mode} | Score ${yScore} ${arrow}`)
   lines.push('')
 
@@ -162,7 +201,16 @@ export function formatMorningBriefCompact(brief: MorningBrief, briefUrl: string)
   if (brief.pendingDecisions.length > 0) {
     lines.push(`Decisions due: ${brief.pendingDecisions.map(d => `${d.title} (${d.daysUntilReview}d)`).join(', ')}`)
   }
-  if (brief.staleContacts.length > 0 || brief.pendingDecisions.length > 0) {
+  // Pipeline alerts
+  if (brief.jobPipeline && brief.jobPipeline.length > 0) {
+    const stale = brief.jobPipeline.filter(j => j.daysSinceUpdate > 5)
+    if (stale.length > 0) {
+      lines.push(`Pipeline follow-up: ${stale.map(j => j.company).join(', ')}`)
+    } else {
+      lines.push(`Pipeline: ${brief.jobPipeline.length} active`)
+    }
+  }
+  if (brief.staleContacts.length > 0 || brief.pendingDecisions.length > 0 || (brief.jobPipeline && brief.jobPipeline.length > 0)) {
     lines.push('')
   }
 

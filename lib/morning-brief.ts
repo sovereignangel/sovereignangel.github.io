@@ -60,6 +60,15 @@ export interface MorningBrief {
     quadrant: string
     projectName: string | null
   }>
+  jobPipeline: Array<{
+    company: string
+    role: string
+    stage: string
+    nextAction: string
+    nextActionDate: string | null
+    daysSinceUpdate: number
+  }>
+  dayOfWeek: 'weekday' | 'saturday' | 'sunday'
   discernmentPrompt: string
   aiSynthesis: string
 }
@@ -364,6 +373,38 @@ async function fetchProjectNames(uid: string): Promise<string[]> {
   return snap.docs.map(d => (d.data().name as string) || '').filter(Boolean)
 }
 
+async function fetchJobPipeline(uid: string): Promise<MorningBrief['jobPipeline']> {
+  const db = await getAdminDb()
+  const activeStages = ['researching', 'applied', 'phone_screen', 'interview', 'take_home', 'final_round', 'offer']
+  const snap = await db.collection('users').doc(uid).collection('job_pipeline')
+    .where('stage', 'in', activeStages)
+    .orderBy('updatedAt', 'desc')
+    .get()
+
+  const todayKey = today()
+  return snap.docs.map(d => {
+    const data = d.data()
+    const updatedStr = data.updatedAt?.toDate?.()
+      ? localDateString(data.updatedAt.toDate())
+      : todayKey
+    return {
+      company: data.company as string,
+      role: data.role as string,
+      stage: data.stage as string,
+      nextAction: (data.nextAction as string) || '',
+      nextActionDate: (data.nextActionDate as string) || null,
+      daysSinceUpdate: daysBetween(updatedStr, todayKey),
+    }
+  })
+}
+
+function getDayOfWeek(): MorningBrief['dayOfWeek'] {
+  const day = new Date().getDay() // 0=Sun, 6=Sat
+  if (day === 0) return 'sunday'
+  if (day === 6) return 'saturday'
+  return 'weekday'
+}
+
 async function fetchRecentBriefFeedback(uid: string): Promise<string[]> {
   const db = await getAdminDb()
   // Check last 14 days of daily_reports for feedback
@@ -403,7 +444,9 @@ async function generateTopPlaysAndSynthesis(
   recentSignal: string | null,
   projectNames: string[],
   userFeedback: string[],
-  openTodos?: MorningBrief['openTodos']
+  openTodos?: MorningBrief['openTodos'],
+  jobPipeline?: MorningBrief['jobPipeline'],
+  dayOfWeek?: MorningBrief['dayOfWeek']
 ): Promise<{
   topPlays: MorningBrief['topPlays']
   discernmentPrompt: string
@@ -411,8 +454,48 @@ async function generateTopPlaysAndSynthesis(
 }> {
   const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' })
 
-  const prompt = `You are a personal chief of staff for an entrepreneur/builder. Generate a daily morning briefing.
+  const dayContext = dayOfWeek === 'saturday'
+    ? `
+DAY CONTEXT: SATURDAY — Recharge & Explore
+This is a weekend day. The user's priorities are:
+- Health & recovery: training, outdoor time, meal prep, sleep optimization
+- Relationships: quality time, reaching out to friends/family, social plans
+- Light exploration: reading, creative projects, learning for fun (NOT deep work)
+- DO NOT suggest RL/quant study, deep focus blocks, or shipping work
+- Keep intensity low — this is about recharging for the week ahead
+- Elevate the "reconnect" suggestions — weekends are natural relationship time
+`
+    : dayOfWeek === 'sunday'
+    ? `
+DAY CONTEXT: SUNDAY — Set the Week
+This is Sunday. The user's priorities are:
+- Admin & life maintenance: bills, errands, calendar review, meal prep, groceries
+- Relationships: plans for the week, catching up with people
+- Week-ahead planning: what's the #1 priority for Monday? What needs prep?
+- Health prep: training plan for the week, sleep target
+- Job pipeline review: any follow-ups due? Applications going stale?
+- DO NOT suggest RL/quant study or deep focus blocks — those are weekday activities (2hrs/day M-F)
+- Light, empowering energy — set yourself up for an elite week
+`
+    : `
+DAY CONTEXT: WEEKDAY
+Standard operating mode. RL/quant study should be ~2 hours daily. Deep focus blocks are appropriate.
+`
 
+  const pipelineSection = jobPipeline && jobPipeline.length > 0
+    ? `
+Job Pipeline (${jobPipeline.length} active):
+${jobPipeline.map(j => {
+  const stale = j.daysSinceUpdate > 5 ? ' ⚠ STALE' : ''
+  const next = j.nextAction ? ` → ${j.nextAction}` : ''
+  const due = j.nextActionDate ? ` (due: ${j.nextActionDate})` : ''
+  return `- ${j.company} — ${j.role} [${j.stage}]${next}${due}${stale}`
+}).join('\n')}
+`
+    : ''
+
+  const prompt = `You are a personal chief of staff for an entrepreneur/builder. Generate a daily morning briefing.
+${dayContext}
 CONTEXT:
 
 Energy State: ${energyState.summary} (Mode: ${energyState.mode})
@@ -431,7 +514,7 @@ Stalled Projects (${stalledProjects.length}):
 ${stalledProjects.map(p => `- ${p.name} — ${p.daysSinceActivity} days idle, next: "${p.nextMilestone}"`).join('\n') || 'None'}
 
 Reward Score: Yesterday ${rewardTrend.yesterday ?? 'N/A'} | Week avg ${rewardTrend.weekAvg ?? 'N/A'} | Trend: ${rewardTrend.trend}
-
+${pipelineSection}
 Open Todos (${openTodos?.length ?? 0}):
 ${openTodos && openTodos.length > 0
   ? openTodos.slice(0, 15).map(t => {
@@ -448,15 +531,17 @@ ${userFeedback.map(f => `- "${f}"`).join('\n')}
 ` : ''}
 Generate these three things:
 
-1. TOP 3 PLAYS — The three highest-leverage actions for today, ranked by (opportunity value × readiness × energy mode). Each play should be specific and actionable (not vague). Consider the energy mode: if RECOVER, suggest lower-intensity actions. IMPORTANT: Factor in the user's open todos — especially "DO FIRST" items. These represent what they've committed to working on. Top plays should align with or incorporate their highest-priority todos. Format as JSON array.
+1. TOP 3 PLAYS — The three highest-leverage actions for today, ranked by (opportunity value × readiness × energy mode). Each play should be specific and actionable (not vague). Consider the energy mode: if RECOVER, suggest lower-intensity actions. IMPORTANT: Factor in the user's open todos — especially "DO FIRST" items. These represent what they've committed to working on. Top plays should align with or incorporate their highest-priority todos.${dayOfWeek === 'saturday' ? ' SATURDAY RULE: Focus plays on health, relationships, and light exploration — no deep work or RL study.' : dayOfWeek === 'sunday' ? ' SUNDAY RULE: Focus plays on admin, relationships, week-ahead prep, and job pipeline follow-ups — no deep work or RL study.' : ' WEEKDAY RULE: Include ~2hrs RL/quant study in the plan.'} Format as JSON array.
 
-2. DISCERNMENT PROMPT — Based on the recent signal, create a thought exercise: "If [signal] is true, what are the 2nd and 3rd order effects on (a) your current projects, (b) the broader market, (c) your positioning?" If no signal is available, create a strategic question based on the stale contacts or pending decisions.
+2. DISCERNMENT PROMPT — ${dayOfWeek === 'saturday' || dayOfWeek === 'sunday'
+    ? 'Create a reflective, philosophical prompt. On weekends, shift from tactical market analysis to bigger-picture thinking: life design, values alignment, long-term vision. Draw on the recent signal if available but frame it through a personal growth lens.'
+    : 'Based on the recent signal, create a thought exercise: "If [signal] is true, what are the 2nd and 3rd order effects on (a) your current projects, (b) the broader market, (c) your positioning?" If no signal is available, create a strategic question based on the stale contacts or pending decisions.'}
 
 3. AI SYNTHESIS — A 2-3 paragraph narrative briefing (max 150 words) that:
-   - Highlights the most important pattern across signals and contacts
+   - Highlights the most important pattern across signals and contacts${jobPipeline && jobPipeline.length > 0 ? '\n   - Flags any job pipeline items needing attention (stale applications, upcoming interviews, follow-ups due)' : ''}
    - Connects yesterday's reward score to today's priorities
    - Suggests one strategic theme for the day
-   Tone: Direct, action-oriented. Like a Bridgewater daily observation.
+   Tone: ${dayOfWeek === 'saturday' ? 'Warm, encouraging. Like a coach on rest day — celebrate the week, set up for recovery.' : dayOfWeek === 'sunday' ? 'Calm, empowering. Like a strategist helping you set up an elite week ahead.' : 'Direct, action-oriented. Like a Bridgewater daily observation.'}
 
 Return ONLY valid JSON (no markdown, no code blocks):
 {
@@ -507,6 +592,7 @@ Return ONLY valid JSON (no markdown, no code blocks):
 
 export async function generateMorningBrief(uid: string): Promise<MorningBrief> {
   const todayKey = today()
+  const dayOfWeek = getDayOfWeek()
 
   // Fetch all data in parallel (each safe — never throws)
   const [
@@ -520,6 +606,7 @@ export async function generateMorningBrief(uid: string): Promise<MorningBrief> {
     projectNames,
     userFeedback,
     openTodos,
+    jobPipeline,
   ] = await Promise.all([
     safeGet<MorningBrief['energyState']>(() => fetchEnergyState(uid), { sleepHours: null, hrv: null, bodyBattery: null, stressLevel: null, nervousSystemState: null, mode: 'CONSERVE' as const, summary: 'Data unavailable' }),
     safeGet(() => fetchUnreadSignals(uid), []),
@@ -531,12 +618,14 @@ export async function generateMorningBrief(uid: string): Promise<MorningBrief> {
     safeGet(() => fetchProjectNames(uid), []),
     safeGet(() => fetchRecentBriefFeedback(uid), []),
     safeGet(() => fetchOpenTodos(uid), []),
+    safeGet(() => fetchJobPipeline(uid), []),
   ])
 
   // AI-generated components (top plays, discernment prompt, synthesis)
   const { topPlays, discernmentPrompt, aiSynthesis } = await generateTopPlaysAndSynthesis(
     energyState, signalDigest, staleContacts, pendingDecisions,
-    stalledProjects, rewardTrend, recentSignal, projectNames, userFeedback, openTodos
+    stalledProjects, rewardTrend, recentSignal, projectNames, userFeedback,
+    openTodos, jobPipeline, dayOfWeek
   )
 
   return {
@@ -549,6 +638,8 @@ export async function generateMorningBrief(uid: string): Promise<MorningBrief> {
     stalledProjects,
     rewardTrend,
     openTodos,
+    jobPipeline,
+    dayOfWeek,
     discernmentPrompt,
     aiSynthesis,
   }

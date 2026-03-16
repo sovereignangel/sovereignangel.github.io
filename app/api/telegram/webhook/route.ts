@@ -2481,6 +2481,148 @@ async function handleTranscriptCallback(chatId: number, messageId: number, callb
   }
 }
 
+// ---------------------------------------------------------------------------
+// Job Pipeline handlers
+// ---------------------------------------------------------------------------
+
+const JOB_STAGE_EMOJI: Record<string, string> = {
+  researching: '🔍', applied: '📨', phone_screen: '📞', interview: '🎤',
+  take_home: '💻', final_round: '🏁', offer: '💰', accepted: '✅',
+  rejected: '❌', ghosted: '👻', withdrawn: '🚪',
+}
+
+const JOB_STAGE_LABELS: Record<string, string> = {
+  researching: 'Researching', applied: 'Applied', phone_screen: 'Phone Screen',
+  interview: 'Interview', take_home: 'Take Home', final_round: 'Final Round',
+  offer: 'Offer', accepted: 'Accepted', rejected: 'Rejected',
+  ghosted: 'Ghosted', withdrawn: 'Withdrawn',
+}
+
+const ACTIVE_JOB_STAGES = ['researching', 'applied', 'phone_screen', 'interview', 'take_home', 'final_round', 'offer']
+
+async function handlePipeline(uid: string, text: string, chatId: number) {
+  const adminDb = await getAdminDb()
+  const showAll = text.toLowerCase() === 'all'
+
+  const snap = showAll
+    ? await adminDb.collection('users').doc(uid).collection('job_pipeline').orderBy('updatedAt', 'desc').get()
+    : await adminDb.collection('users').doc(uid).collection('job_pipeline')
+        .where('stage', 'in', ACTIVE_JOB_STAGES)
+        .orderBy('updatedAt', 'desc')
+        .get()
+
+  if (snap.empty) {
+    await sendTelegramReply(chatId, 'No jobs in pipeline.\n\nAdd one: /apply Company — Role')
+    return
+  }
+
+  const lines: string[] = ['*JOB PIPELINE*', '']
+
+  // Group by stage
+  const byStage: Record<string, Array<{ id: string; company: string; role: string; nextAction: string; nextActionDate: string | null; priority: string }>> = {}
+  snap.docs.forEach(d => {
+    const data = d.data()
+    const stage = data.stage as string
+    if (!byStage[stage]) byStage[stage] = []
+    byStage[stage].push({
+      id: d.id,
+      company: data.company as string,
+      role: data.role as string,
+      nextAction: data.nextAction as string || '',
+      nextActionDate: data.nextActionDate as string | null,
+      priority: data.priority as string || 'medium',
+    })
+  })
+
+  const stageOrder = showAll
+    ? ['offer', 'final_round', 'take_home', 'interview', 'phone_screen', 'applied', 'researching', 'accepted', 'rejected', 'ghosted', 'withdrawn']
+    : ['offer', 'final_round', 'take_home', 'interview', 'phone_screen', 'applied', 'researching']
+
+  for (const stage of stageOrder) {
+    const entries = byStage[stage]
+    if (!entries || entries.length === 0) continue
+    const emoji = JOB_STAGE_EMOJI[stage] || ''
+    const label = JOB_STAGE_LABELS[stage] || stage
+    lines.push(`${emoji} *${label}* (${entries.length})`)
+    entries.forEach(e => {
+      const pri = e.priority === 'high' ? '!' : ''
+      const next = e.nextAction ? ` → ${e.nextAction}` : ''
+      const due = e.nextActionDate ? ` (${e.nextActionDate})` : ''
+      lines.push(`  ${pri}${e.company} — ${e.role}${next}${due}`)
+    })
+    lines.push('')
+  }
+
+  lines.push(`${snap.size} total | /apply Company — Role to add`)
+  lines.push('Update: /edit move chronograph to interview')
+
+  await sendTelegramReply(chatId, lines.join('\n'))
+}
+
+async function handleApply(uid: string, text: string, chatId: number) {
+  if (!text) {
+    await sendTelegramReply(chatId, 'Usage: /apply Company — Role\n\nExamples:\n/apply Chronograph — Quant Researcher\n/apply Bridgewater — Investment Engineer\n/apply Two Sigma — Quant Dev, source: LinkedIn, contact: Jane Smith')
+    return
+  }
+
+  // Parse: "Company — Role" with optional comma-separated fields
+  const parts = text.split('—').map(s => s.trim())
+  if (parts.length < 2) {
+    // Try with dash
+    const dashParts = text.split(' - ').map(s => s.trim())
+    if (dashParts.length >= 2) {
+      parts[0] = dashParts[0]
+      parts[1] = dashParts.slice(1).join(' - ')
+    } else {
+      await sendTelegramReply(chatId, 'Format: /apply Company — Role\nExample: /apply Bridgewater — Investment Engineer')
+      return
+    }
+  }
+
+  const company = parts[0]
+  // Role might have extra fields after commas
+  const roleParts = parts[1].split(',').map(s => s.trim())
+  const role = roleParts[0]
+
+  // Parse optional fields
+  let source = ''
+  let contactName: string | null = null
+  let priority: 'high' | 'medium' | 'low' = 'medium'
+  let salary: string | null = null
+
+  for (let i = 1; i < roleParts.length; i++) {
+    const part = roleParts[i].toLowerCase()
+    if (part.startsWith('source:')) source = roleParts[i].slice('source:'.length).trim()
+    else if (part.startsWith('contact:')) contactName = roleParts[i].slice('contact:'.length).trim()
+    else if (part.startsWith('priority:')) priority = roleParts[i].slice('priority:'.length).trim() as 'high' | 'medium' | 'low'
+    else if (part.startsWith('salary:') || part.startsWith('comp:')) salary = roleParts[i].split(':').slice(1).join(':').trim()
+  }
+
+  const adminDb = await getAdminDb()
+  const todayKey = getTodayKey()
+  const ref = adminDb.collection('users').doc(uid).collection('job_pipeline').doc()
+  await ref.set({
+    company,
+    role,
+    stage: 'applied',
+    nextAction: 'Wait for response / follow up in 1 week',
+    nextActionDate: null,
+    appliedDate: todayKey,
+    source,
+    contactName,
+    notes: [`[${todayKey}] Added to pipeline`],
+    salary,
+    priority,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  })
+
+  const emoji = JOB_STAGE_EMOJI.applied
+  const contactStr = contactName ? `\nContact: ${contactName}` : ''
+  const sourceStr = source ? `\nSource: ${source}` : ''
+  await sendTelegramReply(chatId, `${emoji} Added to pipeline:\n\n${company} — ${role}${contactStr}${sourceStr}\n\nStage: Applied\n\nView all: /pipeline`)
+}
+
 export async function POST(req: NextRequest) {
   if (!BOT_TOKEN) {
     return NextResponse.json({ error: 'Bot not configured' }, { status: 500 })
@@ -2842,6 +2984,18 @@ export async function POST(req: NextRequest) {
     // Handle edit command (/edit <natural language>)
     if (parsed.command === 'edit') {
       await handleEdit(uid, parsed.text, chatId)
+      return NextResponse.json({ ok: true })
+    }
+
+    // Handle pipeline command (/pipeline [all])
+    if (parsed.command === 'pipeline') {
+      await handlePipeline(uid, parsed.text, chatId)
+      return NextResponse.json({ ok: true })
+    }
+
+    // Handle apply command (/apply Company — Role)
+    if (parsed.command === 'apply') {
+      await handleApply(uid, parsed.text, chatId)
       return NextResponse.json({ ok: true })
     }
 

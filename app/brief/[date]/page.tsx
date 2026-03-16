@@ -18,10 +18,27 @@ const MODE_COLOR: Record<string, string> = {
   CONSERVE: 'bg-amber-bg text-amber-ink border-amber-ink/20',
   RECOVER: 'bg-burgundy-bg text-burgundy border-burgundy/20',
 }
-const MODE_LABEL: Record<string, string> = {
-  GO: 'Push hard today.',
-  CONSERVE: 'Pace yourself — protect your energy.',
-  RECOVER: 'Recovery day. Low intensity only.',
+const MODE_LABEL: Record<string, Record<string, string>> = {
+  weekday: {
+    GO: 'Push hard today.',
+    CONSERVE: 'Pace yourself — protect your energy.',
+    RECOVER: 'Recovery day. Low intensity only.',
+  },
+  saturday: {
+    GO: 'Energy is high — enjoy it. Train, explore, connect.',
+    CONSERVE: 'Easy Saturday. Recharge and restore.',
+    RECOVER: 'Full recovery mode. Rest is productive.',
+  },
+  sunday: {
+    GO: 'Strong foundation — set up an elite week.',
+    CONSERVE: 'Calm prep day. Admin and relationships.',
+    RECOVER: 'Gentle Sunday. Light admin, early night.',
+  },
+}
+const DAY_HEADER: Record<string, string> = {
+  weekday: 'Morning Brief',
+  saturday: 'Saturday Recharge',
+  sunday: 'Sunday — Set the Week',
 }
 
 export async function generateMetadata({ params }: { params: { date: string } }): Promise<Metadata> {
@@ -112,7 +129,7 @@ export default async function BriefPage({
           <div className="p-4 border-b-2 border-burgundy">
             <div className="flex items-center justify-between mb-3">
               <div>
-                <span className="font-mono text-[9px] uppercase text-ink-muted block mb-0.5">Morning Brief</span>
+                <span className="font-mono text-[9px] uppercase text-ink-muted block mb-0.5">{DAY_HEADER[brief.dayOfWeek || 'weekday'] || 'Morning Brief'}</span>
                 <h1 className="font-serif text-[20px] font-bold text-ink">{dateLabel}</h1>
               </div>
               <div className="flex items-center gap-1.5">
@@ -126,7 +143,7 @@ export default async function BriefPage({
             {/* Energy State */}
             <div className="bg-cream border border-rule-light rounded-sm px-3 py-2 mb-3">
               <div className="font-mono text-[10px] text-ink font-medium">{brief.energyState.summary}</div>
-              <div className="font-serif text-[10px] italic text-ink-muted mt-0.5">{MODE_LABEL[brief.energyState.mode]}</div>
+              <div className="font-serif text-[10px] italic text-ink-muted mt-0.5">{(MODE_LABEL[brief.dayOfWeek || 'weekday'] || MODE_LABEL.weekday)[brief.energyState.mode]}</div>
             </div>
 
             {/* Reward Trend */}
@@ -265,6 +282,35 @@ export default async function BriefPage({
                         <div className="font-mono text-[10px] font-medium text-ink">{p.name}</div>
                         {p.nextMilestone && <div className="font-mono text-[9px] text-ink-muted">{p.nextMilestone}</div>}
                       </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Job Pipeline */}
+            {brief.jobPipeline && brief.jobPipeline.length > 0 && (
+              <div>
+                <h3 className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-1.5 pb-1 border-b border-rule">
+                  Job Pipeline
+                </h3>
+                <div className="space-y-1">
+                  {brief.jobPipeline.map((j, i) => (
+                    <div key={i} className="flex items-start gap-1.5">
+                      <span className={`font-mono text-[8px] uppercase px-1 py-0.5 rounded-sm border shrink-0 mt-0.5 ${
+                        j.daysSinceUpdate > 5
+                          ? 'bg-amber-bg text-amber-ink border-amber-ink/10'
+                          : 'bg-cream text-ink-muted border-rule-light'
+                      }`}>
+                        {j.stage.replace('_', ' ')}
+                      </span>
+                      <div className="min-w-0">
+                        <div className="font-mono text-[10px] font-medium text-ink">{j.company} — {j.role}</div>
+                        {j.nextAction && <div className="font-mono text-[9px] text-ink-muted">{j.nextAction}</div>}
+                      </div>
+                      {j.daysSinceUpdate > 5 && (
+                        <span className="font-mono text-[8px] text-amber-ink shrink-0 mt-0.5">{j.daysSinceUpdate}d stale</span>
+                      )}
                     </div>
                   ))}
                 </div>
