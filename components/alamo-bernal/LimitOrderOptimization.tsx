@@ -253,11 +253,10 @@ const SCENARIO_COLORS = [
   { bg: 'bg-amber-ink/20', border: 'border-amber-ink', text: 'text-amber-ink', label: 'Conservative' },
   { bg: 'bg-[#c5a832]/20', border: 'border-[#c5a832]', text: 'text-[#c5a832]', label: 'Moderate' },
   { bg: 'bg-green-ink/20', border: 'border-green-ink', text: 'text-green-ink', label: 'Optimistic' },
-  { bg: 'bg-forest/20', border: 'border-forest', text: 'text-forest', label: 'Best case' },
+  { bg: 'bg-[#2d4f6f]/20', border: 'border-[#2d4f6f]', text: 'text-[#2d4f6f]', label: 'Best case' },
 ]
 
 function SavingsChart() {
-  // Compute avg month
   const avgMonth = {
     month: 'Avg',
     dividends: HISTORICAL_MONTHS.reduce((s, m) => s + m.dividends, 0) / HISTORICAL_MONTHS.length,
@@ -267,87 +266,82 @@ function SavingsChart() {
   }
   const allMonths = [...HISTORICAL_MONTHS, avgMonth]
   const maxDiv = Math.max(...allMonths.map((m) => m.dividends))
-  const chartHeight = 220
+  const barH = 240
 
   return (
     <div className="bg-white border border-forest-rule rounded-sm p-3">
       <div className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-forest mb-1.5 pb-1 border-b border-forest-rule">
         Optimization Savings by Month
       </div>
-      <p className="text-[10px] text-forest-ink-muted leading-snug mb-3">
-        Green bar = dividends kept today. Each line shows where loss drops with optimization — the gap between lines is incremental savings.
-      </p>
 
-      {/* Chart */}
-      <div className="flex items-end gap-3 mb-3" style={{ height: chartHeight }}>
+      {/* Chart — each bar = full dividends, split into segments bottom-up */}
+      <div className="flex items-end gap-2 mt-3" style={{ height: barH }}>
         {allMonths.map((m, mi) => {
-          const scale = chartHeight / maxDiv
-          const keptH = m.kept * scale
-          const lostH = m.lost * scale
-
-          // Compute optimization tiers (incremental from current down)
-          const tiers = SCENARIOS.map((s, si) => {
-            const optimizedLost = (s.lossRate / 100) * m.dividends
-            const totalSaved = Math.max(0, m.lost - optimizedLost)
-            const prevSaved = si === 0 ? 0 : Math.max(0, m.lost - (SCENARIOS[si - 1].lossRate / 100) * m.dividends)
-            const incremental = totalSaved - prevSaved
-            return { ...s, ...SCENARIO_COLORS[si], totalSaved, incremental, optimizedLost, tierH: incremental * scale }
-          })
-
+          const scale = barH / maxDiv
           const isAvg = mi === allMonths.length - 1
 
+          // Best-case optimized loss (bottom of loss zone)
+          const bestLossRate = SCENARIOS[SCENARIOS.length - 1].lossRate
+          const bestOptimizedLost = (bestLossRate / 100) * m.dividends
+          const structuralH = bestOptimizedLost * scale
+
+          // Tiers: each scenario's incremental savings vs the next tighter one
+          const tiers = SCENARIOS.map((s, si) => {
+            const thisLost = (s.lossRate / 100) * m.dividends
+            const nextLost = si < SCENARIOS.length - 1
+              ? (SCENARIOS[si + 1].lossRate / 100) * m.dividends
+              : bestOptimizedLost
+            const incremental = Math.max(0, thisLost - nextLost)
+            return { ...s, ...SCENARIO_COLORS[si], incremental, tierH: incremental * scale }
+          })
+
+          // Gap from conservative to current actual loss
+          const conservativeLost = (SCENARIOS[0].lossRate / 100) * m.dividends
+          const gapToCurrentH = Math.max(0, (m.lost - conservativeLost) * scale)
+
+          const keptH = m.kept * scale
+
           return (
-            <div key={m.month} className={`flex-1 flex flex-col items-center ${isAvg ? 'border-l border-forest-rule pl-3' : ''}`}>
-              {/* Bars */}
-              <div className="w-full relative flex flex-col justify-end" style={{ height: chartHeight }}>
-                {/* Lost zone (remaining after all optimization) */}
-                <div className="w-full relative" style={{ height: lostH }}>
-                  {/* Red line at top = current loss */}
-                  <div className="absolute top-0 left-0 right-0 border-t-2 border-red-ink" />
-                  <div className="absolute -top-3.5 right-0">
-                    <span className="font-mono text-[8px] font-semibold text-red-ink">{m.lossPercent.toFixed(1)}%</span>
+            <div key={m.month} className={`flex-1 flex flex-col items-center ${isAvg ? 'border-l border-forest-rule pl-2' : ''}`}>
+              <div className="w-full flex flex-col justify-end" style={{ height: barH }}>
+                {/* Red zone: gap from conservative to actual current loss */}
+                <div className="w-full bg-red-ink/10 border-t-2 border-red-ink relative" style={{ height: gapToCurrentH }}>
+                  <span className="absolute -top-3 left-0 font-mono text-[8px] font-semibold text-red-ink whitespace-nowrap">
+                    {m.lossPercent.toFixed(1)}%
+                  </span>
+                  {gapToCurrentH > 14 && (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <span className="font-mono text-[8px] text-red-ink">
+                        -${((m.lost - conservativeLost) / 1000).toFixed(1)}K
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Optimization tiers: conservative → moderate → optimistic → best case */}
+                {tiers.map((tier, ti) => (
+                  <div
+                    key={ti}
+                    className={`w-full ${tier.bg} border-t ${tier.border} relative`}
+                    style={{ height: Math.max(1, tier.tierH) }}
+                  >
+                    {tier.tierH > 14 && (
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <span className={`font-mono text-[8px] font-semibold ${tier.text}`}>
+                          +${(tier.incremental / 1000).toFixed(1)}K
+                        </span>
+                      </div>
+                    )}
                   </div>
+                ))}
 
-                  {/* Optimization tiers stacked from top down (eating into the loss) */}
-                  {(() => {
-                    let offset = 0
-                    return tiers.map((tier, ti) => {
-                      const el = (
-                        <div key={ti} className="absolute left-0 right-0" style={{ top: offset }}>
-                          {/* Tier band */}
-                          <div className={`w-full ${tier.bg}`} style={{ height: Math.max(0, tier.tierH) }} />
-                          {/* Line at bottom of this tier */}
-                          <div className={`absolute bottom-0 left-0 right-0 border-b ${tier.border}`} style={{ bottom: 0 }} />
-                          {/* Delta label */}
-                          {tier.incremental > 500 && (
-                            <div className="absolute left-0 right-0 flex justify-center" style={{ top: tier.tierH / 2 - 6 }}>
-                              <span className={`font-mono text-[8px] font-semibold ${tier.text}`}>
-                                +${(tier.incremental / 1000).toFixed(1)}K
-                              </span>
-                            </div>
-                          )}
-                          {/* Loss % label on the right */}
-                          <div className="absolute -right-1" style={{ top: tier.tierH - 2 }}>
-                            <span className={`font-mono text-[7px] ${tier.text}`}>{tier.lossRate}%</span>
-                          </div>
-                        </div>
-                      )
-                      offset += tier.tierH
-                      return el
-                    })
-                  })()}
-
-                  {/* Remaining loss (un-optimizable) */}
-                  {(() => {
-                    const totalOptimized = tiers.reduce((s, t) => s + t.tierH, 0)
-                    const remainingH = Math.max(0, lostH - totalOptimized)
-                    return (
-                      <div
-                        className="absolute left-0 right-0 bottom-0 bg-red-ink/8"
-                        style={{ height: remainingH }}
-                      />
-                    )
-                  })()}
+                {/* Structural loss (un-optimizable — below best case) */}
+                <div className="w-full bg-forest-ink-faint/10 border-t border-forest-ink-faint relative" style={{ height: structuralH }}>
+                  {structuralH > 14 && (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <span className="font-mono text-[8px] text-forest-ink-faint">{bestLossRate}%</span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Kept bar (green) */}
@@ -361,7 +355,7 @@ function SavingsChart() {
               </div>
 
               {/* Month label */}
-              <div className={`mt-1.5 font-serif text-[10px] font-semibold ${isAvg ? 'text-forest' : 'text-forest-ink'}`}>
+              <div className={`mt-1 font-serif text-[10px] font-semibold ${isAvg ? 'text-forest' : 'text-forest-ink'}`}>
                 {m.month}
               </div>
               <div className="font-mono text-[8px] text-forest-ink-muted">
@@ -373,21 +367,21 @@ function SavingsChart() {
       </div>
 
       {/* Legend */}
-      <div className="flex flex-wrap items-center gap-3 mb-3 pt-2 border-t border-forest-rule">
+      <div className="flex flex-wrap items-center gap-2 mt-2 pt-2 border-t border-forest-rule mb-3">
         <div className="flex items-center gap-1">
           <div className="w-3 h-2 bg-green-ink/15 border border-green-ink rounded-sm" />
           <span className="text-[9px] text-forest-ink-muted">Kept</span>
         </div>
+        {SCENARIO_COLORS.map((c, i) => (
+          <div key={i} className="flex items-center gap-1">
+            <div className={`w-3 h-2 ${c.bg} border ${c.border} rounded-sm`} />
+            <span className="text-[9px] text-forest-ink-muted">{SCENARIOS[i].lossRate}% {c.label}</span>
+          </div>
+        ))}
         <div className="flex items-center gap-1">
           <div className="w-3 h-0 border-t-2 border-red-ink" />
           <span className="text-[9px] text-forest-ink-muted">Current loss</span>
         </div>
-        {SCENARIO_COLORS.map((c, i) => (
-          <div key={i} className="flex items-center gap-1">
-            <div className={`w-3 h-2 ${c.bg} border ${c.border} rounded-sm`} />
-            <span className="text-[9px] text-forest-ink-muted">{c.label} ({SCENARIOS[i].lossRate}%)</span>
-          </div>
-        ))}
       </div>
 
       {/* Protected Profit Table */}
