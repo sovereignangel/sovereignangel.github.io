@@ -293,9 +293,9 @@ function SavingsChart() {
         Optimization Savings by Month
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[auto_1fr] gap-3 items-start">
+      <div className="grid grid-cols-1 md:grid-cols-[280px_1fr] gap-3 items-start">
         {/* Left: Table */}
-        <div className="order-2 lg:order-1">
+        <div className="order-2 md:order-1">
           <div className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-forest mb-1.5 pb-1 border-b border-forest-rule">
             50% Protected Profit
           </div>
@@ -368,7 +368,7 @@ function SavingsChart() {
         </div>
 
         {/* Right: Chart */}
-        <div className="order-1 lg:order-2">
+        <div className="order-1 md:order-2">
       <svg viewBox={`0 0 ${svgW} ${svgH}`} className="w-full" style={{ maxHeight: 340 }}>
         {/* Y-axis gridlines + labels */}
         {yTicks.map((v) => (
