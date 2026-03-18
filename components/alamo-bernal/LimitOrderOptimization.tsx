@@ -353,6 +353,18 @@ function SavingsChart() {
               </div>
             ))}
           </div>
+
+          {/* Structural loss footnote */}
+          <div className="mt-2 pt-1.5 border-t border-forest-rule">
+            <p className="text-[10px] text-forest-ink-muted leading-snug">
+              <span className="font-medium text-forest-ink">* Structural loss</span> — on ex-dividend day, a stock&apos;s price drops by approximately the dividend amount. This is market mechanics, not execution error.
+              If a stock pays a $0.50 dividend, the price opens ~$0.50 lower. This portion of the loss is built into the strategy and cannot be optimized away with better limit orders.
+            </p>
+            <p className="text-[10px] text-forest-ink-muted leading-snug mt-1">
+              The optimization opportunity sits <span className="font-medium text-forest-ink">between the structural floor and the current loss rate</span> — that&apos;s the execution slippage window.
+              We need to validate with real data and test in Interactive Brokers paper trading for 2–4 weeks to confirm how much of the gap is actually recoverable.
+            </p>
+          </div>
         </div>
 
         {/* Right: Chart */}
@@ -450,6 +462,25 @@ function SavingsChart() {
                   </g>
                 )
               })}
+
+              {/* Structural loss zone (above best-case line to top of bar) */}
+              {(() => {
+                const bestLevel = levels[levels.length - 1]
+                const structuralLost = (SCENARIOS[SCENARIOS.length - 1].lossRate / 100) * m.dividends
+                const structH = bestLevel.y - barTop
+                if (structH < 8) return null
+                return (
+                  <g>
+                    <rect x={x} y={barTop} width={barW} height={structH} fill="#9a928a10" />
+                    <text x={cx} y={barTop + structH / 2 - 2} textAnchor="middle" fill="#9a928a" fontSize={8} fontWeight={600} fontFamily="monospace">
+                      -${(structuralLost / 1000).toFixed(1)}K*
+                    </text>
+                    <text x={cx} y={barTop + structH / 2 + 8} textAnchor="middle" fill="#9a928a" fontSize={6} fontFamily="monospace">
+                      structural
+                    </text>
+                  </g>
+                )
+              })()}
 
               {/* Dividends total at top */}
               <text x={cx} y={barTop - 4} textAnchor="middle" fill="#2a2522" fontSize={9} fontWeight={600} fontFamily="monospace">
