@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import React, { useState } from 'react'
 
 /* ────────────────────────────────────────────────────────────────
    Limit Order Optimization — Phased Roadmap
@@ -197,19 +197,16 @@ const STATUS_STYLES = {
 const BASELINE = {
   avgMonthlyDividends: 75467,
   currentLossRate: 50.8,
-  compThreshold: 40,
-  flatFee: 1000,
   revenueShare: 0.5,
   buildHours: 90,
   maintenanceHoursPerMonth: 5,
 }
 
 const SCENARIOS = [
-  { label: 'Flat fee only', lossRate: 42, color: 'bg-forest-ink-faint', barColor: 'bg-forest-ink-faint' },
-  { label: 'Conservative', lossRate: 38, color: 'bg-amber-ink', barColor: 'bg-amber-ink' },
-  { label: 'Moderate', lossRate: 35, color: 'bg-forest', barColor: 'bg-forest' },
-  { label: 'Optimistic', lossRate: 30, color: 'bg-green-ink', barColor: 'bg-green-ink' },
-  { label: 'Best case', lossRate: 25, color: 'bg-green-ink', barColor: 'bg-green-ink' },
+  { label: 'Conservative', lossRate: 42 },
+  { label: 'Moderate', lossRate: 35 },
+  { label: 'Optimistic', lossRate: 30 },
+  { label: 'Best case', lossRate: 25 },
 ]
 
 // Sean's actual monthly performance data
@@ -219,11 +216,12 @@ const HISTORICAL_MONTHS = [
   { month: 'Feb', dividends: 76700, lossPercent: 47.6, lost: 36511, kept: 40189 },
 ]
 
-function computeMonthScenario(dividends: number, targetLossRate: number) {
-  const { compThreshold, flatFee, revenueShare } = BASELINE
-  const savingsVsThreshold = Math.max(0, (compThreshold - targetLossRate) / 100 * dividends)
-  const performanceCut = savingsVsThreshold * revenueShare
-  return flatFee + performanceCut
+function computeMonthSavings(actualLossPercent: number, optimizedLossPercent: number, dividends: number) {
+  const actualLost = (actualLossPercent / 100) * dividends
+  const optimizedLost = (optimizedLossPercent / 100) * dividends
+  const saved = Math.max(0, actualLost - optimizedLost)
+  const loriCut = saved * BASELINE.revenueShare
+  return { actualLost, optimizedLost, saved, loriCut }
 }
 
 const TIMELINE = [
@@ -238,14 +236,13 @@ const TIMELINE = [
 ]
 
 function computeScenario(lossRate: number) {
-  const { avgMonthlyDividends, compThreshold, flatFee, revenueShare } = BASELINE
-  const savingsVsThreshold = Math.max(0, (compThreshold - lossRate) / 100 * avgMonthlyDividends)
-  const performanceCut = savingsVsThreshold * revenueShare
-  const monthly = flatFee + performanceCut
+  const { avgMonthlyDividends, currentLossRate, revenueShare, buildHours, maintenanceHoursPerMonth } = BASELINE
+  const saved = Math.max(0, (currentLossRate - lossRate) / 100 * avgMonthlyDividends)
+  const monthly = saved * revenueShare
   const sixMonthTotal = monthly * 6
-  const totalHours = BASELINE.buildHours + (BASELINE.maintenanceHoursPerMonth * 3) // 3 months maintenance after 3 months build
+  const totalHours = buildHours + (maintenanceHoursPerMonth * 3)
   const effectiveHourly = sixMonthTotal / totalHours
-  return { savingsVsThreshold, performanceCut, monthly, sixMonthTotal, effectiveHourly }
+  return { saved, monthly, sixMonthTotal, effectiveHourly }
 }
 
 export function TrialEconomics() {
@@ -427,8 +424,8 @@ export function TrialEconomics() {
             Prospective Savings — By Month with Limit Order Optimization
           </div>
           <p className="text-[10px] text-forest-ink-muted leading-snug mb-2">
-            Lori receives 50% of every dollar saved below the {BASELINE.compThreshold}% loss baseline + $1K flat fee.
-            Applied to Sean&apos;s actual dividend volume per month.
+            Comparing Sean&apos;s actual loss from the prior year against what an optimized strategy would have achieved.
+            Lori receives 50% of every dollar saved.
           </p>
 
           {/* Institutional table */}
@@ -500,33 +497,56 @@ export function TrialEconomics() {
                 </tr>
 
                 {/* Optimization Scenarios */}
-                <tr className="border-b border-forest-rule bg-forest-cream/30">
-                  <td className="py-1.5 px-2 font-semibold text-forest-ink uppercase text-[9px] tracking-wide" colSpan={2 + HISTORICAL_MONTHS.length}>
-                    With Optimization — Lori&apos;s 50% Protected Profit
-                  </td>
-                </tr>
                 {SCENARIOS.map((s) => {
-                  const avgIncome = HISTORICAL_MONTHS.reduce((sum, m) => sum + computeMonthScenario(m.dividends, s.lossRate), 0) / HISTORICAL_MONTHS.length
-                  const isBelowThreshold = s.lossRate < BASELINE.compThreshold
+                  const avgSavings = HISTORICAL_MONTHS.reduce((sum, m) => sum + computeMonthSavings(m.lossPercent, s.lossRate, m.dividends).saved, 0) / HISTORICAL_MONTHS.length
+                  const avgLoriCut = HISTORICAL_MONTHS.reduce((sum, m) => sum + computeMonthSavings(m.lossPercent, s.lossRate, m.dividends).loriCut, 0) / HISTORICAL_MONTHS.length
                   return (
-                    <tr key={s.label} className="border-b border-forest-rule">
-                      <td className="py-1 px-2">
-                        <span className="text-forest-ink-muted">If loss → </span>
-                        <span className={`font-mono font-medium ${isBelowThreshold ? 'text-green-ink' : 'text-forest-ink'}`}>{s.lossRate}%</span>
-                        <span className="text-forest-ink-faint ml-1">({s.label})</span>
-                      </td>
-                      {HISTORICAL_MONTHS.map((m) => {
-                        const income = computeMonthScenario(m.dividends, s.lossRate)
-                        return (
-                          <td key={m.month} className={`py-1 px-2 text-right font-mono ${isBelowThreshold ? 'text-green-ink font-medium' : 'text-forest-ink'}`}>
-                            ${income.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                    <React.Fragment key={s.label}>
+                      <tr className="border-b border-forest-rule bg-forest-cream/30">
+                        <td className="py-1.5 px-2 font-semibold text-forest-ink uppercase text-[9px] tracking-wide" colSpan={2 + HISTORICAL_MONTHS.length}>
+                          If optimized to {s.lossRate}% loss ({s.label})
+                        </td>
+                      </tr>
+                      <tr className="border-b border-forest-rule">
+                        <td className="py-1 px-2 text-forest-ink-muted">Optimized loss</td>
+                        {HISTORICAL_MONTHS.map((m) => (
+                          <td key={m.month} className="py-1 px-2 text-right font-mono text-forest-ink">
+                            -${((s.lossRate / 100) * m.dividends / 1000).toFixed(1)}K
                           </td>
-                        )
-                      })}
-                      <td className={`py-1 px-2 text-right font-mono font-semibold border-l border-forest-rule ${isBelowThreshold ? 'text-green-ink' : 'text-forest-ink'}`}>
-                        ${Math.round(avgIncome).toLocaleString()}/mo
-                      </td>
-                    </tr>
+                        ))}
+                        <td className="py-1 px-2 text-right font-mono text-forest-ink border-l border-forest-rule">
+                          {s.lossRate}%
+                        </td>
+                      </tr>
+                      <tr className="border-b border-forest-rule">
+                        <td className="py-1 px-2 text-forest-ink-muted">$ saved vs actual</td>
+                        {HISTORICAL_MONTHS.map((m) => {
+                          const { saved } = computeMonthSavings(m.lossPercent, s.lossRate, m.dividends)
+                          return (
+                            <td key={m.month} className="py-1 px-2 text-right font-mono text-green-ink">
+                              +${(saved / 1000).toFixed(1)}K
+                            </td>
+                          )
+                        })}
+                        <td className="py-1 px-2 text-right font-mono font-medium text-green-ink border-l border-forest-rule">
+                          +${(avgSavings / 1000).toFixed(1)}K
+                        </td>
+                      </tr>
+                      <tr className="border-b-2 border-forest-rule">
+                        <td className="py-1.5 px-2 font-medium text-forest-ink">50% protected profit</td>
+                        {HISTORICAL_MONTHS.map((m) => {
+                          const { loriCut } = computeMonthSavings(m.lossPercent, s.lossRate, m.dividends)
+                          return (
+                            <td key={m.month} className="py-1.5 px-2 text-right font-mono font-semibold text-green-ink">
+                              ${loriCut.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                            </td>
+                          )
+                        })}
+                        <td className="py-1.5 px-2 text-right font-mono font-semibold text-green-ink border-l border-forest-rule">
+                          ${Math.round(avgLoriCut).toLocaleString()}/mo
+                        </td>
+                      </tr>
+                    </React.Fragment>
                   )
                 })}
               </tbody>
@@ -534,7 +554,7 @@ export function TrialEconomics() {
           </div>
 
           <p className="text-[10px] text-forest-ink-muted leading-snug mt-1.5">
-            Comp = $1K flat + 50% of savings below {BASELINE.compThreshold}% loss. Improvements from {BASELINE.currentLossRate}% → {BASELINE.compThreshold}% benefit Sean only — Lori&apos;s upside starts below {BASELINE.compThreshold}%.
+            Savings = prior year&apos;s actual loss for that month minus the optimized loss. Lori receives 50% of the savings — every dollar saved is split evenly.
           </p>
         </div>
 
@@ -543,15 +563,15 @@ export function TrialEconomics() {
           <div className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-forest mb-2 pb-1 border-b border-forest-rule">
             6-Month Projected Totals
           </div>
-          <div className="grid grid-cols-5 gap-1.5">
+          <div className="grid grid-cols-4 gap-1.5">
             {SCENARIOS.map((s) => {
               const { sixMonthTotal, effectiveHourly } = computeScenario(s.lossRate)
               return (
                 <div key={s.label} className="bg-white border border-forest-rule rounded-sm p-2 text-center">
-                  <div className="font-mono text-[12px] font-semibold text-forest-ink">
+                  <div className="font-mono text-[12px] font-semibold text-green-ink">
                     ${(sixMonthTotal / 1000).toFixed(1)}K
                   </div>
-                  <div className="text-[8px] text-forest-ink-faint uppercase tracking-wide mb-1">{s.label}</div>
+                  <div className="text-[9px] text-forest-ink-muted uppercase tracking-wide mb-1">{s.label} ({s.lossRate}%)</div>
                   <div className="text-[9px] text-forest-ink-muted">
                     ~${Math.round(effectiveHourly)}/hr
                   </div>
