@@ -293,6 +293,70 @@ function SavingsChart() {
         Optimization Savings by Month
       </div>
 
+      <div className="grid grid-cols-1 lg:grid-cols-[auto_1fr] gap-3 items-start">
+        {/* Left: Table */}
+        <div className="order-2 lg:order-1">
+          <div className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-forest mb-1.5 pb-1 border-b border-forest-rule">
+            50% Protected Profit
+          </div>
+          <div className="bg-white border border-forest-rule rounded-sm overflow-hidden">
+            <table className="w-full text-[10px]">
+              <thead>
+                <tr className="bg-forest-surface border-b border-forest-rule">
+                  <th className="text-left font-semibold text-forest-ink py-1.5 px-2" />
+                  {HISTORICAL_MONTHS.map((m) => (
+                    <th key={m.month} className="text-right font-serif font-semibold text-forest-ink py-1.5 px-2">{m.month}</th>
+                  ))}
+                  <th className="text-right font-serif font-semibold text-forest py-1.5 px-2 border-l border-forest-rule">Avg</th>
+                </tr>
+              </thead>
+              <tbody>
+                {SCENARIOS.map((s, si) => {
+                  const avgProfit = HISTORICAL_MONTHS.reduce((sum, m) => {
+                    const { loriCut } = computeMonthSavings(m.lossPercent, s.lossRate, m.dividends)
+                    return sum + loriCut
+                  }, 0) / HISTORICAL_MONTHS.length
+                  return (
+                    <tr key={s.label} className="border-b border-forest-rule">
+                      <td className="py-1 px-2 whitespace-nowrap">
+                        <span className="font-medium" style={{ color: TIER_COLORS[si].fill }}>{s.label}</span>
+                        <span className="font-mono text-forest-ink-muted ml-1">→ {s.lossRate}%</span>
+                      </td>
+                      {HISTORICAL_MONTHS.map((m) => {
+                        const { loriCut } = computeMonthSavings(m.lossPercent, s.lossRate, m.dividends)
+                        return (
+                          <td key={m.month} className="py-1 px-2 text-right font-mono font-medium text-green-ink">
+                            ${loriCut.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                          </td>
+                        )
+                      })}
+                      <td className="py-1 px-2 text-right font-mono font-semibold text-green-ink border-l border-forest-rule whitespace-nowrap">
+                        ${Math.round(avgProfit).toLocaleString()}/mo
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Legend below table */}
+          <div className="flex flex-wrap items-center gap-2 mt-2 pt-1.5 border-t border-forest-rule">
+            <div className="flex items-center gap-1">
+              <div className="w-3 h-0.5" style={{ borderTop: '1.5px dashed #8c2d2d' }} />
+              <span className="text-[9px] text-forest-ink-muted">Current loss</span>
+            </div>
+            {TIER_COLORS.map((c, i) => (
+              <div key={i} className="flex items-center gap-1">
+                <div className="w-3 h-0.5" style={{ backgroundColor: c.stroke }} />
+                <span className="text-[9px] text-forest-ink-muted">{c.label} ({SCENARIOS[i].lossRate}%)</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Right: Chart */}
+        <div className="order-1 lg:order-2">
       <svg viewBox={`0 0 ${svgW} ${svgH}`} className="w-full" style={{ maxHeight: 340 }}>
         {/* Y-axis gridlines + labels */}
         {yTicks.map((v) => (
@@ -400,64 +464,7 @@ function SavingsChart() {
           )
         })}
       </svg>
-
-      {/* Legend */}
-      <div className="flex flex-wrap items-center gap-3 mt-1 pt-2 border-t border-forest-rule mb-3">
-        <div className="flex items-center gap-1">
-          <div className="w-3 h-0.5 bg-red-ink" style={{ borderTop: '1.5px dashed #8c2d2d' }} />
-          <span className="text-[9px] text-forest-ink-muted">Current loss</span>
         </div>
-        {TIER_COLORS.map((c, i) => (
-          <div key={i} className="flex items-center gap-1">
-            <div className="w-3 h-0.5" style={{ backgroundColor: c.stroke }} />
-            <span className="text-[9px] text-forest-ink-muted">{c.label} ({SCENARIOS[i].lossRate}%)</span>
-          </div>
-        ))}
-      </div>
-
-      {/* Protected Profit Table */}
-      <div className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-forest mb-1.5 pb-1 border-b border-forest-rule">
-        50% Protected Profit
-      </div>
-      <div className="bg-white border border-forest-rule rounded-sm overflow-hidden">
-        <table className="w-full text-[10px]">
-          <thead>
-            <tr className="bg-forest-surface border-b border-forest-rule">
-              <th className="text-left font-semibold text-forest-ink py-1.5 px-2" />
-              {HISTORICAL_MONTHS.map((m) => (
-                <th key={m.month} className="text-right font-serif font-semibold text-forest-ink py-1.5 px-2">{m.month}</th>
-              ))}
-              <th className="text-right font-serif font-semibold text-forest py-1.5 px-2 border-l border-forest-rule">Avg</th>
-            </tr>
-          </thead>
-          <tbody>
-            {SCENARIOS.map((s, si) => {
-              const avgProfit = HISTORICAL_MONTHS.reduce((sum, m) => {
-                const { loriCut } = computeMonthSavings(m.lossPercent, s.lossRate, m.dividends)
-                return sum + loriCut
-              }, 0) / HISTORICAL_MONTHS.length
-              return (
-                <tr key={s.label} className="border-b border-forest-rule">
-                  <td className="py-1 px-2">
-                    <span className="font-medium" style={{ color: TIER_COLORS[si].fill }}>{s.label}</span>
-                    <span className="font-mono text-forest-ink-muted ml-1">→ {s.lossRate}%</span>
-                  </td>
-                  {HISTORICAL_MONTHS.map((m) => {
-                    const { loriCut } = computeMonthSavings(m.lossPercent, s.lossRate, m.dividends)
-                    return (
-                      <td key={m.month} className="py-1 px-2 text-right font-mono font-medium text-green-ink">
-                        ${loriCut.toLocaleString(undefined, { maximumFractionDigits: 0 })}
-                      </td>
-                    )
-                  })}
-                  <td className="py-1 px-2 text-right font-mono font-semibold text-green-ink border-l border-forest-rule">
-                    ${Math.round(avgProfit).toLocaleString()}/mo
-                  </td>
-                </tr>
-              )
-            })}
-          </tbody>
-        </table>
       </div>
     </div>
   )
