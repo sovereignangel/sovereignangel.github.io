@@ -265,6 +265,111 @@ export function TrialEconomics() {
           6-Month Engagement Economics
         </div>
 
+        {/* ── Gotta Believes ── */}
+        <div className="bg-forest-cream border border-forest rounded-sm p-2">
+          <div className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-forest mb-1.5">
+            Gotta Believes
+          </div>
+          <p className="text-[10px] text-forest-ink-muted leading-snug mb-1.5">
+            For this engagement to generate meaningful performance comp, two things must be true:
+          </p>
+          <div className="space-y-1.5">
+            <div className="flex items-start gap-2">
+              <span className="font-mono text-[10px] text-forest font-semibold shrink-0 mt-px">1.</span>
+              <div>
+                <span className="text-[10px] font-medium text-forest-ink">Execution slippage is &gt;10% of the total loss.</span>
+                <p className="text-[10px] text-forest-ink-muted leading-snug mt-0.5">
+                  Stocks drop ~85–100% of the dividend on ex-div day (structural, unavoidable). If Sean&apos;s ~50% loss is mostly structural, the optimizable window is tiny. But if 10–15% is execution slippage — bad fills, wrong order types, poor timing — that&apos;s our target.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-start gap-2">
+              <span className="font-mono text-[10px] text-forest font-semibold shrink-0 mt-px">2.</span>
+              <div>
+                <span className="text-[10px] font-medium text-forest-ink">We can systematically reduce that slippage with better limit order structures.</span>
+                <p className="text-[10px] text-forest-ink-muted leading-snug mt-0.5">
+                  Different order types (pegged, adaptive, VWAP), better entry/exit timing, and per-stock configs must produce measurably better fills than flat 50% limits across enough trades to matter.
+                </p>
+              </div>
+            </div>
+          </div>
+          <div className="mt-2 pt-1.5 border-t border-forest-rule">
+            <span className="text-[10px] font-medium text-forest-ink">How we find out:</span>
+            <span className="text-[10px] text-forest-ink-muted"> Month 1 learning sprint — 1 IB paper account + local backtester. Answers both questions before any real commitment.</span>
+          </div>
+        </div>
+
+        {/* ── Month 1 Learning Sprint ── */}
+        <div className="bg-white border border-forest-rule rounded-sm p-3">
+          <div className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-forest mb-1.5 pb-1 border-b border-forest-rule">
+            Month 1 — Can We Optimize This?
+          </div>
+          <p className="text-[10px] text-forest-ink-muted leading-snug mb-2">
+            One IB paper account + a local backtester. Goal: answer the &ldquo;gotta believes&rdquo; before committing to 5 more months.
+          </p>
+          <div className="grid grid-cols-2 gap-2 mb-2">
+            <div className="bg-forest-surface border border-forest-rule rounded-sm p-2">
+              <div className="flex items-center gap-1.5 mb-1">
+                <span className="font-mono text-[9px] font-semibold text-forest uppercase">Backtester</span>
+                <span className="text-[8px] text-forest-ink-faint">(where the volume is)</span>
+              </div>
+              <div className="space-y-0.5">
+                {[
+                  'Pull 1-min bars around 200+ historical ex-div dates',
+                  'Simulate fills: LMT at mid vs REL vs ADAPTIVE vs VWAP',
+                  'Compute actual vs optimal fill price per trade',
+                  'Answer: how much slippage is structural vs execution?',
+                  'Run 500+ strategy permutations overnight',
+                ].map((item, i) => (
+                  <div key={i} className="flex items-start gap-1.5">
+                    <span className="text-[8px] text-forest-ink-faint mt-0.5 shrink-0">&#x2022;</span>
+                    <span className="text-[10px] text-forest-ink-muted leading-snug">{item}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="bg-forest-surface border border-forest-rule rounded-sm p-2">
+              <div className="flex items-center gap-1.5 mb-1">
+                <span className="font-mono text-[9px] font-semibold text-forest uppercase">IB Paper Account</span>
+                <span className="text-[8px] text-forest-ink-faint">(validates reality)</span>
+              </div>
+              <div className="space-y-0.5">
+                {[
+                  '~20–30 live ex-div events in one month',
+                  'Mirror Sean\'s current approach first (baseline)',
+                  'Then run top 3 strategies from backtest',
+                  'Compare: does paper match backtest predictions?',
+                  'Log every fill, NBBO, slippage, time-to-fill',
+                ].map((item, i) => (
+                  <div key={i} className="flex items-start gap-1.5">
+                    <span className="text-[8px] text-forest-ink-faint mt-0.5 shrink-0">&#x2022;</span>
+                    <span className="text-[10px] text-forest-ink-muted leading-snug">{item}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+          <div className="bg-forest-cream border border-forest rounded-sm p-2">
+            <div className="font-serif text-[10px] font-semibold uppercase tracking-[0.5px] text-forest mb-1">
+              Month 1 Deliverable
+            </div>
+            <p className="text-[10px] text-forest-ink-muted leading-snug">
+              &ldquo;Sean&apos;s current strategy captures X% of dividends. Y% of the loss is structural (stock drop), Z% is execution slippage.
+              Our best strategy recovered W% of that slippage in backtests and V% on paper. Here&apos;s the evidence across N trades.&rdquo;
+            </p>
+            <div className="flex gap-3 mt-1.5 pt-1.5 border-t border-forest-rule">
+              <div>
+                <span className="text-[9px] text-forest-ink-faint uppercase tracking-wide">If slippage &gt;10%</span>
+                <span className="text-[10px] font-medium text-green-ink ml-1.5">Proceed to Month 2–6</span>
+              </div>
+              <div>
+                <span className="text-[9px] text-forest-ink-faint uppercase tracking-wide">If slippage &lt;5%</span>
+                <span className="text-[10px] font-medium text-red-ink ml-1.5">Stop — flat fee only</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* ── Historical Baseline ── */}
         <div>
           <div className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-forest mb-2 pb-1 border-b border-forest-rule">
