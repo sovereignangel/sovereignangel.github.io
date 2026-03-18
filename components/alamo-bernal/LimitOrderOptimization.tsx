@@ -10,164 +10,130 @@ import React, { useState } from 'react'
 const PHASES = [
   {
     id: 0,
-    title: 'Discovery',
-    subtitle: 'Feasibility Assessment — 2 Sessions, 1 Sprint',
-    duration: '1 sprint',
+    title: 'Pre-Work & Audit',
+    subtitle: 'Month 1 — Weeks 1–4',
+    duration: 'Mo 1',
     status: 'active' as const,
-    thesis: 'Before committing to a multi-month build, we determine whether limit order optimization is even possible. Two working sessions with Sean, independent research between sessions, and a go/no-go decision at the end. This runs under the existing retainer — no new pricing.',
+    thesis: 'Set up accounts, pull Sean\'s trade history, and run the execution audit. Goal: quantify structural loss vs execution slippage before committing to a multi-month build.',
     workstreams: [
       {
-        title: 'Pre-Work',
+        title: 'Pre-Work (Sean)',
         owner: 'sean' as const,
         items: [
-          'Lori creates Alpha Vantage + Massive accounts and shares credentials',
-          'Sean logs in and adds payment method / subscribes',
-          'Accounts active before Session 1 so we can pull live data together',
-          'Sean creates a lori@alamobernal.com account to open a paper trading account with Interactive Brokers — used to test the optimization engine before any real capital is at risk',
-          'Sean exports trade history from Fidelity (CSV or broker report) — entry/exit prices, dates, tickers, dividend amounts',
+          'Create lori@alamobernal.com account + open IB paper trading account',
+          'Export trade history from Fidelity (CSV or broker report) — entry/exit prices, dates, tickers, dividend amounts',
+          'Set up Alpha Vantage + Massive accounts (Lori creates, Sean subscribes)',
         ],
       },
       {
-        title: 'Session 1 — Trade Mechanics Deep Dive',
-        owner: 'both' as const,
-        items: [
-          'Walk through 5–10 actual trades together: what happened, why, what Sean was thinking',
-          'Map the morning routine end-to-end: screening → order entry → monitoring → exit',
-          'Identify: when a stock drops past 50%, how often does it recover same day?',
-          'Are there stocks where Sean knows 50% is wrong but sets it anyway?',
-          'Sean exports trade history from Fidelity (CSV or broker report) during or after session',
-        ],
-      },
-      {
-        title: 'Independent Research (Between Sessions)',
+        title: 'Execution Audit',
         owner: 'lori' as const,
         items: [
           'Pull intraday data for 10–15 of Sean\'s most-traded tickers around ex-div dates',
-          'Quick analysis: was there a better limit price that would have been obvious in hindsight?',
-          'Check loss distribution: bimodal (hits 50% or barely moves) vs. continuous spread?',
-          'Estimated effort: 5–8 hours',
+          'Analyze loss distribution: structural (ex-div price drop) vs execution slippage (bad fills, timing)',
+          'Build local backtester — simulate 200+ historical ex-div dates with different order strategies',
+          'Run 500+ strategy permutations overnight',
         ],
       },
       {
-        title: 'Session 2 — Findings & Go/No-Go',
+        title: 'Working Sessions',
         owner: 'both' as const,
         items: [
-          'Present research: "here\'s what we found looking at your trades"',
-          'Show specific examples: stocks where a different threshold would have saved money',
-          'Go/no-go decision: is the signal strong enough to justify building?',
-          'If go: agree on Phase 1 scope, timeline, and the performance-based comp structure',
-          'If no-go: redirect effort to screening & recordkeeping automation (already on retainer)',
+          'Session 1: Walk through 5–10 actual trades, map the morning routine end-to-end',
+          'Session 2: Present audit findings, show specific examples of recoverable slippage',
+          'Go/no-go decision: is the execution slippage >10%? If yes, proceed. If not, stop here.',
         ],
       },
     ],
     gate: {
-      question: 'Is there enough signal in the data to justify building an optimization engine?',
+      question: 'Is execution slippage >10% and systematically optimizable?',
       criteria: [
-        'At least some stocks show clear, repeatable improvement opportunity vs. flat 50%',
-        'The improvement is large enough to matter (not just noise)',
+        'Audit shows clear, measurable execution slippage beyond structural ex-div drop',
+        'Backtester confirms multiple strategies outperform flat 50% limit',
         'Sean agrees the findings are credible and wants to proceed',
       ],
-      killCondition: 'If analysis shows the 50% rule is already near-optimal (market efficiency), we stop here and redirect all effort to screening & automation under the existing retainer. No time wasted.',
+      killCondition: 'If slippage is <5% or purely structural, we stop here. The audit was still worth it — Sean gets a detailed breakdown of where his money goes.',
     },
   },
   {
     id: 1,
-    title: 'Learn & Build',
-    subtitle: 'Historical Analysis + Optimization Model',
-    duration: '',
+    title: 'Build & Backtest',
+    subtitle: 'Months 2–3 — Weeks 5–12',
+    duration: 'Mo 2–3',
     status: 'blocked' as const,
-    thesis: 'With feasibility confirmed, we ingest the full trade history, build the market data pipeline, and develop the per-stock dynamic threshold model. Backtest everything with a full audit trail.',
+    thesis: 'With execution slippage confirmed, build the optimization model, IB integration, and full audit trail. Run strategy tournament on historical data, then validate top strategies on IB paper account.',
     workstreams: [
-      {
-        title: 'Trade Data Pipeline',
-        owner: 'lori' as const,
-        items: [
-          'Full trade history parsed into structured format',
-          'Alpha Vantage + Massive pulling 1-min candles around each trade window',
-          'Per-trade scorecard: actual loss % vs. optimal achievable loss %',
-        ],
-      },
       {
         title: 'Optimization Model',
         owner: 'lori' as const,
         items: [
-          'Per-stock dynamic limit price based on: recovery speed, dividend yield, sector volatility, market regime',
-          'Output: "for TICKER X on ex-div day, set limit at Y% instead of flat 50%"',
-          'Every recommendation explainable — clear reasoning behind each number',
+          'Per-stock dynamic limit price: recovery speed, dividend yield, sector volatility, market regime',
+          'Strategy tournament across order types (LMT, REL, MIDPRICE, ADAPTIVE), timing windows, urgency ramps',
+          'Full backtest with audit trail: date, ticker, actual fill, model fill, delta, cumulative savings',
         ],
       },
       {
-        title: 'Backtest & Audit Trail',
+        title: 'IB Paper Validation',
         owner: 'lori' as const,
         items: [
-          'Every historical trade replayed with optimized limit orders',
-          'Full audit trail: date, ticker, actual fill, model fill, delta, cumulative savings',
-          'Side-by-side report: what happened vs. what the model would have done',
+          'Run top 3 strategies on ~20–30 live ex-div events per month',
+          'Compare paper fills to backtest predictions — validate model accuracy',
+          'Log every fill, NBBO, slippage, time-to-fill',
         ],
       },
       {
-        title: 'Attribution Framework',
+        title: 'Attribution & Reporting',
         owner: 'lori' as const,
         items: [
           'Value created = P&L delta between flat 50% and optimized threshold',
-          'AB & GI revenue share computed automatically per trade',
-          'Monthly settlement summary exportable (PDF/CSV)',
+          'Per-trade and monthly settlement reporting (PDF/CSV)',
+          'Side-by-side: what happened vs what the model would have done',
         ],
       },
     ],
     gate: {
-      question: 'Does the backtest show consistent, meaningful savings below the 40% loss baseline?',
+      question: 'Does the model consistently outperform flat 50% in both backtest and paper trading?',
       criteria: [
-        'Model outperforms flat 50% on >60% of trades in backtest',
+        'Model outperforms flat 50% on >60% of trades',
+        'Paper results within 15% of backtest predictions',
         'Cumulative savings are material (worth the operational complexity)',
-        'Backtest report reviewed and numbers validated',
       ],
-      killCondition: 'If backtest shows marginal or inconsistent improvement, the model isn\'t ready — we iterate or accept that flat 50% is good enough.',
+      killCondition: 'If backtest shows marginal improvement or paper diverges significantly from predictions, we iterate or accept that flat 50% is near-optimal.',
     },
   },
   {
     id: 2,
     title: 'Supervised Live',
-    subtitle: 'Daily Order Suggestions via Interactive Brokers',
-    duration: '',
+    subtitle: 'Months 4–6 — Weeks 13–24',
+    duration: 'Mo 4–6',
     status: 'blocked' as const,
-    thesis: 'Every morning, the system generates optimized limit orders for today\'s ex-dividend stocks. Review on phone, tap approve, order placed in IB via API. Full attribution tracked automatically.',
+    thesis: 'Morning order sheet generated automatically. Sean reviews on phone, approves, order placed in IB. Full attribution tracked. Macro kill-switch prevents trading on high-risk days.',
     workstreams: [
-      {
-        title: 'Interactive Brokers Setup',
-        owner: 'sean' as const,
-        items: [
-          'IB account opened (paper trading first)',
-          'Small test allocation transferred',
-          'Platform familiarization — order entry, limit order types, API concepts',
-        ],
-      },
       {
         title: 'Morning Order Sheet',
         owner: 'lori' as const,
         items: [
-          'Daily automated run pulls today\'s ex-div stocks from watchlist',
-          'Optimal limit price computed per stock using the proven model',
-          'Mobile-friendly notification pushed with the order sheet',
-          'One-tap approve — order placed in IB via API',
-        ],
-      },
-      {
-        title: 'Macro Kill-Switch',
-        owner: 'lori' as const,
-        items: [
-          'Binary gate: should we trade today?',
-          'Inputs: VIX level, broad market overnight moves, sector stress',
-          'If kill-switch is ON, no orders generated — "sit today out" message sent',
+          'Daily automated run: pull today\'s ex-div stocks, compute optimal limit per stock',
+          'Mobile-friendly notification with order sheet — one-tap approve, order placed via IB API',
+          'Macro kill-switch: VIX level, broad market moves, sector stress → "sit today out" if triggered',
         ],
       },
       {
         title: 'Trust & Graduation',
         owner: 'both' as const,
         items: [
-          'Every suggested order reviewed for first 2–4 weeks (supervised mode)',
+          'Every order reviewed for first 2–4 weeks (supervised mode)',
           'Disagreements flagged — model learns from overrides',
-          'Graduate to "approve all" once confidence established',
+          'Graduate to "approve all" once override rate drops below 10%',
+        ],
+      },
+      {
+        title: 'Month 6 Review',
+        owner: 'both' as const,
+        items: [
+          'Full performance report: 6 months of audited results',
+          'Compare actual capture efficiency vs baseline',
+          'Decision: continue engagement, adjust terms, or wind down',
         ],
       },
     ],
@@ -178,7 +144,7 @@ const PHASES = [
         'Override rate drops below 10%',
         'Monthly attribution report shows clear, positive value creation',
       ],
-      killCondition: 'If override rate stays >50% after 4 weeks, the model needs more work — we return to Phase 1.',
+      killCondition: 'If override rate stays >50% after 4 weeks, the model needs more work — we return to build phase.',
     },
   },
 ]
@@ -401,15 +367,15 @@ function SavingsChart() {
 
   return (
     <div className="bg-white border border-forest-rule rounded-sm p-3">
-      <div className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-forest mb-1.5 pb-1 border-b border-forest-rule">
-        Optimization Savings by Month
+      <div className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-forest mb-1.5 pb-1 border-b border-forest-rule">
+        Limit Order Optimization — Scenarios by Month
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-[1fr_2fr] gap-3 items-stretch">
         {/* Left: Table */}
         <div className="order-2 md:order-1">
           <div className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-forest mb-1.5 pb-1 border-b border-forest-rule">
-            50% Protected Profit
+            Protected Profit Estimates by Month &amp; Avg
           </div>
           <div className="bg-white border border-forest-rule rounded-sm overflow-hidden">
             <table className="w-full text-[10px]">
@@ -486,14 +452,14 @@ function SavingsChart() {
         {yTicks.map((v) => (
           <g key={v}>
             <line x1={marginL} x2={svgW - marginR} y1={yScale(v)} y2={yScale(v)} stroke="#d8d0c8" strokeWidth={0.5} />
-            <text x={marginL - 6} y={yScale(v) + 3} textAnchor="end" fill="#9a928a" fontSize={9} fontFamily="monospace">
+            <text x={marginL - 6} y={yScale(v) + 4} textAnchor="end" fill="#9a928a" fontSize={11} fontFamily="monospace">
               ${(v / 1000).toFixed(0)}K
             </text>
           </g>
         ))}
 
         {/* Y-axis label */}
-        <text x={12} y={marginT + plotH / 2} textAnchor="middle" fill="#9a928a" fontSize={8} fontFamily="serif" transform={`rotate(-90, 12, ${marginT + plotH / 2})`}>
+        <text x={12} y={marginT + plotH / 2} textAnchor="middle" fill="#9a928a" fontSize={10} fontFamily="serif" transform={`rotate(-90, 12, ${marginT + plotH / 2})`}>
           Dividend Capture ($)
         </text>
 
@@ -1011,30 +977,30 @@ export default function LimitOrderOptimization() {
       {/* ── Briefing Header ── */}
       <div className="bg-forest-surface border-2 border-forest rounded-sm p-3">
         <div className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-forest mb-1">
-          Limit Order Optimization
+          Limit Order Optimization — 6-Month Plan
         </div>
-        <p className="text-[10px] sm:text-[9px] text-forest-ink-muted leading-snug mb-2">
-          First: determine if limit order optimization is even feasible. Two sessions, one sprint. If the data supports it,
-          we build. If not, we redirect to screening &amp; automation. Each phase has a gate — we don&apos;t advance until the evidence supports it.
+        <p className="text-[10px] text-forest-ink-muted leading-snug mb-2">
+          Month 1: audit execution slippage vs structural loss. If the data supports optimization, we build the model, validate on IB paper, and go live with supervised order execution. Each phase has a gate — we don&apos;t advance until the evidence supports it.
         </p>
         <div className="flex items-center gap-1 flex-wrap">
           {PHASES.map((phase, i) => (
             <div key={phase.id} className="flex items-center gap-1">
-              <span className={`font-mono text-[9px] sm:text-[8px] px-1.5 py-0.5 rounded-sm border ${STATUS_STYLES[phase.status].color}`}>
-                Phase {phase.id}: {phase.title}
+              <span className={`font-mono text-[10px] px-1.5 py-0.5 rounded-sm border ${STATUS_STYLES[phase.status].color}`}>
+                {phase.title}
               </span>
-              {i < PHASES.length - 1 && <span className="text-[9px] text-forest-ink-faint">&rarr;</span>}
+              <span className="font-mono text-[9px] text-forest-ink-muted">{phase.duration}</span>
+              {i < PHASES.length - 1 && <span className="text-[10px] text-forest-ink-faint">&rarr;</span>}
             </div>
           ))}
         </div>
         <div className="mt-2 pt-2 border-t border-forest-rule flex flex-wrap gap-3">
           <div>
-            <span className="text-[9px] text-forest-ink-faint uppercase tracking-wide">Est. Total</span>
-            <span className="text-[10px] font-medium text-forest-ink ml-1.5">2–4 months</span>
+            <span className="text-[10px] text-forest-ink-muted uppercase tracking-wide">Duration</span>
+            <span className="text-[10px] font-medium text-forest-ink ml-1.5">6 months</span>
           </div>
           <div>
-            <span className="text-[9px] text-forest-ink-faint uppercase tracking-wide">First Blocker</span>
-            <span className="text-[10px] font-medium text-forest-ink ml-1.5">Feasibility assessment (2 sessions)</span>
+            <span className="text-[10px] text-forest-ink-muted uppercase tracking-wide">Month 1</span>
+            <span className="text-[10px] font-medium text-forest-ink ml-1.5">Execution audit + go/no-go</span>
           </div>
         </div>
       </div>

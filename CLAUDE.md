@@ -295,9 +295,11 @@ text-[10px] font-medium text-ink           // Secondary values (MINIMUM for read
 text-[9px] text-ink-muted                  // Badges & chips ONLY (not body text)
 text-[8px] text-ink-muted                  // Badges & chips ONLY (not body text)
 
-// ⚠️ MINIMUM FONT SIZE: text-[10px]
+// ⚠️ MINIMUM FONT SIZE: text-[10px] / fontSize={11} in SVG
 // Never use text-[9px] or text-[8px] for body text, descriptions, or paragraphs.
 // Those sizes are ONLY acceptable for badges, chips, and status labels.
+// For SVG charts: minimum fontSize={11} for axis labels and data labels.
+// fontSize={9} or smaller in SVG is unreadable — never go below 11.
 ```
 
 **Spacing (Compact, Not Loose):**
