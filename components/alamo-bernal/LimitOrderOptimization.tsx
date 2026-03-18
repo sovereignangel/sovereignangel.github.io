@@ -246,6 +246,118 @@ function computeScenario(lossRate: number) {
 }
 
 /* ────────────────────────────────────────────────────────────────
+   Prospective Savings Table — line-by-line detail
+   ──────────────────────────────────────────────────────────────── */
+
+function ProspectiveSavingsTable() {
+  const avgDiv = HISTORICAL_MONTHS.reduce((sum, m) => sum + m.dividends, 0) / HISTORICAL_MONTHS.length
+
+  return (
+    <div>
+      <p className="text-[10px] text-forest-ink-muted leading-snug mb-2">
+        Comparing Sean&apos;s actual loss from the prior year against what an optimized strategy would have achieved.
+        Lori receives 50% of every dollar saved.
+      </p>
+      <div className="bg-white border border-forest-rule rounded-sm overflow-hidden">
+        <table className="w-full text-[10px]">
+          <thead>
+            <tr className="bg-forest-surface border-b border-forest-rule">
+              <th className="text-left font-semibold text-forest-ink py-1.5 px-2 w-[140px]" />
+              {HISTORICAL_MONTHS.map((m) => (
+                <th key={m.month} className="text-right font-serif font-semibold text-forest-ink py-1.5 px-2">{m.month}</th>
+              ))}
+              <th className="text-right font-serif font-semibold text-forest py-1.5 px-2 border-l border-forest-rule">Avg</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr className="border-b border-forest-rule bg-forest-cream/30">
+              <td className="py-1.5 px-2 font-semibold text-forest-ink uppercase text-[9px] tracking-wide" colSpan={2 + HISTORICAL_MONTHS.length}>
+                Current Performance
+              </td>
+            </tr>
+            <tr className="border-b border-forest-rule">
+              <td className="py-1 px-2 text-forest-ink-muted">Dividends collected</td>
+              {HISTORICAL_MONTHS.map((m) => (
+                <td key={m.month} className="py-1 px-2 text-right font-mono text-forest-ink">${(m.dividends / 1000).toFixed(1)}K</td>
+              ))}
+              <td className="py-1 px-2 text-right font-mono font-medium text-forest-ink border-l border-forest-rule">${(avgDiv / 1000).toFixed(1)}K</td>
+            </tr>
+            <tr className="border-b border-forest-rule">
+              <td className="py-1 px-2 text-forest-ink-muted">Loss on stock sales</td>
+              {HISTORICAL_MONTHS.map((m) => (
+                <td key={m.month} className="py-1 px-2 text-right font-mono text-red-ink">{m.lossPercent}%</td>
+              ))}
+              <td className="py-1 px-2 text-right font-mono font-medium text-red-ink border-l border-forest-rule">{BASELINE.currentLossRate}%</td>
+            </tr>
+            <tr className="border-b border-forest-rule">
+              <td className="py-1 px-2 text-forest-ink-muted">$ lost</td>
+              {HISTORICAL_MONTHS.map((m) => (
+                <td key={m.month} className="py-1 px-2 text-right font-mono text-red-ink">-${(m.lost / 1000).toFixed(1)}K</td>
+              ))}
+              <td className="py-1 px-2 text-right font-mono font-medium text-red-ink border-l border-forest-rule">
+                -${(HISTORICAL_MONTHS.reduce((s, m) => s + m.lost, 0) / HISTORICAL_MONTHS.length / 1000).toFixed(1)}K
+              </td>
+            </tr>
+            <tr className="border-b-2 border-forest-rule">
+              <td className="py-1.5 px-2 font-medium text-forest-ink">Net kept</td>
+              {HISTORICAL_MONTHS.map((m) => (
+                <td key={m.month} className="py-1.5 px-2 text-right font-mono font-medium text-forest-ink">${(m.kept / 1000).toFixed(1)}K</td>
+              ))}
+              <td className="py-1.5 px-2 text-right font-mono font-semibold text-forest-ink border-l border-forest-rule">
+                ${(HISTORICAL_MONTHS.reduce((s, m) => s + m.kept, 0) / HISTORICAL_MONTHS.length / 1000).toFixed(1)}K
+              </td>
+            </tr>
+            {SCENARIOS.map((s) => {
+              const avgSavings = HISTORICAL_MONTHS.reduce((sum, m) => sum + computeMonthSavings(m.lossPercent, s.lossRate, m.dividends).saved, 0) / HISTORICAL_MONTHS.length
+              const avgLoriCut = HISTORICAL_MONTHS.reduce((sum, m) => sum + computeMonthSavings(m.lossPercent, s.lossRate, m.dividends).loriCut, 0) / HISTORICAL_MONTHS.length
+              return (
+                <React.Fragment key={s.label}>
+                  <tr className="border-b border-forest-rule bg-forest-cream/30">
+                    <td className="py-1.5 px-2 font-semibold text-forest-ink uppercase text-[9px] tracking-wide" colSpan={2 + HISTORICAL_MONTHS.length}>
+                      If optimized to {s.lossRate}% loss ({s.label})
+                    </td>
+                  </tr>
+                  <tr className="border-b border-forest-rule">
+                    <td className="py-1 px-2 text-forest-ink-muted">Optimized loss</td>
+                    {HISTORICAL_MONTHS.map((m) => (
+                      <td key={m.month} className="py-1 px-2 text-right font-mono text-forest-ink">-${((s.lossRate / 100) * m.dividends / 1000).toFixed(1)}K</td>
+                    ))}
+                    <td className="py-1 px-2 text-right font-mono text-forest-ink border-l border-forest-rule">{s.lossRate}%</td>
+                  </tr>
+                  <tr className="border-b border-forest-rule">
+                    <td className="py-1 px-2 text-forest-ink-muted">$ saved vs actual</td>
+                    {HISTORICAL_MONTHS.map((m) => {
+                      const { saved } = computeMonthSavings(m.lossPercent, s.lossRate, m.dividends)
+                      return (
+                        <td key={m.month} className="py-1 px-2 text-right font-mono text-green-ink">+${(saved / 1000).toFixed(1)}K</td>
+                      )
+                    })}
+                    <td className="py-1 px-2 text-right font-mono font-medium text-green-ink border-l border-forest-rule">+${(avgSavings / 1000).toFixed(1)}K</td>
+                  </tr>
+                  <tr className="border-b-2 border-forest-rule">
+                    <td className="py-1.5 px-2 font-medium text-forest-ink">50% protected profit</td>
+                    {HISTORICAL_MONTHS.map((m) => {
+                      const { loriCut } = computeMonthSavings(m.lossPercent, s.lossRate, m.dividends)
+                      return (
+                        <td key={m.month} className="py-1.5 px-2 text-right font-mono font-semibold text-green-ink">${loriCut.toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
+                      )
+                    })}
+                    <td className="py-1.5 px-2 text-right font-mono font-semibold text-green-ink border-l border-forest-rule">${Math.round(avgLoriCut).toLocaleString()}/mo</td>
+                  </tr>
+                </React.Fragment>
+              )
+            })}
+          </tbody>
+        </table>
+      </div>
+      <p className="text-[10px] text-forest-ink-muted leading-snug mt-1.5">
+        Savings = prior year&apos;s actual loss for that month minus the optimized loss. Lori receives 50% of the savings — every dollar saved is split evenly.
+      </p>
+    </div>
+  )
+}
+
+/* ────────────────────────────────────────────────────────────────
    Savings Chart — SVG bar + line visual
    ──────────────────────────────────────────────────────────────── */
 
@@ -293,7 +405,7 @@ function SavingsChart() {
         Optimization Savings by Month
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-[280px_1fr] gap-3 items-start">
+      <div className="grid grid-cols-1 md:grid-cols-[1fr_320px] gap-3 items-start">
         {/* Left: Table */}
         <div className="order-2 md:order-1">
           <div className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-forest mb-1.5 pb-1 border-b border-forest-rule">
@@ -672,6 +784,100 @@ export function TrialEconomics() {
               </div>
             </div>
           </div>
+
+          {/* ── 6-Month Projections (moved here from Economics) ── */}
+          <div className="mt-2">
+            <div className="font-serif text-[10px] font-semibold uppercase tracking-[0.5px] text-forest mb-1.5 pb-1 border-b border-forest-rule">
+              6-Month Projected Totals
+            </div>
+            <div className="grid grid-cols-4 gap-1.5">
+              {SCENARIOS.map((s) => {
+                const { sixMonthTotal, effectiveHourly } = computeScenario(s.lossRate)
+                return (
+                  <div key={s.label} className="bg-forest-surface border border-forest-rule rounded-sm p-2 text-center">
+                    <div className="font-mono text-[12px] font-semibold text-green-ink">
+                      ${(sixMonthTotal / 1000).toFixed(1)}K
+                    </div>
+                    <div className="text-[9px] text-forest-ink-muted uppercase tracking-wide mb-1">{s.label} ({s.lossRate}%)</div>
+                    <div className="text-[9px] text-forest-ink-muted">
+                      ~${Math.round(effectiveHourly)}/hr
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* ── Hourly Rate by Phase ── */}
+          <div className="mt-2">
+            <div className="font-serif text-[10px] font-semibold uppercase tracking-[0.5px] text-forest mb-1.5 pb-1 border-b border-forest-rule">
+              Effective Hourly Rate by Phase
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              <div className="bg-forest-surface border border-forest-rule rounded-sm p-2">
+                <div className="text-[9px] text-forest-ink-muted uppercase tracking-wide mb-1">Build (Mo 1–3)</div>
+                <div className="text-[10px] text-forest-ink-muted leading-snug">~{BASELINE.buildHours} hrs total</div>
+                <div className="flex items-baseline gap-1 mt-1">
+                  <span className="font-mono text-[12px] font-semibold text-forest-ink">$11–74</span>
+                  <span className="text-[9px] text-forest-ink-muted">/hr</span>
+                </div>
+              </div>
+              <div className="bg-forest-surface border border-forest-rule rounded-sm p-2">
+                <div className="text-[9px] text-forest-ink-muted uppercase tracking-wide mb-1">Maintenance (Mo 4–6)</div>
+                <div className="text-[10px] text-forest-ink-muted leading-snug">~{BASELINE.maintenanceHoursPerMonth} hrs/mo</div>
+                <div className="flex items-baseline gap-1 mt-1">
+                  <span className="font-mono text-[12px] font-semibold text-amber-ink">$200–1,325</span>
+                  <span className="text-[9px] text-forest-ink-muted">/hr</span>
+                </div>
+              </div>
+              <div className="bg-forest-surface border border-forest-rule rounded-sm p-2">
+                <div className="text-[9px] text-forest-ink-muted uppercase tracking-wide mb-1">Blended (6 Mo)</div>
+                <div className="text-[10px] text-forest-ink-muted leading-snug">~{BASELINE.buildHours + BASELINE.maintenanceHoursPerMonth * 3} hrs total</div>
+                <div className="flex items-baseline gap-1 mt-1">
+                  <span className="font-mono text-[12px] font-semibold text-green-ink">$57–379</span>
+                  <span className="text-[9px] text-forest-ink-muted">/hr</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* ── 24-Week Timeline ── */}
+          <div className="mt-2 bg-forest-surface border border-forest-rule rounded-sm p-2">
+            <div className="font-serif text-[10px] font-semibold uppercase tracking-[0.5px] text-forest mb-1.5 pb-1 border-b border-forest-rule">
+              24-Week Engagement Timeline
+            </div>
+            <div className="relative">
+              {TIMELINE.map((t, i) => {
+                const phaseColor = t.phase === 'Build'
+                  ? 'bg-forest-ink-faint text-forest-ink'
+                  : t.phase === 'Test'
+                    ? 'bg-amber-ink/15 text-amber-ink'
+                    : t.phase === 'Live'
+                      ? 'bg-green-ink/15 text-green-ink'
+                      : 'bg-forest/15 text-forest'
+                return (
+                  <div key={i} className="flex items-start gap-2 mb-1">
+                    <div className="flex flex-col items-center w-3 shrink-0">
+                      <div className={`w-1.5 h-1.5 rounded-full mt-0.5 ${
+                        t.phase === 'Build' ? 'bg-forest-ink-faint'
+                          : t.phase === 'Test' ? 'bg-amber-ink'
+                            : t.phase === 'Live' ? 'bg-green-ink'
+                              : 'bg-forest'
+                      }`} />
+                      {i < TIMELINE.length - 1 && <div className="w-px flex-1 bg-forest-rule mt-0.5" />}
+                    </div>
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                      <span className="font-mono text-[9px] font-medium text-forest-ink w-[36px] shrink-0">W{t.week}</span>
+                      <span className="text-[9px] text-forest-ink-muted leading-snug flex-1">{t.label}</span>
+                      <span className={`font-mono text-[7px] uppercase px-1 py-px rounded-sm shrink-0 ${phaseColor}`}>
+                        {t.phase}
+                      </span>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
         </div>
 
         {/* ── Prospective Savings Table ── */}
@@ -924,27 +1130,6 @@ export function TrialEconomics() {
         </div>
       </div>
 
-      {/* ── Pre-Commit Checklist ── */}
-      <div className="bg-forest-cream border border-forest rounded-sm p-2">
-        <div className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-forest mb-1">
-          Before Committing Build Time
-        </div>
-        <div className="space-y-1">
-          {[
-            '6-month minimum commitment from Sean',
-            'Access to last 12 months of trade data (entry/exit fills)',
-            'Baseline audit (5–10 hrs) to estimate structural floor before agreeing to 40% threshold',
-          ].map((item, i) => (
-            <div key={i} className="flex items-start gap-1.5">
-              <span className="text-[9px] text-forest mt-0.5 shrink-0">&#x25A2;</span>
-              <span className="text-[10px] text-forest-ink-muted leading-snug">{item}</span>
-            </div>
-          ))}
-        </div>
-        <p className="text-[10px] text-forest-ink-muted leading-snug mt-1.5 pt-1.5 border-t border-forest-rule">
-          <span className="font-medium text-forest-ink">Critical insight:</span> If the structural loss floor is ~38%, the performance comp is nearly worthless. If it&apos;s ~30%, this is a high-value engagement. The baseline audit answers this question before any infrastructure is built.
-        </p>
-      </div>
     </div>
   )
 }
@@ -952,6 +1137,7 @@ export function TrialEconomics() {
 export default function LimitOrderOptimization() {
   const [openPhases, setOpenPhases] = useState<Set<number>>(new Set([0]))
   const [economicsOpen, setEconomicsOpen] = useState(false)
+  const [savingsDetailOpen, setSavingsDetailOpen] = useState(false)
 
   function togglePhase(id: number) {
     setOpenPhases((prev) => {
@@ -1102,49 +1288,28 @@ export default function LimitOrderOptimization() {
         )
       })}
 
-      {/* ── Attribution Model ── */}
-      <div className="bg-forest-surface border-2 border-forest rounded-sm p-3">
-        <div className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-forest mb-2 pb-1.5 border-b border-forest-rule">
-          Attribution Model
-        </div>
-        <div className="grid grid-cols-2 gap-2 mb-2">
-          <div className="space-y-1">
-            <span className="text-[10px] sm:text-[9px] font-medium text-forest-ink">Alamo Bernal</span>
-            <p className="text-[10px] sm:text-[9px] text-forest-ink-muted leading-snug">
-              Capital, execution, risk management, trade selection
-            </p>
-          </div>
-          <div className="space-y-1">
-            <span className="text-[10px] sm:text-[9px] font-medium text-forest-ink">Generative Intelligence</span>
-            <p className="text-[10px] sm:text-[9px] text-forest-ink-muted leading-snug">
-              Optimization engine, signal generation, attribution infrastructure
-            </p>
-          </div>
-        </div>
-        <div className="pt-2 border-t border-forest-rule">
-          <p className="text-[11px] sm:text-[10px] text-forest-ink-muted leading-snug">
-            Value = P&amp;L delta between flat 50% baseline and optimized limit orders. Computed per trade, auditable end-to-end, settled monthly. Performance-based comp: half of savings below 40% loss baseline.
-          </p>
-        </div>
-      </div>
-
-      {/* ── SOW Note ── */}
-      <div className="bg-forest-cream border border-forest rounded-sm p-3">
-        <div className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-forest mb-1.5">
-          Scope of Work — Compensation Note
-        </div>
-        <div className="space-y-1.5">
-          <p className="text-[10px] text-forest-ink-muted leading-snug">
-            <span className="font-medium text-forest-ink">Validation phase:</span> 1 sprint (two weeks), 2 sessions with Sean. Covered under the existing retainer — no additional pricing. Purpose: determine whether limit order optimization is feasible before committing to a multi-month build.
-          </p>
-          <p className="text-[10px] text-forest-ink-muted leading-snug">
-            <span className="font-medium text-forest-ink">After feasibility is confirmed:</span> screener automation and limit order optimization proceed in parallel on separate compensation structures. Screener work continues under the retainer; optimization work transitions to the performance-based attribution model described above.
-          </p>
-        </div>
-      </div>
-
       {/* ── Optimization Savings Visual ── */}
       <SavingsChart />
+
+      {/* ── Prospective Savings Detail (collapsible) ── */}
+      <div className="bg-forest-surface border border-forest-rule rounded-sm">
+        <button
+          onClick={() => setSavingsDetailOpen(!savingsDetailOpen)}
+          className="w-full flex items-center justify-between px-3 py-2 hover:bg-forest-cream/30 transition-colors"
+        >
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] text-forest-ink-muted">{savingsDetailOpen ? '\u25BC' : '\u25B6'}</span>
+            <span className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-forest">
+              Prospective Savings — Line by Line
+            </span>
+          </div>
+        </button>
+        {savingsDetailOpen && (
+          <div className="border-t border-forest-rule p-3">
+            <ProspectiveSavingsTable />
+          </div>
+        )}
+      </div>
 
       {/* ── Economics (collapsible) ── */}
       <div className="bg-forest-surface border border-forest-rule rounded-sm">
