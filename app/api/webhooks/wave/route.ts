@@ -68,6 +68,12 @@ async function getAdminDb() {
 /**
  * Verify HMAC-SHA256 signature from Wave webhook.
  * Signature = HMAC-SHA256(secret, webhookId.timestamp.body)
+ *
+ * Tries multiple key/digest encodings since Wave docs don't specify:
+ *  - Raw string key + base64 digest (Svix standard)
+ *  - Hex-decoded key + base64 digest
+ *  - Raw string key + hex digest
+ *  - Hex-decoded key + hex digest
  */
 function verifyWaveSignature(request: {
   webhookId: string
@@ -79,21 +85,41 @@ function verifyWaveSignature(request: {
   if (!secret) return false
 
   const signedContent = `${request.webhookId}.${request.timestamp}.${request.body}`
-  const expected = crypto
-    .createHmac('sha256', secret)
-    .update(signedContent)
-    .digest('base64')
 
-  // The signature header may contain multiple signatures (versioned)
-  // Check if any match
+  // Generate candidates with different key/digest encoding combos
+  const rawSecret = secret.startsWith('whsec_') ? secret.slice(6) : secret
+  const keys: (string | Buffer)[] = [rawSecret, Buffer.from(rawSecret, 'hex')]
+  // Also try base64 decoding in case secret is base64-encoded
+  try { keys.push(Buffer.from(rawSecret, 'base64')) } catch { /* skip if not valid base64 */ }
+  const digests: Array<'base64' | 'hex'> = ['base64', 'hex']
+  const candidates: string[] = []
+  for (const key of keys) {
+    for (const digest of digests) {
+      candidates.push(
+        crypto.createHmac('sha256', key).update(signedContent).digest(digest)
+      )
+    }
+  }
+
+  // Signature header may contain multiple versioned signatures separated by spaces
   const signatures = request.signature.split(' ')
-  return signatures.some(sig => {
+  for (const sig of signatures) {
     const sigValue = sig.startsWith('v1,') ? sig.slice(3) : sig
-    const expectedBuf = Buffer.from(expected)
-    const actualBuf = Buffer.from(sigValue)
-    if (expectedBuf.length !== actualBuf.length) return false
-    return crypto.timingSafeEqual(expectedBuf, actualBuf)
-  })
+    for (const expected of candidates) {
+      const expectedBuf = Buffer.from(expected)
+      const actualBuf = Buffer.from(sigValue)
+      if (expectedBuf.length === actualBuf.length) {
+        if (crypto.timingSafeEqual(expectedBuf, actualBuf)) {
+          return true
+        }
+      }
+    }
+  }
+
+  // Log for debugging (visible in Vercel function logs)
+  console.error('[webhooks/wave] HMAC mismatch — signature:', request.signature.slice(0, 30), '... candidates:', candidates.map(c => c.slice(0, 20)))
+
+  return false
 }
 
 /**
