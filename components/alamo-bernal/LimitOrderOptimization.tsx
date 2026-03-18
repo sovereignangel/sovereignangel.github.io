@@ -333,7 +333,7 @@ export function TrialEconomics() {
                 ))}
               </div>
               <div className="mt-1.5 pt-1.5 border-t border-forest-rule">
-                <span className="text-[9px] text-forest-ink-faint">Faster path to live optimization — tech is ready on day 30</span>
+                <span className="text-[10px] text-forest-ink-muted">Faster path to live optimization — tech is ready on day 30</span>
               </div>
             </div>
             <div className="bg-forest-surface border border-forest-rule rounded-sm p-2">
@@ -357,7 +357,7 @@ export function TrialEconomics() {
                 ))}
               </div>
               <div className="mt-1.5 pt-1.5 border-t border-forest-rule">
-                <span className="text-[9px] text-forest-ink-faint">Lower risk — Sean pays for the research either way, gets value regardless</span>
+                <span className="text-[10px] text-forest-ink-muted">Lower risk — Sean pays for the research either way, gets value regardless</span>
               </div>
             </div>
           </div>
@@ -367,7 +367,7 @@ export function TrialEconomics() {
             <div className="bg-forest-surface border border-forest-rule rounded-sm p-2">
               <div className="flex items-center gap-1.5 mb-1">
                 <span className="font-mono text-[9px] font-semibold text-forest uppercase">Backtester</span>
-                <span className="text-[8px] text-forest-ink-faint">(where the volume is)</span>
+                <span className="text-[9px] text-forest-ink-muted">(where the volume is)</span>
               </div>
               <div className="space-y-0.5">
                 {[
@@ -387,7 +387,7 @@ export function TrialEconomics() {
             <div className="bg-forest-surface border border-forest-rule rounded-sm p-2">
               <div className="flex items-center gap-1.5 mb-1">
                 <span className="font-mono text-[9px] font-semibold text-forest uppercase">IB Paper Account</span>
-                <span className="text-[8px] text-forest-ink-faint">(validates reality)</span>
+                <span className="text-[9px] text-forest-ink-muted">(validates reality)</span>
               </div>
               <div className="space-y-0.5">
                 {[
@@ -417,11 +417,11 @@ export function TrialEconomics() {
             </p>
             <div className="flex gap-3 mt-1.5 pt-1.5 border-t border-forest-rule">
               <div>
-                <span className="text-[9px] text-forest-ink-faint uppercase tracking-wide">If slippage &gt;10%</span>
+                <span className="text-[10px] font-medium text-forest-ink uppercase tracking-wide">If slippage &gt;10%</span>
                 <span className="text-[10px] font-medium text-green-ink ml-1.5">Proceed to optimization</span>
               </div>
               <div>
-                <span className="text-[9px] text-forest-ink-faint uppercase tracking-wide">If slippage &lt;5%</span>
+                <span className="text-[10px] font-medium text-forest-ink uppercase tracking-wide">If slippage &lt;5%</span>
                 <span className="text-[10px] font-medium text-red-ink ml-1.5">Stop — audit was still worth it</span>
               </div>
             </div>
@@ -442,15 +442,15 @@ export function TrialEconomics() {
                 </div>
                 <div className="space-y-0.5">
                   <div className="flex justify-between">
-                    <span className="text-[9px] text-forest-ink-faint">Dividends</span>
+                    <span className="text-[10px] text-forest-ink-muted">Dividends</span>
                     <span className="font-mono text-[10px] text-forest-ink">${(m.dividends / 1000).toFixed(1)}K</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-[9px] text-forest-ink-faint">Lost on sales</span>
+                    <span className="text-[10px] text-forest-ink-muted">Lost on sales</span>
                     <span className="font-mono text-[10px] text-red-ink">-${(m.lost / 1000).toFixed(1)}K</span>
                   </div>
                   <div className="flex justify-between pt-0.5 border-t border-forest-rule">
-                    <span className="text-[9px] text-forest-ink-faint">Kept</span>
+                    <span className="text-[10px] text-forest-ink-muted">Kept</span>
                     <span className="font-mono text-[10px] font-medium text-green-ink">${(m.kept / 1000).toFixed(1)}K</span>
                   </div>
                 </div>
@@ -462,19 +462,19 @@ export function TrialEconomics() {
               <div className="font-mono text-[14px] font-semibold text-forest-ink">
                 ${(avgDiv / 1000).toFixed(0)}K
               </div>
-              <div className="text-[9px] text-forest-ink-faint uppercase tracking-wide">Avg Monthly Div</div>
+              <div className="text-[10px] text-forest-ink-muted uppercase tracking-wide">Avg Monthly Div</div>
             </div>
             <div className="bg-white border border-forest-rule rounded-sm p-2 text-center">
               <div className="font-mono text-[14px] font-semibold text-red-ink">
                 {BASELINE.currentLossRate}%
               </div>
-              <div className="text-[9px] text-forest-ink-faint uppercase tracking-wide">Avg Loss Rate</div>
+              <div className="text-[10px] text-forest-ink-muted uppercase tracking-wide">Avg Loss Rate</div>
             </div>
             <div className="bg-white border border-forest-rule rounded-sm p-2 text-center">
               <div className="font-mono text-[14px] font-semibold text-forest">
                 {BASELINE.compThreshold}%
               </div>
-              <div className="text-[9px] text-forest-ink-faint uppercase tracking-wide">Comp Threshold</div>
+              <div className="text-[10px] text-forest-ink-muted uppercase tracking-wide">Comp Threshold</div>
             </div>
           </div>
         </div>
