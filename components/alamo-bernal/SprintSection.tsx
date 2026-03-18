@@ -10,9 +10,8 @@ import {
 } from '@/lib/alamo-bernal/firestore'
 import { SPRINT_ITEMS } from '@/lib/alamo-bernal/seed-data'
 import LimitOrderOptimization from './LimitOrderOptimization'
-import { TrialEconomics } from './LimitOrderOptimization'
 
-type SprintSubtab = 'sprint-planning' | 'limit-order' | 'trial-economics'
+type SprintSubtab = 'sprint-planning' | 'limit-order'
 
 const TYPE_BADGE: Record<SprintItemType, { label: string; color: string }> = {
   feature: { label: 'Feature', color: 'text-green-ink bg-green-bg border-green-ink/20' },
@@ -180,21 +179,9 @@ export default function SprintSection() {
         >
           Limit Order Optimization
         </button>
-        <button
-          onClick={() => setActiveSubtab('trial-economics')}
-          className={`font-serif text-[14px] sm:text-[13px] py-1.5 px-3 transition-colors ${
-            activeSubtab === 'trial-economics'
-              ? 'text-forest font-semibold border-b-2 border-forest'
-              : 'text-forest-ink-muted hover:text-forest-ink'
-          }`}
-        >
-          Trial Economics
-        </button>
       </div>
 
       {activeSubtab === 'limit-order' && <LimitOrderOptimization />}
-
-      {activeSubtab === 'trial-economics' && <TrialEconomics />}
 
       {activeSubtab === 'sprint-planning' && <>
       {/* Header */}

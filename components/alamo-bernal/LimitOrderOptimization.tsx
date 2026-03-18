@@ -695,6 +695,7 @@ export function TrialEconomics() {
 
 export default function LimitOrderOptimization() {
   const [openPhases, setOpenPhases] = useState<Set<number>>(new Set([0]))
+  const [economicsOpen, setEconomicsOpen] = useState(false)
 
   function togglePhase(id: number) {
     setOpenPhases((prev) => {
@@ -884,6 +885,26 @@ export default function LimitOrderOptimization() {
             <span className="font-medium text-forest-ink">After feasibility is confirmed:</span> screener automation and limit order optimization proceed in parallel on separate compensation structures. Screener work continues under the retainer; optimization work transitions to the performance-based attribution model described above.
           </p>
         </div>
+      </div>
+
+      {/* ── Economics (collapsible) ── */}
+      <div className="bg-forest-surface border border-forest-rule rounded-sm">
+        <button
+          onClick={() => setEconomicsOpen(!economicsOpen)}
+          className="w-full flex items-center justify-between px-3 py-2 hover:bg-forest-cream/30 transition-colors"
+        >
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] text-forest-ink-muted">{economicsOpen ? '\u25BC' : '\u25B6'}</span>
+            <span className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-forest">
+              Economics
+            </span>
+          </div>
+        </button>
+        {economicsOpen && (
+          <div className="border-t border-forest-rule p-3">
+            <TrialEconomics />
+          </div>
+        )}
       </div>
     </div>
   )
