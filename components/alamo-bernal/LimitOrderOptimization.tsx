@@ -249,13 +249,6 @@ function computeScenario(lossRate: number) {
 }
 
 export function TrialEconomics() {
-  // Compute max bar value across all months & scenarios for consistent scale
-  const allMonthScenarioValues = HISTORICAL_MONTHS.flatMap((m) =>
-    SCENARIOS.map((s) => computeMonthScenario(m.dividends, s.lossRate))
-  )
-  const maxBar = Math.max(...allMonthScenarioValues)
-
-  // 6-month projections using average
   const avgDiv = HISTORICAL_MONTHS.reduce((sum, m) => sum + m.dividends, 0) / HISTORICAL_MONTHS.length
 
   return (
@@ -428,115 +421,121 @@ export function TrialEconomics() {
           </div>
         </div>
 
-        {/* ── Historical Baseline ── */}
+        {/* ── Prospective Savings Table ── */}
         <div>
-          <div className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-forest mb-2 pb-1 border-b border-forest-rule">
-            Sean&apos;s Actual Performance (Last 3 Months)
-          </div>
-          <div className="grid grid-cols-3 gap-2 mb-2">
-            {HISTORICAL_MONTHS.map((m) => (
-              <div key={m.month} className="bg-white border border-forest-rule rounded-sm p-2">
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="font-serif text-[11px] font-semibold text-forest-ink">{m.month}</span>
-                  <span className="font-mono text-[9px] text-red-ink font-medium">{m.lossPercent}% lost</span>
-                </div>
-                <div className="space-y-0.5">
-                  <div className="flex justify-between">
-                    <span className="text-[10px] text-forest-ink-muted">Dividends</span>
-                    <span className="font-mono text-[10px] text-forest-ink">${(m.dividends / 1000).toFixed(1)}K</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-[10px] text-forest-ink-muted">Lost on sales</span>
-                    <span className="font-mono text-[10px] text-red-ink">-${(m.lost / 1000).toFixed(1)}K</span>
-                  </div>
-                  <div className="flex justify-between pt-0.5 border-t border-forest-rule">
-                    <span className="text-[10px] text-forest-ink-muted">Kept</span>
-                    <span className="font-mono text-[10px] font-medium text-green-ink">${(m.kept / 1000).toFixed(1)}K</span>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-          <div className="grid grid-cols-3 gap-2">
-            <div className="bg-white border border-forest-rule rounded-sm p-2 text-center">
-              <div className="font-mono text-[14px] font-semibold text-forest-ink">
-                ${(avgDiv / 1000).toFixed(0)}K
-              </div>
-              <div className="text-[10px] text-forest-ink-muted uppercase tracking-wide">Avg Monthly Div</div>
-            </div>
-            <div className="bg-white border border-forest-rule rounded-sm p-2 text-center">
-              <div className="font-mono text-[14px] font-semibold text-red-ink">
-                {BASELINE.currentLossRate}%
-              </div>
-              <div className="text-[10px] text-forest-ink-muted uppercase tracking-wide">Avg Loss Rate</div>
-            </div>
-            <div className="bg-white border border-forest-rule rounded-sm p-2 text-center">
-              <div className="font-mono text-[14px] font-semibold text-forest">
-                {BASELINE.compThreshold}%
-              </div>
-              <div className="text-[10px] text-forest-ink-muted uppercase tracking-wide">Comp Threshold</div>
-            </div>
-          </div>
-        </div>
-
-        {/* ── Month-by-Month Scenario Comparison ── */}
-        <div>
-          <div className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-forest mb-2 pb-1 border-b border-forest-rule">
-            What I Would Have Earned — By Month
+          <div className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-forest mb-1.5 pb-1 border-b border-forest-rule">
+            Prospective Savings — By Month with Limit Order Optimization
           </div>
           <p className="text-[10px] text-forest-ink-muted leading-snug mb-2">
-            Applied to Sean&apos;s actual dividend volume per month. Comp = $1K flat + 50% of savings below {BASELINE.compThreshold}% loss.
+            Lori receives 50% of every dollar saved below the {BASELINE.compThreshold}% loss baseline + $1K flat fee.
+            Applied to Sean&apos;s actual dividend volume per month.
           </p>
 
-          {HISTORICAL_MONTHS.map((m) => (
-            <div key={m.month} className="mb-3">
-              <div className="flex items-center gap-2 mb-1">
-                <span className="font-serif text-[11px] font-semibold text-forest-ink">{m.month}</span>
-                <span className="font-mono text-[9px] text-forest-ink-muted">
-                  ${(m.dividends / 1000).toFixed(1)}K div &middot; {m.lossPercent}% actual loss
-                </span>
-              </div>
-              <div className="space-y-1">
+          {/* Institutional table */}
+          <div className="bg-white border border-forest-rule rounded-sm overflow-hidden">
+            <table className="w-full text-[10px]">
+              <thead>
+                <tr className="bg-forest-surface border-b border-forest-rule">
+                  <th className="text-left font-semibold text-forest-ink py-1.5 px-2 w-[140px]" />
+                  {HISTORICAL_MONTHS.map((m) => (
+                    <th key={m.month} className="text-right font-serif font-semibold text-forest-ink py-1.5 px-2">
+                      {m.month}
+                    </th>
+                  ))}
+                  <th className="text-right font-serif font-semibold text-forest py-1.5 px-2 border-l border-forest-rule">
+                    Avg
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {/* Current Performance */}
+                <tr className="border-b border-forest-rule bg-forest-cream/30">
+                  <td className="py-1.5 px-2 font-semibold text-forest-ink uppercase text-[9px] tracking-wide" colSpan={2 + HISTORICAL_MONTHS.length}>
+                    Current Performance
+                  </td>
+                </tr>
+                <tr className="border-b border-forest-rule">
+                  <td className="py-1 px-2 text-forest-ink-muted">Dividends collected</td>
+                  {HISTORICAL_MONTHS.map((m) => (
+                    <td key={m.month} className="py-1 px-2 text-right font-mono text-forest-ink">
+                      ${(m.dividends / 1000).toFixed(1)}K
+                    </td>
+                  ))}
+                  <td className="py-1 px-2 text-right font-mono font-medium text-forest-ink border-l border-forest-rule">
+                    ${(avgDiv / 1000).toFixed(1)}K
+                  </td>
+                </tr>
+                <tr className="border-b border-forest-rule">
+                  <td className="py-1 px-2 text-forest-ink-muted">Loss on stock sales</td>
+                  {HISTORICAL_MONTHS.map((m) => (
+                    <td key={m.month} className="py-1 px-2 text-right font-mono text-red-ink">
+                      {m.lossPercent}%
+                    </td>
+                  ))}
+                  <td className="py-1 px-2 text-right font-mono font-medium text-red-ink border-l border-forest-rule">
+                    {BASELINE.currentLossRate}%
+                  </td>
+                </tr>
+                <tr className="border-b border-forest-rule">
+                  <td className="py-1 px-2 text-forest-ink-muted">$ lost</td>
+                  {HISTORICAL_MONTHS.map((m) => (
+                    <td key={m.month} className="py-1 px-2 text-right font-mono text-red-ink">
+                      -${(m.lost / 1000).toFixed(1)}K
+                    </td>
+                  ))}
+                  <td className="py-1 px-2 text-right font-mono font-medium text-red-ink border-l border-forest-rule">
+                    -${(HISTORICAL_MONTHS.reduce((s, m) => s + m.lost, 0) / HISTORICAL_MONTHS.length / 1000).toFixed(1)}K
+                  </td>
+                </tr>
+                <tr className="border-b-2 border-forest-rule">
+                  <td className="py-1.5 px-2 font-medium text-forest-ink">Net kept</td>
+                  {HISTORICAL_MONTHS.map((m) => (
+                    <td key={m.month} className="py-1.5 px-2 text-right font-mono font-medium text-forest-ink">
+                      ${(m.kept / 1000).toFixed(1)}K
+                    </td>
+                  ))}
+                  <td className="py-1.5 px-2 text-right font-mono font-semibold text-forest-ink border-l border-forest-rule">
+                    ${(HISTORICAL_MONTHS.reduce((s, m) => s + m.kept, 0) / HISTORICAL_MONTHS.length / 1000).toFixed(1)}K
+                  </td>
+                </tr>
+
+                {/* Optimization Scenarios */}
+                <tr className="border-b border-forest-rule bg-forest-cream/30">
+                  <td className="py-1.5 px-2 font-semibold text-forest-ink uppercase text-[9px] tracking-wide" colSpan={2 + HISTORICAL_MONTHS.length}>
+                    With Optimization — Lori&apos;s 50% Protected Profit
+                  </td>
+                </tr>
                 {SCENARIOS.map((s) => {
-                  const income = computeMonthScenario(m.dividends, s.lossRate)
-                  const barWidth = Math.max(8, (income / maxBar) * 100)
+                  const avgIncome = HISTORICAL_MONTHS.reduce((sum, m) => sum + computeMonthScenario(m.dividends, s.lossRate), 0) / HISTORICAL_MONTHS.length
                   const isBelowThreshold = s.lossRate < BASELINE.compThreshold
                   return (
-                    <div key={s.label} className="flex items-center gap-2">
-                      <div className="w-[44px] shrink-0 text-right">
-                        <span className="font-mono text-[10px] font-medium text-forest-ink">{s.lossRate}%</span>
-                      </div>
-                      <div className="flex-1 relative h-[16px] bg-forest-cream rounded-sm overflow-hidden">
-                        <div
-                          className={`absolute inset-y-0 left-0 ${isBelowThreshold ? s.barColor : 'bg-forest-ink-faint'} opacity-70`}
-                          style={{ width: `${barWidth}%` }}
-                        />
-                        <div className="absolute inset-0 flex items-center px-1.5">
-                          <span className="font-mono text-[9px] font-semibold text-white drop-shadow-sm">
+                    <tr key={s.label} className="border-b border-forest-rule">
+                      <td className="py-1 px-2">
+                        <span className="text-forest-ink-muted">If loss → </span>
+                        <span className={`font-mono font-medium ${isBelowThreshold ? 'text-green-ink' : 'text-forest-ink'}`}>{s.lossRate}%</span>
+                        <span className="text-forest-ink-faint ml-1">({s.label})</span>
+                      </td>
+                      {HISTORICAL_MONTHS.map((m) => {
+                        const income = computeMonthScenario(m.dividends, s.lossRate)
+                        return (
+                          <td key={m.month} className={`py-1 px-2 text-right font-mono ${isBelowThreshold ? 'text-green-ink font-medium' : 'text-forest-ink'}`}>
                             ${income.toLocaleString(undefined, { maximumFractionDigits: 0 })}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="w-[72px] shrink-0">
-                        <span className="text-[9px] text-forest-ink-muted">{s.label}</span>
-                      </div>
-                    </div>
+                          </td>
+                        )
+                      })}
+                      <td className={`py-1 px-2 text-right font-mono font-semibold border-l border-forest-rule ${isBelowThreshold ? 'text-green-ink' : 'text-forest-ink'}`}>
+                        ${Math.round(avgIncome).toLocaleString()}/mo
+                      </td>
+                    </tr>
                   )
                 })}
-              </div>
-            </div>
-          ))}
-
-          <div className="flex items-center gap-3 mt-1">
-            <div className="flex items-center gap-1">
-              <div className="w-2 h-2 bg-forest-ink-faint opacity-70 rounded-sm" />
-              <span className="text-[8px] text-forest-ink-faint">Flat fee only (above {BASELINE.compThreshold}%)</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <div className="w-2 h-2 bg-forest opacity-70 rounded-sm" />
-              <span className="text-[8px] text-forest-ink-faint">Flat + performance comp (below {BASELINE.compThreshold}%)</span>
-            </div>
+              </tbody>
+            </table>
           </div>
+
+          <p className="text-[10px] text-forest-ink-muted leading-snug mt-1.5">
+            Comp = $1K flat + 50% of savings below {BASELINE.compThreshold}% loss. Improvements from {BASELINE.currentLossRate}% → {BASELINE.compThreshold}% benefit Sean only — Lori&apos;s upside starts below {BASELINE.compThreshold}%.
+          </p>
         </div>
 
         {/* ── 6-Month Projections ── */}
