@@ -299,14 +299,70 @@ export function TrialEconomics() {
           </div>
         </div>
 
-        {/* ── Month 1 Learning Sprint ── */}
+        {/* ── Month 1 — Execution Audit ── */}
         <div className="bg-white border border-forest-rule rounded-sm p-3">
           <div className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-forest mb-1.5 pb-1 border-b border-forest-rule">
-            Month 1 — Can We Optimize This?
+            Month 1 — Execution Audit
           </div>
           <p className="text-[10px] text-forest-ink-muted leading-snug mb-2">
-            One IB paper account + a local backtester. Goal: answer the &ldquo;gotta believes&rdquo; before committing to 5 more months.
+            Before building optimization infrastructure, we audit Sean&apos;s actual execution to quantify how much loss is structural (market mechanics)
+            vs execution slippage (order type, timing, fill quality). This research has standalone value — Sean gets a detailed breakdown of where his money goes,
+            regardless of whether we proceed to optimization.
           </p>
+
+          {/* ── Two Pricing Options ── */}
+          <div className="grid grid-cols-2 gap-2 mb-2">
+            <div className="bg-forest-surface border-2 border-forest rounded-sm p-2">
+              <div className="flex items-center justify-between mb-1">
+                <span className="font-mono text-[10px] font-semibold text-forest uppercase">Option A</span>
+                <span className="font-mono text-[12px] font-semibold text-forest-ink">$2K</span>
+              </div>
+              <div className="text-[10px] font-medium text-forest-ink mb-1">Audit + Tech Build</div>
+              <div className="space-y-0.5">
+                {[
+                  'Full execution audit (structural vs slippage)',
+                  'Backtester built + 500+ strategy permutations',
+                  'IB paper account running top 3 strategies',
+                  'Detailed report with per-trade evidence',
+                  'Optimization tooling ready for Month 2 if go',
+                ].map((item, i) => (
+                  <div key={i} className="flex items-start gap-1.5">
+                    <span className="text-[8px] text-forest mt-0.5 shrink-0">&#x2022;</span>
+                    <span className="text-[10px] text-forest-ink-muted leading-snug">{item}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-1.5 pt-1.5 border-t border-forest-rule">
+                <span className="text-[9px] text-forest-ink-faint">Faster path to live optimization — tech is ready on day 30</span>
+              </div>
+            </div>
+            <div className="bg-forest-surface border border-forest-rule rounded-sm p-2">
+              <div className="flex items-center justify-between mb-1">
+                <span className="font-mono text-[10px] font-semibold text-forest-ink-muted uppercase">Option B</span>
+                <span className="font-mono text-[12px] font-semibold text-forest-ink">$1K</span>
+              </div>
+              <div className="text-[10px] font-medium text-forest-ink mb-1">Feasibility Audit Only</div>
+              <div className="space-y-0.5">
+                {[
+                  'Full execution audit (structural vs slippage)',
+                  'Analysis of Sean\'s trade history + intraday data',
+                  'Report: where the money goes, what\'s optimizable',
+                  'Go/no-go recommendation with evidence',
+                  'If go: tech build starts Month 2 (adds 1 month)',
+                ].map((item, i) => (
+                  <div key={i} className="flex items-start gap-1.5">
+                    <span className="text-[8px] text-forest-ink-faint mt-0.5 shrink-0">&#x2022;</span>
+                    <span className="text-[10px] text-forest-ink-muted leading-snug">{item}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-1.5 pt-1.5 border-t border-forest-rule">
+                <span className="text-[9px] text-forest-ink-faint">Lower risk — Sean pays for the research either way, gets value regardless</span>
+              </div>
+            </div>
+          </div>
+
+          {/* ── What the Audit Covers ── */}
           <div className="grid grid-cols-2 gap-2 mb-2">
             <div className="bg-forest-surface border border-forest-rule rounded-sm p-2">
               <div className="flex items-center gap-1.5 mb-1">
@@ -349,6 +405,8 @@ export function TrialEconomics() {
               </div>
             </div>
           </div>
+
+          {/* ── Month 1 Deliverable ── */}
           <div className="bg-forest-cream border border-forest rounded-sm p-2">
             <div className="font-serif text-[10px] font-semibold uppercase tracking-[0.5px] text-forest mb-1">
               Month 1 Deliverable
@@ -360,11 +418,11 @@ export function TrialEconomics() {
             <div className="flex gap-3 mt-1.5 pt-1.5 border-t border-forest-rule">
               <div>
                 <span className="text-[9px] text-forest-ink-faint uppercase tracking-wide">If slippage &gt;10%</span>
-                <span className="text-[10px] font-medium text-green-ink ml-1.5">Proceed to Month 2–6</span>
+                <span className="text-[10px] font-medium text-green-ink ml-1.5">Proceed to optimization</span>
               </div>
               <div>
                 <span className="text-[9px] text-forest-ink-faint uppercase tracking-wide">If slippage &lt;5%</span>
-                <span className="text-[10px] font-medium text-red-ink ml-1.5">Stop — flat fee only</span>
+                <span className="text-[10px] font-medium text-red-ink ml-1.5">Stop — audit was still worth it</span>
               </div>
             </div>
           </div>
