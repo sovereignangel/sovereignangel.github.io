@@ -19,6 +19,7 @@ import type { DailyAllocation } from '@/lib/types'
 import { MUSCLE_TARGETS } from '@/lib/constants'
 import { localDateString } from '@/lib/date-utils'
 import ScoreAttribution from '@/components/thesis/ScoreAttribution'
+import QuantPracticeCard from '@/components/thesis/quant-practice/QuantPracticeCard'
 import SignalAttribution from '@/components/thesis/SignalAttribution'
 import { strategicPillars, computeMomentum, type StrategicPillar } from '@/lib/strategic-priorities'
 
@@ -393,6 +394,9 @@ export default function CommandCenter() {
             completedCount={completedCount}
             openCount={openCount}
           />
+
+          {/* Daily Quant Practice */}
+          <QuantPracticeCard />
 
           {/* Prioritized Actions */}
           <ActionsList actions={actions} />
