@@ -18,11 +18,14 @@ export function middleware(request: NextRequest) {
     return NextResponse.rewrite(url)
   }
 
-  // latentspace.loricorpuz.com → rewrite to /latent-space
+  // latentspace.loricorpuz.com — hidden from public
   if (host.startsWith('latentspace.')) {
-    const url = request.nextUrl.clone()
-    url.pathname = `/latent-space${url.pathname === '/' ? '' : url.pathname}`
-    return NextResponse.rewrite(url)
+    return new NextResponse('Not Found', { status: 404 })
+  }
+
+  // /latent-space route — hidden from public
+  if (request.nextUrl.pathname.startsWith('/latent-space')) {
+    return new NextResponse('Not Found', { status: 404 })
   }
 
   return NextResponse.next()
