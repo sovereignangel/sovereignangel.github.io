@@ -141,6 +141,16 @@ export const PROFESSORS: ResearchProfessor[] = [
     labUrl: 'https://www.santafe.edu/people/profile/david-krakauer',
     relevance: 'Macro-level intelligence theory, complex adaptive systems',
   },
+  {
+    id: 'levin_m',
+    name: 'Michael Levin',
+    institution: 'Tufts',
+    field: 'Cognitive Science / Developmental Biology',
+    focus: ['TAME framework', 'Bioelectricity', 'Morphogenesis', 'Multi-scale cognition'],
+    googleScholarUrl: 'https://scholar.google.com/citations?user=bJPpGbkAAAAJ',
+    labUrl: 'https://drmichaellevin.org',
+    relevance: 'Goal-directed intelligence at every scale — cognition without brains, collective agency',
+  },
 ]
 
 // ─── Foundation Reading Stack ───────────────────────────────────────────────
@@ -212,7 +222,7 @@ export const RESEARCH_KEYWORDS = [
   'pomdp', 'hierarchy', 'meta-learning', 'world model', 'active inference',
   'bayesian', 'exploration', 'intrinsic motivation', 'curiosity', 'successor',
   'cognitive', 'intelligence', 'phd', 'research', 'professor', 'paper',
-  'gershman', 'tenenbaum', 'griffiths', 'littman', 'finn', 'friston',
+  'gershman', 'tenenbaum', 'griffiths', 'littman', 'finn', 'friston', 'levin',
   'thesis engine', 'decision architecture', 'credit assignment', 'belief',
   'dopamine', 'neuroscience', 'consciousness', 'eeg', 'representation',
 ]

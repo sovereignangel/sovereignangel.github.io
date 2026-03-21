@@ -41,6 +41,7 @@ const PROFESSOR_SCHOLAR_IDS: Record<string, string> = {
   abbeel: '1736651',
   sadigh: '2625835',
   krakauer_d: '2347195',
+  levin_m: '1740828',
 }
 
 async function fetchProfessorPapers(professorId: string, scholarId: string): Promise<FeedResult> {

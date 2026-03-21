@@ -64,6 +64,7 @@ export async function processTranscriptData(
   transcriptText: string,
   templateType: TranscriptTemplateType,
   extracted: TranscriptExtractionResult,
+  options?: { metadata?: Record<string, unknown> },
 ): Promise<TranscriptProcessingResult> {
   const { adminDb } = await import('./firebase-admin')
   const userRef = adminDb.collection('users').doc(uid)
@@ -275,6 +276,7 @@ export async function processTranscriptData(
     aiProcessed: true,
     aiProcessedAt: new Date(),
     linkedSignalIds: [],
+    metadata: options?.metadata || null,
     createdAt: new Date(),
     updatedAt: new Date(),
   })

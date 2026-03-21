@@ -188,6 +188,17 @@ export async function POST(request: NextRequest) {
   const sessionTitle = payload.data.session.title
 
   try {
+    // 0. Deduplicate — skip if we already processed this Wave session
+    const db = await getAdminDb()
+    const existingConv = await db.collection('users').doc(uid).collection('conversations')
+      .where('metadata.waveSessionId', '==', sessionId)
+      .limit(1)
+      .get()
+    if (!existingConv.empty) {
+      console.log(`[webhooks/wave] Session ${sessionId} already processed, skipping`)
+      return NextResponse.json({ ok: true, skipped: 'already_processed' })
+    }
+
     // 1. Fetch full transcript from Wave API
     const transcript = await fetchWaveTranscript(sessionId)
 
@@ -205,7 +216,6 @@ export async function POST(request: NextRequest) {
     }
 
     // 2. Store debug record
-    const db = await getAdminDb()
     const debugRef = db.collection('users').doc(uid).collection('transcript_drafts').doc()
     await debugRef.set({
       text: transcriptText.slice(0, 500),
@@ -229,7 +239,9 @@ export async function POST(request: NextRequest) {
     const extracted = await extractFromTranscript(transcriptText, templateType)
 
     // 5. Process and save all data
-    const result = await processTranscriptData(uid, transcriptText, templateType, extracted)
+    const result = await processTranscriptData(uid, transcriptText, templateType, extracted, {
+      metadata: { waveSessionId: sessionId },
+    })
 
     // 6. Update debug record
     await debugRef.update({
