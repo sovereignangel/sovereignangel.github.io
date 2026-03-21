@@ -22,6 +22,7 @@ import ScoreAttribution from '@/components/thesis/ScoreAttribution'
 import QuantPracticeCard from '@/components/thesis/quant-practice/QuantPracticeCard'
 import SignalAttribution from '@/components/thesis/SignalAttribution'
 import { strategicPillars, computeMomentum, type StrategicPillar } from '@/lib/strategic-priorities'
+import CommandCenterV2 from '@/components/thesis/CommandCenterV2'
 
 // ─── Helpers ────────────────────────────────────────────────────────
 
@@ -87,6 +88,7 @@ const logField = (l: DailyLog, k: string) => (l as any)[k] as number || 0
 // ─── Command Center ─────────────────────────────────────────────────
 
 export default function CommandCenter() {
+  const [view, setView] = useState<'dashboard' | 'strategic'>('dashboard')
   const { user } = useAuth()
   const { log, recentLogs } = useDailyLogContext()
   const { plan, loading: planLoading } = useWeeklyPlan()
@@ -330,6 +332,32 @@ export default function CommandCenter() {
 
   return (
     <div className="p-3 space-y-3 max-w-[1400px] mx-auto overflow-y-auto" style={{ maxHeight: 'calc(100vh - 100px)' }}>
+      {/* ═══ VIEW TOGGLE ═══ */}
+      <div className="flex items-center justify-between">
+        <div className="flex gap-1">
+          {(['dashboard', 'strategic'] as const).map(v => (
+            <button
+              key={v}
+              onClick={() => setView(v)}
+              className={`font-serif text-[11px] px-2 py-1 rounded-sm border transition-colors ${
+                view === v
+                  ? 'bg-burgundy text-paper border-burgundy'
+                  : 'bg-transparent text-ink-muted border-rule hover:border-ink-faint'
+              }`}
+            >
+              {v === 'dashboard' ? 'Dashboard' : 'Strategic Plan'}
+            </button>
+          ))}
+        </div>
+        <div className="font-mono text-[9px] text-ink-muted">
+          {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+        </div>
+      </div>
+
+      {view === 'strategic' ? (
+        <CommandCenterV2 />
+      ) : (
+      <>
       {/* ═══ SITUATION STRIP ═══ */}
       <SituationStrip
         score={currentScore}
@@ -402,6 +430,8 @@ export default function CommandCenter() {
           <ActionsList actions={actions} />
         </div>
       </div>
+      </>
+      )}
     </div>
   )
 }
