@@ -1,6 +1,6 @@
 'use client'
 
-type Section = 'about' | 'inputs' | 'outputs' | 'thesis' | 'latent-space'
+type Section = 'about' | 'inputs' | 'outputs' | 'thesis'
 
 interface SideNavProps {
   activeSection: Section
@@ -13,7 +13,6 @@ export default function SideNav({ activeSection, onSectionChange }: SideNavProps
     { id: 'inputs', label: 'Inputs' },
     { id: 'outputs', label: 'Outputs' },
     { id: 'thesis', label: 'Thesis' },
-    { id: 'latent-space', label: 'Latent Space' },
   ]
 
   return (

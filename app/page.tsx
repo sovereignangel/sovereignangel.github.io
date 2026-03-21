@@ -8,9 +8,7 @@ import InputsSection from '@/components/portfolio/InputsSection'
 import OutputsSection from '@/components/portfolio/OutputsSection'
 import ThesisSection from '@/components/portfolio/ThesisSection'
 import Footer from '@/components/portfolio/Footer'
-import LatentSpaceSection from '@/components/portfolio/LatentSpaceSection'
-
-type Section = 'about' | 'inputs' | 'outputs' | 'thesis' | 'latent-space'
+type Section = 'about' | 'inputs' | 'outputs' | 'thesis'
 
 export default function Home() {
   const [activeSection, setActiveSection] = useState<Section>('about')
@@ -24,7 +22,6 @@ export default function Home() {
         {activeSection === 'inputs' && <InputsSection />}
         {activeSection === 'outputs' && <OutputsSection />}
         {activeSection === 'thesis' && <ThesisSection />}
-        {activeSection === 'latent-space' && <LatentSpaceSection />}
         <Footer />
       </div>
     </>
