@@ -480,23 +480,21 @@ This means **any new subdomain works automatically** — no manual DNS or Vercel
 When building a new standalone site (e.g., a partnership proposal, venture page, or micro-app) within this repo:
 
 1. **Create the route**: `app/<project-name>/page.tsx` (with layout, components, etc.)
-2. **Add a host-based rewrite** in `next.config.js` so the subdomain serves the route at `/`:
+2. **Add a middleware rewrite** in `middleware.ts` — this is the **primary routing mechanism** for subdomain → route mapping:
 
-```javascript
-// In the rewrites() beforeFiles array:
-{
-  source: '/',
-  has: [{ type: 'host', value: '<subdomain>.loricorpuz.com' }],
-  destination: '/<project-name>',
-},
-{
-  source: '/:path*',
-  has: [{ type: 'host', value: '<subdomain>.loricorpuz.com' }],
-  destination: '/<project-name>/:path*',
-},
+```typescript
+// In middleware.ts, before the final NextResponse.next():
+if (host === '<subdomain>.loricorpuz.com') {
+  const url = request.nextUrl.clone()
+  url.pathname = `/<project-name>${url.pathname === '/' ? '' : url.pathname}`
+  return NextResponse.rewrite(url)
+}
 ```
 
-3. **Merge to main** — that's it. The subdomain will be live.
+> ⚠️ **CRITICAL**: `middleware.ts` is the source of truth for subdomain routing — NOT `next.config.js`. Adding a rewrite only to `next.config.js` will result in 404s. Always add the rule to `middleware.ts`.
+
+3. Optionally mirror in `next.config.js` rewrites for consistency, but middleware takes precedence.
+4. **Merge to master** — that's it. The subdomain will be live.
 
 **No need to**:
 - Add DNS records (wildcard covers it)
