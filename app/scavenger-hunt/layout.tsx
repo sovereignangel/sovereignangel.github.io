@@ -1,5 +1,7 @@
 import type { Metadata } from 'next'
 
+export const dynamic = 'force-dynamic'
+
 export const metadata: Metadata = {
   title: 'Scavenger Hunt - Aruba 2026',
   description: 'Find ingenuity. Collect bananas. Redeem time.',
