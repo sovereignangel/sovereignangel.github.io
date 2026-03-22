@@ -18,6 +18,13 @@ export function middleware(request: NextRequest) {
     return NextResponse.rewrite(url)
   }
 
+  // scavengerhunt.loricorpuz.com → rewrite to /scavenger-hunt
+  if (host === 'scavengerhunt.loricorpuz.com') {
+    const url = request.nextUrl.clone()
+    url.pathname = `/scavenger-hunt${url.pathname === '/' ? '' : url.pathname}`
+    return NextResponse.rewrite(url)
+  }
+
   // latentspace.loricorpuz.com — hidden from public
   if (host.startsWith('latentspace.')) {
     return new NextResponse('Not Found', { status: 404 })
