@@ -19,10 +19,12 @@ export function middleware(request: NextRequest) {
   }
 
   // scavengerhunt.loricorpuz.com → rewrite to /scavenger-hunt
-  if (host === 'scavengerhunt.loricorpuz.com') {
+  if (host === 'scavengerhunt.loricorpuz.com' || host.startsWith('scavengerhunt.')) {
     const url = request.nextUrl.clone()
     url.pathname = `/scavenger-hunt${url.pathname === '/' ? '' : url.pathname}`
-    return NextResponse.rewrite(url)
+    const res = NextResponse.rewrite(url)
+    res.headers.set('x-sh-middleware', 'hit')
+    return res
   }
 
   // latentspace.loricorpuz.com — hidden from public
