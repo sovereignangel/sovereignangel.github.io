@@ -24,6 +24,8 @@
  *   /todo <text>                    — Create todo items (AI-parsed, multi-item, project-matched)
  *   /done [#]                       — Mark a todo as completed (by position number)
  *   /edit <text>                    — Edit todos/projects via natural language (AI-parsed)
+ *   /sh <text>                      — Scavenger hunt: log an ingenious find
+ *   /shr <points> [description]     — Scavenger hunt: redeem points (subtracts from total)
  *
  * Pillar hashtags: #ai, #markets, #mind
  */
@@ -216,13 +218,19 @@ export function parseTelegramMessage(text: string): ParsedTelegramMessage {
     return { command: 'apply', text: body, pillars: [], raw }
   }
 
+  // /shr command — scavenger hunt: redeem points (must be before /sh)
+  if (raw.startsWith('/shr')) {
+    const body = raw.slice('/shr'.length).trim()
+    return { command: 'redeem', text: body, pillars: [], raw }
+  }
+
   // /sh command — scavenger hunt: log an ingenious find
   if (raw.startsWith('/sh')) {
     const body = raw.slice('/sh'.length).trim()
     return { command: 'sh', text: body, pillars: [], raw }
   }
 
-  // /redeem command — redeem scavenger hunt points for minutes
+  // /redeem command — alias for /shr
   if (raw.startsWith('/redeem')) {
     const body = raw.slice('/redeem'.length).trim()
     return { command: 'redeem', text: body, pillars: [], raw }
