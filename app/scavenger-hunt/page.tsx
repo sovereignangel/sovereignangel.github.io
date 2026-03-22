@@ -138,11 +138,14 @@ export default function ScavengerHuntPage() {
         {/* Header */}
         <div className="max-w-md mx-auto">
           <div className="text-center mb-4">
-            <h1 className="text-[28px] font-black text-white tracking-tight" style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+            <p className="text-[13px] text-white/70 font-semibold italic tracking-wide">
+              Lori & Aidas Take Aruba
+            </p>
+            <h1 className="text-[32px] font-black text-white tracking-tight mt-0.5" style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}>
               SCAVENGER HUNT
             </h1>
-            <p className="text-[14px] text-[#b8f397] font-semibold mt-0.5">
-              Aruba 2026 · Mar 22-28
+            <p className="text-[13px] text-[#b8f397] font-medium mt-1 tracking-wider">
+              March 22–28
             </p>
           </div>
 
