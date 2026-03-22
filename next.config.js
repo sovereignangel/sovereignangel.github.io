@@ -36,6 +36,16 @@ const nextConfig = {
           has: [{ type: 'host', value: 'latentspace.loricorpuz.com' }],
           destination: '/latent-space/:path*',
         },
+        {
+          source: '/',
+          has: [{ type: 'host', value: 'scavengerhunt.loricorpuz.com' }],
+          destination: '/scavenger-hunt',
+        },
+        {
+          source: '/:path*',
+          has: [{ type: 'host', value: 'scavengerhunt.loricorpuz.com' }],
+          destination: '/scavenger-hunt/:path*',
+        },
       ],
     }
   },
