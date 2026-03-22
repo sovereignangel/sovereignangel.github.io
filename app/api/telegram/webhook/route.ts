@@ -2623,6 +2623,140 @@ async function handleApply(uid: string, text: string, chatId: number) {
   await sendTelegramReply(chatId, `${emoji} Added to pipeline:\n\n${company} — ${role}${contactStr}${sourceStr}\n\nStage: Applied\n\nView all: /pipeline`)
 }
 
+// ── Scavenger Hunt handlers ──
+
+const ARUBA_START = '2026-03-22'
+const ARUBA_END = '2026-03-28'
+const GAME_DOC = 'aruba_2026'
+
+function getTodayAruba(): string {
+  // Aruba is UTC-4 (AST)
+  const now = new Date()
+  const aruba = new Date(now.getTime() - 4 * 60 * 60 * 1000)
+  return aruba.toISOString().slice(0, 10)
+}
+
+async function handleScavengerHunt(_uid: string, text: string, chatId: number) {
+  if (!text) {
+    await sendTelegramReply(chatId, '🔍 Scavenger Hunt!\n\nUsage: /sh <ingenious thing you spotted>\n\nExample: /sh Solar-powered beach trash compactor\n\nEach find = 1 banana (1 min with Lori)\n\nDashboard: scavengerhunt.loricorpuz.com')
+    return
+  }
+
+  const adminDb = await getAdminDb()
+  const today = getTodayAruba()
+
+  const entry = {
+    description: text,
+    createdAt: new Date().toISOString(),
+    date: today,
+    pointsValue: 1,
+    redeemed: false,
+  }
+
+  await adminDb.collection('scavenger_hunt').doc(GAME_DOC).collection('entries').add(entry)
+
+  // Get total count
+  const allSnap = await adminDb.collection('scavenger_hunt').doc(GAME_DOC).collection('entries').get()
+  const totalPoints = allSnap.size
+
+  // Get today's count
+  let todayCount = 0
+  allSnap.docs.forEach(d => {
+    if (d.data().date === today) todayCount++
+  })
+
+  // Get total redeemed
+  const redemptionSnap = await adminDb.collection('scavenger_hunt').doc(GAME_DOC).collection('redemptions').get()
+  let totalRedeemed = 0
+  redemptionSnap.docs.forEach(d => {
+    totalRedeemed += d.data().pointsRedeemed || 0
+  })
+
+  const available = totalPoints - totalRedeemed
+
+  const bananas = '🍌'.repeat(Math.min(todayCount, 20))
+  await sendTelegramReply(chatId,
+    `🍌 BANANA COLLECTED!\n\n` +
+    `"${text}"\n\n` +
+    `${bananas}\n\n` +
+    `Today: ${todayCount} banana${todayCount !== 1 ? 's' : ''}\n` +
+    `Total: ${totalPoints} banana${totalPoints !== 1 ? 's' : ''}\n` +
+    `Available: ${available} min with Lori\n\n` +
+    `Dashboard: scavengerhunt.loricorpuz.com`
+  )
+}
+
+async function handleScavengerRedeem(_uid: string, text: string, chatId: number) {
+  const adminDb = await getAdminDb()
+
+  // Parse: /redeem <number> [description]
+  const match = text.match(/^(\d+)\s*(.*)$/)
+  if (!match) {
+    // Show current balance
+    const allSnap = await adminDb.collection('scavenger_hunt').doc(GAME_DOC).collection('entries').get()
+    const totalPoints = allSnap.size
+
+    const redemptionSnap = await adminDb.collection('scavenger_hunt').doc(GAME_DOC).collection('redemptions').get()
+    let totalRedeemed = 0
+    redemptionSnap.docs.forEach(d => {
+      totalRedeemed += d.data().pointsRedeemed || 0
+    })
+
+    const available = totalPoints - totalRedeemed
+    await sendTelegramReply(chatId,
+      `🍌 Banana Balance\n\n` +
+      `Total earned: ${totalPoints}\n` +
+      `Redeemed: ${totalRedeemed}\n` +
+      `Available: ${available} min\n\n` +
+      `To redeem: /redeem <minutes> <what for>\n` +
+      `Example: /redeem 10 sunset walk`
+    )
+    return
+  }
+
+  const pointsToRedeem = parseInt(match[1], 10)
+  const description = match[2] || 'Redeemed'
+
+  // Check balance
+  const allSnap = await adminDb.collection('scavenger_hunt').doc(GAME_DOC).collection('entries').get()
+  const totalPoints = allSnap.size
+
+  const redemptionSnap = await adminDb.collection('scavenger_hunt').doc(GAME_DOC).collection('redemptions').get()
+  let totalRedeemed = 0
+  redemptionSnap.docs.forEach(d => {
+    totalRedeemed += d.data().pointsRedeemed || 0
+  })
+
+  const available = totalPoints - totalRedeemed
+
+  if (pointsToRedeem > available) {
+    await sendTelegramReply(chatId,
+      `Not enough bananas! 🍌\n\n` +
+      `Requested: ${pointsToRedeem} min\n` +
+      `Available: ${available} min\n\n` +
+      `Keep hunting! /sh <ingenious thing>`
+    )
+    return
+  }
+
+  const today = getTodayAruba()
+  await adminDb.collection('scavenger_hunt').doc(GAME_DOC).collection('redemptions').add({
+    pointsRedeemed: pointsToRedeem,
+    description,
+    createdAt: new Date().toISOString(),
+    date: today,
+  })
+
+  const newAvailable = available - pointsToRedeem
+  await sendTelegramReply(chatId,
+    `✅ REDEEMED ${pointsToRedeem} banana${pointsToRedeem !== 1 ? 's' : ''}!\n\n` +
+    `"${description}"\n\n` +
+    `That's ${pointsToRedeem} min with Lori 🎉\n\n` +
+    `Remaining: ${newAvailable} banana${newAvailable !== 1 ? 's' : ''}\n\n` +
+    `Dashboard: scavengerhunt.loricorpuz.com`
+  )
+}
+
 export async function POST(req: NextRequest) {
   if (!BOT_TOKEN) {
     return NextResponse.json({ error: 'Bot not configured' }, { status: 500 })
@@ -2996,6 +3130,18 @@ export async function POST(req: NextRequest) {
     // Handle apply command (/apply Company — Role)
     if (parsed.command === 'apply') {
       await handleApply(uid, parsed.text, chatId)
+      return NextResponse.json({ ok: true })
+    }
+
+    // Handle scavenger hunt command (/sh <description of ingenious thing>)
+    if (parsed.command === 'sh') {
+      await handleScavengerHunt(uid, parsed.text, chatId)
+      return NextResponse.json({ ok: true })
+    }
+
+    // Handle redeem command (/redeem <number> [description])
+    if (parsed.command === 'redeem') {
+      await handleScavengerRedeem(uid, parsed.text, chatId)
       return NextResponse.json({ ok: true })
     }
 

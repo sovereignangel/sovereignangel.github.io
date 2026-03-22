@@ -31,7 +31,7 @@
 import type { ThesisPillar } from '@/lib/types'
 
 export interface ParsedTelegramMessage {
-  command: 'signal' | 'note' | 'journal' | 'rss' | 'predict' | 'venture' | 'build' | 'approve' | 'feedback' | 'iterate' | 'reset' | 'brief' | 'memo' | 'morning' | 'cbuild' | 'citerate' | 'skill' | 'sbuild' | 'srespond' | 'sapprove' | 'discipline' | 'transcript' | 'intent' | 'todo' | 'done' | 'edit' | 'pipeline' | 'apply' | 'unknown'
+  command: 'signal' | 'note' | 'journal' | 'rss' | 'predict' | 'venture' | 'build' | 'approve' | 'feedback' | 'iterate' | 'reset' | 'brief' | 'memo' | 'morning' | 'cbuild' | 'citerate' | 'skill' | 'sbuild' | 'srespond' | 'sapprove' | 'discipline' | 'transcript' | 'intent' | 'todo' | 'done' | 'edit' | 'pipeline' | 'apply' | 'sh' | 'redeem' | 'unknown'
   text: string
   pillars: ThesisPillar[]
   raw: string
@@ -214,6 +214,18 @@ export function parseTelegramMessage(text: string): ParsedTelegramMessage {
   if (raw.startsWith('/apply')) {
     const body = raw.slice('/apply'.length).trim()
     return { command: 'apply', text: body, pillars: [], raw }
+  }
+
+  // /sh command — scavenger hunt: log an ingenious find
+  if (raw.startsWith('/sh')) {
+    const body = raw.slice('/sh'.length).trim()
+    return { command: 'sh', text: body, pillars: [], raw }
+  }
+
+  // /redeem command — redeem scavenger hunt points for minutes
+  if (raw.startsWith('/redeem')) {
+    const body = raw.slice('/redeem'.length).trim()
+    return { command: 'redeem', text: body, pillars: [], raw }
   }
 
   // Plain text — treat as signal
