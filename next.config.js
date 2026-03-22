@@ -8,16 +8,6 @@ const nextConfig = {
       beforeFiles: [
         {
           source: '/',
-          has: [{ type: 'host', value: 'arc.loricorpuz.com' }],
-          destination: '/arc',
-        },
-        {
-          source: '/:path*',
-          has: [{ type: 'host', value: 'arc.loricorpuz.com' }],
-          destination: '/arc/:path*',
-        },
-        {
-          source: '/',
           has: [{ type: 'host', value: 'blog.loricorpuz.com' }],
           destination: '/blog',
         },
@@ -25,26 +15,6 @@ const nextConfig = {
           source: '/:path*',
           has: [{ type: 'host', value: 'blog.loricorpuz.com' }],
           destination: '/blog/:path*',
-        },
-        {
-          source: '/',
-          has: [{ type: 'host', value: 'latentspace.loricorpuz.com' }],
-          destination: '/latent-space',
-        },
-        {
-          source: '/:path*',
-          has: [{ type: 'host', value: 'latentspace.loricorpuz.com' }],
-          destination: '/latent-space/:path*',
-        },
-        {
-          source: '/',
-          has: [{ type: 'host', value: 'scavengerhunt.loricorpuz.com' }],
-          destination: '/scavenger-hunt',
-        },
-        {
-          source: '/:path*',
-          has: [{ type: 'host', value: 'scavengerhunt.loricorpuz.com' }],
-          destination: '/scavenger-hunt/:path*',
         },
       ],
     }

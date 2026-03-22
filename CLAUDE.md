@@ -493,7 +493,7 @@ if (host === '<subdomain>.loricorpuz.com') {
 
 > ⚠️ **CRITICAL**: `middleware.ts` is the source of truth for subdomain routing — NOT `next.config.js`. Adding a rewrite only to `next.config.js` will result in 404s. Always add the rule to `middleware.ts`.
 
-3. Optionally mirror in `next.config.js` rewrites for consistency, but middleware takes precedence.
+> ⛔ **NEVER add a matching `next.config.js` rewrite for the same subdomain**. If both exist, the config rewrite runs AFTER the middleware rewrite and double-applies the path prefix (e.g., `/scavenger-hunt` → `/scavenger-hunt/scavenger-hunt`), causing a 404. Only `blog.loricorpuz.com` uses `next.config.js` rewrites; all other subdomains use middleware only.
 4. **Merge to master** — that's it. The subdomain will be live.
 
 **No need to**:
