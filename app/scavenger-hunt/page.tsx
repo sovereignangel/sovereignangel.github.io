@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { collection, query, orderBy, onSnapshot, doc } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
+import Image from 'next/image'
 
 interface HuntEntry {
   id: string
@@ -73,7 +74,7 @@ export default function ScavengerHuntPage() {
   useEffect(() => {
     if (entries.length > prevCount && prevCount > 0) {
       setShowConfetti(true)
-      setTimeout(() => setShowConfetti(false), 2000)
+      setTimeout(() => setShowConfetti(false), 2500)
     }
     setPrevCount(entries.length)
   }, [entries.length, prevCount])
@@ -112,104 +113,188 @@ export default function ScavengerHuntPage() {
   const selectedDay = activeDay || today
 
   return (
-    <div className="min-h-screen bg-[#235325] relative overflow-hidden">
-      {/* Confetti overlay */}
+    <div className="min-h-screen relative overflow-hidden" style={{ background: 'linear-gradient(180deg, #FFF8E1 0%, #FFF3C4 30%, #FFECB3 100%)' }}>
+      {/* Banana confetti overlay */}
       {showConfetti && (
         <div className="fixed inset-0 pointer-events-none z-50">
-          {Array.from({ length: 30 }).map((_, i) => (
+          {Array.from({ length: 40 }).map((_, i) => (
             <div
               key={i}
-              className="absolute text-[24px] animate-bounce"
+              className="absolute animate-bounce"
               style={{
                 left: `${Math.random() * 100}%`,
-                top: `${Math.random() * 60}%`,
+                top: `${Math.random() * 70}%`,
                 animationDelay: `${Math.random() * 0.5}s`,
-                animationDuration: `${0.5 + Math.random() * 1}s`,
+                animationDuration: `${0.4 + Math.random() * 0.8}s`,
+                fontSize: `${18 + Math.random() * 16}px`,
               }}
             >
-              {Math.random() > 0.5 ? '🍌' : '✨'}
+              {['🍌', '✨', '🌴', '🍌', '🍌'][Math.floor(Math.random() * 5)]}
             </div>
           ))}
         </div>
       )}
 
-      {/* Top hero section */}
-      <div className="bg-gradient-to-b from-[#58CC02] to-[#235325] px-4 pt-6 pb-8">
-        {/* Header */}
+      {/* Floating banana decorations */}
+      <div className="absolute top-12 left-4 text-[40px] opacity-15 rotate-[-20deg]">🍌</div>
+      <div className="absolute top-32 right-6 text-[32px] opacity-10 rotate-[15deg]">🍌</div>
+      <div className="absolute top-64 left-8 text-[24px] opacity-10 rotate-[30deg]">🌴</div>
+
+      {/* Hero section */}
+      <div className="relative px-4 pt-6 pb-4">
         <div className="max-w-md mx-auto">
+          {/* Title */}
           <div className="text-center mb-4">
-            <p className="text-[13px] text-white/70 font-semibold italic tracking-wide">
-              Lori & Aidas Take Aruba
+            <p className="text-[12px] font-bold uppercase tracking-[3px]" style={{ color: '#A1887F' }}>
+              Aruba 2026
             </p>
-            <h1 className="text-[32px] font-black text-white tracking-tight mt-0.5" style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}>
-              SCAVENGER HUNT
+            <h1
+              className="text-[36px] font-black tracking-tight mt-1 leading-none"
+              style={{
+                color: '#4E342E',
+                fontFamily: 'system-ui, -apple-system, sans-serif',
+                textShadow: '2px 2px 0px rgba(255,193,7,0.3)',
+              }}
+            >
+              BANANA HUNT
             </h1>
-            <p className="text-[13px] text-[#b8f397] font-medium mt-1 tracking-wider">
-              March 22–28
+            <p className="text-[13px] font-semibold mt-1" style={{ color: '#8D6E63' }}>
+              Find ingenuity. Collect bananas. Redeem time.
             </p>
           </div>
 
-          {/* Main score card */}
-          <div className="bg-white/15 backdrop-blur-sm rounded-[16px] p-4 mb-4 border border-white/20">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <span className="text-[32px]">🍌</span>
-                <div>
-                  <div className="text-[36px] font-black text-white leading-none">{totalPoints}</div>
-                  <div className="text-[11px] text-[#b8f397] font-bold uppercase tracking-wider">Bananas Found</div>
-                </div>
+          {/* Character cards */}
+          <div className="grid grid-cols-2 gap-3 mb-4">
+            {/* The Hunter - Aidas */}
+            <div
+              className="rounded-[16px] p-2 pb-3 text-center shadow-lg relative overflow-hidden"
+              style={{
+                background: 'linear-gradient(180deg, #E8F5E9 0%, #C8E6C9 100%)',
+                border: '2px solid #66BB6A',
+              }}
+            >
+              <div className="w-full aspect-[3/4] rounded-[12px] overflow-hidden mb-2 relative">
+                <Image
+                  src="/scavenger-hunt/hunter.png"
+                  alt="The Hunter - Aidas"
+                  fill
+                  className="object-cover object-top"
+                  sizes="(max-width: 768px) 50vw, 200px"
+                />
               </div>
-              <div className="text-right">
-                <div className="text-[24px] font-black text-[#FFD700] leading-none">{available}</div>
-                <div className="text-[11px] text-[#b8f397] font-bold uppercase tracking-wider">Min Available</div>
+              <div
+                className="text-[13px] font-black uppercase tracking-wide"
+                style={{ color: '#2E7D32' }}
+              >
+                The Hunter
               </div>
+              <div className="text-[10px] font-medium mt-0.5" style={{ color: '#4CAF50' }}>
+                Banana Collector
+              </div>
+              <div className="absolute top-2 right-2 text-[14px]">🕵️</div>
             </div>
 
-            {/* Progress bar */}
-            <div className="bg-white/10 rounded-full h-3 overflow-hidden">
+            {/* The Prize - Lori */}
+            <div
+              className="rounded-[16px] p-2 pb-3 text-center shadow-lg relative overflow-hidden"
+              style={{
+                background: 'linear-gradient(180deg, #FFF3E0 0%, #FFE0B2 100%)',
+                border: '2px solid #FFB74D',
+              }}
+            >
+              <div className="w-full aspect-[3/4] rounded-[12px] overflow-hidden mb-2 relative">
+                <Image
+                  src="/scavenger-hunt/prize.png"
+                  alt="The Prize - Lori"
+                  fill
+                  className="object-cover object-top"
+                  sizes="(max-width: 768px) 50vw, 200px"
+                />
+              </div>
               <div
-                className="bg-[#FFD700] h-full rounded-full transition-all duration-700 ease-out"
-                style={{ width: `${Math.min((totalPoints / 50) * 100, 100)}%` }}
-              />
+                className="text-[13px] font-black uppercase tracking-wide"
+                style={{ color: '#E65100' }}
+              >
+                The Prize
+              </div>
+              <div className="text-[10px] font-medium mt-0.5" style={{ color: '#FB8C00' }}>
+                Minutes with Lori
+              </div>
+              <div className="absolute top-2 right-2 text-[14px]">🏆</div>
             </div>
-            <div className="flex justify-between mt-1">
-              <span className="text-[10px] text-white/60">0</span>
-              <span className="text-[10px] text-white/60">Goal: 50 bananas</span>
+          </div>
+
+          {/* Main score card */}
+          <div
+            className="rounded-[16px] p-4 mb-4 shadow-xl relative overflow-hidden"
+            style={{
+              background: 'linear-gradient(135deg, #4E342E 0%, #3E2723 100%)',
+              border: '2px solid #6D4C41',
+            }}
+          >
+            {/* Subtle banana pattern overlay */}
+            <div className="absolute inset-0 opacity-5">
+              <div className="absolute top-2 right-4 text-[40px] rotate-[20deg]">🍌</div>
+              <div className="absolute bottom-2 left-4 text-[30px] rotate-[-15deg]">🍌</div>
+            </div>
+
+            <div className="relative z-10">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-3">
+                  <div className="text-[36px]">🍌</div>
+                  <div>
+                    <div
+                      className="text-[40px] font-black leading-none"
+                      style={{ color: '#FFD54F' }}
+                    >
+                      {totalPoints}
+                    </div>
+                    <div
+                      className="text-[10px] font-bold uppercase tracking-[2px]"
+                      style={{ color: '#A1887F' }}
+                    >
+                      Bananas Found
+                    </div>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div
+                    className="text-[28px] font-black leading-none"
+                    style={{ color: '#81C784' }}
+                  >
+                    {available}
+                  </div>
+                  <div
+                    className="text-[10px] font-bold uppercase tracking-[2px]"
+                    style={{ color: '#A1887F' }}
+                  >
+                    Min Available
+                  </div>
+                </div>
+              </div>
+
+              {/* Progress bar */}
+              <div className="rounded-full h-3 overflow-hidden" style={{ background: 'rgba(255,255,255,0.1)' }}>
+                <div
+                  className="h-full rounded-full transition-all duration-700 ease-out"
+                  style={{
+                    width: `${Math.min((totalPoints / 50) * 100, 100)}%`,
+                    background: 'linear-gradient(90deg, #FFC107, #FFD54F, #FFEB3B)',
+                  }}
+                />
+              </div>
+              <div className="flex justify-between mt-1">
+                <span className="text-[10px]" style={{ color: '#8D6E63' }}>0</span>
+                <span className="text-[10px]" style={{ color: '#8D6E63' }}>Goal: 50 bananas</span>
+              </div>
             </div>
           </div>
 
           {/* Stats row */}
-          <div className="grid grid-cols-3 gap-2">
-            <StatBadge emoji="🔥" value={streak} label="Day Streak" color="#FF9600" />
-            <StatBadge emoji="📅" value={todayEntries.length} label="Today" color="#58CC02" />
-            <StatBadge emoji="🎁" value={totalRedeemed} label="Redeemed" color="#CE82FF" />
-          </div>
-        </div>
-      </div>
-
-      {/* Character cards */}
-      <div className="max-w-md mx-auto px-4 -mt-2 mb-4">
-        <div className="grid grid-cols-2 gap-3">
-          {/* The Prize - Lori */}
-          <div className="bg-[#FFF3E0] rounded-[16px] p-3 border-2 border-[#FFB74D] shadow-lg">
-            <div className="text-center">
-              <div className="w-20 h-20 mx-auto mb-1 rounded-full overflow-hidden border-3 border-[#FFB74D] bg-[#FFE0B2]">
-                <div className="w-full h-full flex items-center justify-center text-[40px]">🏆</div>
-              </div>
-              <div className="text-[12px] font-black text-[#E65100] uppercase tracking-wide">The Prize</div>
-              <div className="text-[10px] text-[#BF360C] mt-0.5">Minutes with Lori</div>
-            </div>
-          </div>
-
-          {/* The Hunter - Aidas */}
-          <div className="bg-[#E8F5E9] rounded-[16px] p-3 border-2 border-[#66BB6A] shadow-lg">
-            <div className="text-center">
-              <div className="w-20 h-20 mx-auto mb-1 rounded-full overflow-hidden border-3 border-[#66BB6A] bg-[#C8E6C9]">
-                <div className="w-full h-full flex items-center justify-center text-[40px]">🕵️</div>
-              </div>
-              <div className="text-[12px] font-black text-[#1B5E20] uppercase tracking-wide">The Hunter</div>
-              <div className="text-[10px] text-[#2E7D32] mt-0.5">Banana Collector</div>
-            </div>
+          <div className="grid grid-cols-3 gap-2 mb-4">
+            <StatBadge emoji="🔥" value={streak} label="Day Streak" accent="#FF7043" />
+            <StatBadge emoji="📅" value={todayEntries.length} label="Today" accent="#66BB6A" />
+            <StatBadge emoji="🎁" value={totalRedeemed} label="Redeemed" accent="#AB47BC" />
           </div>
         </div>
       </div>
@@ -227,20 +312,32 @@ export default function ScavengerHuntPage() {
                 key={date}
                 onClick={() => setActiveDay(date)}
                 disabled={isFuture}
-                className={`flex-shrink-0 rounded-[12px] px-3 py-2 text-center transition-all ${
-                  isSelected
-                    ? 'bg-[#58CC02] text-white shadow-lg shadow-[#58CC02]/30 scale-105'
+                className="flex-shrink-0 rounded-[12px] px-3 py-2 text-center transition-all"
+                style={{
+                  background: isSelected
+                    ? 'linear-gradient(135deg, #FFC107, #FFB300)'
                     : isFuture
-                    ? 'bg-white/5 text-white/30'
+                    ? 'rgba(78,52,46,0.05)'
                     : count > 0
-                    ? 'bg-white/15 text-white hover:bg-white/25'
-                    : 'bg-white/8 text-white/50 hover:bg-white/15'
-                }`}
+                    ? 'rgba(78,52,46,0.08)'
+                    : 'rgba(78,52,46,0.04)',
+                  color: isSelected ? '#3E2723' : isFuture ? 'rgba(78,52,46,0.25)' : '#5D4037',
+                  border: isSelected ? '2px solid #FF8F00' : '2px solid transparent',
+                  transform: isSelected ? 'scale(1.05)' : 'scale(1)',
+                  boxShadow: isSelected ? '0 4px 12px rgba(255,193,7,0.4)' : 'none',
+                }}
               >
                 <div className="text-[10px] font-bold uppercase">{DAY_LABELS[i]}</div>
                 <div className="text-[16px] font-black">{count > 0 ? count : isToday ? '—' : isFuture ? '·' : '0'}</div>
                 {count > 0 && <div className="text-[10px]">{'🍌'.repeat(Math.min(count, 3))}</div>}
-                {isToday && <div className="text-[8px] font-bold text-[#FFD700] mt-0.5">NOW</div>}
+                {isToday && (
+                  <div
+                    className="text-[8px] font-bold mt-0.5"
+                    style={{ color: isSelected ? '#3E2723' : '#FF8F00' }}
+                  >
+                    NOW
+                  </div>
+                )}
               </button>
             )
           })}
@@ -249,12 +346,25 @@ export default function ScavengerHuntPage() {
 
       {/* Selected day entries */}
       <div className="max-w-md mx-auto px-4 pb-8">
-        <div className="bg-white/10 backdrop-blur-sm rounded-[16px] border border-white/10 overflow-hidden">
-          <div className="px-4 py-3 border-b border-white/10 flex items-center justify-between">
-            <h2 className="text-[14px] font-black text-white uppercase tracking-wide">
+        <div
+          className="rounded-[16px] overflow-hidden shadow-md"
+          style={{
+            background: 'rgba(255,255,255,0.85)',
+            backdropFilter: 'blur(8px)',
+            border: '1px solid rgba(78,52,46,0.1)',
+          }}
+        >
+          <div
+            className="px-4 py-3 flex items-center justify-between"
+            style={{
+              borderBottom: '1px solid rgba(78,52,46,0.08)',
+              background: 'rgba(78,52,46,0.03)',
+            }}
+          >
+            <h2 className="text-[14px] font-black uppercase tracking-wide" style={{ color: '#4E342E' }}>
               {formatDayLabel(selectedDay)}
             </h2>
-            <span className="text-[12px] font-bold text-[#58CC02]">
+            <span className="text-[12px] font-bold" style={{ color: '#66BB6A' }}>
               {(entriesByDay[selectedDay] || []).length} find{(entriesByDay[selectedDay] || []).length !== 1 ? 's' : ''}
             </span>
           </div>
@@ -262,35 +372,46 @@ export default function ScavengerHuntPage() {
           {(entriesByDay[selectedDay] || []).length === 0 ? (
             <div className="px-4 py-8 text-center">
               <div className="text-[40px] mb-2">🔍</div>
-              <p className="text-[14px] text-white/60 font-semibold">
+              <p className="text-[14px] font-semibold" style={{ color: '#8D6E63' }}>
                 {selectedDay === today
                   ? 'No finds yet today. Get hunting!'
                   : selectedDay > today
-                  ? 'This day hasn\'t started yet'
+                  ? "This day hasn't started yet"
                   : 'No finds this day'}
               </p>
               {selectedDay === today && (
-                <p className="text-[12px] text-white/40 mt-2">
-                  Send /sh &lt;description&gt; in Telegram
+                <p className="text-[12px] mt-2" style={{ color: '#BCAAA4' }}>
+                  Send <code className="font-mono text-[11px] px-1 py-0.5 rounded" style={{ background: 'rgba(78,52,46,0.06)' }}>/sh &lt;description&gt;</code> in Telegram
                 </p>
               )}
             </div>
           ) : (
-            <div className="divide-y divide-white/5">
+            <div>
               {(entriesByDay[selectedDay] || []).map((entry, i) => (
-                <div key={entry.id} className="px-4 py-3 flex items-start gap-3">
-                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[#58CC02]/20 flex items-center justify-center">
+                <div
+                  key={entry.id}
+                  className="px-4 py-3 flex items-start gap-3"
+                  style={{
+                    borderBottom: i < (entriesByDay[selectedDay] || []).length - 1
+                      ? '1px solid rgba(78,52,46,0.05)'
+                      : 'none',
+                  }}
+                >
+                  <div
+                    className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center"
+                    style={{ background: 'rgba(255,193,7,0.15)' }}
+                  >
                     <span className="text-[16px]">🍌</span>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-[13px] text-white font-semibold leading-snug">
+                    <p className="text-[13px] font-semibold leading-snug" style={{ color: '#4E342E' }}>
                       {entry.description}
                     </p>
-                    <p className="text-[10px] text-white/40 mt-1">
+                    <p className="text-[10px] mt-1" style={{ color: '#BCAAA4' }}>
                       {formatTime(entry.createdAt)} · +1 banana
                     </p>
                   </div>
-                  <div className="text-[12px] font-black text-[#FFD700]">
+                  <div className="text-[12px] font-black" style={{ color: '#FFB300' }}>
                     #{(entriesByDay[selectedDay] || []).length - i}
                   </div>
                 </div>
@@ -301,23 +422,47 @@ export default function ScavengerHuntPage() {
 
         {/* Redemption history */}
         {redemptions.length > 0 && (
-          <div className="mt-4 bg-white/10 backdrop-blur-sm rounded-[16px] border border-white/10 overflow-hidden">
-            <div className="px-4 py-3 border-b border-white/10">
-              <h2 className="text-[14px] font-black text-[#CE82FF] uppercase tracking-wide">
+          <div
+            className="mt-4 rounded-[16px] overflow-hidden shadow-md"
+            style={{
+              background: 'rgba(255,255,255,0.85)',
+              backdropFilter: 'blur(8px)',
+              border: '1px solid rgba(171,71,188,0.15)',
+            }}
+          >
+            <div
+              className="px-4 py-3"
+              style={{
+                borderBottom: '1px solid rgba(171,71,188,0.08)',
+                background: 'rgba(171,71,188,0.03)',
+              }}
+            >
+              <h2 className="text-[14px] font-black uppercase tracking-wide" style={{ color: '#7B1FA2' }}>
                 Redeemed
               </h2>
             </div>
-            <div className="divide-y divide-white/5">
-              {redemptions.map((r) => (
-                <div key={r.id} className="px-4 py-3 flex items-center gap-3">
-                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[#CE82FF]/20 flex items-center justify-center">
+            <div>
+              {redemptions.map((r, i) => (
+                <div
+                  key={r.id}
+                  className="px-4 py-3 flex items-center gap-3"
+                  style={{
+                    borderBottom: i < redemptions.length - 1
+                      ? '1px solid rgba(171,71,188,0.05)'
+                      : 'none',
+                  }}
+                >
+                  <div
+                    className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center"
+                    style={{ background: 'rgba(171,71,188,0.1)' }}
+                  >
                     <span className="text-[16px]">🎁</span>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-[13px] text-white font-semibold">{r.description}</p>
-                    <p className="text-[10px] text-white/40 mt-0.5">{formatTime(r.createdAt)}</p>
+                    <p className="text-[13px] font-semibold" style={{ color: '#4E342E' }}>{r.description}</p>
+                    <p className="text-[10px] mt-0.5" style={{ color: '#BCAAA4' }}>{formatTime(r.createdAt)}</p>
                   </div>
-                  <div className="text-[14px] font-black text-[#CE82FF]">
+                  <div className="text-[14px] font-black" style={{ color: '#AB47BC' }}>
                     -{r.pointsRedeemed} min
                   </div>
                 </div>
@@ -327,8 +472,16 @@ export default function ScavengerHuntPage() {
         )}
 
         {/* How to play */}
-        <div className="mt-4 bg-white/5 rounded-[16px] p-4 border border-white/10">
-          <h3 className="text-[12px] font-black text-[#58CC02] uppercase tracking-wide mb-3">How to Play</h3>
+        <div
+          className="mt-4 rounded-[16px] p-4 shadow-sm"
+          style={{
+            background: 'rgba(255,255,255,0.7)',
+            border: '1px solid rgba(78,52,46,0.08)',
+          }}
+        >
+          <h3 className="text-[12px] font-black uppercase tracking-[2px] mb-3" style={{ color: '#8D6E63' }}>
+            How to Play
+          </h3>
           <div className="space-y-2.5">
             <HowToStep num={1} text="Spot something ingenious in Aruba" emoji="👀" />
             <HowToStep num={2} text='Send /sh <what you found> in Telegram' emoji="📱" />
@@ -338,20 +491,29 @@ export default function ScavengerHuntPage() {
         </div>
 
         {/* Footer */}
-        <div className="mt-6 text-center text-[10px] text-white/30">
-          Scavenger Hunt · Aruba 2026 · Aidas & Lori
+        <div className="mt-6 text-center">
+          <div className="text-[20px] mb-1">🍌🌴🍌</div>
+          <div className="text-[10px] font-medium" style={{ color: '#BCAAA4' }}>
+            Banana Hunt · Aruba 2026 · Aidas & Lori
+          </div>
         </div>
       </div>
     </div>
   )
 }
 
-function StatBadge({ emoji, value, label, color }: { emoji: string; value: number; label: string; color: string }) {
+function StatBadge({ emoji, value, label, accent }: { emoji: string; value: number; label: string; accent: string }) {
   return (
-    <div className="bg-white/10 rounded-[12px] p-2 text-center">
+    <div
+      className="rounded-[12px] p-2 text-center shadow-sm"
+      style={{
+        background: 'rgba(255,255,255,0.7)',
+        border: '1px solid rgba(78,52,46,0.06)',
+      }}
+    >
       <div className="text-[16px] mb-0.5">{emoji}</div>
-      <div className="text-[18px] font-black text-white">{value}</div>
-      <div className="text-[9px] font-bold uppercase tracking-wider" style={{ color }}>{label}</div>
+      <div className="text-[18px] font-black" style={{ color: '#4E342E' }}>{value}</div>
+      <div className="text-[9px] font-bold uppercase tracking-wider" style={{ color: accent }}>{label}</div>
     </div>
   )
 }
@@ -359,10 +521,13 @@ function StatBadge({ emoji, value, label, color }: { emoji: string; value: numbe
 function HowToStep({ num, text, emoji }: { num: number; text: string; emoji: string }) {
   return (
     <div className="flex items-center gap-3">
-      <div className="flex-shrink-0 w-7 h-7 rounded-full bg-[#58CC02] flex items-center justify-center">
-        <span className="text-[12px] font-black text-white">{num}</span>
+      <div
+        className="flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center"
+        style={{ background: 'linear-gradient(135deg, #FFC107, #FFB300)' }}
+      >
+        <span className="text-[12px] font-black" style={{ color: '#3E2723' }}>{num}</span>
       </div>
-      <p className="text-[12px] text-white/80 font-medium flex-1">{text}</p>
+      <p className="text-[12px] font-medium flex-1" style={{ color: '#5D4037' }}>{text}</p>
       <span className="text-[16px]">{emoji}</span>
     </div>
   )
