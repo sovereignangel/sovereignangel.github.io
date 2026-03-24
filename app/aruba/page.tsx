@@ -5,7 +5,7 @@ import { useState, useEffect, useRef } from 'react'
 // ── Time lock config (Aruba = UTC-4) ─────────────────────────────────────────
 // FLIP USE_TEST_END TO false FOR THE REAL GAME
 const USE_TEST_END = true
-const TEST_END  = { hour: 17, minute: 0 } // 5:00 pm — for testing
+const TEST_END  = { hour: 17, minute: 5 } // 5:05 pm — for testing
 const REAL_END  = { hour: 19, minute: 30 } // 7:30 pm — real game
 
 function getArubaTime() {
