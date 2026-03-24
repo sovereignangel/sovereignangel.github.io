@@ -96,8 +96,8 @@ const CHALLENGES = [
     items: [
       { id: 1, text: 'Full team ocean submersion at the same time — everyone under', pts: 5, proof: 'photo' },
       { id: 2, text: 'One teammate paddles the SUP board 50m out and back without falling', pts: 15, proof: 'video' },
-      { id: 3, text: 'Kayak relay — paddle to a visible landmark and back. Every teammate must go.', pts: 15, proof: 'video' },
-      { id: 4, text: 'Goggle swim race: two teammates race from the rock formation at the edge of the property near sunset to the point rock formation. Loser does 10 pushups.', pts: 15, proof: 'video' },
+      { id: 3, text: 'Kayak relay — every teammate kayaks from the point rock formation to the left rock wall on the property. Must all complete the route.', pts: 15, proof: 'video' },
+      { id: 4, text: 'Goggle swim race: two teammates race from the rock formation on the right of the property to the point rock formation. Loser does 10 pushups.', pts: 15, proof: 'video' },
       { id: 5, text: 'Catch anything alive in the water (crab, fish, anything) and release it', pts: 20, proof: 'video' },
       { id: 6, text: 'Underwater handshake — all team members submerge and shake hands with goggles on', pts: 10, proof: 'video' },
     ],
@@ -159,7 +159,7 @@ const CHALLENGES = [
   {
     category: 'Find These Things', icon: 'search',
     items: [
-      { id: 37, text: 'Team photo with a divi-divi tree', pts: 10, proof: 'photo' },
+      { id: 37, text: 'Team photo with a divi-divi tree', pts: 30, proof: 'photo' },
       { id: 38, text: 'Something that floats that isn\'t wood', pts: 5, proof: 'photo' },
       { id: 39, text: 'A piece of sea glass', pts: 10, proof: 'photo' },
       { id: 40, text: 'A rock that looks like a face', pts: 10, proof: 'photo' },
@@ -201,6 +201,17 @@ const CHALLENGES = [
       { id: 61, text: 'Stack 10 household items into a tower in under 2 minutes', pts: 10, proof: 'video' },
       { id: 62, text: 'Team photo where everyone is mid-air (jumping)', pts: 10, proof: 'photo' },
       { id: 63, text: 'Compose a haiku about Aruba and recite it dramatically at sunset', pts: 10, proof: 'video' },
+    ],
+  },
+  {
+    category: 'Explore the Town', icon: 'run',
+    items: [
+      { id: 68, text: 'Team photo in front of Peachy Beach Villas, Cabin by the Sea, and Villa Laurence — all three in one submission', pts: 15, proof: 'photo' },
+      { id: 69, text: 'Video of a cartwheel in front of SV La Fama', pts: 10, proof: 'video' },
+      { id: 70, text: 'Photo of you jumping into the ocean at Sea Ramp Sea Glass Island', pts: 15, proof: 'photo' },
+      { id: 71, text: 'Funniest/most creative photo in front of Do It Center. Winning team gets +10 bonus pts — group votes.', pts: 10, proof: 'photo' },
+      { id: 72, text: 'Cartwheel in front of Home Fun Super', pts: 10, proof: 'video' },
+      { id: 73, text: 'Team photo in front of "Aruba Art by Mike Merv"', pts: 10, proof: 'photo' },
     ],
   },
 ]
