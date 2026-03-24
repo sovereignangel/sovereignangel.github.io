@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 
 // ── Time lock config (Aruba = UTC-4) ─────────────────────────────────────────
 // FLIP USE_TEST_END TO false FOR THE REAL GAME
-const USE_TEST_END = true
+const USE_TEST_END = false
 const TEST_END  = { hour: 17, minute: 5 } // 5:05 pm — for testing
 const REAL_END  = { hour: 19, minute: 30 } // 7:30 pm — real game
 
@@ -97,7 +97,7 @@ const CHALLENGES = [
       { id: 1, text: 'Full team ocean submersion at the same time — everyone under', pts: 5, proof: 'photo' },
       { id: 2, text: 'One teammate paddles the SUP board 50m out and back without falling', pts: 15, proof: 'video' },
       { id: 3, text: 'Kayak relay — paddle to a visible landmark and back. Every teammate must go.', pts: 15, proof: 'video' },
-      { id: 4, text: 'Goggle swim race: two teammates race 30m in the ocean. Loser does 10 pushups.', pts: 15, proof: 'video' },
+      { id: 4, text: 'Goggle swim race: two teammates race from the rock formation at the edge of the property near sunset to the point rock formation. Loser does 10 pushups.', pts: 15, proof: 'video' },
       { id: 5, text: 'Catch anything alive in the water (crab, fish, anything) and release it', pts: 20, proof: 'video' },
       { id: 6, text: 'Underwater handshake — all team members submerge and shake hands with goggles on', pts: 10, proof: 'video' },
     ],
@@ -105,7 +105,7 @@ const CHALLENGES = [
   {
     category: 'Pool', icon: 'pool',
     items: [
-      { id: 7, text: 'Biggest cannonball splash — judged by group applause', pts: 10, proof: 'video' },
+      { id: 7, text: 'Biggest cannonball splash — judged by group applause. Winning splash gets +10 bonus pts.', pts: 10, proof: 'video' },
       { id: 8, text: 'Longest underwater breath hold — timed on video', pts: 15, proof: 'video' },
       { id: 9, text: 'Pool relay: swim a full lap and tag your teammate. Fastest team gets bonus 5 pts.', pts: 10, proof: 'video' },
       { id: 10, text: 'Underwater dance move with goggles — filmed from above', pts: 10, proof: 'video' },
@@ -116,7 +116,6 @@ const CHALLENGES = [
     items: [
       { id: 11, text: 'Run 3 miles — any route, any teammate(s). Must show smartwatch tracking as proof.', pts: 25, proof: 'screenshot' },
       { id: 12, text: 'Run to Chow Supermarket and buy a dessert for the group. Must show smartwatch tracking for the run and receipt for the purchase.', pts: 25, proof: 'screenshot + receipt' },
-      { id: 13, text: 'Relay race to the nearest visible landmark and back — every member touches it', pts: 10, proof: 'video' },
       { id: 14, text: 'Team plank hold — everyone planks simultaneously for 60 seconds', pts: 10, proof: 'video' },
       { id: 15, text: 'Wheelbarrow race — from the cement to the wood sunset chairs', pts: 10, proof: 'video' },
       { id: 16, text: 'One teammate does 15 burpees in under 60 seconds', pts: 10, proof: 'video' },
@@ -140,13 +139,15 @@ const CHALLENGES = [
   {
     category: 'Brain & Puzzle', icon: 'brain',
     items: [
-      { id: 28, text: 'Long division by hand on camera, no calculator: 7,463 ÷ 17 (to 2 decimal places)', pts: 15, proof: 'video' },
-      { id: 29, text: 'Multiply by hand on camera: 847 × 293. Show all work.', pts: 15, proof: 'video' },
-      { id: 30, text: 'Convert 7/13 to a decimal by hand — at least 4 decimal places', pts: 20, proof: 'video' },
-      { id: 31, text: 'Calculate the square root of 1,849 by hand. Show your method.', pts: 20, proof: 'video' },
+      { id: 28, text: 'Long division by hand on a piece of paper, filmed on camera, no calculator: 7,463 ÷ 17 (to 2 decimal places)', pts: 15, proof: 'video' },
+      { id: 29, text: 'Multiply by hand on a piece of paper, filmed on camera: 847 × 293. Show all work.', pts: 15, proof: 'video' },
+      { id: 30, text: 'Convert 7/13 to a decimal by hand on a piece of paper, filmed — at least 4 decimal places', pts: 20, proof: 'video' },
+      { id: 31, text: 'Calculate the square root of 1,849 by hand on a piece of paper, filmed. Show your method.', pts: 20, proof: 'video' },
       { id: 32, text: 'Name 15 countries in 30 seconds — filmed, no repeats', pts: 10, proof: 'video' },
       { id: 33, text: 'Identify 3 plants or trees near the house by name (Google for verification only)', pts: 10, proof: 'photo + names' },
       { id: 34, text: 'Board game speed round — play and finish one full round in 15 min or less', pts: 10, proof: 'video' },
+      { id: 66, text: 'Each team creates a nickname for every person on the trip. Write them on paper and present to the group.', pts: 15, proof: 'photo + video' },
+      { id: 67, text: 'Pick a book from the house. Have Carlos pick his favorite — photo with Carlos holding the book.', pts: 10, proof: 'photo' },
     ],
   },
   {
