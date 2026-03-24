@@ -18,6 +18,13 @@ export function middleware(request: NextRequest) {
     return NextResponse.rewrite(url)
   }
 
+  // aruba.loricorpuz.com → rewrite to /aruba
+  if (host === 'aruba.loricorpuz.com') {
+    const url = request.nextUrl.clone()
+    url.pathname = `/aruba${url.pathname === '/' ? '' : url.pathname}`
+    return NextResponse.rewrite(url)
+  }
+
   // scavengerhunt.loricorpuz.com → rewrite to /scavenger-hunt
   if (host === 'scavengerhunt.loricorpuz.com') {
     const url = request.nextUrl.clone()
