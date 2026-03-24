@@ -329,6 +329,9 @@ function CategoryIcon({ name, color }: { name: string; color: string }) {
 function TeamCard({ team }: { team: typeof TEAMS[0] }) {
   const [checks, toggle, loaded] = useTeamChecks(team.storageKey)
   const [locked, setLocked] = useState(isGameLocked())
+  const [open, setOpen] = useState<Record<string, boolean>>(
+    Object.fromEntries(CHALLENGES.map(c => [c.category, true]))
+  )
 
   // Re-check lock every 30s
   useEffect(() => {
@@ -372,12 +375,27 @@ function TeamCard({ team }: { team: typeof TEAMS[0] }) {
         </div>
       </div>
 
-      {CHALLENGES.map(cat => (
-        <div key={cat.category} style={{ marginBottom: 12 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, borderBottom: '1px solid #d8d0c8', paddingBottom: 3, marginBottom: 3 }}>
+      {CHALLENGES.map(cat => {
+        const isOpen = open[cat.category]
+        const catDone = cat.items.filter(i => !!checks[i.id]).length
+        const catPts = cat.items.reduce((s, i) => s + (checks[i.id] ? i.pts : 0), 0)
+        return (
+        <div key={cat.category} style={{ marginBottom: 6, border: '1px solid #e8e2da', borderRadius: 2, overflow: 'hidden' }}>
+          <div
+            onClick={() => setOpen(p => ({ ...p, [cat.category]: !p[cat.category] }))}
+            style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 10px', background: '#faf8f4', cursor: 'pointer', WebkitTapHighlightColor: 'transparent', userSelect: 'none' }}
+          >
             <CategoryIcon name={cat.icon} color={team.accent} />
-            <h3 style={{ fontFamily: "'Crimson Pro', Georgia, serif", fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 2, color: '#2a2522', margin: 0 }}>{cat.category}</h3>
+            <h3 style={{ fontFamily: "'Crimson Pro', Georgia, serif", fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 2, color: '#2a2522', margin: 0, flex: 1 }}>{cat.category}</h3>
+            {catDone > 0 && (
+              <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 10, fontWeight: 600, color: team.accent }}>{catPts}pt · {catDone}/{cat.items.length}</span>
+            )}
+            {catDone === 0 && (
+              <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 10, color: '#c8c0b8' }}>{cat.items.length}</span>
+            )}
+            <span style={{ fontSize: 10, color: '#9a928a', marginLeft: 2, transition: 'transform 0.15s', display: 'inline-block', transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}>▾</span>
           </div>
+          {isOpen && <div style={{ padding: '4px 8px 6px' }}>
           {cat.items.map(item => {
             const ts = checks[item.id]
             const isDone = !!ts
@@ -399,8 +417,10 @@ function TeamCard({ team }: { team: typeof TEAMS[0] }) {
               </div>
             )
           })}
+          </div>}
         </div>
-      ))}
+        )
+      })}
 
       <div style={{ position: 'sticky', bottom: 0, background: '#f5f1ea', borderTop: '2px solid #d8d0c8', padding: '8px 4px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <span style={{ fontFamily: "'Crimson Pro', Georgia, serif", fontSize: 11, fontStyle: 'italic', color: '#9a928a' }}>{done}/{total} complete</span>
