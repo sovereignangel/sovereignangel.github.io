@@ -5,7 +5,7 @@ import { useState, useEffect, useRef } from 'react'
 // ── Time lock config (Aruba = UTC-4) ─────────────────────────────────────────
 // FLIP USE_TEST_END TO false FOR THE REAL GAME
 const USE_TEST_END = true
-const TEST_END  = { hour: 16, minute: 55 } // 4:55 pm — for testing NOW
+const TEST_END  = { hour: 17, minute: 0 } // 5:00 pm — for testing
 const REAL_END  = { hour: 19, minute: 30 } // 7:30 pm — real game
 
 function getArubaTime() {
@@ -121,7 +121,7 @@ const CHALLENGES = [
       { id: 15, text: 'Wheelbarrow race along the beach (at least 30 meters)', pts: 10, proof: 'video' },
       { id: 16, text: 'One teammate does 15 burpees in under 60 seconds', pts: 10, proof: 'video' },
       { id: 17, text: 'Leapfrog relay — leapfrog your teammates down the beach for 50m', pts: 10, proof: 'video' },
-      { id: 18, text: 'Human pyramid — hold 5 seconds (duos: piggyback counts)', pts: 15, proof: 'photo' },
+      { id: 18, text: 'Human pyramid — hold 5 seconds. OR: get a photo of you standing/sitting on top of your teammate.', pts: 15, proof: 'photo' },
     ],
   },
   {
@@ -134,7 +134,6 @@ const CHALLENGES = [
       { id: 23, text: 'Draw a portrait of someone from another team in the sand (must be recognizable)', pts: 10, proof: 'photo' },
       { id: 24, text: 'Sunset yoga pose — most creative group silhouette against the sunset', pts: 10, proof: 'photo' },
       { id: 25, text: 'One teammate impersonates someone else on the trip. Others must guess who.', pts: 10, proof: 'video' },
-      { id: 26, text: 'Choreograph and perform a 15-second dance as a team (speaker required)', pts: 15, proof: 'video' },
       { id: 27, text: 'Kite hat + sunglasses + kimono — most absurd outfit, modeled with a straight face', pts: 10, proof: 'photo' },
     ],
   },
@@ -148,7 +147,6 @@ const CHALLENGES = [
       { id: 32, text: 'Name 15 countries in 30 seconds — filmed, no repeats', pts: 10, proof: 'video' },
       { id: 33, text: 'Identify 3 plants or trees near the house by name (Google for verification only)', pts: 10, proof: 'photo + names' },
       { id: 34, text: 'Board game speed round — play and finish one full round in 15 min or less', pts: 10, proof: 'video' },
-      { id: 35, text: 'Guess the exact sunset time without Googling. Submit before checking. Closest team: +15', pts: 15, proof: 'written' },
     ],
   },
   {
@@ -167,9 +165,9 @@ const CHALLENGES = [
       { id: 41, text: 'The most beautiful thing within walking distance — team must agree', pts: 10, proof: 'photo' },
       { id: 42, text: 'A living creature other than a human, dog, or bird', pts: 10, proof: 'photo' },
       { id: 43, text: 'Something red, something yellow, something blue — all natural', pts: 10, proof: 'photo' },
-      { id: 44, text: 'Collect exactly 1 pound of sand (weighed on kitchen scale)', pts: 15, proof: 'photo' },
       { id: 45, text: 'Build a sandcastle at least 1 foot tall with a moat', pts: 10, proof: 'photo' },
       { id: 46, text: 'Spell your team name using objects found on the beach', pts: 10, proof: 'photo' },
+      { id: 64, text: 'Find a conch shell', pts: 10, proof: 'photo' },
     ],
   },
   {
