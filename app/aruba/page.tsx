@@ -6,7 +6,7 @@ import { useState, useEffect, useRef } from 'react'
 // FLIP USE_TEST_END TO false FOR THE REAL GAME
 const USE_TEST_END = false
 const TEST_END  = { hour: 17, minute: 5 } // 5:05 pm — for testing
-const REAL_END  = { hour: 20, minute: 0 } // 8:00 pm — real game
+const REAL_END  = { hour: 20, minute: 45 } // 8:45 pm — real game
 
 function getArubaTime() {
   const now = new Date()
@@ -288,7 +288,7 @@ function RulesPage() {
     <div>
       <SectionHead>The Format</SectionHead>
       <P>2 hours. 63 challenges. 3 teams. One winner. Total possible: <Mono>{totalPossible} pts</Mono></P>
-      <P>At <Mono>20:00</Mono> sharp, all teams return to the mansion. Late arrivals lose <Mono>5 pts/min</Mono>. Scores tallied. Proof reviewed. Champions crowned.</P>
+      <P>At <Mono>20:45</Mono> sharp, all teams return to the mansion. Late arrivals lose <Mono>5 pts/min</Mono>. Scores tallied. Proof reviewed. Champions crowned.</P>
       <Rule />
       <SectionHead>The Teams</SectionHead>
       {TEAMS.map(t => (
@@ -308,7 +308,7 @@ function RulesPage() {
         'Stay within walking/running distance. No vehicles (except for the Chow run).',
         'Disputes? Birthday girl Imgesu is the final arbiter.',
         'Submit all proof to the WhatsApp group. Timestamp is your receipt.',
-        'Bonus votes at 20:00: "Most Creative Proof" (+10) and "Best Team Spirit" (+10).',
+        'Bonus votes at 20:45: "Most Creative Proof" (+10) and "Best Team Spirit" (+10).',
         'The Kokomo Dance-Off will be judged by Carlos (concierge). His decision is final.',
       ].map((rule, i) => (
         <div key={i} style={{ display: 'flex', gap: 8, marginBottom: 3 }}>
@@ -459,7 +459,7 @@ export default function ArubaPage() {
             The Aruba Scavenger Hunt
           </h1>
           <div style={{ fontFamily: "'Crimson Pro', Georgia, serif", fontSize: 10, fontStyle: 'italic', color: '#9a928a', marginTop: 2, marginBottom: 6 }}>
-            Savaneta Beach · Imgesu&apos;s Birthday Edition · 18:00–20:00
+            Savaneta Beach · Imgesu&apos;s Birthday Edition · 18:45–20:45
           </div>
         </div>
         <div style={{ display: 'flex', borderTop: '1px solid #e8e2da' }}>
