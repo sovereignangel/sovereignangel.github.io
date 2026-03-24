@@ -1,6 +1,28 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
+
+// ── Time lock config (Aruba = UTC-4) ─────────────────────────────────────────
+// FLIP USE_TEST_END TO false FOR THE REAL GAME
+const USE_TEST_END = true
+const TEST_END  = { hour: 16, minute: 55 } // 4:55 pm — for testing NOW
+const REAL_END  = { hour: 19, minute: 30 } // 7:30 pm — real game
+
+function getArubaTime() {
+  const now = new Date()
+  return new Date(now.getTime() - 4 * 60 * 60 * 1000)
+}
+function isGameLocked() {
+  const t = getArubaTime()
+  const h = t.getUTCHours(), m = t.getUTCMinutes()
+  const end = USE_TEST_END ? TEST_END : REAL_END
+  return h > end.hour || (h === end.hour && m >= end.minute)
+}
+function formatArubaTime(iso: string) {
+  const d = new Date(iso)
+  const aruba = new Date(d.getTime() - 4 * 60 * 60 * 1000)
+  return aruba.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'UTC' })
+}
 
 // --- SVG Icons ---
 const icons: Record<string, (c?: string) => JSX.Element> = {
@@ -63,9 +85,9 @@ const icons: Record<string, (c?: string) => JSX.Element> = {
 }
 
 const TEAMS = [
-  { name: 'WBURG HIPSTERS', accent: '#7c2d2d', members: ['Aidas', 'Lori'], tagline: 'Brooklyn energy, island execution' },
-  { name: 'BIRTHDAY VIBES', accent: '#8a6d2f', members: ['Imgesu', 'Dave'], tagline: 'Chaos meets ground control' },
-  { name: 'TRIPLE THREAT', accent: '#2d4a6f', members: ['Alyssa', 'Rodrigo', 'Alberto'], tagline: 'Numbers advantage, higher bar' },
+  { name: 'BIRTHDAY VIBES', accent: '#8a6d2f', members: ['Imgesu', 'Dave'], storageKey: 'hunt_team_bday' },
+  { name: 'WBURG HIPSTERS', accent: '#7c2d2d', members: ['Aidas', 'Lori'], storageKey: 'hunt_team_wburg' },
+  { name: 'TRIPLE THREAT', accent: '#2d4a6f', members: ['Alyssa', 'Rodrigo', 'Alberto'], storageKey: 'hunt_team_triple' },
 ]
 
 const CHALLENGES = [
@@ -186,14 +208,44 @@ const CHALLENGES = [
 
 const totalPossible = CHALLENGES.reduce((s, c) => s + c.items.reduce((a, i) => a + i.pts, 0), 0)
 
-function usePersistedState<T>(key: string, initial: T): [T, React.Dispatch<React.SetStateAction<T>>] {
-  const [val, setVal] = useState<T>(() => {
-    try { const s = localStorage.getItem(key); return s ? JSON.parse(s) : initial } catch { return initial }
-  })
+// Checks map: { [itemId]: ISO timestamp string }
+type ChecksMap = Record<number, string>
+
+function useTeamChecks(teamKey: string): [ChecksMap, (id: number) => void, boolean] {
+  const [checks, setChecks] = useState<ChecksMap>({})
+  const [loaded, setLoaded] = useState(false)
+  const pendingRef = useRef<Record<number, string | null>>({})
+
+  // Load from Firestore on mount
   useEffect(() => {
-    try { localStorage.setItem(key, JSON.stringify(val)) } catch {}
-  }, [key, val])
-  return [val, setVal]
+    fetch(`/api/aruba-hunt?team=${teamKey}`)
+      .then(r => r.json())
+      .then(data => {
+        setChecks(data.checks || {})
+        setLoaded(true)
+      })
+      .catch(() => setLoaded(true))
+  }, [teamKey])
+
+  const toggle = (id: number) => {
+    if (isGameLocked()) return
+    const ts = checks[id] ? null : new Date().toISOString()
+    // Optimistic update
+    setChecks(prev => {
+      const next = { ...prev }
+      if (ts === null) delete next[id]
+      else next[id] = ts
+      return next
+    })
+    // Persist to Firestore
+    fetch('/api/aruba-hunt', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ teamKey, itemId: String(id), timestamp: ts }),
+    })
+  }
+
+  return [checks, toggle, loaded]
 }
 
 function Rule() {
@@ -233,7 +285,6 @@ function RulesPage() {
         <div key={t.name} style={{ borderLeft: `3px solid ${t.accent}`, padding: '5px 12px', marginBottom: 5, background: `${t.accent}08` }}>
           <div style={{ fontFamily: "'Crimson Pro', Georgia, serif", fontSize: 14, fontWeight: 700, color: t.accent }}>{t.name}</div>
           <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, color: '#2a2522', fontWeight: 500 }}>{t.members.join(' & ')}</div>
-          <div style={{ fontFamily: "'Crimson Pro', Georgia, serif", fontSize: 11, color: '#9a928a', fontStyle: 'italic' }}>{t.tagline}</div>
         </div>
       ))}
       <Rule />
@@ -276,16 +327,35 @@ function CategoryIcon({ name, color }: { name: string; color: string }) {
   return fn ? fn(color) : null
 }
 
-function TeamCard({ team, storageKey }: { team: typeof TEAMS[0]; storageKey: string }) {
-  const [checked, setChecked] = usePersistedState<Record<number, boolean>>(storageKey, {})
-  const toggle = (id: number) => setChecked(p => ({ ...p, [id]: !p[id] }))
+function TeamCard({ team }: { team: typeof TEAMS[0] }) {
+  const [checks, toggle, loaded] = useTeamChecks(team.storageKey)
+  const [locked, setLocked] = useState(isGameLocked())
 
-  const earned = CHALLENGES.reduce((s, c) => s + c.items.reduce((a, i) => a + (checked[i.id] ? i.pts : 0), 0), 0)
-  const done = Object.values(checked).filter(Boolean).length
+  // Re-check lock every 30s
+  useEffect(() => {
+    const id = setInterval(() => setLocked(isGameLocked()), 30_000)
+    return () => clearInterval(id)
+  }, [])
+
+  const earned = CHALLENGES.reduce((s, c) => s + c.items.reduce((a, i) => a + (checks[i.id] ? i.pts : 0), 0), 0)
+  const done = Object.keys(checks).length
   const total = CHALLENGES.reduce((s, c) => s + c.items.length, 0)
 
   return (
     <div>
+      {locked && (
+        <div style={{ background: '#8c2d2d', color: '#faf8f4', textAlign: 'center', padding: '10px 16px', marginBottom: 14, borderRadius: 2 }}>
+          <div style={{ fontFamily: "'Crimson Pro', Georgia, serif", fontSize: 18, fontWeight: 700, letterSpacing: 1 }}>TIME&apos;S UP</div>
+          <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, opacity: 0.8, marginTop: 2 }}>Checkboxes are locked. Submit proof to WhatsApp.</div>
+        </div>
+      )}
+
+      {!loaded && (
+        <div style={{ textAlign: 'center', padding: '8px 0', fontFamily: "'Crimson Pro', Georgia, serif", fontSize: 11, fontStyle: 'italic', color: '#9a928a' }}>
+          Loading…
+        </div>
+      )}
+
       <div style={{ textAlign: 'center', marginBottom: 12 }}>
         <h2 style={{ fontFamily: "'Crimson Pro', Georgia, serif", fontSize: 22, fontWeight: 700, color: team.accent, margin: '0 0 2px', letterSpacing: 1 }}>{team.name}</h2>
         <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, color: '#5c5550' }}>{team.members.join(' & ')}</div>
@@ -310,9 +380,10 @@ function TeamCard({ team, storageKey }: { team: typeof TEAMS[0]; storageKey: str
             <h3 style={{ fontFamily: "'Crimson Pro', Georgia, serif", fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 2, color: '#2a2522', margin: 0 }}>{cat.category}</h3>
           </div>
           {cat.items.map(item => {
-            const isDone = !!checked[item.id]
+            const ts = checks[item.id]
+            const isDone = !!ts
             return (
-              <div key={item.id} onClick={() => toggle(item.id)} style={{ display: 'flex', gap: 7, padding: '4px 4px', borderRadius: 2, cursor: 'pointer', background: isDone ? `${team.accent}0a` : 'transparent', WebkitTapHighlightColor: 'transparent' }}>
+              <div key={item.id} onClick={() => { if (!locked) toggle(item.id) }} style={{ display: 'flex', gap: 7, padding: '4px 4px', borderRadius: 2, cursor: locked ? 'default' : 'pointer', background: isDone ? `${team.accent}0a` : 'transparent', opacity: locked && !isDone ? 0.5 : 1, WebkitTapHighlightColor: 'transparent' }}>
                 <div style={{ width: 16, height: 16, minWidth: 16, marginTop: 2, borderRadius: 2, border: isDone ? `2px solid ${team.accent}` : '1.5px solid #c8c0b8', background: isDone ? team.accent : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, color: '#faf8f4', fontWeight: 700 }}>
                   {isDone && '✓'}
                 </div>
@@ -321,6 +392,9 @@ function TeamCard({ team, storageKey }: { team: typeof TEAMS[0]; storageKey: str
                   <div style={{ display: 'flex', gap: 6, marginTop: 1, fontFamily: "'IBM Plex Mono', monospace", fontSize: 9.5 }}>
                     <span style={{ fontWeight: 600, color: isDone ? team.accent : '#9a928a' }}>{item.pts} pts</span>
                     <span style={{ color: '#c8c0b8' }}>{item.proof}</span>
+                    {isDone && ts && (
+                      <span style={{ color: team.accent, fontWeight: 600 }}>✓ {formatArubaTime(ts)}</span>
+                    )}
                   </div>
                 </div>
               </div>
@@ -338,12 +412,12 @@ function TeamCard({ team, storageKey }: { team: typeof TEAMS[0]; storageKey: str
 }
 
 export default function ArubaPage() {
-  const [tab, setTab] = usePersistedState<string>('hunt_tab', 'rules')
+  const [tab, setTab] = useState<string>('rules')
 
   const tabs = [
     { key: 'rules', label: 'Rules', accent: '#7c2d2d' },
-    { key: 'team0', label: 'A · L', accent: TEAMS[0].accent },
-    { key: 'team1', label: 'I · D', accent: TEAMS[1].accent },
+    { key: 'team0', label: 'I · D', accent: TEAMS[0].accent },
+    { key: 'team1', label: 'A · L', accent: TEAMS[1].accent },
     { key: 'team2', label: 'A · R · A', accent: TEAMS[2].accent },
   ]
 
@@ -372,9 +446,9 @@ export default function ArubaPage() {
 
       <div style={{ padding: '14px 16px 80px' }}>
         {tab === 'rules' && <RulesPage />}
-        {tab === 'team0' && <TeamCard team={TEAMS[0]} storageKey="hunt_team0" />}
-        {tab === 'team1' && <TeamCard team={TEAMS[1]} storageKey="hunt_team1" />}
-        {tab === 'team2' && <TeamCard team={TEAMS[2]} storageKey="hunt_team2" />}
+        {tab === 'team0' && <TeamCard team={TEAMS[0]} />}
+        {tab === 'team1' && <TeamCard team={TEAMS[1]} />}
+        {tab === 'team2' && <TeamCard team={TEAMS[2]} />}
       </div>
     </div>
   )
