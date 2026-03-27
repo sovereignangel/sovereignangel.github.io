@@ -90,6 +90,40 @@ export default function ThemesSection({ onSharpenToBelief }: ThemesSectionProps)
     }
   }
 
+  async function handleForwardPass(dryRun: boolean) {
+    setBackfilling(true)
+    setBackfillResult(null)
+    try {
+      const res = await authFetch('/api/journal/forward-pass', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ dryRun }),
+      })
+      const data = await res.json()
+      if (dryRun) {
+        const actions = data.actions || []
+        const downgradedP = actions.filter((a: Record<string, string>) => a.type === 'downgrade_principle_to_belief').length
+        const downgradedB = actions.filter((a: Record<string, string>) => a.type === 'downgrade_belief_to_dot').length
+        const linked = actions.filter((a: Record<string, string>) => a.type === 'link_decision_to_belief').length
+        const themeLinks = actions.filter((a: Record<string, string>) => a.type === 'link_to_theme').length
+        const kept = actions.filter((a: Record<string, string>) => a.type === 'keep').length
+        setBackfillResult(
+          `Preview: ${downgradedP} principles → beliefs, ${downgradedB} beliefs → dots, ${linked} decision-belief links, ${themeLinks} theme links, ${kept} kept as-is. ${(data.suggestedThemes || []).length} new themes suggested.`
+        )
+      } else {
+        const r = data.results || {}
+        setBackfillResult(
+          `Done: ${r.principlesDowngraded || 0} principles downgraded, ${r.beliefsDowngraded || 0} beliefs → dots, ${r.decisionsLinked || 0} decisions linked, ${r.artifactsLinkedToThemes || 0} theme links, ${r.themesCreated || 0} new themes.`
+        )
+        await refresh()
+      }
+    } catch (err) {
+      setBackfillResult(`Error: ${err instanceof Error ? err.message : 'Failed'}`)
+    } finally {
+      setBackfilling(false)
+    }
+  }
+
   if (loading) {
     return (
       <div className="p-3 text-[11px] text-ink-muted text-center">Loading themes...</div>
@@ -171,30 +205,64 @@ export default function ThemesSection({ onSharpenToBelief }: ThemesSectionProps)
         </div>
       )}
 
-      {/* Backfill */}
+      {/* Migration Tools */}
       {themes.length === 0 && (
-        <div className="bg-cream border border-rule rounded-sm p-2 space-y-1.5">
+        <div className="bg-cream border border-rule rounded-sm p-2 space-y-2">
           <div className="font-serif text-[10px] text-ink-muted">
-            No themes yet. Backfill from existing journal entries to seed your themes.
+            No themes yet. Run the migration to seed themes from your existing data.
           </div>
-          <div className="flex items-center gap-1.5">
-            <button
-              onClick={() => handleBackfill(true)}
-              disabled={backfilling}
-              className="font-serif text-[10px] font-medium px-2 py-0.5 rounded-sm border border-rule text-ink-muted hover:border-ink-faint disabled:opacity-40 transition-colors"
-            >
-              {backfilling ? 'Processing...' : 'Preview Backfill'}
-            </button>
-            <button
-              onClick={() => handleBackfill(false)}
-              disabled={backfilling}
-              className="font-serif text-[10px] font-medium px-2 py-0.5 rounded-sm border bg-burgundy text-paper border-burgundy hover:bg-burgundy/90 disabled:opacity-40 transition-colors"
-            >
-              {backfilling ? 'Processing...' : 'Run Backfill'}
-            </button>
+
+          {/* Step 1: Backfill dots from journals */}
+          <div className="space-y-1">
+            <div className="font-mono text-[9px] text-ink-muted uppercase font-semibold">
+              Step 1 — Extract dots from journal entries
+            </div>
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => handleBackfill(true)}
+                disabled={backfilling}
+                className="font-serif text-[10px] font-medium px-2 py-0.5 rounded-sm border border-rule text-ink-muted hover:border-ink-faint disabled:opacity-40 transition-colors"
+              >
+                Preview
+              </button>
+              <button
+                onClick={() => handleBackfill(false)}
+                disabled={backfilling}
+                className="font-serif text-[10px] font-medium px-2 py-0.5 rounded-sm border bg-burgundy text-paper border-burgundy hover:bg-burgundy/90 disabled:opacity-40 transition-colors"
+              >
+                Run
+              </button>
+            </div>
           </div>
+
+          {/* Step 2: Forward pass — reclassify existing artifacts */}
+          <div className="space-y-1">
+            <div className="font-mono text-[9px] text-ink-muted uppercase font-semibold">
+              Step 2 — Reclassify principles, beliefs &amp; decisions
+            </div>
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => handleForwardPass(true)}
+                disabled={backfilling}
+                className="font-serif text-[10px] font-medium px-2 py-0.5 rounded-sm border border-rule text-ink-muted hover:border-ink-faint disabled:opacity-40 transition-colors"
+              >
+                Preview
+              </button>
+              <button
+                onClick={() => handleForwardPass(false)}
+                disabled={backfilling}
+                className="font-serif text-[10px] font-medium px-2 py-0.5 rounded-sm border bg-burgundy text-paper border-burgundy hover:bg-burgundy/90 disabled:opacity-40 transition-colors"
+              >
+                Run
+              </button>
+            </div>
+          </div>
+
+          {backfilling && (
+            <div className="font-mono text-[10px] text-ink-muted animate-pulse">Processing...</div>
+          )}
           {backfillResult && (
-            <div className="font-mono text-[10px] text-ink-muted">{backfillResult}</div>
+            <div className="font-mono text-[10px] text-ink-muted whitespace-pre-wrap">{backfillResult}</div>
           )}
         </div>
       )}
