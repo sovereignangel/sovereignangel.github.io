@@ -124,6 +124,48 @@ export default function ThemesSection({ onSharpenToBelief }: ThemesSectionProps)
     }
   }
 
+  async function handleCleanReplay(dryRun: boolean) {
+    setBackfilling(true)
+    setBackfillResult(null)
+    try {
+      const res = await authFetch('/api/journal/clean-replay', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ dryRun }),
+      })
+      const data = await res.json()
+      if (data.error) {
+        setBackfillResult(`Error: ${data.error} — ${data.details || ''}`)
+        return
+      }
+      if (dryRun) {
+        const w = data.willWipe || {}
+        const c = data.willCreate || {}
+        const lines = [
+          `WILL WIPE: ${w.principles} principles, ${w.beliefs} beliefs, ${w.decisions} decisions, ${w.themes} themes`,
+          `WILL PRESERVE: ${data.willPreserve?.journalEntries || 0} journal entries`,
+          `WILL CREATE: ${c.themes} themes with ${c.totalDots} dots`,
+          '',
+          ...(c.themeDetails || []).map((t: { label: string; dotCount: number; dateRange: string; sampleDots: string[] }) =>
+            `• ${t.label} (${t.dotCount} dots, ${t.dateRange})\n  ${t.sampleDots.map((d: string) => `  → ${d}`).join('\n  ')}`
+          ),
+        ]
+        setBackfillResult(lines.join('\n'))
+      } else {
+        const d = data.deleted || {}
+        const c = data.created || {}
+        setBackfillResult(
+          `Clean replay complete.\nDeleted: ${d.principles} principles, ${d.beliefs} beliefs, ${d.decisions} decisions, ${d.themes} themes\nCreated: ${c.themes} themes with ${c.totalDots} dots\nPreserved: ${data.preserved?.journalEntries || 0} journal entries`
+        )
+        await refresh()
+      }
+    } catch (err) {
+      setBackfillResult(`Error: ${err instanceof Error ? err.message : 'Failed'}`)
+    } finally {
+      setBackfilling(false)
+    }
+  }
+
   if (loading && themes.length > 0) {
     return (
       <div className="p-3 text-[11px] text-ink-muted text-center">Loading themes...</div>
@@ -208,58 +250,61 @@ export default function ThemesSection({ onSharpenToBelief }: ThemesSectionProps)
       {/* Migration Tools */}
       {themes.length === 0 && (
         <div className="bg-cream border border-rule rounded-sm p-2 space-y-2">
-          <div className="font-serif text-[10px] text-ink-muted">
-            No themes yet. Run the migration to seed themes from your existing data.
-          </div>
-
-          {/* Step 1: Backfill dots from journals */}
+          {/* Clean Replay — primary action */}
           <div className="space-y-1">
-            <div className="font-mono text-[9px] text-ink-muted uppercase font-semibold">
-              Step 1 — Extract dots from journal entries
+            <div className="font-mono text-[9px] text-burgundy uppercase font-semibold">
+              Clean Replay
+            </div>
+            <div className="font-serif text-[10px] text-ink-muted">
+              Wipe all beliefs, decisions, and principles. Re-process every journal entry through the new hierarchy. Only dots and themes get created — beliefs, decisions, and principles stay empty until you actively build them through the flow.
             </div>
             <div className="flex items-center gap-1.5">
               <button
-                onClick={() => handleBackfill(true)}
+                onClick={() => handleCleanReplay(true)}
                 disabled={backfilling}
                 className="font-serif text-[10px] font-medium px-2 py-0.5 rounded-sm border border-rule text-ink-muted hover:border-ink-faint disabled:opacity-40 transition-colors"
               >
                 Preview
               </button>
               <button
-                onClick={() => handleBackfill(false)}
+                onClick={() => handleCleanReplay(false)}
                 disabled={backfilling}
                 className="font-serif text-[10px] font-medium px-2 py-0.5 rounded-sm border bg-burgundy text-paper border-burgundy hover:bg-burgundy/90 disabled:opacity-40 transition-colors"
               >
-                Run
+                Run Clean Replay
               </button>
             </div>
           </div>
 
-          {/* Step 2: Forward pass — reclassify existing artifacts */}
-          <div className="space-y-1">
-            <div className="font-mono text-[9px] text-ink-muted uppercase font-semibold">
-              Step 2 — Reclassify principles, beliefs &amp; decisions
+          {/* Alternative: incremental migration */}
+          <details className="group">
+            <summary className="font-mono text-[9px] text-ink-faint uppercase cursor-pointer hover:text-ink-muted">
+              Advanced: incremental migration
+            </summary>
+            <div className="mt-1.5 space-y-2 pl-2 border-l border-rule">
+              <div className="space-y-1">
+                <div className="font-mono text-[9px] text-ink-muted uppercase font-semibold">
+                  Step 1 — Extract dots only
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <button onClick={() => handleBackfill(true)} disabled={backfilling} className="font-serif text-[10px] font-medium px-2 py-0.5 rounded-sm border border-rule text-ink-muted hover:border-ink-faint disabled:opacity-40 transition-colors">Preview</button>
+                  <button onClick={() => handleBackfill(false)} disabled={backfilling} className="font-serif text-[10px] font-medium px-2 py-0.5 rounded-sm border bg-burgundy text-paper border-burgundy hover:bg-burgundy/90 disabled:opacity-40 transition-colors">Run</button>
+                </div>
+              </div>
+              <div className="space-y-1">
+                <div className="font-mono text-[9px] text-ink-muted uppercase font-semibold">
+                  Step 2 — Reclassify existing artifacts
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <button onClick={() => handleForwardPass(true)} disabled={backfilling} className="font-serif text-[10px] font-medium px-2 py-0.5 rounded-sm border border-rule text-ink-muted hover:border-ink-faint disabled:opacity-40 transition-colors">Preview</button>
+                  <button onClick={() => handleForwardPass(false)} disabled={backfilling} className="font-serif text-[10px] font-medium px-2 py-0.5 rounded-sm border bg-burgundy text-paper border-burgundy hover:bg-burgundy/90 disabled:opacity-40 transition-colors">Run</button>
+                </div>
+              </div>
             </div>
-            <div className="flex items-center gap-1.5">
-              <button
-                onClick={() => handleForwardPass(true)}
-                disabled={backfilling}
-                className="font-serif text-[10px] font-medium px-2 py-0.5 rounded-sm border border-rule text-ink-muted hover:border-ink-faint disabled:opacity-40 transition-colors"
-              >
-                Preview
-              </button>
-              <button
-                onClick={() => handleForwardPass(false)}
-                disabled={backfilling}
-                className="font-serif text-[10px] font-medium px-2 py-0.5 rounded-sm border bg-burgundy text-paper border-burgundy hover:bg-burgundy/90 disabled:opacity-40 transition-colors"
-              >
-                Run
-              </button>
-            </div>
-          </div>
+          </details>
 
           {backfilling && (
-            <div className="font-mono text-[10px] text-ink-muted animate-pulse">Processing...</div>
+            <div className="font-mono text-[10px] text-ink-muted animate-pulse">Processing... this may take a minute.</div>
           )}
           {backfillResult && (
             <div className="font-mono text-[10px] text-ink-muted whitespace-pre-wrap">{backfillResult}</div>
