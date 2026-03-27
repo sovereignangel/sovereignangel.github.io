@@ -4,7 +4,6 @@ import { useState } from 'react'
 import { useAuth } from '@/components/auth/AuthProvider'
 import { useThemes } from '@/hooks/useThemes'
 import { useBeliefs } from '@/hooks/useBeliefs'
-import { authFetch } from '@/lib/auth-fetch'
 import type { Theme, ThemeStatus, Belief } from '@/lib/types'
 
 const DOMAIN_COLORS: Record<string, string> = {
@@ -28,16 +27,13 @@ interface ThemesSectionProps {
 
 export default function ThemesSection({ onSharpenToBelief }: ThemesSectionProps) {
   const { user } = useAuth()
-  const { themes, active, readyToCodify, loading, save, remove, refresh } = useThemes(user?.uid)
+  const { themes, readyToCodify, loading, save } = useThemes(user?.uid)
   const { beliefs } = useBeliefs(user?.uid)
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [filter, setFilter] = useState<'all' | 'emerging' | 'ready_to_codify' | 'codified'>('all')
   const [showNewForm, setShowNewForm] = useState(false)
   const [newLabel, setNewLabel] = useState('')
   const [newDomain, setNewDomain] = useState<string>('personal')
-  const [backfilling, setBackfilling] = useState(false)
-  const [backfillResult, setBackfillResult] = useState<string | null>(null)
-
   const filtered = filter === 'all'
     ? themes.filter(t => t.status !== 'archived')
     : themes.filter(t => t.status === filter)
@@ -65,105 +61,6 @@ export default function ThemesSection({ onSharpenToBelief }: ThemesSectionProps)
 
   async function handleArchive(themeId: string) {
     await save({ status: 'archived' }, themeId)
-  }
-
-  async function handleBackfill(dryRun: boolean) {
-    setBackfilling(true)
-    setBackfillResult(null)
-    try {
-      const res = await authFetch('/api/journal/backfill-dots', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ dryRun }),
-      })
-      const data = await res.json()
-      if (dryRun) {
-        setBackfillResult(`Preview: ${data.totalDots} dots across ${data.themes?.length || 0} themes from ${data.journalEntriesProcessed} entries`)
-      } else {
-        setBackfillResult(`Done: ${data.totalDots} dots saved. ${data.themesCreated?.length || 0} new themes, ${data.themesUpdated?.length || 0} updated.`)
-        await refresh()
-      }
-    } catch (err) {
-      setBackfillResult(`Error: ${err instanceof Error ? err.message : 'Failed'}`)
-    } finally {
-      setBackfilling(false)
-    }
-  }
-
-  async function handleForwardPass(dryRun: boolean) {
-    setBackfilling(true)
-    setBackfillResult(null)
-    try {
-      const res = await authFetch('/api/journal/forward-pass', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ dryRun }),
-      })
-      const data = await res.json()
-      if (dryRun) {
-        const actions = data.actions || []
-        const downgradedP = actions.filter((a: Record<string, string>) => a.type === 'downgrade_principle_to_belief').length
-        const downgradedB = actions.filter((a: Record<string, string>) => a.type === 'downgrade_belief_to_dot').length
-        const linked = actions.filter((a: Record<string, string>) => a.type === 'link_decision_to_belief').length
-        const themeLinks = actions.filter((a: Record<string, string>) => a.type === 'link_to_theme').length
-        const kept = actions.filter((a: Record<string, string>) => a.type === 'keep').length
-        setBackfillResult(
-          `Preview: ${downgradedP} principles → beliefs, ${downgradedB} beliefs → dots, ${linked} decision-belief links, ${themeLinks} theme links, ${kept} kept as-is. ${(data.suggestedThemes || []).length} new themes suggested.`
-        )
-      } else {
-        const r = data.results || {}
-        setBackfillResult(
-          `Done: ${r.principlesDowngraded || 0} principles downgraded, ${r.beliefsDowngraded || 0} beliefs → dots, ${r.decisionsLinked || 0} decisions linked, ${r.artifactsLinkedToThemes || 0} theme links, ${r.themesCreated || 0} new themes.`
-        )
-        await refresh()
-      }
-    } catch (err) {
-      setBackfillResult(`Error: ${err instanceof Error ? err.message : 'Failed'}`)
-    } finally {
-      setBackfilling(false)
-    }
-  }
-
-  async function handleCleanReplay(dryRun: boolean) {
-    setBackfilling(true)
-    setBackfillResult(null)
-    try {
-      const res = await authFetch('/api/journal/clean-replay', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ dryRun }),
-      })
-      const data = await res.json()
-      if (data.error) {
-        setBackfillResult(`Error: ${data.error} — ${data.details || ''}`)
-        return
-      }
-      if (dryRun) {
-        const w = data.willWipe || {}
-        const c = data.willCreate || {}
-        const lines = [
-          `WILL WIPE: ${w.principles} principles, ${w.beliefs} beliefs, ${w.decisions} decisions, ${w.themes} themes`,
-          `WILL PRESERVE: ${data.willPreserve?.journalEntries || 0} journal entries`,
-          `WILL CREATE: ${c.themes} themes with ${c.totalDots} dots`,
-          '',
-          ...(c.themeDetails || []).map((t: { label: string; dotCount: number; dateRange: string; sampleDots: string[] }) =>
-            `• ${t.label} (${t.dotCount} dots, ${t.dateRange})\n  ${t.sampleDots.map((d: string) => `  → ${d}`).join('\n  ')}`
-          ),
-        ]
-        setBackfillResult(lines.join('\n'))
-      } else {
-        const d = data.deleted || {}
-        const c = data.created || {}
-        setBackfillResult(
-          `Clean replay complete.\nDeleted: ${d.principles} principles, ${d.beliefs} beliefs, ${d.decisions} decisions, ${d.themes} themes\nCreated: ${c.themes} themes with ${c.totalDots} dots\nPreserved: ${data.preserved?.journalEntries || 0} journal entries`
-        )
-        await refresh()
-      }
-    } catch (err) {
-      setBackfillResult(`Error: ${err instanceof Error ? err.message : 'Failed'}`)
-    } finally {
-      setBackfilling(false)
-    }
   }
 
   if (loading && themes.length > 0) {
@@ -244,109 +141,6 @@ export default function ThemesSection({ onSharpenToBelief }: ThemesSectionProps)
           <span className="font-mono text-[10px] text-green-ink font-semibold">
             {readyToCodify.length} theme{readyToCodify.length > 1 ? 's' : ''} ready to sharpen into beliefs
           </span>
-        </div>
-      )}
-
-      {/* Migration Tools */}
-      {(
-        <div className="bg-cream border border-rule rounded-sm p-2 space-y-2">
-          {/* Clean Replay — primary action */}
-          <div className="space-y-1">
-            <div className="font-mono text-[9px] text-burgundy uppercase font-semibold">
-              Clean Replay
-            </div>
-            <div className="font-serif text-[10px] text-ink-muted">
-              Wipe all beliefs, decisions, and principles. Re-process every journal entry through the new hierarchy. Only dots and themes get created — beliefs, decisions, and principles stay empty until you actively build them through the flow.
-            </div>
-            <div className="flex items-center gap-1.5">
-              <button
-                onClick={() => handleCleanReplay(true)}
-                disabled={backfilling}
-                className="font-serif text-[10px] font-medium px-2 py-0.5 rounded-sm border border-rule text-ink-muted hover:border-ink-faint disabled:opacity-40 transition-colors"
-              >
-                Preview
-              </button>
-              <button
-                onClick={() => handleCleanReplay(false)}
-                disabled={backfilling}
-                className="font-serif text-[10px] font-medium px-2 py-0.5 rounded-sm border bg-burgundy text-paper border-burgundy hover:bg-burgundy/90 disabled:opacity-40 transition-colors"
-              >
-                Run Clean Replay
-              </button>
-            </div>
-          </div>
-
-          {/* Seed worked example */}
-          <div className="space-y-1 pt-1 border-t border-rule">
-            <div className="font-mono text-[9px] text-ink-muted uppercase font-semibold">
-              Seed Example
-            </div>
-            <div className="font-serif text-[10px] text-ink-muted">
-              Wipe everything and seed the Aidas/relationship example as the first data through the full hierarchy (2 themes → 3 beliefs → 4 decisions → 1 principle).
-            </div>
-            <button
-              onClick={async () => {
-                setBackfilling(true)
-                setBackfillResult(null)
-                try {
-                  const res = await authFetch('/api/journal/seed-example', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ wipeFirst: true }),
-                  })
-                  const data = await res.json()
-                  if (data.error) {
-                    setBackfillResult(`Error: ${data.error}`)
-                  } else {
-                    setBackfillResult(`Seeded: ${data.seeded.themes} themes, ${data.seeded.beliefs} beliefs, ${data.seeded.decisions} decisions, ${data.seeded.principles} principle`)
-                    await refresh()
-                  }
-                } catch (err) {
-                  setBackfillResult(`Error: ${err instanceof Error ? err.message : 'Failed'}`)
-                } finally {
-                  setBackfilling(false)
-                }
-              }}
-              disabled={backfilling}
-              className="font-serif text-[10px] font-medium px-2 py-0.5 rounded-sm border bg-burgundy text-paper border-burgundy hover:bg-burgundy/90 disabled:opacity-40 transition-colors"
-            >
-              Seed Example
-            </button>
-          </div>
-
-          {/* Alternative: incremental migration */}
-          <details className="group">
-            <summary className="font-mono text-[9px] text-ink-faint uppercase cursor-pointer hover:text-ink-muted">
-              Advanced: incremental migration
-            </summary>
-            <div className="mt-1.5 space-y-2 pl-2 border-l border-rule">
-              <div className="space-y-1">
-                <div className="font-mono text-[9px] text-ink-muted uppercase font-semibold">
-                  Step 1 — Extract dots only
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <button onClick={() => handleBackfill(true)} disabled={backfilling} className="font-serif text-[10px] font-medium px-2 py-0.5 rounded-sm border border-rule text-ink-muted hover:border-ink-faint disabled:opacity-40 transition-colors">Preview</button>
-                  <button onClick={() => handleBackfill(false)} disabled={backfilling} className="font-serif text-[10px] font-medium px-2 py-0.5 rounded-sm border bg-burgundy text-paper border-burgundy hover:bg-burgundy/90 disabled:opacity-40 transition-colors">Run</button>
-                </div>
-              </div>
-              <div className="space-y-1">
-                <div className="font-mono text-[9px] text-ink-muted uppercase font-semibold">
-                  Step 2 — Reclassify existing artifacts
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <button onClick={() => handleForwardPass(true)} disabled={backfilling} className="font-serif text-[10px] font-medium px-2 py-0.5 rounded-sm border border-rule text-ink-muted hover:border-ink-faint disabled:opacity-40 transition-colors">Preview</button>
-                  <button onClick={() => handleForwardPass(false)} disabled={backfilling} className="font-serif text-[10px] font-medium px-2 py-0.5 rounded-sm border bg-burgundy text-paper border-burgundy hover:bg-burgundy/90 disabled:opacity-40 transition-colors">Run</button>
-                </div>
-              </div>
-            </div>
-          </details>
-
-          {backfilling && (
-            <div className="font-mono text-[10px] text-ink-muted animate-pulse">Processing... this may take a minute.</div>
-          )}
-          {backfillResult && (
-            <div className="font-mono text-[10px] text-ink-muted whitespace-pre-wrap">{backfillResult}</div>
-          )}
         </div>
       )}
 
