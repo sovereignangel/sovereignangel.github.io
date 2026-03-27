@@ -248,7 +248,7 @@ export default function ThemesSection({ onSharpenToBelief }: ThemesSectionProps)
       )}
 
       {/* Migration Tools */}
-      {themes.length === 0 && (
+      {(
         <div className="bg-cream border border-rule rounded-sm p-2 space-y-2">
           {/* Clean Replay — primary action */}
           <div className="space-y-1">
