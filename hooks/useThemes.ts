@@ -14,6 +14,9 @@ export function useThemes(uid: string | undefined) {
     try {
       const data = await getThemes(uid)
       setThemes(data)
+    } catch (err) {
+      console.error('useThemes fetch error:', err)
+      setThemes([])
     } finally {
       setLoading(false)
     }

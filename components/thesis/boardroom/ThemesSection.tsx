@@ -124,7 +124,7 @@ export default function ThemesSection({ onSharpenToBelief }: ThemesSectionProps)
     }
   }
 
-  if (loading) {
+  if (loading && themes.length > 0) {
     return (
       <div className="p-3 text-[11px] text-ink-muted text-center">Loading themes...</div>
     )
