@@ -2,46 +2,19 @@ import { NextRequest, NextResponse } from 'next/server'
 import { verifyAuth } from '@/lib/api-auth'
 import { callLLM } from '@/lib/llm'
 import { adminDb } from '@/lib/firebase-admin'
-import type { DecisionDomain } from '@/lib/types'
 
-// Clean Replay: Wipe all derived artifacts, preserve journal entries,
-// re-process every journal through the new dot → theme hierarchy.
-//
-// Beliefs, decisions, and principles stay EMPTY after replay.
-// They only get created when the user actively sharpens themes → beliefs → decisions → principles.
-//
-// POST body: { dryRun?: boolean }
-export async function POST(request: NextRequest) {
-  const auth = await verifyAuth(request)
-  if (auth instanceof NextResponse) return auth
-  const uid = auth.uid
+interface ExtractedDot {
+  observation: string
+  journalDate: string
+}
 
-  try {
-    const body = await request.json().catch(() => ({}))
-    const dryRun = body.dryRun === true
+interface ExtractedTheme {
+  label: string
+  domain: string
+  dots: ExtractedDot[]
+}
 
-    // 1. Count existing artifacts to report what will be wiped
-    const [principlesSnap, beliefsSnap, decisionsSnap, themesSnap, logsSnap] = await Promise.all([
-      adminDb.collection('users').doc(uid).collection('principles').get(),
-      adminDb.collection('users').doc(uid).collection('beliefs').get(),
-      adminDb.collection('users').doc(uid).collection('decisions').get(),
-      adminDb.collection('users').doc(uid).collection('themes').get(),
-      adminDb.collection('users').doc(uid).collection('daily_logs').orderBy('date', 'asc').get(),
-    ])
-
-    // 2. Collect all journal entries
-    const entries: { date: string; text: string }[] = []
-    for (const doc of logsSnap.docs) {
-      const data = doc.data()
-      if (data.journalEntry && typeof data.journalEntry === 'string' && data.journalEntry.trim().length > 0) {
-        entries.push({ date: data.date || doc.id, text: data.journalEntry.trim() })
-      }
-    }
-
-    // 3. Process all journal entries through LLM to extract dots
-    const combinedEntries = entries.map(e => `--- ${e.date} ---\n${e.text}`).join('\n\n')
-
-    const prompt = `You are analyzing a complete journal history to extract "dots" — discrete observations about patterns in life, relationships, work, and the world. These dots will seed a new knowledge system.
+const DOT_PROMPT_HEADER = `You are analyzing journal entries to extract "dots" — discrete observations about patterns in life, relationships, work, and the world.
 
 A "dot" is an observation about HOW THINGS WORK — behavioral patterns, relationship dynamics, cause-effect observations, recurring frustrations, insights about people, systems, or yourself.
 
@@ -53,23 +26,18 @@ A dot is NOT:
 A dot IS:
 - "Aidas criticizes regularly and it drains energy from our interactions"
 - "When I focus on the positive highlights with people, the relationship improves"
-- "Rodrigo and Alberto show up as positive problem solvers, and experiences with them are better"
-- "Context switching between too many projects fragments my focus and lowers output quality"
-- "Discovery conversations with founders reveal pain points faster than desk research"
-
-JOURNAL ENTRIES (chronological):
-${combinedEntries}
-
-Extract ALL pattern observations across these entries. Group them into themes.
+- "Context switching between too many projects fragments my focus"
+- "Discovery conversations reveal pain points faster than desk research"
+- "Running in the morning before work improves my focus quality all day"
+- "Saying no to meetings I don't need to attend freed up 3 hours of creative time"
 
 Guidelines:
-- Be thorough — extract every observation about patterns, dynamics, cause-effect relationships
-- Group related dots under the same theme label
-- Choose concise, descriptive theme labels (e.g., "Criticism style in close relationships", "Focus fragmentation and output quality")
+- Be THOROUGH — extract every observation about patterns, dynamics, cause-effect
 - Each dot should be atomic (one observation per dot)
 - Include the journal date each dot came from
-- A theme can have dots from many different dates — that's the point, they accumulate over time
+- Group dots into themes with concise, descriptive labels
 - Suggest a domain for each theme: personal, portfolio, product, revenue, or thesis
+- Extract MORE dots rather than fewer — the system filters upstream
 
 Return ONLY valid JSON (no markdown, no code blocks):
 {
@@ -78,39 +46,117 @@ Return ONLY valid JSON (no markdown, no code blocks):
       "label": "concise theme label",
       "domain": "personal",
       "dots": [
-        {
-          "observation": "the observation in the writer's voice",
-          "journalDate": "YYYY-MM-DD"
-        }
+        { "observation": "observation text", "journalDate": "YYYY-MM-DD" }
       ]
     }
   ]
 }`
 
-    let extractedThemes: { label: string; domain: string; dots: { observation: string; journalDate: string }[] }[] = []
+// Process journal entries in batches to avoid LLM context limits
+async function extractDotsFromBatch(
+  entries: { date: string; text: string }[],
+  existingThemeLabels: string[]
+): Promise<ExtractedTheme[]> {
+  const combinedEntries = entries.map(e => `--- ${e.date} ---\n${e.text}`).join('\n\n')
 
-    if (entries.length > 0) {
-      const text = await callLLM(prompt)
-      const cleanedText = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()
-      const parsed = JSON.parse(cleanedText)
+  const themesContext = existingThemeLabels.length > 0
+    ? `\nEXISTING THEMES (use these EXACT labels when a dot fits an existing theme):\n${existingThemeLabels.map(t => `  - "${t}"`).join('\n')}\n\nYou may also create new themes for patterns not yet captured.\n`
+    : ''
 
-      const validDomains = ['portfolio', 'product', 'revenue', 'personal', 'thesis']
-      extractedThemes = (parsed.themes || []).map((t: Record<string, unknown>) => ({
-        label: String(t.label || ''),
-        domain: validDomains.includes(t.domain as string) ? t.domain : 'personal',
-        dots: (Array.isArray(t.dots) ? t.dots : []).map((d: Record<string, unknown>) => ({
-          observation: String(d.observation || ''),
-          journalDate: String(d.journalDate || ''),
-        })).filter((d: { observation: string; journalDate: string }) => d.observation.length > 0 && d.journalDate.length > 0),
-      })).filter((t: { label: string; dots: unknown[] }) => t.label.length > 0 && t.dots.length > 0)
+  const prompt = `${DOT_PROMPT_HEADER}
+${themesContext}
+JOURNAL ENTRIES:
+${combinedEntries}`
+
+  const text = await callLLM(prompt)
+  const cleanedText = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()
+  const parsed = JSON.parse(cleanedText)
+
+  const validDomains = ['portfolio', 'product', 'revenue', 'personal', 'thesis']
+  return (parsed.themes || []).map((t: Record<string, unknown>) => ({
+    label: String(t.label || ''),
+    domain: validDomains.includes(t.domain as string) ? t.domain : 'personal',
+    dots: (Array.isArray(t.dots) ? t.dots : []).map((d: Record<string, unknown>) => ({
+      observation: String(d.observation || ''),
+      journalDate: String(d.journalDate || ''),
+    })).filter((d: ExtractedDot) => d.observation.length > 0 && d.journalDate.length > 0),
+  })).filter((t: ExtractedTheme) => t.label.length > 0 && t.dots.length > 0)
+}
+
+// Merge themes from multiple batches — combine dots under same label
+function mergeThemes(allBatches: ExtractedTheme[][]): ExtractedTheme[] {
+  const themeMap = new Map<string, ExtractedTheme>()
+
+  for (const batch of allBatches) {
+    for (const theme of batch) {
+      const normalized = theme.label.toLowerCase().trim()
+      if (themeMap.has(normalized)) {
+        const existing = themeMap.get(normalized)!
+        existing.dots.push(...theme.dots)
+      } else {
+        themeMap.set(normalized, { ...theme, dots: [...theme.dots] })
+      }
+    }
+  }
+
+  return Array.from(themeMap.values())
+}
+
+// POST body: { dryRun?: boolean }
+export async function POST(request: NextRequest) {
+  const auth = await verifyAuth(request)
+  if (auth instanceof NextResponse) return auth
+  const uid = auth.uid
+
+  try {
+    const body = await request.json().catch(() => ({}))
+    const dryRun = body.dryRun === true
+
+    // 1. Count existing artifacts
+    const [principlesSnap, beliefsSnap, decisionsSnap, themesSnap, logsSnap] = await Promise.all([
+      adminDb.collection('users').doc(uid).collection('principles').get(),
+      adminDb.collection('users').doc(uid).collection('beliefs').get(),
+      adminDb.collection('users').doc(uid).collection('decisions').get(),
+      adminDb.collection('users').doc(uid).collection('themes').get(),
+      adminDb.collection('users').doc(uid).collection('daily_logs').orderBy('date', 'asc').get(),
+    ])
+
+    // 2. Collect journal entries
+    const entries: { date: string; text: string }[] = []
+    for (const doc of logsSnap.docs) {
+      const data = doc.data()
+      if (data.journalEntry && typeof data.journalEntry === 'string' && data.journalEntry.trim().length > 0) {
+        entries.push({ date: data.date || doc.id, text: data.journalEntry.trim() })
+      }
     }
 
+    // 3. Process in batches of ~7 entries (keeps each LLM call focused)
+    const BATCH_SIZE = 7
+    const allBatchResults: ExtractedTheme[][] = []
+    const runningThemeLabels: string[] = []
+
+    for (let i = 0; i < entries.length; i += BATCH_SIZE) {
+      const batch = entries.slice(i, i + BATCH_SIZE)
+      const result = await extractDotsFromBatch(batch, runningThemeLabels)
+      allBatchResults.push(result)
+      // Accumulate theme labels for next batch
+      for (const theme of result) {
+        const normalized = theme.label.toLowerCase().trim()
+        if (!runningThemeLabels.some(l => l.toLowerCase().trim() === normalized)) {
+          runningThemeLabels.push(theme.label)
+        }
+      }
+    }
+
+    // 4. Merge themes across batches
+    const extractedThemes = mergeThemes(allBatchResults)
     const totalDots = extractedThemes.reduce((sum, t) => sum + t.dots.length, 0)
 
     if (dryRun) {
       return NextResponse.json({
         success: true,
         dryRun: true,
+        batchesProcessed: allBatchResults.length,
         willWipe: {
           principles: principlesSnap.size,
           beliefs: beliefsSnap.size,
@@ -128,24 +174,24 @@ Return ONLY valid JSON (no markdown, no code blocks):
             domain: t.domain,
             dotCount: t.dots.length,
             dateRange: t.dots.length > 0
-              ? `${t.dots[0].journalDate} → ${t.dots[t.dots.length - 1].journalDate}`
+              ? `${t.dots.reduce((min, d) => d.journalDate < min ? d.journalDate : min, t.dots[0].journalDate)} → ${t.dots.reduce((max, d) => d.journalDate > max ? d.journalDate : max, t.dots[0].journalDate)}`
               : '',
-            sampleDots: t.dots.slice(0, 3).map(d => d.observation),
+            sampleDots: t.dots.slice(0, 3).map(d => `[${d.journalDate}] ${d.observation}`),
           })),
         },
       })
     }
 
-    // EXECUTE: Wipe and rebuild
+    // EXECUTE
 
-    // 4. Delete all existing derived artifacts (in batches of 500 — Firestore limit)
+    // 5. Delete all existing derived artifacts
     const deleteCollection = async (collectionName: string) => {
       const snap = await adminDb.collection('users').doc(uid).collection(collectionName).get()
       const batchSize = 400
       for (let i = 0; i < snap.docs.length; i += batchSize) {
-        const batch = adminDb.batch()
-        snap.docs.slice(i, i + batchSize).forEach(doc => batch.delete(doc.ref))
-        await batch.commit()
+        const b = adminDb.batch()
+        snap.docs.slice(i, i + batchSize).forEach(doc => b.delete(doc.ref))
+        await b.commit()
       }
       return snap.size
     }
@@ -157,12 +203,10 @@ Return ONLY valid JSON (no markdown, no code blocks):
       themes: await deleteCollection('themes'),
     }
 
-    // 5. Create themes with dots
+    // 6. Create themes with dots
     const today = new Date().toISOString().split('T')[0]
-    const themeBatch = adminDb.batch()
-
-    for (const theme of extractedThemes) {
-      const ref = adminDb.collection('users').doc(uid).collection('themes').doc()
+    // Firestore batch limit is 500 — split if needed
+    const themeDocs = extractedThemes.map(theme => {
       const dots = theme.dots.map(d => ({
         observation: d.observation,
         journalDate: d.journalDate,
@@ -171,7 +215,7 @@ Return ONLY valid JSON (no markdown, no code blocks):
       const firstSeen = theme.dots.reduce((min, d) => d.journalDate < min ? d.journalDate : min, theme.dots[0].journalDate)
       const lastSeen = theme.dots.reduce((max, d) => d.journalDate > max ? d.journalDate : max, theme.dots[0].journalDate)
 
-      themeBatch.set(ref, {
+      return {
         label: theme.label,
         domain: theme.domain,
         status: dots.length >= 3 ? 'ready_to_codify' : 'emerging',
@@ -182,13 +226,21 @@ Return ONLY valid JSON (no markdown, no code blocks):
         linkedBeliefIds: [],
         createdAt: new Date(),
         updatedAt: new Date(),
-      })
-    }
+      }
+    })
 
-    await themeBatch.commit()
+    for (let i = 0; i < themeDocs.length; i += 400) {
+      const b = adminDb.batch()
+      themeDocs.slice(i, i + 400).forEach(themeData => {
+        const ref = adminDb.collection('users').doc(uid).collection('themes').doc()
+        b.set(ref, themeData)
+      })
+      await b.commit()
+    }
 
     return NextResponse.json({
       success: true,
+      batchesProcessed: allBatchResults.length,
       deleted,
       created: {
         themes: extractedThemes.length,

@@ -5,6 +5,7 @@ import { useAuth } from '@/components/auth/AuthProvider'
 import { useBeliefs } from '@/hooks/useBeliefs'
 import { useDecisions } from '@/hooks/useDecisions'
 import { useThemes } from '@/hooks/useThemes'
+import { authFetch } from '@/lib/auth-fetch'
 import FlowPipeline from './FlowPipeline'
 import DailyJournal from './DailyJournal'
 import JournalLedger from './JournalLedger'
@@ -69,6 +70,46 @@ export default function TheMachine() {
     scrollToSection('beliefs')
   }, [scrollToSection])
 
+  // Clean replay state
+  const [replaying, setReplaying] = useState(false)
+  const [replayResult, setReplayResult] = useState<string | null>(null)
+
+  const handleCleanReplay = useCallback(async (dryRun: boolean) => {
+    setReplaying(true)
+    setReplayResult(null)
+    try {
+      const res = await authFetch('/api/journal/clean-replay', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ dryRun }),
+      })
+      const data = await res.json()
+      if (data.error) {
+        setReplayResult(`Error: ${data.error} — ${data.details || ''}`)
+        return
+      }
+      if (dryRun) {
+        const w = data.willWipe || {}
+        const c = data.willCreate || {}
+        setReplayResult(
+          `Preview: Will wipe ${w.principles} principles, ${w.beliefs} beliefs, ${w.decisions} decisions, ${w.themes} themes. Will create ${c.themes} themes with ${c.totalDots} dots from ${data.willPreserve?.journalEntries || 0} journal entries (${data.batchesProcessed} batches).`
+        )
+      } else {
+        const d = data.deleted || {}
+        const c = data.created || {}
+        setReplayResult(
+          `Done. Deleted ${d.principles} principles, ${d.beliefs} beliefs, ${d.decisions} decisions, ${d.themes} themes. Created ${c.themes} themes with ${c.totalDots} dots.`
+        )
+        // Force full page reload to refresh all hooks
+        window.location.reload()
+      }
+    } catch (err) {
+      setReplayResult(`Error: ${err instanceof Error ? err.message : 'Failed'}`)
+    } finally {
+      setReplaying(false)
+    }
+  }, [])
+
   const journalCount = 0
 
   const pipelineStages = [
@@ -83,13 +124,36 @@ export default function TheMachine() {
 
   return (
     <div className="space-y-1">
-      {/* Flow Pipeline */}
-      <div className="bg-white border border-rule rounded-sm">
-        <FlowPipeline
-          stages={pipelineStages}
-          activeSection={activeSection}
-          onStageClick={scrollToSection}
-        />
+      {/* Flow Pipeline — sticky header */}
+      <div className="sticky top-0 z-10 bg-cream/95 backdrop-blur-sm pb-1">
+        <div className="bg-white border border-rule rounded-sm">
+          <FlowPipeline
+            stages={pipelineStages}
+            activeSection={activeSection}
+            onStageClick={scrollToSection}
+          />
+        </div>
+
+        {/* Clean Replay bar */}
+        <div className="flex items-center gap-1.5 mt-1 px-1">
+          <button
+            onClick={() => handleCleanReplay(true)}
+            disabled={replaying}
+            className="font-mono text-[9px] px-1.5 py-0.5 rounded-sm border border-rule text-ink-muted hover:border-ink-faint disabled:opacity-40 transition-colors"
+          >
+            Preview Replay
+          </button>
+          <button
+            onClick={() => handleCleanReplay(false)}
+            disabled={replaying}
+            className="font-mono text-[9px] px-1.5 py-0.5 rounded-sm border border-burgundy/30 text-burgundy hover:bg-burgundy-bg disabled:opacity-40 transition-colors"
+          >
+            {replaying ? 'Replaying...' : 'Clean Replay'}
+          </button>
+          {replayResult && (
+            <span className="font-mono text-[9px] text-ink-muted truncate flex-1">{replayResult}</span>
+          )}
+        </div>
       </div>
 
       {/* OBSERVE — Journal entries (dots) */}

@@ -276,6 +276,44 @@ export default function ThemesSection({ onSharpenToBelief }: ThemesSectionProps)
             </div>
           </div>
 
+          {/* Seed worked example */}
+          <div className="space-y-1 pt-1 border-t border-rule">
+            <div className="font-mono text-[9px] text-ink-muted uppercase font-semibold">
+              Seed Example
+            </div>
+            <div className="font-serif text-[10px] text-ink-muted">
+              Wipe everything and seed the Aidas/relationship example as the first data through the full hierarchy (2 themes → 3 beliefs → 4 decisions → 1 principle).
+            </div>
+            <button
+              onClick={async () => {
+                setBackfilling(true)
+                setBackfillResult(null)
+                try {
+                  const res = await authFetch('/api/journal/seed-example', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ wipeFirst: true }),
+                  })
+                  const data = await res.json()
+                  if (data.error) {
+                    setBackfillResult(`Error: ${data.error}`)
+                  } else {
+                    setBackfillResult(`Seeded: ${data.seeded.themes} themes, ${data.seeded.beliefs} beliefs, ${data.seeded.decisions} decisions, ${data.seeded.principles} principle`)
+                    await refresh()
+                  }
+                } catch (err) {
+                  setBackfillResult(`Error: ${err instanceof Error ? err.message : 'Failed'}`)
+                } finally {
+                  setBackfilling(false)
+                }
+              }}
+              disabled={backfilling}
+              className="font-serif text-[10px] font-medium px-2 py-0.5 rounded-sm border bg-burgundy text-paper border-burgundy hover:bg-burgundy/90 disabled:opacity-40 transition-colors"
+            >
+              Seed Example
+            </button>
+          </div>
+
           {/* Alternative: incremental migration */}
           <details className="group">
             <summary className="font-mono text-[9px] text-ink-faint uppercase cursor-pointer hover:text-ink-muted">
