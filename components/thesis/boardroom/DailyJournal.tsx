@@ -7,10 +7,11 @@ import { useCadence } from '@/hooks/useCadence'
 import { saveDecision } from '@/lib/firestore/decisions'
 import { savePrinciple } from '@/lib/firestore/principles'
 import { saveExternalSignal } from '@/lib/firestore/external-signals'
+import { saveTheme, addDotsToTheme, getActiveThemes, recomputeThemeDotCount } from '@/lib/firestore/themes'
 import { authFetch } from '@/lib/auth-fetch'
 import { saveBelief } from '@/lib/firestore/beliefs'
 import type { ParsedJournalEntry } from '@/lib/ai-extraction'
-import type { CadenceChecklistItem } from '@/lib/types'
+import type { CadenceChecklistItem, ThemeDot } from '@/lib/types'
 
 const CADENCE_LABELS: Record<string, string> = {
   energy: 'Log energy inputs',
@@ -64,7 +65,7 @@ export default function DailyJournal() {
   const isEnabled = (key: string) => toggles[key] ?? true
 
   async function handleParse() {
-    if (!journalText.trim()) return
+    if (!journalText.trim() || !user?.uid) return
     setParsing(true)
     setError(null)
     setParsed(null)
@@ -72,10 +73,19 @@ export default function DailyJournal() {
     setToggles({})
 
     try {
+      // Fetch active themes to pass as context to the AI
+      let activeThemeLabels: string[] = []
+      try {
+        const themes = await getActiveThemes(user.uid)
+        activeThemeLabels = themes.map(t => t.label)
+      } catch {
+        // Continue without themes if fetch fails
+      }
+
       const res = await authFetch('/api/journal/parse', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ journalText: journalText.trim() }),
+        body: JSON.stringify({ journalText: journalText.trim(), activeThemeLabels }),
       })
 
       if (!res.ok) {
@@ -318,6 +328,59 @@ export default function DailyJournal() {
         }).catch(() => {}) // fire-and-forget
       }
 
+      // Theme Dots — tag observations to themes or create new themes
+      if (parsed.themeDots && parsed.themeDots.length > 0) {
+        // Fetch current active themes to match by label
+        let existingThemes: { id: string; label: string }[] = []
+        try {
+          const themes = await getActiveThemes(user.uid)
+          existingThemes = themes.map(t => ({ id: t.id!, label: t.label }))
+        } catch {
+          // Continue — will create all as new
+        }
+
+        // Group dots by theme label
+        const dotsByTheme = new Map<string, { dots: ThemeDot[]; isNew: boolean; domain?: string }>()
+        for (let i = 0; i < parsed.themeDots.length; i++) {
+          if (!isEnabled(`themeDot.${i}`)) continue
+          const td = parsed.themeDots[i]
+          const dot: ThemeDot = {
+            observation: td.observation,
+            journalDate: today,
+            addedAt: today,
+          }
+          if (!dotsByTheme.has(td.themeLabel)) {
+            dotsByTheme.set(td.themeLabel, {
+              dots: [],
+              isNew: td.isNewTheme,
+              domain: td.suggestedDomain,
+            })
+          }
+          dotsByTheme.get(td.themeLabel)!.dots.push(dot)
+        }
+
+        // Save dots to existing themes or create new ones
+        for (const [label, { dots, isNew, domain }] of dotsByTheme) {
+          const existing = existingThemes.find(t => t.label === label)
+          if (existing) {
+            await addDotsToTheme(user.uid, existing.id, dots)
+            await recomputeThemeDotCount(user.uid, existing.id)
+          } else {
+            // Create new theme with initial dots
+            await saveTheme(user.uid, {
+              label,
+              domain: (domain as 'portfolio' | 'product' | 'revenue' | 'personal' | 'thesis') || 'personal',
+              status: 'emerging',
+              dots,
+              dotCount: dots.length,
+              firstSeen: today,
+              lastSeen: today,
+              linkedBeliefIds: [],
+            })
+          }
+        }
+      }
+
       // Notes (save as external signals in inbox)
       for (let i = 0; i < parsed.notes.length; i++) {
         if (!isEnabled(`note.${i}`)) continue
@@ -363,7 +426,8 @@ export default function DailyJournal() {
     parsed.psyCap.resilience != null || parsed.psyCap.optimism != null ||
     parsed.cadenceCompleted.length > 0 ||
     parsed.decisions.length > 0 || parsed.principles.length > 0 ||
-    parsed.beliefs.length > 0
+    parsed.beliefs.length > 0 ||
+    (parsed.themeDots && parsed.themeDots.length > 0)
   )
 
   return (
@@ -678,6 +742,22 @@ export default function DailyJournal() {
                   ].filter(Boolean).join(' | ')}
                   enabled={isEnabled(`belief.${i}`)}
                   onToggle={() => toggle(`belief.${i}`)}
+                />
+              ))}
+            </ResultSection>
+          )}
+
+          {/* Theme Dots */}
+          {parsed.themeDots && parsed.themeDots.length > 0 && (
+            <ResultSection title="Theme Dots">
+              {parsed.themeDots.map((td, i) => (
+                <ToggleRow
+                  key={i}
+                  label={td.isNewTheme ? `✦ ${td.themeLabel}` : td.themeLabel}
+                  value={td.isNewTheme ? 'new theme' : 'existing'}
+                  detail={td.observation}
+                  enabled={isEnabled(`themeDot.${i}`)}
+                  onToggle={() => toggle(`themeDot.${i}`)}
                 />
               ))}
             </ResultSection>

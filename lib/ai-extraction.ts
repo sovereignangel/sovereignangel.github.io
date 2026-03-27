@@ -427,6 +427,13 @@ export interface ParsedJournalBelief {
   evidenceAgainst: string[]
 }
 
+export interface ParsedThemeDotResult {
+  observation: string
+  themeLabel: string
+  isNewTheme: boolean
+  suggestedDomain?: DecisionDomain
+}
+
 export interface ParsedJournalEntry {
   energy: ParsedJournalEnergy
   output: ParsedJournalOutput
@@ -441,6 +448,7 @@ export interface ParsedJournalEntry {
   decisions: ParsedJournalDecision[]
   principles: ParsedJournalPrinciple[]
   beliefs: ParsedJournalBelief[]
+  themeDots: ParsedThemeDotResult[]
 }
 
 const EMPTY_JOURNAL_RESULT: ParsedJournalEntry = {
@@ -457,16 +465,21 @@ const EMPTY_JOURNAL_RESULT: ParsedJournalEntry = {
   decisions: [],
   principles: [],
   beliefs: [],
+  themeDots: [],
 }
 
-export async function parseJournalEntry(journalText: string): Promise<ParsedJournalEntry> {
+export async function parseJournalEntry(journalText: string, activeThemeLabels?: string[]): Promise<ParsedJournalEntry> {
+  const themesContext = activeThemeLabels && activeThemeLabels.length > 0
+    ? `\nACTIVE THEMES (existing patterns the writer is tracking — tag dots to these when relevant):\n${activeThemeLabels.map((t, i) => `  ${i + 1}. "${t}"`).join('\n')}\n`
+    : '\nNo active themes yet — suggest new themes for any observations about recurring patterns.\n'
+
   const prompt = `You are parsing a free-form daily journal entry from a builder/entrepreneur. Extract ONLY data that is explicitly stated or directly described. Do NOT infer numeric values, states, or scores from tone, mood, or vibe — only extract when the writer provides concrete details.
 
 CRITICAL: Prefer null over guessing. It is FAR better to return null than to inflate a field with an inferred value. The extracted data feeds a reward function, so false positives are worse than false negatives.
 
 JOURNAL ENTRY:
 ${journalText}
-
+${themesContext}
 Extract data into these domains. Use null for anything not EXPLICITLY mentioned.
 
 1. ENERGY:
@@ -526,6 +539,21 @@ Extract data into these domains. Use null for anything not EXPLICITLY mentioned.
 13. BELIEFS: Array of testable beliefs or hypotheses explicitly stated. Look for: predictions, assumptions, "I think X", expectations. Only claims the writer explicitly makes — do NOT infer beliefs from narrative. Do NOT duplicate decisions or principles here.
    Each: { statement ("I believe that..." form), confidence (0-100), domain (one of "portfolio", "product", "revenue", "personal", "thesis"), evidenceFor (array of supporting evidence from the text), evidenceAgainst (array of contradicting evidence, if any — empty array if none) }
 
+14. THEME DOTS: This is the MOST IMPORTANT extraction. A "dot" is a discrete observation about a pattern in life, relationships, work, or the world. The writer may not frame it as a pattern — your job is to identify observations that could accumulate into themes over time.
+
+   For each observation that describes a behavior, dynamic, or recurring situation:
+   - Tag it to an existing active theme (if one matches — use the EXACT label from the active themes list)
+   - OR suggest a new theme label if the observation represents a pattern not yet tracked
+
+   Guidelines:
+   - A dot is NOT a fact ("I slept 7 hours") — it's an observation about how things work ("I noticed that when I sleep well, my conversations are sharper")
+   - A dot is NOT a decision or action — it's the observation that might LEAD to a decision
+   - Look for: relationship dynamics, behavioral patterns, cause-effect observations, recurring frustrations, things that keep showing up
+   - Be generous with dot extraction — more dots is better than fewer. The system filters upstream.
+   - Each dot should be a single, atomic observation (not a compound statement)
+
+   Each: { observation (the raw observation in the writer's voice), themeLabel (exact existing theme label OR new suggested label), isNewTheme (true if suggesting a new theme), suggestedDomain (only for new themes: one of "portfolio", "product", "revenue", "personal", "thesis") }
+
 Return ONLY valid JSON (no markdown, no code blocks):
 {
   "energy": { "nervousSystemState": null, "bodyFelt": null, "trainingTypes": [], "sleepHours": null },
@@ -540,7 +568,8 @@ Return ONLY valid JSON (no markdown, no code blocks):
   "cadenceCompleted": [],
   "decisions": [],
   "principles": [],
-  "beliefs": []
+  "beliefs": [],
+  "themeDots": []
 }`
 
   try {
@@ -659,6 +688,12 @@ Return ONLY valid JSON (no markdown, no code blocks):
         evidenceFor: Array.isArray(b.evidenceFor) ? b.evidenceFor.map(String) : [],
         evidenceAgainst: Array.isArray(b.evidenceAgainst) ? b.evidenceAgainst.map(String) : [],
       })).filter((b: { statement: string }) => b.statement.length > 0),
+      themeDots: (parsed.themeDots || []).map((td: Record<string, unknown>) => ({
+        observation: String(td.observation || ''),
+        themeLabel: String(td.themeLabel || ''),
+        isNewTheme: typeof td.isNewTheme === 'boolean' ? td.isNewTheme : true,
+        suggestedDomain: validDomains.includes(td.suggestedDomain as string) ? td.suggestedDomain as DecisionDomain : undefined,
+      })).filter((td: { observation: string; themeLabel: string }) => td.observation.length > 0 && td.themeLabel.length > 0),
     }
   } catch (error) {
     console.error('Error parsing journal entry:', error)
@@ -880,6 +915,12 @@ Return ONLY valid JSON (no markdown, no code blocks):
         evidenceFor: Array.isArray(b.evidenceFor) ? b.evidenceFor.map(String) : [],
         evidenceAgainst: Array.isArray(b.evidenceAgainst) ? b.evidenceAgainst.map(String) : [],
       })).filter((b: { statement: string }) => b.statement.length > 0),
+      themeDots: (raw.themeDots || []).map((td: Record<string, unknown>) => ({
+        observation: String(td.observation || ''),
+        themeLabel: String(td.themeLabel || ''),
+        isNewTheme: typeof td.isNewTheme === 'boolean' ? td.isNewTheme : true,
+        suggestedDomain: validDomains.includes(td.suggestedDomain as string) ? td.suggestedDomain as DecisionDomain : undefined,
+      })).filter((td: { observation: string; themeLabel: string }) => td.observation.length > 0 && td.themeLabel.length > 0),
     }
 
     return { transcript, parsed }

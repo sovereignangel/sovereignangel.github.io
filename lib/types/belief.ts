@@ -27,6 +27,7 @@ export interface Belief {
   status: BeliefStatus
   linkedDecisionIds: string[]
   linkedPrincipleIds: string[]
+  linkedThemeId?: string            // Theme this belief was sharpened from
   sourceJournalDate: string       // YYYY-MM-DD
   attentionDate: string           // YYYY-MM-DD — 21 days from creation, extended with reason
   extensions?: BeliefExtension[]  // audit trail of extensions

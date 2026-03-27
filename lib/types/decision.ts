@@ -21,6 +21,7 @@ export interface Decision {
   antithesis?: string              // AI-generated strongest counter-argument
   antithesisConfidence?: number    // AI confidence in the counter-argument (0-100)
   linkedBeliefIds?: string[]       // beliefs that drove this decision
+  linkedThemeId?: string           // theme this decision relates to
   outcomeScore?: number          // 0-100
   actualOutcome?: string
   learnings?: string

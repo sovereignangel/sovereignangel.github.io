@@ -4,26 +4,29 @@ import { useState, useRef, useCallback } from 'react'
 import { useAuth } from '@/components/auth/AuthProvider'
 import { useBeliefs } from '@/hooks/useBeliefs'
 import { useDecisions } from '@/hooks/useDecisions'
+import { useThemes } from '@/hooks/useThemes'
 import FlowPipeline from './FlowPipeline'
 import DailyJournal from './DailyJournal'
 import JournalLedger from './JournalLedger'
+import ThemesSection from './ThemesSection'
 import BeliefSection from './BeliefSection'
 import DecisionJournal from './DecisionJournal'
 import PrinciplesLedger from './PrinciplesLedger'
-import type { Belief } from '@/lib/types'
+import type { Belief, Theme } from '@/lib/types'
 
-const SECTIONS = ['journal', 'beliefs', 'decisions', 'principles'] as const
+const SECTIONS = ['journal', 'themes', 'beliefs', 'decisions', 'principles'] as const
 type SectionId = typeof SECTIONS[number]
 
 export default function TheMachine() {
   const { user } = useAuth()
+  const { active: activeThemes, readyToCodify, emerging } = useThemes(user?.uid)
   const { active: activeBeliefs, untested, stale } = useBeliefs(user?.uid)
   const { decisions, pendingReview } = useDecisions(user?.uid)
-  const activePrinciples = [] // Will be counted from PrinciplesLedger
   const activeDecisions = decisions.filter(d => d.status === 'active')
 
   const [expanded, setExpanded] = useState<Record<SectionId, boolean>>({
     journal: true,
+    themes: true,
     beliefs: true,
     decisions: true,
     principles: true,
@@ -32,12 +35,14 @@ export default function TheMachine() {
   const [activeSection, setActiveSection] = useState<SectionId>('journal')
 
   const journalRef = useRef<HTMLDivElement>(null)
+  const themesRef = useRef<HTMLDivElement>(null)
   const beliefsRef = useRef<HTMLDivElement>(null)
   const decisionsRef = useRef<HTMLDivElement>(null)
   const principlesRef = useRef<HTMLDivElement>(null)
 
   const sectionRefs: Record<SectionId, React.RefObject<HTMLDivElement | null>> = {
     journal: journalRef,
+    themes: themesRef,
     beliefs: beliefsRef,
     decisions: decisionsRef,
     principles: principlesRef,
@@ -49,10 +54,8 @@ export default function TheMachine() {
 
   const scrollToSection = useCallback((id: string) => {
     const sectionId = id as SectionId
-    // Expand the section if collapsed
     setExpanded(prev => ({ ...prev, [sectionId]: true }))
     setActiveSection(sectionId)
-    // Scroll after a tick to allow expansion
     setTimeout(() => {
       sectionRefs[sectionId]?.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
     }, 50)
@@ -62,11 +65,15 @@ export default function TheMachine() {
     scrollToSection('decisions')
   }, [scrollToSection])
 
-  // Today's journal entries count (approximate from JournalLedger)
-  const journalCount = 0 // DailyJournal handles this internally
+  const handleSharpenToBelief = useCallback((theme: Theme) => {
+    scrollToSection('beliefs')
+  }, [scrollToSection])
+
+  const journalCount = 0
 
   const pipelineStages = [
     { id: 'observe', label: 'Observe', count: journalCount, scrollTo: 'journal' },
+    { id: 'synthesize', label: 'Synthesize', count: activeThemes.length, ready: readyToCodify.length, scrollTo: 'themes' },
     { id: 'believe', label: 'Believe', count: activeBeliefs.length, scrollTo: 'beliefs' },
     { id: 'test', label: 'Test', count: untested.length, alert: untested.length, scrollTo: 'beliefs' },
     { id: 'decide', label: 'Decide', count: activeDecisions.length, scrollTo: 'decisions' },
@@ -85,7 +92,7 @@ export default function TheMachine() {
         />
       </div>
 
-      {/* Collapsible Sections */}
+      {/* OBSERVE — Journal entries (dots) */}
       <CollapsibleSection
         ref={journalRef}
         id="journal"
@@ -99,6 +106,23 @@ export default function TheMachine() {
         <JournalLedger />
       </CollapsibleSection>
 
+      {/* SYNTHESIZE — Themes (patterns across dots) */}
+      <CollapsibleSection
+        ref={themesRef}
+        id="themes"
+        title="SYNTHESIZE"
+        subtitle={`${activeThemes.length} active`}
+        alert={readyToCodify.length > 0 ? `${readyToCodify.length} ready` : undefined}
+        expanded={expanded.themes}
+        onToggle={() => toggle('themes')}
+        onClick={() => setActiveSection('themes')}
+      >
+        <div className="p-3">
+          <ThemesSection onSharpenToBelief={handleSharpenToBelief} />
+        </div>
+      </CollapsibleSection>
+
+      {/* BELIEVE — Testable claims from themes */}
       <CollapsibleSection
         ref={beliefsRef}
         id="beliefs"
@@ -114,6 +138,7 @@ export default function TheMachine() {
         </div>
       </CollapsibleSection>
 
+      {/* DECIDE — Actions testing beliefs */}
       <CollapsibleSection
         ref={decisionsRef}
         id="decisions"
@@ -127,6 +152,7 @@ export default function TheMachine() {
         <DecisionJournal />
       </CollapsibleSection>
 
+      {/* CODIFY — Principles from tested decisions */}
       <CollapsibleSection
         ref={principlesRef}
         id="principles"

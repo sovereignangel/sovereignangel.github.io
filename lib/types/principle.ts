@@ -17,6 +17,7 @@ export interface Principle {
   lastReinforcedAt: string
   linkedDecisionIds: string[]
   linkedBeliefIds?: string[]
+  linkedThemeId?: string           // theme this principle was crystallized from
   isActive: boolean
   lastReviewedAt?: string       // YYYY-MM-DD — for spaced repetition
   reviewInterval?: number       // days until next review

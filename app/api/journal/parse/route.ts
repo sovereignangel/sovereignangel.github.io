@@ -8,7 +8,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json()
-    const { journalText } = body
+    const { journalText, activeThemeLabels } = body
 
     if (!journalText || typeof journalText !== 'string' || journalText.trim().length === 0) {
       return NextResponse.json(
@@ -17,7 +17,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const parsed = await parseJournalEntry(journalText.trim())
+    const themes = Array.isArray(activeThemeLabels) ? activeThemeLabels : undefined
+    const parsed = await parseJournalEntry(journalText.trim(), themes)
 
     return NextResponse.json({ success: true, parsed })
   } catch (error) {
