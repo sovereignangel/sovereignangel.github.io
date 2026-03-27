@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useAuth } from '@/components/auth/AuthProvider'
 import { useThemes } from '@/hooks/useThemes'
 import { useBeliefs } from '@/hooks/useBeliefs'
+import { authFetch } from '@/lib/auth-fetch'
 import type { Theme, ThemeStatus, Belief } from '@/lib/types'
 
 const DOMAIN_COLORS: Record<string, string> = {
@@ -27,13 +28,15 @@ interface ThemesSectionProps {
 
 export default function ThemesSection({ onSharpenToBelief }: ThemesSectionProps) {
   const { user } = useAuth()
-  const { themes, active, readyToCodify, loading, save, remove } = useThemes(user?.uid)
+  const { themes, active, readyToCodify, loading, save, remove, refresh } = useThemes(user?.uid)
   const { beliefs } = useBeliefs(user?.uid)
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [filter, setFilter] = useState<'all' | 'emerging' | 'ready_to_codify' | 'codified'>('all')
   const [showNewForm, setShowNewForm] = useState(false)
   const [newLabel, setNewLabel] = useState('')
   const [newDomain, setNewDomain] = useState<string>('personal')
+  const [backfilling, setBackfilling] = useState(false)
+  const [backfillResult, setBackfillResult] = useState<string | null>(null)
 
   const filtered = filter === 'all'
     ? themes.filter(t => t.status !== 'archived')
@@ -62,6 +65,29 @@ export default function ThemesSection({ onSharpenToBelief }: ThemesSectionProps)
 
   async function handleArchive(themeId: string) {
     await save({ status: 'archived' }, themeId)
+  }
+
+  async function handleBackfill(dryRun: boolean) {
+    setBackfilling(true)
+    setBackfillResult(null)
+    try {
+      const res = await authFetch('/api/journal/backfill-dots', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ dryRun }),
+      })
+      const data = await res.json()
+      if (dryRun) {
+        setBackfillResult(`Preview: ${data.totalDots} dots across ${data.themes?.length || 0} themes from ${data.journalEntriesProcessed} entries`)
+      } else {
+        setBackfillResult(`Done: ${data.totalDots} dots saved. ${data.themesCreated?.length || 0} new themes, ${data.themesUpdated?.length || 0} updated.`)
+        await refresh()
+      }
+    } catch (err) {
+      setBackfillResult(`Error: ${err instanceof Error ? err.message : 'Failed'}`)
+    } finally {
+      setBackfilling(false)
+    }
   }
 
   if (loading) {
@@ -145,10 +171,38 @@ export default function ThemesSection({ onSharpenToBelief }: ThemesSectionProps)
         </div>
       )}
 
+      {/* Backfill */}
+      {themes.length === 0 && (
+        <div className="bg-cream border border-rule rounded-sm p-2 space-y-1.5">
+          <div className="font-serif text-[10px] text-ink-muted">
+            No themes yet. Backfill from existing journal entries to seed your themes.
+          </div>
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={() => handleBackfill(true)}
+              disabled={backfilling}
+              className="font-serif text-[10px] font-medium px-2 py-0.5 rounded-sm border border-rule text-ink-muted hover:border-ink-faint disabled:opacity-40 transition-colors"
+            >
+              {backfilling ? 'Processing...' : 'Preview Backfill'}
+            </button>
+            <button
+              onClick={() => handleBackfill(false)}
+              disabled={backfilling}
+              className="font-serif text-[10px] font-medium px-2 py-0.5 rounded-sm border bg-burgundy text-paper border-burgundy hover:bg-burgundy/90 disabled:opacity-40 transition-colors"
+            >
+              {backfilling ? 'Processing...' : 'Run Backfill'}
+            </button>
+          </div>
+          {backfillResult && (
+            <div className="font-mono text-[10px] text-ink-muted">{backfillResult}</div>
+          )}
+        </div>
+      )}
+
       {/* Theme list */}
-      {filtered.length === 0 ? (
+      {filtered.length === 0 && themes.length > 0 ? (
         <div className="text-[11px] text-ink-muted text-center py-3">
-          No themes yet. Themes emerge as dots accumulate from your journal entries.
+          No themes match this filter.
         </div>
       ) : (
         <div className="space-y-1">
