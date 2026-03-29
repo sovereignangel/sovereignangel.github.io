@@ -1,5 +1,6 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { useAuth } from '@/components/auth/AuthProvider'
 import { todayString } from '@/lib/formatters'
 import type { DailyLog, TrainingType, GarminMetrics, Project } from '@/lib/types'
@@ -37,7 +38,23 @@ export interface DailyLogContextValue {
  */
 export function useDailyLog(): DailyLogContextValue {
   const { user, profile, calendarAccessToken, refreshCalendarToken } = useAuth()
-  const logDate = todayString()
+
+  // Track today's date in state so it updates across midnight
+  const [logDate, setLogDate] = useState(todayString)
+  useEffect(() => {
+    const check = () => {
+      const now = todayString()
+      setLogDate(prev => prev !== now ? now : prev)
+    }
+    // Check every 30 seconds for date rollover
+    const interval = setInterval(check, 30_000)
+    // Also check on tab focus (user returns after being away)
+    window.addEventListener('focus', check)
+    return () => {
+      clearInterval(interval)
+      window.removeEventListener('focus', check)
+    }
+  }, [])
 
   // Fetch today's log and Garmin data
   const { log, setLog, garminData, sleepOverride, setSleepOverride } = useDailyLogData(user?.uid, logDate)

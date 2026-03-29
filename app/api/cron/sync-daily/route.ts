@@ -29,19 +29,33 @@ export async function GET(request: NextRequest) {
   try {
     console.log('🕐 Daily sync cron job started')
 
-    // Sync yesterday's data (since it's now complete)
-    const result = await syncAllData()
+    // Sync today (partial-day Garmin data: steps, stress, body battery)
+    const todayResult = await syncAllData()
 
-    const successCount = Object.values(result.results).filter(Boolean).length
+    // Also sync yesterday to catch overnight metrics (sleep, HRV)
+    const yesterday = new Date()
+    yesterday.setDate(yesterday.getDate() - 1)
+    const yesterdayResult = await syncAllData(yesterday.toISOString().split('T')[0])
+
+    const todaySuccess = Object.values(todayResult.results).filter(Boolean).length
+    const yesterdaySuccess = Object.values(yesterdayResult.results).filter(Boolean).length
 
     return NextResponse.json({
       success: true,
-      date: result.date,
-      results: result.results,
-      successCount,
-      totalSources: Object.keys(result.results).length,
-      durationMs: result.duration_ms,
-      errors: result.errors.length > 0 ? result.errors : undefined
+      today: {
+        date: todayResult.date,
+        results: todayResult.results,
+        successCount: todaySuccess,
+        durationMs: todayResult.duration_ms,
+        errors: todayResult.errors.length > 0 ? todayResult.errors : undefined,
+      },
+      yesterday: {
+        date: yesterdayResult.date,
+        results: yesterdayResult.results,
+        successCount: yesterdaySuccess,
+        durationMs: yesterdayResult.duration_ms,
+        errors: yesterdayResult.errors.length > 0 ? yesterdayResult.errors : undefined,
+      },
     })
 
   } catch (error: any) {
