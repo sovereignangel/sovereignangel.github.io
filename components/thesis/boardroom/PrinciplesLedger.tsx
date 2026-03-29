@@ -276,14 +276,14 @@ export default function PrinciplesLedger() {
                 {isExpanded && (
                   <div className="px-2 pb-2 border-t border-rule-light pt-1.5 space-y-1">
                     <p className="font-serif text-[10px] text-ink leading-relaxed">{p.text}</p>
-                    <div className="flex items-center gap-2 text-ink-faint">
-                      <span className="font-mono text-[8px]">Source: {SOURCE_LABELS[p.source]}</span>
+                    <div className="flex items-center gap-2 text-ink-muted">
+                      <span className="font-mono text-[10px]">Source: {SOURCE_LABELS[p.source]}</span>
                       {p.sourceDescription && (
-                        <span className="font-serif text-[8px] italic">{p.sourceDescription}</span>
+                        <span className="font-serif text-[10px] italic">{p.sourceDescription}</span>
                       )}
                     </div>
-                    <div className="flex items-center gap-2 text-ink-faint">
-                      <span className="font-mono text-[8px]">First applied: {p.dateFirstApplied}</span>
+                    <div className="flex items-center gap-2 text-ink-muted">
+                      <span className="font-mono text-[10px]">First applied: {p.dateFirstApplied}</span>
                       <span className="font-mono text-[8px]">Last reinforced: {p.lastReinforcedAt}</span>
                     </div>
                     {p.linkedDecisionIds.length > 0 && (

@@ -1,0 +1,1210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lori · Command Center</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=JetBrains+Mono:wght@300;400;500&display=swap');
+
+:root {
+  --parchment: #f4efe6;
+  --ink: #1a1612;
+  --iron: #3d3530;
+  --rust: #8b3a2a;
+  --gold: #b8962e;
+  --sage: #4a5e4a;
+  --muted: #7a6f65;
+  --border: rgba(58,48,40,0.15);
+  --card: rgba(255,255,255,0.45);
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  background: var(--parchment);
+  color: var(--ink);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  padding: 28px 20px 60px;
+  min-height: 100vh;
+}
+
+.page { max-width: 960px; margin: 0 auto; }
+
+/* NAV TABS */
+.tabs {
+  display: flex;
+  gap: 2px;
+  margin-bottom: 24px;
+  border-bottom: 1px solid var(--ink);
+}
+.tab {
+  padding: 7px 16px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: all 0.15s;
+}
+.tab.active {
+  color: var(--ink);
+  border-bottom: 2px solid var(--ink);
+}
+.tab:hover { color: var(--ink); }
+
+/* HEADER */
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 24px;
+}
+header h1 {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 26px;
+  font-weight: 300;
+  letter-spacing: 0.06em;
+}
+header .meta {
+  font-size: 10px;
+  color: var(--muted);
+  text-align: right;
+  line-height: 1.7;
+}
+header .meta strong {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 14px;
+  font-style: italic;
+  color: var(--iron);
+  display: block;
+}
+
+/* PANELS */
+.panel { display: none; }
+.panel.active { display: block; }
+
+/* ── SECTION LABEL ── */
+.sec-label {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+  margin-top: 28px;
+}
+.sec-label::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+.sec-label:first-child { margin-top: 0; }
+
+/* ── CARDS ── */
+.grid { display: grid; gap: 10px; }
+.g2 { grid-template-columns: 1fr 1fr; }
+.g3 { grid-template-columns: 1fr 1fr 1fr; }
+.g4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  padding: 14px 16px;
+}
+.card.urgent { border-left: 3px solid var(--rust); }
+.card.important { border-left: 3px solid var(--gold); }
+.card.defer { border-left: 3px solid var(--muted); opacity: 0.7; }
+.card.done { opacity: 0.4; text-decoration: line-through; }
+
+.card-tag {
+  font-size: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--muted);
+  margin-bottom: 5px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.dot { width:5px; height:5px; border-radius:50%; flex-shrink:0; }
+.red { background: var(--rust); }
+.gold { background: var(--gold); }
+.green { background: var(--sage); }
+.gray { background: var(--muted); }
+
+.card-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.2;
+  margin-bottom: 7px;
+}
+.card-body {
+  font-size: 10px;
+  color: var(--iron);
+  line-height: 1.65;
+}
+.card-body ul { padding-left: 12px; }
+.card-body li { margin-bottom: 2px; }
+.card-due {
+  margin-top: 9px;
+  padding-top: 7px;
+  border-top: 1px solid var(--border);
+  font-size: 9px;
+  color: var(--muted);
+}
+.card-due b { color: var(--rust); }
+
+.callout {
+  border-left: 2px solid var(--gold);
+  padding: 10px 14px;
+  background: rgba(184,150,46,0.06);
+  font-size: 10px;
+  color: var(--iron);
+  line-height: 1.6;
+  margin-top: 10px;
+}
+.callout strong {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  display: block;
+  margin-bottom: 3px;
+}
+
+/* ── RISK MATRIX ── */
+.risk-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.risk-card {
+  border: 1px solid var(--border);
+  background: var(--card);
+  padding: 16px;
+}
+
+.risk-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 10px;
+}
+
+.risk-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.risk-level {
+  font-size: 8px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border: 1px solid;
+}
+.level-critical { color: var(--rust); border-color: var(--rust); background: rgba(139,58,42,0.07); }
+.level-high     { color: var(--gold); border-color: var(--gold); background: rgba(184,150,46,0.07); }
+.level-medium   { color: var(--sage); border-color: var(--sage); background: rgba(74,94,74,0.07); }
+.level-low      { color: var(--muted); border-color: var(--muted); background: rgba(122,111,101,0.07); }
+
+.risk-gate {
+  margin-top: 8px;
+  padding: 7px 10px;
+  background: rgba(0,0,0,0.03);
+  border: 1px solid var(--border);
+  font-size: 10px;
+  color: var(--iron);
+  line-height: 1.5;
+}
+.risk-gate .gate-label {
+  font-size: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--muted);
+  margin-bottom: 3px;
+}
+.risk-gate .gate-unlock {
+  font-size: 9px;
+  color: var(--sage);
+  margin-top: 4px;
+}
+
+/* ── GANTT ── */
+.gantt-wrap { overflow-x: auto; }
+.gantt {
+  min-width: 700px;
+  border: 1px solid var(--border);
+}
+.gantt-header {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  border-bottom: 1px solid var(--border);
+  background: rgba(0,0,0,0.03);
+}
+.gantt-header-label {
+  padding: 8px 12px;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--muted);
+  border-right: 1px solid var(--border);
+}
+.gantt-months {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+}
+.gantt-month {
+  padding: 8px 4px;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  text-align: center;
+  border-right: 1px solid var(--border);
+}
+.gantt-month:last-child { border-right: none; }
+.gantt-month.now { color: var(--rust); font-weight: 500; }
+
+.gantt-row {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  border-bottom: 1px solid var(--border);
+  min-height: 36px;
+}
+.gantt-row:last-child { border-bottom: none; }
+.gantt-row-label {
+  padding: 8px 12px;
+  font-size: 10px;
+  color: var(--iron);
+  border-right: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  line-height: 1.4;
+}
+.gantt-row-bar {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  align-items: center;
+  position: relative;
+}
+.gantt-cell {
+  height: 100%;
+  border-right: 1px solid rgba(58,48,40,0.06);
+}
+.gantt-cell:last-child { border-right: none; }
+.gantt-bar {
+  position: absolute;
+  height: 10px;
+  border-radius: 1px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+.bar-rust { background: var(--rust); }
+.bar-gold { background: var(--gold); }
+.bar-sage { background: var(--sage); }
+.bar-muted { background: var(--muted); opacity: 0.5; }
+
+.gantt-milestone {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border: 2px solid var(--rust);
+  transform: rotate(45deg) translateY(-50%);
+  top: 50%;
+  background: var(--parchment);
+}
+
+/* ── GO BAG ── */
+.bag-section { margin-bottom: 18px; }
+.bag-section h3 {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: var(--iron);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+.bag-items {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+}
+.bag-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 10px;
+  color: var(--iron);
+  padding: 5px 8px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  cursor: pointer;
+  transition: background 0.1s;
+  user-select: none;
+}
+.bag-item:hover { background: rgba(255,255,255,0.7); }
+.bag-item.checked {
+  opacity: 0.4;
+  text-decoration: line-through;
+  background: rgba(0,0,0,0.03);
+}
+.bag-item input[type=checkbox] { margin-top: 1px; flex-shrink: 0; accent-color: var(--ink); }
+
+/* ── RELATIONSHIPS ── */
+.rel-card {
+  border: 1px solid var(--border);
+  background: var(--card);
+  padding: 14px 16px;
+  margin-bottom: 10px;
+}
+.rel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 8px;
+}
+.rel-name {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 17px;
+  font-weight: 600;
+}
+.rel-tag {
+  font-size: 8px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border: 1px solid var(--border);
+  color: var(--muted);
+}
+.rel-body { font-size: 10px; color: var(--iron); line-height: 1.65; }
+.rel-body ul { padding-left: 12px; }
+.rel-body li { margin-bottom: 2px; }
+.rel-next {
+  margin-top: 8px;
+  padding: 7px 10px;
+  background: rgba(74,94,74,0.06);
+  border: 1px solid rgba(74,94,74,0.2);
+  font-size: 10px;
+  color: var(--sage);
+}
+.rel-next::before {
+  content: 'NEXT ACTION → ';
+  font-size: 8px;
+  letter-spacing: 0.12em;
+  font-weight: 500;
+}
+
+/* OPEN QUESTIONS */
+.q-list { list-style: none; }
+.q-list li {
+  padding: 9px 14px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  margin-bottom: 6px;
+  font-size: 10px;
+  color: var(--iron);
+  line-height: 1.5;
+  display: flex;
+  gap: 10px;
+}
+.q-list li .q-num {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 15px;
+  font-weight: 300;
+  color: var(--muted);
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+footer {
+  margin-top: 40px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+  font-size: 9px;
+  color: var(--muted);
+  letter-spacing: 0.1em;
+  display: flex;
+  justify-content: space-between;
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+<header>
+  <div>
+    <h1>COMMAND CENTER</h1>
+    <div style="font-size:10px;color:var(--muted);margin-top:5px;letter-spacing:0.1em">LORI CORPUZ · BET ON YOURSELF · MARCH 2026</div>
+  </div>
+  <div class="meta">
+    <strong>Friday, March 20</strong>
+    Aruba departs Sunday · HomeBrew FiDi Mar 28<br>
+    3-month bet window: Apr 1 → Jun 30
+  </div>
+</header>
+
+<div class="tabs">
+  <button class="tab active" onclick="show('priorities')">Priorities</button>
+  <button class="tab" onclick="show('risks')">Risk Gates</button>
+  <button class="tab" onclick="show('gantt')">Timeline</button>
+  <button class="tab" onclick="show('gobag')">Go Bag</button>
+  <button class="tab" onclick="show('relationships')">Relationships</button>
+  <button class="tab" onclick="show('open')">Open Questions</button>
+</div>
+
+<!-- ═══════════════════════════════ PRIORITIES ═══════════════════════════ -->
+<div id="priorities" class="panel active">
+
+  <div class="sec-label">🔴 Tonight — Next 6 Hours</div>
+  <div class="grid g2">
+    <div class="card urgent">
+      <div class="card-tag"><span class="dot red"></span> Housing · Do Now</div>
+      <div class="card-title">Close the Sublet</div>
+      <div class="card-body">
+        <ul>
+          <li>Sublet tour happening now — goal ≥$4,000/mo</li>
+          <li>Covers Mar 22 → Jun 30 fully + potential surplus</li>
+          <li>Lock subletter before boarding Sunday</li>
+          <li>Mailroom: pick up unemployment questionnaire</li>
+          <li>Confirm building access stays for you (sauna, gym)</li>
+        </ul>
+        <div class="callout"><strong>The math in one line</strong> Sublet at $4k = you pay $0 rent. Move to HomeBrew FiDi at $1,500 = 4.5mo runway vs. 2.1mo crisis.</div>
+      </div>
+      <div class="card-due">Due: <b>before Sunday boarding</b></div>
+    </div>
+
+    <div class="card urgent">
+      <div class="card-tag"><span class="dot red"></span> Learning · Tonight</div>
+      <div class="card-title">AI Event — World Models</div>
+      <div class="card-body">
+        <ul>
+          <li>Attend tonight — world models focus</li>
+          <li>Prepare 2-min "brain topology → world models" framing to share</li>
+          <li>Goal: one interesting connection worth a short post</li>
+          <li>Network: anyone useful for Latent Space dinner list?</li>
+          <li>Aidas is there — observe, don't decide anything</li>
+        </ul>
+      </div>
+      <div class="card-due">Tonight — <b>light prep only, don't spiral</b></div>
+    </div>
+  </div>
+
+  <div class="sec-label">🟡 Saturday</div>
+  <div class="grid g2">
+    <div class="card important">
+      <div class="card-tag"><span class="dot gold"></span> Pitch · Saturday</div>
+      <div class="card-title">Dave Deck (5 slides max)</div>
+      <div class="card-body">
+        <ul>
+          <li>Backtest results — even 80% complete is enough</li>
+          <li>1-page performance tearsheet (Sharpe, drawdown, return)</li>
+          <li>Ops overview — his load is minimal, yours is the technical work</li>
+          <li>Regulatory path — paper trading = zero legal surface area</li>
+          <li>The ask slide — see Options A/B/C below</li>
+        </ul>
+        <div class="callout">
+          <strong>Options A / B / C — Know These Cold</strong>
+          <b>Option A (lead):</b> Dave commits as equal partner. $3k/month starting April 1. Equal equity in fund entity, joint strategy decisions, path to exiting Shell. Requires him to believe in you AND the strategy.<br><br>
+          <b>Option B (fallback):</b> He introduces his friend's $50k. You manage it at 2% AUM = $1k/year. Not survival income — but it's AUM on the books, an external investor, and the legal forcing function to set up the fund entity. First external check is the hardest.<br><br>
+          <b>Option C (lowest barrier — land here if needed):</b> No money changes hands now. You both commit to the structure, start the 6-month paper trade clock, revisit capital raise in October when you have the track record. Lowest barrier, still starts the clock.<br><br>
+          Lead A. If he hesitates, land on C. B is available if he wants something tangible without committing capital.
+        </div>
+        <div class="callout"><strong>Sequencing warning</strong> Do NOT lead with rent/runway pressure. Make the ask first. Financial disclosure before the ask undermines your position.</div>
+      </div>
+      <div class="card-due">Due: <b>Saturday EOD — before you pack</b></div>
+    </div>
+
+    <div class="card important">
+      <div class="card-tag"><span class="dot gold"></span> Housing · Saturday</div>
+      <div class="card-title">Apartment Ready to Sublet</div>
+      <div class="card-body">
+        <ul>
+          <li>Deep clean — make it look like the photos</li>
+          <li>Stage: put away personal items, clear surfaces</li>
+          <li>Pack go bag (see Go Bag tab for full checklist)</li>
+          <li>Confirm HomeBrew FiDi move-in: Mar 28 or Apr 1?</li>
+        </ul>
+      </div>
+      <div class="card-due">Due: <b>Saturday EOD</b></div>
+    </div>
+  </div>
+
+  <div class="sec-label">✈️ Aruba — March 22–28</div>
+  <div class="grid g2">
+    <div class="card urgent">
+      <div class="card-tag"><span class="dot red"></span> Primary Mission</div>
+      <div class="card-title">Dave Verbal Commitment</div>
+      <div class="card-body">
+        Lead with Option A. Land on Option C if needed. Option B as fallback. You don't need a signed term sheet from a beach chair. You need him to say yes to the <em>direction</em> before you fly home. See Options A/B/C in the Saturday card above.
+      </div>
+    </div>
+    <div class="card important">
+      <div class="card-tag"><span class="dot gold"></span> Personal</div>
+      <div class="card-title">Imgesu Birthday + Kiteboarding</div>
+      <div class="card-body">
+        4 hrs deep work daily — non-negotiable. Kiteboarding morning block. Be fully present for Imgesu's birthday. Introduce Dave and Aidas — you think they'll connect well.
+      </div>
+    </div>
+  </div>
+  <div class="grid g2" style="margin-top:10px">
+    <div class="card important">
+      <div class="card-tag"><span class="dot gold"></span> Open Question · Aruba</div>
+      <div class="card-title">Daily Deep Work: What Moves the Needle Most?</div>
+      <div class="card-body">
+        Given 4 hrs/day of protected work time in Aruba — what is the single highest-leverage thing you can accomplish each day that compounds your bet on yourself?
+        <div class="callout" style="margin-top:8px">
+          <strong>Candidates to decide between</strong>
+          Backtest progress (directly feeds Dave pitch + tearsheet) · Stanford RL study (compounds into Armstrong) · Sean prep (Tuesday retainer conversation) · Relationship outreach (Dan, Neil, Sam) · Written post from world models event · Armstrong UI improvements for Dave demo
+        </div>
+        Answer: <b>Backtest progress every day first.</b> Everything else is secondary. If you ship 30 min of backtest before kiteboarding each morning, the trip compounds rather than costs you.
+      </div>
+    </div>
+    <div class="card defer">
+      <div class="card-tag"><span class="dot gray"></span> Background Only</div>
+      <div class="card-title">Aidas</div>
+      <div class="card-body">
+        Observe. Don't decide anything from the beach. Come back to Brooklyn to process. Emotional activation running in background costs you hours on what matters. Note what you notice — write it down privately — decide nothing.
+      </div>
+    </div>
+  </div>
+
+  <div class="sec-label">📞 Tuesday March 25 — Sean Conversation</div>
+  <div class="grid g2">
+    <div class="card urgent">
+      <div class="card-tag"><span class="dot red"></span> Prep Before Aruba</div>
+      <div class="card-title">Sean: Retainer + Limit Order Optimization</div>
+      <div class="card-body">
+        <ul>
+          <li><strong>What's on the table:</strong> Sean retainer deal — scope TBD. Limit order optimization is the technical ask.</li>
+          <li><strong>What you need to clarify before the call:</strong> What exactly is he asking you to build? What does "limit order optimization" mean in his context?</li>
+          <li><strong>Your ask:</strong> What is the retainer amount? Monthly or project-based? What are the deliverables and timeline?</li>
+          <li><strong>Your leverage:</strong> You have Armstrong already built. You understand options + screener logic. You are not starting from zero.</li>
+          <li><strong>Positioning:</strong> You are a quant builder with live infrastructure — not a freelancer. Price accordingly.</li>
+        </ul>
+        <div class="callout"><strong>Key question to answer before Tuesday</strong> What is the minimum retainer that makes this worth your time vs. the backtest sprint? If it's under $3k/mo, the opportunity cost of pulling focus from the backtest is probably too high unless the work directly feeds Armstrong.</div>
+      </div>
+      <div class="card-due">Prep by: <b>Sunday before boarding</b> · Call: <b>Tuesday Mar 25</b></div>
+    </div>
+    <div class="card important">
+      <div class="card-tag"><span class="dot gold"></span> Limit Order Optimization</div>
+      <div class="card-title">Technical Context</div>
+      <div class="card-body">
+        Limit order optimization = deciding <em>when and at what price</em> to place limit orders to maximize fill probability while minimizing market impact and slippage. Key variables: bid-ask spread, order book depth, volatility at time of entry, time-in-force parameters.<br><br>
+        <ul>
+          <li>If Sean's ask is "help me automate smarter entries" → directly applicable to Armstrong</li>
+          <li>If it's "build a full execution algo" → scope carefully, this is weeks of work</li>
+          <li>If it's "optimize my existing rules" → 1-2 week project, clean retainer scope</li>
+        </ul>
+        <div class="callout"><strong>Best outcome from Tuesday</strong> $4–6k/month retainer, work that directly overlaps with Armstrong development, Sean as a reference client for future consulting pipeline.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec-label">🟢 April 1 → June 30 — The 3-Month Bet</div>
+  <div class="grid g2">
+    <div class="card important">
+      <div class="card-tag"><span class="dot green"></span> North Star · P1</div>
+      <div class="card-title">Backtest → Tearsheet</div>
+      <div class="card-body">
+        <ul>
+          <li>5–6 hrs/day — the spine of the whole plan</li>
+          <li>Hard deadline: complete + documented by Oct 1</li>
+          <li>Converts "I have a strategy" → "I have evidence"</li>
+          <li>Unlocks: Dave capital, family offices, consulting pitch</li>
+        </ul>
+      </div>
+      <div class="card-due">Hard deadline: <b>October 1</b></div>
+    </div>
+
+    <div class="card important">
+      <div class="card-tag"><span class="dot green"></span> Revenue · P2</div>
+      <div class="card-title">First Consulting Client</div>
+      <div class="card-body">
+        <ul>
+          <li>2 revenue asks/day — logged, 30 min total</li>
+          <li>Target: $3–8k/month quant or AI consulting</li>
+          <li>One client at $3k/mo = runway becomes indefinite</li>
+          <li>Alamo Bernal: counter with performance-linked structure, not flat $1k</li>
+        </ul>
+      </div>
+      <div class="card-due">First ask: <b>April 1</b></div>
+    </div>
+
+    <div class="card important">
+      <div class="card-tag"><span class="dot green"></span> Credentialing · P3</div>
+      <div class="card-title">Stanford RL Coursework</div>
+      <div class="card-body">
+        <ul>
+          <li>2 hrs/day — parallel to backtest, non-negotiable</li>
+          <li>Apply concepts directly into Armstrong as you go</li>
+          <li>Builds AI research surface area for 24-month path</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="card important">
+      <div class="card-tag"><span class="dot gold"></span> Admin · April 15</div>
+      <div class="card-title">Tax Filing + Fundraising Plan</div>
+      <div class="card-body">
+        <ul>
+          <li>Personal taxes due April 15 — options trading gains from 2025</li>
+          <li>Pre-seed capital is <em>not</em> taxable (equity, not income)</li>
+          <li>Action: 30-min CPA call this week to model tax liability vs. runway</li>
+          <li>Williamsburg lease extension decision also due April 15</li>
+        </ul>
+      </div>
+      <div class="card-due">Deadline: <b>April 15</b></div>
+    </div>
+  </div>
+
+  <div class="sec-label">⬜ Defer / Delegate / Drop</div>
+  <div class="grid g3">
+    <div class="card defer">
+      <div class="card-tag"><span class="dot gray"></span> Defer</div>
+      <div class="card-title">Latent Space Dinners</div>
+      <div class="card-body">Post-Aruba, post-housing settled. Invitation artifact is the key touchpoint when ready. Logo intentionally deferred until after 3rd dinner.</div>
+    </div>
+    <div class="card defer">
+      <div class="card-tag"><span class="dot gray"></span> Defer</div>
+      <div class="card-title">Armstrong RL Tinkering</div>
+      <div class="card-body">Signal timing experiments, auto research tabs — valuable learning but zero priority until backtest is done. Do not let these expand into the core 5–6hr block.</div>
+    </div>
+    <div class="card defer">
+      <div class="card-tag"><span class="dot gray"></span> Drop</div>
+      <div class="card-title">Thesis Engine B2B</div>
+      <div class="card-body">Build for you as RL lab first. Do not productize until 3+ paying consulting clients are independently asking for it. Not the 6-month revenue target.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ RISK GATES ═══════════════════════════ -->
+<div id="risks" class="panel">
+  <div class="sec-label">Khosla-Style Derisking — Each Gate Unlocks the Next</div>
+
+  <div class="risk-grid">
+
+    <div class="risk-card">
+      <div class="risk-header">
+        <div class="risk-title">Strategy Risk</div>
+        <div class="risk-level level-critical">Critical</div>
+      </div>
+      <div class="card-body">Does the strategy have real, systematic, repeatable edge — or is it luck?</div>
+      <div class="risk-gate">
+        <div class="gate-label">How you derisk it</div>
+        Completed backtest with drawdown analysis, Sharpe ratio, and sample trades. Walk-forward validation on historical data. Documented rules that remove discretion.
+        <div class="gate-unlock">↳ Unlocks: Dave capital, family office meetings, consulting pitch credibility</div>
+      </div>
+      <div class="risk-gate">
+        <div class="gate-label">Current status</div>
+        ~80% complete. Backtest framework built. Yahoo Finance data loaded. No tearsheet yet.
+      </div>
+      <div class="risk-gate">
+        <div class="gate-label">Kill criteria</div>
+        Backtest shows strategy underperforms market across boom/bust cycles with no explainable edge.
+      </div>
+    </div>
+
+    <div class="risk-card">
+      <div class="risk-header">
+        <div class="risk-title">Partner Risk</div>
+        <div class="risk-level level-critical">Critical</div>
+      </div>
+      <div class="card-body">Will Dave commit? Without a co-founder, you are CEO + quant researcher + sales simultaneously with no checks.</div>
+      <div class="risk-gate">
+        <div class="gate-label">How you derisk it</div>
+        Aruba conversation. Show the backtest. Make a clear ask. Sequence: Option A → Option C. Get verbal commitment to direction before flying home.
+        <div class="gate-unlock">↳ Unlocks: fund entity formation, AUM from his network, shared ops burden, external validation</div>
+      </div>
+      <div class="risk-gate">
+        <div class="gate-label">Current status</div>
+        Dave is engaged, intellectually excited, but cautious. Daydreaming about it. Has not committed.
+      </div>
+      <div class="risk-gate">
+        <div class="gate-label">Kill criteria</div>
+        Dave says no to all options. Pivot: solo paper trading track record → different partner or solo raise in 12 months.
+      </div>
+    </div>
+
+    <div class="risk-card">
+      <div class="risk-header">
+        <div class="risk-title">Revenue Risk</div>
+        <div class="risk-level level-high">High</div>
+      </div>
+      <div class="card-body">Can you generate consulting income before runway runs out? Fund management fees are $0 until capital is raised and performing.</div>
+      <div class="risk-gate">
+        <div class="gate-label">How you derisk it</div>
+        2 revenue asks per day starting April 1, logged. Target: $3–8k/month quant or AI consulting. One client changes runway from 4.5 months to indefinite.
+        <div class="gate-unlock">↳ Unlocks: psychological freedom, removes financial pressure from bet, buys time for backtest to compound</div>
+      </div>
+      <div class="risk-gate">
+        <div class="gate-label">Kill criteria</div>
+        30 days of asks, zero traction. Reassess: is the consulting pitch wrong, or is the market wrong?
+      </div>
+    </div>
+
+    <div class="risk-card">
+      <div class="risk-header">
+        <div class="risk-title">Execution Risk</div>
+        <div class="risk-level level-high">High</div>
+      </div>
+      <div class="card-body">Can you maintain 5–6hr/day focus on the backtest for 6 months while also selling, studying, and managing housing/finances?</div>
+      <div class="risk-gate">
+        <div class="gate-label">How you derisk it</div>
+        FiDi HomeBrew move eliminates commute + social overhead. $1,500/mo burn is sustainable. Deep work 5–6hr morning block is protected before anything else.
+        <div class="gate-unlock">↳ Unlocks: backtest on track, RL study compounds, consulting pipeline builds in parallel</div>
+      </div>
+      <div class="risk-gate">
+        <div class="gate-label">Kill criteria</div>
+        Backtest not 50% done by June 1. If so: ruthlessly cut RL hours, consulting asks, and all non-backtest activity.
+      </div>
+    </div>
+
+    <div class="risk-card">
+      <div class="risk-header">
+        <div class="risk-title">Capital Raise Risk</div>
+        <div class="risk-level level-medium">Medium</div>
+      </div>
+      <div class="card-body">Will investors (Dan Hussain, Neil Kapoor, Sam Cassett, Dave's network) actually write checks?</div>
+      <div class="risk-gate">
+        <div class="gate-label">How you derisk it</div>
+        Tearsheet + 6-month paper trade log + Dave committed = credible package. First check from a non-founder investor changes narrative completely: "I paper trade" → "I manage a fund with outside investors."
+        <div class="gate-unlock">↳ Unlocks: AUM on books, external track record clock starts, 10x more investor conversations open</div>
+      </div>
+      <div class="risk-gate">
+        <div class="gate-label">Timeline</div>
+        Not a 6-month ask. First capital raise conversation appropriate Oct–Dec 2026 after tearsheet exists.
+      </div>
+    </div>
+
+    <div class="risk-card">
+      <div class="risk-header">
+        <div class="risk-title">Regulatory / Legal Risk</div>
+        <div class="risk-level level-medium">Medium</div>
+      </div>
+      <div class="card-body">Can you legally manage other people's money? RIA registration or fund entity required before accepting outside capital.</div>
+      <div class="risk-gate">
+        <div class="gate-label">How you derisk it</div>
+        Paper trading phase = zero regulatory surface area. Get 3 fund formation attorney quotes before raising. 3(c)(1) fund structure (up to 100 accredited investors) is the standard starting path.
+        <div class="gate-unlock">↳ Unlocks: Dave's friend's $50k accepted compliantly, external track record is auditable and credible</div>
+      </div>
+      <div class="risk-gate">
+        <div class="gate-label">Current status</div>
+        No entity formed yet. Not needed until Dave commits. Delegate: get quotes in April, form entity in June.
+      </div>
+    </div>
+
+    <div class="risk-card">
+      <div class="risk-header">
+        <div class="risk-title">Identity / Verbal Risk</div>
+        <div class="risk-level level-high">High</div>
+      </div>
+      <div class="card-body">Known gap between written strategic clarity (sharp) and verbal executive communication (hedging, filler-heavy, authority-undermining). Costs you in Dave pitch and every investor conversation.</div>
+      <div class="risk-gate">
+        <div class="gate-label">How you derisk it</div>
+        Pre-call written analysis documents are your strength — use them. Practice the Dave ask out loud before Aruba. No "I gotta believe" hedging. Lead with the evidence, then make the ask directly.
+        <div class="gate-unlock">↳ Unlocks: Dave says yes, investor conversations land differently, consulting pitch closes faster</div>
+      </div>
+    </div>
+
+    <div class="risk-card">
+      <div class="risk-header">
+        <div class="risk-title">Tax / Financial Risk</div>
+        <div class="risk-level level-high">High</div>
+      </div>
+      <div class="card-body">Options trading gains in 2025 may generate a significant personal tax liability due April 15. This is separate from the fund — it's your personal return.</div>
+      <div class="risk-gate">
+        <div class="gate-label">How you derisk it</div>
+        30-min CPA call this week. Model: what do you owe on 2025 gains? Can you set up a payment plan? Pre-seed capital is NOT taxable — it's equity. Do not confuse the two.
+        <div class="gate-unlock">↳ Unlocks: no surprise bill in April, fundraising can proceed without tax liability hanging over it</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ GANTT ════════════════════════════════ -->
+<div id="gantt" class="panel">
+  <div class="sec-label">Timeline — March 2026 → October 2026</div>
+  <div class="gantt-wrap">
+    <div class="gantt">
+      <div class="gantt-header">
+        <div class="gantt-header-label">Initiative</div>
+        <div class="gantt-months">
+          <div class="gantt-month now">Mar</div>
+          <div class="gantt-month">Apr–May</div>
+          <div class="gantt-month">Jun</div>
+          <div class="gantt-month">Jun</div>
+          <div class="gantt-month">Jul</div>
+          <div class="gantt-month">Aug</div>
+          <div class="gantt-month">Sep</div>
+          <div class="gantt-month">Oct</div>
+        </div>
+      </div>
+
+      <!-- Sublet -->
+      <div class="gantt-row">
+        <div class="gantt-row-label"><span class="dot red"></span>Sublet Williamsburg</div>
+        <div class="gantt-row-bar">
+          <div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div>
+          <div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div>
+          <div class="gantt-cell"></div><div class="gantt-cell"></div>
+          <div class="gantt-bar bar-rust" style="left:0%;width:37.5%"></div>
+        </div>
+      </div>
+
+      <!-- FiDi -->
+      <div class="gantt-row">
+        <div class="gantt-row-label"><span class="dot gold"></span>HomeBrew FiDi</div>
+        <div class="gantt-row-bar">
+          <div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div>
+          <div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div>
+          <div class="gantt-cell"></div><div class="gantt-cell"></div>
+          <div class="gantt-bar bar-gold" style="left:12%;width:50%"></div>
+        </div>
+      </div>
+
+      <!-- Aruba -->
+      <div class="gantt-row">
+        <div class="gantt-row-label"><span class="dot red"></span>Aruba + Dave Pitch</div>
+        <div class="gantt-row-bar">
+          <div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div>
+          <div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div>
+          <div class="gantt-cell"></div><div class="gantt-cell"></div>
+          <div class="gantt-bar bar-rust" style="left:8%;width:6%"></div>
+          <div class="gantt-milestone" style="left:14%;"></div>
+        </div>
+      </div>
+
+      <!-- Backtest -->
+      <div class="gantt-row">
+        <div class="gantt-row-label"><span class="dot green"></span>Backtest Sprint (P1)</div>
+        <div class="gantt-row-bar">
+          <div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div>
+          <div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div>
+          <div class="gantt-cell"></div><div class="gantt-cell"></div>
+          <div class="gantt-bar bar-sage" style="left:12.5%;width:87%"></div>
+          <div class="gantt-milestone" style="left:99%;"></div>
+        </div>
+      </div>
+
+      <!-- Consulting -->
+      <div class="gantt-row">
+        <div class="gantt-row-label"><span class="dot gold"></span>Consulting Revenue</div>
+        <div class="gantt-row-bar">
+          <div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div>
+          <div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div>
+          <div class="gantt-cell"></div><div class="gantt-cell"></div>
+          <div class="gantt-bar bar-gold" style="left:12.5%;width:87%"></div>
+        </div>
+      </div>
+
+      <!-- Stanford RL -->
+      <div class="gantt-row">
+        <div class="gantt-row-label"><span class="dot green"></span>Stanford RL (2hr/day)</div>
+        <div class="gantt-row-bar">
+          <div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div>
+          <div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div>
+          <div class="gantt-cell"></div><div class="gantt-cell"></div>
+          <div class="gantt-bar bar-sage" style="left:12.5%;width:87%;opacity:0.5"></div>
+        </div>
+      </div>
+
+      <!-- Taxes -->
+      <div class="gantt-row">
+        <div class="gantt-row-label"><span class="dot gold"></span>Tax Filing (Apr 15)</div>
+        <div class="gantt-row-bar">
+          <div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div>
+          <div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div>
+          <div class="gantt-cell"></div><div class="gantt-cell"></div>
+          <div class="gantt-bar bar-gold" style="left:12.5%;width:15%"></div>
+          <div class="gantt-milestone" style="left:27%;"></div>
+        </div>
+      </div>
+
+      <!-- Dave commit -->
+      <div class="gantt-row">
+        <div class="gantt-row-label"><span class="dot red"></span>Dave Commits (target)</div>
+        <div class="gantt-row-bar">
+          <div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div>
+          <div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div>
+          <div class="gantt-cell"></div><div class="gantt-cell"></div>
+          <div class="gantt-milestone" style="left:14%;"></div>
+        </div>
+      </div>
+
+      <!-- Paper trading -->
+      <div class="gantt-row">
+        <div class="gantt-row-label"><span class="dot green"></span>Live Paper Trading</div>
+        <div class="gantt-row-bar">
+          <div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div>
+          <div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div>
+          <div class="gantt-cell"></div><div class="gantt-cell"></div>
+          <div class="gantt-bar bar-sage" style="left:12.5%;width:87%;opacity:0.4"></div>
+        </div>
+      </div>
+
+      <!-- Capital raise -->
+      <div class="gantt-row">
+        <div class="gantt-row-label"><span class="dot gray"></span>Capital Raise Convo</div>
+        <div class="gantt-row-bar">
+          <div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div>
+          <div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div>
+          <div class="gantt-cell"></div><div class="gantt-cell"></div>
+          <div class="gantt-bar bar-muted" style="left:87%;width:13%"></div>
+        </div>
+      </div>
+
+      <!-- Jun 30 checkpoint -->
+      <div class="gantt-row">
+        <div class="gantt-row-label"><span class="dot red"></span>3-Month Bet Checkpoint</div>
+        <div class="gantt-row-bar">
+          <div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div>
+          <div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div>
+          <div class="gantt-cell"></div><div class="gantt-cell"></div>
+          <div class="gantt-milestone" style="left:49.5%;"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div style="margin-top:14px;font-size:9px;color:var(--muted);display:flex;gap:20px;align-items:center;">
+    <span><span style="display:inline-block;width:12px;height:4px;background:var(--rust);vertical-align:middle;margin-right:4px"></span>Critical path</span>
+    <span><span style="display:inline-block;width:12px;height:4px;background:var(--gold);vertical-align:middle;margin-right:4px"></span>Important</span>
+    <span><span style="display:inline-block;width:12px;height:4px;background:var(--sage);vertical-align:middle;margin-right:4px"></span>Ongoing sprint</span>
+    <span><span style="display:inline-block;width:8px;height:8px;border:2px solid var(--rust);transform:rotate(45deg);display:inline-block;vertical-align:middle;margin-right:4px"></span>Milestone</span>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ GO BAG ════════════════════════════════ -->
+<div id="gobag" class="panel">
+  <div class="sec-label">Go Bag — Pack Before Sunday · Check Off as You Go</div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+    <div>
+      <div class="bag-section">
+        <h3>Documents + Admin</h3>
+        <div class="bag-items">
+          <label class="bag-item"><input type="checkbox" onchange="toggleCheck(this)"> Passport</label>
+          <label class="bag-item"><input type="checkbox" onchange="toggleCheck(this)"> ID / driver's license</label>
+          <label class="bag-item"><input type="checkbox" onchange="toggleCheck(this)"> Unemployment questionnaire (mailroom)</label>
+          <label class="bag-item"><input type="checkbox" onchange="toggleCheck(this)"> Tax documents (W-9 / 1099 from Primary)</label>
+          <label class="bag-item"><input type="checkbox" onchange="toggleCheck(this)"> Health insurance card</label>
+          <label class="bag-item"><input type="checkbox" onchange="toggleCheck(this)"> Credit cards + debit card</label>
+        </div>
+      </div>
+
+      <div class="bag-section">
+        <h3>Tech</h3>
+        <div class="bag-items">
+          <label class="bag-item"><input type="checkbox" onchange="toggleCheck(this)"> Laptop</label>
+          <label class="bag-item"><input type="checkbox" onchange="toggleCheck(this)"> Laptop charger</label>
+          <label class="bag-item"><input type="checkbox" onchange="toggleCheck(this)"> Phone charger</label>
+          <label class="bag-item"><input type="checkbox" onchange="toggleCheck(this)"> AirPods + case</label>
+          <label class="bag-item"><input type="checkbox" onchange="toggleCheck(this)"> External monitor (if needed at FiDi)</label>
+          <label class="bag-item"><input type="checkbox" onchange="toggleCheck(this)"> USB-C hub / dongles</label>
+        </div>
+      </div>
+
+      <div class="bag-section">
+        <h3>Aruba Specific</h3>
+        <div class="bag-items">
+          <label class="bag-item"><input type="checkbox" onchange="toggleCheck(this)"> Kiteboarding gear / wetsuit</label>
+          <label class="bag-item"><input type="checkbox" onchange="toggleCheck(this)"> Swimwear (2–3 pieces)</label>
+          <label class="bag-item"><input type="checkbox" onchange="toggleCheck(this)"> Sunscreen SPF 50+</label>
+          <label class="bag-item"><input type="checkbox" onchange="toggleCheck(this)"> Sunglasses</label>
+          <label class="bag-item"><input type="checkbox" onchange="toggleCheck(this)"> Light layers (evenings)</label>
+          <label class="bag-item"><input type="checkbox" onchange="toggleCheck(this)"> One nicer outfit (birthday dinner)</label>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="bag-section">
+        <h3>Clothes (FiDi + Daily)</h3>
+        <div class="bag-items">
+          <label class="bag-item"><input type="checkbox" onchange="toggleCheck(this)"> Running outfits × 2</label>
+          <label class="bag-item"><input type="checkbox" onchange="toggleCheck(this)"> Casual everyday × 3–4</label>
+          <label class="bag-item"><input type="checkbox" onchange="toggleCheck(this)"> Business/smart casual × 2</label>
+          <label class="bag-item"><input type="checkbox" onchange="toggleCheck(this)"> Jacket × 3</label>
+          <label class="bag-item"><input type="checkbox" onchange="toggleCheck(this)"> Running shoes</label>
+          <label class="bag-item"><input type="checkbox" onchange="toggleCheck(this)"> Dance shoes</label>
+          <label class="bag-item"><input type="checkbox" onchange="toggleCheck(this)"> Prada shoes</label>
+        </div>
+      </div>
+
+      <div class="bag-section">
+        <h3>Health + Wellness</h3>
+        <div class="bag-items">
+          <label class="bag-item"><input type="checkbox" onchange="toggleCheck(this)"> Supplements</label>
+          <label class="bag-item"><input type="checkbox" onchange="toggleCheck(this)"> Creatine</label>
+          <label class="bag-item"><input type="checkbox" onchange="toggleCheck(this)"> Protein powder</label>
+          <label class="bag-item"><input type="checkbox" onchange="toggleCheck(this)"> Vitamins / daily meds</label>
+          <label class="bag-item"><input type="checkbox" onchange="toggleCheck(this)"> Tums (stomach emergency kit per Dave)</label>
+          <label class="bag-item"><input type="checkbox" onchange="toggleCheck(this)"> Skincare essentials</label>
+        </div>
+      </div>
+
+      <div class="bag-section">
+        <h3>Leave in Williamsburg (Retrieve Later)</h3>
+        <div class="bag-items">
+          <label class="bag-item" style="opacity:0.5"><input type="checkbox" disabled> All furniture</label>
+          <label class="bag-item" style="opacity:0.5"><input type="checkbox" disabled> Books + non-essential decor</label>
+          <label class="bag-item" style="opacity:0.5"><input type="checkbox" disabled> Winter clothes</label>
+          <label class="bag-item" style="opacity:0.5"><input type="checkbox" disabled> Non-essential tech</label>
+          <label class="bag-item" style="opacity:0.5"><input type="checkbox" disabled> Extra shoes / accessories</label>
+          <label class="bag-item" style="opacity:0.5"><input type="checkbox" disabled> Kitchen gear</label>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ RELATIONSHIPS ═════════════════════════ -->
+<div id="relationships" class="panel">
+  <div class="sec-label">Relationship CRM — People to Update + Track</div>
+
+  <div class="rel-card">
+    <div class="rel-header">
+      <div class="rel-name">Dave Moss</div>
+      <div class="rel-tag">Prospective Cofounder · Strategy Partner</div>
+    </div>
+    <div class="rel-body">
+      Mgesu's boyfriend. Strategy originator. Shell employee daydreaming about leaving. Intellectually engaged with Armstrong. Cautious about reputation, operations, regulatory stress. Needs the backtest to exist before he can commit. Last call: walked through Armstrong, RL research tabs, partnership deck. His reaction: curious, excited, slow.
+      <ul style="margin-top:6px">
+        <li>Concerns to address: reputation (paper trading phase protects), ops load (minimal — you do technical), regulatory (paper trading = zero surface area)</li>
+        <li>Sequencing: Option A (equal partner) → Option C (yes to structure, paper trading) → Option B (manage friend's $50k)</li>
+      </ul>
+    </div>
+    <div class="rel-next">Aruba pitch conversation. Deck built before you board. One verbal yes before you fly home.</div>
+  </div>
+
+  <div class="rel-card">
+    <div class="rel-header">
+      <div class="rel-name">Dan Hussain</div>
+      <div class="rel-tag">Prospective Investor · High Confidence</div>
+    </div>
+    <div class="rel-body">
+      In the network. Prospective capital source. Update him post-Aruba on Dave commitment + backtest progress. Do not pitch without a tearsheet.
+    </div>
+    <div class="rel-next">Post-Aruba update call. Keep in the loop. Full pitch after tearsheet exists (Oct–Dec).</div>
+  </div>
+
+  <div class="rel-card">
+    <div class="rel-header">
+      <div class="rel-name">Neil Kapoor</div>
+      <div class="rel-tag">Prospective Investor · Medium Confidence</div>
+    </div>
+    <div class="rel-body">
+      Prospective allocator. Similar timing to Dan — relationship maintenance now, formal pitch post-tearsheet.
+    </div>
+    <div class="rel-next">One touchpoint in April — share what you're building, no ask yet.</div>
+  </div>
+
+  <div class="rel-card">
+    <div class="rel-header">
+      <div class="rel-name">Sam Cassett</div>
+      <div class="rel-tag">Prospective Investor · Varying Confidence</div>
+    </div>
+    <div class="rel-body">
+      Third prospective investor in the network. Same play as Neil — maintain relationship, formal pitch deferred to post-tearsheet.
+    </div>
+    <div class="rel-next">One touchpoint in April. Keep warm.</div>
+  </div>
+
+  <div class="rel-card">
+    <div class="rel-header">
+      <div class="rel-name">Sean</div>
+      <div class="rel-tag">Prospective Client · Retainer Conversation</div>
+    </div>
+    <div class="rel-body">
+      Tuesday March 25 call. Topic: retainer structure + limit order optimization. You are a quant builder with live infrastructure — not a freelancer. Price accordingly. Minimum bar: $3k/mo or the work directly feeds Armstrong development.
+    </div>
+    <div class="rel-next">Prep Sunday before boarding. Call Tuesday Mar 25 from Aruba.</div>
+  </div>
+      <div class="rel-tag">Best Friend · Coworking Partner</div>
+    </div>
+    <div class="rel-body">
+      Best friend and coworking partner. Offered SF housing option through Ryan (deprioritized). Key support person during the bet.
+    </div>
+    <div class="rel-next">Post-Aruba catch-up. Keep them updated on the bet + housing move.</div>
+  </div>
+
+  <div class="rel-card">
+    <div class="rel-header">
+      <div class="rel-name">Aidas</div>
+      <div class="rel-tag">Close Friend · Romantic Interest</div>
+    </div>
+    <div class="rel-body">
+      Strong feelings, not yet expressed directly. Will be in Aruba. Observe — don't decide anything from the beach. Come back to Brooklyn to process. Emotional activation running in background costs focus on what matters this week.
+    </div>
+    <div class="rel-next">Observe in Aruba. Return to Brooklyn before any decisions.</div>
+  </div>
+
+  <div class="rel-card">
+    <div class="rel-header">
+      <div class="rel-name">Imgesu</div>
+      <div class="rel-tag">Close Friend · Dave's Partner</div>
+    </div>
+    <div class="rel-body">
+      Birthday in Aruba. Currently navigating tension in her relationship with Dave — wants space but also wants Dave there. You are effectively acting as COO on the birthday logistics. Be present for her.
+    </div>
+    <div class="rel-next">Aruba: birthday celebration is primary. Be present and supportive.</div>
+  </div>
+
+</div>
+
+<!-- ═══════════════════════════════ OPEN QUESTIONS ════════════════════════ -->
+<div id="open" class="panel">
+  <div class="sec-label">Open Questions — Resolve These Before / After Aruba</div>
+
+  <ul class="q-list">
+    <li><span class="q-num">1</span><div><strong>HomeBrew FiDi move-in:</strong> March 28 or April 1? Confirm before boarding Sunday. Changes packing deadline and whether you move before or after Aruba.</div></li>
+    <li><span class="q-num">2</span><div><strong>Williamsburg lease extension:</strong> What is the extension deadline? Leaning extend or clean break? If extend + keep HomeBrew, model whether sublet income reliably covers Williamsburg rent.</div></li>
+    <li><span class="q-num">3</span><div><strong>Tax liability:</strong> What do you actually owe on 2025 options trading gains? Book a 30-min CPA call this week. Pre-seed capital is not taxable — model only your personal 2025 income.</div></li>
+    <li><span class="q-num">4</span><div><strong>Unemployment questionnaire:</strong> What does it actually require? Is the mailroom visit time-sensitive or can it wait until you return from Aruba?</div></li>
+    <li><span class="q-num">5</span><div><strong>Alamo Bernal:</strong> What is the quality of his strategy? Is it novel and systematizable (worth $1k/month as tuition) or basic (walk unless he accepts performance-linked structure)?</div></li>
+    <li><span class="q-num">6</span><div><strong>Transcript / relationship logging:</strong> What tool are you using to log calls with Dave, investors, consulting leads? Needs to be set up before the volume of conversations increases in April.</div></li>
+    <li><span class="q-num">7</span><div><strong>Fundraising path:</strong> What are the derisking gates between now and a first capital raise? See Risk Gates tab — but specifically: what is your ask when you do pitch Dan / Neil / Sam? AUM target? Fund structure? Timeline?</div></li>
+    <li><span class="q-num">8</span><div><strong>World models event Saturday:</strong> What time? What venue? Who else is going besides you and Aidas?</div></li>
+    <li><span class="q-num">9</span><div><strong>Aidas:</strong> What do you want to say / not say in Aruba? What would make you regret the trip if it went unsaid?</div></li>
+    <li><span class="q-num">10</span><div><strong>Single most avoided action:</strong> What one thing, if you stopped avoiding it, would most change your trajectory? (Left open from the prior Socratic session.)</div></li>
+  </ul>
+</div>
+
+<footer>
+  <span>THESIS ENGINE · COMMAND CENTER</span>
+  <span>Updated Friday March 20 2026 — continue adding context</span>
+</footer>
+
+</div>
+
+<script>
+function show(id) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  event.target.classList.add('active');
+}
+function toggleCheck(cb) {
+  cb.closest('.bag-item').classList.toggle('checked', cb.checked);
+}
+</script>
+</body>
+</html>
