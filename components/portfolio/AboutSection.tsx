@@ -11,7 +11,7 @@ export default function AboutSection() {
         Previously, I built a portfolio management product from scratch at JP Morgan Asset Management that drove a $16.4B revenue line, and helped raise $220M+ across early-stage companies, venture capital, hedge funds, and investment banks.
       </p>
       <p className="text-[#333] mb-4">
-        I study deep learning and reinforcement learning. I practice Kadampa Buddhism. Both are the same discipline—learning to see what&apos;s actually there.
+        I study complexity economics, cognitive science, deep learning, and reinforcement learning. I practice Kadampa Buddhism. Both are the same discipline—learning to see what&apos;s actually there.
       </p>
     </section>
   )
