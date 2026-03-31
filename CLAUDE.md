@@ -475,15 +475,18 @@ DNS and Vercel are set up with **wildcard routing**:
 
 This means **any new subdomain works automatically** — no manual DNS or Vercel config needed.
 
-### Adding a New Venture/Project Site
+### Adding a New Subdomain Site — Launch Checklist
 
-When building a new standalone site (e.g., a partnership proposal, venture page, or micro-app) within this repo:
+When building a new standalone site (e.g., a partnership proposal, venture page, or micro-app) within this repo, follow this checklist **exactly**:
 
-1. **Create the route**: `app/<project-name>/page.tsx` (with layout, components, etc.)
-2. **Add a middleware rewrite** in `middleware.ts` — this is the **primary routing mechanism** for subdomain → route mapping:
+#### Step 1: Create the route
+- Create `app/<project-name>/page.tsx` (with layout, components, etc.)
+- If the site needs API routes, put them at `app/api/<project-name>/...` (NOT under the subdomain route — API routes must stay at `/api/` prefix)
+
+#### Step 2: Add middleware rewrite (ONLY in middleware.ts)
 
 ```typescript
-// In middleware.ts, before the final NextResponse.next():
+// In middleware.ts, before the latentspace block:
 if (host === '<subdomain>.loricorpuz.com') {
   const url = request.nextUrl.clone()
   url.pathname = `/<project-name>${url.pathname === '/' ? '' : url.pathname}`
@@ -491,21 +494,46 @@ if (host === '<subdomain>.loricorpuz.com') {
 }
 ```
 
-> ⚠️ **CRITICAL**: `middleware.ts` is the source of truth for subdomain routing — NOT `next.config.js`. Adding a rewrite only to `next.config.js` will result in 404s. Always add the rule to `middleware.ts`.
+#### Step 3: Pre-launch verification (MANDATORY)
 
-> ⛔ **NEVER add a matching `next.config.js` rewrite for the same subdomain**. If both exist, the config rewrite runs AFTER the middleware rewrite and double-applies the path prefix (e.g., `/scavenger-hunt` → `/scavenger-hunt/scavenger-hunt`), causing a 404. Only `blog.loricorpuz.com` uses `next.config.js` rewrites; all other subdomains use middleware only.
-4. **Merge to master** — that's it. The subdomain will be live.
+- [ ] **No `next.config.js` rewrite for the same subdomain** — check `next.config.js` and confirm zero matching entries. If both exist, the config rewrite runs AFTER the middleware rewrite and double-applies the path prefix (e.g., `/foo` → `/foo/foo`), causing a 404. Only `blog.loricorpuz.com` uses `next.config.js` rewrites; all other subdomains use middleware only.
+- [ ] **No type/export collisions** — if adding new type files to `lib/types/`, check for name collisions with existing barrel exports. Run `npm run build` to catch `Module has already exported a member` errors.
+- [ ] **Build passes** — run `npm run build` and confirm the new route appears in the output (e.g., `○ /lordas  6.56 kB  94.7 kB`)
+- [ ] **API routes use correct path** — client-side fetches from subdomain pages should use relative paths like `/api/<project-name>/...`. The middleware matcher excludes `/api/` paths, so these pass through directly without rewriting.
+
+#### Step 4: Push to master
+
+```bash
+git push origin master
+```
+
+#### Step 5: Post-launch verification
+
+- **Wait 2-3 minutes** for Vercel deployment + SSL certificate provisioning (new subdomains need fresh TLS certs)
+- **Verify with curl**: `curl -s -o /dev/null -w "%{http_code}" https://<subdomain>.loricorpuz.com/`
+  - `200` = live and working
+  - SSL error / connection refused = cert still provisioning, wait and retry
+  - `404` = middleware rewrite not working, check steps 2-3
 
 **No need to**:
-- Add DNS records (wildcard covers it)
+- Add DNS records (wildcard `*.loricorpuz.com` covers it)
 - Add domains in Vercel dashboard (wildcard covers it)
-- Set up SSL certificates (Vercel handles this automatically)
+- Set up SSL certificates (Vercel auto-provisions, takes 1-3 min for new subdomains)
+
+> ⚠️ **CRITICAL**: `middleware.ts` is the source of truth for subdomain routing — NOT `next.config.js`. Adding a rewrite only to `next.config.js` will result in 404s. Always add the rule to `middleware.ts`.
+
+> ⛔ **NEVER add a matching `next.config.js` rewrite for the same subdomain**. Only `blog.loricorpuz.com` uses `next.config.js` rewrites; all other subdomains use middleware only.
 
 ### Existing Subdomain Sites
 
 | Subdomain | Route | Purpose |
 |-----------|-------|---------|
+| `blog.loricorpuz.com` | `/blog` | Blog (uses `next.config.js` rewrite — exception to the middleware-only rule) |
 | `alamobernal.loricorpuz.com` | `/alamo-bernal` | Partnership proposal site for Alamo Bernal Investments |
+| `arc.loricorpuz.com` | `/arc` | Arc site |
+| `aruba.loricorpuz.com` | `/aruba` | Aruba site |
+| `scavengerhunt.loricorpuz.com` | `/scavenger-hunt` | Scavenger hunt game |
+| `lordas.loricorpuz.com` | `/lordas` | Lori & Aidas relationship dashboard |
 
 ## Getting Help
 
@@ -516,4 +544,4 @@ if (host === '<subdomain>.loricorpuz.com') {
 
 ---
 
-**Last Updated**: 2026-02-28 — Added deployment & wildcard subdomain docs
+**Last Updated**: 2026-03-31 — Expanded subdomain launch checklist, added all existing subdomains to table
