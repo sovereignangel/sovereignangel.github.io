@@ -219,7 +219,11 @@ export default function PDFReaderView({
           <div className="flex items-center justify-center h-full">
             <div className="bg-white border border-red-ink/20 rounded-sm p-4 max-w-sm text-center">
               <div className="text-[11px] font-semibold text-red-ink mb-1">Failed to load PDF</div>
-              <div className="text-[10px] text-ink-muted">{loadError}</div>
+              <div className="text-[10px] text-ink-muted">
+                {loadError.includes('401') || loadError.includes('Unexpected server response')
+                  ? 'This book is lending-only on Internet Archive and cannot be downloaded directly. Try borrowing it on archive.org first, or upload a PDF you already have.'
+                  : loadError}
+              </div>
             </div>
           </div>
         ) : (

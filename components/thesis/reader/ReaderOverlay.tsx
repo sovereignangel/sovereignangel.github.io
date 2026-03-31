@@ -25,7 +25,11 @@ interface ReaderOverlayProps {
 type HighlightColor = 'burgundy' | 'green' | 'amber'
 
 export default function ReaderOverlay({ source, onClose }: ReaderOverlayProps) {
-  const proxyUrl = `/api/archive-proxy?url=${encodeURIComponent(source.sourceUrl)}`
+  // Blob URLs (uploaded PDFs) and data URLs don't need proxying
+  const needsProxy = !source.sourceUrl.startsWith('blob:') && !source.sourceUrl.startsWith('data:')
+  const proxyUrl = needsProxy
+    ? `/api/archive-proxy?url=${encodeURIComponent(source.sourceUrl)}`
+    : source.sourceUrl
 
   const {
     session,
