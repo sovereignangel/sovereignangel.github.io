@@ -32,6 +32,13 @@ export function middleware(request: NextRequest) {
     return NextResponse.rewrite(url)
   }
 
+  // lordas.loricorpuz.com → rewrite to /lordas
+  if (host === 'lordas.loricorpuz.com') {
+    const url = request.nextUrl.clone()
+    url.pathname = `/lordas${url.pathname === '/' ? '' : url.pathname}`
+    return NextResponse.rewrite(url)
+  }
+
   // latentspace.loricorpuz.com — hidden from public
   if (host.startsWith('latentspace.')) {
     return new NextResponse('Not Found', { status: 404 })
