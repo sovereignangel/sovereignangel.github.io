@@ -29,7 +29,7 @@ export function PinGate({ onSubmit, error }: PinGateProps) {
           LORDAS
         </h1>
         <p className="text-[11px] mt-1 mb-6" style={{ color: '#8a7e72' }}>
-          Relationship Dashboard
+          Connection Insights
         </p>
 
         <form

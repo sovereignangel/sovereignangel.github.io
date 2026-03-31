@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
   title: 'Lordas',
-  description: 'Relationship health dashboard',
+  description: 'Connection insights dashboard',
   robots: 'noindex, nofollow',
 }
 
