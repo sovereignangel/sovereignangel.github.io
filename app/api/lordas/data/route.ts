@@ -38,13 +38,7 @@ export async function GET(request: NextRequest) {
       userRef.collection('relationship_snapshots').orderBy('date', 'desc').limit(30).get(),
     ])
 
-    // Strip transcriptText from conversations (privacy — don't send raw text to client)
-    const conversations = convsSnap.docs.map(d => {
-      const data = d.data()
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { transcriptText, ...rest } = data
-      return rest
-    })
+    const conversations = convsSnap.docs.map(d => d.data())
 
     const themes = themesSnap.docs.map(d => d.data())
     const values = valuesSnap.docs.map(d => d.data())

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import type { RelationshipConversation } from '@/lib/types'
 
 interface SessionTimelineProps {
@@ -17,64 +17,119 @@ const TONE_STYLES: Record<string, { bg: string; text: string }> = {
 
 export function SessionTimeline({ conversations }: SessionTimelineProps) {
   const [expanded, setExpanded] = useState<string | null>(null)
+  const [search, setSearch] = useState('')
+
+  const filtered = useMemo(() => {
+    if (!search.trim()) return conversations
+    const q = search.toLowerCase()
+    return conversations.filter(conv => {
+      const { extraction } = conv
+      return (
+        extraction.triggerTopic.toLowerCase().includes(q) ||
+        extraction.domain.toLowerCase().includes(q) ||
+        extraction.overallTone.toLowerCase().includes(q) ||
+        extraction.keyTakeaways.some(t => t.toLowerCase().includes(q)) ||
+        extraction.actionItems.some(a => a.task.toLowerCase().includes(q)) ||
+        extraction.newUnderstandings.some(u => u.toLowerCase().includes(q)) ||
+        extraction.valuesExpressed.some(v => v.value.toLowerCase().includes(q)) ||
+        extraction.priorityConflicts.some(c => c.topic.toLowerCase().includes(q)) ||
+        conv.date.includes(q) ||
+        (conv.transcriptText || '').toLowerCase().includes(q)
+      )
+    })
+  }, [conversations, search])
 
   if (conversations.length === 0) return null
 
   return (
     <div>
-      {/* Section header */}
+      {/* Section header + search */}
       <div className="flex items-center gap-2 mb-3 pb-1.5 border-b-2" style={{ borderColor: '#d8cfc4' }}>
         <h2 className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px]" style={{ color: '#2a2420' }}>
           Sessions
         </h2>
-        <span className="text-[10px] ml-auto" style={{ color: '#8a7e72' }}>
-          {conversations.length} total
+        <input
+          type="text"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search sessions..."
+          className="ml-auto text-[11px] py-1 px-2 rounded-sm border focus:outline-none focus:border-[#b85c38] transition-colors w-[200px]"
+          style={{
+            backgroundColor: '#faf7f2',
+            borderColor: '#d8cfc4',
+            color: '#2a2420',
+          }}
+        />
+        <span className="text-[10px] shrink-0" style={{ color: '#8a7e72' }}>
+          {filtered.length === conversations.length
+            ? `${conversations.length} total`
+            : `${filtered.length} of ${conversations.length}`}
         </span>
       </div>
 
       <div className="space-y-1">
-        {conversations.map(conv => {
+        {filtered.map(conv => {
           const isExpanded = expanded === conv.id
           const toneStyle = TONE_STYLES[conv.extraction.overallTone] || TONE_STYLES.constructive
           const { extraction, scores } = conv
+          const transcriptText = conv.transcriptText || ''
 
           return (
             <div key={conv.id}>
-              {/* Summary row */}
+              {/* Summary row — date, topic, takeaways preview, tone, score */}
               <button
                 onClick={() => setExpanded(isExpanded ? null : conv.id)}
-                className="w-full flex items-center gap-3 px-3 py-2 rounded-sm border text-left transition-colors"
+                className="w-full px-3 py-2 rounded-sm border text-left transition-colors"
                 style={{
                   backgroundColor: isExpanded ? '#faf7f2' : 'transparent',
                   borderColor: isExpanded ? '#d8cfc4' : 'transparent',
                 }}
               >
-                <span className="text-[11px] font-mono shrink-0" style={{ color: '#8a7e72' }}>
-                  {formatDate(conv.date)}
-                </span>
-                <span className="text-[11px] font-medium truncate" style={{ color: '#2a2420' }}>
-                  {extraction.triggerTopic}
-                </span>
-                <span className="text-[9px] capitalize shrink-0" style={{ color: '#8a7e72' }}>
-                  {extraction.domain}
-                </span>
-                <span
-                  className="text-[8px] font-mono uppercase px-1.5 py-0.5 rounded-sm shrink-0"
-                  style={{ backgroundColor: toneStyle.bg, color: toneStyle.text }}
-                >
-                  {extraction.overallTone}
-                </span>
-                <span className="font-mono text-[11px] font-semibold shrink-0 ml-auto" style={{ color: '#2a2420' }}>
-                  {scores.composite.toFixed(1)}
-                </span>
-                <span className="text-[10px]" style={{ color: '#c0b8aa' }}>
-                  {isExpanded ? '▾' : '▸'}
-                </span>
+                <div className="flex items-center gap-3">
+                  <span className="text-[11px] font-mono shrink-0" style={{ color: '#8a7e72' }}>
+                    {formatDate(conv.date)}
+                  </span>
+                  <span className="text-[11px] font-medium truncate" style={{ color: '#2a2420' }}>
+                    {extraction.triggerTopic}
+                  </span>
+                  <span className="text-[9px] capitalize shrink-0" style={{ color: '#8a7e72' }}>
+                    {extraction.domain}
+                  </span>
+                  <span
+                    className="text-[8px] font-mono uppercase px-1.5 py-0.5 rounded-sm shrink-0"
+                    style={{ backgroundColor: toneStyle.bg, color: toneStyle.text }}
+                  >
+                    {extraction.overallTone}
+                  </span>
+                  <span className="font-mono text-[11px] font-semibold shrink-0 ml-auto" style={{ color: '#2a2420' }}>
+                    {scores.composite.toFixed(1)}
+                  </span>
+                  <span className="text-[10px]" style={{ color: '#c0b8aa' }}>
+                    {isExpanded ? '▾' : '▸'}
+                  </span>
+                </div>
+
+                {/* Takeaways preview — always visible */}
+                {extraction.keyTakeaways.length > 0 && !isExpanded && (
+                  <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5">
+                    {extraction.keyTakeaways.slice(0, 2).map((t, i) => (
+                      <span key={i} className="text-[10px] truncate max-w-[400px]" style={{ color: '#8a7e72' }}>
+                        • {t}
+                      </span>
+                    ))}
+                    {extraction.keyTakeaways.length > 2 && (
+                      <span className="text-[9px]" style={{ color: '#c0b8aa' }}>
+                        +{extraction.keyTakeaways.length - 2} more
+                      </span>
+                    )}
+                  </div>
+                )}
               </button>
 
               {/* Expanded detail */}
               {isExpanded && (
-                <div className="mx-3 mb-2 px-3 py-2 border-x border-b rounded-b-sm" style={{ borderColor: '#d8cfc4' }}>
+                <div className="mx-3 mb-2 px-3 py-3 border-x border-b rounded-b-sm" style={{ borderColor: '#d8cfc4', backgroundColor: '#faf7f2' }}>
+                  {/* Scores */}
                   <div className="grid grid-cols-3 gap-3 mb-3">
                     <ScoreBadge label="Safety" value={scores.safety} color="#2d5f4a" />
                     <ScoreBadge label="Growth" value={scores.growth} color="#b85c38" />
@@ -83,7 +138,7 @@ export function SessionTimeline({ conversations }: SessionTimelineProps) {
 
                   {/* Key takeaways */}
                   {extraction.keyTakeaways.length > 0 && (
-                    <div className="mb-2">
+                    <div className="mb-3">
                       <p className="text-[9px] font-semibold uppercase tracking-[0.5px] mb-1" style={{ color: '#8a7e72' }}>
                         Key Takeaways
                       </p>
@@ -99,7 +154,7 @@ export function SessionTimeline({ conversations }: SessionTimelineProps) {
 
                   {/* Action items */}
                   {extraction.actionItems.length > 0 && (
-                    <div>
+                    <div className="mb-3">
                       <p className="text-[9px] font-semibold uppercase tracking-[0.5px] mb-1" style={{ color: '#8a7e72' }}>
                         Action Items
                       </p>
@@ -118,6 +173,11 @@ export function SessionTimeline({ conversations }: SessionTimelineProps) {
                     </div>
                   )}
 
+                  {/* Transcript */}
+                  {transcriptText && (
+                    <TranscriptSection text={transcriptText} />
+                  )}
+
                   {/* Duration */}
                   {conv.durationMinutes > 0 && (
                     <p className="text-[9px] mt-2" style={{ color: '#c0b8aa' }}>
@@ -129,7 +189,47 @@ export function SessionTimeline({ conversations }: SessionTimelineProps) {
             </div>
           )
         })}
+
+        {filtered.length === 0 && search.trim() && (
+          <p className="text-[11px] py-4 text-center" style={{ color: '#8a7e72' }}>
+            No sessions match &ldquo;{search}&rdquo;
+          </p>
+        )}
       </div>
+    </div>
+  )
+}
+
+function TranscriptSection({ text }: { text: string }) {
+  const [showFull, setShowFull] = useState(false)
+  const preview = text.slice(0, 600)
+  const isLong = text.length > 600
+
+  return (
+    <div className="mt-2 pt-2 border-t" style={{ borderColor: '#e8e0d6' }}>
+      <p className="text-[9px] font-semibold uppercase tracking-[0.5px] mb-1" style={{ color: '#8a7e72' }}>
+        Transcript
+      </p>
+      <div
+        className="text-[10px] leading-relaxed whitespace-pre-wrap font-mono rounded-sm p-2 border overflow-y-auto"
+        style={{
+          color: '#2a2420',
+          backgroundColor: '#f5f0e8',
+          borderColor: '#e8e0d6',
+          maxHeight: showFull ? '400px' : '120px',
+        }}
+      >
+        {showFull ? text : preview}{!showFull && isLong ? '...' : ''}
+      </div>
+      {isLong && (
+        <button
+          onClick={() => setShowFull(!showFull)}
+          className="text-[9px] font-medium mt-1 transition-colors"
+          style={{ color: '#b85c38' }}
+        >
+          {showFull ? 'Show less' : `Show full transcript (${Math.round(text.length / 1000)}k chars)`}
+        </button>
+      )}
     </div>
   )
 }
