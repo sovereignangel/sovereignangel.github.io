@@ -136,7 +136,7 @@ export function SafetyPillar({ conversations }: SafetyPillarProps) {
             Repair & Resilience
           </h3>
           <p className="text-[10px] mb-3" style={{ color: '#8a7e72' }}>
-            The #1 predictor of relationship success
+            The #1 predictor of connection success
           </p>
 
           {/* Repair rate */}

@@ -42,7 +42,7 @@ export function EmptyOutline() {
             },
             {
               title: 'Repair & Resilience',
-              description: 'How well you recover from conflict \u2014 the #1 predictor of relationship success',
+              description: 'How well you recover from conflict \u2014 the #1 predictor of connection success',
               items: [
                 'Repair attempts: humor, affection, accountability, de-escalation',
                 'Success rate per session and rolling average',
@@ -148,7 +148,7 @@ export function EmptyOutline() {
           </p>
           <p className="text-[10px]" style={{ color: '#8a7e72' }}>
             Safety weighted highest because without it, nothing else is honest.
-            Metrics use 5-session rolling averages so one bad conversation doesn&apos;t define the relationship.
+            Metrics use 5-session rolling averages so one bad conversation doesn&apos;t define the connection.
           </p>
         </div>
       </div>
