@@ -24,7 +24,7 @@ export function DashboardHeader({ latest, snapshot, conversationCount }: Dashboa
               LORDAS
             </h1>
             <p className="text-[10px] uppercase tracking-[0.5px]" style={{ color: '#8a7e72' }}>
-              Lori & Aidas · Partnership Dashboard
+              Lori & Aidas · Relationship Dashboard
             </p>
           </div>
         </div>
@@ -49,7 +49,7 @@ export function DashboardHeader({ latest, snapshot, conversationCount }: Dashboa
         <div className="flex items-end gap-6">
           <div>
             <p className="text-[10px] uppercase tracking-[0.5px] mb-0.5" style={{ color: '#8a7e72' }}>
-              Partnership Health
+              Relationship Health
             </p>
             <div className="flex items-baseline gap-1">
               <span className="font-mono text-[32px] font-semibold leading-none" style={{ color: '#2a2420' }}>

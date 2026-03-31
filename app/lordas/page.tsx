@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { PinGate } from '@/components/lordas/PinGate'
 import { DashboardHeader } from '@/components/lordas/DashboardHeader'
+import { EmptyOutline } from '@/components/lordas/EmptyOutline'
 import { SafetyPillar } from '@/components/lordas/SafetyPillar'
 import { GrowthPillar } from '@/components/lordas/GrowthPillar'
 import { AlignmentPillar } from '@/components/lordas/AlignmentPillar'
@@ -104,14 +105,20 @@ export default function LordasPage() {
       />
 
       <div className="mt-6 space-y-6">
-        <SafetyPillar conversations={conversations} />
-        <GrowthPillar conversations={conversations} />
-        <AlignmentPillar
-          conversations={conversations}
-          themes={themes}
-          values={values}
-        />
-        <SessionTimeline conversations={conversations} />
+        {conversations.length === 0 ? (
+          <EmptyOutline />
+        ) : (
+          <>
+            <SafetyPillar conversations={conversations} />
+            <GrowthPillar conversations={conversations} />
+            <AlignmentPillar
+              conversations={conversations}
+              themes={themes}
+              values={values}
+            />
+            <SessionTimeline conversations={conversations} />
+          </>
+        )}
       </div>
     </div>
   )

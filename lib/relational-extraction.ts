@@ -1,7 +1,7 @@
 /**
  * Relational transcript extraction and scoring engine.
  *
- * Extracts partnership health metrics from conflict-resolution transcripts
+ * Extracts relationship health metrics from conflict-resolution transcripts
  * using Gottman, Perel, Johnson, Real, and Tatkin frameworks.
  *
  * Computes Safety, Growth, and Alignment pillar scores.
@@ -20,7 +20,7 @@ import type {
 
 export function isRelationalTranscript(text: string): boolean {
   const snippet = text.slice(0, 500).toLowerCase()
-  return /relational\s+transcript/i.test(snippet)
+  return /relational\s+transcript/i.test(snippet) || /relationship\s+transcript/i.test(snippet)
 }
 
 // ---------------------------------------------------------------------------
