@@ -23,11 +23,14 @@ interface DashboardData {
   snapshots: RelationshipSnapshot[]
 }
 
+type Tab = 'dashboard' | 'theory'
+
 export default function LordasPage() {
   const [pin, setPin] = useState<string | null>(null)
   const [data, setData] = useState<DashboardData | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [tab, setTab] = useState<Tab>('dashboard')
 
   // Check for stored PIN on mount
   useEffect(() => {
@@ -105,12 +108,30 @@ export default function LordasPage() {
         conversationCount={conversations.length}
       />
 
+      {/* Tab nav */}
+      <div className="flex gap-4 mt-4 border-b" style={{ borderColor: '#d8cfc4' }}>
+        {(['dashboard', 'theory'] as Tab[]).map((t) => (
+          <button
+            key={t}
+            onClick={() => setTab(t)}
+            className="font-serif text-[14px] pb-2 transition-colors"
+            style={{
+              color: tab === t ? '#b85c38' : '#8a7e72',
+              fontWeight: tab === t ? 600 : 400,
+              borderBottom: tab === t ? '2px solid #b85c38' : '2px solid transparent',
+              marginBottom: '-1px',
+            }}
+          >
+            {t === 'dashboard' ? 'Dashboard' : 'Theory & Application'}
+          </button>
+        ))}
+      </div>
+
       <div className="mt-6 space-y-6">
-        {conversations.length === 0 ? (
-          <>
-            <EmptyOutline />
-            <TheorySection conversations={[]} />
-          </>
+        {tab === 'theory' ? (
+          <TheorySection conversations={conversations} />
+        ) : conversations.length === 0 ? (
+          <EmptyOutline />
         ) : (
           <>
             <SafetyPillar conversations={conversations} />
@@ -120,7 +141,6 @@ export default function LordasPage() {
               themes={themes}
               values={values}
             />
-            <TheorySection conversations={conversations} />
             <SessionTimeline conversations={conversations} />
           </>
         )}
