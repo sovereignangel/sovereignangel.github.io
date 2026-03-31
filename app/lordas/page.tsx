@@ -8,6 +8,7 @@ import { SafetyPillar } from '@/components/lordas/SafetyPillar'
 import { GrowthPillar } from '@/components/lordas/GrowthPillar'
 import { AlignmentPillar } from '@/components/lordas/AlignmentPillar'
 import { SessionTimeline } from '@/components/lordas/SessionTimeline'
+import { TheorySection } from '@/components/lordas/TheorySection'
 import type {
   RelationshipConversation,
   RelationshipTheme,
@@ -106,7 +107,10 @@ export default function LordasPage() {
 
       <div className="mt-6 space-y-6">
         {conversations.length === 0 ? (
-          <EmptyOutline />
+          <>
+            <EmptyOutline />
+            <TheorySection conversations={[]} />
+          </>
         ) : (
           <>
             <SafetyPillar conversations={conversations} />
@@ -116,6 +120,7 @@ export default function LordasPage() {
               themes={themes}
               values={values}
             />
+            <TheorySection conversations={conversations} />
             <SessionTimeline conversations={conversations} />
           </>
         )}
