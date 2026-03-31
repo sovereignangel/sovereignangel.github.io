@@ -3,7 +3,7 @@ import type { ThesisPillar } from './shared'
 
 // ─── Document Source Types ───────────────────────────────────────────────────
 
-export type DocumentSourceType = 'arxiv_pdf' | 'archive_org' | 'direct_url' | 'semantic_scholar'
+export type DocumentSourceType = 'arxiv_pdf' | 'archive_org' | 'direct_url' | 'semantic_scholar' | 'uploaded_pdf' | 'web_article' | 'uploaded_pdf' | 'web_article'
 
 // ─── Highlight & Annotation ─────────────────────────────────────────────────
 
@@ -57,6 +57,12 @@ export interface ReadingSession {
   highlights: ReadingHighlight[]
   notes: string[]
   questions: ReadingQA[]
+
+  // Web article content (stored for offline reading)
+  articleContent?: string
+  articleExcerpt?: string
+  siteName?: string
+  coverImage?: string
 
   // Linking
   linkedKnowledgeItemId?: string

@@ -40,6 +40,13 @@ export function middleware(request: NextRequest) {
     return NextResponse.rewrite(url)
   }
 
+  // read.loricorpuz.com → rewrite to /read
+  if (host === 'read.loricorpuz.com') {
+    const url = request.nextUrl.clone()
+    url.pathname = `/read${url.pathname === '/' ? '' : url.pathname}`
+    return NextResponse.rewrite(url)
+  }
+
   // lordas.loricorpuz.com → rewrite to /lordas
   if (host === 'lordas.loricorpuz.com') {
     const url = request.nextUrl.clone()
