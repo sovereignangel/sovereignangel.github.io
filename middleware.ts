@@ -4,6 +4,14 @@ import type { NextRequest } from 'next/server'
 export function middleware(request: NextRequest) {
   const host = request.headers.get('host') || ''
 
+  // Force HTTPS on subdomains — prevents HTTP/HTTPS CORS mismatch
+  const proto = request.headers.get('x-forwarded-proto') || 'https'
+  if (proto === 'http' && host.endsWith('.loricorpuz.com')) {
+    const httpsUrl = new URL(request.url)
+    httpsUrl.protocol = 'https:'
+    return NextResponse.redirect(httpsUrl, 308)
+  }
+
   // alamobernal.loricorpuz.com → rewrite to /alamo-bernal
   if (host === 'alamobernal.loricorpuz.com') {
     const url = request.nextUrl.clone()
