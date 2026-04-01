@@ -21,33 +21,9 @@ const C = {
 export default function StillPointPage() {
   return (
     <div className="max-w-[680px] mx-auto px-6 py-16 font-serif">
-      {/* Hero */}
+      {/* Hero — Eliot first */}
       <header className="mb-20">
-        <h1
-          className="text-[28px] font-semibold tracking-tight leading-tight mb-6"
-          style={{ color: C.moss }}
-        >
-          Still Point
-        </h1>
-        <p className="text-[13px] uppercase tracking-[1.5px] mb-12" style={{ color: C.stone }}>
-          A weekend for inner work
-        </p>
-
-        {/* Keynes quote */}
-        <blockquote className="border-l-2 pl-6 my-10" style={{ borderColor: C.moss }}>
-          <p className="text-[17px] leading-relaxed italic" style={{ color: C.graphite }}>
-            &ldquo;One&rsquo;s prime objects in life were love, the creation and enjoyment of aesthetic experience
-            and the pursuit of knowledge. Of these love came a long way first.&rdquo;
-          </p>
-          <cite className="block mt-3 text-[12px] not-italic" style={{ color: C.stone }}>
-            — John Maynard Keynes, <em>My Early Beliefs</em> (1938)
-          </cite>
-        </blockquote>
-      </header>
-
-      {/* The Still Point */}
-      <section className="mb-16">
-        <blockquote className="text-center py-10">
+        <blockquote className="text-center py-6 mb-12">
           <p className="text-[15px] leading-loose italic" style={{ color: C.muted }}>
             At the still point of the turning world. Neither flesh nor fleshless;<br />
             Neither from nor towards; at the still point, there the dance is,<br />
@@ -60,11 +36,21 @@ export default function StillPointPage() {
             — T.S. Eliot, <em>Burnt Norton</em> (1935)
           </cite>
         </blockquote>
-      </section>
+
+        <h1
+          className="text-[28px] font-semibold tracking-tight leading-tight mb-6"
+          style={{ color: C.moss }}
+        >
+          Still Point
+        </h1>
+        <p className="text-[13px] uppercase tracking-[1.5px]" style={{ color: C.stone }}>
+          A weekend for inner work
+        </p>
+      </header>
 
       <Divider />
 
-      {/* The Premise */}
+      {/* The Premise — with Keynes */}
       <section className="mb-16">
         <SectionTitle>The Premise</SectionTitle>
         <p className="text-[14px] leading-relaxed mb-4" style={{ color: C.graphite }}>
@@ -75,10 +61,26 @@ export default function StillPointPage() {
           LinkedIn summary. The actual thing. The pattern you keep running. The conversation you keep avoiding.
           The part of you that you manage instead of meet.
         </p>
-        <p className="text-[14px] leading-relaxed" style={{ color: C.muted }}>
+        <p className="text-[14px] leading-relaxed mb-4" style={{ color: C.muted }}>
           The format is structured transparency: pre-work before you arrive, facilitated 1:1 sessions
           during the weekend, and group work where the room holds what you can&rsquo;t hold alone.
           Everything is grounded in the best research we have on how humans actually change.
+        </p>
+
+        <blockquote className="border-l-2 pl-6 my-8" style={{ borderColor: C.moss }}>
+          <p className="text-[15px] leading-relaxed italic" style={{ color: C.graphite }}>
+            &ldquo;One&rsquo;s prime objects in life were love, the creation and enjoyment of aesthetic experience
+            and the pursuit of knowledge. Of these love came a long way first.&rdquo;
+          </p>
+          <cite className="block mt-3 text-[12px] not-italic" style={{ color: C.stone }}>
+            — John Maynard Keynes, <em>My Early Beliefs</em> (1938)
+          </cite>
+        </blockquote>
+
+        <p className="text-[14px] leading-relaxed" style={{ color: C.muted }}>
+          This weekend is built around that conviction. Love, beauty, knowledge — pursued not as
+          abstractions but through the willingness to be honest about what&rsquo;s actually happening
+          inside you, and to do that work in the company of people who are doing the same.
         </p>
       </section>
 
