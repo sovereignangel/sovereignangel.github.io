@@ -331,68 +331,88 @@ export default function CommandCenter() {
   }
 
   return (
-    <div className="p-3 space-y-3 max-w-[1400px] mx-auto overflow-y-auto" style={{ maxHeight: 'calc(100vh - 100px)' }}>
-      {/* ═══ VIEW TOGGLE ═══ */}
-      <div className="flex items-center justify-between">
-        <div className="flex gap-1">
-          {(['dashboard', 'strategic'] as const).map(v => (
-            <button
-              key={v}
-              onClick={() => setView(v)}
-              className={`font-serif text-[11px] px-2 py-1 rounded-sm border transition-colors ${
-                view === v
-                  ? 'bg-burgundy text-paper border-burgundy'
-                  : 'bg-transparent text-ink-muted border-rule hover:border-ink-faint'
-              }`}
-            >
-              {v === 'dashboard' ? 'Dashboard' : 'Strategic Plan'}
-            </button>
-          ))}
+    <div className="flex flex-col overflow-hidden" style={{ height: 'calc(100vh - 100px)' }}>
+      {/* ═══ MASTHEAD ═══ */}
+      <div className="border-b-2 border-burgundy px-5 py-2 flex items-center justify-between bg-paper flex-shrink-0">
+        <div className="flex items-baseline gap-2">
+          <span className="font-serif text-[20px] font-bold text-burgundy tracking-tight">THESIS ENGINE</span>
+          <span className="font-serif text-[13px] text-ink-muted italic">Command Center</span>
         </div>
-        <div className="font-mono text-[9px] text-ink-muted">
-          {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+        <div className="flex items-center gap-3">
+          <div className="flex gap-1">
+            {(['dashboard', 'strategic'] as const).map(v => (
+              <button
+                key={v}
+                onClick={() => setView(v)}
+                className={`font-serif text-[10px] px-2 py-1 rounded-sm border transition-colors ${
+                  view === v
+                    ? 'bg-burgundy text-paper border-burgundy'
+                    : 'bg-transparent text-ink-muted border-rule hover:border-ink-faint'
+                }`}
+              >
+                {v === 'dashboard' ? 'Dashboard' : 'Strategic'}
+              </button>
+            ))}
+          </div>
+          <span className="font-mono text-[10px] text-ink-muted tracking-wide">
+            {new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })} · {new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+          </span>
         </div>
       </div>
 
       {view === 'strategic' ? (
-        <CommandCenterV2 />
+        <div className="flex-1 overflow-auto p-3">
+          <CommandCenterV2 />
+        </div>
       ) : (
-      <>
-      {/* ═══ SITUATION STRIP ═══ */}
-      <SituationStrip
-        score={currentScore}
-        delta={currentDelta}
-        sleepHours={log.sleepHours}
-        nsState={log.nervousSystemState}
-        calendarToday={calendarToday}
-        calLoading={calLoading}
-        weeklyShips={weeklyShips}
-        weeklyAsks={weeklyAsks}
-        weeklyOwn={weeklyOwn}
-        papersToday={papersToday}
-        scores={scores}
-      />
+      /* ═══ 3-COLUMN BODY ═══ */
+      <div className="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-3 p-3 overflow-hidden min-h-0">
 
-      {/* ═══ STRATEGIC MOMENTUM ═══ */}
-      <MomentumStrip uid={user?.uid} />
-
-      {/* ═══ STATE OF PLAY ═══ */}
-      <div className={`px-3 py-2 rounded-sm ${stateIsGreen ? 'bg-green-bg border border-green-ink/10' : 'bg-cream border border-rule'}`}>
-        <p className={`font-serif text-[11px] italic ${stateIsGreen ? 'text-green-ink' : 'text-ink'}`}>
-          {stateOfPlay}
-        </p>
-      </div>
-
-      {/* ═══ TWO-COLUMN LAYOUT ═══ */}
-      <div className="grid grid-cols-1 lg:grid-cols-[3fr_2fr] gap-3">
-        {/* LEFT COLUMN */}
-        <div className="space-y-3">
+        {/* COL 1: Focus + Tasks */}
+        <div className="flex flex-col gap-3 overflow-hidden min-h-0">
           {/* Today's Allocation */}
           <TodayAllocation
             allocation={todayAllocation}
             spineResolution={plan?.spineResolution}
             planLoading={planLoading}
             today={today}
+          />
+
+          {/* State of Play */}
+          <div className={`px-3 py-2 rounded-sm flex-shrink-0 ${stateIsGreen ? 'bg-green-bg border border-green-ink/10' : 'bg-cream border border-rule'}`}>
+            <p className={`font-serif text-[11px] italic ${stateIsGreen ? 'text-green-ink' : 'text-ink'}`}>
+              {stateOfPlay}
+            </p>
+          </div>
+
+          {/* Eisenhower Matrix */}
+          <div className="flex-1 overflow-auto min-h-0">
+            <EisenhowerMatrix
+              byQuadrant={byQuadrant}
+              onToggleComplete={toggleComplete}
+              onAdd={handleAddTodo}
+              loading={todosLoading}
+              completedCount={completedCount}
+              openCount={openCount}
+            />
+          </div>
+        </div>
+
+        {/* COL 2: Situation + Intelligence */}
+        <div className="flex flex-col gap-3 overflow-hidden min-h-0">
+          {/* Situation Strip */}
+          <SituationStrip
+            score={currentScore}
+            delta={currentDelta}
+            sleepHours={log.sleepHours}
+            nsState={log.nervousSystemState}
+            calendarToday={calendarToday}
+            calLoading={calLoading}
+            weeklyShips={weeklyShips}
+            weeklyAsks={weeklyAsks}
+            weeklyOwn={weeklyOwn}
+            papersToday={papersToday}
+            scores={scores}
           />
 
           {/* Score Attribution */}
@@ -405,32 +425,26 @@ export default function CommandCenter() {
           <SignalAttribution />
 
           {/* Curated Signals */}
-          <CuratedSignals
-            signals={signals}
-            onCycleReadStatus={handleCycleReadStatus}
-          />
+          <div className="flex-1 overflow-auto min-h-0">
+            <CuratedSignals
+              signals={signals}
+              onCycleReadStatus={handleCycleReadStatus}
+            />
+          </div>
         </div>
 
-        {/* RIGHT COLUMN */}
-        <div className="space-y-3">
-          {/* Eisenhower Matrix */}
-          <EisenhowerMatrix
-            byQuadrant={byQuadrant}
-            onToggleComplete={toggleComplete}
-            onAdd={handleAddTodo}
-            loading={todosLoading}
-            completedCount={completedCount}
-            openCount={openCount}
-          />
-
-          {/* Daily Quant Practice */}
-          <QuantPracticeCard />
+        {/* COL 3: Strategy + Actions */}
+        <div className="flex flex-col gap-3 overflow-hidden min-h-0">
+          {/* Strategic Momentum */}
+          <MomentumStrip uid={user?.uid} />
 
           {/* Prioritized Actions */}
           <ActionsList actions={actions} />
+
+          {/* Daily Quant Practice */}
+          <QuantPracticeCard />
         </div>
       </div>
-      </>
       )}
     </div>
   )
@@ -537,8 +551,8 @@ function SituationStrip({ score, delta, sleepHours, nsState, calendarToday, calL
 
   return (
     <div className="bg-white border border-rule rounded-sm p-3">
-      <div className="flex items-center justify-between flex-wrap gap-y-2 gap-x-4">
-        {/* Score cluster */}
+      {/* Score + Sparkline */}
+      <div className="flex items-center justify-between mb-2 pb-2 border-b border-rule-light">
         <div className="flex items-baseline gap-1.5">
           <span className={`font-mono text-[28px] font-bold leading-none ${scoreColor(score)}`}>
             {score !== null ? score.toFixed(1) : '\u2014'}
@@ -550,55 +564,47 @@ function SituationStrip({ score, delta, sleepHours, nsState, calendarToday, calL
           )}
           <span className="font-mono text-[9px] text-ink-muted">/ 10</span>
         </div>
-
-        {/* Vitals */}
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1">
-            <span className="font-mono text-[10px] text-ink-muted">Sleep</span>
-            <span className="font-mono text-[11px] font-semibold text-ink">{sleepHours || '\u2014'}h</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <span className={`w-[6px] h-[6px] rounded-sm ${ns.color}`} />
-            <span className="font-mono text-[10px] text-ink-muted">{ns.label}</span>
-          </div>
-        </div>
-
-        {/* Calendar */}
-        <div className="flex items-center gap-1">
-          {calLoading ? (
-            <span className="font-mono text-[10px] text-ink-muted">\u2026</span>
-          ) : calendarToday ? (
-            <>
-              <span className="font-mono text-[11px] font-semibold text-ink">{Math.round(calendarToday.deep_work_min / 60 * 10) / 10}h</span>
-              <span className="font-mono text-[9px] text-ink-muted">deep</span>
-              <span className="font-mono text-[9px] text-ink-faint mx-0.5">|</span>
-              <span className="font-mono text-[11px] font-semibold text-ink">{Math.round(calendarToday.meetings_min / 60 * 10) / 10}h</span>
-              <span className="font-mono text-[9px] text-ink-muted">mtg</span>
-            </>
-          ) : (
-            <span className="font-mono text-[10px] text-ink-muted">No calendar</span>
-          )}
-        </div>
-
-        {/* Muscles */}
-        <div className="flex items-center gap-2">
-          {[
-            { label: 'Ship', val: weeklyShips, target: MUSCLE_TARGETS.shipsPerWeek },
-            { label: 'Ask', val: weeklyAsks, target: MUSCLE_TARGETS.asksPerWeek },
-            { label: 'Own', val: weeklyOwn, target: MUSCLE_TARGETS.postsPerWeek },
-            { label: 'Repro', val: papersToday, target: MUSCLE_TARGETS.papersPerDay },
-          ].map(m => (
-            <div key={m.label} className="flex items-center gap-0.5">
-              <span className="font-mono text-[9px] text-ink-muted">{m.label}</span>
-              <span className={`font-mono text-[11px] font-semibold tabular-nums ${muscleColor(m.val, m.target)}`}>
-                {m.val}/{m.target}
-              </span>
-            </div>
-          ))}
-        </div>
-
-        {/* 7-day sparkline */}
         {scores.length > 1 && <Sparkline data={scores} />}
+      </div>
+
+      {/* Vitals row */}
+      <div className="flex items-center gap-3 flex-wrap mb-1.5">
+        <div className="flex items-center gap-1">
+          <span className="font-mono text-[10px] text-ink-muted">Sleep</span>
+          <span className="font-mono text-[11px] font-semibold text-ink">{sleepHours || '\u2014'}h</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <span className={`w-[6px] h-[6px] rounded-sm ${ns.color}`} />
+          <span className="font-mono text-[10px] text-ink-muted">{ns.label}</span>
+        </div>
+        {calLoading ? (
+          <span className="font-mono text-[10px] text-ink-muted">\u2026</span>
+        ) : calendarToday ? (
+          <div className="flex items-center gap-1">
+            <span className="font-mono text-[11px] font-semibold text-ink">{Math.round(calendarToday.deep_work_min / 60 * 10) / 10}h</span>
+            <span className="font-mono text-[9px] text-ink-muted">deep</span>
+            <span className="font-mono text-[9px] text-ink-faint mx-0.5">|</span>
+            <span className="font-mono text-[11px] font-semibold text-ink">{Math.round(calendarToday.meetings_min / 60 * 10) / 10}h</span>
+            <span className="font-mono text-[9px] text-ink-muted">mtg</span>
+          </div>
+        ) : null}
+      </div>
+
+      {/* Muscles row */}
+      <div className="flex items-center gap-2 flex-wrap">
+        {[
+          { label: 'Ship', val: weeklyShips, target: MUSCLE_TARGETS.shipsPerWeek },
+          { label: 'Ask', val: weeklyAsks, target: MUSCLE_TARGETS.asksPerWeek },
+          { label: 'Own', val: weeklyOwn, target: MUSCLE_TARGETS.postsPerWeek },
+          { label: 'Repro', val: papersToday, target: MUSCLE_TARGETS.papersPerDay },
+        ].map(m => (
+          <div key={m.label} className="flex items-center gap-0.5">
+            <span className="font-mono text-[9px] text-ink-muted">{m.label}</span>
+            <span className={`font-mono text-[11px] font-semibold tabular-nums ${muscleColor(m.val, m.target)}`}>
+              {m.val}/{m.target}
+            </span>
+          </div>
+        ))}
       </div>
     </div>
   )
