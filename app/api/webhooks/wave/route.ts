@@ -273,7 +273,7 @@ export async function POST(request: NextRequest) {
 
       // Save values
       for (const val of extraction.valuesExpressed) {
-        const valId = `${val.by}_${val.value.toLowerCase().replace(/\s+/g, '_')}`
+        const valId = `${val.by}_${val.value.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '')}`
         const valRef = db.collection('users').doc(uid).collection('relationship_values').doc(valId)
         const valDoc = await valRef.get()
         if (valDoc.exists) {
