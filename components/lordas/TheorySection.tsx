@@ -342,18 +342,31 @@ export function TheorySection({ conversations }: TheorySectionProps) {
                         <span className="text-[11px] font-medium" style={{ color: '#2a2420' }}>
                           {concept.name}
                         </span>
-                        {examples.length > 0 && (
-                          <span
-                            className="text-[8px] font-mono px-1.5 py-0.5 rounded-sm"
-                            style={{ backgroundColor: `${framework.color}10`, color: framework.color }}
-                          >
-                            {examples.length} example{examples.length !== 1 ? 's' : ''}
-                          </span>
-                        )}
                         <span className="text-[10px] ml-auto" style={{ color: '#c0b8aa' }}>
                           {isExpanded ? '▾' : '▸'}
                         </span>
                       </div>
+
+                      {/* Inline examples — always visible */}
+                      {examples.length > 0 && (
+                        <div className="mt-1.5 space-y-1">
+                          {examples.map((ex, i) => (
+                            <div key={i} className="flex gap-2 text-[10px]">
+                              <span className="font-mono shrink-0" style={{ color: '#c0b8aa' }}>
+                                {formatDate(ex.date)}
+                              </span>
+                              {ex.by && (
+                                <span className="font-medium shrink-0" style={{
+                                  color: ex.by === 'Lori' ? '#b85c38' : '#2d5f4a'
+                                }}>
+                                  {ex.by}
+                                </span>
+                              )}
+                              <span style={{ color: '#6b6158' }}>{ex.text}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </button>
 
                     {isExpanded && (
@@ -362,41 +375,9 @@ export function TheorySection({ conversations }: TheorySectionProps) {
                         <p className="text-[10px] leading-relaxed mb-2" style={{ color: '#2a2420' }}>
                           {concept.theory}
                         </p>
-                        <p className="text-[9px] italic mb-3" style={{ color: '#c0b8aa' }}>
+                        <p className="text-[9px] italic" style={{ color: '#c0b8aa' }}>
                           — {concept.source}
                         </p>
-
-                        {/* Application — recent examples */}
-                        {examples.length > 0 ? (
-                          <div className="pt-2 border-t" style={{ borderColor: '#e8e0d6' }}>
-                            <p className="text-[9px] font-semibold uppercase tracking-[0.5px] mb-1" style={{ color: framework.color }}>
-                              From Your Conversations
-                            </p>
-                            <div className="overflow-y-auto max-h-[120px] space-y-1.5">
-                              {examples.map((ex, i) => (
-                                <div key={i} className="flex gap-2 text-[10px]">
-                                  <span className="font-mono shrink-0" style={{ color: '#c0b8aa' }}>
-                                    {formatDate(ex.date)}
-                                  </span>
-                                  {ex.by && (
-                                    <span className="font-medium shrink-0" style={{
-                                      color: ex.by === 'Lori' ? '#b85c38' : '#2d5f4a'
-                                    }}>
-                                      {ex.by}
-                                    </span>
-                                  )}
-                                  <span style={{ color: '#2a2420' }}>{ex.text}</span>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="pt-2 border-t" style={{ borderColor: '#e8e0d6' }}>
-                            <p className="text-[9px] italic" style={{ color: '#c0b8aa' }}>
-                              No examples yet — examples will appear here as conversations are processed
-                            </p>
-                          </div>
-                        )}
                       </div>
                     )}
                   </div>
