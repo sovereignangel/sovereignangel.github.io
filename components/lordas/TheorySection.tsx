@@ -125,15 +125,27 @@ const FRAMEWORKS: Framework[] = [
         extractExamples: (convs) => {
           const examples: Example[] = []
           for (const c of convs) {
-            const lq = c.extraction.curiosityVsAssumption.lori
-            const aq = c.extraction.curiosityVsAssumption.aidas
-            if (lq.genuineQuestions + lq.assumptions + aq.genuineQuestions + aq.assumptions > 0) {
-              const lPct = (lq.genuineQuestions + lq.assumptions) > 0 ? Math.round(lq.genuineQuestions / (lq.genuineQuestions + lq.assumptions) * 100) : 0
-              const aPct = (aq.genuineQuestions + aq.assumptions) > 0 ? Math.round(aq.genuineQuestions / (aq.genuineQuestions + aq.assumptions) * 100) : 0
-              examples.push({
-                date: c.date,
-                text: `Lori: ${lPct}% curiosity (${lq.genuineQuestions}q / ${lq.assumptions}a) · Aidas: ${aPct}% (${aq.genuineQuestions}q / ${aq.assumptions}a)`,
-              })
+            if (c.extraction.curiosityInstances && c.extraction.curiosityInstances.length > 0) {
+              for (const inst of c.extraction.curiosityInstances) {
+                examples.push({
+                  date: c.date,
+                  text: `${inst.type === 'genuine-question' ? '? ' : '! '}${inst.type} — "${inst.quote}"`,
+                  by: inst.by === 'lori' ? 'Lori' : 'Aidas',
+                })
+                if (examples.length >= 5) return examples
+              }
+            } else {
+              // Legacy: counts only
+              const lq = c.extraction.curiosityVsAssumption.lori
+              const aq = c.extraction.curiosityVsAssumption.aidas
+              if (lq.genuineQuestions + lq.assumptions + aq.genuineQuestions + aq.assumptions > 0) {
+                const lPct = (lq.genuineQuestions + lq.assumptions) > 0 ? Math.round(lq.genuineQuestions / (lq.genuineQuestions + lq.assumptions) * 100) : 0
+                const aPct = (aq.genuineQuestions + aq.assumptions) > 0 ? Math.round(aq.genuineQuestions / (aq.genuineQuestions + aq.assumptions) * 100) : 0
+                examples.push({
+                  date: c.date,
+                  text: `Lori: ${lPct}% curiosity (${lq.genuineQuestions}q / ${lq.assumptions}a) · Aidas: ${aPct}% (${aq.genuineQuestions}q / ${aq.assumptions}a)`,
+                })
+              }
             }
             if (examples.length >= 5) break
           }
@@ -225,13 +237,25 @@ const FRAMEWORKS: Framework[] = [
         extractExamples: (convs) => {
           const examples: Example[] = []
           for (const c of convs) {
-            const la = c.extraction.accountabilityVsBlame.lori
-            const aa = c.extraction.accountabilityVsBlame.aidas
-            if (la.ownership + la.blame + aa.ownership + aa.blame > 0) {
-              examples.push({
-                date: c.date,
-                text: `Lori: ${la.ownership} ownership / ${la.blame} blame · Aidas: ${aa.ownership} ownership / ${aa.blame} blame`,
-              })
+            if (c.extraction.accountabilityInstances && c.extraction.accountabilityInstances.length > 0) {
+              for (const inst of c.extraction.accountabilityInstances) {
+                examples.push({
+                  date: c.date,
+                  text: `${inst.type} — "${inst.quote}"`,
+                  by: inst.by === 'lori' ? 'Lori' : 'Aidas',
+                })
+                if (examples.length >= 5) return examples
+              }
+            } else {
+              // Legacy: counts only
+              const la = c.extraction.accountabilityVsBlame.lori
+              const aa = c.extraction.accountabilityVsBlame.aidas
+              if (la.ownership + la.blame + aa.ownership + aa.blame > 0) {
+                examples.push({
+                  date: c.date,
+                  text: `Lori: ${la.ownership} ownership / ${la.blame} blame · Aidas: ${aa.ownership} ownership / ${aa.blame} blame`,
+                })
+              }
             }
             if (examples.length >= 5) break
           }

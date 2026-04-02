@@ -64,10 +64,18 @@ Return a JSON object with these exact fields:
     "aidas": { "genuineQuestions": <count>, "assumptions": <count> }
   },
 
+  "curiosityInstances": [
+    { "by": "lori"|"aidas", "type": "genuine-question"|"assumption", "quote": "<brief excerpt from transcript>" }
+  ],
+
   "accountabilityVsBlame": {
     "lori": { "ownership": <count>, "blame": <count> },
     "aidas": { "ownership": <count>, "blame": <count> }
   },
+
+  "accountabilityInstances": [
+    { "by": "lori"|"aidas", "type": "ownership"|"blame", "quote": "<brief excerpt from transcript>" }
+  ],
 
   "newUnderstandings": ["<insight gained about partner or self>"],
 
@@ -103,6 +111,8 @@ Counting guidelines:
 - Defensiveness = "Yes, but..." / counter-attacking / playing victim / denying responsibility
 - Stonewalling = shutting down, going silent, walking away, emotional withdrawal
 - For horsemenInstances: include one entry per occurrence with a brief quote from the transcript (the actual words said)
+- For curiosityInstances: include one entry per genuine question or assumption with the actual words said
+- For accountabilityInstances: include one entry per ownership or blame statement with the actual words said
 - Genuine questions = open-ended questions driven by curiosity ("How did that make you feel?")
 - Assumptions = assuming intent or feelings ("You don't care about...")
 - Ownership = "I realize I..." / "My part in this was..."
@@ -146,7 +156,9 @@ Return ONLY valid JSON, no markdown, no code fences.`
       repairAttempts: Array.isArray(parsed.repairAttempts) ? parsed.repairAttempts : [],
       vulnerabilityMoments: Array.isArray(parsed.vulnerabilityMoments) ? parsed.vulnerabilityMoments : [],
       curiosityVsAssumption: validateCuriosityAssumption(parsed.curiosityVsAssumption),
+      curiosityInstances: Array.isArray(parsed.curiosityInstances) ? parsed.curiosityInstances : [],
       accountabilityVsBlame: validateAccountabilityBlame(parsed.accountabilityVsBlame),
+      accountabilityInstances: Array.isArray(parsed.accountabilityInstances) ? parsed.accountabilityInstances : [],
       newUnderstandings: Array.isArray(parsed.newUnderstandings) ? parsed.newUnderstandings : [],
       pursueWithdraw: {
         pattern: parsed.pursueWithdraw?.pattern || 'balanced',
@@ -336,10 +348,12 @@ const EMPTY_RELATIONAL_EXTRACTION: RelationalExtraction = {
     lori: { genuineQuestions: 0, assumptions: 0 },
     aidas: { genuineQuestions: 0, assumptions: 0 },
   },
+  curiosityInstances: [],
   accountabilityVsBlame: {
     lori: { ownership: 0, blame: 0 },
     aidas: { ownership: 0, blame: 0 },
   },
+  accountabilityInstances: [],
   newUnderstandings: [],
   pursueWithdraw: { pattern: 'balanced', intensity: 'mild' },
   domain: 'values',

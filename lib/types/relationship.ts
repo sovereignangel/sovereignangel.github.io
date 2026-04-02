@@ -58,6 +58,18 @@ export interface AccountabilityBlame {
   blame: number
 }
 
+export interface AccountabilityInstance {
+  by: RelationalSpeaker
+  type: 'ownership' | 'blame'
+  quote: string
+}
+
+export interface CuriosityInstance {
+  by: RelationalSpeaker
+  type: 'genuine-question' | 'assumption'
+  quote: string
+}
+
 export interface PriorityConflict {
   topic: string
   loriPosition: string
@@ -96,10 +108,12 @@ export interface RelationalExtraction {
     lori: CuriosityAssumption
     aidas: CuriosityAssumption
   }
+  curiosityInstances?: CuriosityInstance[]
   accountabilityVsBlame: {
     lori: AccountabilityBlame
     aidas: AccountabilityBlame
   }
+  accountabilityInstances?: AccountabilityInstance[]
   newUnderstandings: string[]
   pursueWithdraw: {
     pattern: PursueWithdrawPattern
