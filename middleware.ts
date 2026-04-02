@@ -54,6 +54,13 @@ export function middleware(request: NextRequest) {
     return NextResponse.rewrite(url)
   }
 
+  // markovagents.loricorpuz.com → rewrite to /markov-agents
+  if (host === 'markovagents.loricorpuz.com') {
+    const url = request.nextUrl.clone()
+    url.pathname = `/markov-agents${url.pathname === '/' ? '' : url.pathname}`
+    return NextResponse.rewrite(url)
+  }
+
   // stillpoint.loricorpuz.com → rewrite to /stillpoint
   if (host === 'stillpoint.loricorpuz.com') {
     const url = request.nextUrl.clone()
