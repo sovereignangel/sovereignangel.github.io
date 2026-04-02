@@ -30,6 +30,7 @@ interface TextbookEntry {
   chaptersTotal: number
   chaptersRead: number
   status: ItemStatus
+  url?: string
 }
 
 // ─── Constants ──────────────────────────────────────────────────────────
@@ -118,12 +119,12 @@ const INITIAL_ITEMS: RoadmapItem[] = [
 ]
 
 const INITIAL_TEXTBOOKS: TextbookEntry[] = [
-  // Tier 1 \u2014 Must complete
+  // Tier 1 — Must complete
   { id: 'tb-deprado', title: 'Advances in Financial Machine Learning', author: 'de Prado', domain: 'quant', quarter: 'Q2', chaptersTotal: 20, chaptersRead: 0, status: 'not_started' },
   { id: 'tb-arthur', title: 'Complexity and the Economy', author: 'Arthur', domain: 'complexity', quarter: 'Q1', chaptersTotal: 12, chaptersRead: 0, status: 'not_started' },
-  { id: 'tb-sutton', title: 'Reinforcement Learning', author: 'Sutton & Barto', domain: 'ai', quarter: 'Q1', chaptersTotal: 17, chaptersRead: 0, status: 'not_started' },
-  { id: 'tb-goodfellow', title: 'Deep Learning', author: 'Goodfellow et al.', domain: 'ai', quarter: 'Q1', chaptersTotal: 20, chaptersRead: 0, status: 'not_started' },
-  // Tier 2 \u2014 High value
+  { id: 'tb-sutton', title: 'Reinforcement Learning', author: 'Sutton & Barto', domain: 'ai', quarter: 'Q1', chaptersTotal: 17, chaptersRead: 0, status: 'not_started', url: 'http://incompleteideas.net/book/RLbook2020.pdf' },
+  { id: 'tb-goodfellow', title: 'Deep Learning', author: 'Goodfellow et al.', domain: 'ai', quarter: 'Q1', chaptersTotal: 20, chaptersRead: 0, status: 'not_started', url: 'https://www.deeplearningbook.org/' },
+  // Tier 2 — High value
   { id: 'tb-sornette', title: 'Why Stock Markets Crash', author: 'Sornette', domain: 'complexity', quarter: 'Q2', chaptersTotal: 14, chaptersRead: 0, status: 'not_started' },
   { id: 'tb-taleb-dh', title: 'Dynamic Hedging', author: 'Taleb', domain: 'markets', quarter: 'Q3', chaptersTotal: 20, chaptersRead: 0, status: 'not_started' },
   { id: 'tb-mitchell', title: 'Complexity: A Guided Tour', author: 'Mitchell', domain: 'complexity', quarter: 'Q1', chaptersTotal: 18, chaptersRead: 0, status: 'not_started' },
@@ -609,25 +610,37 @@ export default function RoadmapView() {
             </div>
           </div>
 
-          {/* Textbook cards */}
-          {textbooks.map(tb => {
-            const domainMeta = DOMAINS.find(d => d.key === tb.domain)
-            const pct = Math.round((tb.chaptersRead / tb.chaptersTotal) * 100)
+          {/* Textbook rows */}
+          <div className="bg-white border border-rule rounded-sm">
+            {textbooks.map((tb, idx) => {
+              const domainMeta = DOMAINS.find(d => d.key === tb.domain)
+              const pct = Math.round((tb.chaptersRead / tb.chaptersTotal) * 100)
 
-            return (
-              <div key={tb.id} className="bg-white border border-rule rounded-sm p-2">
-                <div className="flex items-center justify-between mb-1">
-                  <div className="flex items-center gap-1.5">
-                    <span className={`font-mono text-[7px] uppercase px-1 py-0.5 rounded-sm border ${domainMeta?.bgColor} ${domainMeta?.borderColor}`}>
-                      {tb.domain}
-                    </span>
-                    <span className="font-serif text-[11px] font-semibold text-ink">{tb.title}</span>
+              const titleEl = tb.url ? (
+                <a
+                  href={tb.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-serif text-[10px] font-semibold text-burgundy hover:underline"
+                >
+                  {tb.title}
+                </a>
+              ) : (
+                <span className="font-serif text-[10px] font-semibold text-ink">{tb.title}</span>
+              )
+
+              return (
+                <div key={tb.id} className={`flex items-center gap-2 px-2 py-1 ${
+                  idx < textbooks.length - 1 ? 'border-b border-rule-light' : ''
+                }`}>
+                  <span className={`font-mono text-[7px] uppercase px-1 py-0.5 rounded-sm border shrink-0 ${domainMeta?.bgColor} ${domainMeta?.borderColor}`}>
+                    {tb.domain.slice(0, 4)}
+                  </span>
+                  <div className="flex-1 min-w-0 flex items-center gap-1.5">
+                    {titleEl}
+                    <span className="font-sans text-[9px] text-ink-muted shrink-0">{tb.author}</span>
                   </div>
-                  <span className="font-mono text-[8px] text-ink-faint">{tb.quarter}</span>
-                </div>
-                <div className="font-sans text-[9px] text-ink-muted mb-1.5">{tb.author}</div>
-                <div className="flex items-center gap-2">
-                  <div className="flex-1 h-1.5 bg-cream rounded-sm overflow-hidden">
+                  <div className="w-[60px] h-1 bg-cream rounded-sm overflow-hidden shrink-0">
                     <div
                       className={`h-full rounded-sm transition-all ${
                         pct >= 100 ? 'bg-green-ink' : pct > 0 ? 'bg-amber-ink' : 'bg-rule'
@@ -635,27 +648,28 @@ export default function RoadmapView() {
                       style={{ width: `${pct}%` }}
                     />
                   </div>
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-0.5 shrink-0">
                     <button
                       onClick={() => updateBookChapters(tb.id, -1)}
-                      className="font-mono text-[10px] w-5 h-5 flex items-center justify-center rounded-sm border border-rule text-ink-muted hover:bg-cream transition-colors"
+                      className="font-mono text-[9px] w-4 h-4 flex items-center justify-center rounded-sm border border-rule text-ink-muted hover:bg-cream transition-colors"
                     >
                       -
                     </button>
-                    <span className="font-mono text-[10px] text-ink w-[48px] text-center">
+                    <span className="font-mono text-[9px] text-ink w-[36px] text-center">
                       {tb.chaptersRead}/{tb.chaptersTotal}
                     </span>
                     <button
                       onClick={() => updateBookChapters(tb.id, 1)}
-                      className="font-mono text-[10px] w-5 h-5 flex items-center justify-center rounded-sm border border-rule text-ink-muted hover:bg-cream transition-colors"
+                      className="font-mono text-[9px] w-4 h-4 flex items-center justify-center rounded-sm border border-rule text-ink-muted hover:bg-cream transition-colors"
                     >
                       +
                     </button>
                   </div>
+                  <span className="font-mono text-[8px] text-ink-faint w-[20px] text-right shrink-0">{tb.quarter}</span>
                 </div>
-              </div>
-            )
-          })}
+              )
+            })}
+          </div>
         </div>
       )}
     </div>
