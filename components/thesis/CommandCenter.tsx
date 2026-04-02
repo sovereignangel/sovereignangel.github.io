@@ -335,7 +335,6 @@ export default function CommandCenter() {
       {/* ═══ MASTHEAD ═══ */}
       <div className="border-b-2 border-burgundy px-5 py-2 flex items-center justify-between bg-paper flex-shrink-0">
         <div className="flex items-baseline gap-2">
-          <span className="font-serif text-[20px] font-bold text-burgundy tracking-tight">THESIS ENGINE</span>
           <span className="font-serif text-[13px] text-ink-muted italic">Command Center</span>
         </div>
         <div className="flex items-center gap-3">
