@@ -77,7 +77,7 @@ const INITIAL_ITEMS: RoadmapItem[] = [
   // ── Q2: Integration ──
   // Complexity
   { id: 'q2-abm-market', domain: 'complexity', quarter: 'Q2', title: 'Build first ABM', type: 'project', description: 'Agent-based market model (Mesa/Python) \u2014 reproduce fat tails', status: 'not_started', weekStart: 1, weekEnd: 10 },
-  { id: 'q2-farmer-email', domain: 'complexity', quarter: 'Q2', title: 'Cold email Farmer group', type: 'milestone', description: 'With: ABM work, RL project, macro research, blog trail', status: 'not_started', weekStart: 10, weekEnd: 13 },
+  { id: 'q2-farmer-ralph', domain: 'complexity', quarter: 'Q2', title: 'Deepen Farmer/Ralph research', type: 'milestone', description: 'Via Michael Ralph (visiting prof at Oxford w/ Farmer) \u2014 build shared research artifacts', status: 'not_started', weekStart: 6, weekEnd: 13 },
   // AI
   { id: 'q2-cs224r-final', domain: 'ai', quarter: 'Q2', title: 'CS224r final project', type: 'project', description: 'Multi-agent RL market simulation \u2014 Farmer alignment artifact', status: 'not_started', weekStart: 1, weekEnd: 10 },
   { id: 'q2-agents', domain: 'ai', quarter: 'Q2', title: 'LLM agent systems', type: 'project', description: 'RAG, tool-use, multi-agent coordination patterns', status: 'not_started', weekStart: 6, weekEnd: 13 },
@@ -107,7 +107,7 @@ const INITIAL_ITEMS: RoadmapItem[] = [
 
   // ── Q4: Execution ──
   // Complexity
-  { id: 'q4-farmer-collab', domain: 'complexity', quarter: 'Q4', title: 'Farmer group engagement', type: 'milestone', description: 'Conference submissions, visiting researcher proposal', status: 'not_started', weekStart: 1, weekEnd: 13 },
+  { id: 'q4-farmer-collab', domain: 'complexity', quarter: 'Q4', title: 'Farmer/Ralph collaboration', type: 'milestone', description: 'Joint research output w/ Michael Ralph, conference submissions, SFI engagement', status: 'not_started', weekStart: 1, weekEnd: 13 },
   // AI
   { id: 'q4-ai-interview', domain: 'ai', quarter: 'Q4', title: 'AI firm positioning', type: 'milestone', description: 'Portfolio of: CS231n, CS224r, agent systems, multi-agent RL', status: 'not_started', weekStart: 1, weekEnd: 13 },
   // Quant
@@ -176,13 +176,389 @@ function getCurrentWeekInQuarter(): number {
   return Math.min(13, Math.max(1, Math.ceil(diff / (7 * 24 * 60 * 60 * 1000))))
 }
 
+// ─── Focus View ─────────────────────────────────────────────────────────
+
+interface DailyFocusItem {
+  id: string
+  text: string
+  domain: Domain
+  roadmapItemId?: string
+  done: boolean
+}
+
+interface WeeklyGoal {
+  id: string
+  text: string
+  domain: Domain
+  roadmapItemId?: string
+  done: boolean
+}
+
+interface FocusData {
+  date: string
+  dailyItems: DailyFocusItem[]
+  weeklyGoals: WeeklyGoal[]
+}
+
+function getToday(): string {
+  const d = new Date()
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
+function getWeekKey(): string {
+  const d = new Date()
+  const day = d.getDay()
+  const monday = new Date(d)
+  monday.setDate(d.getDate() - ((day + 6) % 7))
+  return `${monday.getFullYear()}-${String(monday.getMonth() + 1).padStart(2, '0')}-${String(monday.getDate()).padStart(2, '0')}`
+}
+
+function FocusView({ items, textbooks, currentQ, currentWeek, lagging, onCycleStatus, storageKey }: {
+  items: RoadmapItem[]
+  textbooks: TextbookEntry[]
+  currentQ: Quarter
+  currentWeek: number
+  lagging: RoadmapItem[]
+  onCycleStatus: (id: string) => void
+  storageKey: string | null
+}) {
+  const today = getToday()
+  const weekKey = getWeekKey()
+
+  // Active items for this week in this quarter
+  const activeThisWeek = items.filter(i =>
+    i.quarter === currentQ &&
+    i.status !== 'complete' &&
+    (i.weekStart || 1) <= currentWeek &&
+    (i.weekEnd || 13) >= currentWeek
+  )
+
+  // Active textbooks
+  const activeBooks = textbooks.filter(t => t.quarter === currentQ && t.status !== 'complete')
+
+  // Persisted focus data
+  const [dailyItems, setDailyItems] = useState<DailyFocusItem[]>([])
+  const [weeklyGoals, setWeeklyGoals] = useState<WeeklyGoal[]>([])
+  const [newDaily, setNewDaily] = useState('')
+  const [newDailyDomain, setNewDailyDomain] = useState<Domain>('ai')
+  const [newWeekly, setNewWeekly] = useState('')
+  const [newWeeklyDomain, setNewWeeklyDomain] = useState<Domain>('ai')
+
+  const dailyKey = storageKey ? `${storageKey}-daily-${today}` : null
+  const weeklyKey = storageKey ? `${storageKey}-weekly-${weekKey}` : null
+
+  useEffect(() => {
+    if (!dailyKey) return
+    const saved = localStorage.getItem(dailyKey)
+    if (saved) { try { setDailyItems(JSON.parse(saved)) } catch { /* */ } }
+  }, [dailyKey])
+
+  useEffect(() => {
+    if (!weeklyKey) return
+    const saved = localStorage.getItem(weeklyKey)
+    if (saved) { try { setWeeklyGoals(JSON.parse(saved)) } catch { /* */ } }
+  }, [weeklyKey])
+
+  const persistDaily = useCallback((updated: DailyFocusItem[]) => {
+    setDailyItems(updated)
+    if (dailyKey) localStorage.setItem(dailyKey, JSON.stringify(updated))
+  }, [dailyKey])
+
+  const persistWeekly = useCallback((updated: WeeklyGoal[]) => {
+    setWeeklyGoals(updated)
+    if (weeklyKey) localStorage.setItem(weeklyKey, JSON.stringify(updated))
+  }, [weeklyKey])
+
+  const addDaily = () => {
+    if (!newDaily.trim()) return
+    persistDaily([...dailyItems, { id: `d-${Date.now()}`, text: newDaily.trim(), domain: newDailyDomain, done: false }])
+    setNewDaily('')
+  }
+
+  const addWeekly = () => {
+    if (!newWeekly.trim()) return
+    persistWeekly([...weeklyGoals, { id: `w-${Date.now()}`, text: newWeekly.trim(), domain: newWeeklyDomain, done: false }])
+    setNewWeekly('')
+  }
+
+  const toggleDaily = (id: string) => {
+    persistDaily(dailyItems.map(d => d.id === id ? { ...d, done: !d.done } : d))
+  }
+
+  const removeDaily = (id: string) => {
+    persistDaily(dailyItems.filter(d => d.id !== id))
+  }
+
+  const toggleWeekly = (id: string) => {
+    persistWeekly(weeklyGoals.map(w => w.id === id ? { ...w, done: !w.done } : w))
+  }
+
+  const removeWeekly = (id: string) => {
+    persistWeekly(weeklyGoals.filter(w => w.id !== id))
+  }
+
+  const addFromRoadmap = (item: RoadmapItem, target: 'daily' | 'weekly') => {
+    if (target === 'daily') {
+      persistDaily([...dailyItems, { id: `d-${Date.now()}`, text: item.title, domain: item.domain, roadmapItemId: item.id, done: false }])
+    } else {
+      persistWeekly([...weeklyGoals, { id: `w-${Date.now()}`, text: item.title, domain: item.domain, roadmapItemId: item.id, done: false }])
+    }
+  }
+
+  const dayOfWeek = new Date().toLocaleDateString('en-US', { weekday: 'long' })
+
+  return (
+    <div className="space-y-3">
+      {/* Today's Focus */}
+      <div className="bg-white border border-burgundy/20 rounded-sm p-3">
+        <div className="flex items-center justify-between mb-2 pb-1.5 border-b-2 border-rule">
+          <h4 className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy">
+            Today &middot; {dayOfWeek}
+          </h4>
+          <span className="font-mono text-[9px] text-ink-muted">2\u20134 hrs deep work</span>
+        </div>
+
+        {dailyItems.length === 0 && (
+          <p className="font-sans text-[10px] text-ink-muted mb-2">
+            What should you learn today? Add from the roadmap items below or type your own.
+          </p>
+        )}
+
+        <div className="space-y-0.5 mb-2">
+          {dailyItems.map(d => {
+            const domainMeta = DOMAINS.find(dm => dm.key === d.domain)
+            return (
+              <div key={d.id} className="flex items-center gap-1.5 py-0.5 group">
+                <button
+                  onClick={() => toggleDaily(d.id)}
+                  className={`font-mono text-[10px] shrink-0 ${d.done ? 'text-green-ink' : 'text-ink-faint'}`}
+                >
+                  {d.done ? '\u2713' : '\u25CB'}
+                </button>
+                <span className={`font-mono text-[7px] uppercase px-1 py-0.5 rounded-sm border shrink-0 ${domainMeta?.bgColor} ${domainMeta?.borderColor}`}>
+                  {d.domain.slice(0, 4)}
+                </span>
+                <span className={`font-sans text-[10px] flex-1 ${d.done ? 'text-ink-muted line-through' : 'text-ink'}`}>
+                  {d.text}
+                </span>
+                <button
+                  onClick={() => removeDaily(d.id)}
+                  className="font-mono text-[9px] text-ink-faint hover:text-red-ink opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+                >
+                  &times;
+                </button>
+              </div>
+            )
+          })}
+        </div>
+
+        {/* Add daily item */}
+        <div className="flex items-center gap-1">
+          <select
+            value={newDailyDomain}
+            onChange={e => setNewDailyDomain(e.target.value as Domain)}
+            className="font-mono text-[9px] px-1 py-0.5 rounded-sm border border-rule bg-cream text-ink"
+          >
+            {DOMAINS.map(d => <option key={d.key} value={d.key}>{d.label.split(' ')[0]}</option>)}
+          </select>
+          <input
+            type="text"
+            value={newDaily}
+            onChange={e => setNewDaily(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && addDaily()}
+            placeholder="What to learn today..."
+            className="flex-1 font-sans text-[10px] px-1.5 py-0.5 rounded-sm border border-rule bg-white text-ink placeholder:text-ink-faint"
+          />
+          <button
+            onClick={addDaily}
+            className="font-serif text-[9px] font-medium px-2 py-0.5 rounded-sm bg-burgundy text-paper border border-burgundy"
+          >
+            Add
+          </button>
+        </div>
+      </div>
+
+      {/* This Week's Goals */}
+      <div className="bg-white border border-rule rounded-sm p-3">
+        <div className="flex items-center justify-between mb-2 pb-1.5 border-b-2 border-rule">
+          <h4 className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy">
+            This Week
+          </h4>
+          <span className="font-mono text-[9px] text-ink-muted">{currentQ} \u00B7 W{currentWeek}</span>
+        </div>
+
+        {weeklyGoals.length === 0 && (
+          <p className="font-sans text-[10px] text-ink-muted mb-2">
+            Set high-level goals for the week. What milestones should you hit?
+          </p>
+        )}
+
+        <div className="space-y-0.5 mb-2">
+          {weeklyGoals.map(w => {
+            const domainMeta = DOMAINS.find(dm => dm.key === w.domain)
+            return (
+              <div key={w.id} className="flex items-center gap-1.5 py-0.5 group">
+                <button
+                  onClick={() => toggleWeekly(w.id)}
+                  className={`font-mono text-[10px] shrink-0 ${w.done ? 'text-green-ink' : 'text-ink-faint'}`}
+                >
+                  {w.done ? '\u2713' : '\u25CB'}
+                </button>
+                <span className={`font-mono text-[7px] uppercase px-1 py-0.5 rounded-sm border shrink-0 ${domainMeta?.bgColor} ${domainMeta?.borderColor}`}>
+                  {w.domain.slice(0, 4)}
+                </span>
+                <span className={`font-sans text-[10px] flex-1 ${w.done ? 'text-ink-muted line-through' : 'text-ink'}`}>
+                  {w.text}
+                </span>
+                <button
+                  onClick={() => removeWeekly(w.id)}
+                  className="font-mono text-[9px] text-ink-faint hover:text-red-ink opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+                >
+                  &times;
+                </button>
+              </div>
+            )
+          })}
+        </div>
+
+        {/* Add weekly goal */}
+        <div className="flex items-center gap-1">
+          <select
+            value={newWeeklyDomain}
+            onChange={e => setNewWeeklyDomain(e.target.value as Domain)}
+            className="font-mono text-[9px] px-1 py-0.5 rounded-sm border border-rule bg-cream text-ink"
+          >
+            {DOMAINS.map(d => <option key={d.key} value={d.key}>{d.label.split(' ')[0]}</option>)}
+          </select>
+          <input
+            type="text"
+            value={newWeekly}
+            onChange={e => setNewWeekly(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && addWeekly()}
+            placeholder="High-level goal for the week..."
+            className="flex-1 font-sans text-[10px] px-1.5 py-0.5 rounded-sm border border-rule bg-white text-ink placeholder:text-ink-faint"
+          />
+          <button
+            onClick={addWeekly}
+            className="font-serif text-[9px] font-medium px-2 py-0.5 rounded-sm bg-burgundy text-paper border border-burgundy"
+          >
+            Add
+          </button>
+        </div>
+      </div>
+
+      {/* Active Roadmap Items — quick-add to daily/weekly */}
+      <div className="bg-white border border-rule rounded-sm p-3">
+        <h4 className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-2 pb-1.5 border-b-2 border-rule">
+          Active This Week &middot; {currentQ} W{currentWeek}
+        </h4>
+        <p className="font-sans text-[9px] text-ink-muted mb-1.5">
+          Click <span className="font-mono text-[8px] bg-cream px-0.5 rounded-sm">+D</span> to add to today or <span className="font-mono text-[8px] bg-cream px-0.5 rounded-sm">+W</span> to add to weekly goals.
+        </p>
+        <div className="space-y-0.5">
+          {activeThisWeek.map(item => {
+            const domainMeta = DOMAINS.find(d => d.key === item.domain)
+            return (
+              <div key={item.id} className="flex items-center gap-1.5 py-0.5">
+                <button
+                  onClick={() => onCycleStatus(item.id)}
+                  className={`font-mono text-[10px] shrink-0 ${STATUS_COLOR[item.status]}`}
+                >
+                  {STATUS_ICON[item.status]}
+                </button>
+                <span className={`font-mono text-[7px] uppercase px-1 py-0.5 rounded-sm border shrink-0 ${domainMeta?.bgColor} ${domainMeta?.borderColor}`}>
+                  {item.domain.slice(0, 4)}
+                </span>
+                <span className="font-sans text-[10px] text-ink flex-1">{item.title}</span>
+                <span className={`font-mono text-[7px] uppercase px-1 py-0.5 rounded-sm border shrink-0 ${TYPE_BADGE[item.type]}`}>
+                  {item.type}
+                </span>
+                <button
+                  onClick={() => addFromRoadmap(item, 'daily')}
+                  className="font-mono text-[8px] px-1 py-0.5 rounded-sm border border-rule text-ink-muted hover:text-burgundy hover:border-burgundy/30 transition-colors shrink-0"
+                >
+                  +D
+                </button>
+                <button
+                  onClick={() => addFromRoadmap(item, 'weekly')}
+                  className="font-mono text-[8px] px-1 py-0.5 rounded-sm border border-rule text-ink-muted hover:text-burgundy hover:border-burgundy/30 transition-colors shrink-0"
+                >
+                  +W
+                </button>
+              </div>
+            )
+          })}
+          {activeThisWeek.length === 0 && (
+            <p className="font-sans text-[10px] text-ink-muted">No active roadmap items for this week.</p>
+          )}
+        </div>
+      </div>
+
+      {/* Active textbooks */}
+      {activeBooks.length > 0 && (
+        <div className="bg-white border border-rule rounded-sm p-3">
+          <h4 className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-1.5">
+            Reading This Quarter
+          </h4>
+          <div className="space-y-0.5">
+            {activeBooks.map(tb => {
+              const domainMeta = DOMAINS.find(d => d.key === tb.domain)
+              const pct = Math.round((tb.chaptersRead / tb.chaptersTotal) * 100)
+              return (
+                <div key={tb.id} className="flex items-center gap-1.5 py-0.5">
+                  <span className={`font-mono text-[7px] uppercase px-1 py-0.5 rounded-sm border shrink-0 ${domainMeta?.bgColor} ${domainMeta?.borderColor}`}>
+                    {tb.domain.slice(0, 4)}
+                  </span>
+                  <span className="font-sans text-[10px] text-ink flex-1">{tb.title}</span>
+                  <div className="w-[40px] h-1 bg-cream rounded-sm overflow-hidden shrink-0">
+                    <div className={`h-full rounded-sm ${pct > 0 ? 'bg-amber-ink' : 'bg-rule'}`} style={{ width: `${pct}%` }} />
+                  </div>
+                  <span className="font-mono text-[9px] text-ink-muted shrink-0">{tb.chaptersRead}/{tb.chaptersTotal}</span>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Lagging items */}
+      {lagging.length > 0 && (
+        <div className="bg-amber-bg border border-amber-ink/20 rounded-sm p-2">
+          <span className="font-mono text-[10px] font-semibold text-amber-ink">
+            {lagging.length} item{lagging.length > 1 ? 's' : ''} behind schedule
+          </span>
+          <div className="space-y-0.5 mt-1">
+            {lagging.slice(0, 3).map(item => {
+              const domainMeta = DOMAINS.find(d => d.key === item.domain)
+              return (
+                <div key={item.id} className="flex items-center gap-1.5">
+                  <span className={`font-mono text-[7px] uppercase px-1 py-0.5 rounded-sm border ${domainMeta?.bgColor} ${domainMeta?.borderColor}`}>
+                    {item.domain.slice(0, 4)}
+                  </span>
+                  <span className="font-sans text-[10px] text-ink">{item.title}</span>
+                  <button
+                    onClick={() => addFromRoadmap(item, 'weekly')}
+                    className="font-mono text-[8px] px-1 py-0.5 rounded-sm border border-amber-ink/20 text-amber-ink hover:bg-amber-bg transition-colors shrink-0 ml-auto"
+                  >
+                    +W
+                  </button>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ─── Component ──────────────────────────────────────────────────────────
 
 export default function RoadmapView() {
   const { user } = useAuth()
   const [items, setItems] = useState<RoadmapItem[]>(INITIAL_ITEMS)
   const [textbooks, setTextbooks] = useState<TextbookEntry[]>(INITIAL_TEXTBOOKS)
-  const [view, setView] = useState<'gantt' | 'textbooks'>('gantt')
+  const [view, setView] = useState<'focus' | 'gantt' | 'textbooks'>('focus')
   const [filterDomain, setFilterDomain] = useState<Domain | 'all'>('all')
 
   const storageKeyItems = user?.uid ? `roadmap-items-${user.uid}` : null
@@ -308,7 +684,7 @@ export default function RoadmapView() {
       {/* View toggle + Current position */}
       <div className="flex items-center justify-between">
         <div className="flex gap-1">
-          {(['gantt', 'textbooks'] as const).map(v => (
+          {(['focus', 'gantt', 'textbooks'] as const).map(v => (
             <button
               key={v}
               onClick={() => setView(v)}
@@ -318,7 +694,7 @@ export default function RoadmapView() {
                   : 'bg-transparent text-ink-muted border-rule hover:border-ink-faint'
               }`}
             >
-              {v === 'gantt' ? 'Roadmap' : 'Textbooks'}
+              {v === 'focus' ? 'Focus' : v === 'gantt' ? 'Roadmap' : 'Textbooks'}
             </button>
           ))}
         </div>
@@ -362,7 +738,17 @@ export default function RoadmapView() {
         </div>
       )}
 
-      {view === 'gantt' ? (
+      {view === 'focus' ? (
+        <FocusView
+          items={items}
+          textbooks={textbooks}
+          currentQ={currentQ}
+          currentWeek={currentWeek}
+          lagging={lagging}
+          onCycleStatus={cycleStatus}
+          storageKey={user?.uid ? `roadmap-focus-${user.uid}` : null}
+        />
+      ) : view === 'gantt' ? (
         <>
           {/* Domain progress bars */}
           <div className="bg-white border border-rule rounded-sm p-3">
