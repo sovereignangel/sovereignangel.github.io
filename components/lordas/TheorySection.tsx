@@ -15,6 +15,7 @@ interface Example {
   date: string
   text: string
   by?: string
+  isSummary?: boolean
 }
 
 interface Concept {
@@ -44,7 +45,19 @@ const FRAMEWORKS: Framework[] = [
         extractExamples: (convs) => {
           const examples: Example[] = []
           for (const c of convs) {
-            // Use horsemenInstances (with quotes) if available, fall back to counts
+            // Always add count summary per session
+            const { horsemen } = c.extraction
+            const parts: string[] = []
+            for (const [person, counts] of Object.entries(horsemen)) {
+              const active = Object.entries(counts).filter(([, v]) => v > 0)
+              if (active.length > 0) {
+                parts.push(`${person === 'lori' ? 'Lori' : 'Aidas'}: ${active.map(([k, v]) => `${k} ×${v}`).join(', ')}`)
+              }
+            }
+            if (parts.length > 0) {
+              examples.push({ date: c.date, text: parts.join(' · '), isSummary: true })
+            }
+            // Add individual quote instances
             if (c.extraction.horsemenInstances && c.extraction.horsemenInstances.length > 0) {
               for (const inst of c.extraction.horsemenInstances) {
                 examples.push({
@@ -52,23 +65,8 @@ const FRAMEWORKS: Framework[] = [
                   text: `${inst.type} — "${inst.quote}"`,
                   by: inst.by === 'lori' ? 'Lori' : 'Aidas',
                 })
-                if (examples.length >= 5) return examples
-              }
-            } else {
-              // Legacy: counts only
-              const { horsemen } = c.extraction
-              const parts: string[] = []
-              for (const [person, counts] of Object.entries(horsemen)) {
-                const active = Object.entries(counts).filter(([, v]) => v > 0)
-                if (active.length > 0) {
-                  parts.push(`${person === 'lori' ? 'Lori' : 'Aidas'}: ${active.map(([k, v]) => `${k} ×${v}`).join(', ')}`)
-                }
-              }
-              if (parts.length > 0) {
-                examples.push({ date: c.date, text: parts.join(' · ') })
               }
             }
-            if (examples.length >= 5) break
           }
           return examples
         },
@@ -80,13 +78,16 @@ const FRAMEWORKS: Framework[] = [
         extractExamples: (convs) => {
           const examples: Example[] = []
           for (const c of convs) {
+            if (c.extraction.repairAttempts.length === 0) continue
+            const successful = c.extraction.repairAttempts.filter(r => r.successful).length
+            const total = c.extraction.repairAttempts.length
+            examples.push({ date: c.date, text: `${successful}/${total} repairs successful`, isSummary: true })
             for (const r of c.extraction.repairAttempts) {
               examples.push({
                 date: c.date,
                 text: `${r.successful ? '✓' : '✗'} ${r.type}${r.quote ? ` — "${r.quote}"` : ''}`,
                 by: r.by === 'lori' ? 'Lori' : 'Aidas',
               })
-              if (examples.length >= 5) return examples
             }
           }
           return examples
@@ -105,7 +106,6 @@ const FRAMEWORKS: Framework[] = [
                 text: v.summary,
                 by: v.by === 'lori' ? 'Lori' : 'Aidas',
               })
-              if (examples.length >= 5) return examples
             }
           }
           return examples
@@ -125,29 +125,28 @@ const FRAMEWORKS: Framework[] = [
         extractExamples: (convs) => {
           const examples: Example[] = []
           for (const c of convs) {
+            // Count summary
+            const lq = c.extraction.curiosityVsAssumption.lori
+            const aq = c.extraction.curiosityVsAssumption.aidas
+            if (lq.genuineQuestions + lq.assumptions + aq.genuineQuestions + aq.assumptions > 0) {
+              const lPct = (lq.genuineQuestions + lq.assumptions) > 0 ? Math.round(lq.genuineQuestions / (lq.genuineQuestions + lq.assumptions) * 100) : 0
+              const aPct = (aq.genuineQuestions + aq.assumptions) > 0 ? Math.round(aq.genuineQuestions / (aq.genuineQuestions + aq.assumptions) * 100) : 0
+              examples.push({
+                date: c.date,
+                text: `Lori: ${lPct}% curiosity (${lq.genuineQuestions}q / ${lq.assumptions}a) · Aidas: ${aPct}% (${aq.genuineQuestions}q / ${aq.assumptions}a)`,
+                isSummary: true,
+              })
+            }
+            // Individual instances
             if (c.extraction.curiosityInstances && c.extraction.curiosityInstances.length > 0) {
               for (const inst of c.extraction.curiosityInstances) {
                 examples.push({
                   date: c.date,
-                  text: `${inst.type === 'genuine-question' ? '? ' : '! '}${inst.type} — "${inst.quote}"`,
+                  text: `${inst.type === 'genuine-question' ? '?' : '!'} "${inst.quote}"`,
                   by: inst.by === 'lori' ? 'Lori' : 'Aidas',
-                })
-                if (examples.length >= 5) return examples
-              }
-            } else {
-              // Legacy: counts only
-              const lq = c.extraction.curiosityVsAssumption.lori
-              const aq = c.extraction.curiosityVsAssumption.aidas
-              if (lq.genuineQuestions + lq.assumptions + aq.genuineQuestions + aq.assumptions > 0) {
-                const lPct = (lq.genuineQuestions + lq.assumptions) > 0 ? Math.round(lq.genuineQuestions / (lq.genuineQuestions + lq.assumptions) * 100) : 0
-                const aPct = (aq.genuineQuestions + aq.assumptions) > 0 ? Math.round(aq.genuineQuestions / (aq.genuineQuestions + aq.assumptions) * 100) : 0
-                examples.push({
-                  date: c.date,
-                  text: `Lori: ${lPct}% curiosity (${lq.genuineQuestions}q / ${lq.assumptions}a) · Aidas: ${aPct}% (${aq.genuineQuestions}q / ${aq.assumptions}a)`,
                 })
               }
             }
-            if (examples.length >= 5) break
           }
           return examples
         },
@@ -167,7 +166,6 @@ const FRAMEWORKS: Framework[] = [
                   text: `"${v.value}" — ${v.context}`,
                   by: v.by === 'lori' ? 'Lori' : 'Aidas',
                 })
-                if (examples.length >= 5) return examples
               }
             }
           }
@@ -194,7 +192,6 @@ const FRAMEWORKS: Framework[] = [
                 text: v.summary,
                 by: v.by === 'lori' ? 'Lori' : 'Aidas',
               })
-              if (examples.length >= 5) return examples
             }
           }
           return examples
@@ -218,7 +215,6 @@ const FRAMEWORKS: Framework[] = [
                 text: `${label} (${pw.intensity})`,
               })
             }
-            if (examples.length >= 5) break
           }
           return examples
         },
@@ -237,6 +233,17 @@ const FRAMEWORKS: Framework[] = [
         extractExamples: (convs) => {
           const examples: Example[] = []
           for (const c of convs) {
+            // Count summary
+            const la = c.extraction.accountabilityVsBlame.lori
+            const aa = c.extraction.accountabilityVsBlame.aidas
+            if (la.ownership + la.blame + aa.ownership + aa.blame > 0) {
+              examples.push({
+                date: c.date,
+                text: `Lori: ${la.ownership} ownership / ${la.blame} blame · Aidas: ${aa.ownership} ownership / ${aa.blame} blame`,
+                isSummary: true,
+              })
+            }
+            // Individual instances
             if (c.extraction.accountabilityInstances && c.extraction.accountabilityInstances.length > 0) {
               for (const inst of c.extraction.accountabilityInstances) {
                 examples.push({
@@ -244,20 +251,8 @@ const FRAMEWORKS: Framework[] = [
                   text: `${inst.type} — "${inst.quote}"`,
                   by: inst.by === 'lori' ? 'Lori' : 'Aidas',
                 })
-                if (examples.length >= 5) return examples
-              }
-            } else {
-              // Legacy: counts only
-              const la = c.extraction.accountabilityVsBlame.lori
-              const aa = c.extraction.accountabilityVsBlame.aidas
-              if (la.ownership + la.blame + aa.ownership + aa.blame > 0) {
-                examples.push({
-                  date: c.date,
-                  text: `Lori: ${la.ownership} ownership / ${la.blame} blame · Aidas: ${aa.ownership} ownership / ${aa.blame} blame`,
-                })
               }
             }
-            if (examples.length >= 5) break
           }
           return examples
         },
@@ -275,7 +270,6 @@ const FRAMEWORKS: Framework[] = [
                 text: `Tone: ${c.extraction.overallTone} · Pattern: ${c.extraction.pursueWithdraw.pattern} — potential wall-building session`,
               })
             }
-            if (examples.length >= 5) break
           }
           return examples
         },
@@ -296,7 +290,6 @@ const FRAMEWORKS: Framework[] = [
           for (const c of convs) {
             for (const u of c.extraction.newUnderstandings) {
               examples.push({ date: c.date, text: u })
-              if (examples.length >= 5) return examples
             }
           }
           return examples
@@ -316,7 +309,6 @@ const FRAMEWORKS: Framework[] = [
                 text: `${r.type}${r.successful ? ' (accepted)' : ' (not received)'}${r.quote ? ` — "${r.quote}"` : ''}`,
                 by: r.by === 'lori' ? 'Lori' : 'Aidas',
               })
-              if (examples.length >= 5) return examples
             }
           }
           return examples
@@ -325,6 +317,24 @@ const FRAMEWORKS: Framework[] = [
     ],
   },
 ]
+
+// ---------------------------------------------------------------------------
+// Helper: group examples by date
+// ---------------------------------------------------------------------------
+
+function groupByDate(examples: Example[]): { date: string; summary?: Example; items: Example[] }[] {
+  const map = new Map<string, { summary?: Example; items: Example[] }>()
+  for (const ex of examples) {
+    if (!map.has(ex.date)) map.set(ex.date, { items: [] })
+    const group = map.get(ex.date)!
+    if (ex.isSummary) {
+      group.summary = ex
+    } else {
+      group.items.push(ex)
+    }
+  }
+  return Array.from(map.entries()).map(([date, g]) => ({ date, ...g }))
+}
 
 // ---------------------------------------------------------------------------
 // Component
@@ -391,9 +401,11 @@ export function TheorySection({ conversations }: TheorySectionProps) {
                 >
                   {framework.concepts.map((concept) => {
                     const examples = conversations.length > 0 ? concept.extractExamples(conversations) : []
+                    const grouped = groupByDate(examples)
+                    const totalItems = examples.filter(e => !e.isSummary).length
 
                     return (
-                      <div key={concept.name} className="bg-white p-3">
+                      <div key={concept.name} className="bg-white p-3 flex flex-col">
                         {/* Concept name */}
                         <div className="mb-2 pb-1.5 border-b" style={{ borderColor: '#e8e0d6' }}>
                           <span className="text-[11px] font-medium" style={{ color: '#2a2420' }}>
@@ -409,28 +421,43 @@ export function TheorySection({ conversations }: TheorySectionProps) {
                           — {concept.source}
                         </p>
 
-                        {/* Examples */}
-                        {examples.length > 0 ? (
-                          <div className="pt-1.5 border-t" style={{ borderColor: '#e8e0d6' }}>
-                            <p className="text-[9px] font-semibold uppercase tracking-[0.5px] mb-1" style={{ color: framework.color }}>
-                              Examples ({examples.length})
+                        {/* Examples — grouped by session, scrollable */}
+                        {grouped.length > 0 ? (
+                          <div className="pt-1.5 border-t flex-1" style={{ borderColor: '#e8e0d6' }}>
+                            <p className="text-[9px] font-semibold uppercase tracking-[0.5px] mb-1.5" style={{ color: framework.color }}>
+                              Examples ({totalItems || examples.length})
                             </p>
-                            <div className="space-y-1.5">
-                              {examples.map((ex, i) => (
-                                <div key={i} className="text-[10px]">
-                                  <div className="flex gap-1.5 items-baseline">
-                                    <span className="font-mono shrink-0" style={{ color: '#c0b8aa' }}>
-                                      {formatDate(ex.date)}
+                            <div className="overflow-y-auto max-h-[200px] space-y-2 pr-1">
+                              {grouped.map((group, gi) => (
+                                <div key={gi}>
+                                  {/* Date header + summary */}
+                                  <div className="flex items-baseline gap-1.5 mb-1">
+                                    <span className="font-mono text-[10px] font-medium shrink-0" style={{ color: '#8a7e72' }}>
+                                      {formatDate(group.date)}
                                     </span>
-                                    {ex.by && (
-                                      <span className="font-medium shrink-0" style={{
-                                        color: ex.by === 'Lori' ? '#b85c38' : '#2d5f4a'
-                                      }}>
-                                        {ex.by}
+                                    {group.summary && (
+                                      <span className="text-[9px]" style={{ color: '#6b6158' }}>
+                                        {group.summary.text}
                                       </span>
                                     )}
                                   </div>
-                                  <p className="mt-0.5" style={{ color: '#2a2420' }}>{ex.text}</p>
+                                  {/* Individual instances */}
+                                  {group.items.length > 0 && (
+                                    <div className="ml-2 pl-2 space-y-1" style={{ borderLeft: '2px solid #e8e0d6' }}>
+                                      {group.items.map((ex, i) => (
+                                        <div key={i} className="text-[10px]">
+                                          {ex.by && (
+                                            <span className="font-medium mr-1" style={{
+                                              color: ex.by === 'Lori' ? '#b85c38' : '#2d5f4a'
+                                            }}>
+                                              {ex.by}
+                                            </span>
+                                          )}
+                                          <span style={{ color: '#2a2420' }}>{ex.text}</span>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
                                 </div>
                               ))}
                             </div>
