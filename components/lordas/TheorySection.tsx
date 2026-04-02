@@ -430,16 +430,18 @@ export function TheorySection({ conversations }: TheorySectionProps) {
                             <div className="overflow-y-auto max-h-[200px] space-y-2 pr-1">
                               {grouped.map((group, gi) => (
                                 <div key={gi}>
-                                  {/* Date header + summary */}
-                                  <div className="flex items-baseline gap-1.5 mb-1">
-                                    <span className="font-mono text-[10px] font-medium shrink-0" style={{ color: '#8a7e72' }}>
-                                      {formatDate(group.date)}
-                                    </span>
-                                    {group.summary && (
-                                      <span className="text-[9px]" style={{ color: '#6b6158' }}>
-                                        {group.summary.text}
+                                  {/* Date header + summary — sticky */}
+                                  <div className="sticky top-0 z-10 bg-white pb-1 mb-1">
+                                    <div className="flex items-baseline gap-1.5">
+                                      <span className="font-mono text-[10px] font-medium shrink-0" style={{ color: '#8a7e72' }}>
+                                        {formatDate(group.date)}
                                       </span>
-                                    )}
+                                      {group.summary && (
+                                        <span className="text-[9px]" style={{ color: '#6b6158' }}>
+                                          {group.summary.text}
+                                        </span>
+                                      )}
+                                    </div>
                                   </div>
                                   {/* Individual instances */}
                                   {group.items.length > 0 && (
