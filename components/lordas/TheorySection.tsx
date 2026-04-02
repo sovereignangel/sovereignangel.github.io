@@ -44,18 +44,31 @@ const FRAMEWORKS: Framework[] = [
         extractExamples: (convs) => {
           const examples: Example[] = []
           for (const c of convs) {
-            const { horsemen } = c.extraction
-            const parts: string[] = []
-            for (const [person, counts] of Object.entries(horsemen)) {
-              const active = Object.entries(counts).filter(([, v]) => v > 0)
-              if (active.length > 0) {
-                parts.push(`${person === 'lori' ? 'Lori' : 'Aidas'}: ${active.map(([k, v]) => `${k} ×${v}`).join(', ')}`)
+            // Use horsemenInstances (with quotes) if available, fall back to counts
+            if (c.extraction.horsemenInstances && c.extraction.horsemenInstances.length > 0) {
+              for (const inst of c.extraction.horsemenInstances) {
+                examples.push({
+                  date: c.date,
+                  text: `${inst.type} — "${inst.quote}"`,
+                  by: inst.by === 'lori' ? 'Lori' : 'Aidas',
+                })
+                if (examples.length >= 5) return examples
+              }
+            } else {
+              // Legacy: counts only
+              const { horsemen } = c.extraction
+              const parts: string[] = []
+              for (const [person, counts] of Object.entries(horsemen)) {
+                const active = Object.entries(counts).filter(([, v]) => v > 0)
+                if (active.length > 0) {
+                  parts.push(`${person === 'lori' ? 'Lori' : 'Aidas'}: ${active.map(([k, v]) => `${k} ×${v}`).join(', ')}`)
+                }
+              }
+              if (parts.length > 0) {
+                examples.push({ date: c.date, text: parts.join(' · ') })
               }
             }
-            if (parts.length > 0) {
-              examples.push({ date: c.date, text: parts.join(' · ') })
-            }
-            if (examples.length >= 3) break
+            if (examples.length >= 5) break
           }
           return examples
         },
@@ -73,7 +86,7 @@ const FRAMEWORKS: Framework[] = [
                 text: `${r.successful ? '✓' : '✗'} ${r.type}${r.quote ? ` — "${r.quote}"` : ''}`,
                 by: r.by === 'lori' ? 'Lori' : 'Aidas',
               })
-              if (examples.length >= 3) return examples
+              if (examples.length >= 5) return examples
             }
           }
           return examples
@@ -92,7 +105,7 @@ const FRAMEWORKS: Framework[] = [
                 text: v.summary,
                 by: v.by === 'lori' ? 'Lori' : 'Aidas',
               })
-              if (examples.length >= 3) return examples
+              if (examples.length >= 5) return examples
             }
           }
           return examples
@@ -122,7 +135,7 @@ const FRAMEWORKS: Framework[] = [
                 text: `Lori: ${lPct}% curiosity (${lq.genuineQuestions}q / ${lq.assumptions}a) · Aidas: ${aPct}% (${aq.genuineQuestions}q / ${aq.assumptions}a)`,
               })
             }
-            if (examples.length >= 3) break
+            if (examples.length >= 5) break
           }
           return examples
         },
@@ -142,7 +155,7 @@ const FRAMEWORKS: Framework[] = [
                   text: `"${v.value}" — ${v.context}`,
                   by: v.by === 'lori' ? 'Lori' : 'Aidas',
                 })
-                if (examples.length >= 3) return examples
+                if (examples.length >= 5) return examples
               }
             }
           }
@@ -169,7 +182,7 @@ const FRAMEWORKS: Framework[] = [
                 text: v.summary,
                 by: v.by === 'lori' ? 'Lori' : 'Aidas',
               })
-              if (examples.length >= 3) return examples
+              if (examples.length >= 5) return examples
             }
           }
           return examples
@@ -193,7 +206,7 @@ const FRAMEWORKS: Framework[] = [
                 text: `${label} (${pw.intensity})`,
               })
             }
-            if (examples.length >= 3) break
+            if (examples.length >= 5) break
           }
           return examples
         },
@@ -220,7 +233,7 @@ const FRAMEWORKS: Framework[] = [
                 text: `Lori: ${la.ownership} ownership / ${la.blame} blame · Aidas: ${aa.ownership} ownership / ${aa.blame} blame`,
               })
             }
-            if (examples.length >= 3) break
+            if (examples.length >= 5) break
           }
           return examples
         },
@@ -238,7 +251,7 @@ const FRAMEWORKS: Framework[] = [
                 text: `Tone: ${c.extraction.overallTone} · Pattern: ${c.extraction.pursueWithdraw.pattern} — potential wall-building session`,
               })
             }
-            if (examples.length >= 3) break
+            if (examples.length >= 5) break
           }
           return examples
         },
@@ -259,7 +272,7 @@ const FRAMEWORKS: Framework[] = [
           for (const c of convs) {
             for (const u of c.extraction.newUnderstandings) {
               examples.push({ date: c.date, text: u })
-              if (examples.length >= 3) return examples
+              if (examples.length >= 5) return examples
             }
           }
           return examples
@@ -279,7 +292,7 @@ const FRAMEWORKS: Framework[] = [
                 text: `${r.type}${r.successful ? ' (accepted)' : ' (not received)'}${r.quote ? ` — "${r.quote}"` : ''}`,
                 by: r.by === 'lori' ? 'Lori' : 'Aidas',
               })
-              if (examples.length >= 3) return examples
+              if (examples.length >= 5) return examples
             }
           }
           return examples
@@ -294,7 +307,16 @@ const FRAMEWORKS: Framework[] = [
 // ---------------------------------------------------------------------------
 
 export function TheorySection({ conversations }: TheorySectionProps) {
-  const [expandedConcept, setExpandedConcept] = useState<string | null>(null)
+  const [collapsedCoaches, setCollapsedCoaches] = useState<Set<string>>(new Set())
+
+  const toggleCoach = (author: string) => {
+    setCollapsedCoaches(prev => {
+      const next = new Set(prev)
+      if (next.has(author)) next.delete(author)
+      else next.add(author)
+      return next
+    })
+  }
 
   return (
     <div>
@@ -308,84 +330,102 @@ export function TheorySection({ conversations }: TheorySectionProps) {
         </span>
       </div>
 
-      <div className="space-y-3">
-        {FRAMEWORKS.map((framework) => (
-          <div key={framework.author}>
-            {/* Framework header */}
-            <div className="flex items-baseline gap-2 mb-1.5">
-              <span className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px]" style={{ color: framework.color }}>
-                {framework.author}
-              </span>
-              <span className="text-[9px]" style={{ color: '#c0b8aa' }}>
-                {framework.method}
-              </span>
-            </div>
+      <div className="space-y-2">
+        {FRAMEWORKS.map((framework) => {
+          const isCollapsed = collapsedCoaches.has(framework.author)
 
-            {/* Concepts */}
-            <div className="space-y-1">
-              {framework.concepts.map((concept) => {
-                const key = `${framework.author}-${concept.name}`
-                const isExpanded = expandedConcept === key
-                const examples = conversations.length > 0 ? concept.extractExamples(conversations) : []
+          return (
+            <div key={framework.author} className="border rounded-sm" style={{ borderColor: '#d8cfc4' }}>
+              {/* Coach header — clickable to collapse */}
+              <button
+                onClick={() => toggleCoach(framework.author)}
+                className="w-full text-left px-3 py-2 flex items-center gap-2"
+                style={{ backgroundColor: '#faf7f2' }}
+              >
+                <span className="text-[10px]" style={{ color: '#c0b8aa' }}>
+                  {isCollapsed ? '▸' : '▾'}
+                </span>
+                <span className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px]" style={{ color: framework.color }}>
+                  {framework.author}
+                </span>
+                <span className="text-[9px]" style={{ color: '#c0b8aa' }}>
+                  {framework.method}
+                </span>
+                <span className="text-[8px] font-mono ml-auto px-1.5 py-0.5 rounded-sm" style={{ backgroundColor: `${framework.color}10`, color: framework.color }}>
+                  {framework.concepts.length} concepts
+                </span>
+              </button>
 
-                return (
-                  <div key={key}>
-                    <button
-                      onClick={() => setExpandedConcept(isExpanded ? null : key)}
-                      className="w-full text-left px-3 py-2 rounded-sm border transition-colors"
-                      style={{
-                        backgroundColor: isExpanded ? '#faf7f2' : 'transparent',
-                        borderColor: isExpanded ? '#d8cfc4' : 'transparent',
-                      }}
-                    >
-                      <div className="flex items-center gap-2">
-                        <span className="text-[11px] font-medium" style={{ color: '#2a2420' }}>
-                          {concept.name}
-                        </span>
-                        <span className="text-[10px] ml-auto" style={{ color: '#c0b8aa' }}>
-                          {isExpanded ? '▾' : '▸'}
-                        </span>
-                      </div>
+              {/* Concepts as columns */}
+              {!isCollapsed && (
+                <div
+                  className="grid gap-px"
+                  style={{
+                    gridTemplateColumns: `repeat(${framework.concepts.length}, 1fr)`,
+                    backgroundColor: '#d8cfc4',
+                  }}
+                >
+                  {framework.concepts.map((concept) => {
+                    const examples = conversations.length > 0 ? concept.extractExamples(conversations) : []
 
-                      {/* Inline examples — always visible */}
-                      {examples.length > 0 && (
-                        <div className="mt-1.5 space-y-1">
-                          {examples.map((ex, i) => (
-                            <div key={i} className="flex gap-2 text-[10px]">
-                              <span className="font-mono shrink-0" style={{ color: '#c0b8aa' }}>
-                                {formatDate(ex.date)}
-                              </span>
-                              {ex.by && (
-                                <span className="font-medium shrink-0" style={{
-                                  color: ex.by === 'Lori' ? '#b85c38' : '#2d5f4a'
-                                }}>
-                                  {ex.by}
-                                </span>
-                              )}
-                              <span style={{ color: '#6b6158' }}>{ex.text}</span>
-                            </div>
-                          ))}
+                    return (
+                      <div key={concept.name} className="bg-white p-3">
+                        {/* Concept name */}
+                        <div className="mb-2 pb-1.5 border-b" style={{ borderColor: '#e8e0d6' }}>
+                          <span className="text-[11px] font-medium" style={{ color: '#2a2420' }}>
+                            {concept.name}
+                          </span>
                         </div>
-                      )}
-                    </button>
 
-                    {isExpanded && (
-                      <div className="mx-3 mb-1 px-3 py-2 border-x border-b rounded-b-sm" style={{ borderColor: '#d8cfc4', backgroundColor: '#faf7f2' }}>
-                        {/* Theory */}
-                        <p className="text-[10px] leading-relaxed mb-2" style={{ color: '#2a2420' }}>
-                          {concept.theory}
+                        {/* Theory (compact) */}
+                        <p className="text-[10px] leading-relaxed mb-1.5" style={{ color: '#6b6158' }}>
+                          {concept.theory.length > 200 ? concept.theory.slice(0, 200) + '…' : concept.theory}
                         </p>
-                        <p className="text-[9px] italic" style={{ color: '#c0b8aa' }}>
+                        <p className="text-[9px] italic mb-2" style={{ color: '#c0b8aa' }}>
                           — {concept.source}
                         </p>
+
+                        {/* Examples */}
+                        {examples.length > 0 ? (
+                          <div className="pt-1.5 border-t" style={{ borderColor: '#e8e0d6' }}>
+                            <p className="text-[9px] font-semibold uppercase tracking-[0.5px] mb-1" style={{ color: framework.color }}>
+                              Examples ({examples.length})
+                            </p>
+                            <div className="space-y-1.5">
+                              {examples.map((ex, i) => (
+                                <div key={i} className="text-[10px]">
+                                  <div className="flex gap-1.5 items-baseline">
+                                    <span className="font-mono shrink-0" style={{ color: '#c0b8aa' }}>
+                                      {formatDate(ex.date)}
+                                    </span>
+                                    {ex.by && (
+                                      <span className="font-medium shrink-0" style={{
+                                        color: ex.by === 'Lori' ? '#b85c38' : '#2d5f4a'
+                                      }}>
+                                        {ex.by}
+                                      </span>
+                                    )}
+                                  </div>
+                                  <p className="mt-0.5" style={{ color: '#2a2420' }}>{ex.text}</p>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="pt-1.5 border-t" style={{ borderColor: '#e8e0d6' }}>
+                            <p className="text-[9px] italic" style={{ color: '#c0b8aa' }}>
+                              No examples yet
+                            </p>
+                          </div>
+                        )}
                       </div>
-                    )}
-                  </div>
-                )
-              })}
+                    )
+                  })}
+                </div>
+              )}
             </div>
-          </div>
-        ))}
+          )
+        })}
       </div>
     </div>
   )

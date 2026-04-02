@@ -47,6 +47,10 @@ Return a JSON object with these exact fields:
     "aidas": { "criticism": <count>, "contempt": <count>, "defensiveness": <count>, "stonewalling": <count> }
   },
 
+  "horsemenInstances": [
+    { "by": "lori"|"aidas", "type": "criticism"|"contempt"|"defensiveness"|"stonewalling", "quote": "<brief excerpt from transcript>" }
+  ],
+
   "repairAttempts": [
     { "by": "lori"|"aidas", "type": "humor"|"affection"|"accountability"|"de-escalation"|"meta-communication", "successful": true|false, "quote": "<brief excerpt if notable>" }
   ],
@@ -98,6 +102,7 @@ Counting guidelines:
 - Contempt = eye-rolling, sarcasm, mockery, superiority, disgust
 - Defensiveness = "Yes, but..." / counter-attacking / playing victim / denying responsibility
 - Stonewalling = shutting down, going silent, walking away, emotional withdrawal
+- For horsemenInstances: include one entry per occurrence with a brief quote from the transcript (the actual words said)
 - Genuine questions = open-ended questions driven by curiosity ("How did that make you feel?")
 - Assumptions = assuming intent or feelings ("You don't care about...")
 - Ownership = "I realize I..." / "My part in this was..."
@@ -137,6 +142,7 @@ Return ONLY valid JSON, no markdown, no code fences.`
       durationMinutes: typeof parsed.durationMinutes === 'number' ? parsed.durationMinutes : 0,
       triggerTopic: typeof parsed.triggerTopic === 'string' ? parsed.triggerTopic : 'Unknown',
       horsemen: validateHorsemen(parsed.horsemen),
+      horsemenInstances: Array.isArray(parsed.horsemenInstances) ? parsed.horsemenInstances : [],
       repairAttempts: Array.isArray(parsed.repairAttempts) ? parsed.repairAttempts : [],
       vulnerabilityMoments: Array.isArray(parsed.vulnerabilityMoments) ? parsed.vulnerabilityMoments : [],
       curiosityVsAssumption: validateCuriosityAssumption(parsed.curiosityVsAssumption),
@@ -323,6 +329,7 @@ const EMPTY_RELATIONAL_EXTRACTION: RelationalExtraction = {
     lori: { criticism: 0, contempt: 0, defensiveness: 0, stonewalling: 0 },
     aidas: { criticism: 0, contempt: 0, defensiveness: 0, stonewalling: 0 },
   },
+  horsemenInstances: [],
   repairAttempts: [],
   vulnerabilityMoments: [],
   curiosityVsAssumption: {

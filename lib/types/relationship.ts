@@ -30,6 +30,12 @@ export interface HorsemenCounts {
   stonewalling: number
 }
 
+export interface HorsemenInstance {
+  by: RelationalSpeaker
+  type: HorsemanType
+  quote: string
+}
+
 export interface RepairAttempt {
   by: RelationalSpeaker
   type: RepairType
@@ -81,6 +87,7 @@ export interface RelationalExtraction {
     lori: HorsemenCounts
     aidas: HorsemenCounts
   }
+  horsemenInstances?: HorsemenInstance[]
   repairAttempts: RepairAttempt[]
   vulnerabilityMoments: VulnerabilityMoment[]
 
