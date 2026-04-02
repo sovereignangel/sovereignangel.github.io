@@ -7,12 +7,13 @@ export async function POST(req: NextRequest) {
   if (auth instanceof NextResponse) return auth
 
   try {
-    const { lastWeekPlan, logs, projectNames } = await req.json()
+    const { lastWeekPlan, logs, projectNames, roadmap } = await req.json()
 
     const draft = await generateNextWeekPlan(
       lastWeekPlan || null,
       logs || [],
       projectNames || [],
+      roadmap || undefined,
     )
 
     return NextResponse.json(draft)

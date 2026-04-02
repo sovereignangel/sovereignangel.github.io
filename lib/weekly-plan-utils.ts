@@ -33,34 +33,52 @@ export function formatWeekLabel(startDate: string, endDate: string): string {
 // ─── Scorecard Auto-Population ──────────────────────────────────────
 
 export interface WeeklyActuals {
+  focus_hours: number
+  study_hours: number
+  meetings: number
+  papers_read: number
+  book_hours: number
+  presentations: number
+  vo2: number
+  sleep: number
+  // Legacy fields kept for backward compat with old plans
   revenue_asks: number
   ships: number
   posts: number
   revenue: number
-  vo2: number
-  sleep: number
-  focus_hours: number
 }
 
 export function computeWeeklyActuals(
   logs: DailyLog[],
   garminMetrics?: GarminMetrics[]
 ): WeeklyActuals {
+  let focusHours = 0
+  let studyHours = 0
+  let meetings = 0
+  let papersRead = 0
+  let bookHours = 0
+  let presentations = 0
+  let vo2 = 0
+  let sleepDays = 0
+  // Legacy
   let revenueAsks = 0
   let ships = 0
   let posts = 0
   let revenue = 0
-  let vo2 = 0
-  let sleepDays = 0
-  let focusHours = 0
 
   for (const log of logs) {
+    focusHours += log.focusHoursActual || 0
+    studyHours += log.studyHours || 0
+    meetings += log.meetingsBooked || 0
+    papersRead += log.papersRead || 0
+    bookHours += log.bookHours || 0
+    presentations += log.presentationsGiven || 0
+
+    // Legacy fields
     revenueAsks += log.revenueAsksCount || 0
     posts += log.publicPostsCount || 0
     revenue += log.revenueThisSession || 0
-    focusHours += log.focusHoursActual || 0
 
-    // Ships: use shipsCount if available, else check whatShipped
     if (typeof log.shipsCount === 'number' && log.shipsCount > 0) {
       ships += log.shipsCount
     } else if (log.whatShipped && log.whatShipped.trim()) {
@@ -83,7 +101,6 @@ export function computeWeeklyActuals(
   // If garmin data available, use sleep score as fallback
   if (garminMetrics && sleepDays === 0) {
     for (const g of garminMetrics) {
-      // Garmin sleep score >= 60 is roughly 7+ hours
       if (g.sleepScore && g.sleepScore >= 60) {
         sleepDays += 1
       }
@@ -91,13 +108,19 @@ export function computeWeeklyActuals(
   }
 
   return {
+    focus_hours: focusHours,
+    study_hours: studyHours,
+    meetings,
+    papers_read: papersRead,
+    book_hours: bookHours,
+    presentations,
+    vo2,
+    sleep: sleepDays,
+    // Legacy
     revenue_asks: revenueAsks,
     ships,
     posts,
     revenue,
-    vo2,
-    sleep: sleepDays,
-    focus_hours: focusHours,
   }
 }
 
@@ -115,10 +138,12 @@ export function mergeActualsIntoScorecard(
 
 export function defaultScorecard(): WeeklyScorecardMetric[] {
   return [
-    { key: 'revenue_asks', label: 'Revenue Asks', target: '21', targetNumeric: 21, actual: null },
-    { key: 'ships', label: 'Public Ships', target: '5', targetNumeric: 5, actual: null },
-    { key: 'posts', label: 'Own', target: '7', targetNumeric: 7, actual: null },
-    { key: 'revenue', label: 'Revenue', target: '$2k', targetNumeric: 2000, actual: null, unit: '$' },
+    { key: 'focus_hours', label: 'Focus Hours', target: '30', targetNumeric: 30, actual: null, unit: 'hrs' },
+    { key: 'study_hours', label: 'Study Hours', target: '10', targetNumeric: 10, actual: null, unit: 'hrs' },
+    { key: 'meetings', label: 'Meetings', target: '5', targetNumeric: 5, actual: null },
+    { key: 'papers_read', label: 'Papers Read', target: '2', targetNumeric: 2, actual: null },
+    { key: 'book_hours', label: 'Book Hours', target: '5', targetNumeric: 5, actual: null, unit: 'hrs' },
+    { key: 'presentations', label: 'Presentations', target: '1', targetNumeric: 1, actual: null },
     { key: 'vo2', label: 'VO2 Sessions', target: '2', targetNumeric: 2, actual: null },
     { key: 'sleep', label: 'Sleep 7+hrs', target: '7/7', targetNumeric: 7, actual: null },
   ]
@@ -145,9 +170,8 @@ export function createEmptyWeeklyPlan(date: Date = new Date()): Omit<WeeklyPlan,
         category: 'GE',
         color: '#6b5b4f',
       }] : [],
-      plannedAsks: 0,
-      plannedShips: 0,
-      plannedPosts: 0,
+      plannedStudyHours: 0,
+      plannedMeetings: 0,
     }
   })
 

@@ -662,16 +662,13 @@ function TodayAllocation({ allocation, spineResolution, planLoading, today }: To
           )}
 
           {/* Planned targets */}
-          {(allocation.plannedShips > 0 || allocation.plannedAsks > 0 || allocation.plannedPosts > 0) && (
+          {((allocation.plannedStudyHours ?? 0) > 0 || (allocation.plannedMeetings ?? 0) > 0) && (
             <div className="mt-2 pt-1.5 border-t border-rule-light flex items-center gap-3">
-              {allocation.plannedShips > 0 && (
-                <span className="font-mono text-[9px] text-ink-muted">Ships: <span className="font-semibold text-ink">{allocation.plannedShips}</span></span>
+              {(allocation.plannedStudyHours ?? 0) > 0 && (
+                <span className="font-mono text-[9px] text-ink-muted">Study: <span className="font-semibold text-ink">{allocation.plannedStudyHours}h</span></span>
               )}
-              {allocation.plannedAsks > 0 && (
-                <span className="font-mono text-[9px] text-ink-muted">Asks: <span className="font-semibold text-ink">{allocation.plannedAsks}</span></span>
-              )}
-              {allocation.plannedPosts > 0 && (
-                <span className="font-mono text-[9px] text-ink-muted">Posts: <span className="font-semibold text-ink">{allocation.plannedPosts}</span></span>
+              {(allocation.plannedMeetings ?? 0) > 0 && (
+                <span className="font-mono text-[9px] text-ink-muted">Meetings: <span className="font-semibold text-ink">{allocation.plannedMeetings}</span></span>
               )}
             </div>
           )}

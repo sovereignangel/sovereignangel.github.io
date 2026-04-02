@@ -12,6 +12,7 @@ import RetroView from './RetroView'
 import PlanLedger from './PlanLedger'
 import { createEmptyWeeklyPlan, defaultScorecard } from '@/lib/weekly-plan-utils'
 import { getThisWeekPlanData } from '@/lib/seed-this-week'
+import { INITIAL_ITEMS, INITIAL_TEXTBOOKS, buildRoadmapContext } from '@/lib/roadmap-data'
 import type { WeeklyPlan } from '@/lib/types'
 
 type PlanTab = 'goals' | 'daily' | 'scorecard' | 'retro' | 'ledger'
@@ -79,11 +80,14 @@ export default function WeeklyPlanView() {
   const handleGenerateNextWeek = async () => {
     setGenerateLoading(true)
     try {
-      const projectNames = plan?.projects.map(p => p.projectName) || []
+      const projectNames = plan?.projects.map(p => p.projectName) || [
+        'Alamo Bernal', 'Armstrong Fund', 'Complexity Econ Research', 'RL/AI Study',
+      ]
+      const roadmap = buildRoadmapContext(INITIAL_ITEMS, INITIAL_TEXTBOOKS)
       const res = await authFetch('/api/weekly-plan/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ lastWeekPlan: plan, logs: weekLogs, projectNames }),
+        body: JSON.stringify({ lastWeekPlan: plan, logs: weekLogs, projectNames, roadmap }),
       })
       if (res.ok) {
         const draft = await res.json()

@@ -74,9 +74,8 @@ function DayCard({
           {TRAINING_SCHEDULE[day.day] && (
             <span className="text-[#6b5b4f]">{TRAINING_SCHEDULE[day.day].label}</span>
           )}
-          {day.plannedAsks > 0 && <span className="text-green-ink">κ:{day.plannedAsks}</span>}
-          {day.plannedShips > 0 && <span className="text-burgundy">⬆{day.plannedShips}</span>}
-          {day.plannedPosts > 0 && <span className="text-[#2d4a6f]">✎{day.plannedPosts}</span>}
+          {(day.plannedStudyHours ?? 0) > 0 && <span className="text-[#8a6d2f]">{day.plannedStudyHours}h study</span>}
+          {(day.plannedMeetings ?? 0) > 0 && <span className="text-[#2d4a6f]">{day.plannedMeetings} mtg</span>}
           <span
             className="text-ink-faint transition-transform duration-200"
             style={{ transform: isOpen ? 'rotate(180deg)' : 'none' }}

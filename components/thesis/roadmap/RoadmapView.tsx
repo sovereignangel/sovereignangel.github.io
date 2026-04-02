@@ -2,36 +2,16 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '@/components/auth/AuthProvider'
-
-// ─── Types ──────────────────────────────────────────────────────────────
-
-type Domain = 'complexity' | 'ai' | 'quant' | 'markets' | 'neuro'
-type Quarter = 'Q1' | 'Q2' | 'Q3' | 'Q4'
-type ItemStatus = 'not_started' | 'in_progress' | 'complete'
-
-interface RoadmapItem {
-  id: string
-  domain: Domain
-  quarter: Quarter
-  title: string
-  type: 'course' | 'book' | 'project' | 'milestone' | 'paper'
-  description: string
-  status: ItemStatus
-  weekStart?: number   // week within the quarter (1-13)
-  weekEnd?: number
-}
-
-interface TextbookEntry {
-  id: string
-  title: string
-  author: string
-  domain: Domain
-  quarter: Quarter
-  chaptersTotal: number
-  chaptersRead: number
-  status: ItemStatus
-  url?: string
-}
+import {
+  type RoadmapDomain as Domain,
+  type RoadmapQuarter as Quarter,
+  type RoadmapItemStatus as ItemStatus,
+  type RoadmapItem,
+  type TextbookEntry,
+  QUARTER_META,
+  getCurrentQuarter,
+  getCurrentWeekInQuarter,
+} from '@/lib/roadmap-data'
 
 // ─── Constants ──────────────────────────────────────────────────────────
 
@@ -43,12 +23,7 @@ const DOMAINS: { key: Domain; label: string; color: string; bgColor: string; bor
   { key: 'neuro', label: 'Cognitive & Neuro', color: 'text-ink-muted', bgColor: 'bg-cream', borderColor: 'border-rule' },
 ]
 
-const QUARTERS: { key: Quarter; label: string; months: string }[] = [
-  { key: 'Q1', label: 'Q1 Foundations', months: 'Apr \u2013 Jun 2026' },
-  { key: 'Q2', label: 'Q2 Integration', months: 'Jul \u2013 Sep 2026' },
-  { key: 'Q3', label: 'Q3 Depth + Research', months: 'Oct \u2013 Dec 2026' },
-  { key: 'Q4', label: 'Q4 Execution', months: 'Jan \u2013 Mar 2027' },
-]
+const QUARTERS = QUARTER_META
 
 const CAREER_OUTCOMES = [
   { label: 'Full-Stack Hedge Fund', icon: '\u03B1' },
@@ -154,27 +129,7 @@ const TYPE_BADGE: Record<string, string> = {
   paper: 'text-ink-muted bg-cream border-rule',
 }
 
-// ─── Helpers ────────────────────────────────────────────────────────────
-
-function getCurrentQuarter(): Quarter {
-  const now = new Date()
-  const m = now.getMonth() // 0-indexed
-  // Apr-Jun = Q1, Jul-Sep = Q2, Oct-Dec = Q3, Jan-Mar = Q4
-  if (m >= 3 && m <= 5) return 'Q1'
-  if (m >= 6 && m <= 8) return 'Q2'
-  if (m >= 9 && m <= 11) return 'Q3'
-  return 'Q4'
-}
-
-function getCurrentWeekInQuarter(): number {
-  const now = new Date()
-  const q = getCurrentQuarter()
-  const startMonth = q === 'Q1' ? 3 : q === 'Q2' ? 6 : q === 'Q3' ? 9 : 0
-  const startYear = q === 'Q4' ? now.getFullYear() : now.getFullYear()
-  const start = new Date(startYear, startMonth, 1)
-  const diff = now.getTime() - start.getTime()
-  return Math.min(13, Math.max(1, Math.ceil(diff / (7 * 24 * 60 * 60 * 1000))))
-}
+// getCurrentQuarter and getCurrentWeekInQuarter imported from @/lib/roadmap-data
 
 // ─── Focus View ─────────────────────────────────────────────────────────
 

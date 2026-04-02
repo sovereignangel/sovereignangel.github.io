@@ -36,9 +36,11 @@ export interface DailyAllocation {
   theme: string
   morningPrime: string
   blocks: TimeBlock[]
-  plannedAsks: number
-  plannedShips: number
-  plannedPosts: number
+  plannedAsks?: number
+  plannedShips?: number
+  plannedPosts?: number
+  plannedStudyHours?: number
+  plannedMeetings?: number
 }
 
 export interface WeeklyScorecardMetric {
