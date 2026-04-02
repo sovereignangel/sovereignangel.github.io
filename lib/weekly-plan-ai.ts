@@ -95,6 +95,135 @@ Respond ONLY with valid JSON, no markdown wrapping.`
   }
 }
 
+// ─── Daily Morning Brief ────────────────────────────────────────────
+
+export interface MorningBriefResult {
+  summary: string                    // 2-3 sentence assessment of where you are
+  adjustments: {                     // suggested changes to today's blocks
+    action: 'swap' | 'add' | 'remove' | 'keep'
+    blockIndex?: number              // index in today's blocks to modify
+    task?: string
+    time?: string
+    category?: string
+    color?: string
+    reason: string
+  }[]
+  updatedBlocks?: {                  // full replacement block list if changes are significant
+    time: string
+    task: string
+    category: string
+    color: string
+  }[]
+  morningPrime: string               // updated morning directive based on journal context
+  carryForward: string[]             // items from yesterday that need attention today
+}
+
+export async function generateMorningBrief(
+  plan: WeeklyPlan,
+  logs: DailyLog[],
+  todayIndex: number,
+): Promise<MorningBriefResult> {
+  const today = plan.dailyAllocations[todayIndex]
+  if (!today) {
+    return { summary: 'No allocation found for today.', adjustments: [], morningPrime: '', carryForward: [] }
+  }
+
+  // Journal entries from this week so far (up to yesterday)
+  const journalSoFar = logs
+    .filter(l => l.journalEntry && l.journalEntry.trim())
+    .map(l => `${l.date}: ${l.journalEntry}`)
+    .join('\n\n')
+
+  // Yesterday's log specifically
+  const yesterdayLog = todayIndex > 0
+    ? logs.find(l => l.date === plan.dailyAllocations[todayIndex - 1]?.date)
+    : null
+
+  const yesterdayJournal = yesterdayLog?.journalEntry || 'No journal entry.'
+  const yesterdayFocus = yesterdayLog?.focusHoursActual ?? 0
+
+  // Goal completion status
+  const goalStatus = plan.goals.map(g => {
+    const done = g.items.filter(i => i.completed).length
+    const total = g.items.length
+    return `${g.label} (${g.weight}%): ${done}/${total} — ${g.title}`
+  }).join('\n')
+
+  // Today's planned blocks
+  const todayBlocks = today.blocks.map(b =>
+    `${b.time}: ${b.task} [${b.category}]`
+  ).join('\n')
+
+  // Remaining days in the week
+  const remainingDays = plan.dailyAllocations.slice(todayIndex + 1).map(d =>
+    `${d.day}: ${d.theme}`
+  ).join('\n')
+
+  const prompt = `You are a sharp daily execution advisor. Generate a morning brief that adapts today's plan based on what actually happened this week.
+
+TODAY: ${today.day}, ${today.date}
+THEME: ${today.theme}
+MORNING PRIME: ${today.morningPrime}
+
+TODAY'S PLANNED BLOCKS:
+${todayBlocks}
+
+YESTERDAY'S JOURNAL:
+${yesterdayJournal}
+
+YESTERDAY'S FOCUS HOURS: ${yesterdayFocus}
+
+WEEK'S JOURNAL SO FAR:
+${journalSoFar || 'No entries yet.'}
+
+GOAL STATUS (week so far):
+${goalStatus}
+
+REMAINING DAYS THIS WEEK:
+${remainingDays || 'This is the last day.'}
+
+WEEK SPINE: ${plan.spineResolution}
+
+Based on the journal entries and goal progress, generate a JSON response:
+1. "summary": 2-3 sentences. What happened yesterday that matters? What's the honest state of the week? Be direct.
+2. "adjustments": Array of suggested changes to today's blocks. Each with:
+   - "action": "swap" (replace a block), "add" (insert new block), "remove" (drop a block), or "keep" (no change)
+   - "blockIndex": index of block to modify (for swap/remove)
+   - "task": new task description (for swap/add)
+   - "time": time slot (for add)
+   - "category": category tag (for swap/add)
+   - "color": hex color (for swap/add)
+   - "reason": one sentence why
+3. "updatedBlocks": If changes are significant, provide the FULL updated block list for today. Otherwise omit this field. Each block: { "time", "task", "category", "color" }. Always keep training blocks intact.
+4. "morningPrime": Updated morning directive that reflects journal context and priority shifts. One sentence.
+5. "carryForward": Array of 0-3 items from yesterday/this week that need attention today (unfinished tasks, follow-ups mentioned in journal).
+
+If the journal indicates priorities shifted (new meeting, breakthrough, blocker, emotional state), adapt aggressively. If things are on track, make minimal changes.
+
+Respond ONLY with valid JSON, no markdown wrapping.`
+
+  const response = await callLLM(prompt, { temperature: 0.4, maxTokens: 3000 })
+
+  try {
+    const cleaned = response.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()
+    const parsed = JSON.parse(cleaned)
+    return {
+      summary: parsed.summary || '',
+      adjustments: parsed.adjustments || [],
+      updatedBlocks: parsed.updatedBlocks || undefined,
+      morningPrime: parsed.morningPrime || '',
+      carryForward: parsed.carryForward || [],
+    }
+  } catch {
+    return {
+      summary: response,
+      adjustments: [],
+      morningPrime: '',
+      carryForward: [],
+    }
+  }
+}
+
 // ─── Sunday Plan Generation ─────────────────────────────────────────
 
 export async function generateNextWeekPlan(

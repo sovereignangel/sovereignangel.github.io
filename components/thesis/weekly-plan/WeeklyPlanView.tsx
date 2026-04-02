@@ -13,7 +13,8 @@ import PlanLedger from './PlanLedger'
 import { createEmptyWeeklyPlan, defaultScorecard } from '@/lib/weekly-plan-utils'
 import { getThisWeekPlanData } from '@/lib/seed-this-week'
 import { INITIAL_ITEMS, INITIAL_TEXTBOOKS, buildRoadmapContext } from '@/lib/roadmap-data'
-import type { WeeklyPlan } from '@/lib/types'
+import type { WeeklyPlan, DailyAllocation } from '@/lib/types'
+import type { MorningBriefResult } from '@/lib/weekly-plan-ai'
 
 type PlanTab = 'goals' | 'daily' | 'scorecard' | 'retro' | 'ledger'
 
@@ -41,8 +42,15 @@ export default function WeeklyPlanView() {
   const [activeTab, setActiveTab] = useState<PlanTab>('goals')
   const [retroLoading, setRetroLoading] = useState(false)
   const [generateLoading, setGenerateLoading] = useState(false)
+  const [briefLoading, setBriefLoading] = useState(false)
+  const [morningBrief, setMorningBrief] = useState<MorningBriefResult | null>(null)
+  const [briefDayIndex, setBriefDayIndex] = useState<number>(-1)
 
   const displayPlan: WeeklyPlan | null = plan
+
+  // Find today's index in the plan
+  const todayStr = new Date().toISOString().slice(0, 10)
+  const todayIndex = displayPlan?.dailyAllocations.findIndex(a => a.date === todayStr) ?? -1
 
   const handleActivate = async () => {
     if (!plan) return
@@ -96,6 +104,41 @@ export default function WeeklyPlanView() {
     } finally {
       setGenerateLoading(false)
     }
+  }
+
+  const handleMorningBrief = async () => {
+    if (!plan || todayIndex < 0) return
+    setBriefLoading(true)
+    try {
+      const res = await authFetch('/api/weekly-plan/morning-brief', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ plan, logs: weekLogs, todayIndex }),
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setMorningBrief(data)
+        setBriefDayIndex(todayIndex)
+        setActiveTab('daily')
+      }
+    } finally {
+      setBriefLoading(false)
+    }
+  }
+
+  const handleApplyBrief = async (dayIndex: number, updatedBlocks: DailyAllocation['blocks'], morningPrime: string) => {
+    if (!plan) return
+    const updatedAllocations = plan.dailyAllocations.map((day, i) => {
+      if (i !== dayIndex) return day
+      return {
+        ...day,
+        blocks: updatedBlocks,
+        morningPrime: morningPrime || day.morningPrime,
+      }
+    })
+    await savePlan({ dailyAllocations: updatedAllocations })
+    setMorningBrief(null)
+    setBriefDayIndex(-1)
   }
 
   const handleSeedPlan = async () => {
@@ -188,6 +231,15 @@ export default function WeeklyPlanView() {
             ))}
           </div>
           <div className="flex items-center gap-1 pb-1">
+            {displayPlan.status === 'active' && todayIndex >= 0 && (
+              <button
+                onClick={handleMorningBrief}
+                disabled={briefLoading}
+                className="font-serif text-[9px] font-medium px-2 py-1 rounded-sm border bg-burgundy text-paper border-burgundy hover:bg-burgundy/90 transition-colors disabled:opacity-50"
+              >
+                {briefLoading ? 'Briefing...' : 'Morning Brief'}
+              </button>
+            )}
             {displayPlan.status === 'draft' && (
               <button
                 onClick={handleActivate}
@@ -222,7 +274,13 @@ export default function WeeklyPlanView() {
             <GoalsView goals={displayPlan.goals} onToggleItem={toggleGoalItem} />
           )}
           {activeTab === 'daily' && (
-            <DailyView allocations={displayPlan.dailyAllocations} />
+            <DailyView
+              allocations={displayPlan.dailyAllocations}
+              weekLogs={weekLogs}
+              morningBrief={morningBrief}
+              briefDayIndex={briefDayIndex}
+              onApplyBrief={handleApplyBrief}
+            />
           )}
           {activeTab === 'scorecard' && (
             <ScorecardView scorecard={displayPlan.scorecard} />
