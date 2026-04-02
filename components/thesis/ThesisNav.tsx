@@ -12,8 +12,7 @@ import { format } from 'date-fns'
 const navItems = [
   { href: '/thesis', label: 'Command Center', symbol: 'g*', exact: true },
   { href: '/thesis/operate', label: 'Operate', symbol: 'GVC+\u03BA' },
-  { href: '/thesis/intelligence', label: 'Intelligence', symbol: 'GI' },
-  { href: '/thesis/boardroom', label: 'Board Room', symbol: 'J' },
+  { href: '/thesis/boardroom', label: 'The Machine', symbol: 'J' },
 ]
 
 function ScoreValue({ label, value, color, arrow, arrowColor }: {
@@ -109,9 +108,21 @@ export default function ThesisNav() {
                 </span>
                 <UserMenu />
               </div>
-              <p className="font-mono text-[8px] text-ink-faint hidden sm:block">
-                g* = (GE × GI × GVC × κ × 𝒪 × GD × GN × J)^(1/8) × Gate − 𝓕 + Θ
-              </p>
+              <div className="flex items-center gap-2">
+                <p className="font-mono text-[8px] text-ink-faint hidden sm:block">
+                  g* = (GE × GI × GVC × κ × 𝒪 × GD × GN × J)^(1/8) × Gate − 𝓕 + Θ
+                </p>
+                <Link
+                  href="/thesis/archive"
+                  className={`font-mono text-[8px] px-1.5 py-0.5 rounded-sm border no-underline transition-colors hidden sm:inline-block ${
+                    pathname.startsWith('/thesis/archive')
+                      ? 'text-burgundy border-burgundy/30 bg-burgundy-bg'
+                      : 'text-ink-faint border-rule hover:text-ink-muted hover:border-ink-faint'
+                  }`}
+                >
+                  Archive
+                </Link>
+              </div>
             </div>
           </div>
         </div>
