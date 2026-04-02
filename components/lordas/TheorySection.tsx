@@ -377,9 +377,9 @@ export function TheorySection({ conversations }: TheorySectionProps) {
                           </span>
                         </div>
 
-                        {/* Theory (compact) */}
+                        {/* Theory */}
                         <p className="text-[10px] leading-relaxed mb-1.5" style={{ color: '#6b6158' }}>
-                          {concept.theory.length > 200 ? concept.theory.slice(0, 200) + '…' : concept.theory}
+                          {concept.theory}
                         </p>
                         <p className="text-[9px] italic mb-2" style={{ color: '#c0b8aa' }}>
                           — {concept.source}
