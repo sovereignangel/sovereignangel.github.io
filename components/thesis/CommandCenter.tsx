@@ -5,7 +5,7 @@ import { useAuth } from '@/components/auth/AuthProvider'
 import { useDailyLogContext } from '@/components/thesis/DailyLogProvider'
 import { useWeeklyPlan } from '@/hooks/useWeeklyPlan'
 import { useCalendarTime } from '@/hooks/useCalendarTime'
-import { useTodos } from '@/hooks/useTodos'
+import RoadmapFocus from '@/components/thesis/roadmap/RoadmapFocus'
 import {
   getNetworkContacts,
   getDecisions,
@@ -14,7 +14,7 @@ import {
   updateExternalSignal,
   getTodayPublishedPapers,
 } from '@/lib/firestore'
-import type { NetworkContact, Decision, ExternalSignal, Venture, DailyLog, Todo, TodoQuadrant } from '@/lib/types'
+import type { NetworkContact, Decision, ExternalSignal, Venture, DailyLog } from '@/lib/types'
 import type { DailyAllocation } from '@/lib/types'
 import { MUSCLE_TARGETS } from '@/lib/constants'
 import { localDateString } from '@/lib/date-utils'
@@ -93,8 +93,6 @@ export default function CommandCenter() {
   const { log, recentLogs } = useDailyLogContext()
   const { plan, loading: planLoading } = useWeeklyPlan()
   const { today: calendarToday, loading: calLoading } = useCalendarTime(7)
-  const { byQuadrant, loading: todosLoading, toggleComplete, save: saveTodoItem, completedCount, openCount } = useTodos(user?.uid)
-
   const [contacts, setContacts] = useState<NetworkContact[]>([])
   const [decisions, setDecisions] = useState<Decision[]>([])
   const [signals, setSignals] = useState<ExternalSignal[]>([])
@@ -316,10 +314,6 @@ export default function CommandCenter() {
     await updateExternalSignal(user.uid, signal.id, { readStatus: next as ExternalSignal['readStatus'] })
   }
 
-  const handleAddTodo = async (text: string, quadrant: TodoQuadrant) => {
-    await saveTodoItem({ text, quadrant, status: 'open', sourceType: 'web' })
-  }
-
   // ─── Loading state ──────────────────────────────────────────────
 
   if (loading) {
@@ -384,16 +378,9 @@ export default function CommandCenter() {
             </p>
           </div>
 
-          {/* Eisenhower Matrix */}
+          {/* Roadmap Focus */}
           <div className="flex-1 overflow-auto min-h-0">
-            <EisenhowerMatrix
-              byQuadrant={byQuadrant}
-              onToggleComplete={toggleComplete}
-              onAdd={handleAddTodo}
-              loading={todosLoading}
-              completedCount={completedCount}
-              openCount={openCount}
-            />
+            <RoadmapFocus />
           </div>
         </div>
 
@@ -787,117 +774,6 @@ function CuratedSignals({ signals, onCycleReadStatus }: CuratedSignalsProps) {
       {signals.length > 6 && (
         <div className="font-mono text-[8px] text-ink-muted mt-2">
           +{signals.length - 6} more in inbox
-        </div>
-      )}
-    </div>
-  )
-}
-
-// ─── Eisenhower Matrix ──────────────────────────────────────────────
-
-const QUADRANT_CONFIG: Record<TodoQuadrant, { label: string; color: string; bg: string; border: string }> = {
-  do_first: { label: 'Do First', color: 'text-red-ink', bg: 'bg-red-ink/5', border: 'border-red-ink/15' },
-  schedule: { label: 'Schedule', color: 'text-green-ink', bg: 'bg-green-bg', border: 'border-green-ink/15' },
-  delegate: { label: 'Delegate', color: 'text-amber-ink', bg: 'bg-amber-bg', border: 'border-amber-ink/15' },
-  eliminate: { label: 'Eliminate', color: 'text-ink-muted', bg: 'bg-cream', border: 'border-rule' },
-}
-
-interface EisenhowerMatrixProps {
-  byQuadrant: Record<TodoQuadrant, Todo[]>
-  onToggleComplete: (todo: Todo) => void
-  onAdd: (text: string, quadrant: TodoQuadrant) => void
-  loading: boolean
-  completedCount: number
-  openCount: number
-}
-
-function EisenhowerMatrix({ byQuadrant, onToggleComplete, onAdd, loading, completedCount, openCount }: EisenhowerMatrixProps) {
-  const [addingTo, setAddingTo] = useState<TodoQuadrant | null>(null)
-  const [newText, setNewText] = useState('')
-
-  const handleAdd = (quadrant: TodoQuadrant) => {
-    if (!newText.trim()) return
-    onAdd(newText.trim(), quadrant)
-    setNewText('')
-    setAddingTo(null)
-  }
-
-  return (
-    <div className="bg-white border border-rule rounded-sm p-3">
-      <SectionHeader>
-        Eisenhower Matrix
-        {(openCount > 0 || completedCount > 0) && (
-          <span className="font-mono text-[9px] font-normal normal-case text-ink-muted ml-1">
-            {openCount} open{completedCount > 0 && <span className="text-green-ink ml-1">{completedCount} done today</span>}
-          </span>
-        )}
-      </SectionHeader>
-
-      {loading ? (
-        <div className="font-mono text-[10px] text-ink-muted mt-2">Loading...</div>
-      ) : (
-        <div className="grid grid-cols-2 gap-1.5 mt-2">
-          {(['do_first', 'schedule', 'delegate', 'eliminate'] as TodoQuadrant[]).map(q => {
-            const config = QUADRANT_CONFIG[q]
-            const items = byQuadrant[q] || []
-            return (
-              <div key={q} className={`${config.bg} border ${config.border} rounded-sm p-2 min-h-[48px]`}>
-                <div className="flex items-center justify-between mb-1">
-                  <span className={`font-serif text-[9px] font-semibold uppercase tracking-[0.5px] ${config.color}`}>
-                    {config.label}
-                  </span>
-                  <button
-                    onClick={() => { setAddingTo(addingTo === q ? null : q); setNewText('') }}
-                    className="font-mono text-[10px] text-ink-muted hover:text-burgundy w-4 h-4 flex items-center justify-center"
-                  >
-                    +
-                  </button>
-                </div>
-
-                {addingTo === q && (
-                  <div className="mb-1">
-                    <input
-                      autoFocus
-                      value={newText}
-                      onChange={e => setNewText(e.target.value)}
-                      onKeyDown={e => { if (e.key === 'Enter') handleAdd(q); if (e.key === 'Escape') setAddingTo(null) }}
-                      className="w-full font-mono text-[10px] bg-transparent text-ink border-0 border-b border-rule-light focus:border-burgundy focus:outline-none py-0.5 placeholder:text-ink-faint"
-                      placeholder="New todo..."
-                    />
-                  </div>
-                )}
-
-                <div className="space-y-0.5">
-                  {items.map(todo => (
-                    <div key={todo.id} className="flex items-start gap-1 group">
-                      <button
-                        onClick={() => onToggleComplete(todo)}
-                        className={`font-mono text-[10px] flex-shrink-0 mt-px ${
-                          todo.status === 'completed' ? 'text-green-ink' : 'text-ink-muted hover:text-green-ink'
-                        }`}
-                      >
-                        {todo.status === 'completed' ? '\u2713' : '\u25CB'}
-                      </button>
-                      <div className="flex-1 min-w-0">
-                        <span className={`font-mono text-[10px] ${todo.status === 'completed' ? 'line-through text-ink-muted' : 'text-ink'}`}>
-                          {todo.text}
-                        </span>
-                        {todo.linkedProjectName && (
-                          <span className="font-mono text-[7px] text-ink-faint ml-1">
-                            {todo.linkedProjectName}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {items.length === 0 && addingTo !== q && (
-                  <div className="font-mono text-[8px] text-ink-faint">—</div>
-                )}
-              </div>
-            )
-          })}
         </div>
       )}
     </div>
