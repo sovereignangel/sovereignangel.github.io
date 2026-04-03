@@ -45,7 +45,7 @@ export async function generateMetadata({ params }: { params: { date: string } })
   const dateLabel = formatDate(params.date)
   return {
     title: `Morning Brief — ${dateLabel}`,
-    description: 'Daily intelligence briefing from the Thesis Engine.',
+    description: 'Daily compass from the Thesis Engine.',
   }
 }
 
@@ -74,8 +74,6 @@ function formatDateShort(date: string): string {
 }
 
 async function findBrief(date: string, token?: string): Promise<BriefDoc | null> {
-  // Look up brief by UID from the token, or find the first user's brief for this date
-  // For now, find any user that has this date's brief with matching token
   const usersSnap = await adminDb.collection('users').get()
 
   for (const userDoc of usersSnap.docs) {
@@ -86,7 +84,6 @@ async function findBrief(date: string, token?: string): Promise<BriefDoc | null>
 
     if (briefSnap.exists) {
       const data = briefSnap.data() as BriefDoc
-      // If token is provided, verify it matches
       if (token && data.publicToken && data.publicToken !== token) continue
       if (data.brief) return data
     }
@@ -133,7 +130,6 @@ export default async function BriefPage({
                 <h1 className="font-serif text-[20px] font-bold text-ink">{dateLabel}</h1>
               </div>
               <div className="flex items-center gap-1.5">
-                {/* Energy Mode Badge */}
                 <span className={`font-mono text-[9px] uppercase px-2 py-1 rounded-sm border font-semibold ${MODE_COLOR[brief.energyState.mode] || 'bg-cream text-ink-muted border-rule'}`}>
                   {brief.energyState.mode}
                 </span>
@@ -171,40 +167,49 @@ export default async function BriefPage({
 
           {/* Body */}
           <div className="p-4 space-y-4">
-            {/* Top Plays */}
-            {brief.topPlays.length > 0 && (
-              <div>
-                <h2 className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-2 pb-1.5 border-b-2 border-rule">
-                  Top {brief.topPlays.length} Things You Need to Know
-                </h2>
-                <div className="space-y-2">
-                  {brief.topPlays.map((play, i) => (
-                    <div key={i} className="flex items-start gap-2">
-                      <span className="font-mono text-[12px] font-bold text-burgundy bg-burgundy-bg px-2 py-1 rounded-sm shrink-0 mt-0.5">
-                        {i + 1}
-                      </span>
-                      <div className="flex-1">
-                        <div className="font-mono text-[11px] font-semibold text-ink leading-tight">{play.action}</div>
-                        <div className="font-mono text-[10px] text-ink-muted mt-0.5">{play.reason}</div>
-                      </div>
-                      <span className={`font-mono text-[8px] uppercase px-1.5 py-0.5 rounded-sm border shrink-0 mt-0.5 ${
-                        play.leverage === 'high'
-                          ? 'bg-green-bg text-green-ink border-green-ink/20'
-                          : 'bg-cream text-ink-muted border-rule-light'
-                      }`}>
-                        {play.leverage}
-                      </span>
-                    </div>
-                  ))}
-                </div>
+            {/* Daily Intention */}
+            <div>
+              <h2 className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-2 pb-1.5 border-b-2 border-rule">
+                Today&apos;s Intention
+              </h2>
+              <div className="space-y-3">
+                {brief.dailyIntention.study && (
+                  <div className="flex items-start gap-2">
+                    <span className="font-mono text-[9px] font-semibold uppercase px-2 py-1 rounded-sm bg-amber-bg text-amber-ink border border-amber-ink/20 shrink-0 mt-0.5">
+                      Study
+                    </span>
+                    <div className="font-mono text-[11px] text-ink leading-relaxed">{brief.dailyIntention.study}</div>
+                  </div>
+                )}
+                {brief.dailyIntention.work && (
+                  <div className="flex items-start gap-2">
+                    <span className="font-mono text-[9px] font-semibold uppercase px-2 py-1 rounded-sm bg-burgundy-bg text-burgundy border border-burgundy/20 shrink-0 mt-0.5">
+                      Work
+                    </span>
+                    <div className="font-mono text-[11px] text-ink leading-relaxed">{brief.dailyIntention.work}</div>
+                  </div>
+                )}
+                {brief.dailyIntention.evening && (
+                  <div className="flex items-start gap-2">
+                    <span className="font-mono text-[9px] font-semibold uppercase px-2 py-1 rounded-sm bg-green-bg text-green-ink border border-green-ink/20 shrink-0 mt-0.5">
+                      Evening
+                    </span>
+                    <div className="font-mono text-[11px] text-ink leading-relaxed">{brief.dailyIntention.evening}</div>
+                  </div>
+                )}
               </div>
-            )}
+              {brief.dailyIntention.themeContext && (
+                <div className="font-serif text-[10px] italic text-ink-muted mt-2 pt-2 border-t border-rule-light">
+                  {brief.dailyIntention.themeContext}
+                </div>
+              )}
+            </div>
 
             {/* Signal Digest */}
             {brief.signalDigest.length > 0 && (
               <div>
                 <h3 className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-1.5 pb-1 border-b border-rule">
-                  Signal Digest
+                  Signals
                 </h3>
                 <div className="space-y-1">
                   {brief.signalDigest.map((s, i) => (
@@ -212,7 +217,7 @@ export default async function BriefPage({
                       <span className="font-mono text-[8px] text-ink-faint shrink-0 mt-0.5">{Math.round(s.relevance * 100)}%</span>
                       <div className="min-w-0">
                         <div className="font-mono text-[10px] font-medium text-ink leading-tight">{s.title}</div>
-                        {s.summary && <div className="font-mono text-[9px] text-ink-muted mt-0.5">{s.summary}</div>}
+                        {s.summary && <div className="font-mono text-[10px] text-ink-muted mt-0.5">{s.summary}</div>}
                       </div>
                     </div>
                   ))}
@@ -220,108 +225,55 @@ export default async function BriefPage({
               </div>
             )}
 
-            {/* Two-column: Stale Contacts + Pending Decisions */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              {brief.staleContacts.length > 0 && (
-                <div>
-                  <h3 className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-1.5 pb-1 border-b border-rule">
-                    Reconnect
-                  </h3>
-                  <div className="space-y-1">
-                    {brief.staleContacts.map((c, i) => (
-                      <div key={i} className="flex items-start gap-1.5">
-                        <span className="font-mono text-[8px] uppercase px-1 py-0.5 rounded-sm bg-amber-bg text-amber-ink border border-amber-ink/10 shrink-0 mt-0.5">
-                          {c.daysSinceTouch}d
-                        </span>
-                        <div className="min-w-0">
-                          <div className="font-mono text-[10px] font-medium text-ink">{c.name}</div>
-                          {c.nextAction && <div className="font-mono text-[9px] text-ink-muted">{c.nextAction}</div>}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {brief.pendingDecisions.length > 0 && (
-                <div>
-                  <h3 className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-1.5 pb-1 border-b border-rule">
-                    Decisions Due
-                  </h3>
-                  <div className="space-y-1">
-                    {brief.pendingDecisions.map((d, i) => (
-                      <div key={i} className="flex items-start gap-1.5">
-                        <span className={`font-mono text-[8px] uppercase px-1 py-0.5 rounded-sm border shrink-0 mt-0.5 ${
-                          d.daysUntilReview <= 3
-                            ? 'bg-burgundy-bg text-burgundy border-burgundy/20'
-                            : 'bg-cream text-ink-muted border-rule-light'
-                        }`}>
-                          {d.daysUntilReview}d
-                        </span>
-                        <div className="font-mono text-[10px] text-ink">{d.title}</div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Stalled Projects */}
-            {brief.stalledProjects.length > 0 && (
-              <div>
-                <h3 className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-1.5 pb-1 border-b border-rule">
-                  Stalled Projects
-                </h3>
-                <div className="space-y-1">
-                  {brief.stalledProjects.map((p, i) => (
-                    <div key={i} className="flex items-start gap-1.5">
+            {/* Two-column: Reconnect + Pending Decisions */}
+            {(brief.reconnect || brief.pendingDecisions.length > 0) && (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {brief.reconnect && (
+                  <div>
+                    <h3 className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-1.5 pb-1 border-b border-rule">
+                      Reconnect
+                    </h3>
+                    <div className="flex items-start gap-1.5">
                       <span className="font-mono text-[8px] uppercase px-1 py-0.5 rounded-sm bg-amber-bg text-amber-ink border border-amber-ink/10 shrink-0 mt-0.5">
-                        {p.daysSinceActivity}d
+                        {brief.reconnect.daysSinceTouch}d
                       </span>
                       <div className="min-w-0">
-                        <div className="font-mono text-[10px] font-medium text-ink">{p.name}</div>
-                        {p.nextMilestone && <div className="font-mono text-[9px] text-ink-muted">{p.nextMilestone}</div>}
+                        <div className="font-mono text-[10px] font-medium text-ink">{brief.reconnect.name}</div>
+                        {brief.reconnect.nextAction && <div className="font-mono text-[10px] text-ink-muted">{brief.reconnect.nextAction}</div>}
                       </div>
                     </div>
-                  ))}
-                </div>
+                  </div>
+                )}
+
+                {brief.pendingDecisions.length > 0 && (
+                  <div>
+                    <h3 className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-1.5 pb-1 border-b border-rule">
+                      Decisions Due
+                    </h3>
+                    <div className="space-y-1">
+                      {brief.pendingDecisions.map((d, i) => (
+                        <div key={i} className="flex items-start gap-1.5">
+                          <span className={`font-mono text-[8px] uppercase px-1 py-0.5 rounded-sm border shrink-0 mt-0.5 ${
+                            d.daysUntilReview <= 3
+                              ? 'bg-burgundy-bg text-burgundy border-burgundy/20'
+                              : 'bg-cream text-ink-muted border-rule-light'
+                          }`}>
+                            {d.daysUntilReview}d
+                          </span>
+                          <div className="font-mono text-[10px] text-ink">{d.title}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
-            {/* Job Pipeline */}
-            {brief.jobPipeline && brief.jobPipeline.length > 0 && (
-              <div>
-                <h3 className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-1.5 pb-1 border-b border-rule">
-                  Job Pipeline
-                </h3>
-                <div className="space-y-1">
-                  {brief.jobPipeline.map((j, i) => (
-                    <div key={i} className="flex items-start gap-1.5">
-                      <span className={`font-mono text-[8px] uppercase px-1 py-0.5 rounded-sm border shrink-0 mt-0.5 ${
-                        j.daysSinceUpdate > 5
-                          ? 'bg-amber-bg text-amber-ink border-amber-ink/10'
-                          : 'bg-cream text-ink-muted border-rule-light'
-                      }`}>
-                        {j.stage.replace('_', ' ')}
-                      </span>
-                      <div className="min-w-0">
-                        <div className="font-mono text-[10px] font-medium text-ink">{j.company} — {j.role}</div>
-                        {j.nextAction && <div className="font-mono text-[9px] text-ink-muted">{j.nextAction}</div>}
-                      </div>
-                      {j.daysSinceUpdate > 5 && (
-                        <span className="font-mono text-[8px] text-amber-ink shrink-0 mt-0.5">{j.daysSinceUpdate}d stale</span>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Discernment Exercise */}
-            {brief.discernmentPrompt && (
+            {/* Keynes Check */}
+            {brief.keynesCheck && (
               <div className="bg-cream border border-rule-light rounded-sm p-3">
-                <div className="font-mono text-[9px] font-semibold uppercase text-ink-muted mb-1">Discernment Exercise</div>
-                <div className="font-serif text-[11px] italic text-ink leading-relaxed">{brief.discernmentPrompt}</div>
+                <div className="font-mono text-[9px] font-semibold uppercase text-ink-muted mb-1">Keynes Check</div>
+                <div className="font-serif text-[11px] italic text-ink leading-relaxed">{brief.keynesCheck}</div>
               </div>
             )}
 

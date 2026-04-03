@@ -1,8 +1,9 @@
 /**
  * Morning Brief Generator
  *
- * Aggregates data across all Firestore collections and uses Gemini
- * to produce a daily intelligence briefing delivered via Telegram.
+ * Generates a daily compass — one clear intention with specific outcomes,
+ * not a clipboard of tasks. Informed by energy state, theme rhythm, signals,
+ * and the Keynes philosophy: love, aesthetic experience, knowledge.
  */
 
 import { GoogleGenerativeAI } from '@google/generative-ai'
@@ -12,6 +13,13 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '')
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
+
+export interface DailyIntention {
+  study: string           // 2hr morning study block — what to study and why
+  work: string            // 1-2 theme focus for the work block — with specific outcome
+  evening: string         // Love & play / community / social learning suggestion
+  themeContext: string    // 1-2 sentences: why this theme today, what's the leverage
+}
 
 export interface MorningBrief {
   date: string
@@ -24,52 +32,29 @@ export interface MorningBrief {
     mode: 'GO' | 'CONSERVE' | 'RECOVER'
     summary: string
   }
-  topPlays: Array<{
-    action: string
-    reason: string
-    leverage: 'high' | 'medium'
-  }>
+  dailyIntention: DailyIntention
   signalDigest: Array<{
     title: string
     summary: string
     relevance: number
   }>
-  staleContacts: Array<{
+  reconnect: {
     name: string
-    tier: string
     daysSinceTouch: number
     nextAction: string
-  }>
+  } | null
   pendingDecisions: Array<{
     title: string
     daysUntilReview: number
     domain: string
-  }>
-  stalledProjects: Array<{
-    name: string
-    daysSinceActivity: number
-    nextMilestone: string
   }>
   rewardTrend: {
     yesterday: number | null
     weekAvg: number | null
     trend: 'up' | 'down' | 'flat'
   }
-  openTodos: Array<{
-    text: string
-    quadrant: string
-    projectName: string | null
-  }>
-  jobPipeline: Array<{
-    company: string
-    role: string
-    stage: string
-    nextAction: string
-    nextActionDate: string | null
-    daysSinceUpdate: number
-  }>
   dayOfWeek: 'weekday' | 'saturday' | 'sunday'
-  discernmentPrompt: string
+  keynesCheck: string     // one-liner: have you made space for love/beauty/play?
   aiSynthesis: string
 }
 
@@ -95,6 +80,10 @@ function daysBetween(dateStr: string, now: string): number {
   const a = new Date(dateStr + 'T12:00:00')
   const b = new Date(now + 'T12:00:00')
   return Math.round((b.getTime() - a.getTime()) / (1000 * 60 * 60 * 24))
+}
+
+function getDayName(): string {
+  return new Date().toLocaleDateString('en-US', { weekday: 'long' })
 }
 
 // ---------------------------------------------------------------------------
@@ -179,7 +168,7 @@ async function fetchUnreadSignals(uid: string) {
     .where('status', '==', 'inbox')
     .where('readStatus', '==', 'unread')
     .orderBy('relevanceScore', 'desc')
-    .limit(5)
+    .limit(3)
     .get()
 
   return snap.docs.map(d => {
@@ -192,30 +181,28 @@ async function fetchUnreadSignals(uid: string) {
   })
 }
 
-async function fetchStaleContacts(uid: string) {
+async function fetchReconnect(uid: string): Promise<MorningBrief['reconnect']> {
   const db = await getAdminDb()
   const todayKey = today()
   const snap = await db.collection('users').doc(uid).collection('network_contacts')
     .where('isTop30', '==', true)
     .get()
 
-  const contacts = snap.docs
+  const stale = snap.docs
     .map(d => {
       const data = d.data()
       const lastTouch = (data.lastTouchDate as string) || todayKey
       const daysSince = daysBetween(lastTouch, todayKey)
       return {
         name: (data.name as string) || '',
-        tier: (data.tier as string) || '',
         daysSinceTouch: daysSince,
         nextAction: (data.nextAction as string) || '',
       }
     })
     .filter(c => c.daysSinceTouch > 14)
     .sort((a, b) => b.daysSinceTouch - a.daysSinceTouch)
-    .slice(0, 5)
 
-  return contacts
+  return stale.length > 0 ? stale[0] : null
 }
 
 async function fetchPendingDecisions(uid: string) {
@@ -238,73 +225,6 @@ async function fetchPendingDecisions(uid: string) {
     })
     .filter(d => d.daysUntilReview <= 14)
     .sort((a, b) => a.daysUntilReview - b.daysUntilReview)
-    .slice(0, 5)
-}
-
-async function fetchOpenTodos(uid: string) {
-  const db = await getAdminDb()
-  const snap = await db.collection('users').doc(uid).collection('todos')
-    .where('status', '==', 'open')
-    .get()
-
-  return snap.docs.sort((a, b) => ((a.data().sortOrder as number) || 0) - ((b.data().sortOrder as number) || 0)).map(d => {
-    const data = d.data()
-    return {
-      text: (data.text as string) || '',
-      quadrant: (data.quadrant as string) || 'do_first',
-      projectName: (data.linkedProjectName as string) || null,
-    }
-  })
-}
-
-async function fetchStalledProjects(uid: string) {
-  const db = await getAdminDb()
-  const todayKey = today()
-  const snap = await db.collection('users').doc(uid).collection('projects').get()
-
-  // Get last 7 days of logs to check for activity
-  const logDates: string[] = []
-  for (let i = 0; i < 7; i++) logDates.push(daysAgo(i))
-
-  const logSnaps = await Promise.all(
-    logDates.map(d =>
-      db.collection('users').doc(uid).collection('daily_logs').doc(d).get()
-    )
-  )
-
-  const activeSpineProjects = new Set<string>()
-  const shippedProjects = new Set<string>()
-  for (const ls of logSnaps) {
-    if (!ls.exists) continue
-    const data = ls.data()
-    if (data?.spineProject) activeSpineProjects.add(data.spineProject)
-    if (data?.whatShipped) shippedProjects.add(data.spineProject || '')
-  }
-
-  return snap.docs
-    .map(d => {
-      const data = d.data()
-      const name = (data.name as string) || ''
-      const status = (data.status as string) || ''
-      if (status === 'archived' || status === 'completed' || status === 'paused') return null
-      const hasActivity = activeSpineProjects.has(name) || shippedProjects.has(name)
-      if (hasActivity) return null
-
-      // Estimate days since activity from updatedAt
-      const updatedAt = data.updatedAt
-      let daysSince = 7
-      if (updatedAt && typeof updatedAt.toDate === 'function') {
-        daysSince = daysBetween(localDateString(updatedAt.toDate()), todayKey)
-      }
-
-      return {
-        name,
-        daysSinceActivity: Math.max(daysSince, 7),
-        nextMilestone: (data.nextMilestone as string) || '',
-      }
-    })
-    .filter((p): p is NonNullable<typeof p> => p !== null)
-    .sort((a, b) => b.daysSinceActivity - a.daysSinceActivity)
     .slice(0, 3)
 }
 
@@ -350,64 +270,8 @@ async function fetchRewardTrend(uid: string) {
   return { yesterday: yesterdayScore, weekAvg, trend }
 }
 
-async function fetchRecentSignalForDiscernment(uid: string): Promise<string | null> {
-  const db = await getAdminDb()
-  const snap = await db.collection('users').doc(uid).collection('external_signals')
-    .where('status', '==', 'inbox')
-    .orderBy('createdAt', 'desc')
-    .limit(5)
-    .get()
-
-  if (snap.empty) return null
-
-  // Pick a random one from the top 5
-  const docs = snap.docs
-  const idx = Math.floor(Math.random() * docs.length)
-  const data = docs[idx].data()
-  return (data.aiSummary as string) || (data.title as string) || null
-}
-
-async function fetchProjectNames(uid: string): Promise<string[]> {
-  const db = await getAdminDb()
-  const snap = await db.collection('users').doc(uid).collection('projects').get()
-  return snap.docs.map(d => (d.data().name as string) || '').filter(Boolean)
-}
-
-async function fetchJobPipeline(uid: string): Promise<MorningBrief['jobPipeline']> {
-  const db = await getAdminDb()
-  const activeStages = ['researching', 'applied', 'phone_screen', 'interview', 'take_home', 'final_round', 'offer']
-  const snap = await db.collection('users').doc(uid).collection('job_pipeline')
-    .where('stage', 'in', activeStages)
-    .orderBy('updatedAt', 'desc')
-    .get()
-
-  const todayKey = today()
-  return snap.docs.map(d => {
-    const data = d.data()
-    const updatedStr = data.updatedAt?.toDate?.()
-      ? localDateString(data.updatedAt.toDate())
-      : todayKey
-    return {
-      company: data.company as string,
-      role: data.role as string,
-      stage: data.stage as string,
-      nextAction: (data.nextAction as string) || '',
-      nextActionDate: (data.nextActionDate as string) || null,
-      daysSinceUpdate: daysBetween(updatedStr, todayKey),
-    }
-  })
-}
-
-function getDayOfWeek(): MorningBrief['dayOfWeek'] {
-  const day = new Date().getDay() // 0=Sun, 6=Sat
-  if (day === 0) return 'sunday'
-  if (day === 6) return 'saturday'
-  return 'weekday'
-}
-
 async function fetchRecentBriefFeedback(uid: string): Promise<string[]> {
   const db = await getAdminDb()
-  // Check last 14 days of daily_reports for feedback
   const dates: string[] = []
   for (let i = 0; i < 14; i++) {
     const d = new Date(); d.setDate(d.getDate() - i)
@@ -426,131 +290,136 @@ async function fetchRecentBriefFeedback(uid: string): Promise<string[]> {
       }
     }
   }
-  // Return most recent 5 feedbacks
   return feedback.filter(Boolean).slice(0, 5)
+}
+
+async function fetchRecentJournalEntries(uid: string): Promise<string[]> {
+  const db = await getAdminDb()
+  const entries: string[] = []
+  for (let i = 1; i <= 3; i++) {
+    const dateKey = daysAgo(i)
+    const snap = await db.collection('users').doc(uid).collection('daily_logs').doc(dateKey).get()
+    if (snap.exists) {
+      const data = snap.data()
+      if (data?.journalEntry && typeof data.journalEntry === 'string' && data.journalEntry.trim()) {
+        entries.push(`${dateKey}: ${data.journalEntry.trim()}`)
+      }
+    }
+  }
+  return entries
+}
+
+function getDayOfWeek(): MorningBrief['dayOfWeek'] {
+  const day = new Date().getDay() // 0=Sun, 6=Sat
+  if (day === 0) return 'sunday'
+  if (day === 6) return 'saturday'
+  return 'weekday'
 }
 
 // ---------------------------------------------------------------------------
 // AI Generation
 // ---------------------------------------------------------------------------
 
-async function generateTopPlaysAndSynthesis(
+async function generateDailyIntention(
   energyState: MorningBrief['energyState'],
   signals: MorningBrief['signalDigest'],
-  staleContacts: MorningBrief['staleContacts'],
+  reconnect: MorningBrief['reconnect'],
   pendingDecisions: MorningBrief['pendingDecisions'],
-  stalledProjects: MorningBrief['stalledProjects'],
   rewardTrend: MorningBrief['rewardTrend'],
-  recentSignal: string | null,
-  projectNames: string[],
   userFeedback: string[],
-  openTodos?: MorningBrief['openTodos'],
-  jobPipeline?: MorningBrief['jobPipeline'],
-  dayOfWeek?: MorningBrief['dayOfWeek']
+  journalEntries: string[],
+  dayOfWeek: MorningBrief['dayOfWeek'],
 ): Promise<{
-  topPlays: MorningBrief['topPlays']
-  discernmentPrompt: string
+  dailyIntention: DailyIntention
+  keynesCheck: string
   aiSynthesis: string
 }> {
   const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' })
+  const dayName = getDayName()
 
   const dayContext = dayOfWeek === 'saturday'
     ? `
-DAY CONTEXT: SATURDAY — Recharge & Explore
-This is a weekend day. The user's priorities are:
-- Health & recovery: training, outdoor time, meal prep, sleep optimization
-- Relationships: quality time, reaching out to friends/family, social plans
-- Light exploration: reading, creative projects, learning for fun (NOT deep work)
-- DO NOT suggest RL/quant study, deep focus blocks, or shipping work
-- Keep intensity low — this is about recharging for the week ahead
-- Elevate the "reconnect" suggestions — weekends are natural relationship time
+DAY: SATURDAY — Recharge & Love
+No work blocks. This is Keynes time: love, aesthetic experience, play.
+- Training (Zone 2 run), long-form reading, relationship time, community
+- The "study" field should be optional light reading or skip entirely
+- The "work" field should be a creative/personal project or skip entirely
+- The "evening" field should be social, romantic, or restorative
 `
     : dayOfWeek === 'sunday'
     ? `
-DAY CONTEXT: SUNDAY — Set the Week
-This is Sunday. The user's priorities are:
-- Admin & life maintenance: bills, errands, calendar review, meal prep, groceries
-- Relationships: plans for the week, catching up with people
-- Week-ahead planning: what's the #1 priority for Monday? What needs prep?
-- Health prep: training plan for the week, sleep target
-- Job pipeline review: any follow-ups due? Applications going stale?
-- DO NOT suggest RL/quant study or deep focus blocks — those are weekday activities (2hrs/day M-F)
-- Light, empowering energy — set yourself up for an elite week
+DAY: SUNDAY — Set the Week
+Light admin and preparation. No deep work.
+- The "study" field should be synthesis/review or week-ahead reading
+- The "work" field should be planning, admin, or light prep
+- The "evening" field should be restful — early night, Aidas time, meal prep
 `
     : `
-DAY CONTEXT: WEEKDAY
-Standard operating mode. RL/quant study should be ~2 hours daily. Deep focus blocks are appropriate.
+DAY: ${dayName} (WEEKDAY)
+Daily architecture:
+- ~7:00am: Wake, journal + meditate (15-20min) — clarity ritual before anything else
+- ~7:30-9:45am: Training block (~2hr 15min). Run from Homebrew to gym (~35min, Audible book), weights (45min), subway home (~40min, Audible continued). Current Audible: "Making Sense of Chaos" by Doyne Farmer.
+- ~10:00am-12:00pm: 2hrs INTENSE STUDY — post-exercise peak cognition. From intellectual roadmap OR skills needed for Armstrong/Alamo Bernal.
+- ~12:00-5:00pm: 1-2 THEME FOCUS maximum. Deep, concentrated work on one or two themes.
+- ~5:00-7:00pm+: Love & play, community, social learning. NON-NEGOTIABLE. Not spillover work.
+- Before bed: Brief journal reflection.
+
+ALAMO BERNAL CONSTRAINT: Only 2 days per week (15-20hrs total). If today is not an Alamo day, DO NOT suggest Alamo work.
+
+THEMES OF FOCUS (pick 1-2 for the work block):
+- Armstrong: Prospective hedge fund R&D lab (ML/AI/Agents/Markets) with Dave. Building conviction.
+- Alamo Bernal: Paid tech work, profit protection ($2.5k/mo + performance). 2 DAYS/WEEK ONLY.
+- CEcon Research: Complexity economics with Michael Ralph. complexityecon.loricorpuz.com. Reading "Making Sense of Chaos" (Farmer). Michael targeting Oxford assistant professorship.
+- Stanford RL: CS231n + CS224r with Aman & Dima.
+- AI Engineering Groups: AI Socratic (Fed), EAIG (Andrew), AGI Reading Group (Neel @ Tower Research Capital).
+- Homebrew: AI Frontier community, home base.
+
+STUDY SOURCES (for the 10am-12pm block):
+- Intellectual roadmap: Stanford RL courses, complexity economics papers/books, AI/ML textbooks
+- Execution skills: Whatever Armstrong or Alamo Bernal currently needs (quant methods, backtesting, specific tech)
 `
 
-  const pipelineSection = jobPipeline && jobPipeline.length > 0
-    ? `
-Job Pipeline (${jobPipeline.length} active):
-${jobPipeline.map(j => {
-  const stale = j.daysSinceUpdate > 5 ? ' ⚠ STALE' : ''
-  const next = j.nextAction ? ` → ${j.nextAction}` : ''
-  const due = j.nextActionDate ? ` (due: ${j.nextActionDate})` : ''
-  return `- ${j.company} — ${j.role} [${j.stage}]${next}${due}${stale}`
-}).join('\n')}
-`
-    : ''
+  const prompt = `You are a daily compass for a builder-researcher. Generate ONE clear daily intention — not a task list.
 
-  const prompt = `You are a personal chief of staff for an entrepreneur/builder. Generate a daily morning briefing.
+GUIDING PHILOSOPHY: John Maynard Keynes — "The prime objects in life are love, the creation and enjoyment of aesthetic experience and the pursuit of knowledge. And love comes a long way first."
+
 ${dayContext}
+
 CONTEXT:
-
 Energy State: ${energyState.summary} (Mode: ${energyState.mode})
-Active Projects: ${projectNames.join(', ') || 'None listed'}
 
-Unread Signals (${signals.length}):
-${signals.map(s => `- ${s.title} (relevance: ${s.relevance.toFixed(2)}): ${s.summary}`).join('\n') || 'None'}
+Recent Signals (${signals.length}):
+${signals.map(s => `- ${s.title}: ${s.summary}`).join('\n') || 'None'}
 
-Stale Contacts (${staleContacts.length}):
-${staleContacts.map(c => `- ${c.name} (${c.tier}) — ${c.daysSinceTouch} days, next: "${c.nextAction}"`).join('\n') || 'None'}
+${reconnect ? `Reconnect suggestion: ${reconnect.name} (${reconnect.daysSinceTouch} days since touch)${reconnect.nextAction ? ` — "${reconnect.nextAction}"` : ''}` : ''}
 
-Pending Decision Reviews (${pendingDecisions.length}):
+Pending Decisions (${pendingDecisions.length}):
 ${pendingDecisions.map(d => `- ${d.title} (${d.domain}) — review in ${d.daysUntilReview} days`).join('\n') || 'None'}
 
-Stalled Projects (${stalledProjects.length}):
-${stalledProjects.map(p => `- ${p.name} — ${p.daysSinceActivity} days idle, next: "${p.nextMilestone}"`).join('\n') || 'None'}
-
 Reward Score: Yesterday ${rewardTrend.yesterday ?? 'N/A'} | Week avg ${rewardTrend.weekAvg ?? 'N/A'} | Trend: ${rewardTrend.trend}
-${pipelineSection}
-Open Todos (${openTodos?.length ?? 0}):
-${openTodos && openTodos.length > 0
-  ? openTodos.slice(0, 15).map(t => {
-      const proj = t.projectName ? `[${t.projectName}] ` : ''
-      const q = t.quadrant === 'do_first' ? 'DO FIRST' : t.quadrant === 'schedule' ? 'SCHEDULE' : t.quadrant.toUpperCase()
-      return `- [${q}] ${proj}${t.text}`
-    }).join('\n')
-  : 'None'}
 
-Recent Signal for Discernment: ${recentSignal || 'No recent signals available'}
+Recent Journal Entries:
+${journalEntries.length > 0 ? journalEntries.join('\n\n') : 'No recent entries.'}
 ${userFeedback.length > 0 ? `
 USER FEEDBACK ON PREVIOUS BRIEFS (apply these preferences):
 ${userFeedback.map(f => `- "${f}"`).join('\n')}
 ` : ''}
-Generate these three things:
+Generate a JSON response with:
 
-1. TOP 3 PLAYS — The three highest-leverage actions for today, ranked by (opportunity value × readiness × energy mode). Each play should be specific and actionable (not vague). Consider the energy mode: if RECOVER, suggest lower-intensity actions. IMPORTANT: Factor in the user's open todos — especially "DO FIRST" items. These represent what they've committed to working on. Top plays should align with or incorporate their highest-priority todos.${dayOfWeek === 'saturday' ? ' SATURDAY RULE: Focus plays on health, relationships, and light exploration — no deep work or RL study.' : dayOfWeek === 'sunday' ? ' SUNDAY RULE: Focus plays on admin, relationships, week-ahead prep, and job pipeline follow-ups — no deep work or RL study.' : ' WEEKDAY RULE: Include ~2hrs RL/quant study in the plan.'} Format as JSON array.
+1. "dailyIntention": An object with four fields:
+   - "study": One sentence. What to study in the 10am-12pm block and why. Be SPECIFIC — name the chapter, paper, course lecture, or skill. Include a concrete outcome (e.g., "finish Ch.4", "implement X", "derive Y"). ${dayOfWeek !== 'weekday' ? 'Can be light reading or empty string on weekends.' : ''}
+   - "work": One sentence. Which 1-2 themes own the work block, with a SPECIFIC outcome including numbers where possible (e.g., "6 focused hours on Armstrong signal pipeline — have backtest running on 3 macro signals by EOD"). ${dayOfWeek !== 'weekday' ? 'Can be creative/personal or empty on weekends.' : 'MUST name the theme(s). If energy mode is RECOVER, suggest lighter work.'}
+   - "evening": One sentence. Love & play / community / social learning suggestion. Name specific people, groups, or activities when possible.
+   - "themeContext": 1-2 sentences explaining WHY these themes today — what's the leverage, what has momentum from recent journal entries, what hasn't gotten attention.
 
-2. DISCERNMENT PROMPT — ${dayOfWeek === 'saturday' || dayOfWeek === 'sunday'
-    ? 'Create a reflective, philosophical prompt. On weekends, shift from tactical market analysis to bigger-picture thinking: life design, values alignment, long-term vision. Draw on the recent signal if available but frame it through a personal growth lens.'
-    : 'Based on the recent signal, create a thought exercise: "If [signal] is true, what are the 2nd and 3rd order effects on (a) your current projects, (b) the broader market, (c) your positioning?" If no signal is available, create a strategic question based on the stale contacts or pending decisions.'}
+2. "keynesCheck": A short, warm one-liner (not preachy) reminding about love, beauty, or play. Vary it daily. Examples: "Aidas hasn't seen you relaxed in a while — be present tonight." or "When did you last make something just because it was beautiful?" or "The best ideas come after you stop trying. Go play."
 
-3. AI SYNTHESIS — A 2-3 paragraph narrative briefing (max 150 words) that:
-   - Highlights the most important pattern across signals and contacts${jobPipeline && jobPipeline.length > 0 ? '\n   - Flags any job pipeline items needing attention (stale applications, upcoming interviews, follow-ups due)' : ''}
-   - Connects yesterday's reward score to today's priorities
-   - Suggests one strategic theme for the day
-   Tone: ${dayOfWeek === 'saturday' ? 'Warm, encouraging. Like a coach on rest day — celebrate the week, set up for recovery.' : dayOfWeek === 'sunday' ? 'Calm, empowering. Like a strategist helping you set up an elite week ahead.' : 'Direct, action-oriented. Like a Bridgewater daily observation.'}
+3. "aiSynthesis": 2-3 sentences (max 80 words). Connect yesterday's score/journal to today's intention. Highlight one pattern worth noticing. ${dayOfWeek === 'saturday' ? 'Warm, celebrating the week.' : dayOfWeek === 'sunday' ? 'Calm, setting up the week.' : 'Direct, like a sharp friend.'}
 
 Return ONLY valid JSON (no markdown, no code blocks):
 {
-  "topPlays": [
-    { "action": "...", "reason": "...", "leverage": "high" },
-    { "action": "...", "reason": "...", "leverage": "high" },
-    { "action": "...", "reason": "...", "leverage": "medium" }
-  ],
-  "discernmentPrompt": "...",
+  "dailyIntention": { "study": "...", "work": "...", "evening": "...", "themeContext": "..." },
+  "keynesCheck": "...",
   "aiSynthesis": "..."
 }`
 
@@ -568,20 +437,26 @@ Return ONLY valid JSON (no markdown, no code blocks):
     const parsed = JSON.parse(text)
 
     return {
-      topPlays: (parsed.topPlays || []).slice(0, 3).map((p: Record<string, unknown>) => ({
-        action: String(p.action || ''),
-        reason: String(p.reason || ''),
-        leverage: p.leverage === 'medium' ? 'medium' as const : 'high' as const,
-      })),
-      discernmentPrompt: String(parsed.discernmentPrompt || ''),
+      dailyIntention: {
+        study: String(parsed.dailyIntention?.study || ''),
+        work: String(parsed.dailyIntention?.work || ''),
+        evening: String(parsed.dailyIntention?.evening || ''),
+        themeContext: String(parsed.dailyIntention?.themeContext || ''),
+      },
+      keynesCheck: String(parsed.keynesCheck || ''),
       aiSynthesis: String(parsed.aiSynthesis || ''),
     }
   } catch (error) {
     console.error('[morning-brief] AI generation failed:', error)
     return {
-      topPlays: [{ action: 'Review your signals inbox', reason: 'AI generation failed — start with manual review', leverage: 'medium' }],
-      discernmentPrompt: 'What is the highest-leverage action you could take today?',
-      aiSynthesis: 'AI synthesis unavailable. Check your signals, contacts, and pending decisions manually.',
+      dailyIntention: {
+        study: 'Pick up where you left off in your current textbook.',
+        work: 'Review your themes and choose the one with most momentum.',
+        evening: 'Be present with someone you love.',
+        themeContext: 'AI generation failed — trust your instincts today.',
+      },
+      keynesCheck: 'Love comes a long way first.',
+      aiSynthesis: 'AI synthesis unavailable. Check your signals and journal, then choose your theme.',
     }
   }
 }
@@ -598,49 +473,37 @@ export async function generateMorningBrief(uid: string): Promise<MorningBrief> {
   const [
     energyState,
     signalDigest,
-    staleContacts,
+    reconnect,
     pendingDecisions,
-    stalledProjects,
     rewardTrend,
-    recentSignal,
-    projectNames,
     userFeedback,
-    openTodos,
-    jobPipeline,
+    journalEntries,
   ] = await Promise.all([
     safeGet<MorningBrief['energyState']>(() => fetchEnergyState(uid), { sleepHours: null, hrv: null, bodyBattery: null, stressLevel: null, nervousSystemState: null, mode: 'CONSERVE' as const, summary: 'Data unavailable' }),
     safeGet(() => fetchUnreadSignals(uid), []),
-    safeGet(() => fetchStaleContacts(uid), []),
+    safeGet(() => fetchReconnect(uid), null),
     safeGet(() => fetchPendingDecisions(uid), []),
-    safeGet(() => fetchStalledProjects(uid), []),
     safeGet(() => fetchRewardTrend(uid), { yesterday: null, weekAvg: null, trend: 'flat' as const }),
-    safeGet(() => fetchRecentSignalForDiscernment(uid), null),
-    safeGet(() => fetchProjectNames(uid), []),
     safeGet(() => fetchRecentBriefFeedback(uid), []),
-    safeGet(() => fetchOpenTodos(uid), []),
-    safeGet(() => fetchJobPipeline(uid), []),
+    safeGet(() => fetchRecentJournalEntries(uid), []),
   ])
 
-  // AI-generated components (top plays, discernment prompt, synthesis)
-  const { topPlays, discernmentPrompt, aiSynthesis } = await generateTopPlaysAndSynthesis(
-    energyState, signalDigest, staleContacts, pendingDecisions,
-    stalledProjects, rewardTrend, recentSignal, projectNames, userFeedback,
-    openTodos, jobPipeline, dayOfWeek
+  // AI-generated components
+  const { dailyIntention, keynesCheck, aiSynthesis } = await generateDailyIntention(
+    energyState, signalDigest, reconnect, pendingDecisions,
+    rewardTrend, userFeedback, journalEntries, dayOfWeek
   )
 
   return {
     date: todayKey,
     energyState,
-    topPlays,
+    dailyIntention,
     signalDigest,
-    staleContacts,
+    reconnect,
     pendingDecisions,
-    stalledProjects,
     rewardTrend,
-    openTodos,
-    jobPipeline,
     dayOfWeek,
-    discernmentPrompt,
+    keynesCheck,
     aiSynthesis,
   }
 }
