@@ -1,6 +1,7 @@
 /**
  * Formats a MorningBrief into Telegram-friendly messages.
- * New structure: compass, not clipboard.
+ * Telegram compact: bold headlines only (bullets).
+ * Full format: headlines + nuance with metric connections.
  */
 
 import type { MorningBrief } from './morning-brief'
@@ -29,6 +30,9 @@ const DAY_HEADER: Record<string, string> = {
   sunday: 'SUNDAY — SET THE WEEK',
 }
 
+/**
+ * Full Telegram format — headlines + nuance + all sections.
+ */
 export function formatMorningBrief(brief: MorningBrief): string {
   const dateLabel = new Date(brief.date + 'T12:00:00').toLocaleDateString('en-US', {
     weekday: 'long',
@@ -52,24 +56,33 @@ export function formatMorningBrief(brief: MorningBrief): string {
   lines.push(`_${modeLabels[brief.energyState.mode] || ''}_`)
   lines.push('')
 
-  // Daily Intention — the core
+  // Daily Intention — headline + nuance
   const { dailyIntention } = brief
 
-  if (dailyIntention.study) {
+  if (dailyIntention.study.headline) {
     lines.push(`*STUDY (10am–12pm)*`)
-    lines.push(dailyIntention.study)
+    lines.push(`*${dailyIntention.study.headline}*`)
+    if (dailyIntention.study.nuance) {
+      lines.push(dailyIntention.study.nuance)
+    }
     lines.push('')
   }
 
-  if (dailyIntention.work) {
+  if (dailyIntention.work.headline) {
     lines.push(`*WORK (12–5pm)*`)
-    lines.push(dailyIntention.work)
+    lines.push(`*${dailyIntention.work.headline}*`)
+    if (dailyIntention.work.nuance) {
+      lines.push(dailyIntention.work.nuance)
+    }
     lines.push('')
   }
 
-  if (dailyIntention.evening) {
+  if (dailyIntention.evening.headline) {
     lines.push(`*EVENING*`)
-    lines.push(dailyIntention.evening)
+    lines.push(`*${dailyIntention.evening.headline}*`)
+    if (dailyIntention.evening.nuance) {
+      lines.push(dailyIntention.evening.nuance)
+    }
     lines.push('')
   }
 
@@ -123,8 +136,8 @@ export function formatMorningBrief(brief: MorningBrief): string {
 }
 
 /**
- * Compact Telegram format: daily intention + link to full brief.
- * Keeps Telegram messages short and actionable.
+ * Compact Telegram format: bold headline bullets only + link to full brief.
+ * Click through for nuance and metric connections.
  */
 export function formatMorningBriefCompact(brief: MorningBrief, briefUrl: string): string {
   const dateLabel = new Date(brief.date + 'T12:00:00').toLocaleDateString('en-US', {
@@ -144,17 +157,17 @@ export function formatMorningBriefCompact(brief: MorningBrief, briefUrl: string)
   lines.push(`${brief.energyState.mode} | Score ${yScore} ${arrow}`)
   lines.push('')
 
-  // Daily Intention — compact
+  // Daily Intention — headlines only as bullets
   const { dailyIntention } = brief
 
-  if (dailyIntention.study) {
-    lines.push(`*Study:* ${dailyIntention.study}`)
+  if (dailyIntention.study.headline) {
+    lines.push(`• *${dailyIntention.study.headline}*`)
   }
-  if (dailyIntention.work) {
-    lines.push(`*Work:* ${dailyIntention.work}`)
+  if (dailyIntention.work.headline) {
+    lines.push(`• *${dailyIntention.work.headline}*`)
   }
-  if (dailyIntention.evening) {
-    lines.push(`*Evening:* ${dailyIntention.evening}`)
+  if (dailyIntention.evening.headline) {
+    lines.push(`• *${dailyIntention.evening.headline}*`)
   }
   lines.push('')
 

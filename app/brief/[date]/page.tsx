@@ -173,28 +173,43 @@ export default async function BriefPage({
                 Today&apos;s Intention
               </h2>
               <div className="space-y-3">
-                {brief.dailyIntention.study && (
+                {brief.dailyIntention.study?.headline && (
                   <div className="flex items-start gap-2">
                     <span className="font-mono text-[9px] font-semibold uppercase px-2 py-1 rounded-sm bg-amber-bg text-amber-ink border border-amber-ink/20 shrink-0 mt-0.5">
                       Study
                     </span>
-                    <div className="font-mono text-[11px] text-ink leading-relaxed">{brief.dailyIntention.study}</div>
+                    <div className="flex-1">
+                      <div className="font-mono text-[11px] font-semibold text-ink leading-tight">{brief.dailyIntention.study.headline}</div>
+                      {brief.dailyIntention.study.nuance && (
+                        <div className="font-mono text-[10px] text-ink-muted mt-1 leading-relaxed">{brief.dailyIntention.study.nuance}</div>
+                      )}
+                    </div>
                   </div>
                 )}
-                {brief.dailyIntention.work && (
+                {brief.dailyIntention.work?.headline && (
                   <div className="flex items-start gap-2">
                     <span className="font-mono text-[9px] font-semibold uppercase px-2 py-1 rounded-sm bg-burgundy-bg text-burgundy border border-burgundy/20 shrink-0 mt-0.5">
                       Work
                     </span>
-                    <div className="font-mono text-[11px] text-ink leading-relaxed">{brief.dailyIntention.work}</div>
+                    <div className="flex-1">
+                      <div className="font-mono text-[11px] font-semibold text-ink leading-tight">{brief.dailyIntention.work.headline}</div>
+                      {brief.dailyIntention.work.nuance && (
+                        <div className="font-mono text-[10px] text-ink-muted mt-1 leading-relaxed">{brief.dailyIntention.work.nuance}</div>
+                      )}
+                    </div>
                   </div>
                 )}
-                {brief.dailyIntention.evening && (
+                {brief.dailyIntention.evening?.headline && (
                   <div className="flex items-start gap-2">
                     <span className="font-mono text-[9px] font-semibold uppercase px-2 py-1 rounded-sm bg-green-bg text-green-ink border border-green-ink/20 shrink-0 mt-0.5">
                       Evening
                     </span>
-                    <div className="font-mono text-[11px] text-ink leading-relaxed">{brief.dailyIntention.evening}</div>
+                    <div className="flex-1">
+                      <div className="font-mono text-[11px] font-semibold text-ink leading-tight">{brief.dailyIntention.evening.headline}</div>
+                      {brief.dailyIntention.evening.nuance && (
+                        <div className="font-mono text-[10px] text-ink-muted mt-1 leading-relaxed">{brief.dailyIntention.evening.nuance}</div>
+                      )}
+                    </div>
                   </div>
                 )}
               </div>

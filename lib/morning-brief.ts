@@ -14,10 +14,15 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '')
 // Types
 // ---------------------------------------------------------------------------
 
+export interface IntentionBlock {
+  headline: string        // Board-level precise one-liner (shown in Telegram)
+  nuance: string          // Context, reasoning, and how it drives weekly metrics (shown in full brief)
+}
+
 export interface DailyIntention {
-  study: string           // 2hr morning study block — what to study and why
-  work: string            // 1-2 theme focus for the work block — with specific outcome
-  evening: string         // Love & play / community / social learning suggestion
+  study: IntentionBlock   // 2hr morning study block
+  work: IntentionBlock    // 1-2 theme focus for the work block
+  evening: IntentionBlock // Love & play / community / social learning
   themeContext: string    // 1-2 sentences: why this theme today, what's the leverage
 }
 
@@ -406,11 +411,17 @@ ${userFeedback.map(f => `- "${f}"`).join('\n')}
 ` : ''}
 Generate a JSON response with:
 
-1. "dailyIntention": An object with four fields:
-   - "study": One sentence. What to study in the 10am-12pm block and why. Be SPECIFIC — name the chapter, paper, course lecture, or skill. Include a concrete outcome (e.g., "finish Ch.4", "implement X", "derive Y"). ${dayOfWeek !== 'weekday' ? 'Can be light reading or empty string on weekends.' : ''}
-   - "work": One sentence. Which 1-2 themes own the work block, with a SPECIFIC outcome including numbers where possible (e.g., "6 focused hours on Armstrong signal pipeline — have backtest running on 3 macro signals by EOD"). ${dayOfWeek !== 'weekday' ? 'Can be creative/personal or empty on weekends.' : 'MUST name the theme(s). If energy mode is RECOVER, suggest lighter work.'}
-   - "evening": One sentence. Love & play / community / social learning suggestion. Name specific people, groups, or activities when possible.
+1. "dailyIntention": An object with four fields. Each of study/work/evening is an object with "headline" and "nuance":
+   - "study": { "headline": "Board-level one-liner — precise, specific, bold. Name the exact material and outcome.", "nuance": "Why this material now, how it connects to the broader roadmap, and which weekly metrics it drives (e.g., 'Drives study_hours toward 10hr target, papers_read +1')." }${dayOfWeek !== 'weekday' ? ' Can have empty strings on weekends.' : ''}
+   - "work": { "headline": "Board-level one-liner — which theme(s), specific deliverable, numbers where possible.", "nuance": "Strategic reasoning: why this theme today, what has momentum, how it drives focus_hours and other weekly metrics." }${dayOfWeek !== 'weekday' ? ' Can have empty strings on weekends.' : ' MUST name the theme(s). If energy mode is RECOVER, suggest lighter work.'}
+   - "evening": { "headline": "Board-level one-liner — name specific people, groups, or activities.", "nuance": "Why this matters for relationships/community, and how it feeds back into the work (e.g., network effects, recovery, creative input)." }
    - "themeContext": 1-2 sentences explaining WHY these themes today — what's the leverage, what has momentum from recent journal entries, what hasn't gotten attention.
+
+   HEADLINE EXAMPLES (be this precise):
+   - "CS224r Lecture 7: Policy Gradient Methods — derive REINFORCE from scratch"
+   - "Armstrong signal pipeline: backtest 3 macro signals, target Sharpe > 1.2 by EOD"
+   - "Alamo Bernal: ship risk dashboard v2, 6hrs focused delivery"
+   - "EAIG meetup at Homebrew — present this week's Armstrong backtest results"
 
 2. "keynesCheck": A short, warm one-liner (not preachy) reminding about love, beauty, or play. Vary it daily. Examples: "Aidas hasn't seen you relaxed in a while — be present tonight." or "When did you last make something just because it was beautiful?" or "The best ideas come after you stop trying. Go play."
 
@@ -418,7 +429,12 @@ Generate a JSON response with:
 
 Return ONLY valid JSON (no markdown, no code blocks):
 {
-  "dailyIntention": { "study": "...", "work": "...", "evening": "...", "themeContext": "..." },
+  "dailyIntention": {
+    "study": { "headline": "...", "nuance": "..." },
+    "work": { "headline": "...", "nuance": "..." },
+    "evening": { "headline": "...", "nuance": "..." },
+    "themeContext": "..."
+  },
   "keynesCheck": "...",
   "aiSynthesis": "..."
 }`
@@ -436,11 +452,20 @@ Return ONLY valid JSON (no markdown, no code blocks):
 
     const parsed = JSON.parse(text)
 
+    const parseBlock = (block: unknown): { headline: string; nuance: string } => {
+      if (typeof block === 'string') return { headline: block, nuance: '' }
+      if (block && typeof block === 'object') {
+        const b = block as Record<string, unknown>
+        return { headline: String(b.headline || ''), nuance: String(b.nuance || '') }
+      }
+      return { headline: '', nuance: '' }
+    }
+
     return {
       dailyIntention: {
-        study: String(parsed.dailyIntention?.study || ''),
-        work: String(parsed.dailyIntention?.work || ''),
-        evening: String(parsed.dailyIntention?.evening || ''),
+        study: parseBlock(parsed.dailyIntention?.study),
+        work: parseBlock(parsed.dailyIntention?.work),
+        evening: parseBlock(parsed.dailyIntention?.evening),
         themeContext: String(parsed.dailyIntention?.themeContext || ''),
       },
       keynesCheck: String(parsed.keynesCheck || ''),
@@ -450,9 +475,9 @@ Return ONLY valid JSON (no markdown, no code blocks):
     console.error('[morning-brief] AI generation failed:', error)
     return {
       dailyIntention: {
-        study: 'Pick up where you left off in your current textbook.',
-        work: 'Review your themes and choose the one with most momentum.',
-        evening: 'Be present with someone you love.',
+        study: { headline: 'Pick up where you left off in your current textbook.', nuance: '' },
+        work: { headline: 'Review your themes and choose the one with most momentum.', nuance: '' },
+        evening: { headline: 'Be present with someone you love.', nuance: '' },
         themeContext: 'AI generation failed — trust your instincts today.',
       },
       keynesCheck: 'Love comes a long way first.',
