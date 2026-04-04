@@ -1,5 +1,11 @@
 # Claude Development Guide for Thesis Engine
 
+## IMPORTANT: No Emojis — Ever
+
+**NEVER use emojis in code, components, UI text, or commit messages.** Use SVG icons, typographic symbols (·, —, →, ×), or design artifacts instead. This applies to all files in the repo — components, pages, data, comments, everything.
+
+---
+
 This file provides essential context and patterns for efficiently building features for the Thesis Engine dashboard.
 
 ## Project Overview

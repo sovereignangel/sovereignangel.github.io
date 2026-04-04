@@ -4,7 +4,7 @@ import { adminDb } from '@/lib/firebase-admin'
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { name, status, constraints } = body
+    const { name, email, phone, status, constraints } = body
 
     if (!name || !status || !['yes', 'maybe', 'no'].includes(status)) {
       return NextResponse.json({ error: 'Invalid RSVP data' }, { status: 400 })
@@ -12,6 +12,8 @@ export async function POST(request: Request) {
 
     const docRef = await adminDb.collection('peak_state_rsvps').add({
       name: name.trim(),
+      email: email?.trim() || '',
+      phone: phone?.trim() || '',
       status,
       constraints: constraints?.trim() || '',
       createdAt: new Date().toISOString(),
