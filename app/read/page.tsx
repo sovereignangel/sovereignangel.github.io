@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useAuth } from '@/components/auth/AuthProvider'
-import { getReadingSessions, deleteReadingSession } from '@/lib/firestore/reading-sessions'
+import { getReadingSessions, deleteReadingSession, getReadingSessionBySource, saveReadingSession } from '@/lib/firestore/reading-sessions'
 import { useReadingSession } from '@/hooks/useReadingSession'
 import dynamic from 'next/dynamic'
 import ArticleReaderView from '@/components/read/ArticleReaderView'
@@ -36,13 +36,28 @@ export default function ReadPage() {
   const [archiveUrl, setArchiveUrl] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  // Load library
+  // Load library + seed Morning Brief recommendations (one-time per book)
   useEffect(() => {
     if (!user?.uid) { setLoadingSessions(false); return }
+    const uid = user.uid
     setLoadingSessions(true)
-    getReadingSessions(user.uid)
-      .then(setSessions)
-      .finally(() => setLoadingSessions(false))
+    ;(async () => {
+      // Seed: A Path with Heart — Jack Kornfield (free PDF on archive.org)
+      const kornfieldUrl = 'https://archive.org/download/pathwithheartguidethroughtheperilsandpromisesofspirituallifejackkornfield_555_e/pathwithheartguidethroughtheperilsandpromisesofspirituallifejackkornfield_555_e.pdf'
+      const existing = await getReadingSessionBySource(uid, kornfieldUrl)
+      if (!existing) {
+        await saveReadingSession(uid, {
+          title: 'A Path with Heart',
+          author: 'Jack Kornfield',
+          sourceUrl: kornfieldUrl,
+          sourceType: 'archive_org',
+          lastReadAt: new Date().toISOString(),
+        })
+      }
+      const list = await getReadingSessions(uid)
+      setSessions(list)
+      setLoadingSessions(false)
+    })()
   }, [user?.uid])
 
   const refreshLibrary = useCallback(() => {
