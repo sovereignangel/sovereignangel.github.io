@@ -89,7 +89,7 @@ const logField = (l: DailyLog, k: string) => (l as any)[k] as number || 0
 // ─── Command Center ─────────────────────────────────────────────────
 
 export default function CommandCenter() {
-  const [view, setView] = useState<'northstar' | 'dashboard' | 'strategic'>('northstar')
+  const [view, setView] = useState<'northstar' | 'dashboard'>('northstar')
   const { user } = useAuth()
   const { log, recentLogs } = useDailyLogContext()
   const { plan, loading: planLoading } = useWeeklyPlan()
@@ -334,7 +334,7 @@ export default function CommandCenter() {
         </div>
         <div className="flex items-center gap-3">
           <div className="flex gap-1">
-            {(['northstar', 'dashboard', 'strategic'] as const).map(v => (
+            {(['northstar', 'dashboard'] as const).map(v => (
               <button
                 key={v}
                 onClick={() => setView(v)}
@@ -344,7 +344,7 @@ export default function CommandCenter() {
                     : 'bg-transparent text-ink-muted border-rule hover:border-ink-faint'
                 }`}
               >
-                {v === 'northstar' ? 'North Star' : v === 'dashboard' ? 'Dashboard' : 'Strategic'}
+                {v === 'northstar' ? 'North Star' : 'Dashboard'}
               </button>
             ))}
           </div>
@@ -357,10 +357,6 @@ export default function CommandCenter() {
       {view === 'northstar' ? (
         <div className="flex-1 overflow-auto">
           <NorthStar />
-        </div>
-      ) : view === 'strategic' ? (
-        <div className="flex-1 overflow-auto p-3">
-          <CommandCenterV2 />
         </div>
       ) : (
       /* ═══ 3-COLUMN BODY ═══ */
