@@ -1,6 +1,6 @@
 'use client'
 
-type Section = 'about' | 'inputs' | 'outputs' | 'thesis'
+type Section = 'about' | 'inputs' | 'outputs'
 
 interface SideNavProps {
   activeSection: Section
@@ -12,7 +12,6 @@ export default function SideNav({ activeSection, onSectionChange }: SideNavProps
     { id: 'about', label: 'About' },
     { id: 'inputs', label: 'Inputs' },
     { id: 'outputs', label: 'Outputs' },
-    { id: 'thesis', label: 'Thesis' },
   ]
 
   return (
@@ -28,8 +27,6 @@ export default function SideNav({ activeSection, onSectionChange }: SideNavProps
           className={`text-sm no-underline transition-colors duration-200 ${
             activeSection === section.id
               ? 'text-[#1a1a1a] font-medium'
-              : section.id === 'thesis'
-              ? 'text-navy hover:text-navy-light font-medium'
               : 'text-[#999] hover:text-[#666]'
           }`}
         >

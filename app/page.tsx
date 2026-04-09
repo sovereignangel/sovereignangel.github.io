@@ -6,9 +6,8 @@ import Header from '@/components/portfolio/Header'
 import AboutSection from '@/components/portfolio/AboutSection'
 import InputsSection from '@/components/portfolio/InputsSection'
 import OutputsSection from '@/components/portfolio/OutputsSection'
-import ThesisSection from '@/components/portfolio/ThesisSection'
 import Footer from '@/components/portfolio/Footer'
-type Section = 'about' | 'inputs' | 'outputs' | 'thesis'
+type Section = 'about' | 'inputs' | 'outputs'
 
 export default function Home() {
   const [activeSection, setActiveSection] = useState<Section>('about')
@@ -21,7 +20,6 @@ export default function Home() {
         {activeSection === 'about' && <AboutSection />}
         {activeSection === 'inputs' && <InputsSection />}
         {activeSection === 'outputs' && <OutputsSection />}
-        {activeSection === 'thesis' && <ThesisSection />}
         <Footer />
       </div>
     </>

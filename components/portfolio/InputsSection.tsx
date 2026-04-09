@@ -1,25 +1,9 @@
-'use client'
-
-import { useState } from 'react'
 import Image from 'next/image'
-import SubTabs from './SubTabs'
 
 export default function InputsSection() {
-  const [activeTab, setActiveTab] = useState('classes')
-
   return (
     <section className="bg-[#faf8f4]/90 backdrop-blur-sm rounded-sm p-5 -mx-5">
-      <SubTabs
-        tabs={[
-          { id: 'classes', label: 'Classes' },
-          { id: 'content', label: 'Writing' },
-        ]}
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
-      />
-
-      {activeTab === 'classes' && (
-        <div>
+      <div>
           <div className="mb-7">
             <h3 className="text-[17px] font-medium mb-1">
               <a
@@ -65,37 +49,6 @@ export default function InputsSection() {
             </div>
           </div>
         </div>
-      )}
-
-      {activeTab === 'content' && (
-        <div>
-          <p className="text-[19px] font-medium text-[#1a1a1a] tracking-tight mb-4 font-serif">
-            Writing
-          </p>
-          <div className="space-y-5">
-            <div>
-              <a
-                href="/blog/building-a-macro-signal-pipeline"
-                className="text-[17px] font-medium text-[#1a1a1a] no-underline border-b border-[#ccc] hover:border-[#1a1a1a] transition-colors duration-200"
-              >
-                Building a Macro Signal Pipeline from Scratch
-              </a>
-              <p className="text-[13px] text-[#888] mt-1">March 12, 2026 · 8 min</p>
-              <p className="text-[15px] text-[#555] mt-1">
-                How I&apos;m building systematic infrastructure to translate macroeconomic data into actionable investment signals.
-              </p>
-            </div>
-          </div>
-          <a
-            href="/blog"
-            className="inline-block mt-6 text-[13px] text-[#999] hover:text-[#1a1a1a] transition-colors no-underline border-b border-[#ddd] hover:border-[#1a1a1a]"
-          >
-            All posts →
-          </a>
-        </div>
-      )}
-
-
     </section>
   )
 }
