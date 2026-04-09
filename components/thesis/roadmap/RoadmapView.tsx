@@ -8,6 +8,7 @@ import {
   type RoadmapItemStatus as ItemStatus,
   type RoadmapItem,
   type TextbookEntry,
+  INITIAL_TEXTBOOKS,
   QUARTER_META,
   getCurrentQuarter,
   getCurrentWeekInQuarter,
@@ -91,22 +92,6 @@ const INITIAL_ITEMS: RoadmapItem[] = [
   { id: 'q4-paper-submit', domain: 'quant', quarter: 'Q4', title: 'Submit paper to arXiv/SSRN', type: 'milestone', description: 'Research paper published or posted', status: 'not_started', weekStart: 5, weekEnd: 10 },
   // Markets
   { id: 'q4-kelly', domain: 'markets', quarter: 'Q4', title: 'Kelly criterion + risk parity', type: 'book', description: 'Advanced position sizing, multi-asset risk budgeting', status: 'not_started', weekStart: 1, weekEnd: 8 },
-]
-
-const INITIAL_TEXTBOOKS: TextbookEntry[] = [
-  // Tier 1 — Must complete
-  { id: 'tb-deprado', title: 'Advances in Financial Machine Learning', author: 'de Prado', domain: 'quant', quarter: 'Q2', chaptersTotal: 20, chaptersRead: 0, status: 'not_started' },
-  { id: 'tb-arthur', title: 'Complexity and the Economy', author: 'Arthur', domain: 'complexity', quarter: 'Q1', chaptersTotal: 12, chaptersRead: 0, status: 'not_started' },
-  { id: 'tb-sutton', title: 'Reinforcement Learning', author: 'Sutton & Barto', domain: 'ai', quarter: 'Q1', chaptersTotal: 17, chaptersRead: 0, status: 'not_started', url: 'http://incompleteideas.net/book/RLbook2020.pdf' },
-  { id: 'tb-goodfellow', title: 'Deep Learning', author: 'Goodfellow et al.', domain: 'ai', quarter: 'Q1', chaptersTotal: 20, chaptersRead: 0, status: 'not_started', url: 'https://www.deeplearningbook.org/' },
-  // Tier 2 — High value
-  { id: 'tb-sornette', title: 'Why Stock Markets Crash', author: 'Sornette', domain: 'complexity', quarter: 'Q2', chaptersTotal: 14, chaptersRead: 0, status: 'not_started' },
-  { id: 'tb-taleb-dh', title: 'Dynamic Hedging', author: 'Taleb', domain: 'markets', quarter: 'Q3', chaptersTotal: 20, chaptersRead: 0, status: 'not_started' },
-  { id: 'tb-mitchell', title: 'Complexity: A Guided Tour', author: 'Mitchell', domain: 'complexity', quarter: 'Q1', chaptersTotal: 18, chaptersRead: 0, status: 'not_started' },
-  { id: 'tb-bouchaud', title: 'Theory of Financial Risk', author: 'Bouchaud & Potters', domain: 'quant', quarter: 'Q3', chaptersTotal: 15, chaptersRead: 0, status: 'not_started' },
-  { id: 'tb-chan', title: 'Quantitative Trading', author: 'Chan', domain: 'quant', quarter: 'Q1', chaptersTotal: 8, chaptersRead: 0, status: 'not_started' },
-  { id: 'tb-natenberg', title: 'Option Volatility & Pricing', author: 'Natenberg', domain: 'markets', quarter: 'Q1', chaptersTotal: 22, chaptersRead: 0, status: 'not_started' },
-  { id: 'tb-hamilton', title: 'Time Series Analysis', author: 'Hamilton', domain: 'quant', quarter: 'Q2', chaptersTotal: 22, chaptersRead: 0, status: 'not_started' },
 ]
 
 const STATUS_ICON: Record<ItemStatus, string> = {
@@ -202,6 +187,20 @@ export default function RoadmapView() {
       const next = Math.max(0, Math.min(tb.chaptersTotal, tb.chaptersRead + delta))
       const status: ItemStatus = next === 0 ? 'not_started' : next >= tb.chaptersTotal ? 'complete' : 'in_progress'
       return { ...tb, chaptersRead: next, status }
+    })
+    persistBooks(updated)
+  }
+
+  const cycleBookStatus = (id: string) => {
+    const order: ItemStatus[] = ['not_started', 'in_progress', 'complete']
+    const updated = textbooks.map(tb => {
+      if (tb.id !== id) return tb
+      const nextStatus = order[(order.indexOf(tb.status) + 1) % order.length]
+      const nextChapters =
+        nextStatus === 'not_started' ? 0 :
+        nextStatus === 'complete' ? tb.chaptersTotal :
+        Math.max(1, tb.chaptersRead) // in_progress: at least 1
+      return { ...tb, status: nextStatus, chaptersRead: nextChapters }
     })
     persistBooks(updated)
   }
@@ -566,66 +565,102 @@ export default function RoadmapView() {
             </div>
           </div>
 
-          {/* Textbook rows */}
-          <div className="bg-white border border-rule rounded-sm">
-            {textbooks.map((tb, idx) => {
-              const domainMeta = DOMAINS.find(d => d.key === tb.domain)
-              const pct = Math.round((tb.chaptersRead / tb.chaptersTotal) * 100)
-
-              const titleEl = tb.url ? (
-                <a
-                  href={tb.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="font-serif text-[10px] font-semibold text-burgundy hover:underline"
-                >
-                  {tb.title}
-                </a>
-              ) : (
-                <span className="font-serif text-[10px] font-semibold text-ink">{tb.title}</span>
-              )
-
-              return (
-                <div key={tb.id} className={`flex items-center gap-2 px-2 py-1 ${
-                  idx < textbooks.length - 1 ? 'border-b border-rule-light' : ''
-                }`}>
-                  <span className={`font-mono text-[7px] uppercase px-1 py-0.5 rounded-sm border shrink-0 ${domainMeta?.bgColor} ${domainMeta?.borderColor}`}>
-                    {tb.domain.slice(0, 4)}
+          {/* Textbook rows — grouped by target month */}
+          {(() => {
+            // Build ordered list of month groups, preserving INITIAL_TEXTBOOKS order.
+            const groups: { key: string; books: TextbookEntry[] }[] = []
+            for (const tb of textbooks) {
+              const key = tb.targetMonth || `${tb.quarter} (unscheduled)`
+              let g = groups.find(x => x.key === key)
+              if (!g) {
+                g = { key, books: [] }
+                groups.push(g)
+              }
+              g.books.push(tb)
+            }
+            return groups.map(group => (
+              <div key={group.key} className="bg-white border border-rule rounded-sm">
+                <div className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-burgundy px-3 py-2 border-b-2 border-rule">
+                  {group.key}
+                  <span className="font-mono text-[9px] text-ink-muted ml-2">
+                    {group.books.filter(b => b.status === 'complete').length}/{group.books.length} done
                   </span>
-                  <div className="flex-1 min-w-0 flex items-center gap-1.5">
-                    {titleEl}
-                    <span className="font-sans text-[9px] text-ink-muted shrink-0">{tb.author}</span>
-                  </div>
-                  <div className="w-[60px] h-1 bg-cream rounded-sm overflow-hidden shrink-0">
-                    <div
-                      className={`h-full rounded-sm transition-all ${
-                        pct >= 100 ? 'bg-green-ink' : pct > 0 ? 'bg-amber-ink' : 'bg-rule'
-                      }`}
-                      style={{ width: `${pct}%` }}
-                    />
-                  </div>
-                  <div className="flex items-center gap-0.5 shrink-0">
-                    <button
-                      onClick={() => updateBookChapters(tb.id, -1)}
-                      className="font-mono text-[9px] w-4 h-4 flex items-center justify-center rounded-sm border border-rule text-ink-muted hover:bg-cream transition-colors"
-                    >
-                      -
-                    </button>
-                    <span className="font-mono text-[9px] text-ink w-[36px] text-center">
-                      {tb.chaptersRead}/{tb.chaptersTotal}
-                    </span>
-                    <button
-                      onClick={() => updateBookChapters(tb.id, 1)}
-                      className="font-mono text-[9px] w-4 h-4 flex items-center justify-center rounded-sm border border-rule text-ink-muted hover:bg-cream transition-colors"
-                    >
-                      +
-                    </button>
-                  </div>
-                  <span className="font-mono text-[8px] text-ink-faint w-[20px] text-right shrink-0">{tb.quarter}</span>
                 </div>
-              )
-            })}
-          </div>
+                {group.books.map((tb, idx) => {
+                  const domainMeta = DOMAINS.find(d => d.key === tb.domain)
+                  const pct = Math.round((tb.chaptersRead / tb.chaptersTotal) * 100)
+                  const statusLabel = tb.status === 'complete' ? 'done' : tb.status === 'in_progress' ? 'reading' : 'queued'
+                  const statusColor = tb.status === 'complete' ? 'text-green-ink border-green-ink/30 bg-green-bg'
+                    : tb.status === 'in_progress' ? 'text-amber-ink border-amber-ink/30 bg-amber-bg'
+                    : 'text-ink-faint border-rule bg-cream'
+
+                  const titleEl = tb.url ? (
+                    <a
+                      href={tb.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-serif text-[11px] font-semibold text-burgundy hover:underline"
+                    >
+                      {tb.title}
+                    </a>
+                  ) : (
+                    <span className="font-serif text-[11px] font-semibold text-ink">{tb.title}</span>
+                  )
+
+                  return (
+                    <div key={tb.id} className={`px-3 py-2 ${idx < group.books.length - 1 ? 'border-b border-rule-light' : ''}`}>
+                      <div className="flex items-center gap-2">
+                        <span className={`font-mono text-[8px] uppercase px-1 py-0.5 rounded-sm border shrink-0 ${domainMeta?.bgColor} ${domainMeta?.borderColor}`}>
+                          {tb.subdomain || domainMeta?.label || tb.domain}
+                        </span>
+                        <div className="flex-1 min-w-0 flex items-baseline gap-1.5 flex-wrap">
+                          {titleEl}
+                          <span className="font-sans text-[10px] text-ink-muted shrink-0">{tb.author}</span>
+                        </div>
+                        <button
+                          onClick={() => cycleBookStatus(tb.id)}
+                          className={`font-mono text-[9px] uppercase px-1.5 py-0.5 rounded-sm border shrink-0 hover:opacity-80 transition-opacity ${statusColor}`}
+                          title="Cycle status: queued → reading → done"
+                        >
+                          {statusLabel}
+                        </button>
+                        <div className="w-[60px] h-1 bg-cream rounded-sm overflow-hidden shrink-0">
+                          <div
+                            className={`h-full rounded-sm transition-all ${
+                              pct >= 100 ? 'bg-green-ink' : pct > 0 ? 'bg-amber-ink' : 'bg-rule'
+                            }`}
+                            style={{ width: `${pct}%` }}
+                          />
+                        </div>
+                        <div className="flex items-center gap-0.5 shrink-0">
+                          <button
+                            onClick={() => updateBookChapters(tb.id, -1)}
+                            className="font-mono text-[10px] w-4 h-4 flex items-center justify-center rounded-sm border border-rule text-ink-muted hover:bg-cream transition-colors"
+                          >
+                            -
+                          </button>
+                          <span className="font-mono text-[10px] text-ink w-[40px] text-center">
+                            {tb.chaptersRead}/{tb.chaptersTotal}
+                          </span>
+                          <button
+                            onClick={() => updateBookChapters(tb.id, 1)}
+                            className="font-mono text-[10px] w-4 h-4 flex items-center justify-center rounded-sm border border-rule text-ink-muted hover:bg-cream transition-colors"
+                          >
+                            +
+                          </button>
+                        </div>
+                      </div>
+                      {tb.notes && (
+                        <p className="font-sans text-[10px] text-ink-muted leading-relaxed mt-1 pl-1">
+                          {tb.notes}
+                        </p>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            ))
+          })()}
         </div>
       )}
     </div>

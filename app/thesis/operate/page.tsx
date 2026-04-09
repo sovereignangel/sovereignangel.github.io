@@ -1,14 +1,15 @@
 'use client'
 
-import { useState, Suspense, useEffect } from 'react'
+import { useState, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
-import WeeklyPlanView from '@/components/thesis/weekly-plan/WeeklyPlanView'
 import PositionBriefing from '@/components/thesis/capital/PositionBriefing'
 import WarRoomView from '@/components/thesis/capital/WarRoomView'
 import RoadmapView from '@/components/thesis/roadmap/RoadmapView'
+import ConvictionSprint from '@/components/thesis/sprint/ConvictionSprint'
+import ConvictionSprintFinancials from '@/components/thesis/sprint/ConvictionSprintFinancials'
 
-type OperateTab = 'plan' | 'capital' | 'roadmap'
-type CapitalSubTab = 'position' | 'warroom'
+type OperateTab = 'sprint' | 'capital' | 'roadmap'
+type CapitalSubTab = 'position' | 'warroom' | 'sprint'
 
 function OperateContent() {
   const searchParams = useSearchParams()
@@ -17,8 +18,7 @@ function OperateContent() {
   const [activeTab, setActiveTab] = useState<OperateTab>(
     tabParam === 'capital' ? 'capital'
       : tabParam === 'roadmap' ? 'roadmap'
-      : tabParam === 'plan' ? 'plan'
-      : 'plan'
+      : 'sprint'
   )
 
   // Capital state
@@ -30,7 +30,7 @@ function OperateContent() {
       {/* Primary tabs */}
       <div className="flex gap-1 border-b border-rule shrink-0">
         {([
-          { key: 'plan' as const, label: 'Plan' },
+          { key: 'sprint' as const, label: 'Sprint' },
           { key: 'capital' as const, label: 'Capital' },
           { key: 'roadmap' as const, label: 'Roadmap' },
         ]).map(tab => (
@@ -50,9 +50,9 @@ function OperateContent() {
 
       {/* Tab content */}
       <div className="flex-1 min-h-0">
-        {activeTab === 'plan' && (
+        {activeTab === 'sprint' && (
           <div className="overflow-y-auto h-full">
-            <WeeklyPlanView />
+            <ConvictionSprint />
           </div>
         )}
 
@@ -62,6 +62,7 @@ function OperateContent() {
               {([
                 { key: 'position' as const, label: 'Position' },
                 { key: 'warroom' as const, label: 'War Room' },
+                { key: 'sprint' as const, label: 'Conviction Sprint' },
               ]).map(tab => (
                 <button
                   key={tab.key}
@@ -84,6 +85,7 @@ function OperateContent() {
                 />
               )}
               {capitalSubTab === 'warroom' && <WarRoomView />}
+              {capitalSubTab === 'sprint' && <ConvictionSprintFinancials />}
             </div>
           </div>
         )}

@@ -18,8 +18,12 @@ export interface RoadmapContext {
     title: string
     author: string
     domain: string
+    subdomain?: string
     chaptersTotal: number
     chaptersRead: number
+    status?: string
+    notes?: string
+    targetMonth?: string
   }[]
 }
 
@@ -285,9 +289,13 @@ export async function generateNextWeekPlan(
     const itemsList = roadmap.activeItems.map(i =>
       `- [${i.domain}] ${i.title} (${i.type}, ${i.status}): ${i.description}`
     ).join('\n')
-    const booksList = roadmap.activeTextbooks.map(t =>
-      `- "${t.title}" by ${t.author} [${t.domain}]: ${t.chaptersRead}/${t.chaptersTotal} chapters`
-    ).join('\n')
+    const booksList = roadmap.activeTextbooks.map(t => {
+      const tag = t.subdomain ? `${t.domain} / ${t.subdomain}` : t.domain
+      const month = t.targetMonth ? ` — target ${t.targetMonth}` : ''
+      const state = t.status ? ` [${t.status}]` : ''
+      const why = t.notes ? `\n    why: ${t.notes}` : ''
+      return `- "${t.title}" by ${t.author} [${tag}]${month}${state}: ${t.chaptersRead}/${t.chaptersTotal} chapters${why}`
+    }).join('\n')
     roadmapSection = `
 ROADMAP CONTEXT — ${roadmap.currentQuarter}, Week ${roadmap.currentWeekInQuarter}/13:
 Active roadmap items this week:

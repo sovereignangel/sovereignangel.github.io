@@ -23,6 +23,7 @@ import QuantPracticeCard from '@/components/thesis/quant-practice/QuantPracticeC
 import SignalAttribution from '@/components/thesis/SignalAttribution'
 import { strategicPillars, computeMomentum, type StrategicPillar } from '@/lib/strategic-priorities'
 import CommandCenterV2 from '@/components/thesis/CommandCenterV2'
+import NorthStar from '@/components/thesis/sprint/NorthStar'
 
 // ─── Helpers ────────────────────────────────────────────────────────
 
@@ -88,7 +89,7 @@ const logField = (l: DailyLog, k: string) => (l as any)[k] as number || 0
 // ─── Command Center ─────────────────────────────────────────────────
 
 export default function CommandCenter() {
-  const [view, setView] = useState<'dashboard' | 'strategic'>('dashboard')
+  const [view, setView] = useState<'northstar' | 'dashboard' | 'strategic'>('northstar')
   const { user } = useAuth()
   const { log, recentLogs } = useDailyLogContext()
   const { plan, loading: planLoading } = useWeeklyPlan()
@@ -333,7 +334,7 @@ export default function CommandCenter() {
         </div>
         <div className="flex items-center gap-3">
           <div className="flex gap-1">
-            {(['dashboard', 'strategic'] as const).map(v => (
+            {(['northstar', 'dashboard', 'strategic'] as const).map(v => (
               <button
                 key={v}
                 onClick={() => setView(v)}
@@ -343,7 +344,7 @@ export default function CommandCenter() {
                     : 'bg-transparent text-ink-muted border-rule hover:border-ink-faint'
                 }`}
               >
-                {v === 'dashboard' ? 'Dashboard' : 'Strategic'}
+                {v === 'northstar' ? 'North Star' : v === 'dashboard' ? 'Dashboard' : 'Strategic'}
               </button>
             ))}
           </div>
@@ -353,7 +354,11 @@ export default function CommandCenter() {
         </div>
       </div>
 
-      {view === 'strategic' ? (
+      {view === 'northstar' ? (
+        <div className="flex-1 overflow-auto">
+          <NorthStar />
+        </div>
+      ) : view === 'strategic' ? (
         <div className="flex-1 overflow-auto p-3">
           <CommandCenterV2 />
         </div>

@@ -351,7 +351,7 @@ async function fetchNetworkHealth(
   const weekStart = weekDates[0]
   const weekEnd = weekDates[weekDates.length - 1]
 
-  const snap = await db.collection('users').doc(uid).collection('network_contacts').get()
+  const snap = await db.collection('users').doc(uid).collection('unified_contacts').get()
 
   let totalContacts = 0
   let touchedThisWeek = 0
@@ -414,7 +414,7 @@ async function fetchStaleDecisionMakerDetails(uid: string): Promise<Array<{
 }>> {
   const db = await getAdminDb()
   const todayKey = localDateString(new Date())
-  const snap = await db.collection('users').doc(uid).collection('network_contacts')
+  const snap = await db.collection('users').doc(uid).collection('unified_contacts')
     .where('tier', '==', 'decision_maker')
     .get()
 
@@ -424,7 +424,7 @@ async function fetchStaleDecisionMakerDetails(uid: string): Promise<Array<{
       const lastTouch = (data.lastTouchDate as string) || ''
       const daysSince = lastTouch ? daysBetween(lastTouch, todayKey) : 999
       return {
-        name: (data.name as string) || '',
+        name: (data.canonicalName as string) || '',
         daysSinceTouch: daysSince,
         nextAction: (data.nextAction as string) || '',
         warmIntrosGenerated: (data.warmIntrosGenerated as number) || 0,

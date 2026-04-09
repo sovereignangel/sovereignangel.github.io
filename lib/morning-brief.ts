@@ -189,7 +189,7 @@ async function fetchUnreadSignals(uid: string) {
 async function fetchReconnect(uid: string): Promise<MorningBrief['reconnect']> {
   const db = await getAdminDb()
   const todayKey = today()
-  const snap = await db.collection('users').doc(uid).collection('network_contacts')
+  const snap = await db.collection('users').doc(uid).collection('unified_contacts')
     .where('isTop30', '==', true)
     .get()
 
@@ -199,7 +199,7 @@ async function fetchReconnect(uid: string): Promise<MorningBrief['reconnect']> {
       const lastTouch = (data.lastTouchDate as string) || todayKey
       const daysSince = daysBetween(lastTouch, todayKey)
       return {
-        name: (data.name as string) || '',
+        name: (data.canonicalName as string) || '',
         daysSinceTouch: daysSince,
         nextAction: (data.nextAction as string) || '',
       }

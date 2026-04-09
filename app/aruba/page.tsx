@@ -85,7 +85,7 @@ const icons: Record<string, (c?: string) => JSX.Element> = {
 }
 
 const TEAMS = [
-  { name: 'BIRTHDAY VIBES', accent: '#8a6d2f', members: ['Imgesu', 'Dave'], storageKey: 'hunt_team_bday' },
+  { name: 'BIRTHDAY VIBES', accent: '#8a6d2f', members: ['Imgesu'], storageKey: 'hunt_team_bday' },
   { name: 'WBURG HIPSTERS', accent: '#7c2d2d', members: ['Aidas', 'Lori'], storageKey: 'hunt_team_wburg' },
   { name: 'TRIPLE THREAT', accent: '#2d4a6f', members: ['Alyssa', 'Rodrigo', 'Alberto'], storageKey: 'hunt_team_triple' },
 ]

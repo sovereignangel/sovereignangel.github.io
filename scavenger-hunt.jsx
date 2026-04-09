@@ -70,7 +70,7 @@ const TEAMS = [
   {
     name: "BIRTHDAY VIBES",
     accent: "#8a6d2f",
-    members: ["Imgesu", "Dave"],
+    members: ["Imgesu"],
     tagline: "Chaos meets ground control",
   },
   {
@@ -471,7 +471,7 @@ export default function App() {
   const tabs = [
     { key: "rules", label: "Rules", accent: "#7c2d2d" },
     { key: "team0", label: "A · L", accent: TEAMS[0].accent },
-    { key: "team1", label: "I · D", accent: TEAMS[1].accent },
+    { key: "team1", label: "I", accent: TEAMS[1].accent },
     { key: "team2", label: "A · R · A", accent: TEAMS[2].accent },
   ];
 

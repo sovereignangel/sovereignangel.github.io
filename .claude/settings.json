@@ -1,7 +1,10 @@
 {
   "permissions": {
     "allow": [
-      "Bash(git branch:*)"
+      "Bash(git branch:*)",
+      "Bash(curl -s -X POST http://localhost:3000/api/cron/sync-daily -H 'Authorization: Bearer xfk1mSbmWpCilOw92RQu3dwilxB1JPtt2lzlgiTHUDA=' -H 'Content-Type: application/json' -d '{\"\"\"\"date\"\"\"\": \"\"\"\"2026-03-28\"\"\"\"}')",
+      "Bash(ps -p 9144 -o command=)",
+      "Read(//proc/9144/**)"
     ]
   }
 }

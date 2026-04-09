@@ -29,6 +29,12 @@ export interface TextbookEntry {
   chaptersRead: number
   status: RoadmapItemStatus
   url?: string
+  /** Subdomain / topic tag for narrower context (e.g., "Portfolio Construction") */
+  subdomain?: string
+  /** Why this book matters — fed to plan generation so tasks can reference its strategic role */
+  notes?: string
+  /** Target month label, e.g., "April 2026" — used for grouping in the view */
+  targetMonth?: string
 }
 
 export const DOMAIN_LABELS: Record<RoadmapDomain, string> = {
@@ -90,12 +96,48 @@ export const INITIAL_ITEMS: RoadmapItem[] = [
 ]
 
 export const INITIAL_TEXTBOOKS: TextbookEntry[] = [
-  // Tier 1 — Must complete
+  // ── April 2026 — Q1 ──
+  { id: 'tb-grinold-kahn', title: 'Active Portfolio Management', author: 'Grinold & Kahn', domain: 'quant', subdomain: 'Portfolio Construction', quarter: 'Q1', targetMonth: 'April 2026', chaptersTotal: 16, chaptersRead: 0, status: 'not_started', notes: 'Capacity analysis is your flagged skill gap. Gives you the language for the tearsheet and investor conversations. Read first.' },
+  { id: 'tb-marks-most-important', title: 'The Most Important Thing', author: 'Howard Marks', domain: 'markets', subdomain: 'Discretionary Investing', quarter: 'Q1', targetMonth: 'April 2026', chaptersTotal: 20, chaptersRead: 0, status: 'not_started', notes: "Maps directly to Dave's second-level thinking and risk intuition. Short, dense, immediately applicable to how you frame Armstrong's edge." },
+  { id: 'tb-sutton', title: 'Reinforcement Learning: An Introduction', author: 'Sutton & Barto', domain: 'ai', subdomain: 'ML / RL', quarter: 'Q1', targetMonth: 'April 2026', chaptersTotal: 17, chaptersRead: 0, status: 'not_started', url: 'http://incompleteideas.net/book/RLbook2020.pdf', notes: "Companion to your Stanford RL coursework. Read in parallel with the course — it's the canonical text and you'll reference it for years." },
+  { id: 'tb-farmer-chaos', title: 'Making Sense of Chaos', author: 'Doyne Farmer', domain: 'complexity', subdomain: 'Complexity Economics', quarter: 'Q1', targetMonth: 'April 2026', chaptersTotal: 15, chaptersRead: 0, status: 'not_started', notes: 'Lower priority. Reading with Michael Ralph — builds the complexity vocabulary that differentiates your intellectual identity. Good accountability read.' },
+
+  // ── May 2026 — Q1 ──
+  { id: 'tb-mcneil-qrm', title: 'Quantitative Risk Management', author: 'McNeil, Frey & Embrechts', domain: 'quant', subdomain: 'Risk Management', quarter: 'Q1', targetMonth: 'May 2026', chaptersTotal: 14, chaptersRead: 0, status: 'not_started', notes: "Drawdown analysis, tail risk, VaR — the quantitative risk vocabulary Dave's backtest scenarios demand. Feeds directly into the tearsheet." },
+  { id: 'tb-klarman-margin', title: 'Margin of Safety', author: 'Seth Klarman', domain: 'markets', subdomain: 'Discretionary Investing', quarter: 'Q1', targetMonth: 'May 2026', chaptersTotal: 14, chaptersRead: 0, status: 'not_started', notes: 'The value investing bible for risk-aware discretionary capital allocation. Hard to find physically — PDF circulates. Shapes how you talk about downside protection.' },
+  { id: 'tb-kahneman-tfs', title: 'Thinking, Fast and Slow', author: 'Daniel Kahneman', domain: 'neuro', subdomain: 'Cognitive Science', quarter: 'Q1', targetMonth: 'May 2026', chaptersTotal: 38, chaptersRead: 0, status: 'not_started', notes: "If you haven't read it: foundational for understanding decision biases in trading. If you have: skip and pull a later book forward." },
+
+  // ── June 2026 — Q1 ──
+  { id: 'tb-graham-dodd', title: 'Security Analysis', author: 'Graham & Dodd', domain: 'markets', subdomain: 'Fundamentals (Chicago)', quarter: 'Q1', targetMonth: 'June 2026', chaptersTotal: 20, chaptersRead: 0, status: 'not_started', notes: "The canonical text. Don't read cover-to-cover — read sections on margin of safety, earnings analysis, and balance sheet analysis. Gives you credibility language." },
+  { id: 'tb-rahl-risk-budget', title: 'Risk Budgeting', author: 'Leslie Rahl', domain: 'quant', subdomain: 'Portfolio Construction', quarter: 'Q1', targetMonth: 'June 2026', chaptersTotal: 18, chaptersRead: 0, status: 'not_started', notes: "Bridges discretionary and systematic risk management. Practical frameworks for how you'll actually allocate across positions in the fund." },
+
+  // ── July 2026 — Q2 ──
+  { id: 'tb-soros-alchemy', title: 'The Alchemy of Finance', author: 'George Soros', domain: 'markets', subdomain: 'Macro / Reflexivity', quarter: 'Q2', targetMonth: 'July 2026', chaptersTotal: 14, chaptersRead: 0, status: 'not_started', notes: 'Reflexivity framework connects fundamentals to market dynamics. The macro overlay Dave uses intuitively — Soros formalized it. Essential for regime shift thinking.' },
+  { id: 'tb-goodfellow', title: 'Deep Learning', author: 'Goodfellow, Bengio & Courville', domain: 'ai', subdomain: 'ML Foundations', quarter: 'Q2', targetMonth: 'July 2026', chaptersTotal: 20, chaptersRead: 0, status: 'not_started', url: 'https://www.deeplearningbook.org/', notes: 'Your math background absorbs this fast. Gives you the deep learning foundations that make your RL work and agent-building rigorous, not just applied.' },
+  { id: 'tb-meadows-systems', title: 'Thinking in Systems', author: 'Donella Meadows', domain: 'complexity', subdomain: 'Systems Dynamics', quarter: 'Q2', targetMonth: 'July 2026', chaptersTotal: 7, chaptersRead: 0, status: 'not_started', notes: 'Short, foundational. Gives you the systems grammar that connects complexity economics to everything else. Read in a weekend.' },
+
+  // ── August 2026 — Q2 ──
+  { id: 'tb-arthur', title: 'Complexity and the Economy', author: 'W. Brian Arthur', domain: 'complexity', subdomain: 'Complexity Economics', quarter: 'Q2', targetMonth: 'August 2026', chaptersTotal: 12, chaptersRead: 0, status: 'not_started', notes: "Santa Fe Institute lineage. Arthur is the intellectual ancestor of Farmer's work. Deepens your complexity vocabulary and gives you the theoretical backbone." },
+  { id: 'tb-sapolsky-behave', title: 'Behave', author: 'Robert Sapolsky', domain: 'neuro', subdomain: 'Neuroscience', quarter: 'Q2', targetMonth: 'August 2026', chaptersTotal: 17, chaptersRead: 0, status: 'not_started', notes: 'The most comprehensive single volume on human behavior — biology, neuroscience, environment, decision-making. Long but extraordinary. Connects your inner architecture work to hard science.' },
+  { id: 'tb-page-model-thinker', title: 'The Model Thinker', author: 'Scott Page', domain: 'complexity', subdomain: 'Multi-Domain Bridge', quarter: 'Q2', targetMonth: 'August 2026', chaptersTotal: 28, chaptersRead: 0, status: 'not_started', notes: 'Multi-model thinking across all your domains. Frameworks for switching between complexity, Bayesian, game-theoretic, and agent-based mental models.' },
+
+  // ── September 2026 — Q2 ──
+  { id: 'tb-mackay-info', title: 'Information Theory, Inference & Learning Algorithms', author: 'David MacKay', domain: 'ai', subdomain: 'Math / ML Bridge', quarter: 'Q2', targetMonth: 'September 2026', chaptersTotal: 50, chaptersRead: 0, status: 'not_started', notes: 'The mathematical bridge between information theory, Bayesian reasoning, and ML. Dense but your math background handles it. The book that makes you legit in quant conversations.' },
+  { id: 'tb-hohwy-predictive', title: 'Predictive Minds', author: 'Jakob Hohwy', domain: 'neuro', subdomain: 'Computational Neuroscience', quarter: 'Q2', targetMonth: 'September 2026', chaptersTotal: 10, chaptersRead: 0, status: 'not_started', notes: 'Predictive processing / free energy principle — the neuroscience framework that maps directly onto RL and Bayesian inference. Connects your AI work to neuro at the deepest level.' },
+
+  // ── October 2026 — Q3 ──
+  { id: 'tb-beinhocker-wealth', title: 'The Origin of Wealth', author: 'Eric Beinhocker', domain: 'complexity', subdomain: 'Complexity Economics', quarter: 'Q3', targetMonth: 'October 2026', chaptersTotal: 19, chaptersRead: 0, status: 'not_started', notes: 'The best bridge between traditional economics and complexity theory. Impressive in investor conversations — very few fund managers think in these terms.' },
+  { id: 'tb-russell-norvig', title: 'AI: A Modern Approach', author: 'Russell & Norvig', domain: 'ai', subdomain: 'AI Foundations', quarter: 'Q3', targetMonth: 'October 2026', chaptersTotal: 28, chaptersRead: 0, status: 'not_started', notes: 'The structural backbone of AI. Reference text more than cover-to-cover read. Having it in your vocabulary signals seriousness for research roles.' },
+
+  // ── November 2026 — Q3 ──
+  { id: 'tb-barrett-emotions', title: 'How Emotions Are Made', author: 'Lisa Feldman Barrett', domain: 'neuro', subdomain: 'Cognitive Science', quarter: 'Q3', targetMonth: 'November 2026', chaptersTotal: 14, chaptersRead: 0, status: 'not_started', notes: 'Destroys the classical model of emotions. Constructionist view directly relevant to your inner architecture work and understanding yourself as an agent.' },
+  { id: 'tb-noise', title: 'Noise', author: 'Kahneman, Sibony & Sunstein', domain: 'neuro', subdomain: 'Decision Science', quarter: 'Q3', targetMonth: 'November 2026', chaptersTotal: 28, chaptersRead: 0, status: 'not_started', notes: 'Decision-making under uncertainty — directly applicable to discretionary trading, fund management, and reducing noise in your own judgment process.' },
+
+  // ── December 2026+ — Q3 ──
+  { id: 'tb-doidge-brain', title: 'The Brain That Changes Itself', author: 'Norman Doidge', domain: 'neuro', subdomain: 'Neuroplasticity', quarter: 'Q3', targetMonth: 'December 2026', chaptersTotal: 11, chaptersRead: 0, status: 'not_started', notes: 'Neuroplasticity science connecting to your Hoffman Process experience and the retraining-the-OS frame. Read when the sprint pressure lifts and you have space for reflection.' },
+
+  // ── Pre-existing references (kept for plan continuity) ──
   { id: 'tb-deprado', title: 'Advances in Financial Machine Learning', author: 'de Prado', domain: 'quant', quarter: 'Q2', chaptersTotal: 20, chaptersRead: 0, status: 'not_started' },
-  { id: 'tb-arthur', title: 'Complexity and the Economy', author: 'Arthur', domain: 'complexity', quarter: 'Q1', chaptersTotal: 12, chaptersRead: 0, status: 'not_started' },
-  { id: 'tb-sutton', title: 'Reinforcement Learning', author: 'Sutton & Barto', domain: 'ai', quarter: 'Q1', chaptersTotal: 17, chaptersRead: 0, status: 'not_started', url: 'http://incompleteideas.net/book/RLbook2020.pdf' },
-  { id: 'tb-goodfellow', title: 'Deep Learning', author: 'Goodfellow et al.', domain: 'ai', quarter: 'Q1', chaptersTotal: 20, chaptersRead: 0, status: 'not_started', url: 'https://www.deeplearningbook.org/' },
-  // Tier 2 — High value
   { id: 'tb-sornette', title: 'Why Stock Markets Crash', author: 'Sornette', domain: 'complexity', quarter: 'Q2', chaptersTotal: 14, chaptersRead: 0, status: 'not_started' },
   { id: 'tb-taleb-dh', title: 'Dynamic Hedging', author: 'Taleb', domain: 'markets', quarter: 'Q3', chaptersTotal: 20, chaptersRead: 0, status: 'not_started' },
   { id: 'tb-mitchell', title: 'Complexity: A Guided Tour', author: 'Mitchell', domain: 'complexity', quarter: 'Q1', chaptersTotal: 18, chaptersRead: 0, status: 'not_started' },
@@ -163,8 +205,12 @@ export function buildRoadmapContext(
       title: t.title,
       author: t.author,
       domain: DOMAIN_LABELS[t.domain],
+      subdomain: t.subdomain,
       chaptersTotal: t.chaptersTotal,
       chaptersRead: t.chaptersRead,
+      status: t.status,
+      notes: t.notes,
+      targetMonth: t.targetMonth,
     })),
   }
 }
