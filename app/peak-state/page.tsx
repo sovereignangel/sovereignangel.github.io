@@ -193,9 +193,9 @@ export default function PeakStatePage() {
           </h1>
           <div className="w-16 h-[2px] bg-burgundy mx-auto mb-4" />
           <p className="font-serif text-[18px] text-ink-faint leading-relaxed max-w-lg mx-auto">
-            Bike the Amalfi Coast & Cilento — Sorrento to Palinuro.
+            Peak performance. Peak experiences.
             <br />
-            <span className="text-paper">10 days. 9 towns. 1 birthday.</span>
+            <span className="text-paper">Amalfi Coast & Cilento — Sorrento to Palinuro.</span>
           </p>
         </div>
       </header>
