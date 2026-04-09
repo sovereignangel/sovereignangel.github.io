@@ -367,17 +367,10 @@ export default function CommandCenter() {
           {/* Today's Allocation */}
           <TodayAllocation
             allocation={todayAllocation}
-            spineResolution={plan?.spineResolution}
+            journalEntry={log.journalEntry}
             planLoading={planLoading}
             today={today}
           />
-
-          {/* State of Play */}
-          <div className={`px-3 py-2 rounded-sm flex-shrink-0 ${stateIsGreen ? 'bg-green-bg border border-green-ink/10' : 'bg-cream border border-rule'}`}>
-            <p className={`font-serif text-[11px] italic ${stateIsGreen ? 'text-green-ink' : 'text-ink'}`}>
-              {stateOfPlay}
-            </p>
-          </div>
 
           {/* Roadmap Focus */}
           <div className="flex-1 overflow-auto min-h-0">
@@ -424,9 +417,6 @@ export default function CommandCenter() {
         <div className="flex flex-col gap-3 overflow-hidden min-h-0">
           {/* Strategic Momentum */}
           <MomentumStrip uid={user?.uid} />
-
-          {/* Prioritized Actions */}
-          <ActionsList actions={actions} />
 
           {/* Daily Quant Practice */}
           <QuantPracticeCard />
@@ -601,12 +591,12 @@ function SituationStrip({ score, delta, sleepHours, nsState, calendarToday, calL
 
 interface TodayAllocationProps {
   allocation: DailyAllocation | undefined
-  spineResolution: string | undefined
+  journalEntry: string | undefined
   planLoading: boolean
   today: string
 }
 
-function TodayAllocation({ allocation, spineResolution, planLoading, today }: TodayAllocationProps) {
+function TodayAllocation({ allocation, journalEntry, planLoading, today }: TodayAllocationProps) {
   const dayName = new Date().toLocaleDateString('en-US', { weekday: 'long' })
   const dateLabel = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 
@@ -660,16 +650,26 @@ function TodayAllocation({ allocation, spineResolution, planLoading, today }: To
             </div>
           )}
 
-          {/* Spine resolution */}
-          {spineResolution && (
+          {/* Journal entry from Telegram */}
+          {journalEntry && journalEntry.trim() && (
             <div className="mt-1.5 pt-1.5 border-t border-rule-light">
-              <span className="font-serif text-[9px] italic text-ink-muted">{spineResolution}</span>
+              <div className="font-mono text-[8px] uppercase tracking-[0.1em] text-ink-muted mb-0.5">Journal</div>
+              <p className="font-serif text-[10px] text-ink leading-relaxed whitespace-pre-line">
+                {journalEntry.length > 300 ? journalEntry.slice(0, 300) + '...' : journalEntry}
+              </p>
             </div>
           )}
         </div>
+      ) : journalEntry && journalEntry.trim() ? (
+        <div className="mt-2">
+          <div className="font-mono text-[8px] uppercase tracking-[0.1em] text-ink-muted mb-0.5">Journal</div>
+          <p className="font-serif text-[10px] text-ink leading-relaxed whitespace-pre-line">
+            {journalEntry.length > 300 ? journalEntry.slice(0, 300) + '...' : journalEntry}
+          </p>
+        </div>
       ) : (
         <div className="font-mono text-[10px] text-ink-muted mt-2">
-          No plan for today. Set one in Operate &rarr; Weekly Plan.
+          No plan for today. Send /journal via Telegram.
         </div>
       )}
     </div>
