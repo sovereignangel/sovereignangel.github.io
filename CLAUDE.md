@@ -535,7 +535,6 @@ git push origin master
 | Subdomain | Route | Purpose |
 |-----------|-------|---------|
 | `blog.loricorpuz.com` | `/blog` | Blog (uses `next.config.js` rewrite — exception to the middleware-only rule) |
-| `alamobernal.loricorpuz.com` | `/alamo-bernal` | Partnership proposal site for Alamo Bernal Investments |
 | `arc.loricorpuz.com` | `/arc` | Arc site |
 | `aruba.loricorpuz.com` | `/aruba` | Aruba site |
 | `scavengerhunt.loricorpuz.com` | `/scavenger-hunt` | Scavenger hunt game |

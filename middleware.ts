@@ -12,13 +12,6 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(httpsUrl, 308)
   }
 
-  // alamobernal.loricorpuz.com → rewrite to /alamo-bernal
-  if (host === 'alamobernal.loricorpuz.com') {
-    const url = request.nextUrl.clone()
-    url.pathname = `/alamo-bernal${url.pathname === '/' ? '' : url.pathname}`
-    return NextResponse.rewrite(url)
-  }
-
   // arc.loricorpuz.com → rewrite to /arc
   if (host === 'arc.loricorpuz.com') {
     const url = request.nextUrl.clone()
