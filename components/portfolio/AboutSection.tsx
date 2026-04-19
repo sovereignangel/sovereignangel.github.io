@@ -26,12 +26,13 @@ export default function AboutSection() {
           aria-label="Running"
           role="img"
         >
-          <circle cx="16" cy="4.5" r="1.5" />
-          <path d="M15 6.5l-3.5 4.5 3 2.5-1 4.5" />
-          <path d="M13 8.5l3-0.5 2.5 2" />
-          <path d="M12 11l-3.5 2.5 1.5 2.5" />
-          <path d="M14.5 13.5l2 2 2.5-1" />
-          <path d="M13.5 17.5l-3 3.5" />
+          <circle cx="15" cy="3.5" r="1.5" />
+          <path d="M14.5 5L13 11" />
+          <path d="M14 6.5L17.5 8L16 5" />
+          <path d="M13.5 7L10 10L11.5 12.5" />
+          <path d="M13 11L16.5 13L14.5 17.5" />
+          <path d="M13 11L9.5 14L6.5 12" />
+          <path d="M14.5 17.5L17 20" />
         </svg>
         <svg
           width="28"
@@ -81,16 +82,17 @@ export default function AboutSection() {
           aria-label="Kiteboarding"
           role="img"
         >
-          <path d="M2 7 Q12 0 22 7" />
-          <path d="M2 7l2 1" />
-          <path d="M22 7l-2 1" />
-          <path d="M4 8L12 17" />
-          <path d="M20 8L12 17" />
-          <circle cx="12" cy="17.5" r="1.1" />
-          <path d="M12 18.6v1.6" />
-          <path d="M7.5 21.5h9" />
-          <path d="M18 21.5c.8 0 1.2-.6 2-.6" />
-          <path d="M4 21.5c.8 0 1.2-.6 2-.6" />
+          <path d="M3 7 C 6 1, 18 1, 21 7" />
+          <path d="M3 7 L 3.5 8.5" />
+          <path d="M21 7 L 20.5 8.5" />
+          <path d="M3.5 8 L 11.5 15" />
+          <path d="M20.5 8 L 12.5 15" />
+          <circle cx="12" cy="15.5" r="1" />
+          <path d="M12 16.5 L 12 19" />
+          <path d="M12 19 L 9.5 20.5" />
+          <path d="M12 19 L 14.5 20.5" />
+          <path d="M8 21 L 16 21" />
+          <path d="M3 22.5 q 2 -1 4 0 t 4 0 t 4 0 t 4 0" />
         </svg>
         <svg
           width="28"
