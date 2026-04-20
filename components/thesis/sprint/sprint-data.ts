@@ -293,9 +293,12 @@ export const SPRINT_WEEKS: SprintWeek[] = [
 
 export const SPRINT_FINANCIALS = {
   income: [
-    { label: 'Alamo Bernal base', amount: '$2,500/mo' },
-    { label: 'LOOE performance',  amount: '$0–10k/mo' },
-    { label: 'Williamsburg sublease', amount: 'covers liability' },
+    { label: 'Alamo Bernal base (active)',          amount: '$2,500/mo' },
+    { label: 'AB optimization engine (3–5mo dev)',  amount: '$0–10k/mo' },
+    { label: 'AB engine maintenance (post-dev)',    amount: '$1,000/mo' },
+    { label: 'Armstrong salary (contingent)',       amount: '$12,500/mo' },
+    { label: 'Armstrong equity (45% GP)',           amount: 'deferred' },
+    { label: 'Williamsburg sublease',               amount: 'covers liability' },
   ],
   burn: [
     { label: 'Chinatown rent',     amount: '$1,360/mo' },
@@ -304,13 +307,14 @@ export const SPRINT_FINANCIALS = {
     { label: 'Total burn',         amount: '$2,360/mo', total: true },
   ],
   scenarios: [
-    { label: 'Floor (LOOE = $0)',     net: '+$140/mo',    note: 'Breakeven — alive' },
-    { label: 'Moderate (LOOE = $3k)', net: '+$3,140/mo',  note: 'Building savings' },
-    { label: 'Strong (LOOE = $7k)',   net: '+$7,140/mo',  note: 'Europe funded' },
-    { label: 'Ceiling (LOOE = $10k)', net: '+$10,140/mo', note: 'Runway extends indefinitely' },
+    { label: 'Floor (AB base only)',                  net: '+$140/mo',    note: 'Breakeven — alive' },
+    { label: 'Dev phase (AB + $3k engine)',           net: '+$3,140/mo',  note: 'Building savings' },
+    { label: 'Dev ceiling (AB + $10k engine)',        net: '+$10,140/mo', note: 'Runway extends indefinitely' },
+    { label: 'Armstrong closes ($2M raised by May 1)', net: '+$12,640/mo', note: '$150k salary active, AB becomes upside' },
+    { label: 'Full stack (Armstrong + AB engine)',    net: '+$22,640/mo', note: 'Salary + engine ceiling; equity compounds' },
   ],
   insight:
-    "At floor you're breakeven. At moderate LOOE performance you're saving $3k+/month. The AB contract alone makes the bet survivable. Everything Armstrong generates from here is upside that funds Europe, Burning Man, and the fund raise. The constraint is no longer money — it's execution speed.",
+    "Three income layers stacking on different timelines. AB base ($2.5k) is live and covers burn. AB optimization engine unlocks $0–10k/mo over the next 3–5 months, then decays to $1k/mo maintenance. Armstrong is the step-function: $150k salary + 45% GP equity if the $2M raise closes by May 1. Constraint shifts from survival → execution speed on the engine → closing the raise.",
 }
 
 // ─── North Star ─────────────────────────────────────────────────────
