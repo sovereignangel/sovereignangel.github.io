@@ -18,7 +18,7 @@ import type { CapitalPosition, CapitalAlert, FinancialSnapshot, DebtItem } from 
 const PRO_FORMA_INCOME: IncomeBreakdown = { employment: 2500, sublease: 0, freelance: 0, other: 0 }
 const PRO_FORMA_EXPENSES: ExpenseBreakdown = { rent: 1360, food: 600, subscriptions: 0, miscellaneous: 400, travel: 0, familySupport: 0, other: 0 }
 const PRO_FORMA_SNAPSHOT = {
-  cashSavings: 0, investments: 0, crypto: 19629, realEstate: 0, startupEquity: 0, otherAssets: 0,
+  cashSavings: 20000, investments: 0, crypto: 0, realEstate: 0, startupEquity: 0, otherAssets: 0,
   totalDebt: 50000, monthlyIncome: 2500, monthlyExpenses: 2360,
   incomeBreakdown: PRO_FORMA_INCOME, expenseBreakdown: PRO_FORMA_EXPENSES,
 }
