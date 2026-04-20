@@ -19,7 +19,7 @@ const PRO_FORMA_INCOME: IncomeBreakdown = { employment: 2500, sublease: 0, freel
 const PRO_FORMA_EXPENSES: ExpenseBreakdown = { rent: 1360, food: 600, subscriptions: 0, miscellaneous: 400, travel: 0, familySupport: 0, other: 0 }
 const PRO_FORMA_SNAPSHOT = {
   cashSavings: 0, investments: 0, crypto: 19629, realEstate: 0, startupEquity: 0, otherAssets: 0,
-  totalDebt: 41000, monthlyIncome: 2500, monthlyExpenses: 2360,
+  totalDebt: 50000, monthlyIncome: 2500, monthlyExpenses: 2360,
   incomeBreakdown: PRO_FORMA_INCOME, expenseBreakdown: PRO_FORMA_EXPENSES,
 }
 const PRO_FORMA_DEBTS: { name: string; category: DebtCategory; balance: number; apr: number; minimumPayment: number }[] = [
@@ -27,9 +27,9 @@ const PRO_FORMA_DEBTS: { name: string; category: DebtCategory; balance: number; 
   { name: 'Apple Card',       category: 'credit_card',   balance: 6398,  apr: 0.285, minimumPayment: 160 },
   { name: 'Crypto loan',      category: 'personal_loan', balance: 17000, apr: 0.08,  minimumPayment: 250 },
   { name: 'Loan from ex',     category: 'personal_loan', balance: 4000,  apr: 0,     minimumPayment: 100 },
-  { name: '2025 Federal Taxes', category: 'tax',         balance: 5000,  apr: 0.03,  minimumPayment: 150 },
-  { name: '2023 Federal Taxes', category: 'tax',         balance: 4000,  apr: 0.03,  minimumPayment: 125 },
-  { name: '2021 Federal Taxes', category: 'tax',         balance: 3000,  apr: 0.03,  minimumPayment: 100 },
+  { name: '2025 Federal Taxes', category: 'tax',         balance: 7000,  apr: 0.03,  minimumPayment: 200 },
+  { name: '2023 Federal Taxes', category: 'tax',         balance: 7000,  apr: 0.03,  minimumPayment: 200 },
+  { name: '2021 Federal Taxes', category: 'tax',         balance: 7000,  apr: 0.03,  minimumPayment: 200 },
 ]
 
 interface Props {
