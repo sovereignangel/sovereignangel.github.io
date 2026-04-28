@@ -7,7 +7,7 @@ export default function Footer() {
   ]
 
   return (
-    <footer className="pt-8 border-t border-[#eee]">
+    <footer className="pt-8">
       <div className="text-sm text-[#888] mb-4">Williamsburg</div>
       <div className="flex gap-6 flex-wrap">
         {links.map((link) => (

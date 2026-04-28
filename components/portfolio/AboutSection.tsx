@@ -82,17 +82,17 @@ export default function AboutSection() {
           aria-label="Kiteboarding"
           role="img"
         >
-          <path d="M3 7 C 6 1, 18 1, 21 7" />
-          <path d="M3 7 L 3.5 8.5" />
-          <path d="M21 7 L 20.5 8.5" />
-          <path d="M3.5 8 L 11.5 15" />
-          <path d="M20.5 8 L 12.5 15" />
-          <circle cx="12" cy="15.5" r="1" />
-          <path d="M12 16.5 L 12 19" />
-          <path d="M12 19 L 9.5 20.5" />
-          <path d="M12 19 L 14.5 20.5" />
-          <path d="M8 21 L 16 21" />
-          <path d="M3 22.5 q 2 -1 4 0 t 4 0 t 4 0 t 4 0" />
+          <path d="M3 7 Q 12 1.5, 21 7" />
+          <path d="M3 7 Q 12 5.5, 21 7" />
+          <path d="M3.5 7.5 L 11 14.5" />
+          <path d="M20.5 7.5 L 13 14.5" />
+          <path d="M10.5 14.5 L 13.5 14.5" />
+          <circle cx="12" cy="16.5" r="1.1" />
+          <path d="M12 17.5 L 12 20" />
+          <path d="M11 14.5 L 12 17.2" />
+          <path d="M13 14.5 L 12 17.2" />
+          <ellipse cx="12" cy="20.8" rx="4.5" ry="0.7" />
+          <path d="M2.5 22.8 q 2.5 -1 5 0 t 5 0 t 5 0 t 5 0" />
         </svg>
         <svg
           width="28"
