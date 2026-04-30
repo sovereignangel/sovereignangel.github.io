@@ -11,7 +11,7 @@ export default function AboutSection() {
         Complexity economics and deep reinforcement learning are the frameworks I bring to markets.
       </p>
       <p className="text-[#333] mb-4">
-        I practice Kadampa Buddhism.
+        I practice Mahamudra & Kadampa Buddhism.
       </p>
       <div className="flex items-center gap-5 text-[#333]" aria-label="Sports">
         <svg
