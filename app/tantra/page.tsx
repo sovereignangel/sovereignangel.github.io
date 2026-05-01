@@ -121,11 +121,15 @@ function daysBetween(a: string, b: string): number {
 }
 
 function computeStreak(checkinDates: Set<string>): number {
-  let streak = 0
+  const fmt = (d: Date) =>
+    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
   const d = new Date()
+  // If today isn't checked in yet, start counting from yesterday so the streak
+  // doesn't drop to 0 every morning before practice.
+  if (!checkinDates.has(fmt(d))) d.setDate(d.getDate() - 1)
+  let streak = 0
   for (let i = 0; i < 1000; i++) {
-    const s = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-    if (checkinDates.has(s)) {
+    if (checkinDates.has(fmt(d))) {
       streak += 1
       d.setDate(d.getDate() - 1)
     } else {
@@ -148,6 +152,7 @@ export default function TantraPage() {
   const [submitting, setSubmitting] = useState(false)
   const [backfillDate, setBackfillDate] = useState('')
   const [backfillTime, setBackfillTime] = useState('10:00')
+  const [backfillOpen, setBackfillOpen] = useState(false)
 
   const load = useCallback(async () => {
     if (!user) return
@@ -400,30 +405,36 @@ export default function TantraPage() {
               )}
 
               <div className="pt-3 mt-1 border-t border-rule-light">
-                <div className="font-mono text-[9px] uppercase tracking-[1px] text-ink-muted mb-1.5">
-                  Backfill a day
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <input
-                    type="date"
-                    value={backfillDate}
-                    onChange={(e) => setBackfillDate(e.target.value)}
-                    className="font-mono text-[11px] text-ink bg-cream border border-rule rounded-sm px-2 py-1 focus:outline-none focus:border-burgundy"
-                  />
-                  <input
-                    type="time"
-                    value={backfillTime}
-                    onChange={(e) => setBackfillTime(e.target.value)}
-                    className="font-mono text-[11px] text-ink bg-cream border border-rule rounded-sm px-2 py-1 focus:outline-none focus:border-burgundy"
-                  />
-                  <button
-                    onClick={handleBackfill}
-                    disabled={submitting || !backfillDate}
-                    className="font-serif text-[10px] uppercase tracking-[0.5px] px-2 py-1 border border-burgundy text-burgundy rounded-sm hover:bg-burgundy hover:text-paper transition-colors disabled:opacity-40"
-                  >
-                    Record
-                  </button>
-                </div>
+                <button
+                  onClick={() => setBackfillOpen((o) => !o)}
+                  className="font-mono text-[9px] uppercase tracking-[1px] text-ink-muted hover:text-burgundy transition-colors flex items-center gap-1"
+                >
+                  <span>{backfillOpen ? '−' : '+'}</span>
+                  <span>Backfill a day</span>
+                </button>
+                {backfillOpen && (
+                  <div className="flex flex-col gap-1.5 mt-2">
+                    <input
+                      type="date"
+                      value={backfillDate}
+                      onChange={(e) => setBackfillDate(e.target.value)}
+                      className="font-mono text-[11px] text-ink bg-cream border border-rule rounded-sm px-2 py-1 focus:outline-none focus:border-burgundy"
+                    />
+                    <input
+                      type="time"
+                      value={backfillTime}
+                      onChange={(e) => setBackfillTime(e.target.value)}
+                      className="font-mono text-[11px] text-ink bg-cream border border-rule rounded-sm px-2 py-1 focus:outline-none focus:border-burgundy"
+                    />
+                    <button
+                      onClick={handleBackfill}
+                      disabled={submitting || !backfillDate}
+                      className="font-serif text-[10px] uppercase tracking-[0.5px] px-2 py-1 border border-burgundy text-burgundy rounded-sm hover:bg-burgundy hover:text-paper transition-colors disabled:opacity-40"
+                    >
+                      Record
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
 
