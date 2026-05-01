@@ -146,6 +146,8 @@ export default function TantraPage() {
   const [commentText, setCommentText] = useState('')
   const [commentKind, setCommentKind] = useState<TantraCommentKind>('other')
   const [submitting, setSubmitting] = useState(false)
+  const [backfillDate, setBackfillDate] = useState('')
+  const [backfillTime, setBackfillTime] = useState('10:00')
 
   const load = useCallback(async () => {
     if (!user) return
@@ -228,6 +230,21 @@ export default function TantraPage() {
       }
       const refreshed = await getTantraCheckins(user.uid)
       setCheckins(refreshed)
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  async function handleBackfill() {
+    if (!user || !backfillDate) return
+    setSubmitting(true)
+    try {
+      const [h, m] = backfillTime.split(':').map(Number)
+      const local = new Date(`${backfillDate}T${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:00`)
+      await setTantraCheckin(user.uid, backfillDate, local)
+      const refreshed = await getTantraCheckins(user.uid)
+      setCheckins(refreshed)
+      setBackfillDate('')
     } finally {
       setSubmitting(false)
     }
@@ -381,6 +398,33 @@ export default function TantraPage() {
                   {formatDateTime(todayCheckinTime.toDate())}
                 </div>
               )}
+
+              <div className="pt-3 mt-1 border-t border-rule-light">
+                <div className="font-mono text-[9px] uppercase tracking-[1px] text-ink-muted mb-1.5">
+                  Backfill a day
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <input
+                    type="date"
+                    value={backfillDate}
+                    onChange={(e) => setBackfillDate(e.target.value)}
+                    className="font-mono text-[11px] text-ink bg-cream border border-rule rounded-sm px-2 py-1 focus:outline-none focus:border-burgundy"
+                  />
+                  <input
+                    type="time"
+                    value={backfillTime}
+                    onChange={(e) => setBackfillTime(e.target.value)}
+                    className="font-mono text-[11px] text-ink bg-cream border border-rule rounded-sm px-2 py-1 focus:outline-none focus:border-burgundy"
+                  />
+                  <button
+                    onClick={handleBackfill}
+                    disabled={submitting || !backfillDate}
+                    className="font-serif text-[10px] uppercase tracking-[0.5px] px-2 py-1 border border-burgundy text-burgundy rounded-sm hover:bg-burgundy hover:text-paper transition-colors disabled:opacity-40"
+                  >
+                    Record
+                  </button>
+                </div>
+              </div>
             </div>
 
             {/* Right: 40-day dot grid */}
