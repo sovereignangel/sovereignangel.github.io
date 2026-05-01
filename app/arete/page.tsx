@@ -1,6 +1,18 @@
 'use client'
 
-import { useState, type CSSProperties, type ReactNode } from 'react'
+import { useState, useEffect, type CSSProperties } from 'react'
+
+function useIsMobile() {
+  const [isMobile, setIsMobile] = useState(false)
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 900px)')
+    const handler = () => setIsMobile(mq.matches)
+    handler()
+    mq.addEventListener('change', handler)
+    return () => mq.removeEventListener('change', handler)
+  }, [])
+  return isMobile
+}
 
 // ============================================================
 // ARETE x MISTRAL - tokens
@@ -435,53 +447,98 @@ const WEEKS: Week[] = [
 // HERO
 // ============================================================
 function Hero() {
+  const isMobile = useIsMobile()
   return (
-    <section style={{ background: T.cream, color: T.ink, padding: '32px 48px 80px', position: 'relative', overflow: 'hidden' }}>
+    <section
+      style={{
+        background: T.cream,
+        color: T.ink,
+        padding: isMobile ? '24px 20px 48px' : '32px 48px 80px',
+        position: 'relative',
+        overflow: 'hidden',
+      }}
+    >
       <PatternArcs color={T.bronze} opacity={0.08} size={120} />
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'relative', zIndex: 1 }}>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          position: 'relative',
+          zIndex: 1,
+          gap: 12,
+        }}
+      >
         <Lockup size="sm" />
-        <nav style={{ display: 'flex', gap: 36, fontFamily: T.mono, fontSize: 11, letterSpacing: '0.3em', textTransform: 'uppercase' }}>
-          <a href="#program" style={{ color: T.ink, textDecoration: 'none', opacity: 0.75 }}>
-            Program
-          </a>
-          <a href="#rhythm" style={{ color: T.ink, textDecoration: 'none', opacity: 0.75 }}>
-            Rhythm
-          </a>
-          <a href="#coaches" style={{ color: T.ink, textDecoration: 'none', opacity: 0.75 }}>
-            Coaches
-          </a>
-          <a href="#location" style={{ color: T.ink, textDecoration: 'none', opacity: 0.75 }}>
-            Lieu
-          </a>
-          <a href="#rsvp" style={{ color: T.ink, textDecoration: 'none', opacity: 0.75 }}>
+        {!isMobile && (
+          <nav
+            style={{
+              display: 'flex',
+              gap: 36,
+              fontFamily: T.mono,
+              fontSize: 11,
+              letterSpacing: '0.3em',
+              textTransform: 'uppercase',
+            }}
+          >
+            <a href="#program" style={{ color: T.ink, textDecoration: 'none', opacity: 0.75 }}>
+              Program
+            </a>
+            <a href="#rhythm" style={{ color: T.ink, textDecoration: 'none', opacity: 0.75 }}>
+              Rhythm
+            </a>
+            <a href="#coaches" style={{ color: T.ink, textDecoration: 'none', opacity: 0.75 }}>
+              Coaches
+            </a>
+            <a href="#location" style={{ color: T.ink, textDecoration: 'none', opacity: 0.75 }}>
+              Lieu
+            </a>
+            <a href="#rsvp" style={{ color: T.ink, textDecoration: 'none', opacity: 0.75 }}>
+              RSVP
+            </a>
+          </nav>
+        )}
+        {isMobile && (
+          <a
+            href="#rsvp"
+            style={{
+              fontFamily: T.mono,
+              fontSize: 10,
+              letterSpacing: '0.3em',
+              textTransform: 'uppercase',
+              color: T.ink,
+              textDecoration: 'none',
+              opacity: 0.85,
+            }}
+          >
             RSVP
           </a>
-        </nav>
+        )}
       </div>
 
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: '1.05fr 1fr',
-          gap: 64,
+          gridTemplateColumns: isMobile ? '1fr' : '1.05fr 1fr',
+          gap: isMobile ? 32 : 64,
           alignItems: 'center',
-          marginTop: 60,
+          marginTop: isMobile ? 36 : 60,
           position: 'relative',
           zIndex: 1,
         }}
       >
-        <div>
+        <div style={{ order: isMobile ? 2 : 0 }}>
           <div style={{ fontSize: 11, letterSpacing: '0.5em', paddingLeft: '0.5em', fontFamily: T.mono, opacity: 0.6 }}>
             ARETE · LP RETREAT · MMXXVI
           </div>
           <h1
             style={{
               fontFamily: T.serif,
-              fontSize: 92,
+              fontSize: isMobile ? 44 : 92,
               fontWeight: 400,
               lineHeight: 0.95,
               letterSpacing: '-0.01em',
-              margin: '24px 0 24px',
+              margin: isMobile ? '16px 0 18px' : '24px 0 24px',
             }}
           >
             <span style={{ fontStyle: 'italic' }}>Mistral.</span>
@@ -490,16 +547,32 @@ function Hero() {
             <br />
             on the wind.
           </h1>
-          <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 28 }}>
+          <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: isMobile ? 20 : 28 }}>
             <div style={{ width: 32, height: 1, background: T.ink, opacity: 0.5 }} />
             <div style={{ fontSize: 11, letterSpacing: '0.42em', fontFamily: T.mono, opacity: 0.7 }}>
               JULY 2026 · CÔTE FRANÇAISE
             </div>
           </div>
-          <p style={{ fontSize: 18, lineHeight: 1.65, maxWidth: 460, opacity: 0.85, margin: '0 0 32px', fontFamily: T.serif }}>
+          <p
+            style={{
+              fontSize: isMobile ? 16 : 18,
+              lineHeight: 1.65,
+              maxWidth: isMobile ? '100%' : 460,
+              opacity: 0.85,
+              margin: '0 0 28px',
+              fontFamily: T.serif,
+            }}
+          >
             The whole month of July, four spots on the French coast, kitesurf at dawn and reading at dusk. A retreat for the partners of Arete — a practice in mastery, patience, and the long horizon.
           </p>
-          <div style={{ display: 'flex', gap: 16 }}>
+          <div
+            style={{
+              display: 'flex',
+              gap: isMobile ? 10 : 16,
+              flexDirection: isMobile ? 'column' : 'row',
+              alignItems: isMobile ? 'stretch' : 'center',
+            }}
+          >
             <a
               href="#rsvp"
               style={{
@@ -511,6 +584,7 @@ function Hero() {
                 fontSize: 11,
                 letterSpacing: '0.32em',
                 textTransform: 'uppercase',
+                textAlign: 'center',
               }}
             >
               Reserve a week →
@@ -526,6 +600,7 @@ function Hero() {
                 fontSize: 11,
                 letterSpacing: '0.32em',
                 textTransform: 'uppercase',
+                textAlign: 'center',
               }}
             >
               Read the program
@@ -538,6 +613,10 @@ function Hero() {
             position: 'relative',
             aspectRatio: '3/4',
             boxShadow: '0 30px 60px -20px rgba(0,0,0,0.35), 0 8px 24px -8px rgba(0,0,0,0.2)',
+            order: isMobile ? 1 : 0,
+            maxWidth: isMobile ? 360 : 'none',
+            margin: isMobile ? '0 auto' : 0,
+            width: '100%',
           }}
         >
           <PosterVintage />
@@ -546,7 +625,7 @@ function Hero() {
 
       <div
         style={{
-          marginTop: 80,
+          marginTop: isMobile ? 48 : 80,
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
@@ -554,12 +633,21 @@ function Hero() {
           paddingTop: 24,
           position: 'relative',
           zIndex: 1,
+          flexWrap: 'wrap',
+          gap: isMobile ? 12 : 0,
         }}
       >
         {['Hyères · Var', 'Port-Saint-Louis', 'Le Barcarès', 'Leucate · La Franqui'].map((s, i) => (
           <div
             key={i}
-            style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: '0.32em', textTransform: 'uppercase', opacity: 0.65 }}
+            style={{
+              fontFamily: T.mono,
+              fontSize: isMobile ? 9 : 10,
+              letterSpacing: '0.32em',
+              textTransform: 'uppercase',
+              opacity: 0.65,
+              flexBasis: isMobile ? '46%' : 'auto',
+            }}
           >
             <span style={{ color: T.bronze, marginRight: 10 }}>{`0${i + 1}`}</span>
             {s}
@@ -574,10 +662,28 @@ function Hero() {
 // PROGRAM
 // ============================================================
 function Program() {
+  const isMobile = useIsMobile()
   return (
-    <section id="program" style={{ background: T.paper, color: T.ink, padding: '120px 48px', position: 'relative' }}>
+    <section
+      id="program"
+      style={{
+        background: T.paper,
+        color: T.ink,
+        padding: isMobile ? '64px 20px' : '120px 48px',
+        position: 'relative',
+      }}
+    >
       <div style={{ maxWidth: 1200, margin: '0 auto' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 64 }}>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: isMobile ? 'flex-start' : 'flex-end',
+            marginBottom: isMobile ? 36 : 64,
+            flexDirection: isMobile ? 'column' : 'row',
+            gap: isMobile ? 20 : 0,
+          }}
+        >
           <div>
             <div
               style={{
@@ -591,26 +697,50 @@ function Program() {
             >
               I · LE PROGRAMME
             </div>
-            <h2 style={{ fontFamily: T.serif, fontSize: 56, fontWeight: 400, lineHeight: 1, margin: 0, fontStyle: 'italic' }}>
+            <h2
+              style={{
+                fontFamily: T.serif,
+                fontSize: isMobile ? 34 : 56,
+                fontWeight: 400,
+                lineHeight: 1,
+                margin: 0,
+                fontStyle: 'italic',
+              }}
+            >
               Four weeks. Four coasts.
             </h2>
           </div>
-          <div style={{ maxWidth: 360, fontSize: 14, lineHeight: 1.7, opacity: 0.78, fontFamily: T.serif }}>
+          <div
+            style={{
+              maxWidth: 360,
+              fontSize: isMobile ? 15 : 14,
+              lineHeight: 1.7,
+              opacity: 0.78,
+              fontFamily: T.serif,
+            }}
+          >
             Each week stands alone. Come for one, come for all four. The kite stays the same; the wind, the light, and the rock change beneath it.
           </div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 0, borderTop: `1px solid ${T.ink}` }}>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: isMobile ? '1fr' : 'repeat(4, 1fr)',
+            gap: 0,
+            borderTop: `1px solid ${T.ink}`,
+          }}
+        >
           {WEEKS.map((w, i) => (
             <div
               key={w.n}
               style={{
-                padding: '32px 24px',
-                borderRight: i < 3 ? `1px solid ${T.ink}33` : 'none',
-                borderBottom: `1px solid ${T.ink}`,
+                padding: isMobile ? '28px 4px' : '32px 24px',
+                borderRight: !isMobile && i < 3 ? `1px solid ${T.ink}33` : 'none',
+                borderBottom: `1px solid ${T.ink}${isMobile && i < WEEKS.length - 1 ? '33' : ''}`,
                 display: 'flex',
                 flexDirection: 'column',
-                minHeight: 320,
+                minHeight: isMobile ? 'auto' : 320,
               }}
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
@@ -664,6 +794,7 @@ function Program() {
 // RHYTHM
 // ============================================================
 function Rhythm() {
+  const isMobile = useIsMobile()
   const items: { time: string; title: string; sub: string; icon: IconKind }[] = [
     { time: '06:00', title: 'Café & le vent', sub: 'Wind check. Coffee. Silence.', icon: 'sun' },
     { time: '07:00', title: 'Session — kite', sub: 'Glass water. Two hours on the line.', icon: 'kite' },
@@ -675,7 +806,13 @@ function Rhythm() {
   return (
     <section
       id="rhythm"
-      style={{ background: T.ink, color: T.cream, padding: '120px 48px', position: 'relative', overflow: 'hidden' }}
+      style={{
+        background: T.ink,
+        color: T.cream,
+        padding: isMobile ? '64px 20px' : '120px 48px',
+        position: 'relative',
+        overflow: 'hidden',
+      }}
     >
       <PatternWaves color={T.cream} opacity={0.05} size={140} />
       <div style={{ maxWidth: 1200, margin: '0 auto', position: 'relative' }}>
@@ -694,33 +831,48 @@ function Rhythm() {
         <h2
           style={{
             fontFamily: T.serif,
-            fontSize: 56,
+            fontSize: isMobile ? 34 : 56,
             fontWeight: 400,
             lineHeight: 1,
-            margin: '0 0 64px',
+            margin: isMobile ? '0 0 36px' : '0 0 64px',
             fontStyle: 'italic',
           }}
         >
           A day, repeated <span style={{ color: T.sun }}>well</span>.
         </h2>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 48 }}>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)',
+            gap: isMobile ? 32 : 48,
+          }}
+        >
           {items.map((it, i) => (
             <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              <Icon kind={it.icon} size={48} color={T.sun} opacity={0.9} />
+              <Icon kind={it.icon} size={isMobile ? 40 : 48} color={T.sun} opacity={0.9} />
               <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: '0.3em', opacity: 0.6 }}>{it.time}</div>
-              <div style={{ fontFamily: T.serif, fontSize: 28, fontStyle: 'italic', fontWeight: 400 }}>{it.title}</div>
+              <div
+                style={{
+                  fontFamily: T.serif,
+                  fontSize: isMobile ? 24 : 28,
+                  fontStyle: 'italic',
+                  fontWeight: 400,
+                }}
+              >
+                {it.title}
+              </div>
               <div style={{ fontFamily: T.serif, fontSize: 14, lineHeight: 1.6, opacity: 0.7 }}>{it.sub}</div>
             </div>
           ))}
         </div>
         <div
           style={{
-            marginTop: 80,
+            marginTop: isMobile ? 48 : 80,
             paddingTop: 32,
             borderTop: `1px solid ${T.cream}22`,
             fontFamily: T.serif,
             fontStyle: 'italic',
-            fontSize: 18,
+            fontSize: isMobile ? 16 : 18,
             opacity: 0.7,
             maxWidth: 580,
           }}
@@ -748,6 +900,7 @@ function Rhythm() {
 // COACHES
 // ============================================================
 function Coaches() {
+  const isMobile = useIsMobile()
   const c: { name: string; role: string; bio: string; cred: string; icon: IconKind }[] = [
     {
       name: 'Théo Lacroix',
@@ -772,7 +925,14 @@ function Coaches() {
     },
   ]
   return (
-    <section id="coaches" style={{ background: T.cream, color: T.ink, padding: '120px 48px' }}>
+    <section
+      id="coaches"
+      style={{
+        background: T.cream,
+        color: T.ink,
+        padding: isMobile ? '64px 20px' : '120px 48px',
+      }}
+    >
       <div style={{ maxWidth: 1200, margin: '0 auto' }}>
         <div
           style={{
@@ -789,16 +949,22 @@ function Coaches() {
         <h2
           style={{
             fontFamily: T.serif,
-            fontSize: 56,
+            fontSize: isMobile ? 34 : 56,
             fontWeight: 400,
             lineHeight: 1,
-            margin: '0 0 64px',
+            margin: isMobile ? '0 0 36px' : '0 0 64px',
             fontStyle: 'italic',
           }}
         >
           The hands you&rsquo;ll learn from.
         </h2>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 32 }}>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)',
+            gap: isMobile ? 40 : 32,
+          }}
+        >
           {c.map((p) => (
             <div key={p.name} style={{ display: 'flex', flexDirection: 'column' }}>
               <div
@@ -862,10 +1028,17 @@ function Coaches() {
 // LOCATION
 // ============================================================
 function Location() {
+  const isMobile = useIsMobile()
   return (
     <section
       id="location"
-      style={{ background: T.paper, color: T.ink, padding: '120px 48px', position: 'relative', overflow: 'hidden' }}
+      style={{
+        background: T.paper,
+        color: T.ink,
+        padding: isMobile ? '64px 20px' : '120px 48px',
+        position: 'relative',
+        overflow: 'hidden',
+      }}
     >
       <div style={{ maxWidth: 1200, margin: '0 auto', position: 'relative' }}>
         <div
@@ -883,17 +1056,24 @@ function Location() {
         <h2
           style={{
             fontFamily: T.serif,
-            fontSize: 56,
+            fontSize: isMobile ? 34 : 56,
             fontWeight: 400,
             lineHeight: 1,
-            margin: '0 0 64px',
+            margin: isMobile ? '0 0 36px' : '0 0 64px',
             fontStyle: 'italic',
           }}
         >
           Four houses by the sea.
         </h2>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: 64, alignItems: 'center' }}>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: isMobile ? '1fr' : '1.2fr 1fr',
+            gap: isMobile ? 32 : 64,
+            alignItems: 'center',
+          }}
+        >
           <div
             style={{
               position: 'relative',
@@ -1062,6 +1242,7 @@ function Field({
 // RSVP
 // ============================================================
 function RSVP() {
+  const isMobile = useIsMobile()
   const initial: Record<string, number> = { I: 3, II: 5, III: 2, IV: 6 }
   const [taken, setTaken] = useState<Record<string, number>>(initial)
   const [picked, setPicked] = useState<string[]>(['II'])
@@ -1088,7 +1269,13 @@ function RSVP() {
   return (
     <section
       id="rsvp"
-      style={{ background: T.cream, color: T.ink, padding: '120px 48px', position: 'relative', overflow: 'hidden' }}
+      style={{
+        background: T.cream,
+        color: T.ink,
+        padding: isMobile ? '64px 20px' : '120px 48px',
+        position: 'relative',
+        overflow: 'hidden',
+      }}
     >
       <PatternArcs color={T.bronze} opacity={0.06} size={120} />
       <div style={{ maxWidth: 980, margin: '0 auto', position: 'relative' }}>
@@ -1107,7 +1294,7 @@ function RSVP() {
         <h2
           style={{
             fontFamily: T.serif,
-            fontSize: 56,
+            fontSize: isMobile ? 34 : 56,
             fontWeight: 400,
             lineHeight: 1,
             margin: '0 0 16px',
@@ -1116,13 +1303,28 @@ function RSVP() {
         >
           Reserve a week.
         </h2>
-        <p style={{ fontFamily: T.serif, fontSize: 16, opacity: 0.75, maxWidth: 540, margin: '0 0 56px' }}>
+        <p
+          style={{
+            fontFamily: T.serif,
+            fontSize: 16,
+            opacity: 0.75,
+            maxWidth: 540,
+            margin: isMobile ? '0 0 32px' : '0 0 56px',
+          }}
+        >
           Eight spots per week. Pick one or several — you may attend more than one. We&rsquo;ll confirm by post within forty-eight hours.
         </p>
 
         {!submitted ? (
           <form onSubmit={submit}>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 40 }}>
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)',
+                gap: isMobile ? 12 : 16,
+                marginBottom: isMobile ? 28 : 40,
+              }}
+            >
               {WEEKS.map((w) => {
                 const remaining = w.cap - taken[w.n]
                 const sel = picked.includes(w.n)
@@ -1191,7 +1393,14 @@ function RSVP() {
               })}
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, marginBottom: 32 }}>
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
+                gap: isMobile ? 20 : 24,
+                marginBottom: isMobile ? 24 : 32,
+              }}
+            >
               <Field label="Name" value={name} onChange={setName} placeholder="Your full name" />
               <Field label="Email" value={email} onChange={setEmail} placeholder="you@arete.tech" type="email" />
             </div>
@@ -1207,10 +1416,12 @@ function RSVP() {
               style={{
                 display: 'flex',
                 justifyContent: 'space-between',
-                alignItems: 'center',
+                alignItems: isMobile ? 'stretch' : 'center',
                 marginTop: 40,
                 paddingTop: 24,
                 borderTop: `1px solid ${T.ink}33`,
+                flexDirection: isMobile ? 'column' : 'row',
+                gap: isMobile ? 18 : 0,
               }}
             >
               <div
@@ -1238,6 +1449,7 @@ function RSVP() {
                   letterSpacing: '0.32em',
                   textTransform: 'uppercase',
                   opacity: picked.length === 0 || !name || !email ? 0.4 : 1,
+                  width: isMobile ? '100%' : 'auto',
                 }}
               >
                 Submit RSVP →
@@ -1273,8 +1485,15 @@ function FAQ() {
     ['Is this an Arete fund event?', 'Yes — the Mistral retreat is hosted by Arete Technologies for our LPs and a few invited friends. It is not a fund expense to LPs.'],
   ]
   const [open, setOpen] = useState<number>(0)
+  const isMobile = useIsMobile()
   return (
-    <section style={{ background: T.paper, color: T.ink, padding: '120px 48px' }}>
+    <section
+      style={{
+        background: T.paper,
+        color: T.ink,
+        padding: isMobile ? '64px 20px' : '120px 48px',
+      }}
+    >
       <div style={{ maxWidth: 900, margin: '0 auto' }}>
         <div
           style={{
@@ -1291,10 +1510,10 @@ function FAQ() {
         <h2
           style={{
             fontFamily: T.serif,
-            fontSize: 56,
+            fontSize: isMobile ? 34 : 56,
             fontWeight: 400,
             lineHeight: 1,
-            margin: '0 0 48px',
+            margin: isMobile ? '0 0 28px' : '0 0 48px',
             fontStyle: 'italic',
           }}
         >
@@ -1316,8 +1535,9 @@ function FAQ() {
                   justifyContent: 'space-between',
                   alignItems: 'center',
                   fontFamily: T.serif,
-                  fontSize: 21,
+                  fontSize: isMobile ? 17 : 21,
                   color: T.ink,
+                  gap: 16,
                 }}
               >
                 <span>{q}</span>
@@ -1349,27 +1569,35 @@ function FAQ() {
 // FOOTER
 // ============================================================
 function Footer() {
+  const isMobile = useIsMobile()
   return (
     <footer
-      style={{ background: T.ink, color: T.cream, padding: '80px 48px 48px', position: 'relative', overflow: 'hidden' }}
+      style={{
+        background: T.ink,
+        color: T.cream,
+        padding: isMobile ? '56px 20px 36px' : '80px 48px 48px',
+        position: 'relative',
+        overflow: 'hidden',
+      }}
     >
       <PatternWaves color={T.cream} opacity={0.04} size={200} />
       <div style={{ maxWidth: 1200, margin: '0 auto', position: 'relative' }}>
         <div
           style={{
-            display: 'grid',
+            display: isMobile ? 'flex' : 'grid',
             gridTemplateColumns: '1fr 2fr 1fr',
-            gap: 48,
+            flexDirection: isMobile ? 'column' : undefined,
+            gap: isMobile ? 32 : 48,
             alignItems: 'center',
-            marginBottom: 64,
+            marginBottom: isMobile ? 36 : 64,
           }}
         >
-          <Seal size={120} color={T.sun} />
+          <Seal size={isMobile ? 100 : 120} color={T.sun} />
           <div
             style={{
               textAlign: 'center',
               fontFamily: T.serif,
-              fontSize: 28,
+              fontSize: isMobile ? 22 : 28,
               fontStyle: 'italic',
               lineHeight: 1.4,
               opacity: 0.85,
@@ -1379,7 +1607,7 @@ function Footer() {
             <br />
             the long view.&rdquo;
           </div>
-          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+          <div style={{ display: 'flex', justifyContent: isMobile ? 'center' : 'flex-end' }}>
             <Lockup light />
           </div>
         </div>
@@ -1388,12 +1616,15 @@ function Footer() {
             display: 'flex',
             justifyContent: 'space-between',
             borderTop: `1px solid ${T.cream}22`,
-            paddingTop: 32,
+            paddingTop: isMobile ? 24 : 32,
             fontFamily: T.mono,
             fontSize: 9,
             letterSpacing: '0.3em',
             opacity: 0.55,
             textTransform: 'uppercase',
+            flexDirection: isMobile ? 'column' : 'row',
+            gap: isMobile ? 10 : 0,
+            textAlign: isMobile ? 'center' : 'left',
           }}
         >
           <span>© MMXXVI · ARETE TECHNOLOGIES</span>

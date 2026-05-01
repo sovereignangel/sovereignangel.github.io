@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 
 export const metadata: Metadata = {
   title: 'Mistral · Arete LP Retreat · Kitesurf France · July 2026',
@@ -10,6 +10,11 @@ export const metadata: Metadata = {
     siteName: 'Arete Technologies',
     type: 'website',
   },
+}
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
 }
 
 export default function AreteLayout({
