@@ -73,14 +73,19 @@ export function BudgetView() {
     return unsub
   }, [])
 
-  // Auto-seed on first load if the collection is empty
+  // Auto-seed on first load if the collection is empty (one attempt only)
   const [seeding, setSeeding] = useState(false)
+  const [seedAttempted, setSeedAttempted] = useState(false)
+  const [seedError, setSeedError] = useState<string | null>(null)
   useEffect(() => {
-    if (loaded && items.length === 0 && !seeding) {
+    if (loaded && items.length === 0 && !seeding && !seedAttempted) {
       setSeeding(true)
-      seedDefaults().finally(() => setSeeding(false))
+      setSeedAttempted(true)
+      seedDefaults()
+        .catch((e) => setSeedError(e instanceof Error ? e.message : String(e)))
+        .finally(() => setSeeding(false))
     }
-  }, [loaded, items.length, seeding])
+  }, [loaded, items.length, seeding, seedAttempted])
 
   const filtered = useMemo(() => {
     if (filter === 'all') return items
@@ -158,6 +163,51 @@ export function BudgetView() {
       <div style={{ padding: 16 }}>
         {!loaded || (items.length === 0 && seeding) ? (
           <SkeletonRows count={6} />
+        ) : items.length === 0 && seedError ? (
+          <div
+            style={{
+              padding: 16,
+              border: `1px solid ${T.coral}`,
+              background: T.coral + '11',
+              fontFamily: T.serif,
+              fontSize: 14,
+              color: T.ink,
+              lineHeight: 1.5,
+            }}
+          >
+            <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: '0.3em', color: T.coral, marginBottom: 8 }}>
+              SEED FAILED
+            </div>
+            <div>{seedError}</div>
+            <div style={{ marginTop: 10, fontSize: 13, opacity: 0.75 }}>
+              This is most likely a Firestore rules issue. Allow authenticated read/write on
+              <code style={{ fontFamily: T.mono, marginLeft: 4 }}>
+                arete_mistral_budget
+              </code>{' '}
+              and{' '}
+              <code style={{ fontFamily: T.mono }}>arete_mistral_planning</code> in the Firebase console.
+            </div>
+            <button
+              onClick={() => {
+                setSeedError(null)
+                setSeedAttempted(false)
+              }}
+              style={{
+                marginTop: 12,
+                background: T.ink,
+                color: T.cream,
+                border: 'none',
+                padding: '10px 14px',
+                fontFamily: T.mono,
+                fontSize: 10,
+                letterSpacing: '0.3em',
+                textTransform: 'uppercase',
+                cursor: 'pointer',
+              }}
+            >
+              Retry
+            </button>
+          </div>
         ) : filtered.length === 0 ? (
           <Empty msg="No items match this filter." />
         ) : (
