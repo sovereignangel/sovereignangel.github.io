@@ -73,6 +73,15 @@ export function BudgetView() {
     return unsub
   }, [])
 
+  // Auto-seed on first load if the collection is empty
+  const [seeding, setSeeding] = useState(false)
+  useEffect(() => {
+    if (loaded && items.length === 0 && !seeding) {
+      setSeeding(true)
+      seedDefaults().finally(() => setSeeding(false))
+    }
+  }, [loaded, items.length, seeding])
+
   const filtered = useMemo(() => {
     if (filter === 'all') return items
     if (filter === 'overall') return items.filter((i) => i.weeks.length === 0)
@@ -147,29 +156,8 @@ export function BudgetView() {
 
       {/* List */}
       <div style={{ padding: 16 }}>
-        {!loaded ? (
+        {!loaded || (items.length === 0 && seeding) ? (
           <SkeletonRows count={6} />
-        ) : items.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '40px 20px' }}>
-            <Empty msg="No budget items yet." />
-            <button
-              onClick={() => seedDefaults()}
-              style={{
-                marginTop: 16,
-                padding: '14px 22px',
-                background: T.bronze,
-                color: T.cream,
-                border: 'none',
-                fontFamily: T.mono,
-                fontSize: 11,
-                letterSpacing: '0.32em',
-                textTransform: 'uppercase',
-                cursor: 'pointer',
-              }}
-            >
-              Seed defaults
-            </button>
-          </div>
         ) : filtered.length === 0 ? (
           <Empty msg="No items match this filter." />
         ) : (
