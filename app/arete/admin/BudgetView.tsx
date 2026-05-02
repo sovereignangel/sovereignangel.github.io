@@ -10,6 +10,7 @@ import {
   updateBudgetItem,
   deleteBudgetItem,
   seedDefaults,
+  wipeBudget,
 } from './firestore'
 
 const T = {
@@ -62,6 +63,7 @@ export function BudgetView() {
   const [filter, setFilter] = useState<Filter>('all')
   const [expanded, setExpanded] = useState<string | null>(null)
   const [adding, setAdding] = useState(false)
+  const [confirmReset, setConfirmReset] = useState(false)
 
   useEffect(() => {
     const unsub = subscribeBudget((next) => {
@@ -180,6 +182,38 @@ export function BudgetView() {
                 onToggle={() => setExpanded(expanded === item.id ? null : item.id)}
               />
             ))}
+          </div>
+        )}
+
+        {/* Wipe & reseed — visible when items exist, double-tap to confirm */}
+        {loaded && items.length > 0 && (
+          <div style={{ display: 'flex', justifyContent: 'center', marginTop: 32 }}>
+            <button
+              onClick={async () => {
+                if (!confirmReset) {
+                  setConfirmReset(true)
+                  setTimeout(() => setConfirmReset(false), 4000)
+                  return
+                }
+                await wipeBudget()
+                await seedDefaults()
+                setConfirmReset(false)
+              }}
+              style={{
+                background: confirmReset ? T.coral : 'transparent',
+                color: confirmReset ? T.cream : T.ink,
+                border: `1px solid ${confirmReset ? T.coral : T.ink + '33'}`,
+                padding: '10px 16px',
+                fontFamily: T.mono,
+                fontSize: 9,
+                letterSpacing: '0.32em',
+                textTransform: 'uppercase',
+                cursor: 'pointer',
+                opacity: 0.85,
+              }}
+            >
+              {confirmReset ? 'Tap again — wipes all items' : 'Reset to defaults'}
+            </button>
           </div>
         )}
       </div>

@@ -10,6 +10,8 @@ import {
   onSnapshot,
   query,
   orderBy,
+  getDocs,
+  writeBatch,
   serverTimestamp,
   type Unsubscribe,
 } from 'firebase/firestore'
@@ -163,6 +165,13 @@ export async function deletePlanningItem(id: string) {
   await deleteDoc(doc(db, PLANNING, id))
 }
 
+export async function wipeBudget() {
+  const snap = await getDocs(collection(db, BUDGET))
+  const batch = writeBatch(db)
+  snap.docs.forEach((d) => batch.delete(d.ref))
+  await batch.commit()
+}
+
 // ============================================================
 // Seed defaults — one-tap populate based on the Mistral budget model
 // (refined tier, 6 attendees, 4 weeks)
@@ -170,22 +179,40 @@ export async function deletePlanningItem(id: string) {
 
 export async function seedDefaults() {
   const allWeeks: WeekN[] = ['I', 'II', 'III', 'IV']
-  const seeds: Omit<BudgetItem, 'id' | 'createdAt' | 'updatedAt'>[] = [
-    { name: 'Villa', amount: 13000 * 4, category: 'lodging', weeks: allWeeks, notes: '6-room ensuite, walking distance to launch (refined tier).', charged: false },
-    { name: 'Lead instructor — Théo', amount: 2500 * 4, category: 'coaching', weeks: allWeeks, notes: 'Resident pro, on every week.', charged: false },
-    { name: 'Assistant instructor', amount: 1500 * 4, category: 'coaching', weeks: allWeeks, notes: '1:3 ratio, scales with attendance (assumes N=6).', charged: false },
+  // Faithful to the original Mistral budget model:
+  // refined tier · 6 attendees · 4 weeks · 1 assistant instructor (ceil(6/3)-1)
+  type Seed = Omit<BudgetItem, 'id' | 'createdAt' | 'updatedAt'>
+  const baseSeeds: Seed[] = [
+    { name: 'Villa', amount: 13000 * 4, category: 'lodging', weeks: allWeeks, notes: '6-room ensuite, walking distance to launch (refined tier · €13k/week).', charged: false },
+    { name: 'Lead instructor — Théo', amount: 2500 * 4, category: 'coaching', weeks: allWeeks, notes: 'Resident pro, every week. €2,500/week.', charged: false },
+    { name: 'Assistant instructor', amount: 1500 * 4, category: 'coaching', weeks: allWeeks, notes: '1:3 ratio, scales with attendance — 1 assistant for N=6. €1,500/week.', charged: false },
     { name: 'Kite quiver — rental', amount: 350 * 6 * 4, category: 'equipment', weeks: allWeeks, notes: '€350/rider × 6 riders × 4 weeks (refined tier).', charged: false },
-    { name: 'French tutor', amount: 1500 * 4, category: 'tutor', weeks: allWeeks, notes: 'Live-in, daily lesson over olives.', charged: false },
-    { name: 'Cook', amount: 2800 * 4, category: 'food', weeks: allWeeks, notes: 'Local, three meals daily.', charged: false },
-    { name: 'Groceries', amount: 40 * (6 + 3) * 7 * 4, category: 'food', weeks: allWeeks, notes: '€40/pers/day × 9 pers × 7 days × 4 weeks.', charged: false },
-    { name: 'Ground transport', amount: 1000 * 4, category: 'transport', weeks: allWeeks, notes: 'Van + airport / TGV transfers.', charged: false },
-    { name: 'Atmosphere', amount: 1500 * 4, category: 'atmosphere', weeks: allWeeks, notes: 'Wine, books, flowers, candles.', charged: false },
+    { name: 'French tutor', amount: 1500 * 4, category: 'tutor', weeks: allWeeks, notes: 'Live-in, daily lesson over olives. €1,500/week.', charged: false },
+    { name: 'Cook', amount: 2800 * 4, category: 'food', weeks: allWeeks, notes: 'Local, three meals daily. €2,800/week (Adam Brunet 2026 rate).', charged: false },
+    { name: 'Groceries', amount: 40 * (6 + 3) * 7 * 4, category: 'food', weeks: allWeeks, notes: '€40/pers/day × 9 pers (6 guests + 3 staff) × 7 days × 4 weeks.', charged: false },
+    { name: 'Ground transport', amount: 1000 * 4, category: 'transport', weeks: allWeeks, notes: 'Van + airport / TGV transfers. €1,000/week.', charged: false },
+    { name: 'Atmosphere', amount: 1500 * 4, category: 'atmosphere', weeks: allWeeks, notes: 'Wine, books, market flowers, candles. €1,500/week.', charged: false },
     { name: 'Photo & video', amount: 4000, category: 'media', weeks: [], notes: "Recap content, next year's invite.", charged: false },
-    { name: 'Welcome kits', amount: 840, category: 'kits', weeks: [], notes: 'Notebook, swim trunks, branded items (~24 unique guests).', charged: false },
+    { name: 'Welcome kits', amount: 840, category: 'kits', weeks: [], notes: 'Notebook, swim trunks, branded items. ~24 guest-weeks × €50 × 70% unique.', charged: false },
     { name: 'Print collateral', amount: 1000, category: 'kits', weeks: [], notes: 'Invite cards, menu cards, library bookplates.', charged: false },
     { name: 'Activity insurance', amount: 2000, category: 'insurance', weeks: [], charged: false },
     { name: 'Admin & accounting', amount: 1000, category: 'admin', weeks: [], charged: false },
-    { name: 'Contingency (10%)', amount: 31000, category: 'contingency', weeks: [], notes: 'Weather days, last-minute swaps, ops slippage.', charged: false },
+  ]
+
+  // Contingency = 10% of (operational + one-time), per the original model
+  const subtotal = baseSeeds.reduce((s, x) => s + x.amount, 0)
+  const contingency = Math.round(subtotal * 0.1)
+
+  const seeds: Seed[] = [
+    ...baseSeeds,
+    {
+      name: 'Contingency (10%)',
+      amount: contingency,
+      category: 'contingency',
+      weeks: [],
+      notes: 'Weather days, last-minute swaps, ops slippage. 10% of operational + one-time.',
+      charged: false,
+    },
   ]
   await Promise.all(seeds.map((s) => addBudgetItem(s)))
 
