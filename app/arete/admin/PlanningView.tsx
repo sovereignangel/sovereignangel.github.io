@@ -137,7 +137,7 @@ export function PlanningView() {
 
       <div style={{ padding: 16 }}>
         {!loaded ? (
-          <Empty msg="Loading…" />
+          <SkeletonRows count={5} />
         ) : filtered.length === 0 ? (
           <Empty msg={items.length === 0 ? 'No items yet — tap + to add.' : 'Nothing here.'} />
         ) : (
@@ -212,6 +212,41 @@ function Stat({ label, value, accent }: { label: string; value: string; accent?:
       >
         {value}
       </div>
+    </div>
+  )
+}
+
+function SkeletonRows({ count }: { count: number }) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      {Array.from({ length: count }).map((_, i) => (
+        <div
+          key={i}
+          style={{
+            background: T.paper,
+            border: `1px solid ${T.ink}22`,
+            borderLeft: `3px solid ${T.ink}22`,
+            padding: '12px 12px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 10,
+            opacity: 1 - i * 0.14,
+          }}
+        >
+          <div
+            style={{
+              width: 28,
+              height: 28,
+              borderRadius: '50%',
+              border: `1.5px solid ${T.ink}22`,
+            }}
+          />
+          <div style={{ flex: 1 }}>
+            <div style={{ height: 14, background: T.ink, opacity: 0.08, width: '70%', marginBottom: 8 }} />
+            <div style={{ height: 8, background: T.ink, opacity: 0.06, width: '30%' }} />
+          </div>
+        </div>
+      ))}
     </div>
   )
 }

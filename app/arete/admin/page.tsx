@@ -153,7 +153,13 @@ export default function AdminPage() {
         </div>
       </div>
 
-      {tab === 'budget' ? <BudgetView /> : <PlanningView />}
+      {/* Mount both views so subscriptions stay live and tab-switching is instant */}
+      <div style={{ display: tab === 'budget' ? 'block' : 'none' }}>
+        <BudgetView />
+      </div>
+      <div style={{ display: tab === 'planning' ? 'block' : 'none' }}>
+        <PlanningView />
+      </div>
     </main>
   )
 }

@@ -146,7 +146,7 @@ export function BudgetView() {
       {/* List */}
       <div style={{ padding: 16 }}>
         {!loaded ? (
-          <Empty msg="Loading…" />
+          <SkeletonRows count={6} />
         ) : items.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '40px 20px' }}>
             <Empty msg="No budget items yet." />
@@ -243,6 +243,34 @@ function Stat({ label, value, accent }: { label: string; value: string; accent?:
       >
         {value}
       </div>
+    </div>
+  )
+}
+
+function SkeletonRows({ count }: { count: number }) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      {Array.from({ length: count }).map((_, i) => (
+        <div
+          key={i}
+          style={{
+            background: T.paper,
+            border: `1px solid ${T.ink}22`,
+            borderLeft: `3px solid ${T.ink}22`,
+            padding: '14px 14px',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            opacity: 1 - i * 0.12,
+          }}
+        >
+          <div style={{ flex: 1 }}>
+            <div style={{ height: 14, background: T.ink, opacity: 0.08, width: '60%', marginBottom: 8 }} />
+            <div style={{ height: 8, background: T.ink, opacity: 0.06, width: '35%' }} />
+          </div>
+          <div style={{ width: 70, height: 16, background: T.ink, opacity: 0.08 }} />
+        </div>
+      ))}
     </div>
   )
 }

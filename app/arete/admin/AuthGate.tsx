@@ -24,8 +24,12 @@ const T = {
 }
 
 export function useAdminUser() {
-  const [user, setUser] = useState<User | null>(null)
-  const [ready, setReady] = useState(false)
+  // Synchronously seed from auth.currentUser so returning users skip the loading flash
+  const initial = auth.currentUser
+  const [user, setUser] = useState<User | null>(
+    initial && ADMIN_EMAILS.includes(initial.email || '') ? initial : null
+  )
+  const [ready, setReady] = useState<boolean>(initial !== null)
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (u) => {
