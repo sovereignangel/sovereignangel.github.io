@@ -1629,7 +1629,13 @@ function Footer() {
         >
           <span>© MMXXVI · ARETE TECHNOLOGIES</span>
           <span>MISTRAL@ARETE.TECH</span>
-          <span>NEW YORK · ATHENS · FRANCE</span>
+          <span>
+            <a href="/admin" style={{ color: T.cream, textDecoration: 'none', opacity: 0.85 }}>
+              HOSTS
+            </a>
+            <span style={{ margin: '0 10px', opacity: 0.4 }}>·</span>
+            NEW YORK · ATHENS · FRANCE
+          </span>
         </div>
       </div>
     </footer>
