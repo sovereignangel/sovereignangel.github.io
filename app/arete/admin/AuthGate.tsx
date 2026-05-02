@@ -166,7 +166,7 @@ export function AuthScreen() {
             textTransform: 'uppercase',
           }}
         >
-          L. Corpuz · D. Aruba
+          L. Corpuz · D. Moss
         </div>
       </div>
     </div>
