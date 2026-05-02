@@ -125,38 +125,40 @@ export function BudgetView() {
 
   return (
     <div style={{ paddingBottom: 100 }}>
-      {/* Summary */}
+      {/* Sticky summary + filters — sits below the page header & tab control */}
       <div
         style={{
+          position: 'sticky',
+          top: 110,
+          zIndex: 15,
           background: T.cream,
           borderBottom: `1px solid ${T.ink}22`,
-          padding: '14px 16px 12px',
-          marginTop: 12,
         }}
       >
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 4 }}>
-          <Stat label="Total" value={eur(totals.total)} />
-          <Stat label="Charged" value={eur(totals.charged)} accent={T.green} />
-          <Stat label="Remaining" value={eur(totals.remaining)} accent={T.coral} />
+        <div style={{ padding: '14px 16px 12px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 4 }}>
+            <Stat label="Total" value={eur(totals.total)} />
+            <Stat label="Charged" value={eur(totals.charged)} accent={T.green} />
+            <Stat label="Remaining" value={eur(totals.remaining)} accent={T.coral} />
+          </div>
         </div>
-      </div>
-
-      {/* Filters */}
-      <div
-        style={{
-          display: 'flex',
-          gap: 6,
-          padding: '12px 16px',
-          overflowX: 'auto',
-          WebkitOverflowScrolling: 'touch',
-          borderBottom: `1px solid ${T.ink}22`,
-        }}
-      >
-        {filterChip('all', 'All')}
-        {filterChip('overall', 'Overall')}
-        {(['I', 'II', 'III', 'IV'] as WeekN[]).map((w) => filterChip(w, `Week ${w}`))}
-        {filterChip('pending', 'Pending')}
-        {filterChip('charged', 'Charged')}
+        <div
+          style={{
+            display: 'flex',
+            gap: 6,
+            padding: '0 16px 12px',
+            overflowX: 'auto',
+            WebkitOverflowScrolling: 'touch',
+          }}
+        >
+          {filterChip('all', 'All')}
+          {filterChip('overall', 'Overall')}
+          {(['I', 'II', 'III', 'IV'] as WeekN[]).map((w) =>
+            filterChip(w, `Week ${w} · ${WEEK_LABELS[w]}`),
+          )}
+          {filterChip('pending', 'Pending')}
+          {filterChip('charged', 'Charged')}
+        </div>
       </div>
 
       {/* List */}

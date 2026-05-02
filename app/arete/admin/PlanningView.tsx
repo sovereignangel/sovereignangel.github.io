@@ -102,37 +102,37 @@ export function PlanningView() {
 
   return (
     <div style={{ paddingBottom: 100 }}>
-      {/* Summary */}
+      {/* Sticky summary + filters — sits below the page header & tab control */}
       <div
         style={{
+          position: 'sticky',
+          top: 110,
+          zIndex: 15,
           background: T.cream,
           borderBottom: `1px solid ${T.ink}22`,
-          padding: '14px 16px 12px',
-          marginTop: 12,
         }}
       >
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 4 }}>
-          <Stat label="Open" value={String(counts.open)} />
-          <Stat label="Priority" value={String(counts.high)} accent={T.coral} />
-          <Stat label="Done" value={String(counts.done)} accent={T.green} />
+        <div style={{ padding: '14px 16px 12px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 4 }}>
+            <Stat label="Open" value={String(counts.open)} />
+            <Stat label="Priority" value={String(counts.high)} accent={T.coral} />
+            <Stat label="Done" value={String(counts.done)} accent={T.green} />
+          </div>
         </div>
-      </div>
-
-      {/* Filters */}
-      <div
-        style={{
-          display: 'flex',
-          gap: 6,
-          padding: '12px 16px',
-          overflowX: 'auto',
-          WebkitOverflowScrolling: 'touch',
-          borderBottom: `1px solid ${T.ink}22`,
-        }}
-      >
-        {filterChip('open', 'Open', counts.open)}
-        {filterChip('high', 'High priority', counts.high)}
-        {filterChip('all', 'All')}
-        {filterChip('done', 'Done', counts.done)}
+        <div
+          style={{
+            display: 'flex',
+            gap: 6,
+            padding: '0 16px 12px',
+            overflowX: 'auto',
+            WebkitOverflowScrolling: 'touch',
+          }}
+        >
+          {filterChip('open', 'Open', counts.open)}
+          {filterChip('high', 'High priority', counts.high)}
+          {filterChip('all', 'All')}
+          {filterChip('done', 'Done', counts.done)}
+        </div>
       </div>
 
       <div style={{ padding: 16 }}>
