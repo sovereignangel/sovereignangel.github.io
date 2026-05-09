@@ -463,8 +463,8 @@ type Week = { n: 'I' | 'II' | 'III' | 'IV'; dates: string; place: string; region
 const WEEKS: Week[] = [
   { n: 'I', dates: '29 JUN — 5 JUL', place: 'Hyères', region: 'Var', spot: "L'Almanarre", desc: 'Long flat-water sessions on the salt lagoons. Olive trees and a quiet town.', cap: 8 },
   { n: 'II', dates: '6 JUL — 12 JUL', place: 'Port-Saint-Louis', region: 'Bouches-du-Rhône', spot: 'Napoléon', desc: 'Mistral country. Open Camargue beaches, wild horses, the cleanest wind in Europe.', cap: 8 },
-  { n: 'III', dates: '13 JUL — 19 JUL', place: 'Le Barcarès', region: 'Pyrénées-Orientales', spot: 'La Coudalère', desc: 'Long sand spit, shallow water, ideal for hours of progression.', cap: 8 },
-  { n: 'IV', dates: '20 JUL — 26 JUL', place: 'Leucate · La Franqui', region: 'Aude', spot: 'Les Coussoules', desc: "The Tramontane howls down the Pyrenees. The masters' week.", cap: 8 },
+  { n: 'III', dates: '13 JUL — 19 JUL', place: 'Narbonne · Hospitalet', region: 'Aude', spot: "L'Hospitalet · La Vieille Nouvelle", desc: 'Wild beach between sea and lagoon, Roman city above. Long shallow setups in steady wind.', cap: 8 },
+  { n: 'IV', dates: '20 JUL — 26 JUL', place: 'Leucate · Le Barcarès', region: 'Aude · Pyrénées-Orientales', spot: 'Les Coussoules · La Coudalère', desc: "The Tramontane howls down the Pyrenees. Two iconic spots, one masters' week.", cap: 8 },
 ]
 
 // ============================================================
@@ -610,7 +610,7 @@ function Hero() {
           gap: isMobile ? 12 : 0,
         }}
       >
-        {['Hyères · Var', 'Port-Saint-Louis', 'Le Barcarès', 'Leucate · La Franqui'].map((s, i) => (
+        {['Hyères · Var', 'Port-Saint-Louis', 'Narbonne · Hospitalet', 'Leucate · Le Barcarès'].map((s, i) => (
           <div
             key={i}
             style={{
@@ -1121,55 +1121,59 @@ function ArtifactPortStLouis() {
   )
 }
 
-function ArtifactBarcares() {
+function ArtifactNarbonne() {
   return (
     <ArtifactFrame>
       <svg viewBox="0 0 400 300" style={{ width: '100%', height: '100%', display: 'block' }} preserveAspectRatio="xMidYMid slice">
         <defs>
-          <linearGradient id="sky-b" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#f2e8d0" />
-            <stop offset="100%" stopColor="#d6c89e" />
+          <linearGradient id="sky-n" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#f0e6cc" />
+            <stop offset="100%" stopColor="#d6b88a" />
+          </linearGradient>
+          <linearGradient id="lagoon-n" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#b88a5a" stopOpacity="0.55" />
+            <stop offset="100%" stopColor="#7a5a2e" stopOpacity="0.7" />
           </linearGradient>
         </defs>
-        <rect width="400" height="200" fill="url(#sky-b)" />
-        <rect y="200" width="400" height="100" fill={T.sea} />
-        <circle cx="80" cy="80" r="20" fill={T.sun} opacity="0.85" />
-        <path d="M 0 200 Q 100 192 200 198 Q 300 204 400 196 L 400 210 L 0 210 Z" fill={T.bronze} opacity="0.55" />
-        <g transform="translate(180, 150)">
-          <path d="M 0 50 L 30 36 L 150 36 L 170 50 Z" fill={T.cream} stroke={T.ink} strokeWidth="0.8" />
-          <rect x="36" y="20" width="108" height="16" fill={T.cream} stroke={T.ink} strokeWidth="0.7" />
-          <rect x="50" y="8" width="60" height="12" fill={T.cream} stroke={T.ink} strokeWidth="0.7" />
-          <line x1="60" y1="8" x2="60" y2="-22" stroke={T.ink} strokeWidth="0.7" />
-          <line x1="100" y1="8" x2="100" y2="-22" stroke={T.ink} strokeWidth="0.7" />
-          <g fill={T.ink}>
-            <circle cx="46" cy="28" r="1.4" />
-            <circle cx="60" cy="28" r="1.4" />
-            <circle cx="74" cy="28" r="1.4" />
-            <circle cx="88" cy="28" r="1.4" />
-            <circle cx="102" cy="28" r="1.4" />
-            <circle cx="116" cy="28" r="1.4" />
-            <circle cx="130" cy="28" r="1.4" />
-          </g>
-          <rect x="124" y="-2" width="14" height="6" fill={T.coral} stroke={T.ink} strokeWidth="0.5" />
+        <rect width="400" height="170" fill="url(#sky-n)" />
+        <circle cx="76" cy="78" r="20" fill={T.sun} opacity="0.9" />
+        <g transform="translate(244, 92)" stroke={T.ink} fill={T.ink} opacity="0.7">
+          <rect x="0" y="36" width="92" height="42" fill={T.ink} opacity="0.7" />
+          <path d="M 8 36 L 8 14 L 22 14 L 22 36 Z" fill={T.ink} />
+          <path d="M 70 36 L 70 14 L 84 14 L 84 36 Z" fill={T.ink} />
+          <path d="M 8 14 L 15 0 L 22 14 Z" fill={T.ink} />
+          <path d="M 70 14 L 77 0 L 84 14 Z" fill={T.ink} />
+          <rect x="36" y="20" width="20" height="58" fill={T.ink} />
+          <path d="M 36 20 L 46 6 L 56 20 Z" fill={T.ink} />
+          <line x1="46" y1="-2" x2="46" y2="6" strokeWidth="0.8" />
         </g>
-        <g fill="none" stroke={T.ink} strokeWidth="0.9">
-          <path d="M 60 50 Q 90 30 120 50 Q 122 56 116 58 Q 90 42 64 58 Q 58 56 60 50 Z" fill={T.coral} />
-          <path d="M 240 30 Q 264 14 288 30 Q 290 36 285 38 Q 264 24 243 38 Q 238 36 240 30 Z" fill={T.sun} />
-          <path d="M 320 60 Q 340 46 360 60 Q 362 64 358 66 Q 340 54 322 66 Q 318 64 320 60 Z" fill={T.bronze} />
-          <line x1="90" y1="50" x2="195" y2="172" opacity="0.55" />
-          <line x1="264" y1="32" x2="240" y2="172" opacity="0.55" />
-          <line x1="340" y1="62" x2="270" y2="172" opacity="0.55" />
+        <path d="M 0 160 Q 80 150 160 160 Q 240 168 320 160 Q 360 156 400 160 L 400 200 L 0 200 Z" fill={T.bronze} opacity="0.45" />
+        <g stroke={T.ink} strokeWidth="0.8" fill="none" opacity="0.65">
+          <path d="M 30 150 L 40 158 M 50 148 L 60 156 M 70 150 L 80 158 M 90 146 L 100 154 M 110 150 L 120 158 M 130 148 L 140 156" />
+          <path d="M 30 142 L 40 150 M 50 140 L 60 148 M 70 142 L 80 150 M 90 138 L 100 146 M 110 142 L 120 150 M 130 140 L 140 148" opacity="0.7" />
+        </g>
+        <rect y="200" width="400" height="100" fill="url(#lagoon-n)" />
+        <line x1="0" y1="200" x2="400" y2="200" stroke={T.ink} strokeWidth="0.6" opacity="0.4" />
+        <g fill="none" stroke={T.ink} strokeWidth="1">
+          <path d="M 230 180 Q 254 168 278 180 Q 280 186 274 188 Q 254 174 232 188 Q 226 186 230 180 Z" fill={T.coral} />
+          <line x1="254" y1="184" x2="248" y2="252" opacity="0.6" />
+          <circle cx="250" cy="256" r="3.5" fill={T.ink} />
+          <path d="M 234 256 L 266 256" strokeWidth="1.4" />
+        </g>
+        <g stroke={T.coral} strokeWidth="1.1" fill="none">
+          <path d="M 30 218 Q 36 208 44 214 L 46 230 M 44 214 L 52 214" />
+          <path d="M 60 224 Q 66 214 74 220 L 76 236 M 74 220 L 82 220" />
         </g>
         <g stroke={T.cream} strokeWidth="0.5" fill="none" opacity="0.45">
-          <path d="M 0 240 Q 100 232 200 240 T 400 240" />
-          <path d="M 0 258 Q 100 250 200 258 T 400 258" opacity="0.7" />
-          <path d="M 0 276 Q 100 268 200 276 T 400 276" opacity="0.5" />
+          <path d="M 0 246 Q 100 240 200 246 T 400 246" />
+          <path d="M 0 264 Q 100 258 200 264 T 400 264" opacity="0.7" />
+          <path d="M 0 282 Q 100 276 200 282 T 400 282" opacity="0.5" />
         </g>
         <text x="20" y="290" fontFamily={T.mono} fontSize="9" fill={T.cream} letterSpacing="3" opacity="0.85">
-          III · LE BARCARÈS
+          III · NARBONNE · HOSPITALET
         </text>
         <text x="380" y="290" textAnchor="end" fontFamily={T.mono} fontSize="9" fill={T.cream} letterSpacing="2" opacity="0.7">
-          42°47′ N
+          43°10′ N
         </text>
       </svg>
     </ArtifactFrame>
@@ -1190,32 +1194,50 @@ function ArtifactLeucate() {
             <stop offset="100%" stopColor="#0f2c44" />
           </linearGradient>
         </defs>
-        <rect width="400" height="160" fill="url(#sky-l)" />
-        <rect y="160" width="400" height="140" fill="url(#sea-l)" />
-        <circle cx="320" cy="60" r="18" fill={T.sun} opacity="0.85" />
-        <path d="M 0 160 L 0 110 Q 60 96 120 116 L 160 134 Q 200 148 240 142 L 280 156 Q 320 168 400 152 L 400 160 Z" fill="#f4efe6" stroke={T.ink} strokeWidth="0.6" />
-        <path d="M 0 160 L 0 110 Q 60 96 120 116 L 160 134 Q 200 148 240 142 L 280 156" fill="none" stroke={T.ink} strokeWidth="0.6" opacity="0.5" />
-        <g transform="translate(58, 92)">
-          <rect x="0" y="0" width="10" height="22" fill={T.cream} stroke={T.ink} strokeWidth="0.7" />
-          <rect x="-2" y="-4" width="14" height="6" fill={T.coral} />
-          <line x1="5" y1="-4" x2="5" y2="-12" stroke={T.ink} strokeWidth="0.6" />
+        <rect width="400" height="170" fill="url(#sky-l)" />
+        <rect y="170" width="400" height="130" fill="url(#sea-l)" />
+        <circle cx="200" cy="60" r="18" fill={T.sun} opacity="0.85" />
+        <path d="M 0 170 L 0 100 Q 50 84 100 108 L 130 132 Q 160 146 184 150 L 184 170 Z" fill="#f4efe6" stroke={T.ink} strokeWidth="0.6" />
+        <path d="M 0 100 Q 50 84 100 108 L 130 132 Q 160 146 184 150" fill="none" stroke={T.ink} strokeWidth="0.6" opacity="0.5" />
+        <g transform="translate(48, 78)">
+          <rect x="0" y="0" width="9" height="22" fill={T.cream} stroke={T.ink} strokeWidth="0.7" />
+          <rect x="-2" y="-4" width="13" height="6" fill={T.coral} />
+          <line x1="4.5" y1="-4" x2="4.5" y2="-12" stroke={T.ink} strokeWidth="0.6" />
+        </g>
+        <g transform="translate(244, 198)">
+          <ellipse cx="60" cy="20" rx="76" ry="6" fill={T.bronze} opacity="0.55" />
+          <path d="M 0 18 L 18 8 L 110 8 L 124 18 Z" fill={T.cream} stroke={T.ink} strokeWidth="0.7" />
+          <rect x="22" y="-2" width="80" height="10" fill={T.cream} stroke={T.ink} strokeWidth="0.6" />
+          <rect x="32" y="-10" width="44" height="8" fill={T.cream} stroke={T.ink} strokeWidth="0.6" />
+          <line x1="42" y1="-10" x2="42" y2="-26" stroke={T.ink} strokeWidth="0.6" />
+          <line x1="66" y1="-10" x2="66" y2="-26" stroke={T.ink} strokeWidth="0.6" />
+          <g fill={T.ink}>
+            <circle cx="30" cy="3" r="0.9" />
+            <circle cx="40" cy="3" r="0.9" />
+            <circle cx="50" cy="3" r="0.9" />
+            <circle cx="60" cy="3" r="0.9" />
+            <circle cx="70" cy="3" r="0.9" />
+            <circle cx="80" cy="3" r="0.9" />
+            <circle cx="90" cy="3" r="0.9" />
+          </g>
+          <rect x="86" y="-6" width="10" height="4" fill={T.coral} stroke={T.ink} strokeWidth="0.4" />
         </g>
         <g fill="none" stroke={T.ink} strokeWidth="1">
-          <path d="M 220 70 Q 250 56 280 72 Q 282 80 276 82 Q 250 64 224 82 Q 218 80 220 70 Z" fill={T.coral} />
-          <line x1="250" y1="74" x2="244" y2="200" opacity="0.6" />
-          <circle cx="246" cy="206" r="4" fill={T.ink} />
-          <path d="M 230 208 L 262 208" strokeWidth="1.6" />
+          <path d="M 240 70 Q 270 56 300 72 Q 302 80 296 82 Q 270 64 244 82 Q 238 80 240 70 Z" fill={T.coral} />
+          <line x1="270" y1="74" x2="262" y2="186" opacity="0.6" />
+          <circle cx="264" cy="190" r="3.5" fill={T.ink} />
+          <path d="M 248 192 L 280 192" strokeWidth="1.4" />
         </g>
-        <g stroke={T.cream} strokeWidth="0.5" fill="none" opacity="0.4">
-          <path d="M 0 200 Q 80 192 160 200 T 320 200 T 480 200" />
-          <path d="M 0 220 Q 80 212 160 220 T 320 220 T 480 220" opacity="0.7" />
-          <path d="M 0 240 Q 80 232 160 240 T 320 240 T 480 240" opacity="0.55" />
-          <path d="M 0 260 Q 80 252 160 260 T 320 260 T 480 260" opacity="0.4" />
+        <g stroke={T.cream} strokeWidth="0.5" fill="none" opacity="0.38">
+          <path d="M 0 224 Q 80 216 160 224 T 320 224 T 480 224" />
+          <path d="M 0 244 Q 80 236 160 244 T 320 244 T 480 244" opacity="0.7" />
+          <path d="M 0 264 Q 80 256 160 264 T 320 264 T 480 264" opacity="0.55" />
+          <path d="M 0 284 Q 80 276 160 284 T 320 284 T 480 284" opacity="0.4" />
         </g>
-        <text x="20" y="288" fontFamily={T.mono} fontSize="9" fill={T.cream} letterSpacing="3" opacity="0.85">
-          IV · LEUCATE · LA FRANQUI
+        <text x="20" y="290" fontFamily={T.mono} fontSize="9" fill={T.cream} letterSpacing="3" opacity="0.85">
+          IV · LEUCATE · LE BARCARÈS
         </text>
-        <text x="380" y="288" textAnchor="end" fontFamily={T.mono} fontSize="9" fill={T.cream} letterSpacing="2" opacity="0.7">
+        <text x="380" y="290" textAnchor="end" fontFamily={T.mono} fontSize="9" fill={T.cream} letterSpacing="2" opacity="0.7">
           42°54′ N
         </text>
       </svg>
@@ -1243,21 +1265,22 @@ const TOWN_DETAIL: Record<'I' | 'II' | 'III' | 'IV', { artifact: () => React.JSX
     ],
   },
   III: {
-    artifact: ArtifactBarcares,
+    artifact: ArtifactNarbonne,
     sights: [
-      { name: 'Le Lydia', note: 'A 1930s ocean liner permanently beached in the dunes — now a monument.' },
-      { name: 'Forteresse de Salses', note: 'Catalan-Castilian frontier fortress, low and pink against the maquis.' },
-      { name: 'Collioure (40 min)', note: 'The painted port of Matisse and Derain — anchovies, light, fauvism.' },
-      { name: 'Étang de Salses-Leucate', note: 'A vast saltwater lagoon laced with oyster beds and flamingos.' },
+      { name: 'Cathédrale Saint-Just', note: 'An unfinished Gothic giant — vaults higher than Notre-Dame, abruptly cut short.' },
+      { name: 'Les Halles de Narbonne', note: 'The 1901 covered market — oysters from Gruissan, charcuterie, lunch at Chez Bebelle.' },
+      { name: 'Via Domitia & Horreum', note: 'The Roman road exposed in the central square; underground granary tunnels below.' },
+      { name: 'Abbaye de Fontfroide (20 min)', note: 'A Cistercian abbey of ochre stone and cypress — concerts in the cloister.' },
     ],
   },
   IV: {
     artifact: ArtifactLeucate,
     sights: [
       { name: 'Falaise de Leucate', note: 'White limestone cliffs over open sea — coastal path, WWII bunkers, Phare.' },
-      { name: 'Carcassonne (1 hr)', note: 'UNESCO medieval citadel, 52 towers, dinner inside the walls.' },
+      { name: 'Le Lydia (Le Barcarès)', note: 'A 1930s ocean liner permanently beached in the dunes — now a monument.' },
+      { name: 'Forteresse de Salses (15 min)', note: 'Catalan-Castilian frontier fortress, low and pink against the maquis.' },
       { name: 'Châteaux cathares', note: 'Quéribus and Peyrepertuse — fortresses balanced on Pyrenean ridges.' },
-      { name: 'Narbonne (30 min)', note: 'Roman ruins, the Via Domitia underfoot, Les Halles for a Languedoc lunch.' },
+      { name: 'Collioure (45 min)', note: 'The painted port of Matisse and Derain — anchovies, light, fauvism.' },
     ],
   },
 }
@@ -1355,8 +1378,8 @@ function Location() {
               {[
                 { x: 470, y: 258, n: 'I', l: 'Hyères' },
                 { x: 380, y: 225, n: 'II', l: 'Port-Saint-Louis' },
-                { x: 175, y: 152, n: 'III', l: 'Le Barcarès' },
-                { x: 130, y: 144, n: 'IV', l: 'Leucate' },
+                { x: 175, y: 152, n: 'III', l: 'Narbonne · Hospitalet' },
+                { x: 130, y: 144, n: 'IV', l: 'Leucate · Barcarès' },
               ].map((p) => (
                 <g key={p.n}>
                   <circle cx={p.x} cy={p.y} r="5" fill={T.coral} stroke={T.ink} strokeWidth="0.75" />
@@ -1412,19 +1435,19 @@ function Location() {
         <div style={{ marginTop: isMobile ? 56 : 96 }}>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 18, marginBottom: 28, flexWrap: 'wrap' }}>
             <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: '0.5em', paddingLeft: '0.5em', opacity: 0.6 }}>
-              IV · LES VILLAGES
+              IV · THE VILLAGES
             </div>
             <div style={{ height: 1, flex: 1, background: T.ink, opacity: 0.18, minWidth: 80 }} />
             <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: isMobile ? 18 : 22, opacity: 0.8 }}>
-              à voir, à goûter, à parcourir.
+              Worth the detour.
             </div>
           </div>
 
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)',
-              gap: isMobile ? 32 : 48,
+              gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)',
+              gap: isMobile ? 14 : 20,
             }}
           >
             {WEEKS.map((w) => {
@@ -1436,83 +1459,65 @@ function Location() {
                   style={{
                     background: T.cream,
                     border: `1px solid ${T.ink}22`,
-                    padding: isMobile ? 20 : 28,
+                    padding: isMobile ? 12 : 16,
+                    display: 'flex',
+                    flexDirection: 'column',
                   }}
                 >
                   <Artifact />
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginTop: 22, gap: 12 }}>
-                    <div>
-                      <div
-                        style={{
-                          fontFamily: T.mono,
-                          fontSize: 10,
-                          letterSpacing: '0.5em',
-                          paddingLeft: '0.5em',
-                          opacity: 0.6,
-                        }}
-                      >
-                        {w.n} · {w.dates}
-                      </div>
-                      <h3
-                        style={{
-                          fontFamily: T.serif,
-                          fontSize: isMobile ? 26 : 32,
-                          fontStyle: 'italic',
-                          fontWeight: 400,
-                          margin: '6px 0 0',
-                          lineHeight: 1.05,
-                        }}
-                      >
-                        {w.place}
-                      </h3>
-                    </div>
+                  <div style={{ marginTop: 14 }}>
                     <div
                       style={{
                         fontFamily: T.mono,
                         fontSize: 9,
-                        letterSpacing: '0.3em',
-                        textTransform: 'uppercase',
-                        opacity: 0.55,
-                        textAlign: 'right',
-                        whiteSpace: 'nowrap',
+                        letterSpacing: '0.4em',
+                        paddingLeft: '0.4em',
+                        opacity: 0.6,
                       }}
                     >
-                      {w.region}
-                      <br />
-                      <span style={{ color: T.coral, opacity: 0.85 }}>{w.spot}</span>
+                      {w.n} · {w.dates}
+                    </div>
+                    <h3
+                      style={{
+                        fontFamily: T.serif,
+                        fontSize: isMobile ? 20 : 22,
+                        fontStyle: 'italic',
+                        fontWeight: 400,
+                        margin: '6px 0 4px',
+                        lineHeight: 1.1,
+                      }}
+                    >
+                      {w.place}
+                    </h3>
+                    <div
+                      style={{
+                        fontFamily: T.mono,
+                        fontSize: 8,
+                        letterSpacing: '0.28em',
+                        textTransform: 'uppercase',
+                        opacity: 0.55,
+                      }}
+                    >
+                      {w.region} · <span style={{ color: T.coral, opacity: 0.95 }}>{w.spot}</span>
                     </div>
                   </div>
 
-                  <p style={{ fontFamily: T.serif, fontSize: 15, lineHeight: 1.65, opacity: 0.82, marginTop: 14 }}>
+                  <p style={{ fontFamily: T.serif, fontSize: 13, lineHeight: 1.55, opacity: 0.82, marginTop: 12 }}>
                     {w.desc}
                   </p>
 
-                  <div
-                    style={{
-                      marginTop: 22,
-                      paddingTop: 18,
-                      borderTop: `1px solid ${T.ink}1f`,
-                    }}
-                  >
-                    <div
-                      style={{
-                        fontFamily: T.mono,
-                        fontSize: 9,
-                        letterSpacing: '0.45em',
-                        paddingLeft: '0.45em',
-                        opacity: 0.55,
-                        marginBottom: 14,
-                      }}
-                    >
-                      À VOIR · DANS LES ENVIRONS
-                    </div>
-                    <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  <details className="loc-details">
+                    <summary>
+                      <span>NEARBY · DON&rsquo;T MISS</span>
+                      <span className="loc-details-icon" aria-hidden="true">＋</span>
+                    </summary>
+                    <ul style={{ listStyle: 'none', padding: 0, margin: '14px 0 0', display: 'flex', flexDirection: 'column', gap: 10 }}>
                       {detail.sights.map((s, i) => (
-                        <li key={s.name} style={{ display: 'grid', gridTemplateColumns: '24px 1fr', gap: 10, alignItems: 'baseline' }}>
+                        <li key={s.name} style={{ display: 'grid', gridTemplateColumns: '20px 1fr', gap: 8, alignItems: 'baseline' }}>
                           <span
                             style={{
                               fontFamily: T.mono,
-                              fontSize: 9,
+                              fontSize: 8,
                               letterSpacing: '0.2em',
                               color: T.bronze,
                               opacity: 0.85,
@@ -1521,13 +1526,13 @@ function Location() {
                             {String(i + 1).padStart(2, '0')}
                           </span>
                           <span>
-                            <span style={{ fontFamily: T.serif, fontSize: 15, fontStyle: 'italic' }}>{s.name}</span>
-                            <span style={{ fontFamily: T.serif, fontSize: 14, opacity: 0.7, marginLeft: 6 }}>— {s.note}</span>
+                            <span style={{ fontFamily: T.serif, fontSize: 13, fontStyle: 'italic', display: 'block' }}>{s.name}</span>
+                            <span style={{ fontFamily: T.serif, fontSize: 12, opacity: 0.72, lineHeight: 1.45 }}>{s.note}</span>
                           </span>
                         </li>
                       ))}
                     </ul>
-                  </div>
+                  </details>
                 </article>
               )
             })}
@@ -2094,6 +2099,33 @@ export default function AretePage() {
       <style>{`
         html { scroll-behavior: smooth; }
         section[id] { scroll-margin-top: 76px; }
+        .loc-details { margin-top: auto; padding-top: 14px; border-top: 1px solid ${T.ink}1f; }
+        .loc-details > summary {
+          cursor: pointer;
+          list-style: none;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 8px;
+          font-family: ${T.mono};
+          font-size: 9px;
+          letter-spacing: 0.4em;
+          padding-left: 0.4em;
+          color: ${T.ink};
+          opacity: 0.7;
+          padding: 6px 0;
+          transition: opacity 0.15s;
+        }
+        .loc-details > summary:hover { opacity: 1; color: ${T.bronze}; }
+        .loc-details > summary::-webkit-details-marker { display: none; }
+        .loc-details-icon {
+          font-family: ${T.mono};
+          font-size: 14px;
+          line-height: 1;
+          transition: transform 0.2s ease;
+          opacity: 0.6;
+        }
+        .loc-details[open] > summary .loc-details-icon { transform: rotate(45deg); opacity: 1; color: ${T.bronze}; }
       `}</style>
       <TopBar />
       <Hero />
