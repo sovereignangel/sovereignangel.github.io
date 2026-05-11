@@ -286,7 +286,7 @@ export function BudgetView() {
         +
       </button>
 
-      {adding && <AddSheet onClose={() => setAdding(false)} />}
+      {adding && <AddSheet onClose={() => setAdding(false)} initialFilter={filter} />}
     </div>
   )
 }
@@ -737,12 +737,13 @@ function Input({
   )
 }
 
-function AddSheet({ onClose }: { onClose: () => void }) {
+function AddSheet({ onClose, initialFilter }: { onClose: () => void; initialFilter: Filter }) {
+  const isWeekFilter = initialFilter === 'I' || initialFilter === 'II' || initialFilter === 'III' || initialFilter === 'IV'
   const [name, setName] = useState('')
   const [amount, setAmount] = useState('')
   const [category, setCategory] = useState<BudgetCategory>('other')
-  const [scope, setScope] = useState<'overall' | 'weeks'>('overall')
-  const [weeks, setWeeks] = useState<WeekN[]>([])
+  const [scope, setScope] = useState<'overall' | 'weeks'>(isWeekFilter ? 'weeks' : 'overall')
+  const [weeks, setWeeks] = useState<WeekN[]>(isWeekFilter ? [initialFilter as WeekN] : [])
   const [notes, setNotes] = useState('')
 
   const toggleWeek = (w: WeekN) =>
