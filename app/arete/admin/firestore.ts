@@ -41,7 +41,7 @@ export type BudgetCategory =
 export interface BudgetItem {
   id: string
   name: string
-  amount: number              // EUR — total for this line item across the weeks selected
+  amount: number              // USD — total for this line item across the weeks selected
   category: BudgetCategory
   weeks: WeekN[]              // [] = overall / one-time program cost; populated = per-week
   notes?: string
@@ -183,20 +183,25 @@ export async function seedDefaults() {
   // refined tier · 6 attendees · 4 weeks · 1 assistant instructor (ceil(6/3)-1)
   type Seed = Omit<BudgetItem, 'id' | 'createdAt' | 'updatedAt'>
   const baseSeeds: Seed[] = [
-    { name: 'Villa', amount: 13000 * 4, category: 'lodging', weeks: allWeeks, notes: '6-room ensuite, walking distance to launch (refined tier · €13k/week).', charged: false },
-    { name: 'Lead instructor — Théo', amount: 2500 * 4, category: 'coaching', weeks: allWeeks, notes: 'Resident pro, every week. €2,500/week.', charged: false },
-    { name: 'Assistant instructor', amount: 1500 * 4, category: 'coaching', weeks: allWeeks, notes: '1:3 ratio, scales with attendance — 1 assistant for N=6. €1,500/week.', charged: false },
-    { name: 'Kite quiver — rental', amount: 350 * 6 * 4, category: 'equipment', weeks: allWeeks, notes: '€350/rider × 6 riders × 4 weeks (refined tier).', charged: false },
-    { name: 'French tutor', amount: 1500 * 4, category: 'tutor', weeks: allWeeks, notes: 'Live-in, daily lesson over olives. €1,500/week.', charged: false },
-    { name: 'Cook', amount: 2800 * 4, category: 'food', weeks: allWeeks, notes: 'Local, three meals daily. €2,800/week (Adam Brunet 2026 rate).', charged: false },
-    { name: 'Groceries', amount: 40 * (6 + 3) * 7 * 4, category: 'food', weeks: allWeeks, notes: '€40/pers/day × 9 pers (6 guests + 3 staff) × 7 days × 4 weeks.', charged: false },
-    { name: 'Ground transport', amount: 1000 * 4, category: 'transport', weeks: allWeeks, notes: 'Van + airport / TGV transfers. €1,000/week.', charged: false },
-    { name: 'Atmosphere', amount: 1500 * 4, category: 'atmosphere', weeks: allWeeks, notes: 'Wine, books, market flowers, candles. €1,500/week.', charged: false },
-    { name: 'Photo & video', amount: 4000, category: 'media', weeks: [], notes: "Recap content, next year's invite.", charged: false },
-    { name: 'Welcome kits', amount: 840, category: 'kits', weeks: [], notes: 'Notebook, swim trunks, branded items. ~24 guest-weeks × €50 × 70% unique.', charged: false },
-    { name: 'Print collateral', amount: 1000, category: 'kits', weeks: [], notes: 'Invite cards, menu cards, library bookplates.', charged: false },
-    { name: 'Activity insurance', amount: 2000, category: 'insurance', weeks: [], charged: false },
-    { name: 'Admin & accounting', amount: 1000, category: 'admin', weeks: [], charged: false },
+    { name: 'Villa', amount: 14000 * 4, category: 'lodging', weeks: allWeeks, notes: '6-room ensuite, walking distance to launch (refined tier · $14k/week).', charged: false },
+    { name: 'Hyères Airbnb · 10 pax (higher end)', amount: 6100, category: 'lodging', weeks: ['I'], notes: 'Week I lodging — sleeps 10, 29 Jun → 5 Jul 2026. Higher-end pick, code HMSMRE24JK. Link: https://www.airbnb.com/book/stays/1477723892946943440?numberOfAdults=10&checkin=2026-06-29&checkout=2026-07-05&guestCurrency=USD&productId=1477723892946943440&code=HMSMRE24JK. Overlaps with the generic Villa line — keep one, drop the other for Week I.', charged: false },
+    { name: 'Camargue Airbnb · 10 pax', amount: 7200, category: 'lodging', weeks: ['II'], notes: 'Week II lodging — sleeps 10, 5 Jul → 12 Jul 2026. $7.2k total. Link: https://www.airbnb.com/rooms/1643522737742386213?adults=10&check_in=2026-07-05&check_out=2026-07-12&wishlist_item_id=11006301893825. Overlaps with the generic Villa line — keep one, drop the other for Week II.', charged: false },
+    { name: 'Narbonne Airbnb · 11 pax', amount: 9600, category: 'lodging', weeks: ['III'], notes: 'Week III lodging — sleeps 11, 19 Jul → 26 Jul 2026 (spans the W3 → W4 transition). Code HMH3QAMDJJ. Link: https://www.airbnb.com/book/stays/948265181526557439?numberOfAdults=10&checkin=2026-07-19&checkout=2026-07-26&guestCurrency=USD&productId=948265181526557439&code=HMH3QAMDJJ. Overlaps with the generic Villa line — keep one, drop the other for Week III.', charged: false },
+    { name: 'Le Barcarès Airbnb · 10 pax', amount: 4300, category: 'lodging', weeks: ['IV'], notes: 'Week IV lodging — 10 guests, $4.3k total. Overlaps with the generic Villa line — keep one, drop the other for Week IV.', charged: false },
+    { name: 'Lead instructor — Théo', amount: 2700 * 4, category: 'coaching', weeks: allWeeks, notes: 'Resident pro, every week. $2,700/week.', charged: false },
+    { name: 'Assistant instructor', amount: 1600 * 4, category: 'coaching', weeks: allWeeks, notes: '1:3 ratio, scales with attendance — 1 assistant for N=6. $1,600/week.', charged: false },
+    { name: 'Kite quiver — rental', amount: 380 * 6 * 4, category: 'equipment', weeks: allWeeks, notes: '$380/rider × 6 riders × 4 weeks (refined tier).', charged: false },
+    { name: 'French tutor', amount: 1600 * 4, category: 'tutor', weeks: allWeeks, notes: 'Live-in, daily lesson over olives. $1,600/week.', charged: false },
+    { name: 'Cook', amount: 3000 * 4, category: 'food', weeks: allWeeks, notes: 'Local, three meals daily. $3,000/week (Adam Brunet 2026 rate).', charged: false },
+    { name: 'Private chef · lunch + dinner', amount: 5800 * 4, category: 'food', weeks: allWeeks, notes: 'Mid-range private chef, not too lux. 10 pax × $48/meal × 2 meals × 6 days ≈ $5,800/week (service + ingredients). Overlaps with the seeded Cook + Groceries lines — pick one path: keep this and drop Cook, or keep Cook (three meals daily) and drop this.', charged: false },
+    { name: 'Groceries', amount: 43 * (6 + 3) * 7 * 4, category: 'food', weeks: allWeeks, notes: '$43/pers/day × 9 pers (6 guests + 3 staff) × 7 days × 4 weeks.', charged: false },
+    { name: 'Ground transport', amount: 1100 * 4, category: 'transport', weeks: allWeeks, notes: 'Van + airport / TGV transfers. $1,100/week.', charged: false },
+    { name: 'Atmosphere', amount: 1600 * 4, category: 'atmosphere', weeks: allWeeks, notes: 'Wine, books, market flowers, candles. $1,600/week.', charged: false },
+    { name: 'Photo & video', amount: 4300, category: 'media', weeks: [], notes: "Recap content, next year's invite.", charged: false },
+    { name: 'Welcome kits', amount: 900, category: 'kits', weeks: [], notes: 'Notebook, swim trunks, branded items. ~24 guest-weeks × $54 × 70% unique.', charged: false },
+    { name: 'Print collateral', amount: 1100, category: 'kits', weeks: [], notes: 'Invite cards, menu cards, library bookplates.', charged: false },
+    { name: 'Activity insurance', amount: 2200, category: 'insurance', weeks: [], charged: false },
+    { name: 'Admin & accounting', amount: 1100, category: 'admin', weeks: [], charged: false },
   ]
 
   // Contingency = 10% of (operational + one-time), per the original model

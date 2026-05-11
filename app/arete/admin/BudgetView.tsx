@@ -53,7 +53,7 @@ const CATS: { value: BudgetCategory; label: string }[] = [
   { value: 'other', label: 'Other' },
 ]
 
-const eur = (n: number) => '€' + n.toLocaleString('en-US', { maximumFractionDigits: 0 })
+const usd = (n: number) => '$' + n.toLocaleString('en-US', { maximumFractionDigits: 0 })
 
 type Filter = 'all' | 'overall' | WeekN | 'pending' | 'charged'
 
@@ -137,9 +137,9 @@ export function BudgetView() {
       >
         <div style={{ padding: '14px 16px 12px' }}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 4 }}>
-            <Stat label="Total" value={eur(totals.total)} />
-            <Stat label="Charged" value={eur(totals.charged)} accent={T.green} />
-            <Stat label="Remaining" value={eur(totals.remaining)} accent={T.coral} />
+            <Stat label="Total" value={usd(totals.total)} />
+            <Stat label="Charged" value={usd(totals.charged)} accent={T.green} />
+            <Stat label="Remaining" value={usd(totals.remaining)} accent={T.coral} />
           </div>
         </div>
         <div
@@ -461,7 +461,7 @@ function ItemRow({
               color: T.ink,
             }}
           >
-            {eur(item.amount)}
+            {usd(item.amount)}
           </div>
           <ChargedChip
             charged={item.charged}
@@ -539,7 +539,7 @@ function ItemEditor({ item, onClose }: { item: BudgetItem; onClose: () => void }
     <div style={{ padding: '0 14px 16px', borderTop: `1px solid ${T.ink}22` }}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 14, paddingTop: 14 }}>
         <Input label="Name" value={name} onChange={setName} />
-        <Input label="Amount (EUR)" value={amount} onChange={setAmount} type="number" />
+        <Input label="Amount (USD)" value={amount} onChange={setAmount} type="number" />
 
         <Field label="Category">
           <select
@@ -764,7 +764,7 @@ function AddSheet({ onClose }: { onClose: () => void }) {
   return (
     <Sheet onClose={onClose} title="New budget item">
       <Input label="Name" value={name} onChange={setName} placeholder="e.g. Sunset boat dinner" />
-      <Input label="Amount (EUR)" value={amount} onChange={setAmount} type="number" placeholder="0" />
+      <Input label="Amount (USD)" value={amount} onChange={setAmount} type="number" placeholder="0" />
 
       <Field label="Category">
         <select
