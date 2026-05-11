@@ -460,13 +460,66 @@ function PosterVintage() {
 // ============================================================
 // `cap` = spots open to guests (Airbnb total occupancy minus Dave & Lori).
 // `airbnb` = USD total for the house; per-person = airbnb / (cap + 2).
-type Week = { n: 'I' | 'II' | 'III' | 'IV'; dates: string; place: string; region: string; spot: string; desc: string; cap: number; airbnb: number }
+// `airbnbUrl` = booking link if you want to look at the actual house.
+type Week = {
+  n: 'I' | 'II' | 'III' | 'IV'
+  dates: string
+  place: string
+  region: string
+  spot: string
+  desc: string
+  cap: number
+  airbnb: number
+  airbnbUrl?: string
+}
 
 const WEEKS: Week[] = [
-  { n: 'I', dates: '29 JUN — 5 JUL', place: 'Hyères', region: 'Var', spot: "L'Almanarre", desc: 'Long flat-water sessions on the salt lagoons. Olive trees and a quiet town.', cap: 8, airbnb: 6100 },
-  { n: 'II', dates: '6 JUL — 12 JUL', place: 'Port-Saint-Louis', region: 'Bouches-du-Rhône', spot: 'Napoléon', desc: 'Mistral country. Open Camargue beaches, wild horses, the cleanest wind in Europe.', cap: 8, airbnb: 7200 },
-  { n: 'III', dates: '13 JUL — 19 JUL', place: 'Narbonne · Hospitalet', region: 'Aude', spot: "L'Hospitalet · La Vieille Nouvelle", desc: 'Wild beach between sea and lagoon, Roman city above. Long shallow setups in steady wind.', cap: 9, airbnb: 9600 },
-  { n: 'IV', dates: '20 JUL — 26 JUL', place: 'Leucate · Le Barcarès', region: 'Aude · Pyrénées-Orientales', spot: 'Les Coussoules · La Coudalère', desc: "The Tramontane howls down the Pyrenees. Two iconic spots, one masters' week.", cap: 8, airbnb: 4300 },
+  {
+    n: 'I',
+    dates: '29 JUN — 5 JUL',
+    place: 'Hyères',
+    region: 'Var',
+    spot: "L'Almanarre",
+    desc: 'Long flat-water sessions on the salt lagoons. Olive trees and a quiet town.',
+    cap: 8,
+    airbnb: 6100,
+    airbnbUrl:
+      'https://www.airbnb.com/book/stays/1477723892946943440?numberOfAdults=10&checkin=2026-06-29&checkout=2026-07-05&guestCurrency=USD&productId=1477723892946943440&code=HMSMRE24JK',
+  },
+  {
+    n: 'II',
+    dates: '6 JUL — 12 JUL',
+    place: 'Port-Saint-Louis',
+    region: 'Bouches-du-Rhône',
+    spot: 'Napoléon',
+    desc: 'Mistral country. Open Camargue beaches, wild horses, the cleanest wind in Europe.',
+    cap: 8,
+    airbnb: 7200,
+    airbnbUrl:
+      'https://www.airbnb.com/rooms/1643522737742386213?adults=10&check_in=2026-07-05&check_out=2026-07-12&wishlist_item_id=11006301893825',
+  },
+  {
+    n: 'III',
+    dates: '13 JUL — 19 JUL',
+    place: 'Narbonne · Hospitalet',
+    region: 'Aude',
+    spot: "L'Hospitalet · La Vieille Nouvelle",
+    desc: 'Wild beach between sea and lagoon, Roman city above. Long shallow setups in steady wind.',
+    cap: 9,
+    airbnb: 9600,
+    airbnbUrl:
+      'https://www.airbnb.com/book/stays/948265181526557439?numberOfAdults=10&checkin=2026-07-19&checkout=2026-07-26&guestCurrency=USD&productId=948265181526557439&code=HMH3QAMDJJ',
+  },
+  {
+    n: 'IV',
+    dates: '20 JUL — 26 JUL',
+    place: 'Leucate · Le Barcarès',
+    region: 'Aude · Pyrénées-Orientales',
+    spot: 'Les Coussoules · La Coudalère',
+    desc: "The Tramontane howls down the Pyrenees. Two iconic spots, one masters' week.",
+    cap: 8,
+    airbnb: 4300,
+  },
 ]
 
 const perPerson = (w: Week) => Math.round(w.airbnb / (w.cap + 2))
@@ -1408,14 +1461,14 @@ function Location() {
 
           <div>
             <p style={{ fontFamily: T.serif, fontSize: 17, lineHeight: 1.7, opacity: 0.85 }}>
-              Each week we take over a stone farmhouse or a villa within walking distance of the launch beach. Six bedrooms, a long table, a kitchen run by a local cook, a small library curated for the week.
+              Each week we take over an Airbnb within walking distance of the launch beach. Eight to ten beds, a long table, lunch and dinner from a private chef, a small library curated for the week.
             </p>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 24, marginTop: 32 }}>
               {[
-                ['Lodging', '6 ensuite rooms · long table · garden'],
-                ['Equipment', 'Full kite quiver provided · all skill levels'],
-                ['Coaching', '1:3 ratio · radio in-water · video review'],
-                ['Transit', 'Met at TGV / airport · all transfers included'],
+                ['Lodging', 'Airbnb · sleeps 10-11 · garden · long table'],
+                ['Meals', 'Lunch &amp; dinner catered · private chef'],
+                ['Kiting', 'Optional · arranged at the spot · own expense'],
+                ['Transit', 'Group lifts between weeks · van or TGV'],
               ].map(([h, b]) => (
                 <div key={h}>
                   <div
@@ -1429,10 +1482,111 @@ function Location() {
                   >
                     {h}
                   </div>
-                  <div style={{ fontFamily: T.serif, fontSize: 15, marginTop: 6, lineHeight: 1.5 }}>{b}</div>
+                  <div
+                    style={{ fontFamily: T.serif, fontSize: 15, marginTop: 6, lineHeight: 1.5 }}
+                    dangerouslySetInnerHTML={{ __html: b }}
+                  />
                 </div>
               ))}
             </div>
+          </div>
+        </div>
+
+        <div style={{ marginTop: isMobile ? 56 : 88 }}>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 18, marginBottom: 24, flexWrap: 'wrap' }}>
+            <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: '0.5em', paddingLeft: '0.5em', opacity: 0.6 }}>
+              AIRBNB · LE LOGEMENT
+            </div>
+            <div style={{ height: 1, flex: 1, background: T.ink, opacity: 0.18, minWidth: 80 }} />
+            <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: isMobile ? 16 : 18, opacity: 0.7 }}>
+              The houses, by week.
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            {WEEKS.map((w, i) => (
+              <a
+                key={w.n}
+                href={w.airbnbUrl || undefined}
+                target={w.airbnbUrl ? '_blank' : undefined}
+                rel={w.airbnbUrl ? 'noopener noreferrer' : undefined}
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: isMobile ? '32px 1fr auto' : '60px 1.4fr 1fr auto',
+                  gap: isMobile ? 12 : 20,
+                  alignItems: 'center',
+                  padding: isMobile ? '16px 0' : '20px 0',
+                  borderTop: i === 0 ? `1px solid ${T.ink}33` : 'none',
+                  borderBottom: `1px solid ${T.ink}33`,
+                  color: T.ink,
+                  textDecoration: 'none',
+                  cursor: w.airbnbUrl ? 'pointer' : 'default',
+                }}
+              >
+                <div
+                  style={{
+                    fontFamily: T.serif,
+                    fontStyle: 'italic',
+                    fontSize: isMobile ? 22 : 28,
+                    color: T.bronze,
+                    lineHeight: 1,
+                  }}
+                >
+                  {w.n}
+                </div>
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontFamily: T.serif, fontSize: isMobile ? 16 : 19, lineHeight: 1.2 }}>{w.place}</div>
+                  <div
+                    style={{
+                      fontFamily: T.mono,
+                      fontSize: 9,
+                      letterSpacing: '0.22em',
+                      opacity: 0.6,
+                      marginTop: 4,
+                      textTransform: 'uppercase',
+                    }}
+                  >
+                    {w.dates} · sleeps {w.cap + 2}
+                  </div>
+                </div>
+                {!isMobile && (
+                  <div>
+                    <div style={{ fontFamily: T.mono, fontSize: 13, color: T.coral, fontWeight: 500 }}>
+                      ${perPerson(w).toLocaleString('en-US')}
+                      <span style={{ opacity: 0.6, fontSize: 9, letterSpacing: '0.18em', marginLeft: 5 }}>/PP</span>
+                    </div>
+                    <div style={{ fontFamily: T.mono, fontSize: 9, letterSpacing: '0.22em', opacity: 0.5, marginTop: 3 }}>
+                      ${w.airbnb.toLocaleString('en-US')} TOTAL
+                    </div>
+                  </div>
+                )}
+                <div
+                  style={{
+                    fontFamily: T.mono,
+                    fontSize: 10,
+                    letterSpacing: '0.28em',
+                    textTransform: 'uppercase',
+                    color: w.airbnbUrl ? T.coral : T.ink + '66',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {w.airbnbUrl ? 'View →' : 'TBC'}
+                </div>
+              </a>
+            ))}
+          </div>
+
+          <div
+            style={{
+              fontFamily: T.mono,
+              fontSize: 9,
+              letterSpacing: '0.22em',
+              opacity: 0.5,
+              marginTop: 16,
+              textTransform: 'uppercase',
+            }}
+          >
+            Per-person price covers the house only · food &amp; transport estimates to follow
           </div>
         </div>
 
