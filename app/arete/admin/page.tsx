@@ -68,7 +68,15 @@ export default function AdminPage() {
           height: 56,
         }}
       >
-        <div>
+        <a
+          href="/"
+          title="Back to Mistral"
+          style={{
+            color: T.ink,
+            textDecoration: 'none',
+            display: 'block',
+          }}
+        >
           <div
             style={{
               fontFamily: T.mono,
@@ -77,7 +85,7 @@ export default function AdminPage() {
               opacity: 0.55,
             }}
           >
-            ARETE · MISTRAL
+            ← ARETE · MISTRAL
           </div>
           <div
             style={{
@@ -91,7 +99,7 @@ export default function AdminPage() {
           >
             Hosts portal
           </div>
-        </div>
+        </a>
         <button
           onClick={adminSignOut}
           style={{
