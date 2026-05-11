@@ -458,14 +458,18 @@ function PosterVintage() {
 // ============================================================
 // WEEKS
 // ============================================================
-type Week = { n: 'I' | 'II' | 'III' | 'IV'; dates: string; place: string; region: string; spot: string; desc: string; cap: number }
+// `cap` = spots open to guests (Airbnb total occupancy minus Dave & Lori).
+// `airbnb` = USD total for the house; per-person = airbnb / (cap + 2).
+type Week = { n: 'I' | 'II' | 'III' | 'IV'; dates: string; place: string; region: string; spot: string; desc: string; cap: number; airbnb: number }
 
 const WEEKS: Week[] = [
-  { n: 'I', dates: '29 JUN — 5 JUL', place: 'Hyères', region: 'Var', spot: "L'Almanarre", desc: 'Long flat-water sessions on the salt lagoons. Olive trees and a quiet town.', cap: 8 },
-  { n: 'II', dates: '6 JUL — 12 JUL', place: 'Port-Saint-Louis', region: 'Bouches-du-Rhône', spot: 'Napoléon', desc: 'Mistral country. Open Camargue beaches, wild horses, the cleanest wind in Europe.', cap: 8 },
-  { n: 'III', dates: '13 JUL — 19 JUL', place: 'Narbonne · Hospitalet', region: 'Aude', spot: "L'Hospitalet · La Vieille Nouvelle", desc: 'Wild beach between sea and lagoon, Roman city above. Long shallow setups in steady wind.', cap: 8 },
-  { n: 'IV', dates: '20 JUL — 26 JUL', place: 'Leucate · Le Barcarès', region: 'Aude · Pyrénées-Orientales', spot: 'Les Coussoules · La Coudalère', desc: "The Tramontane howls down the Pyrenees. Two iconic spots, one masters' week.", cap: 8 },
+  { n: 'I', dates: '29 JUN — 5 JUL', place: 'Hyères', region: 'Var', spot: "L'Almanarre", desc: 'Long flat-water sessions on the salt lagoons. Olive trees and a quiet town.', cap: 8, airbnb: 6100 },
+  { n: 'II', dates: '6 JUL — 12 JUL', place: 'Port-Saint-Louis', region: 'Bouches-du-Rhône', spot: 'Napoléon', desc: 'Mistral country. Open Camargue beaches, wild horses, the cleanest wind in Europe.', cap: 8, airbnb: 7200 },
+  { n: 'III', dates: '13 JUL — 19 JUL', place: 'Narbonne · Hospitalet', region: 'Aude', spot: "L'Hospitalet · La Vieille Nouvelle", desc: 'Wild beach between sea and lagoon, Roman city above. Long shallow setups in steady wind.', cap: 9, airbnb: 9600 },
+  { n: 'IV', dates: '20 JUL — 26 JUL', place: 'Leucate · Le Barcarès', region: 'Aude · Pyrénées-Orientales', spot: 'Les Coussoules · La Coudalère', desc: "The Tramontane howls down the Pyrenees. Two iconic spots, one masters' week.", cap: 8, airbnb: 4300 },
 ]
+
+const perPerson = (w: Week) => Math.round(w.airbnb / (w.cap + 2))
 
 // ============================================================
 // HERO
@@ -497,7 +501,7 @@ function Hero() {
       >
         <div style={{ order: isMobile ? 2 : 0 }}>
           <div style={{ fontSize: 11, letterSpacing: '0.5em', paddingLeft: '0.5em', fontFamily: T.mono, opacity: 0.6 }}>
-            ARETE · LP RETREAT · MMXXVI
+            ARETE · FRIENDS &amp; FAMILY LAUNCH RETREAT · MMXXVI
           </div>
           <h1
             style={{
@@ -1611,9 +1615,9 @@ function Field({
 // ============================================================
 function RSVP() {
   const isMobile = useIsMobile()
-  const initial: Record<string, number> = { I: 3, II: 5, III: 2, IV: 6 }
+  const initial: Record<string, number> = { I: 0, II: 0, III: 0, IV: 0 }
   const [taken, setTaken] = useState<Record<string, number>>(initial)
-  const [picked, setPicked] = useState<string[]>(['II'])
+  const [picked, setPicked] = useState<string[]>([])
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [note, setNote] = useState('')
@@ -1676,12 +1680,47 @@ function RSVP() {
             fontFamily: T.serif,
             fontSize: 16,
             opacity: 0.75,
-            maxWidth: 540,
-            margin: isMobile ? '0 0 32px' : '0 0 56px',
+            maxWidth: 620,
+            margin: isMobile ? '0 0 20px' : '0 0 28px',
           }}
         >
-          Eight spots per week. Pick one or several — you may attend more than one. We&rsquo;ll confirm by post within forty-eight hours.
+          Up to nine spots in Narbonne, eight in the others — Dave &amp; Lori already counted in. Pick one or several; you may attend more than one. We&rsquo;ll confirm by post within forty-eight hours.
         </p>
+
+        <div
+          style={{
+            border: `1px solid ${T.ink}33`,
+            background: T.paper,
+            padding: isMobile ? '18px 18px' : '20px 24px',
+            margin: isMobile ? '0 0 32px' : '0 0 48px',
+            maxWidth: 640,
+          }}
+        >
+          <div
+            style={{
+              fontFamily: T.mono,
+              fontSize: 9,
+              letterSpacing: '0.32em',
+              opacity: 0.6,
+              textTransform: 'uppercase',
+              marginBottom: 10,
+            }}
+          >
+            Save your seat
+          </div>
+          <div style={{ fontFamily: T.serif, fontSize: 15, lineHeight: 1.6, color: T.ink }}>
+            A refundable Airbnb deposit by <span style={{ fontStyle: 'italic' }}>1 June</span> holds your week. Send via Venmo to{' '}
+            <a
+              href="https://venmo.com/sovereignangel"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ color: T.coral, textDecoration: 'none', fontFamily: T.mono, fontSize: 13, letterSpacing: '0.04em' }}
+            >
+              @sovereignangel
+            </a>
+            . Per-person price below covers the house only — estimates for catered lunch &amp; dinner, group lifts between locations, and other shared costs come later. Kiting is optional and arranged at your own expense.
+          </div>
+        </div>
 
         {!submitted ? (
           <form onSubmit={submit}>
@@ -1738,6 +1777,32 @@ function RSVP() {
                     </div>
                     <div style={{ fontFamily: T.mono, fontSize: 9, letterSpacing: '0.25em', opacity: 0.7 }}>{w.dates}</div>
                     <div style={{ fontFamily: T.serif, fontSize: 17, lineHeight: 1.2 }}>{w.place}</div>
+                    <div style={{ marginTop: 2 }}>
+                      <div
+                        style={{
+                          fontFamily: T.mono,
+                          fontSize: 11,
+                          letterSpacing: '0.04em',
+                          color: sel ? T.sun : T.coral,
+                          fontWeight: 500,
+                        }}
+                      >
+                        ${perPerson(w).toLocaleString('en-US')}
+                        <span style={{ opacity: 0.7, fontSize: 9, letterSpacing: '0.18em', marginLeft: 4 }}>/PP · HOUSE</span>
+                      </div>
+                      <div
+                        style={{
+                          fontFamily: T.mono,
+                          fontSize: 8,
+                          letterSpacing: '0.18em',
+                          opacity: 0.55,
+                          marginTop: 2,
+                          textTransform: 'uppercase',
+                        }}
+                      >
+                        + food · transport · TBD
+                      </div>
+                    </div>
                     <div
                       style={{
                         height: 2,
@@ -1845,9 +1910,12 @@ function RSVP() {
 // ============================================================
 function FAQ() {
   const items: [string, string][] = [
-    ['Do I need to know how to kitesurf?', 'No. We host complete beginners through advanced riders, with a 1:3 coach ratio across three skill streams.'],
+    ['How do I save my spot?', 'A refundable Airbnb deposit by 1 June via Venmo to @sovereignangel locks in your week. Refundable if your plans change before we close the house bookings; we will say so clearly when the deadline approaches.'],
+    ["What's included in the per-person price?", 'The house only — your share of the Airbnb. Estimates for catered lunch & dinner (private chef, mid-range, not too lux) and group lifts between locations come in a second pass once we firm up headcount. Travel to France is on you.'],
+    ['Is kiting included?', 'No — kiting is optional and arranged à la carte at the spot, at your own expense. Beginners can book a local school directly; advanced riders bring their own kit. The retreat itself is the meals, the reading, the company, and the wind.'],
+    ['How do meals work?', 'Lunch and dinner are catered for the house — a private chef, mid-range, three weeks of long tables. Breakfast and any restaurant nights are casual and on you. Dietary asks welcome on the form below.'],
+    ['How do we move between weeks?', 'Group lifts between locations — vans or trains, arranged together so we travel as one party. You only need to handle your flights into and out of France.'],
     ['Can I bring a partner?', 'Yes. Each room is a double; partners are welcome whether they kite or not. Reading and meals are open to all.'],
-    ["What's included?", 'Lodging, meals, all kite equipment, coaching, ground transfers, and the reading. Travel to France is on you.'],
     ['Can I attend more than one week?', 'Absolutely — many partners do two. Pick all the weeks you want on the form above.'],
     ["What if the wind doesn't come?", 'It will (this is southern France in July). On the rare flat day: foiling, freediving, or a long lunch and a longer book.'],
     ['Is this an Arete fund event?', 'Yes — the Mistral retreat is hosted by Arete Technologies for our LPs and a few invited friends. It is not a fund expense to LPs.'],
