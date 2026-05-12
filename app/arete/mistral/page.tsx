@@ -1754,7 +1754,7 @@ function Location() {
   const isMobile = useIsMobile()
   return (
     <section
-      id="lodging"
+      id="program"
       style={{
         background: T.paper,
         color: T.ink,
@@ -1774,7 +1774,7 @@ function Location() {
             marginBottom: 16,
           }}
         >
-          IV · LE LIEU
+          I · LE PROGRAMME
         </div>
         <h2
           style={{
@@ -1925,7 +1925,7 @@ function Location() {
                     background: T.cream,
                     border: `1px solid ${T.ink}22`,
                     display: 'grid',
-                    gridTemplateColumns: isMobile ? '1fr' : '320px 1fr',
+                    gridTemplateColumns: isMobile ? '110px 1fr' : '320px 1fr',
                     overflow: 'hidden',
                   }}
                 >
@@ -1933,22 +1933,23 @@ function Location() {
                     <Artifact />
                   </div>
 
-                  <div style={{ padding: isMobile ? 16 : 24 }}>
+                  <div style={{ padding: isMobile ? 12 : 24, minWidth: 0 }}>
                     <div
                       style={{
                         display: 'flex',
-                        alignItems: 'baseline',
+                        flexDirection: isMobile ? 'column' : 'row',
+                        alignItems: isMobile ? 'flex-start' : 'baseline',
                         justifyContent: 'space-between',
-                        gap: 12,
+                        gap: isMobile ? 8 : 12,
                       }}
                     >
                       <div style={{ minWidth: 0, flex: 1 }}>
                         <div
                           style={{
                             fontFamily: T.mono,
-                            fontSize: 9,
-                            letterSpacing: '0.32em',
-                            paddingLeft: '0.32em',
+                            fontSize: isMobile ? 8 : 9,
+                            letterSpacing: '0.28em',
+                            paddingLeft: '0.28em',
                             opacity: 0.6,
                             textTransform: 'uppercase',
                           }}
@@ -1958,10 +1959,10 @@ function Location() {
                         <h3
                           style={{
                             fontFamily: T.serif,
-                            fontSize: isMobile ? 22 : 28,
+                            fontSize: isMobile ? 17 : 28,
                             fontStyle: 'italic',
                             fontWeight: 400,
-                            margin: '6px 0 4px',
+                            margin: isMobile ? '4px 0 2px' : '6px 0 4px',
                             lineHeight: 1.1,
                           }}
                         >
@@ -1971,31 +1972,31 @@ function Location() {
                           style={{
                             fontFamily: T.mono,
                             fontSize: 8,
-                            letterSpacing: '0.26em',
+                            letterSpacing: '0.24em',
                             textTransform: 'uppercase',
                             opacity: 0.55,
                           }}
                         >
-                          {w.region} · <span style={{ color: T.coral, opacity: 0.95 }}>{w.spot}</span>
+                          {w.region}
                         </div>
                       </div>
 
-                      <div style={{ textAlign: 'right', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                      <div style={{ textAlign: isMobile ? 'left' : 'right', whiteSpace: 'nowrap', flexShrink: 0 }}>
                         <div
                           style={{
                             fontFamily: T.mono,
-                            fontSize: 14,
+                            fontSize: isMobile ? 13 : 14,
                             color: T.coral,
                             fontWeight: 500,
                           }}
                         >
                           ${perPerson(w).toLocaleString('en-US')}
-                          <span style={{ opacity: 0.6, fontSize: 9, letterSpacing: '0.18em', marginLeft: 4 }}>/PP</span>
+                          <span style={{ opacity: 0.6, fontSize: 8, letterSpacing: '0.18em', marginLeft: 4 }}>/PP</span>
                         </div>
                         <div
                           style={{
                             fontFamily: T.mono,
-                            fontSize: 9,
+                            fontSize: 8,
                             letterSpacing: '0.18em',
                             opacity: 0.5,
                             marginTop: 2,
@@ -2010,10 +2011,10 @@ function Location() {
                     <p
                       style={{
                         fontFamily: T.serif,
-                        fontSize: 14,
-                        lineHeight: 1.6,
+                        fontSize: isMobile ? 12 : 14,
+                        lineHeight: isMobile ? 1.5 : 1.6,
                         opacity: 0.85,
-                        marginTop: 14,
+                        marginTop: isMobile ? 10 : 14,
                         marginBottom: 0,
                       }}
                     >
@@ -2028,15 +2029,15 @@ function Location() {
                         style={{
                           display: 'inline-flex',
                           alignItems: 'center',
-                          gap: 8,
-                          marginTop: 14,
-                          padding: '10px 16px',
+                          gap: 6,
+                          marginTop: isMobile ? 10 : 14,
+                          padding: isMobile ? '7px 10px' : '10px 16px',
                           background: 'transparent',
                           border: `1px solid ${T.coral}`,
                           color: T.coral,
                           fontFamily: T.mono,
-                          fontSize: 10,
-                          letterSpacing: '0.28em',
+                          fontSize: isMobile ? 8 : 10,
+                          letterSpacing: '0.24em',
                           textTransform: 'uppercase',
                           textDecoration: 'none',
                           cursor: 'pointer',
@@ -2279,7 +2280,7 @@ function RSVP() {
             marginBottom: 16,
           }}
         >
-          V · RÉSERVER
+          IV · RÉSERVER
         </div>
         <h2
           style={{
@@ -2741,7 +2742,7 @@ function FAQ() {
             marginBottom: 16,
           }}
         >
-          VI · QUESTIONS
+          V · QUESTIONS
         </div>
         <h2
           style={{
@@ -2887,7 +2888,6 @@ function TopBar() {
     ['#program', 'Program'],
     ['#rhythm', 'Rhythm'],
     ['#practices', 'Practices'],
-    ['#lodging', 'Lodging'],
     ['#rsvp', 'RSVP'],
   ]
   return (
@@ -2997,10 +2997,9 @@ export default function AretePage() {
       `}</style>
       <TopBar />
       <Hero />
-      <Program />
+      <Location />
       <Rhythm />
       <Coaches />
-      <Location />
       <RSVP />
       <FAQ />
       <Footer />
