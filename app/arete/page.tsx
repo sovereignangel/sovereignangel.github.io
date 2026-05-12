@@ -241,12 +241,14 @@ export default function AretePage() {
             <SecondaryCard
               name="Salons"
               tagline="The long table."
+              description="Intellectual gatherings. A long table, returning guests, conversation as the practice."
               status="Coming soon"
               interactive={false}
             />
             <SecondaryCard
               name="Mistral"
               tagline="The long horizon."
+              description="A kitesurf retreat on the French coast — four weeks of kite, symposium, and patient craft."
               status="F&F retreat · Jul 2026 →"
               href="/mistral"
               interactive
@@ -293,12 +295,14 @@ export default function AretePage() {
 function SecondaryCard({
   name,
   tagline,
+  description,
   status,
   href,
   interactive,
 }: {
   name: string
   tagline: string
+  description?: string
   status: string
   href?: string
   interactive: boolean
@@ -341,11 +345,25 @@ function SecondaryCard({
           fontSize: 15,
           color: C.burgundy,
           lineHeight: 1.3,
+          marginBottom: description ? 10 : 0,
         }}
       >
         {tagline}
       </div>
-      <div style={{ flex: 1, minHeight: 12 }} />
+      {description && (
+        <p
+          style={{
+            fontFamily: C.serif,
+            fontSize: 13,
+            lineHeight: 1.55,
+            color: C.inkMuted,
+            margin: 0,
+          }}
+        >
+          {description}
+        </p>
+      )}
+      <div style={{ flex: 1, minHeight: 14 }} />
       <div
         style={{
           fontFamily: C.mono,
