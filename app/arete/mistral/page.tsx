@@ -827,13 +827,14 @@ function Program() {
 // ============================================================
 function Rhythm() {
   const isMobile = useIsMobile()
-  const items: { time: string; title: string; sub: string; icon: IconKind }[] = [
-    { time: '06:00', title: 'Café & le vent', sub: 'Wind check. Coffee. Silence.', icon: 'sun' },
-    { time: '07:00', title: 'Main session — kite', sub: 'Glass water. Two hours on the line. The day’s main wind window.', icon: 'kite' },
-    { time: '11:00 — 13:00', title: 'Leçon de français', sub: 'A working French lesson over olives — conversation, not grammar drills.', icon: 'book' },
-    { time: '13:00 — 15:00', title: 'Le Symposium', sub: 'After Plato — each day one attendee takes the chair over a long lunch: a prompt, a topic, a short talk. The table answers in turn over wine.', icon: 'olive' },
-    { time: '16:00', title: 'Optional session — kite', sub: 'Afternoon thermals. Optional — work hours for the EST table.', icon: 'wind' },
-    { time: '20:00', title: 'Dinner', sub: 'Local catch, garden vegetables, cold rosé. Casual — the day’s thinking already happened at the chair.', icon: 'bowl' },
+  // EST/EDT shown alongside local CEST. France is +6 hours from US East in July (EDT/CEST).
+  const items: { est: string; local: string; duration?: string; title: string; sub: string; icon: IconKind }[] = [
+    { est: '00:00', local: '06:00', title: 'Café & le vent', sub: 'Wind check. Coffee. Silence.', icon: 'sun' },
+    { est: '01:00', local: '07:00', title: 'Main session — kite', sub: 'Glass water. Two hours on the line. The day’s main wind window.', icon: 'kite' },
+    { est: '05:00', local: '11:00', duration: '2h', title: 'Leçon de français', sub: 'A working French lesson — conversation, not grammar drills.', icon: 'book' },
+    { est: '07:00', local: '13:00', duration: '2h', title: 'Le Symposium', sub: 'After Plato. An attendee takes the chair over a long lunch. Ends 09 EST so the afternoon is clear for work.', icon: 'olive' },
+    { est: '10:00', local: '16:00', title: 'Optional session — kite', sub: 'Afternoon thermals. Optional — work hours for the EST table.', icon: 'wind' },
+    { est: '14:00', local: '20:00', title: 'Dinner', sub: 'Local catch, garden vegetables, cold rosé. Casual — the day’s thinking already happened at the chair.', icon: 'bowl' },
   ]
   return (
     <section
@@ -907,28 +908,139 @@ function Rhythm() {
           </div>
         </div>
 
+        {/* Timezone header row */}
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)',
-            gap: isMobile ? 32 : 48,
+            gridTemplateColumns: isMobile ? '52px 52px 32px 1fr' : '64px 64px 44px 1fr',
+            columnGap: isMobile ? 10 : 20,
+            paddingBottom: 10,
+            borderBottom: `1px solid ${T.cream}33`,
+            marginBottom: 4,
           }}
         >
+          <div
+            style={{
+              fontFamily: T.mono,
+              fontSize: 9,
+              letterSpacing: '0.28em',
+              opacity: 0.55,
+              textTransform: 'uppercase',
+            }}
+          >
+            EST
+          </div>
+          <div
+            style={{
+              fontFamily: T.mono,
+              fontSize: 9,
+              letterSpacing: '0.28em',
+              color: T.sun,
+              opacity: 0.85,
+              textTransform: 'uppercase',
+            }}
+          >
+            Local
+          </div>
+          <div />
+          <div
+            style={{
+              fontFamily: T.mono,
+              fontSize: 9,
+              letterSpacing: '0.28em',
+              opacity: 0.4,
+              textTransform: 'uppercase',
+            }}
+          >
+            The day
+          </div>
+        </div>
+
+        {/* Timeline rows */}
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
           {items.map((it, i) => (
-            <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              <Icon kind={it.icon} size={isMobile ? 40 : 48} color={T.sun} opacity={0.9} />
-              <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: '0.3em', opacity: 0.6 }}>{it.time}</div>
+            <div
+              key={i}
+              style={{
+                display: 'grid',
+                gridTemplateColumns: isMobile ? '52px 52px 32px 1fr' : '64px 64px 44px 1fr',
+                columnGap: isMobile ? 10 : 20,
+                padding: isMobile ? '18px 0' : '20px 0',
+                borderBottom: i < items.length - 1 ? `1px solid ${T.cream}1a` : 'none',
+                alignItems: 'baseline',
+              }}
+            >
+              {/* EST column */}
               <div
                 style={{
-                  fontFamily: T.serif,
-                  fontSize: isMobile ? 24 : 28,
-                  fontStyle: 'italic',
-                  fontWeight: 400,
+                  fontFamily: T.mono,
+                  fontSize: isMobile ? 14 : 16,
+                  letterSpacing: '0.04em',
+                  opacity: 0.5,
+                  whiteSpace: 'nowrap',
                 }}
               >
-                {it.title}
+                {it.est}
               </div>
-              <div style={{ fontFamily: T.serif, fontSize: 14, lineHeight: 1.6, opacity: 0.7 }}>{it.sub}</div>
+
+              {/* Local column */}
+              <div
+                style={{
+                  fontFamily: T.mono,
+                  fontSize: isMobile ? 14 : 16,
+                  letterSpacing: '0.04em',
+                  color: T.sun,
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {it.local}
+              </div>
+
+              {/* Icon */}
+              <div style={{ alignSelf: 'flex-start', paddingTop: 2 }}>
+                <Icon kind={it.icon} size={isMobile ? 22 : 28} color={T.sun} opacity={0.85} />
+              </div>
+
+              {/* Content: title + sub */}
+              <div style={{ minWidth: 0 }}>
+                <div
+                  style={{
+                    fontFamily: T.serif,
+                    fontSize: isMobile ? 19 : 22,
+                    fontStyle: 'italic',
+                    fontWeight: 400,
+                    lineHeight: 1.2,
+                  }}
+                >
+                  {it.title}
+                  {it.duration && (
+                    <span
+                      style={{
+                        fontFamily: T.mono,
+                        fontStyle: 'normal',
+                        fontSize: 10,
+                        letterSpacing: '0.22em',
+                        opacity: 0.5,
+                        marginLeft: 10,
+                        textTransform: 'uppercase',
+                      }}
+                    >
+                      · {it.duration}
+                    </span>
+                  )}
+                </div>
+                <div
+                  style={{
+                    fontFamily: T.serif,
+                    fontSize: isMobile ? 13 : 14,
+                    lineHeight: 1.55,
+                    opacity: 0.7,
+                    marginTop: 4,
+                  }}
+                >
+                  {it.sub}
+                </div>
+              </div>
             </div>
           ))}
         </div>
