@@ -830,7 +830,7 @@ function Rhythm() {
   // EST/EDT shown alongside local CEST. France is +6 hours from US East in July (EDT/CEST).
   const items: { est: string; local: string; duration?: string; title: string; sub: string; icon: IconKind }[] = [
     { est: '00:00', local: '06:00', title: 'Café & le vent', sub: 'Wind check. Coffee. Silence.', icon: 'sun' },
-    { est: '01:00', local: '07:00', title: 'Main session — kite', sub: 'Glass water. Two hours on the line. The day’s main wind window.', icon: 'kite' },
+    { est: '01:00', local: '07:00', duration: '3h', title: 'Main session — kite', sub: 'Glass water. Three hours on the line. The day’s main wind window.', icon: 'kite' },
     { est: '05:00', local: '11:00', duration: '2h', title: 'Leçon de français', sub: 'A working French lesson — conversation, not grammar drills.', icon: 'book' },
     { est: '07:00', local: '13:00', duration: '2h', title: 'Le Symposium', sub: 'After Plato. An attendee takes the chair over a long lunch. Ends 09 EST so the afternoon is clear for work.', icon: 'olive' },
     { est: '10:00', local: '16:00', title: 'Optional session — kite', sub: 'Afternoon thermals. Optional — work hours for the EST table.', icon: 'wind' },
