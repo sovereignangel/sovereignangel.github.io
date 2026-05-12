@@ -2436,7 +2436,7 @@ function FAQ() {
     ['Can I bring a partner?', 'Yes — each room is a double and partners are welcome whether they kite or not. The Airbnb price is per-person, so a partner means 2× the deposit and 2× the per-person share of the house. Meals and dinner conversations are open to all.'],
     ['Can I attend more than one week?', 'Absolutely — many partners do two. Pick all the weeks you want on the form above.'],
     ["What if the wind doesn't come?", 'It will (this is southern France in July). On the rare flat day: foiling, freediving, or a long lunch and a longer book.'],
-    ['Is this an Arete fund event?', 'Yes — the Mistral retreat is hosted by Arete Technologies for our LPs and a few invited friends. It is not a fund expense to LPs.'],
+    ['Is this an Arete fund event?', 'Yes — the Mistral retreat is hosted by Arete Technologies for LPs and friends.'],
   ]
   const [open, setOpen] = useState<number>(0)
   const isMobile = useIsMobile()
