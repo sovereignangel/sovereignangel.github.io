@@ -211,12 +211,7 @@ export default function AretePage() {
                 maxWidth: 480,
               }}
             >
-              A quantamental fund. Disciplined practice, expressed in capital.
-              Thesis, holdings, and returns are at{' '}
-              <span style={{ fontFamily: C.mono, fontSize: 13, color: C.burgundy, letterSpacing: '0.02em' }}>
-                armstrong.loricorpuz.com
-              </span>
-              .
+              A quantamental fund — value invested with time leverage. Pre-launch details on the fund website.
             </p>
 
             <div style={{ flex: 1 }} />
