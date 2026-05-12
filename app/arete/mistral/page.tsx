@@ -484,7 +484,7 @@ const WEEKS: Week[] = [
     cap: 8,
     airbnb: 6100,
     airbnbUrl:
-      'https://www.airbnb.com/book/stays/1477723892946943440?numberOfAdults=10&checkin=2026-06-29&checkout=2026-07-05&guestCurrency=USD&productId=1477723892946943440&code=HMSMRE24JK',
+      'https://www.airbnb.com/rooms/1477723892946943440?productId=1477723892946943440&check_in=2026-06-29&check_out=2026-07-05&adults=10&source_impression_id=p3_1778546159_P37DgFMxs0y55B94',
   },
   {
     n: 'II',
@@ -508,7 +508,7 @@ const WEEKS: Week[] = [
     cap: 9,
     airbnb: 9600,
     airbnbUrl:
-      'https://www.airbnb.com/book/stays/948265181526557439?numberOfAdults=10&checkin=2026-07-19&checkout=2026-07-26&guestCurrency=USD&productId=948265181526557439&code=HMH3QAMDJJ',
+      'https://www.airbnb.com/rooms/948265181526557439?productId=948265181526557439&check_in=2026-07-19&check_out=2026-07-26&adults=10',
   },
   {
     n: 'IV',
@@ -519,6 +519,8 @@ const WEEKS: Week[] = [
     desc: "The Tramontane howls down the Pyrenees. Two iconic spots, one masters' week.",
     cap: 8,
     airbnb: 4300,
+    airbnbUrl:
+      'https://www.airbnb.com/rooms/1063599375799313767?adults=10&check_in=2026-06-13&check_out=2026-06-19&wishlist_item_id=11006301815882',
   },
 ]
 
@@ -927,31 +929,234 @@ function Rhythm() {
 }
 
 // ============================================================
-// COACHES
+// PRACTICE ASSETS — branded illustrations for the three pillars
+// ============================================================
+function PracticeFrame({ children }: { children: React.ReactNode }) {
+  return (
+    <div
+      style={{
+        aspectRatio: '4/5',
+        background: '#e8dfc8',
+        position: 'relative',
+        overflow: 'hidden',
+        borderBottom: `1px solid ${T.ink}`,
+      }}
+    >
+      {children}
+    </div>
+  )
+}
+
+function AssetKite() {
+  return (
+    <PracticeFrame>
+      <svg viewBox="0 0 400 500" preserveAspectRatio="xMidYMid slice" style={{ width: '100%', height: '100%', display: 'block' }}>
+        <defs>
+          <linearGradient id="sky-k" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#e8dfc8" />
+            <stop offset="60%" stopColor="#d6c89e" />
+            <stop offset="100%" stopColor="#c89f5a" />
+          </linearGradient>
+        </defs>
+        <rect width="400" height="360" fill="url(#sky-k)" />
+        <rect y="360" width="400" height="140" fill={T.sea} />
+        <circle cx="320" cy="90" r="22" fill={T.sun} opacity="0.85" />
+        <path
+          d="M 70 130 Q 130 70 200 90 Q 230 100 215 140 Q 145 110 80 160 Q 60 152 70 130 Z"
+          fill={T.coral}
+          stroke={T.ink}
+          strokeWidth="1.2"
+        />
+        <g stroke={T.ink} strokeWidth="0.55" opacity="0.65" fill="none">
+          <line x1="95" y1="140" x2="218" y2="368" />
+          <line x1="140" y1="125" x2="218" y2="368" />
+          <line x1="190" y1="115" x2="218" y2="368" />
+        </g>
+        <g fill={T.ink}>
+          <circle cx="218" cy="360" r="5" />
+          <path d="M 215 365 L 221 365 L 222 380 L 218 390 L 214 380 Z" />
+          <path d="M 196 390 L 240 390" stroke={T.ink} strokeWidth="2.6" />
+          <ellipse cx="218" cy="396" rx="22" ry="2" opacity="0.35" />
+        </g>
+        <g stroke={T.cream} strokeWidth="0.55" fill="none" opacity="0.45">
+          <path d="M 0 416 Q 100 410 200 416 T 400 416" />
+          <path d="M 0 436 Q 100 430 200 436 T 400 436" opacity="0.7" />
+          <path d="M 0 456 Q 100 450 200 456 T 400 456" opacity="0.5" />
+          <path d="M 0 476 Q 100 470 200 476 T 400 476" opacity="0.4" />
+        </g>
+        <text x="20" y="490" fontFamily={T.mono} fontSize="9" fill={T.cream} letterSpacing="3" opacity="0.85">
+          LE VENT
+        </text>
+        <text x="380" y="490" textAnchor="end" fontFamily={T.mono} fontSize="9" fill={T.cream} letterSpacing="2" opacity="0.6">
+          OPTIONAL
+        </text>
+      </svg>
+    </PracticeFrame>
+  )
+}
+
+function AssetFrench() {
+  return (
+    <PracticeFrame>
+      <svg viewBox="0 0 400 500" preserveAspectRatio="xMidYMid slice" style={{ width: '100%', height: '100%', display: 'block' }}>
+        <defs>
+          <linearGradient id="back-f" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#f0e6cc" />
+            <stop offset="100%" stopColor="#d6b88a" />
+          </linearGradient>
+        </defs>
+        <rect width="400" height="500" fill="url(#back-f)" />
+        <text
+          x="200"
+          y="135"
+          fontFamily={T.serif}
+          fontSize="56"
+          fontStyle="italic"
+          fill={T.coral}
+          opacity="0.32"
+          textAnchor="middle"
+        >
+          français
+        </text>
+        <rect x="30" y="290" width="340" height="180" fill={T.bronze} opacity="0.42" />
+        <line x1="30" y1="290" x2="370" y2="290" stroke={T.ink} strokeWidth="0.6" opacity="0.5" />
+        <g>
+          <path
+            d="M 100 290 L 260 290 L 260 248 L 180 240 L 100 248 Z"
+            fill={T.cream}
+            stroke={T.ink}
+            strokeWidth="0.8"
+          />
+          <line x1="180" y1="240" x2="180" y2="290" stroke={T.ink} strokeWidth="0.6" opacity="0.7" />
+          <g stroke={T.ink} strokeWidth="0.4" opacity="0.5">
+            <line x1="115" y1="258" x2="170" y2="258" />
+            <line x1="115" y1="265" x2="170" y2="265" />
+            <line x1="115" y1="272" x2="165" y2="272" />
+            <line x1="115" y1="279" x2="170" y2="279" />
+            <line x1="190" y1="258" x2="245" y2="258" />
+            <line x1="190" y1="265" x2="245" y2="265" />
+            <line x1="190" y1="272" x2="240" y2="272" />
+            <line x1="190" y1="279" x2="245" y2="279" />
+          </g>
+        </g>
+        <g>
+          <ellipse cx="305" cy="282" rx="22" ry="4" fill={T.ink} />
+          <path d="M 283 282 L 287 300 Q 295 308 305 308 Q 315 308 323 300 L 327 282 Z" fill={T.ink} opacity="0.85" />
+          <path d="M 326 287 Q 338 287 338 295 Q 338 303 326 303" fill="none" stroke={T.ink} strokeWidth="1.1" />
+          <ellipse cx="305" cy="282" rx="18" ry="3" fill="#2a1810" />
+        </g>
+        <g>
+          <path d="M 50 252 Q 92 220 130 196" stroke={T.ink} strokeWidth="0.9" fill="none" />
+          <g fill={T.bronze} opacity="0.85">
+            <ellipse cx="68" cy="240" rx="7" ry="3" transform="rotate(-30 68 240)" />
+            <ellipse cx="82" cy="228" rx="7" ry="3" transform="rotate(-30 82 228)" />
+            <ellipse cx="96" cy="216" rx="7" ry="3" transform="rotate(-30 96 216)" />
+            <ellipse cx="110" cy="206" rx="7" ry="3" transform="rotate(-30 110 206)" />
+            <ellipse cx="124" cy="198" rx="7" ry="3" transform="rotate(-30 124 198)" />
+          </g>
+          <g fill={T.bronze} opacity="0.55">
+            <ellipse cx="74" cy="252" rx="6" ry="2.5" transform="rotate(60 74 252)" />
+            <ellipse cx="90" cy="240" rx="6" ry="2.5" transform="rotate(60 90 240)" />
+            <ellipse cx="106" cy="226" rx="6" ry="2.5" transform="rotate(60 106 226)" />
+          </g>
+        </g>
+        <text x="20" y="490" fontFamily={T.mono} fontSize="9" fill={T.ink} letterSpacing="3" opacity="0.65">
+          LA LANGUE
+        </text>
+        <text x="380" y="490" textAnchor="end" fontFamily={T.mono} fontSize="9" fill={T.ink} letterSpacing="2" opacity="0.55">
+          DAILY · INCLUDED
+        </text>
+      </svg>
+    </PracticeFrame>
+  )
+}
+
+function AssetConversations() {
+  return (
+    <PracticeFrame>
+      <svg viewBox="0 0 400 500" preserveAspectRatio="xMidYMid slice" style={{ width: '100%', height: '100%', display: 'block' }}>
+        <defs>
+          <linearGradient id="dusk-c" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#3a2f28" />
+            <stop offset="55%" stopColor="#2a2522" />
+            <stop offset="100%" stopColor="#1a1410" />
+          </linearGradient>
+        </defs>
+        <rect width="400" height="500" fill="url(#dusk-c)" />
+        <rect x="110" y="60" width="180" height="400" fill={T.cream} opacity="0.92" stroke={T.ink} strokeWidth="0.6" />
+        <g opacity="0.5" fill={T.cream}>
+          <rect x="76" y="105" width="22" height="44" />
+          <rect x="76" y="185" width="22" height="44" />
+          <rect x="76" y="265" width="22" height="44" />
+          <rect x="76" y="345" width="22" height="44" />
+          <rect x="302" y="105" width="22" height="44" />
+          <rect x="302" y="185" width="22" height="44" />
+          <rect x="302" y="265" width="22" height="44" />
+          <rect x="302" y="345" width="22" height="44" />
+        </g>
+        <g>
+          {[110, 200, 290, 380].map((y) => (
+            <g key={y}>
+              <rect x="197" y={y - 36} width="6" height="36" fill={T.cream} />
+              <ellipse cx="200" cy={y} rx="5" ry="2" fill={T.bronze} opacity="0.7" />
+              <path
+                d={`M 198 ${y - 48} Q 195 ${y - 42} 200 ${y - 36} Q 205 ${y - 42} 202 ${y - 48} Z`}
+                fill={T.sun}
+              />
+              <circle cx="200" cy={y - 44} r="14" fill={T.sun} opacity="0.18" />
+            </g>
+          ))}
+        </g>
+        <g stroke={T.ink} strokeWidth="0.6" fill="none" opacity="0.5">
+          <circle cx="148" cy="135" r="14" />
+          <circle cx="252" cy="135" r="14" />
+          <circle cx="148" cy="225" r="14" />
+          <circle cx="252" cy="225" r="14" />
+          <circle cx="148" cy="315" r="14" />
+          <circle cx="252" cy="315" r="14" />
+          <circle cx="148" cy="405" r="14" />
+          <circle cx="252" cy="405" r="14" />
+        </g>
+        <g fill={T.coral} opacity="0.6">
+          <path d="M 134 152 Q 134 162 142 164 L 142 168 L 140 168 L 140 172 L 156 172 L 156 168 L 154 168 L 154 164 Q 162 162 162 152 Z" />
+          <path d="M 134 332 Q 134 342 142 344 L 142 348 L 140 348 L 140 352 L 156 352 L 156 348 L 154 348 L 154 344 Q 162 342 162 332 Z" />
+          <path d="M 238 242 Q 238 252 246 254 L 246 258 L 244 258 L 244 262 L 260 262 L 260 258 L 258 258 L 258 254 Q 266 252 266 242 Z" />
+          <path d="M 238 422 Q 238 432 246 434 L 246 438 L 244 438 L 244 442 L 260 442 L 260 438 L 258 438 L 258 434 Q 266 432 266 422 Z" />
+        </g>
+        <text x="20" y="490" fontFamily={T.mono} fontSize="9" fill={T.cream} letterSpacing="3" opacity="0.85">
+          LA TABLE
+        </text>
+        <text x="380" y="490" textAnchor="end" fontFamily={T.mono} fontSize="9" fill={T.cream} letterSpacing="2" opacity="0.6">
+          BY THE GROUP
+        </text>
+      </svg>
+    </PracticeFrame>
+  )
+}
+
+// ============================================================
+// PRACTICES
 // ============================================================
 function Coaches() {
   const isMobile = useIsMobile()
-  const c: { name: string; role: string; bio: string; cred: string; icon: IconKind }[] = [
+  const practices: { title: string; role: string; body: string; Art: () => JSX.Element }[] = [
     {
-      name: 'Théo Lacroix',
-      role: 'Resident kite instructor',
-      bio: 'Pro kiteboarder, ten seasons on the French coast. Lives with us for the week — first on the water, last off it.',
-      cred: 'IKO L3 · 12 yrs',
-      icon: 'kite',
+      title: 'Kiting',
+      role: 'Optional · own expense',
+      body: 'Schools and rentals at every spot we visit. Beginners book a local school direct; advanced riders bring their own kit. We keep the choice yours — the retreat itself is the meals, the reading, and the company.',
+      Art: AssetKite,
     },
     {
-      name: 'Camille Beaumont',
-      role: 'Professeure de français',
-      bio: 'Sorbonne-trained, teaches the daily lesson over olives. Patient, funny, allergic to grammar drills.',
-      cred: 'DELF/DALF · 8 yrs',
-      icon: 'wave',
+      title: 'French',
+      role: 'Daily lesson over olives',
+      body: 'A live-in tutor for the month. Patient, funny, allergic to grammar drills. The lesson happens at the table — wine, olive oil, and a small printed text per week.',
+      Art: AssetFrench,
     },
     {
-      name: 'The table',
-      role: 'Reading & dialogue',
-      bio: 'No assigned guru. Each week the partners pick the text, share the chair, and trade questions over dinner.',
-      cred: 'BY THE GROUP',
-      icon: 'book',
+      title: 'Dinner conversations',
+      role: 'Led by the group',
+      body: 'No assigned guru. Each week the partners pick the text, share the chair, and trade questions over a long candlelit table. The reading is whatever the group decides; the practice is showing up to it.',
+      Art: AssetConversations,
     },
   ]
   return (
@@ -974,7 +1179,7 @@ function Coaches() {
             marginBottom: 16,
           }}
         >
-          III · LES MAÎTRES
+          III · LES PRATIQUES
         </div>
         <h2
           style={{
@@ -986,7 +1191,7 @@ function Coaches() {
             fontStyle: 'italic',
           }}
         >
-          The hands you&rsquo;ll learn from.
+          Three practices, one month.
         </h2>
         <div
           style={{
@@ -995,59 +1200,29 @@ function Coaches() {
             gap: isMobile ? 40 : 32,
           }}
         >
-          {c.map((p) => (
-            <div key={p.name} style={{ display: 'flex', flexDirection: 'column' }}>
-              <div
-                style={{
-                  aspectRatio: '4/5',
-                  background: T.paperDeep,
-                  position: 'relative',
-                  overflow: 'hidden',
-                  borderBottom: `1px solid ${T.ink}`,
-                }}
-              >
-                <div
-                  style={{
-                    position: 'absolute',
-                    inset: 0,
-                    backgroundImage: `radial-gradient(circle at 30% 35%, ${T.sand} 0%, transparent 45%), radial-gradient(circle at 70% 60%, ${T.bronze}66 0%, transparent 50%)`,
-                  }}
-                />
-                <PatternArcs color={T.ink} opacity={0.12} size={60} />
-                <div
-                  style={{
-                    position: 'absolute',
-                    top: 12,
-                    left: 14,
-                    fontFamily: T.mono,
-                    fontSize: 9,
-                    letterSpacing: '0.3em',
-                    opacity: 0.6,
-                  }}
-                >
-                  {p.cred}
-                </div>
-                <div style={{ position: 'absolute', bottom: 12, right: 14 }}>
-                  <Icon kind={p.icon} size={32} color={T.ink} opacity={0.5} />
+          {practices.map((p) => {
+            const Art = p.Art
+            return (
+              <div key={p.title} style={{ display: 'flex', flexDirection: 'column' }}>
+                <Art />
+                <div style={{ paddingTop: 20 }}>
+                  <div
+                    style={{
+                      fontFamily: T.mono,
+                      fontSize: 10,
+                      letterSpacing: '0.3em',
+                      opacity: 0.6,
+                      textTransform: 'uppercase',
+                    }}
+                  >
+                    {p.role}
+                  </div>
+                  <div style={{ fontFamily: T.serif, fontSize: 30, fontStyle: 'italic', marginTop: 6 }}>{p.title}</div>
+                  <p style={{ fontFamily: T.serif, fontSize: 14, lineHeight: 1.65, opacity: 0.75, marginTop: 12 }}>{p.body}</p>
                 </div>
               </div>
-              <div style={{ paddingTop: 20 }}>
-                <div
-                  style={{
-                    fontFamily: T.mono,
-                    fontSize: 10,
-                    letterSpacing: '0.3em',
-                    opacity: 0.6,
-                    textTransform: 'uppercase',
-                  }}
-                >
-                  {p.role}
-                </div>
-                <div style={{ fontFamily: T.serif, fontSize: 30, fontStyle: 'italic', marginTop: 6 }}>{p.name}</div>
-                <p style={{ fontFamily: T.serif, fontSize: 14, lineHeight: 1.65, opacity: 0.75, marginTop: 12 }}>{p.bio}</p>
-              </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       </div>
     </section>
@@ -1512,10 +1687,10 @@ function Location() {
                 rel={w.airbnbUrl ? 'noopener noreferrer' : undefined}
                 style={{
                   display: 'grid',
-                  gridTemplateColumns: isMobile ? '32px 1fr auto' : '60px 1.4fr 1fr auto',
-                  gap: isMobile ? 12 : 20,
+                  gridTemplateColumns: isMobile ? '28px 1fr auto auto' : '60px 1.4fr auto auto',
+                  gap: isMobile ? 10 : 20,
                   alignItems: 'center',
-                  padding: isMobile ? '16px 0' : '20px 0',
+                  padding: isMobile ? '14px 0' : '20px 0',
                   borderTop: i === 0 ? `1px solid ${T.ink}33` : 'none',
                   borderBottom: `1px solid ${T.ink}33`,
                   color: T.ink,
@@ -1527,7 +1702,7 @@ function Location() {
                   style={{
                     fontFamily: T.serif,
                     fontStyle: 'italic',
-                    fontSize: isMobile ? 22 : 28,
+                    fontSize: isMobile ? 20 : 28,
                     color: T.bronze,
                     lineHeight: 1,
                   }}
@@ -1535,42 +1710,69 @@ function Location() {
                   {w.n}
                 </div>
                 <div style={{ minWidth: 0 }}>
-                  <div style={{ fontFamily: T.serif, fontSize: isMobile ? 16 : 19, lineHeight: 1.2 }}>{w.place}</div>
+                  <div
+                    style={{
+                      fontFamily: T.serif,
+                      fontSize: isMobile ? 15 : 19,
+                      lineHeight: 1.2,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {w.place}
+                  </div>
                   <div
                     style={{
                       fontFamily: T.mono,
-                      fontSize: 9,
-                      letterSpacing: '0.22em',
+                      fontSize: isMobile ? 8 : 9,
+                      letterSpacing: isMobile ? '0.18em' : '0.22em',
                       opacity: 0.6,
                       marginTop: 4,
                       textTransform: 'uppercase',
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
                     }}
                   >
                     {w.dates} · sleeps {w.cap + 2}
                   </div>
                 </div>
-                {!isMobile && (
-                  <div>
-                    <div style={{ fontFamily: T.mono, fontSize: 13, color: T.coral, fontWeight: 500 }}>
-                      ${perPerson(w).toLocaleString('en-US')}
-                      <span style={{ opacity: 0.6, fontSize: 9, letterSpacing: '0.18em', marginLeft: 5 }}>/PP</span>
-                    </div>
-                    <div style={{ fontFamily: T.mono, fontSize: 9, letterSpacing: '0.22em', opacity: 0.5, marginTop: 3 }}>
-                      ${w.airbnb.toLocaleString('en-US')} TOTAL
-                    </div>
+                <div style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
+                  <div
+                    style={{
+                      fontFamily: T.mono,
+                      fontSize: isMobile ? 12 : 13,
+                      color: T.coral,
+                      fontWeight: 500,
+                    }}
+                  >
+                    ${perPerson(w).toLocaleString('en-US')}
+                    <span style={{ opacity: 0.6, fontSize: isMobile ? 8 : 9, letterSpacing: '0.18em', marginLeft: 4 }}>/PP</span>
                   </div>
-                )}
+                  <div
+                    style={{
+                      fontFamily: T.mono,
+                      fontSize: isMobile ? 8 : 9,
+                      letterSpacing: '0.18em',
+                      opacity: 0.5,
+                      marginTop: 2,
+                    }}
+                  >
+                    ${(w.airbnb / 1000).toFixed(1)}K TOTAL
+                  </div>
+                </div>
                 <div
                   style={{
                     fontFamily: T.mono,
-                    fontSize: 10,
-                    letterSpacing: '0.28em',
+                    fontSize: isMobile ? 9 : 10,
+                    letterSpacing: '0.24em',
                     textTransform: 'uppercase',
                     color: w.airbnbUrl ? T.coral : T.ink + '66',
                     whiteSpace: 'nowrap',
                   }}
                 >
-                  {w.airbnbUrl ? 'View →' : 'TBC'}
+                  {w.airbnbUrl ? (isMobile ? '→' : 'View →') : 'TBC'}
                 </div>
               </a>
             ))}
@@ -1764,9 +1966,66 @@ function Field({
   )
 }
 
+function Segment({
+  label,
+  value,
+  onChange,
+  options,
+}: {
+  label: string
+  value: string
+  onChange: (v: string) => void
+  options: { value: string; label: string }[]
+}) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+      <span
+        style={{
+          fontFamily: T.mono,
+          fontSize: 9,
+          letterSpacing: '0.32em',
+          textTransform: 'uppercase',
+          opacity: 0.65,
+        }}
+      >
+        {label}
+      </span>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+        {options.map((opt) => {
+          const sel = opt.value === value
+          return (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => onChange(opt.value)}
+              style={{
+                padding: '10px 14px',
+                background: sel ? T.ink : 'transparent',
+                color: sel ? T.cream : T.ink,
+                border: `1px solid ${sel ? T.ink : T.ink + '44'}`,
+                fontFamily: T.mono,
+                fontSize: 10,
+                letterSpacing: '0.22em',
+                textTransform: 'uppercase',
+                cursor: 'pointer',
+                transition: 'all 0.12s',
+              }}
+            >
+              {opt.label}
+            </button>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
 // ============================================================
 // RSVP
 // ============================================================
+type KiteLevel = 'none' | 'beginner' | 'intermediate' | 'advanced'
+type KiteGear = 'na' | 'own' | 'rental'
+
 function RSVP() {
   const isMobile = useIsMobile()
   const initial: Record<string, number> = { I: 0, II: 0, III: 0, IV: 0 }
@@ -1774,6 +2033,11 @@ function RSVP() {
   const [picked, setPicked] = useState<string[]>([])
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
+  const [kiteLevel, setKiteLevel] = useState<KiteLevel>('none')
+  const [kiteGear, setKiteGear] = useState<KiteGear>('na')
+  const [bringPartner, setBringPartner] = useState(false)
+  const [partnerName, setPartnerName] = useState('')
+  const [dietary, setDietary] = useState('')
   const [note, setNote] = useState('')
   const [submitted, setSubmitted] = useState(false)
 
@@ -1991,13 +2255,113 @@ function RSVP() {
               <Field label="Name" value={name} onChange={setName} placeholder="Your full name" />
               <Field label="Email" value={email} onChange={setEmail} placeholder="you@arete.tech" type="email" />
             </div>
-            <Field
-              label="Anything we should know?"
-              value={note}
-              onChange={setNote}
-              placeholder="Skill level, dietary, partner attending, etc."
-              textarea
+
+            {/* Kite level */}
+            <Segment
+              label="Kite level"
+              value={kiteLevel}
+              onChange={(v) => {
+                const next = v as KiteLevel
+                setKiteLevel(next)
+                if (next === 'none') setKiteGear('na')
+                else if (kiteGear === 'na') setKiteGear('rental')
+              }}
+              options={[
+                { value: 'none', label: 'Not kiting' },
+                { value: 'beginner', label: 'Beginner' },
+                { value: 'intermediate', label: 'Intermediate' },
+                { value: 'advanced', label: 'Advanced' },
+              ]}
             />
+
+            {/* Equipment — only relevant if kiting */}
+            {kiteLevel !== 'none' && (
+              <div style={{ marginTop: isMobile ? 22 : 26 }}>
+                <Segment
+                  label="Kite equipment"
+                  value={kiteGear}
+                  onChange={(v) => setKiteGear(v as KiteGear)}
+                  options={[
+                    { value: 'own', label: 'Bringing my own' },
+                    { value: 'rental', label: 'Need rental' },
+                  ]}
+                />
+              </div>
+            )}
+
+            {/* Partner +1 */}
+            <div style={{ marginTop: isMobile ? 22 : 26 }}>
+              <div
+                style={{
+                  fontFamily: T.mono,
+                  fontSize: 9,
+                  letterSpacing: '0.32em',
+                  textTransform: 'uppercase',
+                  opacity: 0.65,
+                  marginBottom: 10,
+                }}
+              >
+                Partner +1
+              </div>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer' }}>
+                <span
+                  onClick={() => setBringPartner(!bringPartner)}
+                  style={{
+                    width: 18,
+                    height: 18,
+                    border: `1px solid ${T.ink}`,
+                    background: bringPartner ? T.ink : 'transparent',
+                    color: T.cream,
+                    fontSize: 12,
+                    fontFamily: T.mono,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                  }}
+                >
+                  {bringPartner ? '✓' : ''}
+                </span>
+                <input
+                  type="checkbox"
+                  checked={bringPartner}
+                  onChange={(e) => setBringPartner(e.target.checked)}
+                  style={{ display: 'none' }}
+                />
+                <span style={{ fontFamily: T.serif, fontSize: 16, opacity: 0.85 }}>
+                  Yes, my partner is coming too.
+                </span>
+              </label>
+              {bringPartner && (
+                <div style={{ marginTop: 16 }}>
+                  <Field
+                    label="Partner's name"
+                    value={partnerName}
+                    onChange={setPartnerName}
+                    placeholder="Their full name"
+                  />
+                </div>
+              )}
+            </div>
+
+            <div style={{ marginTop: isMobile ? 22 : 26 }}>
+              <Field
+                label="Dietary restrictions"
+                value={dietary}
+                onChange={setDietary}
+                placeholder="Allergies, vegetarian, halal, etc. — or none."
+              />
+            </div>
+
+            <div style={{ marginTop: isMobile ? 22 : 26 }}>
+              <Field
+                label="Anything else?"
+                value={note}
+                onChange={setNote}
+                placeholder="Anything we should know — arrival timing, requests, etc."
+                textarea
+              />
+            </div>
 
             <div
               style={{
@@ -2067,9 +2431,9 @@ function FAQ() {
     ['How do I save my spot?', 'A refundable Airbnb deposit by 1 June via Venmo to @sovereignangel locks in your week. Refundable if your plans change before we close the house bookings; we will say so clearly when the deadline approaches.'],
     ["What's included in the per-person price?", 'The house only — your share of the Airbnb. Estimates for catered lunch & dinner (private chef, mid-range, not too lux) and group lifts between locations come in a second pass once we firm up headcount. Travel to France is on you.'],
     ['Is kiting included?', 'No — kiting is optional and arranged à la carte at the spot, at your own expense. Beginners can book a local school directly; advanced riders bring their own kit. The retreat itself is the meals, the reading, the company, and the wind.'],
-    ['How do meals work?', 'Lunch and dinner are catered for the house — a private chef, mid-range, three weeks of long tables. Breakfast and any restaurant nights are casual and on you. Dietary asks welcome on the form below.'],
+    ['How do meals work?', 'Lunch and dinner are catered for the house — a private chef, mid-range, four weeks of long tables. Breakfast and any restaurant nights are casual and on you. Dietary asks welcome on the form below.'],
     ['How do we move between weeks?', 'Group lifts between locations — vans or trains, arranged together so we travel as one party. You only need to handle your flights into and out of France.'],
-    ['Can I bring a partner?', 'Yes. Each room is a double; partners are welcome whether they kite or not. Reading and meals are open to all.'],
+    ['Can I bring a partner?', 'Yes — each room is a double and partners are welcome whether they kite or not. The Airbnb price is per-person, so a partner means 2× the deposit and 2× the per-person share of the house. Meals and dinner conversations are open to all.'],
     ['Can I attend more than one week?', 'Absolutely — many partners do two. Pick all the weeks you want on the form above.'],
     ["What if the wind doesn't come?", 'It will (this is southern France in July). On the rare flat day: foiling, freediving, or a long lunch and a longer book.'],
     ['Is this an Arete fund event?', 'Yes — the Mistral retreat is hosted by Arete Technologies for our LPs and a few invited friends. It is not a fund expense to LPs.'],
