@@ -829,11 +829,11 @@ function Rhythm() {
   const isMobile = useIsMobile()
   const items: { time: string; title: string; sub: string; icon: IconKind }[] = [
     { time: '06:00', title: 'Café & le vent', sub: 'Wind check. Coffee. Silence.', icon: 'sun' },
-    { time: '07:00', title: 'Session — kite', sub: 'Glass water. Two hours on the line.', icon: 'kite' },
-    { time: '11:00', title: 'Leçon de français', sub: 'A working French lesson over olives — conversation, not grammar drills.', icon: 'book' },
-    { time: '14:00', title: 'Long lunch', sub: 'Local catch, garden vegetables, cold rosé.', icon: 'bowl' },
-    { time: '16:00', title: 'Session — kite', sub: 'Afternoon thermals. Progression.', icon: 'wind' },
-    { time: '20:00', title: 'Le Symposium', sub: 'After Plato — each evening one attendee takes the chair: a prompt, a topic, a short talk. The table answers in turn over wine.', icon: 'olive' },
+    { time: '07:00', title: 'Main session — kite', sub: 'Glass water. Two hours on the line. The day’s main wind window.', icon: 'kite' },
+    { time: '11:00 — 13:00', title: 'Leçon de français', sub: 'A working French lesson over olives — conversation, not grammar drills.', icon: 'book' },
+    { time: '13:00 — 15:00', title: 'Le Symposium', sub: 'After Plato — each day one attendee takes the chair over a long lunch: a prompt, a topic, a short talk. The table answers in turn over wine.', icon: 'olive' },
+    { time: '16:00', title: 'Optional session — kite', sub: 'Afternoon thermals. Optional — work hours for the EST table.', icon: 'wind' },
+    { time: '20:00', title: 'Dinner', sub: 'Local catch, garden vegetables, cold rosé. Casual — the day’s thinking already happened at the chair.', icon: 'bowl' },
   ]
   return (
     <section
@@ -866,12 +866,47 @@ function Rhythm() {
             fontSize: isMobile ? 34 : 56,
             fontWeight: 400,
             lineHeight: 1,
-            margin: isMobile ? '0 0 36px' : '0 0 64px',
+            margin: isMobile ? '0 0 28px' : '0 0 36px',
             fontStyle: 'italic',
           }}
         >
           A day, repeated <span style={{ color: T.sun }}>well</span>.
         </h2>
+
+        <div
+          style={{
+            border: `1px solid ${T.cream}33`,
+            background: T.cream + '0a',
+            padding: isMobile ? '16px 18px' : '18px 22px',
+            margin: isMobile ? '0 0 36px' : '0 0 56px',
+            maxWidth: 680,
+          }}
+        >
+          <div
+            style={{
+              fontFamily: T.mono,
+              fontSize: 9,
+              letterSpacing: '0.32em',
+              opacity: 0.6,
+              textTransform: 'uppercase',
+              marginBottom: 8,
+              color: T.sun,
+            }}
+          >
+            Built for the EST table
+          </div>
+          <div
+            style={{
+              fontFamily: T.serif,
+              fontSize: 15,
+              lineHeight: 1.6,
+              opacity: 0.85,
+            }}
+          >
+            Curated for partners working US-East hours. <span style={{ fontStyle: 'italic' }}>Le Symposium</span> ends at <span style={{ color: T.sun }}>09:00 EST</span>, leaving the afternoon clear for work. The 16:00 session is the optional one — the 07:00 session is the day&rsquo;s main wind window.
+          </div>
+        </div>
+
         <div
           style={{
             display: 'grid',
@@ -1189,7 +1224,7 @@ function AssetConversations() {
           LE SYMPOSIUM
         </text>
         <text x="380" y="490" textAnchor="end" fontFamily={T.mono} fontSize="9" fill={T.cream} letterSpacing="2" opacity="0.6">
-          NIGHTLY
+          DAILY · LUNCH
         </text>
       </svg>
     </PracticeFrame>
@@ -1211,13 +1246,13 @@ function Coaches() {
     {
       title: 'French',
       role: 'Daily lesson over olives',
-      body: 'A live-in tutor for the month. Patient, funny, allergic to grammar drills. The lesson happens at the table — wine, olive oil, and a small printed text per week.',
+      body: "One tutor for the full month, joining over Zoom. Patient, funny, allergic to grammar drills. We work from Assimil's New French With Ease — one short bilingual dialogue a day. Everyone buys their own copy; the tutor builds the live session around it. Conversation over correction.",
       Art: AssetFrench,
     },
     {
       title: 'Symposiums',
-      role: 'Daily · an attendee in the chair',
-      body: "After Plato. Every evening one attendee takes the chair — frames a question, opens a topic, or gives a short talk — and the table answers in turn over wine. Everyone gets several nights across the month. The reading and the chair are yours; the practice is showing up to it.",
+      role: 'Daily over lunch · an attendee in the chair',
+      body: "After Plato. Each day one attendee takes the chair over a long lunch — frames a question, opens a topic, or gives a short talk — and the table answers in turn over wine. Scheduled 13:00–15:00 local, ending at 09:00 EST so the afternoon is clear for work. Everyone gets several turns across the month.",
       Art: AssetConversations,
     },
   ]
