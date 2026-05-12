@@ -1,10 +1,10 @@
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Mistral · Arete LP Retreat · Kitesurf France · July 2026',
-  description: 'On the wind, the long view. A four-week kitesurf retreat on the French coast for the partners of Arete Technologies.',
+  title: 'Mistral · F&F Retreat · Kitesurf France · July 2026',
+  description: 'On the wind, the long view. A four-week kitesurf retreat on the French coast — friends & family of Arete Technologies.',
   openGraph: {
-    title: 'Mistral · Arete LP Retreat',
+    title: 'Mistral · F&F Retreat',
     description: 'On the wind, the long view. Four weeks of kitesurf on the French coast — July 2026.',
     url: 'https://arete.loricorpuz.com/mistral',
     siteName: 'Arete Technologies',
