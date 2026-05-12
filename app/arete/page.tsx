@@ -64,9 +64,22 @@ const RESPONSIVE_CSS = `
     align-items: stretch;
   }
   .arete-grid > * { min-width: 0; }
+  .arete-secondary {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
   @media (max-width: 780px) {
     .arete-grid {
       grid-template-columns: 1fr;
+    }
+    .arete-secondary {
+      flex-direction: row;
+      gap: 12px;
+    }
+    .arete-secondary > * {
+      flex: 1;
+      min-width: 0;
     }
   }
 `
@@ -237,7 +250,7 @@ export default function AretePage() {
           </a>
 
           {/* SECONDARY STACK — Salons + Mistral */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+          <div className="arete-secondary">
             <SecondaryCard
               name="Salons"
               tagline="The long table."
