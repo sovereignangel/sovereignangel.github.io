@@ -1405,29 +1405,50 @@ function Coaches() {
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)',
-            gap: isMobile ? 40 : 32,
+            gridTemplateColumns: 'repeat(3, 1fr)',
+            gap: isMobile ? 10 : 32,
           }}
         >
           {practices.map((p) => {
             const Art = p.Art
             return (
-              <div key={p.title} style={{ display: 'flex', flexDirection: 'column' }}>
+              <div key={p.title} style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
                 <Art />
-                <div style={{ paddingTop: 20 }}>
+                <div style={{ paddingTop: isMobile ? 12 : 20 }}>
                   <div
                     style={{
                       fontFamily: T.mono,
-                      fontSize: 10,
-                      letterSpacing: '0.3em',
+                      fontSize: isMobile ? 8 : 10,
+                      letterSpacing: isMobile ? '0.2em' : '0.3em',
                       opacity: 0.6,
                       textTransform: 'uppercase',
+                      lineHeight: 1.3,
                     }}
                   >
                     {p.role}
                   </div>
-                  <div style={{ fontFamily: T.serif, fontSize: 30, fontStyle: 'italic', marginTop: 6 }}>{p.title}</div>
-                  <p style={{ fontFamily: T.serif, fontSize: 14, lineHeight: 1.65, opacity: 0.75, marginTop: 12 }}>{p.body}</p>
+                  <div
+                    style={{
+                      fontFamily: T.serif,
+                      fontSize: isMobile ? 18 : 30,
+                      fontStyle: 'italic',
+                      marginTop: isMobile ? 4 : 6,
+                      lineHeight: 1.1,
+                    }}
+                  >
+                    {p.title}
+                  </div>
+                  <p
+                    style={{
+                      fontFamily: T.serif,
+                      fontSize: isMobile ? 11 : 14,
+                      lineHeight: isMobile ? 1.5 : 1.65,
+                      opacity: 0.75,
+                      marginTop: isMobile ? 8 : 12,
+                    }}
+                  >
+                    {p.body}
+                  </p>
                 </div>
               </div>
             )
