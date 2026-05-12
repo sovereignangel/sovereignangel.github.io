@@ -1258,7 +1258,7 @@ function Coaches() {
   ]
   return (
     <section
-      id="coaches"
+      id="practices"
       style={{
         background: T.cream,
         color: T.ink,
@@ -1621,7 +1621,7 @@ function Location() {
   const isMobile = useIsMobile()
   return (
     <section
-      id="location"
+      id="lodging"
       style={{
         background: T.paper,
         color: T.ink,
@@ -1777,9 +1777,9 @@ function Location() {
 
           <div
             style={{
-              display: 'grid',
-              gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)',
-              gap: isMobile ? 18 : 24,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: isMobile ? 18 : 20,
             }}
           >
             {WEEKS.map((w) => {
@@ -1791,14 +1791,16 @@ function Location() {
                   style={{
                     background: T.cream,
                     border: `1px solid ${T.ink}22`,
-                    display: 'flex',
-                    flexDirection: 'column',
+                    display: 'grid',
+                    gridTemplateColumns: isMobile ? '1fr' : '320px 1fr',
                     overflow: 'hidden',
                   }}
                 >
-                  <Artifact />
+                  <div style={{ minWidth: 0 }}>
+                    <Artifact />
+                  </div>
 
-                  <div style={{ padding: isMobile ? 16 : 22 }}>
+                  <div style={{ padding: isMobile ? 16 : 24 }}>
                     <div
                       style={{
                         display: 'flex',
@@ -1823,7 +1825,7 @@ function Location() {
                         <h3
                           style={{
                             fontFamily: T.serif,
-                            fontSize: isMobile ? 22 : 26,
+                            fontSize: isMobile ? 22 : 28,
                             fontStyle: 'italic',
                             fontWeight: 400,
                             margin: '6px 0 4px',
@@ -1878,7 +1880,7 @@ function Location() {
                         fontSize: 14,
                         lineHeight: 1.6,
                         opacity: 0.85,
-                        marginTop: 16,
+                        marginTop: 14,
                         marginBottom: 0,
                       }}
                     >
@@ -1894,7 +1896,7 @@ function Location() {
                           display: 'inline-flex',
                           alignItems: 'center',
                           gap: 8,
-                          marginTop: 16,
+                          marginTop: 14,
                           padding: '10px 16px',
                           background: 'transparent',
                           border: `1px solid ${T.coral}`,
@@ -1911,7 +1913,7 @@ function Location() {
                       </a>
                     )}
 
-                    <details className="loc-details" style={{ marginTop: 16 }}>
+                    <details className="loc-details" style={{ marginTop: 14 }}>
                       <summary>
                         <span>NEARBY · DON&rsquo;T MISS</span>
                         <span className="loc-details-icon" aria-hidden="true">＋</span>
@@ -2751,8 +2753,8 @@ function TopBar() {
   const navItems: [string, string][] = [
     ['#program', 'Program'],
     ['#rhythm', 'Rhythm'],
-    ['#coaches', 'Coaches'],
-    ['#location', 'Lieu'],
+    ['#practices', 'Practices'],
+    ['#lodging', 'Lodging'],
     ['#rsvp', 'RSVP'],
   ]
   return (
