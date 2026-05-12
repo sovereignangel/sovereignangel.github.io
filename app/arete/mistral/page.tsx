@@ -833,7 +833,7 @@ function Rhythm() {
     { time: '11:00', title: 'Leçon de français', sub: 'A working French lesson over olives — conversation, not grammar drills.', icon: 'book' },
     { time: '14:00', title: 'Long lunch', sub: 'Local catch, garden vegetables, cold rosé.', icon: 'bowl' },
     { time: '16:00', title: 'Session — kite', sub: 'Afternoon thermals. Progression.', icon: 'wind' },
-    { time: '20:00', title: 'Dinner & the chair', sub: "Self-directed conversation — a different facilitator each day picks the prompt and keeps the thread. One bottle, long table.", icon: 'olive' },
+    { time: '20:00', title: 'Le Symposium', sub: 'After Plato — each evening one attendee takes the chair: a prompt, a topic, a short talk. The table answers in turn over wine.', icon: 'olive' },
   ]
   return (
     <section
@@ -1186,10 +1186,10 @@ function AssetConversations() {
           <path d="M 238 422 Q 238 432 246 434 L 246 438 L 244 438 L 244 442 L 260 442 L 260 438 L 258 438 L 258 434 Q 266 432 266 422 Z" />
         </g>
         <text x="20" y="490" fontFamily={T.mono} fontSize="9" fill={T.cream} letterSpacing="3" opacity="0.85">
-          LA TABLE
+          LE SYMPOSIUM
         </text>
         <text x="380" y="490" textAnchor="end" fontFamily={T.mono} fontSize="9" fill={T.cream} letterSpacing="2" opacity="0.6">
-          BY THE GROUP
+          NIGHTLY
         </text>
       </svg>
     </PracticeFrame>
@@ -1215,9 +1215,9 @@ function Coaches() {
       Art: AssetFrench,
     },
     {
-      title: 'Dinner conversations',
-      role: 'Self-directed · one facilitator a day',
-      body: 'No assigned guru. The group sets the table — one facilitator each day picks the prompt, frames the question, and keeps the thread. Everyone gets a turn in the chair across the month. The practice is showing up to it.',
+      title: 'Symposiums',
+      role: 'Daily · an attendee in the chair',
+      body: "After Plato. Every evening one attendee takes the chair — frames a question, opens a topic, or gives a short talk — and the table answers in turn over wine. Everyone gets several nights across the month. The reading and the chair are yours; the practice is showing up to it.",
       Art: AssetConversations,
     },
   ]
@@ -2545,7 +2545,7 @@ function FAQ() {
     ['Is kiting included?', 'No — kiting is optional and arranged à la carte at the spot, at your own expense. Beginners can book a local school directly; advanced riders bring their own kit. The retreat itself is the meals, the reading, the company, and the wind.'],
     ['How do meals work?', 'Lunch and dinner are catered for the house — a private chef, mid-range, four weeks of long tables. Breakfast and any restaurant nights are casual and on you. Dietary asks welcome on the form below.'],
     ['How do we move between weeks?', 'Group lifts between locations — vans or trains, arranged together so we travel as one party. You only need to handle your flights into and out of France.'],
-    ['Can I bring a partner?', 'Yes — each room is a double and partners are welcome whether they kite or not. The Airbnb price is per-person, so a partner means 2× the deposit and 2× the per-person share of the house. Meals and dinner conversations are open to all.'],
+    ['Can I bring a partner?', 'Yes — each room is a double and partners are welcome whether they kite or not. The Airbnb price is per-person, so a partner means 2× the deposit and 2× the per-person share of the house. Meals and symposiums are open to all.'],
     ['Can I attend more than one week?', 'Absolutely — many partners do two. Pick all the weeks you want on the form above.'],
     ["What if the wind doesn't come?", 'It will (this is southern France in July). On the rare flat day: foiling, freediving, or a long lunch and a longer book.'],
     ['Is this an Arete fund event?', 'Yes — the Mistral retreat is hosted by Arete Technologies for LPs and friends.'],
