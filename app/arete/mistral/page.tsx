@@ -833,7 +833,7 @@ function Rhythm() {
     { time: '11:00', title: 'Leçon de français', sub: 'A working French lesson over olives — conversation, not grammar drills.', icon: 'book' },
     { time: '14:00', title: 'Long lunch', sub: 'Local catch, garden vegetables, cold rosé.', icon: 'bowl' },
     { time: '16:00', title: 'Session — kite', sub: 'Afternoon thermals. Progression.', icon: 'wind' },
-    { time: '20:00', title: 'Dinner & a talk', sub: 'A guest, an attendee, or a coach gives a short talk. One bottle. Long table.', icon: 'olive' },
+    { time: '20:00', title: 'Dinner & the chair', sub: "Self-directed conversation — a different facilitator each day picks the prompt and keeps the thread. One bottle, long table.", icon: 'olive' },
   ]
   return (
     <section
@@ -899,7 +899,69 @@ function Rhythm() {
         </div>
         <div
           style={{
-            marginTop: isMobile ? 48 : 80,
+            marginTop: isMobile ? 48 : 72,
+            paddingTop: 32,
+            borderTop: `1px solid ${T.cream}22`,
+          }}
+        >
+          <div
+            style={{
+              fontFamily: T.mono,
+              fontSize: 10,
+              letterSpacing: '0.4em',
+              opacity: 0.55,
+              marginBottom: 20,
+              textTransform: 'uppercase',
+            }}
+          >
+            The week shape
+          </div>
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)',
+              gap: isMobile ? 24 : 40,
+            }}
+          >
+            <div>
+              <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: '0.28em', color: T.sun, opacity: 0.85, textTransform: 'uppercase' }}>
+                Weekdays
+              </div>
+              <div style={{ fontFamily: T.serif, fontSize: isMobile ? 20 : 22, fontStyle: 'italic', margin: '6px 0 8px' }}>
+                The day, repeated.
+              </div>
+              <div style={{ fontFamily: T.serif, fontSize: 14, lineHeight: 1.65, opacity: 0.78 }}>
+                The rhythm above — wind, lessons, long lunch, dinner & the chair.
+              </div>
+            </div>
+            <div>
+              <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: '0.28em', color: T.sun, opacity: 0.85, textTransform: 'uppercase' }}>
+                Weekend
+              </div>
+              <div style={{ fontFamily: T.serif, fontSize: isMobile ? 20 : 22, fontStyle: 'italic', margin: '6px 0 8px' }}>
+                Travel, then explore.
+              </div>
+              <div style={{ fontFamily: T.serif, fontSize: 14, lineHeight: 1.65, opacity: 0.78 }}>
+                One day for travel and settling into the new house. One day for the village — markets, ruins, a long lunch elsewhere.
+              </div>
+            </div>
+            <div>
+              <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: '0.28em', color: T.sun, opacity: 0.85, textTransform: 'uppercase' }}>
+                Once a week
+              </div>
+              <div style={{ fontFamily: T.serif, fontSize: isMobile ? 20 : 22, fontStyle: 'italic', margin: '6px 0 8px' }}>
+                The scavenger hunt.
+              </div>
+              <div style={{ fontFamily: T.serif, fontSize: 14, lineHeight: 1.65, opacity: 0.78 }}>
+                One hunt per week, woven through the village. New winners every week — the cumulative ledger lives at the long table.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div
+          style={{
+            marginTop: isMobile ? 48 : 72,
             paddingTop: 32,
             borderTop: `1px solid ${T.cream}22`,
             fontFamily: T.serif,
@@ -1154,8 +1216,8 @@ function Coaches() {
     },
     {
       title: 'Dinner conversations',
-      role: 'Led by the group',
-      body: 'No assigned guru. Each week the partners pick the text, share the chair, and trade questions over a long candlelit table. The reading is whatever the group decides; the practice is showing up to it.',
+      role: 'Self-directed · one facilitator a day',
+      body: 'No assigned guru. The group sets the table — one facilitator each day picks the prompt, frames the question, and keeps the thread. Everyone gets a turn in the chair across the month. The practice is showing up to it.',
       Art: AssetConversations,
     },
   ]
@@ -1674,140 +1736,15 @@ function Location() {
             </div>
             <div style={{ height: 1, flex: 1, background: T.ink, opacity: 0.18, minWidth: 80 }} />
             <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: isMobile ? 16 : 18, opacity: 0.7 }}>
-              The houses, by week.
-            </div>
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
-            {WEEKS.map((w, i) => (
-              <a
-                key={w.n}
-                href={w.airbnbUrl || undefined}
-                target={w.airbnbUrl ? '_blank' : undefined}
-                rel={w.airbnbUrl ? 'noopener noreferrer' : undefined}
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: isMobile ? '28px 1fr auto auto' : '60px 1.4fr auto auto',
-                  gap: isMobile ? 10 : 20,
-                  alignItems: 'center',
-                  padding: isMobile ? '14px 0' : '20px 0',
-                  borderTop: i === 0 ? `1px solid ${T.ink}33` : 'none',
-                  borderBottom: `1px solid ${T.ink}33`,
-                  color: T.ink,
-                  textDecoration: 'none',
-                  cursor: w.airbnbUrl ? 'pointer' : 'default',
-                }}
-              >
-                <div
-                  style={{
-                    fontFamily: T.serif,
-                    fontStyle: 'italic',
-                    fontSize: isMobile ? 20 : 28,
-                    color: T.bronze,
-                    lineHeight: 1,
-                  }}
-                >
-                  {w.n}
-                </div>
-                <div style={{ minWidth: 0 }}>
-                  <div
-                    style={{
-                      fontFamily: T.serif,
-                      fontSize: isMobile ? 15 : 19,
-                      lineHeight: 1.2,
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    {w.place}
-                  </div>
-                  <div
-                    style={{
-                      fontFamily: T.mono,
-                      fontSize: isMobile ? 8 : 9,
-                      letterSpacing: isMobile ? '0.18em' : '0.22em',
-                      opacity: 0.6,
-                      marginTop: 4,
-                      textTransform: 'uppercase',
-                      whiteSpace: 'nowrap',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                    }}
-                  >
-                    {w.dates} · sleeps {w.cap + 2}
-                  </div>
-                </div>
-                <div style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
-                  <div
-                    style={{
-                      fontFamily: T.mono,
-                      fontSize: isMobile ? 12 : 13,
-                      color: T.coral,
-                      fontWeight: 500,
-                    }}
-                  >
-                    ${perPerson(w).toLocaleString('en-US')}
-                    <span style={{ opacity: 0.6, fontSize: isMobile ? 8 : 9, letterSpacing: '0.18em', marginLeft: 4 }}>/PP</span>
-                  </div>
-                  <div
-                    style={{
-                      fontFamily: T.mono,
-                      fontSize: isMobile ? 8 : 9,
-                      letterSpacing: '0.18em',
-                      opacity: 0.5,
-                      marginTop: 2,
-                    }}
-                  >
-                    ${(w.airbnb / 1000).toFixed(1)}K TOTAL
-                  </div>
-                </div>
-                <div
-                  style={{
-                    fontFamily: T.mono,
-                    fontSize: isMobile ? 9 : 10,
-                    letterSpacing: '0.24em',
-                    textTransform: 'uppercase',
-                    color: w.airbnbUrl ? T.coral : T.ink + '66',
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  {w.airbnbUrl ? (isMobile ? '→' : 'View →') : 'TBC'}
-                </div>
-              </a>
-            ))}
-          </div>
-
-          <div
-            style={{
-              fontFamily: T.mono,
-              fontSize: 9,
-              letterSpacing: '0.22em',
-              opacity: 0.5,
-              marginTop: 16,
-              textTransform: 'uppercase',
-            }}
-          >
-            Per-person price covers the house only · food &amp; transport estimates to follow
-          </div>
-        </div>
-
-        <div style={{ marginTop: isMobile ? 56 : 96 }}>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 18, marginBottom: 28, flexWrap: 'wrap' }}>
-            <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: '0.5em', paddingLeft: '0.5em', opacity: 0.6 }}>
-              IV · THE VILLAGES
-            </div>
-            <div style={{ height: 1, flex: 1, background: T.ink, opacity: 0.18, minWidth: 80 }} />
-            <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: isMobile ? 18 : 22, opacity: 0.8 }}>
-              Worth the detour.
+              The houses, by week — and what&rsquo;s worth the detour.
             </div>
           </div>
 
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)',
-              gap: isMobile ? 14 : 20,
+              gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)',
+              gap: isMobile ? 18 : 24,
             }}
           >
             {WEEKS.map((w) => {
@@ -1819,83 +1756,170 @@ function Location() {
                   style={{
                     background: T.cream,
                     border: `1px solid ${T.ink}22`,
-                    padding: isMobile ? 12 : 16,
                     display: 'flex',
                     flexDirection: 'column',
+                    overflow: 'hidden',
                   }}
                 >
                   <Artifact />
-                  <div style={{ marginTop: 14 }}>
+
+                  <div style={{ padding: isMobile ? 16 : 22 }}>
                     <div
                       style={{
-                        fontFamily: T.mono,
-                        fontSize: 9,
-                        letterSpacing: '0.4em',
-                        paddingLeft: '0.4em',
-                        opacity: 0.6,
+                        display: 'flex',
+                        alignItems: 'baseline',
+                        justifyContent: 'space-between',
+                        gap: 12,
                       }}
                     >
-                      {w.n} · {w.dates}
+                      <div style={{ minWidth: 0, flex: 1 }}>
+                        <div
+                          style={{
+                            fontFamily: T.mono,
+                            fontSize: 9,
+                            letterSpacing: '0.32em',
+                            paddingLeft: '0.32em',
+                            opacity: 0.6,
+                            textTransform: 'uppercase',
+                          }}
+                        >
+                          {w.n} · {w.dates}
+                        </div>
+                        <h3
+                          style={{
+                            fontFamily: T.serif,
+                            fontSize: isMobile ? 22 : 26,
+                            fontStyle: 'italic',
+                            fontWeight: 400,
+                            margin: '6px 0 4px',
+                            lineHeight: 1.1,
+                          }}
+                        >
+                          {w.place}
+                        </h3>
+                        <div
+                          style={{
+                            fontFamily: T.mono,
+                            fontSize: 8,
+                            letterSpacing: '0.26em',
+                            textTransform: 'uppercase',
+                            opacity: 0.55,
+                          }}
+                        >
+                          {w.region} · <span style={{ color: T.coral, opacity: 0.95 }}>{w.spot}</span>
+                        </div>
+                      </div>
+
+                      <div style={{ textAlign: 'right', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                        <div
+                          style={{
+                            fontFamily: T.mono,
+                            fontSize: 14,
+                            color: T.coral,
+                            fontWeight: 500,
+                          }}
+                        >
+                          ${perPerson(w).toLocaleString('en-US')}
+                          <span style={{ opacity: 0.6, fontSize: 9, letterSpacing: '0.18em', marginLeft: 4 }}>/PP</span>
+                        </div>
+                        <div
+                          style={{
+                            fontFamily: T.mono,
+                            fontSize: 9,
+                            letterSpacing: '0.18em',
+                            opacity: 0.5,
+                            marginTop: 2,
+                            textTransform: 'uppercase',
+                          }}
+                        >
+                          ${(w.airbnb / 1000).toFixed(1)}K · sleeps {w.cap + 2}
+                        </div>
+                      </div>
                     </div>
-                    <h3
+
+                    <p
                       style={{
                         fontFamily: T.serif,
-                        fontSize: isMobile ? 20 : 22,
-                        fontStyle: 'italic',
-                        fontWeight: 400,
-                        margin: '6px 0 4px',
-                        lineHeight: 1.1,
+                        fontSize: 14,
+                        lineHeight: 1.6,
+                        opacity: 0.85,
+                        marginTop: 16,
+                        marginBottom: 0,
                       }}
                     >
-                      {w.place}
-                    </h3>
-                    <div
-                      style={{
-                        fontFamily: T.mono,
-                        fontSize: 8,
-                        letterSpacing: '0.28em',
-                        textTransform: 'uppercase',
-                        opacity: 0.55,
-                      }}
-                    >
-                      {w.region} · <span style={{ color: T.coral, opacity: 0.95 }}>{w.spot}</span>
-                    </div>
+                      {w.desc}
+                    </p>
+
+                    {w.airbnbUrl && (
+                      <a
+                        href={w.airbnbUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 8,
+                          marginTop: 16,
+                          padding: '10px 16px',
+                          background: 'transparent',
+                          border: `1px solid ${T.coral}`,
+                          color: T.coral,
+                          fontFamily: T.mono,
+                          fontSize: 10,
+                          letterSpacing: '0.28em',
+                          textTransform: 'uppercase',
+                          textDecoration: 'none',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        View on Airbnb →
+                      </a>
+                    )}
+
+                    <details className="loc-details" style={{ marginTop: 16 }}>
+                      <summary>
+                        <span>NEARBY · DON&rsquo;T MISS</span>
+                        <span className="loc-details-icon" aria-hidden="true">＋</span>
+                      </summary>
+                      <ul style={{ listStyle: 'none', padding: 0, margin: '14px 0 0', display: 'flex', flexDirection: 'column', gap: 10 }}>
+                        {detail.sights.map((s, i) => (
+                          <li key={s.name} style={{ display: 'grid', gridTemplateColumns: '24px 1fr', gap: 8, alignItems: 'baseline' }}>
+                            <span
+                              style={{
+                                fontFamily: T.mono,
+                                fontSize: 8,
+                                letterSpacing: '0.2em',
+                                color: T.bronze,
+                                opacity: 0.85,
+                              }}
+                            >
+                              {String(i + 1).padStart(2, '0')}
+                            </span>
+                            <span>
+                              <span style={{ fontFamily: T.serif, fontSize: 13, fontStyle: 'italic', display: 'block' }}>{s.name}</span>
+                              <span style={{ fontFamily: T.serif, fontSize: 12, opacity: 0.72, lineHeight: 1.45 }}>{s.note}</span>
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    </details>
                   </div>
-
-                  <p style={{ fontFamily: T.serif, fontSize: 13, lineHeight: 1.55, opacity: 0.82, marginTop: 12 }}>
-                    {w.desc}
-                  </p>
-
-                  <details className="loc-details">
-                    <summary>
-                      <span>NEARBY · DON&rsquo;T MISS</span>
-                      <span className="loc-details-icon" aria-hidden="true">＋</span>
-                    </summary>
-                    <ul style={{ listStyle: 'none', padding: 0, margin: '14px 0 0', display: 'flex', flexDirection: 'column', gap: 10 }}>
-                      {detail.sights.map((s, i) => (
-                        <li key={s.name} style={{ display: 'grid', gridTemplateColumns: '20px 1fr', gap: 8, alignItems: 'baseline' }}>
-                          <span
-                            style={{
-                              fontFamily: T.mono,
-                              fontSize: 8,
-                              letterSpacing: '0.2em',
-                              color: T.bronze,
-                              opacity: 0.85,
-                            }}
-                          >
-                            {String(i + 1).padStart(2, '0')}
-                          </span>
-                          <span>
-                            <span style={{ fontFamily: T.serif, fontSize: 13, fontStyle: 'italic', display: 'block' }}>{s.name}</span>
-                            <span style={{ fontFamily: T.serif, fontSize: 12, opacity: 0.72, lineHeight: 1.45 }}>{s.note}</span>
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
-                  </details>
                 </article>
               )
             })}
+          </div>
+
+          <div
+            style={{
+              fontFamily: T.mono,
+              fontSize: 9,
+              letterSpacing: '0.22em',
+              opacity: 0.5,
+              marginTop: 20,
+              textTransform: 'uppercase',
+            }}
+          >
+            Per-person price covers the house only · food &amp; transport estimates to follow
           </div>
         </div>
       </div>
@@ -2040,6 +2064,12 @@ function RSVP() {
   const [dietary, setDietary] = useState('')
   const [note, setNote] = useState('')
   const [submitted, setSubmitted] = useState(false)
+
+  const partyCount = bringPartner ? 2 : 1
+  const depositTotal = picked.reduce((sum, n) => {
+    const w = WEEKS.find((x) => x.n === n)
+    return w ? sum + perPerson(w) * partyCount : sum
+  }, 0)
 
   const toggle = (n: string) => setPicked((p) => (p.includes(n) ? p.filter((x) => x !== n) : [...p, n]))
 
@@ -2303,9 +2333,21 @@ function RSVP() {
               >
                 Partner +1
               </div>
-              <label style={{ display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer', userSelect: 'none' }}>
+                <input
+                  type="checkbox"
+                  checked={bringPartner}
+                  onChange={(e) => setBringPartner(e.target.checked)}
+                  style={{
+                    position: 'absolute',
+                    opacity: 0,
+                    pointerEvents: 'none',
+                    width: 0,
+                    height: 0,
+                  }}
+                />
                 <span
-                  onClick={() => setBringPartner(!bringPartner)}
+                  aria-hidden="true"
                   style={{
                     width: 18,
                     height: 18,
@@ -2322,12 +2364,6 @@ function RSVP() {
                 >
                   {bringPartner ? '✓' : ''}
                 </span>
-                <input
-                  type="checkbox"
-                  checked={bringPartner}
-                  onChange={(e) => setBringPartner(e.target.checked)}
-                  style={{ display: 'none' }}
-                />
                 <span style={{ fontFamily: T.serif, fontSize: 16, opacity: 0.85 }}>
                   Yes, my partner is coming too.
                 </span>
@@ -2343,6 +2379,82 @@ function RSVP() {
                 </div>
               )}
             </div>
+
+            {/* Deposit summary — appears once a week is selected */}
+            {picked.length > 0 && (
+              <div
+                style={{
+                  marginTop: isMobile ? 24 : 30,
+                  border: `1px solid ${T.coral}`,
+                  background: T.coral + '0d',
+                  padding: isMobile ? '18px 18px' : '22px 24px',
+                }}
+              >
+                <div
+                  style={{
+                    fontFamily: T.mono,
+                    fontSize: 9,
+                    letterSpacing: '0.32em',
+                    textTransform: 'uppercase',
+                    color: T.coral,
+                    marginBottom: 10,
+                  }}
+                >
+                  Refundable deposit
+                </div>
+                <div style={{ display: 'flex', alignItems: 'baseline', flexWrap: 'wrap', gap: 8 }}>
+                  <div
+                    style={{
+                      fontFamily: T.serif,
+                      fontStyle: 'italic',
+                      fontSize: isMobile ? 32 : 38,
+                      color: T.ink,
+                      lineHeight: 1,
+                    }}
+                  >
+                    ${depositTotal.toLocaleString('en-US')}
+                  </div>
+                  <div
+                    style={{
+                      fontFamily: T.mono,
+                      fontSize: 10,
+                      letterSpacing: '0.22em',
+                      opacity: 0.7,
+                      textTransform: 'uppercase',
+                    }}
+                  >
+                    USD
+                  </div>
+                </div>
+                <div
+                  style={{
+                    fontFamily: T.serif,
+                    fontSize: 14,
+                    lineHeight: 1.55,
+                    opacity: 0.85,
+                    marginTop: 10,
+                  }}
+                >
+                  {picked.length} week{picked.length > 1 ? 's' : ''} × {partyCount} {partyCount > 1 ? 'people' : 'person'}.
+                  Send to{' '}
+                  <a
+                    href="https://venmo.com/sovereignangel"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      color: T.coral,
+                      textDecoration: 'none',
+                      fontFamily: T.mono,
+                      fontSize: 13,
+                      letterSpacing: '0.04em',
+                    }}
+                  >
+                    Venmo @sovereignangel
+                  </a>{' '}
+                  by <span style={{ fontStyle: 'italic' }}>1 June</span>.
+                </div>
+              </div>
+            )}
 
             <div style={{ marginTop: isMobile ? 22 : 26 }}>
               <Field
