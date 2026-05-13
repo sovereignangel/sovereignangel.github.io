@@ -224,7 +224,7 @@ export default function AretePage() {
                 maxWidth: 480,
               }}
             >
-              A quantamental fund — value invested with time leverage. Pre-launch details on the fund website.
+              A quantamental fund — value investing with time as leverage. Pre-launch details on the fund website.
             </p>
 
             <div style={{ flex: 1 }} />
