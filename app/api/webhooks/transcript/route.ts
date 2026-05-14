@@ -11,7 +11,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { extractFromTranscript, classifyTranscriptType } from '@/lib/ai-extraction'
 import { processTranscriptData, formatTranscriptSummary } from '@/lib/transcript-processing'
-import { sendTelegramMessage } from '@/lib/telegram'
+import { sendToInbox } from '@/lib/inbox/client'
 
 export const runtime = 'nodejs'
 export const maxDuration = 120
@@ -88,7 +88,14 @@ export async function POST(request: NextRequest) {
         source: source || 'webhook',
         autoClassified: true,
       })
-      await sendTelegramMessage(chatId, summary)
+      await sendToInbox({
+        source: 'thesis',
+        kind: 'info',
+        severity: 'info',
+        title: `Transcript processed: ${result.title || templateType}`,
+        body: summary,
+        dedupe_key: `transcript:${result.conversationId}`,
+      })
     }
 
     return NextResponse.json({
@@ -113,7 +120,13 @@ export async function POST(request: NextRequest) {
       const userDoc = await db.collection('users').doc(uid).get()
       const chatId = userDoc.data()?.settings?.telegramChatId
       if (chatId) {
-        await sendTelegramMessage(chatId, `Transcript auto-processing failed: ${msg.slice(0, 300)}`)
+        await sendToInbox({
+          source: 'thesis',
+          kind: 'alert',
+          severity: 'warn',
+          title: 'Transcript auto-processing failed',
+          body: msg.slice(0, 300),
+        })
       }
     } catch { /* swallow notification errors */ }
 

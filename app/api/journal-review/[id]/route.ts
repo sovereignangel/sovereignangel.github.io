@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyAuth } from '@/lib/api-auth'
+import { sendToInbox } from '@/lib/inbox/client'
 
 export const dynamic = 'force-dynamic'
 
@@ -127,36 +128,35 @@ export async function PATCH(
 
   // Notify via Telegram
   if (review.telegramChatId) {
-    const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN
-    if (BOT_TOKEN) {
-      const edited = [
-        ...corrections.contacts.filter((c: { status: string }) => c.status === 'edited'),
-        ...corrections.decisions.filter((d: { status: string }) => d.status === 'edited'),
-        ...corrections.principles.filter((p: { status: string }) => p.status === 'edited'),
-        ...corrections.beliefs.filter((b: { status: string }) => b.status === 'edited'),
-        ...corrections.notes.filter((n: { status: string }) => n.status === 'edited'),
-      ].length
-      const deleted = [
-        ...corrections.contacts.filter((c: { status: string }) => c.status === 'deleted'),
-        ...corrections.decisions.filter((d: { status: string }) => d.status === 'deleted'),
-        ...corrections.principles.filter((p: { status: string }) => p.status === 'deleted'),
-        ...corrections.beliefs.filter((b: { status: string }) => b.status === 'deleted'),
-        ...corrections.notes.filter((n: { status: string }) => n.status === 'deleted'),
-      ].length
+    const edited = [
+      ...corrections.contacts.filter((c: { status: string }) => c.status === 'edited'),
+      ...corrections.decisions.filter((d: { status: string }) => d.status === 'edited'),
+      ...corrections.principles.filter((p: { status: string }) => p.status === 'edited'),
+      ...corrections.beliefs.filter((b: { status: string }) => b.status === 'edited'),
+      ...corrections.notes.filter((n: { status: string }) => n.status === 'edited'),
+    ].length
+    const deleted = [
+      ...corrections.contacts.filter((c: { status: string }) => c.status === 'deleted'),
+      ...corrections.decisions.filter((d: { status: string }) => d.status === 'deleted'),
+      ...corrections.principles.filter((p: { status: string }) => p.status === 'deleted'),
+      ...corrections.beliefs.filter((b: { status: string }) => b.status === 'deleted'),
+      ...corrections.notes.filter((n: { status: string }) => n.status === 'deleted'),
+    ].length
 
-      const parts = []
-      if (edited) parts.push(`${edited} edited`)
-      if (deleted) parts.push(`${deleted} removed`)
-      const msg = parts.length > 0
-        ? `Journal review corrected: ${parts.join(', ')}`
-        : 'Journal review confirmed — no changes needed'
+    const parts = []
+    if (edited) parts.push(`${edited} edited`)
+    if (deleted) parts.push(`${deleted} removed`)
+    const msg = parts.length > 0
+      ? `Journal review corrected: ${parts.join(', ')}`
+      : 'Journal review confirmed — no changes needed'
 
-      await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ chat_id: review.telegramChatId, text: msg }),
-      })
-    }
+    await sendToInbox({
+      source: 'thesis',
+      kind: 'info',
+      severity: 'info',
+      title: msg,
+      dedupe_key: `review-correction:${id}`,
+    })
   }
 
   return NextResponse.json({ ok: true, status: 'corrected' })

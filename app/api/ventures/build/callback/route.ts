@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { sendTelegramMessage } from '@/lib/telegram'
+import { sendToInbox } from '@/lib/inbox/client'
 
 export async function POST(req: NextRequest) {
   // Auth check
@@ -66,15 +66,20 @@ export async function POST(req: NextRequest) {
       // Notify via Telegram
       if (resolvedChatId) {
         const liveUrl = customDomain ? `https://${customDomain}` : previewUrl || repoUrl
-        await sendTelegramMessage(resolvedChatId, [
-          `${vNum}${ventureName} is LIVE`,
-          '',
-          liveUrl ? `${liveUrl}` : '',
-          repoUrl ? `Repo: ${repoUrl}` : '',
-          filesGenerated ? `${filesGenerated} files generated` : '',
-          '',
-          'Use /iterate to modify, /memo to generate investment memo',
-        ].filter(Boolean).join('\n'))
+        await sendToInbox({
+          source: 'thesis',
+          kind: 'info',
+          severity: 'info',
+          title: `${vNum}${ventureName} is LIVE`,
+          body: [
+            repoUrl ? `Repo: ${repoUrl}` : '',
+            filesGenerated ? `${filesGenerated} files generated` : '',
+            '',
+            'Use /iterate to modify, /memo to generate investment memo',
+          ].filter(Boolean).join('\n'),
+          link: liveUrl || undefined,
+          dedupe_key: `venture-callback:${ventureId}:live`,
+        })
       }
     } else if (status === 'failed') {
       await ventureRef.update({
@@ -89,13 +94,18 @@ export async function POST(req: NextRequest) {
 
       // Notify via Telegram
       if (resolvedChatId) {
-        await sendTelegramMessage(resolvedChatId, [
-          `${vNum}${ventureName} build FAILED`,
-          '',
-          errorMessage || 'Unknown error',
-          '',
-          'Use /build to retry or /feedback to adjust the PRD',
-        ].join('\n'))
+        await sendToInbox({
+          source: 'thesis',
+          kind: 'alert',
+          severity: 'warn',
+          title: `${vNum}${ventureName} build FAILED`,
+          body: [
+            errorMessage || 'Unknown error',
+            '',
+            'Use /build to retry or /feedback to adjust the PRD',
+          ].join('\n'),
+          dedupe_key: `venture-callback:${ventureId}:failed`,
+        })
       }
     } else {
       // Intermediate status update (generating, pushing, deploying)

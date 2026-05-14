@@ -15,7 +15,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyAuth } from '@/lib/api-auth'
-import { sendTelegramMessage } from '@/lib/telegram'
+import { sendToInbox } from '@/lib/inbox/client'
 
 export const runtime = 'nodejs'
 export const maxDuration = 300 // 5 minutes — code generation can take time
@@ -184,15 +184,20 @@ export async function POST(req: NextRequest) {
       // Notify via Telegram
       if (chatId) {
         const liveUrl = result.customDomain ? `https://${result.customDomain}` : result.previewUrl || result.repoUrl
-        await sendTelegramMessage(chatId, [
-          `${vNum}${ventureName} is LIVE`,
-          '',
-          liveUrl || '',
-          result.repoUrl ? `Repo: ${result.repoUrl}` : '',
-          result.filesGenerated ? `${result.filesGenerated} files generated` : '',
-          '',
-          'Use /iterate to modify, /memo to generate investment memo',
-        ].filter(Boolean).join('\n'))
+        await sendToInbox({
+          source: 'thesis',
+          kind: 'info',
+          severity: 'info',
+          title: `${vNum}${ventureName} is LIVE`,
+          body: [
+            result.repoUrl ? `Repo: ${result.repoUrl}` : '',
+            result.filesGenerated ? `${result.filesGenerated} files generated` : '',
+            '',
+            'Use /iterate to modify, /memo to generate investment memo',
+          ].filter(Boolean).join('\n'),
+          link: liveUrl || undefined,
+          dedupe_key: `claude-build:${ventureId}:live`,
+        })
       }
 
       return NextResponse.json({
@@ -214,13 +219,18 @@ export async function POST(req: NextRequest) {
 
       // Notify via Telegram
       if (chatId) {
-        await sendTelegramMessage(chatId, [
-          `${vNum}${ventureName} build FAILED`,
-          '',
-          result.errorMessage || 'Unknown error',
-          '',
-          iterate ? 'Use /citerate to retry' : 'Use /cbuild to retry or /feedback to adjust the PRD',
-        ].join('\n'))
+        await sendToInbox({
+          source: 'thesis',
+          kind: 'alert',
+          severity: 'warn',
+          title: `${vNum}${ventureName} build FAILED`,
+          body: [
+            result.errorMessage || 'Unknown error',
+            '',
+            iterate ? 'Use /citerate to retry' : 'Use /cbuild to retry or /feedback to adjust the PRD',
+          ].join('\n'),
+          dedupe_key: `claude-build:${ventureId}:failed`,
+        })
       }
 
       return NextResponse.json({

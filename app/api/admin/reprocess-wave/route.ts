@@ -6,7 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { extractFromTranscript, classifyTranscriptType } from '@/lib/ai-extraction'
 import { processTranscriptData, formatTranscriptSummary } from '@/lib/transcript-processing'
-import { sendTelegramMessage } from '@/lib/telegram'
+import { sendToInbox } from '@/lib/inbox/client'
 
 export const runtime = 'nodejs'
 export const maxDuration = 300
@@ -80,7 +80,14 @@ export async function POST(request: NextRequest) {
           source: `Wave (${durationMin} min, reprocessed)`,
           autoClassified: true,
         })
-        await sendTelegramMessage(chatId, summary)
+        await sendToInbox({
+          source: 'lordas',
+          kind: 'info',
+          severity: 'info',
+          title: `Wave reprocessed: ${title}`,
+          body: summary,
+          dedupe_key: `wave-reprocess:${sessionId}`,
+        })
       }
 
       results.push({ sessionId, title, status: 'processed', counts: result.counts })

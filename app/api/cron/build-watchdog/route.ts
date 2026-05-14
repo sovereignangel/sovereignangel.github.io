@@ -10,7 +10,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { sendTelegramMessage } from '@/lib/telegram'
+import { sendToInbox } from '@/lib/inbox/client'
 
 export const runtime = 'nodejs'
 export const maxDuration = 30
@@ -74,14 +74,19 @@ export async function GET(request: NextRequest) {
 
         // Notify via Telegram
         if (chatId) {
-          await sendTelegramMessage(chatId, [
-            `${vNum}${ventureName} build timed out`,
-            '',
-            'The builder did not report back within 10 minutes.',
-            'Check GitHub Actions for errors.',
-            '',
-            'Use /build to retry or /cbuild for Claude-powered build',
-          ].join('\n'))
+          await sendToInbox({
+            source: 'thesis',
+            kind: 'alert',
+            severity: 'warn',
+            title: `${vNum}${ventureName} build timed out`,
+            body: [
+              'The builder did not report back within 10 minutes.',
+              'Check GitHub Actions for errors.',
+              '',
+              'Use /build to retry or /cbuild for Claude-powered build',
+            ].join('\n'),
+            dedupe_key: `build-watchdog:${ventureDoc.id}`,
+          })
         }
       }
     }

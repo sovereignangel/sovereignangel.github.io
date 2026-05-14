@@ -13,6 +13,7 @@ const navItems = [
   { href: '/thesis', label: 'Command Center', symbol: 'g*', exact: true },
   { href: '/thesis/operate', label: 'Operate', symbol: 'GVC+\u03BA' },
   { href: '/thesis/boardroom', label: 'The Machine', symbol: 'J' },
+  { href: '/thesis/wikis', label: 'Wikis', symbol: 'L2' },
 ]
 
 function ScoreValue({ label, value, color, arrow, arrowColor }: {

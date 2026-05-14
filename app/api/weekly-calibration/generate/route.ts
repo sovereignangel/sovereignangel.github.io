@@ -8,7 +8,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { generateWeeklyCalibration } from '@/lib/weekly-calibration'
 import { formatWeeklyCalibration } from '@/lib/weekly-calibration-formatter'
-import { sendTelegramMessage } from '@/lib/telegram'
+import { sendToInbox } from '@/lib/inbox/client'
 
 export const runtime = 'nodejs'
 export const maxDuration = 120
@@ -24,7 +24,14 @@ async function generateAndSend(uid: string, chatId: string | number): Promise<{ 
 
     // Format and send via Telegram
     const formatted = formatWeeklyCalibration(calibration)
-    await sendTelegramMessage(chatId, formatted)
+    await sendToInbox({
+      source: 'thesis',
+      kind: 'info',
+      severity: 'info',
+      title: `Weekly Calibration — week of ${calibration.weekStart}`,
+      body: formatted,
+      dedupe_key: `weekly-calibration:${calibration.weekStart}`,
+    })
 
     // Save to weekly_synthesis collection
     const db = await getAdminDb()
@@ -110,7 +117,14 @@ export async function POST(request: NextRequest) {
 
     // Send via Telegram if chat ID available
     if (resolvedChatId) {
-      await sendTelegramMessage(resolvedChatId, formatted)
+      await sendToInbox({
+        source: 'thesis',
+        kind: 'info',
+        severity: 'info',
+        title: `Weekly Calibration — week of ${calibration.weekStart}`,
+        body: formatted,
+        dedupe_key: `weekly-calibration:${calibration.weekStart}`,
+      })
     }
 
     // Save to weekly_synthesis

@@ -9,7 +9,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { randomBytes } from 'crypto'
 import { generateMorningBrief } from '@/lib/morning-brief'
 import { formatMorningBriefCompact } from '@/lib/morning-brief-formatter'
-import { sendTelegramMessage } from '@/lib/telegram'
+import { sendToInbox } from '@/lib/inbox/client'
 
 export const runtime = 'nodejs'
 export const maxDuration = 120
@@ -38,7 +38,16 @@ async function generateAndSend(uid: string, chatId: string | number): Promise<{ 
 
     // Format compact Telegram message with link to full brief
     const formatted = formatMorningBriefCompact(brief, briefUrl)
-    const messageId = await sendTelegramMessage(chatId, formatted)
+    const sendResult = await sendToInbox({
+      source: 'thesis',
+      kind: 'info',
+      severity: 'info',
+      title: `Morning Brief — ${brief.date}`,
+      body: formatted,
+      link: briefUrl,
+      dedupe_key: `morning-brief:${brief.date}`,
+    })
+    const messageId = 'message_id' in sendResult ? sendResult.message_id ?? null : null
 
     // Save to daily_reports for dashboard access (include message_id for reply-based feedback)
     const db = await getAdminDb()
@@ -139,7 +148,16 @@ export async function POST(request: NextRequest) {
     // Send via Telegram if chat ID available
     let messageId: number | null = null
     if (resolvedChatId) {
-      messageId = await sendTelegramMessage(resolvedChatId, formatted)
+      const sendResult = await sendToInbox({
+        source: 'thesis',
+        kind: 'info',
+        severity: 'info',
+        title: `Morning Brief — ${brief.date}`,
+        body: formatted,
+        link: briefUrl,
+        dedupe_key: `morning-brief:${brief.date}`,
+      })
+      messageId = 'message_id' in sendResult ? sendResult.message_id ?? null : null
     }
 
     // Save to daily_reports

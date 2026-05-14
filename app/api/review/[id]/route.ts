@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { sendToInbox } from '@/lib/inbox/client'
 
 export const dynamic = 'force-dynamic'
 
@@ -129,30 +130,29 @@ export async function PATCH(
 
   // Notify via Telegram
   if (review.telegramChatId) {
-    const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN
-    if (BOT_TOKEN) {
-      const edited = [
-        ...corrections.contacts, ...corrections.decisions, ...corrections.principles,
-        ...corrections.beliefs, ...corrections.notes,
-      ].filter((i: { status: string }) => i.status === 'edited').length
-      const deleted = [
-        ...corrections.contacts, ...corrections.decisions, ...corrections.principles,
-        ...corrections.beliefs, ...corrections.notes,
-      ].filter((i: { status: string }) => i.status === 'deleted').length
+    const edited = [
+      ...corrections.contacts, ...corrections.decisions, ...corrections.principles,
+      ...corrections.beliefs, ...corrections.notes,
+    ].filter((i: { status: string }) => i.status === 'edited').length
+    const deleted = [
+      ...corrections.contacts, ...corrections.decisions, ...corrections.principles,
+      ...corrections.beliefs, ...corrections.notes,
+    ].filter((i: { status: string }) => i.status === 'deleted').length
 
-      const parts = []
-      if (edited) parts.push(`${edited} edited`)
-      if (deleted) parts.push(`${deleted} removed`)
-      const msg = parts.length > 0
-        ? `Journal review corrected: ${parts.join(', ')}`
-        : 'Journal review confirmed — no changes needed'
+    const parts = []
+    if (edited) parts.push(`${edited} edited`)
+    if (deleted) parts.push(`${deleted} removed`)
+    const msg = parts.length > 0
+      ? `Journal review corrected: ${parts.join(', ')}`
+      : 'Journal review confirmed — no changes needed'
 
-      await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ chat_id: review.telegramChatId, text: msg }),
-      })
-    }
+    await sendToInbox({
+      source: 'thesis',
+      kind: 'info',
+      severity: 'info',
+      title: msg,
+      dedupe_key: `review-correction:${id}`,
+    })
   }
 
   return NextResponse.json({ ok: true, status: 'corrected' })

@@ -55,18 +55,19 @@ export async function GET(request: NextRequest) {
   // Telegram notification (best-effort)
   if (!failed) {
     try {
-      const { sendTelegramMessage } = await import('@/lib/telegram')
-      const chatId = process.env.TELEGRAM_CHAT_ID
-      if (chatId) {
-        await sendTelegramMessage(chatId, [
-          `THESIS BRIEFING — ${today}`,
-          '',
+      const { sendToInbox } = await import('@/lib/inbox/client')
+      await sendToInbox({
+        source: 'thesis',
+        kind: 'info',
+        severity: 'info',
+        title: `THESIS BRIEFING — ${today}`,
+        body: [
           (briefing.headline as string) || 'Overnight processing complete',
           `${briefing.signalsProcessed || 0} signals | ${briefing.actionRequired || 0} actions`,
-          '',
-          `${process.env.NEXT_PUBLIC_BASE_URL || 'https://loricorpuz.com'}/thesis/briefing`,
-        ].join('\n'))
-      }
+        ].join('\n'),
+        link: `${process.env.NEXT_PUBLIC_BASE_URL || 'https://loricorpuz.com'}/thesis/briefing`,
+        dedupe_key: `overnight-synthesis:${today}`,
+      })
     } catch {}
   }
 
