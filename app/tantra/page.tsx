@@ -512,15 +512,17 @@ export default function TantraPage() {
                   {streak}<span className="font-serif text-[10px] text-ink-muted ml-1">days</span>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-2 pt-1 border-t border-rule-light">
-                <div>
-                  <div className="font-mono text-[8px] uppercase tracking-[1px] text-ink-muted">Total</div>
-                  <div className="font-serif text-[13px] font-semibold text-ink">{totalCompleted}</div>
+              <div className="flex flex-col gap-1 pt-1 border-t border-rule-light">
+                <div className="flex items-baseline justify-between gap-2">
+                  <span className="font-mono text-[8px] uppercase tracking-[1px] text-ink-muted">Total</span>
+                  <span className="font-serif text-[13px] font-semibold text-ink leading-none">{totalCompleted}</span>
                 </div>
                 <div>
-                  <div className="font-mono text-[8px] uppercase tracking-[1px] text-ink-muted">Day One</div>
-                  <div className="font-serif text-[13px] font-semibold text-ink">
-                    {daysSincePractice}<span className="font-serif text-[9px] text-ink-muted ml-0.5">d</span>
+                  <div className="font-mono text-[8px] uppercase tracking-[1px] text-ink-muted">
+                    Start: {new Date(practiceStart + 'T00:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                  </div>
+                  <div className="font-serif text-[12px] font-semibold text-ink mt-0.5 leading-tight">
+                    {daysSincePractice} days practiced
                   </div>
                 </div>
               </div>
