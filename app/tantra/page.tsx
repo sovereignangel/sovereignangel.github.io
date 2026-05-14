@@ -603,8 +603,8 @@ export default function TantraPage() {
         </div>
       </section>
 
-      {/* SECTIONS — 4 cols, ~40vh */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 mb-2 lg:mb-3 lg:flex-1 lg:min-h-[340px]">
+      {/* SECTIONS — 4 cols, natural height */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 mb-2 lg:mb-3 lg:h-[300px]">
         {/* Five Hindrances */}
         <section className="bg-white border border-rule rounded-sm p-2.5 flex flex-col min-h-0 overflow-hidden">
           <div className="flex items-center gap-1.5 mb-1.5 pb-1.5 border-b border-rule-light">
