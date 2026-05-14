@@ -67,6 +67,48 @@ function PulseCore() {
   )
 }
 
+function BateyDiagram() {
+  const drummers = 6
+  return (
+    <svg viewBox="0 0 200 200" className="w-40 h-40 mx-auto" aria-hidden="true">
+      {/* outer ring — the cousins, the community */}
+      <circle cx="100" cy="100" r="82" fill="none" stroke="#7a4a2a" strokeWidth="0.4" opacity="0.6" />
+      {/* inner ring — the batey edge */}
+      <circle cx="100" cy="100" r="32" fill="none" stroke="#f4a261" strokeWidth="0.4" opacity="0.65" />
+      {/* call-and-response radials */}
+      {Array.from({ length: drummers }).map((_, i) => {
+        const a = (i / drummers) * Math.PI * 2 - Math.PI / 2
+        const x1 = 100 + Math.cos(a) * 34
+        const y1 = 100 + Math.sin(a) * 34
+        const x2 = 100 + Math.cos(a) * 80
+        const y2 = 100 + Math.sin(a) * 80
+        return (
+          <line
+            key={i}
+            x1={x1}
+            y1={y1}
+            x2={x2}
+            y2={y2}
+            stroke="#f4a261"
+            strokeWidth="0.3"
+            opacity="0.35"
+          />
+        )
+      })}
+      {/* drummers on the perimeter */}
+      {Array.from({ length: drummers }).map((_, i) => {
+        const a = (i / drummers) * Math.PI * 2 - Math.PI / 2
+        const cx = 100 + Math.cos(a) * 82
+        const cy = 100 + Math.sin(a) * 82
+        return <circle key={i} cx={cx} cy={cy} r="2.4" fill="#c2410c" opacity="0.9" />
+      })}
+      {/* dancer at center — body as the first instrument */}
+      <circle cx="100" cy="100" r="10" fill="none" stroke="#f4a261" strokeWidth="0.3" opacity="0.5" />
+      <circle cx="100" cy="100" r="3.5" fill="#f4a261" />
+    </svg>
+  )
+}
+
 function Grain() {
   return (
     <div
@@ -317,6 +359,52 @@ function VisionTab() {
             <br />
             <span className="text-[#f4a261]">It becomes part of the instrument.</span>
           </p>
+        </div>
+      </section>
+
+      {/* Lineage — Bomba */}
+      <section className="border-t border-[#2a1f18] py-32 bg-gradient-to-b from-[#0a0807] via-[#0e0a07] to-[#0a0807]">
+        <div className="max-w-3xl mx-auto px-6 text-center">
+          <p className="font-mono text-[10px] uppercase tracking-[4px] text-[#7a4a2a] mb-12">
+            A lineage
+          </p>
+
+          <div className="mb-10 opacity-90">
+            <BateyDiagram />
+          </div>
+
+          <h2 className="font-serif text-[36px] sm:text-[44px] leading-[1.1] text-[#f0e8de] mb-10">
+            The first instrument
+            <br />
+            <em className="not-italic italic font-light text-[#f4a261]">was the body.</em>
+          </h2>
+
+          <div className="space-y-6 font-serif text-[18px] leading-[1.65] text-[#d4c4b0] max-w-2xl mx-auto">
+            <p>
+              In <em className="text-[#f4a261] not-italic italic">bomba</em> — the Afro-Puerto Rican dance carried from West Africa to coastal towns like Loíza —
+              a woman steps into the <em className="text-[#f4a261] not-italic italic">batey</em> and the cousins surrounding her answer
+              her body in real time.
+            </p>
+            <p>
+              Her hip calls. The <em className="text-[#f4a261] not-italic italic">primo</em> drummer follows on the fly.
+              The other drummers hold the floor steady so the conversation can happen.
+              <br />
+              <span className="text-[#f0e8de]">The dance leads. The music listens.</span>
+            </p>
+            <p className="text-[#a89786]">
+              Atune is a continuation, not an invention.
+              The room becomes the dancer.
+              The system becomes the cousins with the drums.
+            </p>
+          </div>
+
+          <div className="mt-12 flex items-center justify-center gap-3">
+            <span className="h-px w-12 bg-[#7a4a2a]" />
+            <span className="font-mono text-[9px] uppercase tracking-[3px] text-[#7a4a2a]">
+              Loíza · Mayagüez · Ponce
+            </span>
+            <span className="h-px w-12 bg-[#7a4a2a]" />
+          </div>
         </div>
       </section>
 
