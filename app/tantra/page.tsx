@@ -450,9 +450,9 @@ export default function TantraPage() {
   }
 
   return (
-    <div className="max-w-[1480px] mx-auto px-6 lg:px-10 py-8 lg:py-10">
+    <div className="max-w-[1480px] mx-auto px-4 lg:px-8 py-4 lg:py-5">
       {/* Top: who I am becoming (small, editable) */}
-      <div className="mb-3">
+      <div className="mb-2">
         {editingOneliner ? (
           <div className="flex flex-col gap-2">
             <div className="font-mono text-[9px] uppercase tracking-[1px] text-burgundy">
@@ -461,7 +461,7 @@ export default function TantraPage() {
             <textarea
               value={onelinerDraft}
               onChange={(e) => setOnelinerDraft(e.target.value)}
-              className="font-serif italic text-[13px] text-ink bg-transparent border border-rule rounded-sm px-2 py-1.5 w-full focus:outline-none focus:border-burgundy resize-none"
+              className="font-serif italic text-[12px] text-ink bg-transparent border border-rule rounded-sm px-2 py-1.5 w-full focus:outline-none focus:border-burgundy resize-none"
               rows={2}
               autoFocus
             />
@@ -492,20 +492,20 @@ export default function TantraPage() {
             <span className="font-mono text-[9px] uppercase tracking-[1px] text-ink-muted mr-2">
               Who I am becoming —
             </span>
-            <span className="font-serif italic text-[13px] text-ink-muted group-hover:text-burgundy transition-colors">
+            <span className="font-serif italic text-[12px] text-ink-muted group-hover:text-burgundy transition-colors">
               {config?.oneliner}
             </span>
           </button>
         )}
       </div>
 
-      {/* Title */}
-      <div className="mb-8 pb-6 border-b border-rule-light">
-        <h1 className="font-serif text-[32px] lg:text-[40px] font-semibold text-burgundy tracking-tight leading-[1.05]">
+      {/* Title — compact */}
+      <div className="mb-3 pb-2 border-b border-rule-light">
+        <h1 className="font-serif text-[22px] lg:text-[26px] font-semibold text-burgundy tracking-tight leading-tight">
           Daily Tantra Meditation
         </h1>
-        <div className="font-serif italic text-[13px] lg:text-[14px] text-ink-muted mt-1.5">
-          Becoming Her · {regimeName} · A 30-minute morning ritual · Five Hindrances · Seven Factors · The Nine Aspects
+        <div className="font-serif italic text-[11px] lg:text-[12px] text-ink-muted mt-0.5">
+          Becoming Her · {regimeName} · A 30-minute morning ritual
         </div>
       </div>
 
@@ -653,19 +653,19 @@ export default function TantraPage() {
             <div className="font-serif italic text-[12px] text-ink-muted mb-4 leading-snug">
               Universal obstructions to clear awareness. Named aloud, each one loosens its grip.
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
+            <div className="grid grid-cols-5 gap-1.5 md:gap-3">
               {HINDRANCES.map((h, i) => (
                 <div
                   key={h.name}
-                  className="bg-cream border border-rule-light rounded-sm p-4 flex flex-col gap-1.5 min-h-[120px]"
+                  className="bg-cream border border-rule-light rounded-sm p-2 md:p-4 flex flex-col gap-1 md:gap-1.5 min-h-[90px] md:min-h-[120px]"
                 >
-                  <span className="font-mono text-[10px] text-burgundy font-semibold">
+                  <span className="font-mono text-[9px] md:text-[10px] text-burgundy font-semibold">
                     0{i + 1}
                   </span>
-                  <span className="font-serif text-[13px] lg:text-[14px] font-semibold text-ink leading-tight">
+                  <span className="font-serif text-[10px] md:text-[13px] lg:text-[14px] font-semibold text-ink leading-tight">
                     {h.name}
                   </span>
-                  <span className="font-serif text-[11px] text-ink-muted leading-snug">
+                  <span className="hidden md:block font-serif text-[11px] text-ink-muted leading-snug">
                     {h.gloss}
                   </span>
                 </div>
@@ -728,19 +728,19 @@ export default function TantraPage() {
             <div className="font-serif italic text-[12px] text-ink-muted mb-4 leading-snug">
               The soil from which awakened mind arises. She arises from these, not from willpower.
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-7 gap-3">
+            <div className="grid grid-cols-4 md:grid-cols-7 gap-1.5 md:gap-3">
               {FACTORS.map((f, i) => (
                 <div
                   key={f.name}
-                  className="bg-cream border border-rule-light rounded-sm p-4 flex flex-col gap-1.5 min-h-[130px]"
+                  className="bg-cream border border-rule-light rounded-sm p-2 md:p-4 flex flex-col gap-1 md:gap-1.5 min-h-[80px] md:min-h-[130px]"
                 >
-                  <span className="font-mono text-[10px] text-burgundy font-semibold">
+                  <span className="font-mono text-[9px] md:text-[10px] text-burgundy font-semibold">
                     0{i + 1}
                   </span>
-                  <span className="font-serif text-[13px] font-semibold text-ink leading-tight">
+                  <span className="font-serif text-[10px] md:text-[13px] font-semibold text-ink leading-tight">
                     {f.name}
                   </span>
-                  <span className="font-serif text-[11px] text-ink-muted leading-snug">
+                  <span className="hidden md:block font-serif text-[11px] text-ink-muted leading-snug">
                     {f.gloss}
                   </span>
                 </div>
@@ -760,30 +760,32 @@ export default function TantraPage() {
             <div className="font-serif italic text-[12px] text-ink-muted mb-4 leading-snug">
               Three domains of becoming — Inner, Creation, Relating. From the empty space, She arises.
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6">
+            <div className="grid grid-cols-3 gap-2 md:gap-4 lg:gap-6">
               {(['INNER', 'CREATION', 'RELATING'] as const).map((domain) => (
-                <div key={domain} className="flex flex-col gap-3">
-                  <div className="font-mono text-[10px] uppercase tracking-[1.2px] text-burgundy pb-2 border-b border-rule-light">
-                    {domain === 'INNER'
-                      ? 'I · Inner — relating to herself'
-                      : domain === 'CREATION'
-                      ? 'II · Creation — what she brings into being'
-                      : 'III · Relating — meeting the world'}
+                <div key={domain} className="flex flex-col gap-2 md:gap-3">
+                  <div className="font-mono text-[9px] md:text-[10px] uppercase tracking-[1.2px] text-burgundy pb-1.5 md:pb-2 border-b border-rule-light">
+                    {domain === 'INNER' ? (
+                      <>I · Inner<span className="hidden md:inline"> — relating to herself</span></>
+                    ) : domain === 'CREATION' ? (
+                      <>II · Creation<span className="hidden md:inline"> — what she brings into being</span></>
+                    ) : (
+                      <>III · Relating<span className="hidden md:inline"> — meeting the world</span></>
+                    )}
                   </div>
                   {ASPECTS.filter((a) => a.domain === domain).map((a) => (
                     <div
                       key={a.n}
-                      className="bg-burgundy-bg border border-burgundy/20 rounded-sm p-4"
+                      className="bg-burgundy-bg border border-burgundy/20 rounded-sm p-2 md:p-4"
                     >
-                      <div className="flex items-baseline gap-2 mb-1.5">
-                        <span className="font-mono text-[10px] text-burgundy font-semibold">
+                      <div className="flex items-baseline gap-1.5 md:gap-2 mb-1 md:mb-1.5">
+                        <span className="font-mono text-[9px] md:text-[10px] text-burgundy font-semibold">
                           0{a.n}
                         </span>
-                        <span className="font-serif text-[14px] lg:text-[15px] font-semibold text-burgundy leading-tight">
+                        <span className="font-serif text-[11px] md:text-[14px] lg:text-[15px] font-semibold text-burgundy leading-tight">
                           {a.title}
                         </span>
                       </div>
-                      <div className="font-serif text-[12px] lg:text-[13px] text-ink leading-relaxed">
+                      <div className="font-serif text-[10px] md:text-[12px] lg:text-[13px] text-ink leading-snug md:leading-relaxed">
                         {a.line}
                       </div>
                     </div>
