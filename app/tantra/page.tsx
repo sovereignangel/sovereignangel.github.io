@@ -153,6 +153,68 @@ const V1_GENERATING: Aspect[] = [
   { n: 9, domain: 'RELATING', title: 'The Present One', line: 'When I am with someone, no part of me is elsewhere. My attention is the gift.' },
 ]
 
+// ── Section design assets (SVG sigils) ───────────────────────────────────────
+function HindrancesSigil() {
+  return (
+    <svg width="40" height="40" viewBox="0 0 40 40" fill="none" className="text-burgundy">
+      {[8, 14, 20, 26, 32].map((x, i) => (
+        <line key={i} x1={x} y1="8" x2={x} y2="32" stroke="currentColor" strokeWidth="1.4" />
+      ))}
+      <line x1="6" y1="20" x2="34" y2="20" stroke="currentColor" strokeWidth="0.8" opacity="0.5" />
+    </svg>
+  )
+}
+function DissolutionsSigil() {
+  const dots = [
+    [8, 8, 1.6], [16, 12, 1.2], [24, 9, 1.0], [32, 14, 0.8],
+    [12, 20, 1.3], [22, 22, 1.6], [30, 24, 1.0],
+    [8, 30, 1.0], [18, 32, 0.8], [28, 32, 1.2],
+  ]
+  return (
+    <svg width="40" height="40" viewBox="0 0 40 40" fill="none" className="text-burgundy">
+      {dots.map(([cx, cy, r], i) => (
+        <circle key={i} cx={cx} cy={cy} r={r} fill="currentColor" opacity={0.4 + (r as number) * 0.3} />
+      ))}
+    </svg>
+  )
+}
+function FactorsSigil() {
+  const rays = Array.from({ length: 7 }, (_, i) => {
+    const a = (i * (360 / 7) - 90) * (Math.PI / 180)
+    const x = 20 + 14 * Math.cos(a)
+    const y = 20 + 14 * Math.sin(a)
+    return { x, y, key: i }
+  })
+  return (
+    <svg width="40" height="40" viewBox="0 0 40 40" fill="none" className="text-burgundy">
+      {rays.map((r) => (
+        <line key={r.key} x1="20" y1="20" x2={r.x} y2={r.y} stroke="currentColor" strokeWidth="1.2" />
+      ))}
+      <circle cx="20" cy="20" r="2.5" fill="currentColor" />
+      <circle cx="20" cy="20" r="9" stroke="currentColor" strokeWidth="0.6" opacity="0.4" />
+    </svg>
+  )
+}
+function AspectsSigil() {
+  return (
+    <svg width="40" height="40" viewBox="0 0 40 40" fill="none" className="text-burgundy">
+      {[0, 1, 2].map((r) =>
+        [0, 1, 2].map((c) => (
+          <circle
+            key={`${r}-${c}`}
+            cx={10 + c * 10}
+            cy={10 + r * 10}
+            r={r === 1 && c === 1 ? 2.4 : 1.6}
+            fill="currentColor"
+            opacity={r === 1 && c === 1 ? 1 : 0.75}
+          />
+        ))
+      )}
+      <rect x="6" y="6" width="28" height="28" stroke="currentColor" strokeWidth="0.6" opacity="0.3" />
+    </svg>
+  )
+}
+
 function formatDateTime(d: Date): string {
   return d.toLocaleString('en-US', {
     month: 'short',
@@ -174,8 +236,6 @@ function computeStreak(checkinDates: Set<string>): number {
   const fmt = (d: Date) =>
     `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
   const d = new Date()
-  // If today isn't checked in yet, start counting from yesterday so the streak
-  // doesn't drop to 0 every morning before practice.
   if (!checkinDates.has(fmt(d))) d.setDate(d.getDate() - 1)
   let streak = 0
   for (let i = 0; i < 1000; i++) {
@@ -187,6 +247,32 @@ function computeStreak(checkinDates: Set<string>): number {
     }
   }
   return streak
+}
+
+function SectionHeader({
+  sigil,
+  title,
+  meta,
+}: {
+  sigil: React.ReactNode
+  title: string
+  meta: string
+}) {
+  return (
+    <div className="flex items-center justify-between mb-3">
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 flex items-center justify-center border border-rule-light rounded-sm bg-paper">
+          {sigil}
+        </div>
+        <h2 className="font-serif text-[15px] lg:text-[16px] font-semibold uppercase tracking-[0.5px] text-burgundy">
+          {title}
+        </h2>
+      </div>
+      <div className="font-mono text-[10px] uppercase tracking-[0.5px] text-ink-muted">
+        {meta}
+      </div>
+    </div>
+  )
 }
 
 export default function TantraPage() {
@@ -204,6 +290,7 @@ export default function TantraPage() {
   const [backfillTime, setBackfillTime] = useState('10:00')
   const [backfillOpen, setBackfillOpen] = useState(false)
   const [showArchive, setShowArchive] = useState(false)
+  const [showCommentHistory, setShowCommentHistory] = useState(false)
 
   const load = useCallback(async () => {
     if (!user) return
@@ -236,11 +323,10 @@ export default function TantraPage() {
       finalCfg = { ...finalCfg, ...migration }
     }
 
-    // Seed the Apr 21, 2026 10:05 AM EDT check-in if this is first load and it's missing
     const seedDate = '2026-04-21'
     const hasSeed = cis.some((c) => c.date === seedDate)
     if (!hasSeed) {
-      const seedInstant = new Date('2026-04-21T14:05:00Z') // 10:05 AM EDT
+      const seedInstant = new Date('2026-04-21T14:05:00Z')
       await setTantraCheckin(user.uid, seedDate, seedInstant)
       const refreshed = await getTantraCheckins(user.uid)
       setCheckins(refreshed)
@@ -364,38 +450,25 @@ export default function TantraPage() {
   }
 
   return (
-    <div className="max-w-[1200px] mx-auto px-6 py-8">
-      {/* Header */}
-      <div className="mb-6">
-        <div className="font-mono text-[10px] uppercase tracking-[1px] text-ink-muted mb-1">
-          Armstrong · Personal Development Practice · {regimeName}
-        </div>
-        <h1 className="font-serif text-[28px] font-semibold text-burgundy tracking-tight leading-tight">
-          Daily Tantra Meditation
-        </h1>
-        <div className="font-serif italic text-[13px] text-ink-muted mt-0.5">
-          Becoming Her · A 30-minute morning ritual · Five Hindrances · Seven Factors · The Nine Aspects
-        </div>
-      </div>
-
-      {/* Oneliner banner */}
-      <div className="bg-white border border-rule rounded-sm p-4 mb-6 relative">
-        <div className="font-mono text-[9px] uppercase tracking-[1px] text-burgundy mb-1.5">
-          Who I am becoming
-        </div>
+    <div className="max-w-[1480px] mx-auto px-6 lg:px-10 py-8 lg:py-10">
+      {/* Top: who I am becoming (small, editable) */}
+      <div className="mb-3">
         {editingOneliner ? (
           <div className="flex flex-col gap-2">
+            <div className="font-mono text-[9px] uppercase tracking-[1px] text-burgundy">
+              Who I am becoming
+            </div>
             <textarea
               value={onelinerDraft}
               onChange={(e) => setOnelinerDraft(e.target.value)}
-              className="font-serif text-[16px] text-ink bg-transparent border border-rule rounded-sm px-2 py-1.5 w-full focus:outline-none focus:border-burgundy resize-none"
+              className="font-serif italic text-[13px] text-ink bg-transparent border border-rule rounded-sm px-2 py-1.5 w-full focus:outline-none focus:border-burgundy resize-none"
               rows={2}
               autoFocus
             />
             <div className="flex gap-2">
               <button
                 onClick={handleSaveOneliner}
-                className="font-serif text-[11px] uppercase tracking-[0.5px] px-3 py-1 bg-burgundy text-paper rounded-sm"
+                className="font-serif text-[10px] uppercase tracking-[0.5px] px-3 py-1 bg-burgundy text-paper rounded-sm"
               >
                 Save
               </button>
@@ -404,7 +477,7 @@ export default function TantraPage() {
                   setOnelinerDraft(config?.oneliner || '')
                   setEditingOneliner(false)
                 }}
-                className="font-serif text-[11px] uppercase tracking-[0.5px] px-3 py-1 border border-rule text-ink-muted rounded-sm"
+                className="font-serif text-[10px] uppercase tracking-[0.5px] px-3 py-1 border border-rule text-ink-muted rounded-sm"
               >
                 Cancel
               </button>
@@ -413,17 +486,33 @@ export default function TantraPage() {
         ) : (
           <button
             onClick={() => setEditingOneliner(true)}
-            className="font-serif text-[18px] text-ink leading-snug text-left hover:text-burgundy transition-colors w-full"
+            className="text-left w-full group"
+            title="Click to edit"
           >
-            {config?.oneliner}
+            <span className="font-mono text-[9px] uppercase tracking-[1px] text-ink-muted mr-2">
+              Who I am becoming —
+            </span>
+            <span className="font-serif italic text-[13px] text-ink-muted group-hover:text-burgundy transition-colors">
+              {config?.oneliner}
+            </span>
           </button>
         )}
       </div>
 
-      {/* Streak section */}
-      <section className="mb-6">
+      {/* Title */}
+      <div className="mb-8 pb-6 border-b border-rule-light">
+        <h1 className="font-serif text-[32px] lg:text-[40px] font-semibold text-burgundy tracking-tight leading-[1.05]">
+          Daily Tantra Meditation
+        </h1>
+        <div className="font-serif italic text-[13px] lg:text-[14px] text-ink-muted mt-1.5">
+          Becoming Her · {regimeName} · A 30-minute morning ritual · Five Hindrances · Seven Factors · The Nine Aspects
+        </div>
+      </div>
+
+      {/* STREAK — 20% block */}
+      <section className="mb-10">
         <div className="flex items-baseline justify-between mb-3">
-          <h2 className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy">
+          <h2 className="font-serif text-[15px] lg:text-[16px] font-semibold uppercase tracking-[0.5px] text-burgundy">
             The 40-Day Mandala · {regimeName}
           </h2>
           <div className="font-mono text-[10px] uppercase tracking-[0.5px] text-ink-muted">
@@ -431,25 +520,25 @@ export default function TantraPage() {
           </div>
         </div>
 
-        <div className="bg-white border border-rule rounded-sm p-4">
-          <div className="grid grid-cols-[auto_1fr] gap-6 items-center">
+        <div className="bg-white border border-rule rounded-sm p-5 lg:p-7">
+          <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-6 lg:gap-10 items-stretch">
             {/* Left: streak counters */}
-            <div className="flex flex-col gap-3 min-w-[180px]">
+            <div className="flex flex-col gap-4">
               <div>
                 <div className="font-mono text-[9px] uppercase tracking-[1px] text-ink-muted">
                   Current streak
                 </div>
-                <div className="font-serif text-[44px] font-semibold text-burgundy leading-none mt-1">
+                <div className="font-serif text-[56px] lg:text-[64px] font-semibold text-burgundy leading-none mt-1">
                   {streak}
-                  <span className="font-serif text-[14px] text-ink-muted ml-1.5">days</span>
+                  <span className="font-serif text-[14px] text-ink-muted ml-2">days</span>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-3 pt-2 border-t border-rule-light">
                 <div>
                   <div className="font-mono text-[9px] uppercase tracking-[1px] text-ink-muted">
                     Total completed
                   </div>
-                  <div className="font-serif text-[16px] font-semibold text-ink mt-0.5">
+                  <div className="font-serif text-[18px] font-semibold text-ink mt-0.5">
                     {totalCompleted}
                   </div>
                 </div>
@@ -457,8 +546,9 @@ export default function TantraPage() {
                   <div className="font-mono text-[9px] uppercase tracking-[1px] text-ink-muted">
                     Since Day One
                   </div>
-                  <div className="font-serif text-[16px] font-semibold text-ink mt-0.5">
-                    {daysSincePractice}<span className="font-serif text-[11px] text-ink-muted ml-1">d</span>
+                  <div className="font-serif text-[18px] font-semibold text-ink mt-0.5">
+                    {daysSincePractice}
+                    <span className="font-serif text-[11px] text-ink-muted ml-1">d</span>
                   </div>
                 </div>
               </div>
@@ -466,7 +556,7 @@ export default function TantraPage() {
               <button
                 onClick={handleToggleToday}
                 disabled={submitting}
-                className={`font-serif text-[11px] uppercase tracking-[0.5px] px-3 py-2 rounded-sm border transition-colors mt-1 ${
+                className={`font-serif text-[11px] uppercase tracking-[0.5px] px-3 py-2.5 rounded-sm border transition-colors mt-1 ${
                   checkedInToday
                     ? 'bg-burgundy text-paper border-burgundy'
                     : 'bg-transparent text-burgundy border-burgundy hover:bg-burgundy hover:text-paper'
@@ -475,12 +565,12 @@ export default function TantraPage() {
                 {checkedInToday ? 'Completed today' : 'Mark today complete'}
               </button>
               {checkedInToday && todayCheckinTime && (
-                <div className="font-mono text-[9px] text-ink-muted">
+                <div className="font-mono text-[9px] text-ink-muted -mt-2">
                   {formatDateTime(todayCheckinTime.toDate())}
                 </div>
               )}
 
-              <div className="pt-3 mt-1 border-t border-rule-light">
+              <div className="pt-2 mt-auto border-t border-rule-light">
                 <button
                   onClick={() => setBackfillOpen((o) => !o)}
                   className="font-mono text-[9px] uppercase tracking-[1px] text-ink-muted hover:text-burgundy transition-colors flex items-center gap-1"
@@ -515,19 +605,19 @@ export default function TantraPage() {
             </div>
 
             {/* Right: 40-day dot grid */}
-            <div>
-              <div className="flex items-baseline justify-between mb-2">
+            <div className="flex flex-col">
+              <div className="flex items-baseline justify-between mb-3">
                 <div className="font-mono text-[9px] uppercase tracking-[1px] text-ink-muted">
                   {regimeName} cycle · started {cycleStart}
                 </div>
                 <div className="font-mono text-[9px] uppercase tracking-[1px] text-ink-faint">
-                  Day one {practiceStart}
+                  Day One {practiceStart}
                 </div>
               </div>
-              <div className="grid grid-cols-10 gap-1.5">
+              <div className="grid grid-cols-10 gap-2 flex-1">
                 {cycleDays.map((d) => {
                   const base =
-                    'aspect-square rounded-sm border flex items-center justify-center font-mono text-[9px]'
+                    'aspect-square rounded-sm border flex items-center justify-center font-mono text-[10px] lg:text-[11px]'
                   let cls = `${base} border-rule text-ink-faint bg-transparent`
                   if (d.checked) {
                     cls = `${base} bg-burgundy border-burgundy text-paper`
@@ -550,176 +640,169 @@ export default function TantraPage() {
         </div>
       </section>
 
-      {/* The Five Hindrances */}
-      <section className="mb-6">
-        <div className="flex items-baseline justify-between mb-3">
-          <h2 className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy">
-            The Five Hindrances
-          </h2>
-          <div className="font-mono text-[10px] uppercase tracking-[0.5px] text-ink-muted">
-            Dissolution · Layer A
-          </div>
-        </div>
-        <div className="bg-white border border-rule rounded-sm p-4">
-          <div className="font-serif italic text-[11px] text-ink-muted mb-3 leading-snug">
-            Universal obstructions to clear awareness. Named aloud, each one loosens its grip.
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-2">
-            {HINDRANCES.map((h, i) => (
-              <div
-                key={h.name}
-                className="bg-cream border border-rule-light rounded-sm p-3 flex flex-col gap-1"
-              >
-                <span className="font-mono text-[9px] text-burgundy font-semibold">
-                  0{i + 1}
-                </span>
-                <span className="font-serif text-[12px] font-semibold text-ink leading-tight">
-                  {h.name}
-                </span>
-                <span className="font-serif text-[10px] text-ink-muted leading-snug">
-                  {h.gloss}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* The Dissolutions */}
-      <section className="mb-6">
-        <div className="flex items-baseline justify-between mb-3">
-          <h2 className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy">
-            The Dissolutions
-          </h2>
-          <div className="font-mono text-[10px] uppercase tracking-[0.5px] text-ink-muted">
-            Dissolution · Layers B + C · Refresh quarterly
-          </div>
-        </div>
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-4">
-          <div className="bg-white border border-rule rounded-sm p-4">
-            <div className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-2 pb-1.5 border-b border-rule">
-              The woman who dissolves
+      {/* SECTIONS — the four pillars */}
+      <div className="space-y-10 mb-10">
+        {/* Five Hindrances */}
+        <section>
+          <SectionHeader
+            sigil={<HindrancesSigil />}
+            title="The Five Hindrances"
+            meta="Dissolution · Layer A · Universal"
+          />
+          <div className="bg-white border border-rule rounded-sm p-5 lg:p-7">
+            <div className="font-serif italic text-[12px] text-ink-muted mb-4 leading-snug">
+              Universal obstructions to clear awareness. Named aloud, each one loosens its grip.
             </div>
-            <div className="font-serif italic text-[11px] text-ink-muted mb-3 leading-snug">
-              The specific shapes the old self still takes — consciously released before She can arise.
-            </div>
-            <ul className="space-y-1.5">
-              {DISSOLUTIONS.map((line, i) => (
-                <li
-                  key={i}
-                  className="font-serif text-[12px] text-ink leading-snug pl-3 relative"
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
+              {HINDRANCES.map((h, i) => (
+                <div
+                  key={h.name}
+                  className="bg-cream border border-rule-light rounded-sm p-4 flex flex-col gap-1.5 min-h-[120px]"
                 >
-                  <span className="absolute left-0 top-[0.4em] text-burgundy text-[10px]">·</span>
-                  {line}
-                </li>
-              ))}
-            </ul>
-          </div>
-          <div className="bg-burgundy-bg border border-burgundy/20 rounded-sm p-4">
-            <div className="font-mono text-[9px] uppercase tracking-[1px] text-burgundy mb-2">
-              Layer C · Linguistic Loosening
-            </div>
-            <div className="font-serif text-[12px] text-ink leading-snug italic">
-              &ldquo;{LINGUISTIC_LOOSENING}&rdquo;
-            </div>
-            <div className="font-mono text-[9px] text-ink-muted mt-3 leading-snug">
-              Sit 60 seconds. Not just patterns released, but the ground of self loosened.
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* The Seven Factors of Awakening */}
-      <section className="mb-6">
-        <div className="flex items-baseline justify-between mb-3">
-          <h2 className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy">
-            The Seven Factors of Awakening
-          </h2>
-          <div className="font-mono text-[10px] uppercase tracking-[0.5px] text-ink-muted">
-            Generation · Foundation
-          </div>
-        </div>
-        <div className="bg-white border border-rule rounded-sm p-4">
-          <div className="font-serif italic text-[11px] text-ink-muted mb-3 leading-snug">
-            The soil from which awakened mind arises. She arises from these, not from willpower.
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-7 gap-2">
-            {FACTORS.map((f, i) => (
-              <div
-                key={f.name}
-                className="bg-cream border border-rule-light rounded-sm p-3 flex flex-col gap-1"
-              >
-                <span className="font-mono text-[9px] text-burgundy font-semibold">
-                  0{i + 1}
-                </span>
-                <span className="font-serif text-[12px] font-semibold text-ink leading-tight">
-                  {f.name}
-                </span>
-                <span className="font-serif text-[10px] text-ink-muted leading-snug">
-                  {f.gloss}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* The Nine Aspects (Generations) */}
-      <section className="mb-6">
-        <div className="flex items-baseline justify-between mb-3">
-          <h2 className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy">
-            The Nine Aspects
-          </h2>
-          <div className="font-mono text-[10px] uppercase tracking-[0.5px] text-ink-muted">
-            Generation · She arises
-          </div>
-        </div>
-        <div className="bg-white border border-rule rounded-sm p-4">
-          <div className="font-serif italic text-[11px] text-ink-muted mb-3 leading-snug">
-            Three domains of becoming — Inner, Creation, Relating. From the empty space, She arises.
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            {(['INNER', 'CREATION', 'RELATING'] as const).map((domain) => (
-              <div key={domain} className="flex flex-col gap-2">
-                <div className="font-mono text-[9px] uppercase tracking-[1.2px] text-burgundy pb-1 border-b border-rule-light">
-                  {domain === 'INNER'
-                    ? 'I · Inner — how she relates to herself'
-                    : domain === 'CREATION'
-                    ? 'II · Creation — what she brings into being'
-                    : 'III · Relating — how she meets the world'}
+                  <span className="font-mono text-[10px] text-burgundy font-semibold">
+                    0{i + 1}
+                  </span>
+                  <span className="font-serif text-[13px] lg:text-[14px] font-semibold text-ink leading-tight">
+                    {h.name}
+                  </span>
+                  <span className="font-serif text-[11px] text-ink-muted leading-snug">
+                    {h.gloss}
+                  </span>
                 </div>
-                {ASPECTS.filter((a) => a.domain === domain).map((a) => (
-                  <div
-                    key={a.n}
-                    className="bg-burgundy-bg border border-burgundy/20 rounded-sm p-3"
-                  >
-                    <div className="flex items-baseline gap-2 mb-1">
-                      <span className="font-mono text-[9px] text-burgundy font-semibold">
-                        0{a.n}
-                      </span>
-                      <span className="font-serif text-[13px] font-semibold text-burgundy leading-tight">
-                        {a.title}
-                      </span>
-                    </div>
-                    <div className="font-serif text-[11px] text-ink leading-snug">
-                      {a.line}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-          <div className="mt-4 pt-3 border-t border-rule-light font-serif italic text-[11px] text-ink-muted leading-snug">
-            Quiet dignity, not divine pride — she does not announce her becoming. She sits with it, fully, until others know.
-          </div>
-        </div>
-      </section>
+        </section>
 
-      {/* V1 Archive — collapsed */}
-      <section className="mb-6">
+        {/* Dissolutions */}
+        <section>
+          <SectionHeader
+            sigil={<DissolutionsSigil />}
+            title="The Dissolutions"
+            meta="Dissolution · Layers B + C · Refresh quarterly"
+          />
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-4 lg:gap-6">
+            <div className="bg-white border border-rule rounded-sm p-5 lg:p-7">
+              <div className="font-serif text-[12px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-3 pb-2 border-b border-rule">
+                The woman who dissolves
+              </div>
+              <div className="font-serif italic text-[12px] text-ink-muted mb-4 leading-snug">
+                The specific shapes the old self still takes — consciously released before She can arise.
+              </div>
+              <ul className="space-y-2.5">
+                {DISSOLUTIONS.map((line, i) => (
+                  <li
+                    key={i}
+                    className="font-serif text-[13px] lg:text-[14px] text-ink leading-relaxed pl-4 relative"
+                  >
+                    <span className="absolute left-0 top-[0.45em] text-burgundy text-[11px] font-mono">
+                      0{i + 1}
+                    </span>
+                    <span className="ml-3">{line}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div className="bg-burgundy-bg border border-burgundy/20 rounded-sm p-5 lg:p-6 flex flex-col">
+              <div className="font-mono text-[10px] uppercase tracking-[1px] text-burgundy mb-3">
+                Layer C · Linguistic Loosening
+              </div>
+              <div className="font-serif text-[14px] text-ink leading-relaxed italic flex-1">
+                &ldquo;{LINGUISTIC_LOOSENING}&rdquo;
+              </div>
+              <div className="font-mono text-[10px] text-ink-muted mt-4 pt-3 border-t border-burgundy/15 leading-snug">
+                Sit 60 seconds. Not just patterns released, but the ground of self loosened.
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Seven Factors of Awakening */}
+        <section>
+          <SectionHeader
+            sigil={<FactorsSigil />}
+            title="The Seven Factors of Awakening"
+            meta="Generation · Foundation · She arises from these"
+          />
+          <div className="bg-white border border-rule rounded-sm p-5 lg:p-7">
+            <div className="font-serif italic text-[12px] text-ink-muted mb-4 leading-snug">
+              The soil from which awakened mind arises. She arises from these, not from willpower.
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-7 gap-3">
+              {FACTORS.map((f, i) => (
+                <div
+                  key={f.name}
+                  className="bg-cream border border-rule-light rounded-sm p-4 flex flex-col gap-1.5 min-h-[130px]"
+                >
+                  <span className="font-mono text-[10px] text-burgundy font-semibold">
+                    0{i + 1}
+                  </span>
+                  <span className="font-serif text-[13px] font-semibold text-ink leading-tight">
+                    {f.name}
+                  </span>
+                  <span className="font-serif text-[11px] text-ink-muted leading-snug">
+                    {f.gloss}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Nine Aspects */}
+        <section>
+          <SectionHeader
+            sigil={<AspectsSigil />}
+            title="The Nine Aspects"
+            meta="Generation · She arises · Three domains"
+          />
+          <div className="bg-white border border-rule rounded-sm p-5 lg:p-7">
+            <div className="font-serif italic text-[12px] text-ink-muted mb-4 leading-snug">
+              Three domains of becoming — Inner, Creation, Relating. From the empty space, She arises.
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6">
+              {(['INNER', 'CREATION', 'RELATING'] as const).map((domain) => (
+                <div key={domain} className="flex flex-col gap-3">
+                  <div className="font-mono text-[10px] uppercase tracking-[1.2px] text-burgundy pb-2 border-b border-rule-light">
+                    {domain === 'INNER'
+                      ? 'I · Inner — relating to herself'
+                      : domain === 'CREATION'
+                      ? 'II · Creation — what she brings into being'
+                      : 'III · Relating — meeting the world'}
+                  </div>
+                  {ASPECTS.filter((a) => a.domain === domain).map((a) => (
+                    <div
+                      key={a.n}
+                      className="bg-burgundy-bg border border-burgundy/20 rounded-sm p-4"
+                    >
+                      <div className="flex items-baseline gap-2 mb-1.5">
+                        <span className="font-mono text-[10px] text-burgundy font-semibold">
+                          0{a.n}
+                        </span>
+                        <span className="font-serif text-[14px] lg:text-[15px] font-semibold text-burgundy leading-tight">
+                          {a.title}
+                        </span>
+                      </div>
+                      <div className="font-serif text-[12px] lg:text-[13px] text-ink leading-relaxed">
+                        {a.line}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ))}
+            </div>
+            <div className="mt-5 pt-4 border-t border-rule-light font-serif italic text-[12px] text-ink-muted leading-snug">
+              Quiet dignity, not divine pride — she does not announce her becoming. She sits with it, fully, until others know.
+            </div>
+          </div>
+        </section>
+      </div>
+
+      {/* V1 archive */}
+      <section className="mb-8">
         <button
           onClick={() => setShowArchive((o) => !o)}
-          className="w-full flex items-center justify-between bg-paper border border-rule-light rounded-sm px-3 py-2 hover:border-rule transition-colors"
+          className="w-full flex items-center justify-between bg-paper border border-rule-light rounded-sm px-4 py-2.5 hover:border-rule transition-colors"
         >
           <span className="font-mono text-[10px] uppercase tracking-[1px] text-ink-muted">
             <span className="text-burgundy mr-2">{showArchive ? '−' : '+'}</span>
@@ -730,7 +813,7 @@ export default function TantraPage() {
           </span>
         </button>
         {showArchive && (
-          <div className="mt-3 grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-4">
+          <div className="mt-3 grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-4">
             <div className="bg-white border border-rule rounded-sm p-4">
               <div className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-2 pb-1.5 border-b border-rule">
                 V1 · Dissolving
@@ -783,7 +866,7 @@ export default function TantraPage() {
         )}
       </section>
 
-      {/* Commentary */}
+      {/* COMMENTS — 10% compact block, history collapsible */}
       <section className="mb-12">
         <div className="flex items-baseline justify-between mb-3">
           <h2 className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy">
@@ -794,15 +877,12 @@ export default function TantraPage() {
           </div>
         </div>
 
-        <div className="bg-white border border-rule rounded-sm p-4 mb-3">
-          <div className="font-serif italic text-[11px] text-ink-muted mb-3 leading-snug">
-            Notes, things to dissolve, things to generate — aggregated across the 40 days to inform your next practice.
-          </div>
+        <div className="bg-white border border-rule rounded-sm p-4">
           <textarea
             value={commentText}
             onChange={(e) => setCommentText(e.target.value)}
-            placeholder="What arose today?"
-            rows={3}
+            placeholder="What arose today? Notes, things to dissolve, things to generate..."
+            rows={2}
             className="w-full font-serif text-[13px] text-ink bg-cream border border-rule rounded-sm px-3 py-2 focus:outline-none focus:border-burgundy resize-none"
           />
           <div className="flex items-center justify-between mt-2 gap-2 flex-wrap">
@@ -821,22 +901,28 @@ export default function TantraPage() {
                 </button>
               ))}
             </div>
-            <button
-              onClick={handleAddComment}
-              disabled={submitting || !commentText.trim()}
-              className="font-serif text-[11px] uppercase tracking-[0.5px] px-3 py-1.5 bg-burgundy text-paper rounded-sm disabled:opacity-40"
-            >
-              Add entry
-            </button>
+            <div className="flex items-center gap-2">
+              {comments.length > 0 && (
+                <button
+                  onClick={() => setShowCommentHistory((o) => !o)}
+                  className="font-mono text-[9px] uppercase tracking-[1px] text-ink-muted hover:text-burgundy transition-colors"
+                >
+                  {showCommentHistory ? `Hide history` : `View ${comments.length} past ${comments.length === 1 ? 'entry' : 'entries'}`}
+                </button>
+              )}
+              <button
+                onClick={handleAddComment}
+                disabled={submitting || !commentText.trim()}
+                className="font-serif text-[11px] uppercase tracking-[0.5px] px-3 py-1.5 bg-burgundy text-paper rounded-sm disabled:opacity-40"
+              >
+                Add entry
+              </button>
+            </div>
           </div>
         </div>
 
-        {comments.length === 0 ? (
-          <div className="font-serif italic text-[12px] text-ink-muted text-center py-6">
-            No entries yet. Your reflections will accumulate here.
-          </div>
-        ) : (
-          <div className="space-y-2">
+        {showCommentHistory && comments.length > 0 && (
+          <div className="space-y-2 mt-3">
             {comments.map((c) => {
               const d = c.createdAt?.toDate ? c.createdAt.toDate() : null
               const kindLabel =
