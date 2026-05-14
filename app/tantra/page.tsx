@@ -450,7 +450,7 @@ export default function TantraPage() {
   }
 
   return (
-    <div className="max-w-[1480px] mx-auto px-4 lg:px-8 py-4 lg:py-5">
+    <div className="max-w-[1680px] mx-auto px-4 lg:px-6 py-3 lg:h-screen lg:overflow-y-auto lg:flex lg:flex-col">
       {/* Top: who I am becoming (small, editable) */}
       <div className="mb-2">
         {editingOneliner ? (
@@ -509,54 +509,42 @@ export default function TantraPage() {
         </div>
       </div>
 
-      {/* STREAK — 20% block */}
-      <section className="mb-10">
-        <div className="flex items-baseline justify-between mb-3">
-          <h2 className="font-serif text-[15px] lg:text-[16px] font-semibold uppercase tracking-[0.5px] text-burgundy">
+      {/* STREAK ~20vh */}
+      <section className="mb-2 lg:mb-3 lg:h-[22vh] lg:min-h-[180px] flex flex-col">
+        <div className="flex items-baseline justify-between mb-1.5">
+          <h2 className="font-serif text-[11px] lg:text-[12px] font-semibold uppercase tracking-[0.5px] text-burgundy">
             The 40-Day Mandala · {regimeName}
           </h2>
-          <div className="font-mono text-[10px] uppercase tracking-[0.5px] text-ink-muted">
-            Day {daysIntoCycle} of {cycleLen} · {daysRemaining} remaining
+          <div className="font-mono text-[9px] uppercase tracking-[0.5px] text-ink-muted">
+            Day {daysIntoCycle}/{cycleLen} · {daysRemaining} left
           </div>
         </div>
-
-        <div className="bg-white border border-rule rounded-sm p-5 lg:p-7">
-          <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-6 lg:gap-10 items-stretch">
-            {/* Left: streak counters */}
-            <div className="flex flex-col gap-4">
+        <div className="bg-white border border-rule rounded-sm p-2.5 flex-1 min-h-0">
+          <div className="grid grid-cols-1 lg:grid-cols-[170px_1fr] gap-3 lg:gap-4 h-full">
+            {/* Left: counters */}
+            <div className="flex flex-col gap-1.5">
               <div>
-                <div className="font-mono text-[9px] uppercase tracking-[1px] text-ink-muted">
-                  Current streak
-                </div>
-                <div className="font-serif text-[56px] lg:text-[64px] font-semibold text-burgundy leading-none mt-1">
-                  {streak}
-                  <span className="font-serif text-[14px] text-ink-muted ml-2">days</span>
+                <div className="font-mono text-[8px] uppercase tracking-[1px] text-ink-muted">Current streak</div>
+                <div className="font-serif text-[32px] lg:text-[38px] font-semibold text-burgundy leading-none mt-0.5">
+                  {streak}<span className="font-serif text-[10px] text-ink-muted ml-1">days</span>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-3 pt-2 border-t border-rule-light">
+              <div className="grid grid-cols-2 gap-2 pt-1 border-t border-rule-light">
                 <div>
-                  <div className="font-mono text-[9px] uppercase tracking-[1px] text-ink-muted">
-                    Total completed
-                  </div>
-                  <div className="font-serif text-[18px] font-semibold text-ink mt-0.5">
-                    {totalCompleted}
-                  </div>
+                  <div className="font-mono text-[8px] uppercase tracking-[1px] text-ink-muted">Total</div>
+                  <div className="font-serif text-[13px] font-semibold text-ink">{totalCompleted}</div>
                 </div>
                 <div>
-                  <div className="font-mono text-[9px] uppercase tracking-[1px] text-ink-muted">
-                    Since Day One
-                  </div>
-                  <div className="font-serif text-[18px] font-semibold text-ink mt-0.5">
-                    {daysSincePractice}
-                    <span className="font-serif text-[11px] text-ink-muted ml-1">d</span>
+                  <div className="font-mono text-[8px] uppercase tracking-[1px] text-ink-muted">Day One</div>
+                  <div className="font-serif text-[13px] font-semibold text-ink">
+                    {daysSincePractice}<span className="font-serif text-[9px] text-ink-muted ml-0.5">d</span>
                   </div>
                 </div>
               </div>
-
               <button
                 onClick={handleToggleToday}
                 disabled={submitting}
-                className={`font-serif text-[11px] uppercase tracking-[0.5px] px-3 py-2.5 rounded-sm border transition-colors mt-1 ${
+                className={`font-serif text-[10px] uppercase tracking-[0.5px] px-2 py-1.5 rounded-sm border transition-colors ${
                   checkedInToday
                     ? 'bg-burgundy text-paper border-burgundy'
                     : 'bg-transparent text-burgundy border-burgundy hover:bg-burgundy hover:text-paper'
@@ -564,70 +552,53 @@ export default function TantraPage() {
               >
                 {checkedInToday ? 'Completed today' : 'Mark today complete'}
               </button>
-              {checkedInToday && todayCheckinTime && (
-                <div className="font-mono text-[9px] text-ink-muted -mt-2">
-                  {formatDateTime(todayCheckinTime.toDate())}
-                </div>
-              )}
-
-              <div className="pt-2 mt-auto border-t border-rule-light">
+              <div className="mt-auto pt-1 border-t border-rule-light">
                 <button
                   onClick={() => setBackfillOpen((o) => !o)}
-                  className="font-mono text-[9px] uppercase tracking-[1px] text-ink-muted hover:text-burgundy transition-colors flex items-center gap-1"
+                  className="font-mono text-[8px] uppercase tracking-[1px] text-ink-muted hover:text-burgundy flex items-center gap-1"
                 >
                   <span>{backfillOpen ? '−' : '+'}</span>
-                  <span>Backfill a day</span>
+                  <span>Backfill</span>
                 </button>
                 {backfillOpen && (
-                  <div className="flex flex-col gap-1.5 mt-2">
+                  <div className="flex gap-1 mt-1">
                     <input
                       type="date"
                       value={backfillDate}
                       onChange={(e) => setBackfillDate(e.target.value)}
-                      className="font-mono text-[11px] text-ink bg-cream border border-rule rounded-sm px-2 py-1 focus:outline-none focus:border-burgundy"
+                      className="font-mono text-[9px] text-ink bg-cream border border-rule rounded-sm px-1 py-0.5 focus:outline-none focus:border-burgundy flex-1 min-w-0"
                     />
                     <input
                       type="time"
                       value={backfillTime}
                       onChange={(e) => setBackfillTime(e.target.value)}
-                      className="font-mono text-[11px] text-ink bg-cream border border-rule rounded-sm px-2 py-1 focus:outline-none focus:border-burgundy"
+                      className="font-mono text-[9px] text-ink bg-cream border border-rule rounded-sm px-1 py-0.5 focus:outline-none focus:border-burgundy w-[58px]"
                     />
                     <button
                       onClick={handleBackfill}
                       disabled={submitting || !backfillDate}
-                      className="font-serif text-[10px] uppercase tracking-[0.5px] px-2 py-1 border border-burgundy text-burgundy rounded-sm hover:bg-burgundy hover:text-paper transition-colors disabled:opacity-40"
+                      className="font-serif text-[9px] uppercase tracking-[0.5px] px-1.5 py-0.5 border border-burgundy text-burgundy rounded-sm hover:bg-burgundy hover:text-paper disabled:opacity-40"
                     >
-                      Record
+                      Save
                     </button>
                   </div>
                 )}
               </div>
             </div>
-
-            {/* Right: 40-day dot grid */}
-            <div className="flex flex-col">
-              <div className="flex items-baseline justify-between mb-3">
-                <div className="font-mono text-[9px] uppercase tracking-[1px] text-ink-muted">
-                  {regimeName} cycle · started {cycleStart}
-                </div>
-                <div className="font-mono text-[9px] uppercase tracking-[1px] text-ink-faint">
-                  Day One {practiceStart}
-                </div>
+            {/* Right: 40-day grid */}
+            <div className="flex flex-col min-h-0">
+              <div className="font-mono text-[8px] uppercase tracking-[1px] text-ink-muted mb-1 flex justify-between">
+                <span>{regimeName} · {cycleStart}</span>
+                <span className="text-ink-faint">Day One {practiceStart}</span>
               </div>
-              <div className="grid grid-cols-10 gap-2 flex-1">
+              <div className="grid grid-cols-10 gap-1 flex-1 min-h-0">
                 {cycleDays.map((d) => {
-                  const base =
-                    'aspect-square rounded-sm border flex items-center justify-center font-mono text-[10px] lg:text-[11px]'
+                  const base = 'aspect-square rounded-sm border flex items-center justify-center font-mono text-[9px]'
                   let cls = `${base} border-rule text-ink-faint bg-transparent`
-                  if (d.checked) {
-                    cls = `${base} bg-burgundy border-burgundy text-paper`
-                  } else if (d.isToday) {
-                    cls = `${base} border-burgundy text-burgundy bg-burgundy-bg`
-                  } else if (d.isFuture) {
-                    cls = `${base} border-rule-light text-ink-faint bg-transparent`
-                  } else {
-                    cls = `${base} border-rule text-ink-muted bg-cream`
-                  }
+                  if (d.checked) cls = `${base} bg-burgundy border-burgundy text-paper`
+                  else if (d.isToday) cls = `${base} border-burgundy text-burgundy bg-burgundy-bg`
+                  else if (d.isFuture) cls = `${base} border-rule-light text-ink-faint bg-transparent`
+                  else cls = `${base} border-rule text-ink-muted bg-cream`
                   return (
                     <div key={d.date} title={`${d.date} · Day ${d.index}`} className={cls}>
                       {d.index}
@@ -640,224 +611,237 @@ export default function TantraPage() {
         </div>
       </section>
 
-      {/* SECTIONS — the four pillars */}
-      <div className="space-y-10 mb-10">
+      {/* SECTIONS — 4 cols, ~40vh */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 mb-2 lg:mb-3 lg:h-[42vh] lg:min-h-[340px]">
         {/* Five Hindrances */}
-        <section>
-          <SectionHeader
-            sigil={<HindrancesSigil />}
-            title="The Five Hindrances"
-            meta="Dissolution · Layer A · Universal"
-          />
-          <div className="bg-white border border-rule rounded-sm p-5 lg:p-7">
-            <div className="font-serif italic text-[12px] text-ink-muted mb-4 leading-snug">
-              Universal obstructions to clear awareness. Named aloud, each one loosens its grip.
+        <section className="bg-white border border-rule rounded-sm p-2.5 flex flex-col min-h-0 overflow-hidden">
+          <div className="flex items-center gap-1.5 mb-1.5 pb-1.5 border-b border-rule-light">
+            <div className="w-7 h-7 flex items-center justify-center flex-shrink-0"><HindrancesSigil /></div>
+            <div className="flex-1 min-w-0">
+              <h3 className="font-serif text-[10px] font-semibold uppercase tracking-[0.5px] text-burgundy leading-tight">Five Hindrances</h3>
+              <div className="font-mono text-[8px] uppercase tracking-[1px] text-ink-muted">Layer A · Universal</div>
             </div>
-            <div className="grid grid-cols-5 gap-1.5 md:gap-3">
-              {HINDRANCES.map((h, i) => (
-                <div
-                  key={h.name}
-                  className="bg-cream border border-rule-light rounded-sm p-2 md:p-4 flex flex-col gap-1 md:gap-1.5 min-h-[90px] md:min-h-[120px]"
-                >
-                  <span className="font-mono text-[9px] md:text-[10px] text-burgundy font-semibold">
-                    0{i + 1}
-                  </span>
-                  <span className="font-serif text-[10px] md:text-[13px] lg:text-[14px] font-semibold text-ink leading-tight">
-                    {h.name}
-                  </span>
-                  <span className="hidden md:block font-serif text-[11px] text-ink-muted leading-snug">
-                    {h.gloss}
-                  </span>
+          </div>
+          <div className="flex-1 overflow-y-auto space-y-1.5 pr-1">
+            {HINDRANCES.map((h, i) => (
+              <div key={h.name} className="border-l-2 border-burgundy/30 pl-1.5">
+                <div className="flex items-baseline gap-1">
+                  <span className="font-mono text-[8px] text-burgundy font-semibold">0{i + 1}</span>
+                  <span className="font-serif text-[11px] font-semibold text-ink leading-tight">{h.name}</span>
                 </div>
-              ))}
-            </div>
+                <div className="font-serif text-[9px] text-ink-muted leading-snug">{h.gloss}</div>
+              </div>
+            ))}
           </div>
         </section>
 
         {/* Dissolutions */}
-        <section>
-          <SectionHeader
-            sigil={<DissolutionsSigil />}
-            title="The Dissolutions"
-            meta="Dissolution · Layers B + C · Refresh quarterly"
-          />
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-4 lg:gap-6">
-            <div className="bg-white border border-rule rounded-sm p-5 lg:p-7">
-              <div className="font-serif text-[12px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-3 pb-2 border-b border-rule">
-                The woman who dissolves
-              </div>
-              <div className="font-serif italic text-[12px] text-ink-muted mb-4 leading-snug">
-                The specific shapes the old self still takes — consciously released before She can arise.
-              </div>
-              <ul className="space-y-2.5">
-                {DISSOLUTIONS.map((line, i) => (
-                  <li
-                    key={i}
-                    className="font-serif text-[13px] lg:text-[14px] text-ink leading-relaxed pl-4 relative"
-                  >
-                    <span className="absolute left-0 top-[0.45em] text-burgundy text-[11px] font-mono">
-                      0{i + 1}
-                    </span>
-                    <span className="ml-3">{line}</span>
-                  </li>
-                ))}
-              </ul>
+        <section className="bg-white border border-rule rounded-sm p-2.5 flex flex-col min-h-0 overflow-hidden">
+          <div className="flex items-center gap-1.5 mb-1.5 pb-1.5 border-b border-rule-light">
+            <div className="w-7 h-7 flex items-center justify-center flex-shrink-0"><DissolutionsSigil /></div>
+            <div className="flex-1 min-w-0">
+              <h3 className="font-serif text-[10px] font-semibold uppercase tracking-[0.5px] text-burgundy leading-tight">Dissolutions</h3>
+              <div className="font-mono text-[8px] uppercase tracking-[1px] text-ink-muted">Layers B + C</div>
             </div>
-            <div className="bg-burgundy-bg border border-burgundy/20 rounded-sm p-5 lg:p-6 flex flex-col">
-              <div className="font-mono text-[10px] uppercase tracking-[1px] text-burgundy mb-3">
-                Layer C · Linguistic Loosening
+          </div>
+          <div className="flex-1 overflow-y-auto space-y-1.5 pr-1">
+            {DISSOLUTIONS.map((line, i) => (
+              <div key={i} className="border-l-2 border-burgundy/30 pl-1.5">
+                <div className="flex items-baseline gap-1">
+                  <span className="font-mono text-[8px] text-burgundy font-semibold flex-shrink-0">0{i + 1}</span>
+                  <span className="font-serif text-[10px] text-ink leading-snug">{line}</span>
+                </div>
               </div>
-              <div className="font-serif text-[14px] text-ink leading-relaxed italic flex-1">
-                &ldquo;{LINGUISTIC_LOOSENING}&rdquo;
-              </div>
-              <div className="font-mono text-[10px] text-ink-muted mt-4 pt-3 border-t border-burgundy/15 leading-snug">
-                Sit 60 seconds. Not just patterns released, but the ground of self loosened.
-              </div>
+            ))}
+            <div className="mt-1.5 p-1.5 bg-burgundy-bg border border-burgundy/20 rounded-sm">
+              <div className="font-mono text-[8px] uppercase tracking-[1px] text-burgundy mb-0.5">Layer C · Linguistic</div>
+              <div className="font-serif text-[9px] italic text-ink leading-snug">&ldquo;{LINGUISTIC_LOOSENING}&rdquo;</div>
             </div>
           </div>
         </section>
 
-        {/* Seven Factors of Awakening */}
-        <section>
-          <SectionHeader
-            sigil={<FactorsSigil />}
-            title="The Seven Factors of Awakening"
-            meta="Generation · Foundation · She arises from these"
-          />
-          <div className="bg-white border border-rule rounded-sm p-5 lg:p-7">
-            <div className="font-serif italic text-[12px] text-ink-muted mb-4 leading-snug">
-              The soil from which awakened mind arises. She arises from these, not from willpower.
+        {/* Seven Factors */}
+        <section className="bg-white border border-rule rounded-sm p-2.5 flex flex-col min-h-0 overflow-hidden">
+          <div className="flex items-center gap-1.5 mb-1.5 pb-1.5 border-b border-rule-light">
+            <div className="w-7 h-7 flex items-center justify-center flex-shrink-0"><FactorsSigil /></div>
+            <div className="flex-1 min-w-0">
+              <h3 className="font-serif text-[10px] font-semibold uppercase tracking-[0.5px] text-burgundy leading-tight">Seven Factors</h3>
+              <div className="font-mono text-[8px] uppercase tracking-[1px] text-ink-muted">Awakening · Foundation</div>
             </div>
-            <div className="grid grid-cols-4 md:grid-cols-7 gap-1.5 md:gap-3">
-              {FACTORS.map((f, i) => (
-                <div
-                  key={f.name}
-                  className="bg-cream border border-rule-light rounded-sm p-2 md:p-4 flex flex-col gap-1 md:gap-1.5 min-h-[80px] md:min-h-[130px]"
-                >
-                  <span className="font-mono text-[9px] md:text-[10px] text-burgundy font-semibold">
-                    0{i + 1}
-                  </span>
-                  <span className="font-serif text-[10px] md:text-[13px] font-semibold text-ink leading-tight">
-                    {f.name}
-                  </span>
-                  <span className="hidden md:block font-serif text-[11px] text-ink-muted leading-snug">
-                    {f.gloss}
-                  </span>
+          </div>
+          <div className="flex-1 overflow-y-auto space-y-1.5 pr-1">
+            {FACTORS.map((f, i) => (
+              <div key={f.name} className="border-l-2 border-burgundy/30 pl-1.5">
+                <div className="flex items-baseline gap-1">
+                  <span className="font-mono text-[8px] text-burgundy font-semibold">0{i + 1}</span>
+                  <span className="font-serif text-[11px] font-semibold text-ink leading-tight">{f.name}</span>
                 </div>
-              ))}
-            </div>
+                <div className="font-serif text-[9px] text-ink-muted leading-snug">{f.gloss}</div>
+              </div>
+            ))}
           </div>
         </section>
 
         {/* Nine Aspects */}
-        <section>
-          <SectionHeader
-            sigil={<AspectsSigil />}
-            title="The Nine Aspects"
-            meta="Generation · She arises · Three domains"
-          />
-          <div className="bg-white border border-rule rounded-sm p-5 lg:p-7">
-            <div className="font-serif italic text-[12px] text-ink-muted mb-4 leading-snug">
-              Three domains of becoming — Inner, Creation, Relating. From the empty space, She arises.
+        <section className="bg-white border border-rule rounded-sm p-2.5 flex flex-col min-h-0 overflow-hidden">
+          <div className="flex items-center gap-1.5 mb-1.5 pb-1.5 border-b border-rule-light">
+            <div className="w-7 h-7 flex items-center justify-center flex-shrink-0"><AspectsSigil /></div>
+            <div className="flex-1 min-w-0">
+              <h3 className="font-serif text-[10px] font-semibold uppercase tracking-[0.5px] text-burgundy leading-tight">Nine Aspects</h3>
+              <div className="font-mono text-[8px] uppercase tracking-[1px] text-ink-muted">Generation · 3 domains</div>
             </div>
-            <div className="grid grid-cols-3 gap-2 md:gap-4 lg:gap-6">
-              {(['INNER', 'CREATION', 'RELATING'] as const).map((domain) => (
-                <div key={domain} className="flex flex-col gap-2 md:gap-3">
-                  <div className="font-mono text-[9px] md:text-[10px] uppercase tracking-[1.2px] text-burgundy pb-1.5 md:pb-2 border-b border-rule-light">
-                    {domain === 'INNER' ? (
-                      <>I · Inner<span className="hidden md:inline"> — relating to herself</span></>
-                    ) : domain === 'CREATION' ? (
-                      <>II · Creation<span className="hidden md:inline"> — what she brings into being</span></>
-                    ) : (
-                      <>III · Relating<span className="hidden md:inline"> — meeting the world</span></>
-                    )}
-                  </div>
+          </div>
+          <div className="flex-1 overflow-y-auto space-y-2 pr-1">
+            {(['INNER', 'CREATION', 'RELATING'] as const).map((domain) => (
+              <div key={domain}>
+                <div className="font-mono text-[8px] uppercase tracking-[1.2px] text-burgundy mb-0.5">
+                  {domain === 'INNER' ? 'I · Inner' : domain === 'CREATION' ? 'II · Creation' : 'III · Relating'}
+                </div>
+                <div className="space-y-1">
                   {ASPECTS.filter((a) => a.domain === domain).map((a) => (
-                    <div
-                      key={a.n}
-                      className="bg-burgundy-bg border border-burgundy/20 rounded-sm p-2 md:p-4"
-                    >
-                      <div className="flex items-baseline gap-1.5 md:gap-2 mb-1 md:mb-1.5">
-                        <span className="font-mono text-[9px] md:text-[10px] text-burgundy font-semibold">
-                          0{a.n}
-                        </span>
-                        <span className="font-serif text-[11px] md:text-[14px] lg:text-[15px] font-semibold text-burgundy leading-tight">
-                          {a.title}
-                        </span>
-                      </div>
-                      <div className="font-serif text-[10px] md:text-[12px] lg:text-[13px] text-ink leading-snug md:leading-relaxed">
-                        {a.line}
+                    <div key={a.n} className="border-l-2 border-burgundy/30 pl-1.5 cursor-help" title={a.line}>
+                      <div className="flex items-baseline gap-1">
+                        <span className="font-mono text-[8px] text-burgundy font-semibold">0{a.n}</span>
+                        <span className="font-serif text-[10px] font-semibold text-ink leading-tight">{a.title}</span>
                       </div>
                     </div>
                   ))}
                 </div>
-              ))}
-            </div>
-            <div className="mt-5 pt-4 border-t border-rule-light font-serif italic text-[12px] text-ink-muted leading-snug">
-              Quiet dignity, not divine pride — she does not announce her becoming. She sits with it, fully, until others know.
-            </div>
+              </div>
+            ))}
           </div>
         </section>
       </div>
 
-      {/* V1 archive */}
-      <section className="mb-8">
+      {/* COMMENTS ~10vh */}
+      <section className="mb-2 lg:h-[10vh] lg:min-h-[88px]">
+        <div className="flex items-baseline justify-between mb-1.5">
+          <h2 className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-burgundy">
+            Commentary
+          </h2>
+          <div className="font-mono text-[9px] uppercase tracking-[0.5px] text-ink-muted">
+            {comments.length} {comments.length === 1 ? 'entry' : 'entries'} · informs V3
+          </div>
+        </div>
+        <div className="bg-white border border-rule rounded-sm p-2 flex items-stretch gap-1.5">
+          <div className="flex flex-col gap-0.5 flex-shrink-0">
+            {(['other', 'dissolve', 'generate'] as TantraCommentKind[]).map((k) => (
+              <button
+                key={k}
+                onClick={() => setCommentKind(k)}
+                className={`font-mono text-[8px] uppercase tracking-[1px] px-1.5 py-0.5 rounded-sm border ${
+                  commentKind === k
+                    ? 'bg-burgundy text-paper border-burgundy'
+                    : 'bg-transparent text-ink-muted border-rule hover:border-ink-faint'
+                }`}
+              >
+                {k === 'other' ? 'Note' : k === 'dissolve' ? 'Diss' : 'Gen'}
+              </button>
+            ))}
+          </div>
+          <textarea
+            value={commentText}
+            onChange={(e) => setCommentText(e.target.value)}
+            placeholder="What arose today?"
+            rows={2}
+            className="flex-1 font-serif text-[11px] text-ink bg-cream border border-rule rounded-sm px-2 py-1 focus:outline-none focus:border-burgundy resize-none"
+          />
+          <div className="flex flex-col gap-0.5 flex-shrink-0 justify-between">
+            <button
+              onClick={handleAddComment}
+              disabled={submitting || !commentText.trim()}
+              className="font-serif text-[9px] uppercase tracking-[0.5px] px-2 py-1 bg-burgundy text-paper rounded-sm disabled:opacity-40"
+            >
+              Add
+            </button>
+            {comments.length > 0 && (
+              <button
+                onClick={() => setShowCommentHistory((o) => !o)}
+                className="font-mono text-[8px] uppercase tracking-[1px] text-ink-muted hover:text-burgundy whitespace-nowrap"
+              >
+                {showCommentHistory ? 'Hide' : `View ${comments.length}`}
+              </button>
+            )}
+          </div>
+        </div>
+        {showCommentHistory && comments.length > 0 && (
+          <div className="space-y-1 mt-2 max-h-[40vh] overflow-y-auto">
+            {comments.map((c) => {
+              const d = c.createdAt?.toDate ? c.createdAt.toDate() : null
+              const kindLabel = c.kind === 'dissolve' ? 'Dissolve' : c.kind === 'generate' ? 'Generate' : 'Note'
+              const kindColor =
+                c.kind === 'dissolve'
+                  ? 'text-ink-muted border-rule bg-cream'
+                  : c.kind === 'generate'
+                  ? 'text-burgundy border-burgundy/30 bg-burgundy-bg'
+                  : 'text-ink-muted border-rule bg-paper'
+              return (
+                <div key={c.id} className="bg-white border border-rule rounded-sm p-1.5 group relative">
+                  <div className="flex items-baseline justify-between gap-2 mb-0.5">
+                    <span className={`font-mono text-[8px] uppercase tracking-[1px] px-1 py-0.5 rounded-sm border ${kindColor}`}>
+                      {kindLabel}
+                    </span>
+                    <span className="font-mono text-[8px] text-ink-muted">{d ? formatDateTime(d) : '—'}</span>
+                  </div>
+                  <div className="font-serif text-[11px] text-ink leading-snug whitespace-pre-wrap">{c.text}</div>
+                  <button
+                    onClick={() => handleDeleteComment(c.id)}
+                    className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 font-mono text-[10px] uppercase tracking-[0.5px] text-ink-muted hover:text-red-ink"
+                    title="Delete"
+                  >
+                    ×
+                  </button>
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </section>
+
+      {/* V1 archive — collapsed pill */}
+      <section className="mb-3">
         <button
           onClick={() => setShowArchive((o) => !o)}
-          className="w-full flex items-center justify-between bg-paper border border-rule-light rounded-sm px-4 py-2.5 hover:border-rule transition-colors"
+          className="w-full flex items-center justify-between bg-paper border border-rule-light rounded-sm px-2.5 py-1.5 hover:border-rule transition-colors"
         >
-          <span className="font-mono text-[10px] uppercase tracking-[1px] text-ink-muted">
-            <span className="text-burgundy mr-2">{showArchive ? '−' : '+'}</span>
-            V1 Archive · Apr 21 – May 13 · 18 days of practice
+          <span className="font-mono text-[9px] uppercase tracking-[1px] text-ink-muted">
+            <span className="text-burgundy mr-1.5">{showArchive ? '−' : '+'}</span>
+            V1 Archive · Apr 21 – May 13 · 18 days
           </span>
-          <span className="font-mono text-[9px] text-ink-faint">
-            {showArchive ? 'Hide' : 'Show'}
-          </span>
+          <span className="font-mono text-[8px] text-ink-faint">{showArchive ? 'Hide' : 'Show'}</span>
         </button>
         {showArchive && (
-          <div className="mt-3 grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-4">
-            <div className="bg-white border border-rule rounded-sm p-4">
-              <div className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-2 pb-1.5 border-b border-rule">
+          <div className="mt-2 grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-2">
+            <div className="bg-white border border-rule rounded-sm p-2.5">
+              <div className="font-serif text-[10px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-1.5 pb-1 border-b border-rule">
                 V1 · Dissolving
               </div>
-              <ul className="space-y-1.5">
+              <ul className="space-y-1">
                 {V1_DISSOLVING.map((line, i) => (
-                  <li
-                    key={i}
-                    className="font-serif text-[11px] text-ink-muted leading-snug pl-3 relative"
-                  >
-                    <span className="absolute left-0 top-[0.4em] text-ink-faint text-[10px]">·</span>
+                  <li key={i} className="font-serif text-[10px] text-ink-muted leading-snug pl-2.5 relative">
+                    <span className="absolute left-0 top-[0.4em] text-ink-faint text-[9px]">·</span>
                     {line}
                   </li>
                 ))}
               </ul>
             </div>
-            <div className="bg-white border border-rule rounded-sm p-4">
-              <div className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-2 pb-1.5 border-b border-rule">
+            <div className="bg-white border border-rule rounded-sm p-2.5">
+              <div className="font-serif text-[10px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-1.5 pb-1 border-b border-rule">
                 V1 · The Original Nine
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
                 {(['INNER', 'CREATION', 'RELATING'] as const).map((domain) => (
-                  <div key={domain} className="flex flex-col gap-2">
-                    <div className="font-mono text-[9px] uppercase tracking-[1.2px] text-ink-muted pb-1 border-b border-rule-light">
+                  <div key={domain} className="flex flex-col gap-1.5">
+                    <div className="font-mono text-[8px] uppercase tracking-[1.2px] text-ink-muted pb-1 border-b border-rule-light">
                       {domain === 'INNER' ? 'I · Inner' : domain === 'CREATION' ? 'II · Creation' : 'III · Relating'}
                     </div>
                     {V1_GENERATING.filter((a) => a.domain === domain).map((a) => (
-                      <div
-                        key={a.n}
-                        className="bg-paper border border-rule-light rounded-sm p-2.5"
-                      >
-                        <div className="flex items-baseline gap-2 mb-1">
-                          <span className="font-mono text-[9px] text-ink-muted font-semibold">
-                            0{a.n}
-                          </span>
-                          <span className="font-serif text-[12px] font-semibold text-ink leading-tight">
-                            {a.title}
-                          </span>
+                      <div key={a.n} className="bg-paper border border-rule-light rounded-sm p-1.5">
+                        <div className="flex items-baseline gap-1 mb-0.5">
+                          <span className="font-mono text-[8px] text-ink-muted font-semibold">0{a.n}</span>
+                          <span className="font-serif text-[10px] font-semibold text-ink leading-tight">{a.title}</span>
                         </div>
-                        <div className="font-serif text-[10px] text-ink-muted leading-snug">
-                          {a.line}
-                        </div>
+                        <div className="font-serif text-[9px] text-ink-muted leading-snug">{a.line}</div>
                       </div>
                     ))}
                   </div>
@@ -868,106 +852,7 @@ export default function TantraPage() {
         )}
       </section>
 
-      {/* COMMENTS — 10% compact block, history collapsible */}
-      <section className="mb-12">
-        <div className="flex items-baseline justify-between mb-3">
-          <h2 className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy">
-            Commentary
-          </h2>
-          <div className="font-mono text-[10px] uppercase tracking-[0.5px] text-ink-muted">
-            {comments.length} {comments.length === 1 ? 'entry' : 'entries'} · informs V3
-          </div>
-        </div>
-
-        <div className="bg-white border border-rule rounded-sm p-4">
-          <textarea
-            value={commentText}
-            onChange={(e) => setCommentText(e.target.value)}
-            placeholder="What arose today? Notes, things to dissolve, things to generate..."
-            rows={2}
-            className="w-full font-serif text-[13px] text-ink bg-cream border border-rule rounded-sm px-3 py-2 focus:outline-none focus:border-burgundy resize-none"
-          />
-          <div className="flex items-center justify-between mt-2 gap-2 flex-wrap">
-            <div className="flex gap-1">
-              {(['other', 'dissolve', 'generate'] as TantraCommentKind[]).map((k) => (
-                <button
-                  key={k}
-                  onClick={() => setCommentKind(k)}
-                  className={`font-mono text-[9px] uppercase tracking-[1px] px-2 py-1 rounded-sm border transition-colors ${
-                    commentKind === k
-                      ? 'bg-burgundy text-paper border-burgundy'
-                      : 'bg-transparent text-ink-muted border-rule hover:border-ink-faint'
-                  }`}
-                >
-                  {k === 'other' ? 'Note' : k === 'dissolve' ? 'Dissolve' : 'Generate'}
-                </button>
-              ))}
-            </div>
-            <div className="flex items-center gap-2">
-              {comments.length > 0 && (
-                <button
-                  onClick={() => setShowCommentHistory((o) => !o)}
-                  className="font-mono text-[9px] uppercase tracking-[1px] text-ink-muted hover:text-burgundy transition-colors"
-                >
-                  {showCommentHistory ? `Hide history` : `View ${comments.length} past ${comments.length === 1 ? 'entry' : 'entries'}`}
-                </button>
-              )}
-              <button
-                onClick={handleAddComment}
-                disabled={submitting || !commentText.trim()}
-                className="font-serif text-[11px] uppercase tracking-[0.5px] px-3 py-1.5 bg-burgundy text-paper rounded-sm disabled:opacity-40"
-              >
-                Add entry
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {showCommentHistory && comments.length > 0 && (
-          <div className="space-y-2 mt-3">
-            {comments.map((c) => {
-              const d = c.createdAt?.toDate ? c.createdAt.toDate() : null
-              const kindLabel =
-                c.kind === 'dissolve' ? 'Dissolve' : c.kind === 'generate' ? 'Generate' : 'Note'
-              const kindColor =
-                c.kind === 'dissolve'
-                  ? 'text-ink-muted border-rule bg-cream'
-                  : c.kind === 'generate'
-                  ? 'text-burgundy border-burgundy/30 bg-burgundy-bg'
-                  : 'text-ink-muted border-rule bg-paper'
-              return (
-                <div
-                  key={c.id}
-                  className="bg-white border border-rule rounded-sm p-3 group relative"
-                >
-                  <div className="flex items-baseline justify-between gap-3 mb-1">
-                    <span
-                      className={`font-mono text-[9px] uppercase tracking-[1px] px-1.5 py-0.5 rounded-sm border ${kindColor}`}
-                    >
-                      {kindLabel}
-                    </span>
-                    <span className="font-mono text-[9px] text-ink-muted">
-                      {d ? formatDateTime(d) : '—'}
-                    </span>
-                  </div>
-                  <div className="font-serif text-[13px] text-ink leading-snug whitespace-pre-wrap">
-                    {c.text}
-                  </div>
-                  <button
-                    onClick={() => handleDeleteComment(c.id)}
-                    className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 font-mono text-[9px] uppercase tracking-[0.5px] text-ink-muted hover:text-red-ink transition-opacity"
-                    title="Delete"
-                  >
-                    Remove
-                  </button>
-                </div>
-              )
-            })}
-          </div>
-        )}
-      </section>
-
-      <div className="font-mono text-[9px] uppercase tracking-[1px] text-ink-faint text-center mb-4">
+      <div className="font-mono text-[8px] uppercase tracking-[1px] text-ink-faint text-center">
         — ⬩ — Armstrong · Confidential · For Daily Practice — ⬩ —
       </div>
     </div>
