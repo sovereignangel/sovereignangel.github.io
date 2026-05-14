@@ -75,6 +75,13 @@ export function middleware(request: NextRequest) {
     return NextResponse.rewrite(url)
   }
 
+  // atune.loricorpuz.com → rewrite to /atune
+  if (host === 'atune.loricorpuz.com') {
+    const url = request.nextUrl.clone()
+    url.pathname = `/atune${url.pathname === '/' ? '' : url.pathname}`
+    return NextResponse.rewrite(url)
+  }
+
   // latentspace.loricorpuz.com — hidden from public
   if (host.startsWith('latentspace.')) {
     return new NextResponse('Not Found', { status: 404 })
