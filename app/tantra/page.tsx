@@ -359,23 +359,6 @@ export default function TantraPage() {
   const daysRemaining = Math.max(0, cycleLen - daysIntoCycle)
   const daysSincePractice = Math.max(0, daysBetween(practiceStart, today) + 1)
 
-  const cycleDays = useMemo(() => {
-    const arr: { date: string; index: number; checked: boolean; isToday: boolean; isFuture: boolean }[] = []
-    for (let i = 0; i < cycleLen; i++) {
-      const d = new Date(cycleStart + 'T00:00:00')
-      d.setDate(d.getDate() + i)
-      const s = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-      arr.push({
-        date: s,
-        index: i + 1,
-        checked: checkinDates.has(s),
-        isToday: s === today,
-        isFuture: new Date(s + 'T00:00:00').getTime() > new Date(today + 'T00:00:00').getTime(),
-      })
-    }
-    return arr
-  }, [cycleStart, cycleLen, checkinDates, today])
-
   async function handleToggleToday() {
     if (!user) return
     setSubmitting(true)
@@ -509,8 +492,8 @@ export default function TantraPage() {
         </div>
       </div>
 
-      {/* STREAK ~20vh */}
-      <section className="mb-2 lg:mb-3 lg:h-[22vh] lg:min-h-[180px] flex flex-col">
+      {/* STREAK — compact */}
+      <section className="mb-2 lg:mb-3 lg:h-[15vh] lg:min-h-[130px] flex flex-col">
         <div className="flex items-baseline justify-between mb-1.5">
           <h2 className="font-serif text-[11px] lg:text-[12px] font-semibold uppercase tracking-[0.5px] text-burgundy">
             The 40-Day Mandala · {regimeName}
@@ -585,26 +568,50 @@ export default function TantraPage() {
                 )}
               </div>
             </div>
-            {/* Right: 40-day grid */}
-            <div className="flex flex-col min-h-0">
-              <div className="font-mono text-[8px] uppercase tracking-[1px] text-ink-muted mb-1 flex justify-between">
-                <span>{regimeName} · {cycleStart}</span>
+            {/* Right: progress bar */}
+            <div className="flex flex-col justify-center min-h-0">
+              <div className="font-mono text-[8px] uppercase tracking-[1px] text-ink-muted mb-1.5 flex justify-between">
+                <span>{regimeName} cycle · started {cycleStart}</span>
                 <span className="text-ink-faint">Day One {practiceStart}</span>
               </div>
-              <div className="grid grid-cols-10 gap-1 flex-1 min-h-0">
-                {cycleDays.map((d) => {
-                  const base = 'aspect-square rounded-sm border flex items-center justify-center font-mono text-[9px]'
-                  let cls = `${base} border-rule text-ink-faint bg-transparent`
-                  if (d.checked) cls = `${base} bg-burgundy border-burgundy text-paper`
-                  else if (d.isToday) cls = `${base} border-burgundy text-burgundy bg-burgundy-bg`
-                  else if (d.isFuture) cls = `${base} border-rule-light text-ink-faint bg-transparent`
-                  else cls = `${base} border-rule text-ink-muted bg-cream`
-                  return (
-                    <div key={d.date} title={`${d.date} · Day ${d.index}`} className={cls}>
-                      {d.index}
-                    </div>
-                  )
-                })}
+              <div className="relative h-3 bg-cream border border-rule rounded-sm overflow-hidden">
+                <div
+                  className="absolute inset-y-0 left-0 bg-burgundy transition-all"
+                  style={{ width: `${(daysIntoCycle / cycleLen) * 100}%` }}
+                />
+                {[10, 20, 30].map((d) => (
+                  <div
+                    key={d}
+                    className="absolute inset-y-0 w-px bg-ink-faint/50"
+                    style={{ left: `${(d / cycleLen) * 100}%` }}
+                  />
+                ))}
+                {checkins
+                  .filter((c) => {
+                    const day = daysBetween(cycleStart, c.date) + 1
+                    return day >= 1 && day <= cycleLen
+                  })
+                  .map((c) => {
+                    const day = daysBetween(cycleStart, c.date) + 1
+                    return (
+                      <div
+                        key={c.date}
+                        title={`${c.date} · Day ${day} · completed`}
+                        className="absolute top-0 bottom-0 w-[3px] bg-paper/80"
+                        style={{ left: `calc(${((day - 0.5) / cycleLen) * 100}% - 1.5px)` }}
+                      />
+                    )
+                  })}
+              </div>
+              <div className="mt-1 flex justify-between font-mono text-[8px] uppercase tracking-[1px] text-ink-muted">
+                <span>Day 1</span>
+                <span>10</span>
+                <span>20</span>
+                <span>30</span>
+                <span>Day 40</span>
+              </div>
+              <div className="mt-2 text-center font-mono text-[9px] uppercase tracking-[1px] text-burgundy">
+                Today · Day {daysIntoCycle} / {cycleLen} · {totalCompleted} completed
               </div>
             </div>
           </div>
@@ -612,7 +619,7 @@ export default function TantraPage() {
       </section>
 
       {/* SECTIONS — 4 cols, ~40vh */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 mb-2 lg:mb-3 lg:h-[42vh] lg:min-h-[340px]">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 mb-2 lg:mb-3 lg:flex-1 lg:min-h-[340px]">
         {/* Five Hindrances */}
         <section className="bg-white border border-rule rounded-sm p-2.5 flex flex-col min-h-0 overflow-hidden">
           <div className="flex items-center gap-1.5 mb-1.5 pb-1.5 border-b border-rule-light">
