@@ -4,6 +4,9 @@ export interface TantraConfig {
   oneliner: string
   startDate: string
   cycleLengthDays: number
+  practiceStartDate?: string
+  cycleStartDate?: string
+  regimeName?: string
   updatedAt?: Timestamp
 }
 
