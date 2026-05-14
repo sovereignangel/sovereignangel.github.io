@@ -482,141 +482,124 @@ export default function TantraPage() {
         )}
       </div>
 
-      {/* Title — compact */}
-      <div className="mb-3 pb-2 border-b border-rule-light">
-        <h1 className="font-serif text-[22px] lg:text-[26px] font-semibold text-burgundy tracking-tight leading-tight">
-          Daily Tantra Meditation
-        </h1>
-        <div className="font-serif italic text-[11px] lg:text-[12px] text-ink-muted mt-0.5">
-          Becoming Her · {regimeName} · A 30-minute morning ritual
+      {/* Title row — title left, progress bar right */}
+      <div className="mb-3 pb-2 border-b border-rule-light grid grid-cols-1 lg:grid-cols-[auto_1fr] gap-3 lg:gap-6 items-end">
+        <div>
+          <h1 className="font-serif text-[22px] lg:text-[26px] font-semibold text-burgundy tracking-tight leading-tight">
+            Daily Tantra Meditation
+          </h1>
+          <div className="font-serif italic text-[11px] lg:text-[12px] text-ink-muted mt-0.5">
+            Becoming Her · {regimeName} · A 30-minute morning ritual
+          </div>
+        </div>
+        <div className="flex flex-col gap-1 lg:pl-6 lg:border-l lg:border-rule-light">
+          <div className="font-mono text-[9px] uppercase tracking-[1px] text-ink-muted flex justify-between items-baseline">
+            <span>{regimeName} cycle · Day {daysIntoCycle} / {cycleLen} · {daysRemaining} remaining</span>
+            <span className="text-burgundy">{totalCompleted} completed</span>
+          </div>
+          <div className="relative h-3 bg-cream border border-rule rounded-sm overflow-hidden">
+            <div
+              className="absolute inset-y-0 left-0 bg-burgundy transition-all"
+              style={{ width: `${(daysIntoCycle / cycleLen) * 100}%` }}
+            />
+            {[10, 20, 30].map((d) => (
+              <div
+                key={d}
+                className="absolute inset-y-0 w-px bg-ink-faint/50"
+                style={{ left: `${(d / cycleLen) * 100}%` }}
+              />
+            ))}
+            {checkins
+              .filter((c) => {
+                const day = daysBetween(cycleStart, c.date) + 1
+                return day >= 1 && day <= cycleLen
+              })
+              .map((c) => {
+                const day = daysBetween(cycleStart, c.date) + 1
+                return (
+                  <div
+                    key={c.date}
+                    title={`${c.date} · Day ${day} · completed`}
+                    className="absolute top-0 bottom-0 w-[3px] bg-paper/80"
+                    style={{ left: `calc(${((day - 0.5) / cycleLen) * 100}% - 1.5px)` }}
+                  />
+                )
+              })}
+          </div>
+          <div className="flex justify-between font-mono text-[8px] uppercase tracking-[1px] text-ink-muted">
+            <span>Day 1</span>
+            <span>10</span>
+            <span>20</span>
+            <span>30</span>
+            <span>Day 40</span>
+          </div>
         </div>
       </div>
 
-      {/* STREAK — compact */}
-      <section className="mb-2 lg:mb-3 lg:h-[15vh] lg:min-h-[130px] flex flex-col">
-        <div className="flex items-baseline justify-between mb-1.5">
-          <h2 className="font-serif text-[11px] lg:text-[12px] font-semibold uppercase tracking-[0.5px] text-burgundy">
-            The 40-Day Mandala · {regimeName}
-          </h2>
-          <div className="font-mono text-[9px] uppercase tracking-[0.5px] text-ink-muted">
-            Day {daysIntoCycle}/{cycleLen} · {daysRemaining} left
+      {/* Streak strip — single row */}
+      <section className="mb-2 lg:mb-3">
+        <div className="bg-white border border-rule rounded-sm px-3 py-2 flex items-center gap-3 lg:gap-4 flex-wrap">
+          <div className="flex flex-col">
+            <div className="font-mono text-[8px] uppercase tracking-[1px] text-ink-muted">Streak</div>
+            <div className="font-serif text-[26px] lg:text-[30px] font-semibold text-burgundy leading-none">
+              {streak}<span className="font-serif text-[10px] text-ink-muted ml-1">days</span>
+            </div>
           </div>
-        </div>
-        <div className="bg-white border border-rule rounded-sm p-2.5 flex-1 min-h-0">
-          <div className="grid grid-cols-1 lg:grid-cols-[170px_1fr] gap-3 lg:gap-4 h-full">
-            {/* Left: counters */}
-            <div className="flex flex-col gap-1.5">
-              <div>
-                <div className="font-mono text-[8px] uppercase tracking-[1px] text-ink-muted">Current streak</div>
-                <div className="font-serif text-[32px] lg:text-[38px] font-semibold text-burgundy leading-none mt-0.5">
-                  {streak}<span className="font-serif text-[10px] text-ink-muted ml-1">days</span>
-                </div>
-              </div>
-              <div className="flex flex-col gap-1 pt-1 border-t border-rule-light">
-                <div className="flex items-baseline justify-between gap-2">
-                  <span className="font-mono text-[8px] uppercase tracking-[1px] text-ink-muted">Total</span>
-                  <span className="font-serif text-[13px] font-semibold text-ink leading-none">{totalCompleted}</span>
-                </div>
-                <div>
-                  <div className="font-mono text-[8px] uppercase tracking-[1px] text-ink-muted">
-                    Start: {new Date(practiceStart + 'T00:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
-                  </div>
-                  <div className="font-serif text-[12px] font-semibold text-ink mt-0.5 leading-tight">
-                    {daysSincePractice} days practiced
-                  </div>
-                </div>
-              </div>
+          <div className="border-l border-rule-light pl-3 lg:pl-4 flex flex-col">
+            <div className="font-mono text-[8px] uppercase tracking-[1px] text-ink-muted">Total</div>
+            <div className="font-serif text-[18px] font-semibold text-ink leading-none mt-0.5">{totalCompleted}</div>
+          </div>
+          <div className="border-l border-rule-light pl-3 lg:pl-4 flex flex-col min-w-0">
+            <div className="font-mono text-[8px] uppercase tracking-[1px] text-ink-muted">
+              Start: {new Date(practiceStart + 'T00:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+            </div>
+            <div className="font-serif text-[13px] font-semibold text-ink mt-0.5 leading-tight">
+              {daysSincePractice} days practiced
+            </div>
+          </div>
+          <div className="flex items-center gap-2 ml-auto">
+            <button
+              onClick={handleToggleToday}
+              disabled={submitting}
+              className={`font-serif text-[10px] uppercase tracking-[0.5px] px-3 py-1.5 rounded-sm border transition-colors ${
+                checkedInToday
+                  ? 'bg-burgundy text-paper border-burgundy'
+                  : 'bg-transparent text-burgundy border-burgundy hover:bg-burgundy hover:text-paper'
+              } disabled:opacity-50`}
+            >
+              {checkedInToday ? 'Completed today' : 'Mark today complete'}
+            </button>
+            <button
+              onClick={() => setBackfillOpen((o) => !o)}
+              className="font-mono text-[9px] uppercase tracking-[1px] text-ink-muted hover:text-burgundy transition-colors flex items-center gap-1"
+            >
+              <span>{backfillOpen ? '−' : '+'}</span>
+              <span>Backfill</span>
+            </button>
+          </div>
+          {backfillOpen && (
+            <div className="basis-full flex items-center gap-1 pt-1.5 mt-1 border-t border-rule-light">
+              <input
+                type="date"
+                value={backfillDate}
+                onChange={(e) => setBackfillDate(e.target.value)}
+                className="font-mono text-[10px] text-ink bg-cream border border-rule rounded-sm px-2 py-1 focus:outline-none focus:border-burgundy"
+              />
+              <input
+                type="time"
+                value={backfillTime}
+                onChange={(e) => setBackfillTime(e.target.value)}
+                className="font-mono text-[10px] text-ink bg-cream border border-rule rounded-sm px-2 py-1 focus:outline-none focus:border-burgundy w-[80px]"
+              />
               <button
-                onClick={handleToggleToday}
-                disabled={submitting}
-                className={`font-serif text-[10px] uppercase tracking-[0.5px] px-2 py-1.5 rounded-sm border transition-colors ${
-                  checkedInToday
-                    ? 'bg-burgundy text-paper border-burgundy'
-                    : 'bg-transparent text-burgundy border-burgundy hover:bg-burgundy hover:text-paper'
-                } disabled:opacity-50`}
+                onClick={handleBackfill}
+                disabled={submitting || !backfillDate}
+                className="font-serif text-[10px] uppercase tracking-[0.5px] px-2 py-1 border border-burgundy text-burgundy rounded-sm hover:bg-burgundy hover:text-paper disabled:opacity-40"
               >
-                {checkedInToday ? 'Completed today' : 'Mark today complete'}
+                Record
               </button>
-              <div className="mt-auto pt-1 border-t border-rule-light">
-                <button
-                  onClick={() => setBackfillOpen((o) => !o)}
-                  className="font-mono text-[8px] uppercase tracking-[1px] text-ink-muted hover:text-burgundy flex items-center gap-1"
-                >
-                  <span>{backfillOpen ? '−' : '+'}</span>
-                  <span>Backfill</span>
-                </button>
-                {backfillOpen && (
-                  <div className="flex gap-1 mt-1">
-                    <input
-                      type="date"
-                      value={backfillDate}
-                      onChange={(e) => setBackfillDate(e.target.value)}
-                      className="font-mono text-[9px] text-ink bg-cream border border-rule rounded-sm px-1 py-0.5 focus:outline-none focus:border-burgundy flex-1 min-w-0"
-                    />
-                    <input
-                      type="time"
-                      value={backfillTime}
-                      onChange={(e) => setBackfillTime(e.target.value)}
-                      className="font-mono text-[9px] text-ink bg-cream border border-rule rounded-sm px-1 py-0.5 focus:outline-none focus:border-burgundy w-[58px]"
-                    />
-                    <button
-                      onClick={handleBackfill}
-                      disabled={submitting || !backfillDate}
-                      className="font-serif text-[9px] uppercase tracking-[0.5px] px-1.5 py-0.5 border border-burgundy text-burgundy rounded-sm hover:bg-burgundy hover:text-paper disabled:opacity-40"
-                    >
-                      Save
-                    </button>
-                  </div>
-                )}
-              </div>
             </div>
-            {/* Right: progress bar */}
-            <div className="flex flex-col justify-center min-h-0">
-              <div className="font-mono text-[8px] uppercase tracking-[1px] text-ink-muted mb-1.5 flex justify-between">
-                <span>{regimeName} cycle · started {cycleStart}</span>
-                <span className="text-ink-faint">Day One {practiceStart}</span>
-              </div>
-              <div className="relative h-3 bg-cream border border-rule rounded-sm overflow-hidden">
-                <div
-                  className="absolute inset-y-0 left-0 bg-burgundy transition-all"
-                  style={{ width: `${(daysIntoCycle / cycleLen) * 100}%` }}
-                />
-                {[10, 20, 30].map((d) => (
-                  <div
-                    key={d}
-                    className="absolute inset-y-0 w-px bg-ink-faint/50"
-                    style={{ left: `${(d / cycleLen) * 100}%` }}
-                  />
-                ))}
-                {checkins
-                  .filter((c) => {
-                    const day = daysBetween(cycleStart, c.date) + 1
-                    return day >= 1 && day <= cycleLen
-                  })
-                  .map((c) => {
-                    const day = daysBetween(cycleStart, c.date) + 1
-                    return (
-                      <div
-                        key={c.date}
-                        title={`${c.date} · Day ${day} · completed`}
-                        className="absolute top-0 bottom-0 w-[3px] bg-paper/80"
-                        style={{ left: `calc(${((day - 0.5) / cycleLen) * 100}% - 1.5px)` }}
-                      />
-                    )
-                  })}
-              </div>
-              <div className="mt-1 flex justify-between font-mono text-[8px] uppercase tracking-[1px] text-ink-muted">
-                <span>Day 1</span>
-                <span>10</span>
-                <span>20</span>
-                <span>30</span>
-                <span>Day 40</span>
-              </div>
-              <div className="mt-2 text-center font-mono text-[9px] uppercase tracking-[1px] text-burgundy">
-                Today · Day {daysIntoCycle} / {cycleLen} · {totalCompleted} completed
-              </div>
-            </div>
-          </div>
+          )}
         </div>
       </section>
 
