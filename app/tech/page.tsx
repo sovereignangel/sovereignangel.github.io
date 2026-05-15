@@ -42,17 +42,7 @@ function ArchitectureFlow() {
   ]
 
   return (
-    <svg viewBox="-170 -110 340 220" className="w-full max-w-[min(94vw,720px)] h-auto" aria-hidden>
-      {/* Compounding goals — north star */}
-      <text x="0" y="-96" textAnchor="middle" fontSize="4" fontFamily="serif" letterSpacing="1.2" fill="#7c2d2d">
-        ↑ COMPOUNDS INTO ↑
-      </text>
-      <text x="0" y="-86" textAnchor="middle" fontSize="6" fontStyle="italic" fontFamily="serif" fill="#2a2522">
-        creation · net worth · relationships · aesthetic · knowledge
-      </text>
-
-      <line x1="-160" y1="-72" x2="160" y2="-72" stroke="#d8d0c8" strokeWidth="0.4" />
-
+    <svg viewBox="-170 -90 340 200" className="w-full max-w-[min(94vw,720px)] h-auto" aria-hidden>
       {/* IN THE WORLD label */}
       <text x="-130" y="-58" textAnchor="middle" fontSize="3.5" letterSpacing="0.8" fontFamily="serif" fill="#7c2d2d">
         IN THE WORLD
@@ -285,6 +275,10 @@ function VisionTab() {
         <p className={`${fBody} text-[13px] sm:text-[15px] leading-[1.55] text-[#2a2522]/85 max-w-2xl`}>
           A life lived in many rooms at once. Meetings get transcribed by Wave; ideas get texted to Alfred. Each one routes to the platform that needs it — Personal OS, the Hedge Fund, or the Clients. <span className="italic text-[#7c2d2d]">All of it compounds into the few things that matter.</span>
         </p>
+        <blockquote className={`${fDisplay} italic text-[13px] sm:text-[15px] leading-[1.55] text-[#2a2522]/90 max-w-2xl mt-3 pl-3 border-l-2 border-[#7c2d2d]/50`}>
+          &ldquo;Our prime objects in life were love, the creation and enjoyment of aesthetic experience, and the pursuit of knowledge. <span className="text-[#7c2d2d] font-semibold not-italic">Of these, love came a long way first.</span>&rdquo;
+          <span className={`${fMono} block not-italic text-[10px] sm:text-[11px] tracking-[0.15em] uppercase text-[#9a928a] mt-1.5`}>— J.M. Keynes · My Early Beliefs · 1938</span>
+        </blockquote>
       </div>
       <div className="flex-1 min-h-0 flex items-center justify-center my-2 sm:my-3">
         <ArchitectureFlow />
