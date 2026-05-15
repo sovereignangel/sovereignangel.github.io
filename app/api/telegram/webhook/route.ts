@@ -9,6 +9,9 @@ import { DEFAULT_SETTINGS } from '@/lib/constants'
 import { resolveContactsBatch, buildAdminContactAdapter } from '@/lib/entity-resolution'
 import { embedJournalEntry } from '@/lib/embed-on-save'
 import { processTranscriptData, formatTranscriptSummary } from '@/lib/transcript-processing'
+import { matchPrefix } from '@/lib/inbox/route-prefix'
+import { buildAskKeyboard, buildAskPromptText, parseAskCallback } from '@/lib/inbox/ask-buttons'
+import type { InboxSource } from '@/lib/inbox/types'
 
 export const maxDuration = 300
 
@@ -2757,6 +2760,155 @@ async function handleScavengerRedeem(_uid: string, text: string, chatId: number)
   )
 }
 
+// =============================================================================
+// Phase 2 inbound router — prefix dispatch + free-form ask-button flow
+// =============================================================================
+
+const SOURCE_LABEL: Record<InboxSource, string> = {
+  armstrong: 'Armstrong',
+  'alamo-bernal': 'Alamo Bernal',
+  thesis: 'Thesis',
+  lordas: 'Lordas',
+}
+
+// Project ingest endpoint URLs — POST'd to for /arm and /ab. Thesis and Lordas
+// dispatch in-process (write to Website-side Firestore). When DeepOps + AB
+// stand up their /api/inbox-ingest endpoints, these URLs reach them; until
+// then, the POST fails and we stash to Website Firestore as a fallback.
+const PROJECT_INGEST_URL: Partial<Record<InboxSource, string>> = {
+  armstrong: process.env.ARMSTRONG_INGEST_URL || 'https://armstrong.loricorpuz.com/api/inbox-ingest',
+  'alamo-bernal': process.env.ALAMOBERNAL_INGEST_URL || 'https://alamobernal.loricorpuz.com/api/inbox-ingest',
+}
+
+/**
+ * Routes a freeform inbound message to the chosen project. For thesis/lordas
+ * (Website-internal), writes to users/{uid}/inbox_messages — Phase 4 harness
+ * reads from there. For armstrong/alamo-bernal, POSTs to the project's
+ * /api/inbox-ingest; on failure, stashes to users/{uid}/queued_routing for
+ * later drain.
+ */
+async function handlePrefixRoute(
+  uid: string,
+  chatId: number,
+  source: InboxSource,
+  text: string,
+): Promise<void> {
+  const label = SOURCE_LABEL[source]
+  if (!text || text.trim().length === 0) {
+    await sendTelegramReply(chatId, `Empty message. Usage: \`/${source === 'armstrong' ? 'arm' : source === 'alamo-bernal' ? 'ab' : source} <text>\``)
+    return
+  }
+
+  const adminDb = await getAdminDb()
+  const baseDoc = {
+    source,
+    text,
+    kind: 'freeform' as const,
+    sender_chat_id: chatId,
+    created_at: new Date(),
+    routed_by: 'prefix' as const,
+  }
+
+  // Thesis / Lordas — in-process, write to Website-side queue.
+  if (source === 'thesis' || source === 'lordas') {
+    const ref = adminDb.collection('users').doc(uid).collection('inbox_messages').doc()
+    await ref.set({ ...baseDoc, status: 'queued' })
+    await sendTelegramReply(chatId, `Routed to [${label}].\n\n_"${text.slice(0, 80)}${text.length > 80 ? '…' : ''}"_`)
+    return
+  }
+
+  // Armstrong / Alamo Bernal — POST to project's ingest endpoint.
+  const ingestUrl = PROJECT_INGEST_URL[source]
+  const secret = process.env.INBOX_SHARED_SECRET
+  if (!ingestUrl || !secret) {
+    const ref = adminDb.collection('users').doc(uid).collection('queued_routing').doc()
+    await ref.set({ ...baseDoc, status: 'stashed', last_error: 'ingest config missing', attempts: 0 })
+    await sendTelegramReply(chatId, `Stashed for [${label}] — project ingest not configured yet.\n\n_"${text.slice(0, 80)}${text.length > 80 ? '…' : ''}"_`)
+    return
+  }
+
+  try {
+    const res = await fetch(ingestUrl, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-inbox-secret': secret },
+      body: JSON.stringify({
+        source,
+        text,
+        sender_chat_id: chatId,
+        kind: 'freeform',
+      }),
+    })
+    if (!res.ok) {
+      const body = await res.text()
+      throw new Error(`HTTP ${res.status}: ${body.slice(0, 200)}`)
+    }
+    await sendTelegramReply(chatId, `Routed to [${label}].\n\n_"${text.slice(0, 80)}${text.length > 80 ? '…' : ''}"_`)
+  } catch (err) {
+    const errMsg = err instanceof Error ? err.message : String(err)
+    const ref = adminDb.collection('users').doc(uid).collection('queued_routing').doc()
+    await ref.set({ ...baseDoc, status: 'stashed', last_error: errMsg.slice(0, 500), attempts: 0 })
+    await sendTelegramReply(chatId, `Stashed for [${label}] — project endpoint unreachable (${errMsg.slice(0, 80)}).\n\nWill drain when endpoint is live.`)
+  }
+}
+
+/**
+ * Free-form text (no routing prefix) → reply with 5-button inline keyboard.
+ * Creates a draft at users/{uid}/inbox_drafts/{auto_id}; the callback handler
+ * looks it up by ID, dispatches, and deletes the draft.
+ */
+async function handleFreeformAskButtons(uid: string, chatId: number, text: string): Promise<void> {
+  const adminDb = await getAdminDb()
+  const ref = adminDb.collection('users').doc(uid).collection('inbox_drafts').doc()
+  await ref.set({
+    text,
+    sender_chat_id: chatId,
+    created_at: new Date(),
+    status: 'awaiting_choice',
+  })
+  await sendTelegramInlineKeyboard(chatId, buildAskPromptText(text), buildAskKeyboard(ref.id))
+}
+
+/**
+ * User tapped one of the 5 ask-buttons. Look up the draft, dispatch (or cancel),
+ * and edit the prompt message to reflect the choice.
+ */
+async function handleAskCallback(
+  cbq: { data?: string; from: { id: number }; message?: { chat: { id: number }; message_id: number } },
+  chatId: number,
+  messageId: number,
+): Promise<void> {
+  const parsed = parseAskCallback(cbq.data || '')
+  if (!parsed) {
+    await editTelegramMessage(chatId, messageId, '_Invalid ask callback. (Please retry.)_')
+    return
+  }
+  const uid = await findUserByChatId(cbq.from.id)
+  if (!uid) {
+    await editTelegramMessage(chatId, messageId, '_Not linked. Add chat ID in Settings._')
+    return
+  }
+  const adminDb = await getAdminDb()
+  const draftRef = adminDb.collection('users').doc(uid).collection('inbox_drafts').doc(parsed.draftId)
+  const draftSnap = await draftRef.get()
+  if (!draftSnap.exists) {
+    await editTelegramMessage(chatId, messageId, '_Draft expired or already routed._')
+    return
+  }
+  const draft = draftSnap.data() as { text: string; sender_chat_id: number }
+
+  if (parsed.source === 'cancel') {
+    await draftRef.delete()
+    await editTelegramMessage(chatId, messageId, '_Cancelled._')
+    return
+  }
+
+  // Dispatch via the same prefix-route helper (single source of truth for routing logic).
+  await handlePrefixRoute(uid, draft.sender_chat_id, parsed.source, draft.text)
+  await draftRef.delete()
+  // Edit the original ask-prompt message to show the final routing choice.
+  await editTelegramMessage(chatId, messageId, `Routed to [${SOURCE_LABEL[parsed.source]}].\n\n_"${draft.text.slice(0, 80)}${draft.text.length > 80 ? '…' : ''}"_`)
+}
+
 export async function POST(req: NextRequest) {
   if (!BOT_TOKEN) {
     return NextResponse.json({ error: 'Bot not configured' }, { status: 500 })
@@ -2780,6 +2932,8 @@ export async function POST(req: NextRequest) {
       const cbMessageId = cbq.message?.message_id
       if (cbChatId && cbMessageId && cbq.data?.startsWith('trx:')) {
         await handleTranscriptCallback(cbChatId, cbMessageId, cbq.data)
+      } else if (cbChatId && cbMessageId && cbq.data?.startsWith('ask:')) {
+        await handleAskCallback(cbq, cbChatId, cbMessageId)
       }
       // No callback queries needed for /todo — AI handles categorization directly
       return NextResponse.json({ ok: true })
@@ -2939,6 +3093,15 @@ export async function POST(req: NextRequest) {
       const replyToId = message.reply_to_message.message_id
       const handled = await handleBriefReplyFeedback(uid, message.text, replyToId, chatId)
       if (handled) return NextResponse.json({ ok: true })
+    }
+
+    // Phase 2 inbound router: /arm, /ab, /thesis, /lordas prefix dispatch.
+    // Runs BEFORE parseTelegramMessage so existing commands (/journal, /signal, etc.)
+    // are untouched — they only fire when the text doesn't match a routing prefix.
+    const prefixMatch = matchPrefix(message.text)
+    if (prefixMatch) {
+      await handlePrefixRoute(uid, chatId, prefixMatch.source, prefixMatch.text)
+      return NextResponse.json({ ok: true })
     }
 
     // Parse the message
@@ -3147,6 +3310,16 @@ export async function POST(req: NextRequest) {
 
     if (!parsed.text) {
       await sendTelegramReply(chatId, 'Empty signal. Usage: `/signal Your observation here`')
+      return NextResponse.json({ ok: true })
+    }
+
+    // Phase 2 inbound router: free-form text (no slash command and no /signal /note
+    // explicit prefix) gets the ask-button flow. /signal and /note continue to
+    // route to the signal-save fall-through below — those are explicit, the user
+    // has chosen the signal pipeline.
+    const isExplicitSignal = parsed.raw.startsWith('/signal') || parsed.raw.startsWith('/note')
+    if (!isExplicitSignal && parsed.command === 'signal') {
+      await handleFreeformAskButtons(uid, chatId, parsed.text)
       return NextResponse.json({ ok: true })
     }
 
