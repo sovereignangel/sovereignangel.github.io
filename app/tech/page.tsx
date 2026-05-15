@@ -199,8 +199,8 @@ function TechDiagram() {
           stack: ['AB · Supabase', 'ab_meetings · research_requests', 'partnership · screener · briefs'],
         },
         {
-          x: 110, label: 'Thesis · Lordas',
-          stack: ['Website · Firestore', 'inbox_messages · relational', 'wikis · journal · the apps'],
+          x: 110, label: 'Thesis Engine',
+          stack: ['Website · Firestore', 'wikis · journal · inbox_messages', 'Lordas · the apps · relational'],
         },
       ].map((p) => (
         <g key={p.label}>
