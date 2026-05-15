@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 
-type Tab = 'vision' | 'alfred' | 'streams' | 'world' | 'metrics'
+type Tab = 'vision' | 'tech' | 'metrics'
 
 // ── Palette (Armstrong brand) ────────────────────────────────────────────────
 // cream      #f5f1ea  bg
@@ -13,261 +13,270 @@ type Tab = 'vision' | 'alfred' | 'streams' | 'world' | 'metrics'
 // rule       #d8d0c8  borders
 // rule-light #e8e2da  subtle dividers
 // burgundy   #7c2d2d  scholarly accent
-// burgundy-bg #7c2d2d10  burgundy at low opacity
 // ─────────────────────────────────────────────────────────────────────────────
 
-// font helpers
-const fDisplay = 'font-[var(--font-display)]'
-const fBody    = 'font-[var(--font-display)]' // body is also Crimson Pro for warmth; mono handles labels
-const fMono    = 'font-[var(--font-mono)]'
+const fDisplay = 'font-[var(--font-display)]'   // Crimson Pro
+const fBody    = 'font-[var(--font-display)]'   // body uses display for warmth
+const fMono    = 'font-[var(--font-mono)]'      // IBM Plex Mono
 
-// ── Diagrams ─────────────────────────────────────────────────────────────────
-
-// ── Architecture flow (Vision hero) ─────────────────────────────────────────
-// Captures Lori's actual mental model:
-//   world (meetings + ideas) → Alfred → 3 platforms
-//   the substrate (self-investment) underneath
-//   compounding goals above
-//   inverse-RL future direction noted at the bottom
+// ── Vision diagram (animated, hero) ──────────────────────────────────────────
+// Sources (left) → Alfred hub (center, breathing) → 3 platforms (right, stacked).
+// Platform order top → bottom: Personal OS, Hedge Fund, Clients.
 
 function ArchitectureFlow() {
-  // Business-architecture diagram. Three platforms ordered per Lori's mental model:
-  //   Personal OS (Thesis Engine)  — top
-  //   Hedge Fund (Arete Technologies / Armstrong) — middle, the main vertical
-  //   Clients (Alamo Bernal) — bottom
-  // Wrapped above by sources + router, below by the cross-cutting harness layer.
-  const tiers: Array<{ label: string; tone: 'ink' | 'router' | 'platform' | 'fund' | 'harness'; items: Array<{ name: string; sub: string }> }> = [
-    {
-      label: 'Sources',
-      tone: 'ink',
-      items: [
-        { name: 'Telegram', sub: 'chat · voice · slash commands' },
-        { name: 'Wave AI', sub: 'session.completed → transcript' },
-        { name: 'journal · email', sub: 'passive ingest' },
-      ],
-    },
-    {
-      label: 'Router',
-      tone: 'router',
-      items: [
-        { name: 'Alfred · Website /api/inbox', sub: 'auth · prefix · ask-buttons · Wave 7-tag · dedupe · digest' },
-      ],
-    },
-    {
-      label: 'Personal OS',
-      tone: 'platform',
-      items: [
-        { name: 'Thesis Engine', sub: 'Website · wikis · journal · Lordas · the apps' },
-      ],
-    },
-    {
-      label: 'Hedge Fund',
-      tone: 'fund',
-      items: [
-        { name: 'Arete Technologies · Armstrong', sub: 'DeepOps · research · fundraising · management · investing' },
-      ],
-    },
-    {
-      label: 'Clients',
-      tone: 'platform',
-      items: [
-        { name: 'Alamo Bernal', sub: 'AB · partnership · screener · meetings · briefs' },
-      ],
-    },
-    {
-      label: 'Harness',
-      tone: 'harness',
-      items: [
-        { name: 'Alfred · workflows', sub: 'Ollama + Claude · reads queues, writes wikis, drafts memos' },
-      ],
-    },
-  ]
-
-  const itemStyle = (tone: 'ink' | 'router' | 'platform' | 'fund' | 'harness') =>
-    tone === 'router'
-      ? 'border border-[#7c2d2d] bg-[#7c2d2d]/[0.05]'
-      : tone === 'fund'
-        ? 'border-2 border-[#7c2d2d] bg-[#7c2d2d]/[0.08]'
-        : tone === 'platform'
-          ? 'border border-[#7c2d2d]/50 bg-[#faf8f4]'
-          : tone === 'harness'
-            ? 'border border-[#8a6d2f]/60 bg-[#8a6d2f]/[0.04]'
-            : 'border border-[#d8d0c8] bg-[#faf8f4]'
-
-  return (
-    <div className="w-full max-w-4xl mx-auto flex flex-col gap-2 sm:gap-2.5">
-      {tiers.map((tier, ti) => (
-        <div key={tier.label}>
-          <div className="grid grid-cols-12 items-stretch gap-2 sm:gap-3">
-            <div className="col-span-3 sm:col-span-2 flex items-center justify-end pr-1.5 sm:pr-2 text-right">
-              <span className={`${fMono} text-[10px] sm:text-[12px] uppercase tracking-[0.18em] text-[#7c2d2d] font-semibold leading-tight`}>
-                {tier.label}
-              </span>
-            </div>
-            <div className={`col-span-9 sm:col-span-10 grid gap-2 ${tier.items.length === 1 ? 'grid-cols-1' : 'grid-cols-3'}`}>
-              {tier.items.map((it) => (
-                <div key={it.name} className={`${itemStyle(tier.tone)} px-2.5 sm:px-3 py-1.5 sm:py-2 min-w-0`}>
-                  <p className={`${fDisplay} font-semibold text-[14px] sm:text-[17px] text-[#2a2522] leading-tight truncate`}>{it.name}</p>
-                  <p className={`${fMono} text-[10px] sm:text-[11px] text-[#5c5550] leading-snug truncate`}>{it.sub}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-          {ti < tiers.length - 1 && (
-            <div className="grid grid-cols-12 gap-2 sm:gap-3 py-0.5">
-              <div className="col-span-3 sm:col-span-2" />
-              <div className={`col-span-9 sm:col-span-10 ${fMono} text-[14px] text-[#7c2d2d] leading-none`}>↓</div>
-            </div>
-          )}
-        </div>
-      ))}
-    </div>
-  )
-}
-
-function RoomsWheel({ size = 280 }: { size?: number }) {
   const [t, setT] = useState(0)
   useEffect(() => {
-    const id = setInterval(() => setT((v) => v + 1), 90)
+    const id = setInterval(() => setT((v) => v + 1), 95)
     return () => clearInterval(id)
   }, [])
 
-  const rooms = [
-    { angle: -90, label: 'salons' },
-    { angle: -30, label: 'transcripts' },
-    { angle: 30, label: 'lordas' },
-    { angle: 90, label: 'the body' },
-    { angle: 150, label: 'the work' },
-    { angle: 210, label: 'adventures' },
+  const sources = [
+    { x: -130, y: -30, label: 'meetings', sub: 'via Wave' },
+    { x: -130, y: 28, label: 'ideas', sub: 'via Telegram' },
+  ]
+  // top → bottom: Personal OS, Hedge Fund, Clients
+  const platforms = [
+    { x: 105, y: -50, name: 'Personal OS', sub: 'Thesis Engine · wikis · journal · Lordas', emphasis: false },
+    { x: 105, y: 0, name: 'Hedge Fund', sub: 'Arete Technologies · Armstrong', emphasis: true },
+    { x: 105, y: 50, name: 'Clients', sub: 'Alamo Bernal · partnerships', emphasis: false },
   ]
 
   return (
-    <svg viewBox="-110 -110 220 220" width={size} height={size} aria-hidden>
-      <circle cx="0" cy="0" r="96" fill="none" stroke="#d8d0c8" strokeWidth="0.4" />
-      <circle cx="0" cy="0" r="66" fill="none" stroke="#d8d0c8" strokeWidth="0.4" strokeDasharray="1 2.5" />
-
-      {rooms.map((r) => {
-        const x = Math.cos((r.angle * Math.PI) / 180) * 80
-        const y = Math.sin((r.angle * Math.PI) / 180) * 80
-        return (
-          <line key={r.label + '-l'} x1="0" y1="0" x2={x * 0.85} y2={y * 0.85} stroke="#9a928a" strokeWidth="0.3" opacity="0.6" />
-        )
-      })}
-
-      {[0, 1, 2].map((i) => {
-        const phase = (t / 14 + i * 0.7) % 5
-        const r = 12 + phase * 18
-        const op = Math.max(0, 0.25 - phase * 0.05)
-        return <circle key={'r' + i} cx="0" cy="0" r={r} fill="none" stroke="#7c2d2d" strokeWidth="0.35" opacity={op} />
-      })}
-      <circle cx="0" cy="0" r="9" fill="none" stroke="#7c2d2d" strokeWidth="0.7" />
-      <text x="0" y="2" textAnchor="middle" fontSize="6" fontFamily="serif" fontStyle="italic" fill="#7c2d2d">
-        Alfred
+    <svg viewBox="-170 -110 340 220" className="w-full max-w-[min(94vw,720px)] h-auto" aria-hidden>
+      {/* Compounding goals — north star */}
+      <text x="0" y="-96" textAnchor="middle" fontSize="4" fontFamily="serif" letterSpacing="1.2" fill="#7c2d2d">
+        ↑ COMPOUNDS INTO ↑
+      </text>
+      <text x="0" y="-86" textAnchor="middle" fontSize="6" fontStyle="italic" fontFamily="serif" fill="#2a2522">
+        creation · net worth · relationships · aesthetic · knowledge
       </text>
 
-      {rooms.map((r, i) =>
+      <line x1="-160" y1="-72" x2="160" y2="-72" stroke="#d8d0c8" strokeWidth="0.4" />
+
+      {/* IN THE WORLD label */}
+      <text x="-130" y="-58" textAnchor="middle" fontSize="3.5" letterSpacing="0.8" fontFamily="serif" fill="#7c2d2d">
+        IN THE WORLD
+      </text>
+
+      {/* Sources */}
+      {sources.map((s) => (
+        <g key={s.label}>
+          <circle cx={s.x} cy={s.y} r="2.6" fill="#2a2522" />
+          <text x={s.x - 6} y={s.y + 1.5} textAnchor="end" fontSize="5.5" fontStyle="italic" fontFamily="serif" fill="#2a2522">
+            {s.label}
+          </text>
+          <text x={s.x - 6} y={s.y + 8} textAnchor="end" fontSize="3.8" fontFamily="serif" fill="#9a928a">
+            {s.sub}
+          </text>
+          <line x1={s.x + 3} y1={s.y} x2={-16} y2={0} stroke="#9a928a" strokeWidth="0.4" opacity="0.55" />
+        </g>
+      ))}
+
+      {/* Alfred (center hub, breathing) */}
+      {[0, 1, 2].map((i) => {
+        const phase = (t / 14 + i * 0.7) % 4
+        const r = 16 + phase * 14
+        const op = Math.max(0, 0.22 - phase * 0.05)
+        return <circle key={i} cx="0" cy="0" r={r} fill="none" stroke="#7c2d2d" strokeWidth="0.3" opacity={op} />
+      })}
+      <circle cx="0" cy="0" r="14" fill="#f5f1ea" stroke="#7c2d2d" strokeWidth="0.7" />
+      <text x="0" y="2.2" textAnchor="middle" fontSize="6.5" fontStyle="italic" fontFamily="serif" fill="#7c2d2d">
+        Alfred
+      </text>
+      <text x="0" y="22" textAnchor="middle" fontSize="3.5" letterSpacing="0.8" fontFamily="serif" fill="#9a928a">
+        ONE THREAD · ONE TOKEN
+      </text>
+
+      {/* PLATFORMS label */}
+      <text x="105" y="-72" textAnchor="middle" fontSize="3.5" letterSpacing="0.8" fontFamily="serif" fill="#7c2d2d">
+        PLATFORMS
+      </text>
+
+      {/* Platforms */}
+      {platforms.map((p) => (
+        <g key={p.name}>
+          <line x1="16" y1="0" x2={p.x - 6} y2={p.y} stroke={p.emphasis ? '#7c2d2d' : '#9a928a'} strokeWidth={p.emphasis ? '0.6' : '0.4'} opacity={p.emphasis ? '0.85' : '0.55'} />
+          <circle cx={p.x - 3} cy={p.y} r={p.emphasis ? '3.4' : '2.6'} fill="#7c2d2d" />
+          <text x={p.x + 2} y={p.y + 0.5} fontSize={p.emphasis ? '6.5' : '5.5'} fontStyle="italic" fontFamily="serif" fontWeight={p.emphasis ? '600' : '400'} fill="#2a2522">
+            {p.name}
+          </text>
+          <text x={p.x + 2} y={p.y + 7} fontSize="3.8" fontFamily="serif" fill="#9a928a">
+            {p.sub}
+          </text>
+        </g>
+      ))}
+
+      {/* Inbound dots: sources → Alfred */}
+      {sources.map((s, i) =>
         [0, 1].map((k) => {
-          const x = Math.cos((r.angle * Math.PI) / 180)
-          const y = Math.sin((r.angle * Math.PI) / 180)
-          const progress = ((t + i * 11 + k * 50) % 100) / 100
-          const cx = x * progress * 80
-          const cy = y * progress * 80
+          const offset = (t + i * 25 + k * 50) % 100
+          const p = offset / 100
+          const cx = s.x + (-s.x - 14) * p
+          const cy = s.y + (-s.y) * p
           return (
-            <circle key={`d-${i}-${k}`} cx={cx} cy={cy} r="0.7" fill="#7c2d2d" opacity={progress > 0.1 && progress < 0.95 ? 0.8 : 0} />
+            <circle key={`in-${i}-${k}`} cx={cx} cy={cy} r="0.7" fill="#7c2d2d" opacity={p > 0.08 && p < 0.92 ? 0.7 : 0} />
           )
         }),
       )}
 
-      {rooms.map((r) => {
-        const cx = Math.cos((r.angle * Math.PI) / 180) * 82
-        const cy = Math.sin((r.angle * Math.PI) / 180) * 82
-        const lx = Math.cos((r.angle * Math.PI) / 180) * 100
-        const ly = Math.sin((r.angle * Math.PI) / 180) * 100
-        const cosA = Math.cos((r.angle * Math.PI) / 180)
-        const anchor = cosA > 0.3 ? 'start' : cosA < -0.3 ? 'end' : 'middle'
-        return (
-          <g key={r.label}>
-            <rect x={cx - 2.5} y={cy - 2.5} width="5" height="5" fill="#f5f1ea" stroke="#7c2d2d" strokeWidth="0.45" />
-            <text x={lx} y={ly + 1.5} textAnchor={anchor} fontSize="4.5" fontFamily="serif" fontStyle="italic" fill="#2a2522">
-              {r.label}
-            </text>
-          </g>
-        )
-      })}
+      {/* Outbound dots: Alfred → platforms */}
+      {platforms.map((pl, i) =>
+        [0, 1].map((k) => {
+          const offset = (t + i * 25 + k * 50 + 50) % 100
+          const p = offset / 100
+          const cx = 14 + (pl.x - 14 - 6) * p
+          const cy = pl.y * p
+          return (
+            <circle key={`out-${i}-${k}`} cx={cx} cy={cy} r="0.7" fill="#7c2d2d" opacity={p > 0.08 && p < 0.92 ? 0.7 : 0} />
+          )
+        }),
+      )}
+
+      <line x1="-160" y1="82" x2="160" y2="82" stroke="#d8d0c8" strokeWidth="0.4" />
+      <text x="0" y="93" textAnchor="middle" fontSize="3.8" fontStyle="italic" fontFamily="serif" fill="#9a928a">
+        an artist and a capitalist · una vita in molte stanze
+      </text>
     </svg>
   )
 }
 
-function RouterDiagram({ size = 260 }: { size?: number }) {
+// ── Tech diagram (detailed, technical, used on Tech tab) ─────────────────────
+// Same flow but with the full technical surface visible: router endpoints,
+// project queues, wikis, harness, model routing.
+
+function TechDiagram() {
   const [t, setT] = useState(0)
   useEffect(() => {
-    const id = setInterval(() => setT((v) => v + 1), 90)
+    const id = setInterval(() => setT((v) => v + 1), 95)
     return () => clearInterval(id)
   }, [])
 
-  const inputs = [
-    { x: -70, y: -50, label: 'Telegram' },
-    { x: 0, y: -75, label: 'Wave AI' },
-    { x: 70, y: -50, label: 'journal' },
-  ]
-  const outputs = [
-    { x: -70, y: 50, label: 'Armstrong' },
-    { x: 0, y: 75, label: 'Alamo Bernal' },
-    { x: 70, y: 50, label: 'Thesis · Lordas' },
-  ]
-
   return (
-    <svg viewBox="-100 -100 200 200" width={size} height={size} aria-hidden>
-      <circle cx="0" cy="0" r="14" fill="none" stroke="#7c2d2d" strokeWidth="0.6" />
-      <text x="0" y="2" textAnchor="middle" fontSize="5.5" fontFamily="serif" fontStyle="italic" fill="#7c2d2d">
-        Alfred
+    <svg viewBox="-200 -150 400 300" className="w-full max-w-[min(96vw,860px)] h-auto" aria-hidden>
+      {/* === Top: sources === */}
+      <text x="-180" y="-138" fontSize="3.8" letterSpacing="0.8" fontFamily="serif" fill="#7c2d2d">SOURCES</text>
+      {[
+        { x: -150, y: -120, label: 'Telegram', sub: 'chat · voice · slash' },
+        { x: -50, y: -120, label: 'Wave AI', sub: 'session.completed' },
+        { x: 50, y: -120, label: 'journal · email', sub: 'passive ingest' },
+      ].map((s) => (
+        <g key={s.label}>
+          <rect x={s.x - 26} y={s.y - 6} width="52" height="12" fill="#faf8f4" stroke="#2a2522" strokeWidth="0.4" />
+          <text x={s.x} y={s.y - 1} textAnchor="middle" fontSize="4.5" fontFamily="serif" fontStyle="italic" fill="#2a2522">{s.label}</text>
+          <text x={s.x} y={s.y + 4} textAnchor="middle" fontSize="3" fontFamily="serif" fill="#9a928a">{s.sub}</text>
+          <line x1={s.x} y1={s.y + 6} x2={s.x * 0.45} y2={-80} stroke="#9a928a" strokeWidth="0.35" opacity="0.55" />
+        </g>
+      ))}
+
+      {/* === Alfred router === */}
+      <text x="-180" y="-78" fontSize="3.8" letterSpacing="0.8" fontFamily="serif" fill="#7c2d2d">L1 · ROUTER</text>
+      <rect x="-95" y="-90" width="190" height="36" fill="#7c2d2d" fillOpacity="0.06" stroke="#7c2d2d" strokeWidth="0.6" />
+      <text x="0" y="-78" textAnchor="middle" fontSize="6.5" fontStyle="italic" fontFamily="serif" fontWeight="600" fill="#7c2d2d">
+        Alfred · Website /api/inbox
       </text>
+      <text x="0" y="-71" textAnchor="middle" fontSize="3.8" fontFamily="serif" fill="#5c5550">
+        prefix · ask-buttons · Wave 7-tag · dedupe · digest
+      </text>
+      <text x="0" y="-64" textAnchor="middle" fontSize="3.2" fontFamily="serif" fill="#9a928a" fontStyle="italic">
+        one HMAC-auth&apos;d endpoint · one bot token, never seven
+      </text>
+      {/* breathing rings around the router */}
       {[0, 1, 2].map((i) => {
-        const phase = (t / 18 + i * 0.55) % 3
-        const r = 17 + phase * 18
-        const op = Math.max(0, 0.22 - phase * 0.06)
-        return <circle key={'r' + i} cx="0" cy="0" r={r} fill="none" stroke="#7c2d2d" strokeWidth="0.3" opacity={op} />
+        const phase = (t / 14 + i * 0.7) % 4
+        const r = 24 + phase * 22
+        const op = Math.max(0, 0.18 - phase * 0.04)
+        return <ellipse key={i} cx="0" cy="-72" rx={r * 2} ry={r * 0.7} fill="none" stroke="#7c2d2d" strokeWidth="0.25" opacity={op} />
       })}
 
-      {inputs.map((n) => (
-        <g key={n.label}>
-          <line x1={n.x * 0.85} y1={n.y * 0.85} x2={n.x * 0.2} y2={n.y * 0.2} stroke="#9a928a" strokeWidth="0.35" opacity="0.5" />
-          <circle cx={n.x} cy={n.y} r="2.2" fill="#7c2d2d" />
-          <text x={n.x} y={n.y - 5} textAnchor="middle" fontSize="4.5" fontStyle="italic" fontFamily="serif" fill="#2a2522">
-            {n.label}
-          </text>
-          {[0, 1, 2].map((i) => {
-            const p = ((t + i * 35) % 100) / 100
-            return <circle key={i} cx={n.x * (1 - p) * 0.85} cy={n.y * (1 - p) * 0.85} r="0.7" fill="#7c2d2d" opacity={p > 0.1 && p < 0.9 ? 0.7 : 0} />
-          })}
+      {/* === Project queues (3 columns) === */}
+      <text x="-180" y="-38" fontSize="3.8" letterSpacing="0.8" fontFamily="serif" fill="#7c2d2d">L2 · QUEUES</text>
+      {[
+        {
+          x: -110, label: 'Armstrong', emphasis: true,
+          stack: ['DeepOps · Supabase', 'research_requests · meetings', 'fundraising · research', 'management · investing'],
+        },
+        {
+          x: 0, label: 'Alamo Bernal',
+          stack: ['AB · Supabase', 'ab_meetings · research_requests', 'screener · briefs', 'partnership work'],
+        },
+        {
+          x: 110, label: 'Thesis · Lordas',
+          stack: ['Website · Firestore', 'inbox_messages · relational', 'wikis · journal', 'the apps'],
+        },
+      ].map((p) => (
+        <g key={p.label}>
+          <line x1={0} y1={-54} x2={p.x} y2={-30} stroke={p.emphasis ? '#7c2d2d' : '#9a928a'} strokeWidth={p.emphasis ? '0.55' : '0.4'} opacity="0.6" />
+          <rect x={p.x - 50} y={-30} width="100" height="62" fill="#faf8f4" stroke={p.emphasis ? '#7c2d2d' : '#7c2d2d'} strokeWidth={p.emphasis ? '0.8' : '0.5'} strokeOpacity={p.emphasis ? '1' : '0.55'} />
+          <text x={p.x} y={-22} textAnchor="middle" fontSize="5.5" fontStyle="italic" fontFamily="serif" fontWeight={p.emphasis ? '600' : '500'} fill="#2a2522">{p.label}</text>
+          {p.stack.map((line, j) => (
+            <text key={j} x={p.x} y={-13 + j * 6.5} textAnchor="middle" fontSize="3" fontFamily="serif" fill="#5c5550">{line}</text>
+          ))}
         </g>
       ))}
-      {outputs.map((n) => (
-        <g key={n.label}>
-          <line x1={n.x * 0.2} y1={n.y * 0.2} x2={n.x * 0.85} y2={n.y * 0.85} stroke="#9a928a" strokeWidth="0.35" opacity="0.5" />
-          <circle cx={n.x} cy={n.y} r="2.2" fill="#2a2522" />
-          <text x={n.x} y={n.y + 9} textAnchor="middle" fontSize="4.5" fontStyle="italic" fontFamily="serif" fill="#2a2522">
-            {n.label}
-          </text>
-          {[0, 1, 2].map((i) => {
-            const p = ((t + i * 35 + 50) % 100) / 100
-            return <circle key={i} cx={n.x * p * 0.85} cy={n.y * p * 0.85} r="0.7" fill="#2a2522" opacity={p > 0.1 && p < 0.9 ? 0.7 : 0} />
-          })}
-        </g>
+
+      {/* outbound dots from router to each queue */}
+      {[-110, 0, 110].map((px, i) =>
+        [0, 1].map((k) => {
+          const offset = (t + i * 25 + k * 50 + 50) % 100
+          const p = offset / 100
+          const cx = px * p
+          const cy = -54 + (24) * p
+          return (
+            <circle key={`dq-${i}-${k}`} cx={cx} cy={cy} r="0.7" fill="#7c2d2d" opacity={p > 0.08 && p < 0.92 ? 0.65 : 0} />
+          )
+        }),
+      )}
+
+      {/* === Wikis (Layer 3) === */}
+      <text x="-180" y="50" fontSize="3.8" letterSpacing="0.8" fontFamily="serif" fill="#7c2d2d">L3 · WIKIS</text>
+      <rect x="-130" y="42" width="260" height="22" fill="#8a6d2f" fillOpacity="0.06" stroke="#8a6d2f" strokeWidth="0.45" strokeOpacity="0.7" />
+      <text x="0" y="52" textAnchor="middle" fontSize="5" fontStyle="italic" fontFamily="serif" fontWeight="600" fill="#2a2522">
+        Karpathy Layer 2 — self-updating knowledge
+      </text>
+      <text x="0" y="59" textAnchor="middle" fontSize="3.5" fontFamily="serif" fill="#5c5550">
+        contact / ticker / project / topic / meeting — wikis/{'{slug}'}
+      </text>
+      {/* upward arrows from queues into wikis */}
+      {[-110, 0, 110].map((px) => (
+        <line key={'wU' + px} x1={px} y1={32} x2={px * 0.6} y2={42} stroke="#9a928a" strokeWidth="0.35" opacity="0.5" />
       ))}
+
+      {/* === Harness (Layer 4) === */}
+      <text x="-180" y="84" fontSize="3.8" letterSpacing="0.8" fontFamily="serif" fill="#7c2d2d">L4 · HARNESS</text>
+      <rect x="-150" y="74" width="300" height="28" fill="#faf8f4" stroke="#7c2d2d" strokeWidth="0.7" />
+      <text x="0" y="84" textAnchor="middle" fontSize="6" fontStyle="italic" fontFamily="serif" fontWeight="600" fill="#7c2d2d">Alfred · the agent</text>
+      <text x="0" y="91" textAnchor="middle" fontSize="3.8" fontFamily="serif" fill="#5c5550">
+        Ollama (cheap) + Claude (premium) · launchd → Cloud Run
+      </text>
+      <text x="0" y="97" textAnchor="middle" fontSize="3.2" fontStyle="italic" fontFamily="serif" fill="#9a928a">
+        reads queues · writes wikis · drafts memos · alerts Telegram
+      </text>
+
+      {/* === Seven tags fan, bottom === */}
+      <text x="-180" y="120" fontSize="3.8" letterSpacing="0.8" fontFamily="serif" fill="#7c2d2d">7-TAG FANOUT · Wave session.completed</text>
+      {['Fundraising', 'Research', 'Management', 'Investing', 'Alamo Bernal', 'Thesis Engine', 'Lordas'].map((tag, i) => {
+        const x = -150 + i * 50
+        return (
+          <g key={tag}>
+            <rect x={x - 23} y="128" width="46" height="9" fill="#faf8f4" stroke="#7c2d2d" strokeWidth="0.4" strokeOpacity="0.55" />
+            <text x={x} y="134" textAnchor="middle" fontSize="3.5" fontFamily="serif" fontStyle="italic" fill="#2a2522">{tag}</text>
+          </g>
+        )
+      })}
+      <text x="170" y="146" textAnchor="end" fontSize="3" fontStyle="italic" fontFamily="serif" fill="#9a928a">+ defer (no destination)</text>
     </svg>
   )
 }
 
-// ── Section header (compact, viewport-fit) ───────────────────────────────────
+// ── Section header ───────────────────────────────────────────────────────────
 
 function Chapter({ label, title, italic }: { label: string; title: string; italic?: boolean }) {
   return (
     <div className="mb-3 sm:mb-5 shrink-0">
-      <p className={`${fMono} text-[10px] sm:text-[11px] tracking-[0.22em] uppercase text-[#7c2d2d] font-semibold mb-1.5`}>
+      <p className={`${fMono} text-[10px] sm:text-[11px] font-semibold tracking-[0.22em] uppercase text-[#7c2d2d] mb-1.5`}>
         {label}
       </p>
-      <h2 className={`${fDisplay} ${italic ? 'italic' : ''} font-semibold text-[24px] sm:text-[34px] md:text-[40px] leading-[1.05] tracking-[-0.6px] text-[#2a2522]`}>
+      <h2 className={`${fDisplay} ${italic ? 'italic font-medium' : 'font-semibold'} text-[24px] sm:text-[34px] md:text-[40px] leading-[1.05] tracking-[-0.6px] text-[#2a2522]`}>
         {title}
       </h2>
     </div>
@@ -280,166 +289,37 @@ function VisionTab() {
   return (
     <div className="h-full flex flex-col px-5 sm:px-8 py-4 sm:py-6 max-w-5xl mx-auto w-full">
       <div className="shrink-0">
-        <Chapter label="i · the vision" title="In the world. Through Alfred. Into what compounds." italic />
+        <Chapter label="i · the vision" title="An artist and a capitalist." italic />
         <p className={`${fBody} text-[13px] sm:text-[15px] leading-[1.55] text-[#2a2522]/85 max-w-2xl`}>
-          She moves in the world — meetings get transcribed by Wave, ideas get texted to Alfred. Each one routes to the platform that needs it: Personal OS, the Hedge Fund, or the Clients. <span className="italic text-[#7c2d2d]">All of it compounds into the few things that matter.</span>
+          A life lived in many rooms at once. Meetings get transcribed by Wave; ideas get texted to Alfred. Each one routes to the platform that needs it — Personal OS, the Hedge Fund, or the Clients. <span className="italic text-[#7c2d2d]">All of it compounds into the few things that matter.</span>
         </p>
       </div>
-
-      <div className="flex-1 min-h-0 flex items-center justify-center py-2">
+      <div className="flex-1 min-h-0 flex items-center justify-center my-2 sm:my-3">
         <ArchitectureFlow />
       </div>
-
-      <p className={`${fDisplay} italic text-[12px] sm:text-[14px] text-[#9a928a] text-center shrink-0`}>
-        una vita in molte stanze — a renaissance practice, indexed
-      </p>
     </div>
   )
 }
 
-function AlfredTab() {
-  const phases = [
-    { n: 'I', name: 'Outbound router', state: 'live' },
-    { n: 'II.a', name: 'Inbound prefix · ask-buttons', state: 'live' },
-    { n: 'II.b', name: 'Wave 7-tag fanout', state: 'live' },
-    { n: 'III', name: 'Wikis (Karpathy L2)', state: 'reconciling' },
-    { n: 'IV', name: 'Alfred harness', state: 'scaffolded' },
-  ]
-  const tone = (s: string) =>
-    s === 'live' ? 'text-[#2d5f3f] border-[#2d5f3f]/40 bg-[#2d5f3f]/[0.08]' :
-    s === 'reconciling' ? 'text-[#8a6d2f] border-[#8a6d2f]/40 bg-[#8a6d2f]/[0.08]' :
-    'text-[#9a928a] border-[#d8d0c8] bg-[#faf8f4]'
-
+function TechTab() {
   return (
-    <div className="h-full flex flex-col px-5 sm:px-8 py-5 sm:py-7 max-w-3xl mx-auto w-full">
-      <Chapter label="ii · the chat" title="One bot. One thread. Every input organized." />
-
-      <div className="flex-1 grid grid-cols-1 sm:grid-cols-5 gap-4 sm:gap-6 items-center min-h-0">
-        <div className="sm:col-span-2 flex items-center justify-center order-2 sm:order-1">
-          <RouterDiagram size={220} />
-        </div>
-        <div className="sm:col-span-3 order-1 sm:order-2 flex flex-col gap-1.5 sm:gap-2 min-h-0">
-          {phases.map((p) => (
-            <div key={p.n} className="flex items-baseline justify-between gap-3 border-b border-[#e8e2da] pb-1.5">
-              <div className="flex items-baseline gap-2.5 min-w-0">
-                <span className={`${fMono} text-[10px] sm:text-[11px] text-[#7c2d2d] shrink-0 w-8`}>{p.n}</span>
-                <span className={`${fDisplay} text-[15px] sm:text-[17px] text-[#2a2522] truncate`}>{p.name}</span>
-              </div>
-              <span className={`${fMono} text-[9px] uppercase tracking-[0.12em] px-1.5 py-0.5 border ${tone(p.state)}`}>
-                {p.state}
-              </span>
-            </div>
-          ))}
-        </div>
+    <div className="h-full flex flex-col px-4 sm:px-8 py-4 sm:py-6 max-w-6xl mx-auto w-full">
+      <div className="shrink-0">
+        <Chapter label="ii · the tech" title="One bot. One thread. Five layers." />
+        <p className={`${fBody} text-[12px] sm:text-[14px] leading-[1.5] text-[#2a2522]/85 max-w-3xl`}>
+          Sources route through a single auth&apos;d HTTP endpoint into per-project queues. Queues feed wikis (Karpathy L2). Wikis feed the agent (Alfred, Phase 4) — which drafts memos, alerts, and updates back. <span className="italic text-[#7c2d2d]">No LLM auto-classification; every routing decision is explicit (slash prefix or 5/7-button keyboard).</span>
+        </p>
       </div>
-
-      <p className={`${fDisplay} italic text-[12px] sm:text-[14px] text-[#9a928a] text-center mt-3 shrink-0`}>
-        bot token rotates in one place, never seven
-      </p>
-    </div>
-  )
-}
-
-function StreamsTab() {
-  const streams = [
-    { tag: 'Fundraising', sub: 'Armstrong', dest: 'DeepOps · meetings' },
-    { tag: 'Research', sub: 'Armstrong', dest: 'DeepOps · meetings' },
-    { tag: 'Management', sub: 'Armstrong', dest: 'DeepOps · meetings' },
-    { tag: 'Investing', sub: 'Armstrong', dest: 'DeepOps · meetings' },
-    { tag: 'Alamo Bernal', sub: 'partnership', dest: 'AB · ab_meetings' },
-    { tag: 'Thesis Engine', sub: 'personal projects', dest: 'Website · inbox_messages' },
-    { tag: 'Lordas', sub: 'with Aidas', dest: 'Website · relational' },
-    { tag: 'Defer', sub: 'escape hatch', dest: '— (no destination)' },
-  ]
-
-  return (
-    <div className="h-full flex flex-col px-5 sm:px-8 py-5 sm:py-7 max-w-3xl mx-auto w-full">
-      <Chapter label="iii · the streams" title="Seven destinations · one escape hatch." />
-
-      <div className="flex-1 flex flex-col justify-center min-h-0 gap-1 sm:gap-1.5 overflow-hidden">
-        {streams.map((s, i) => {
-          const isDefer = s.tag === 'Defer'
-          return (
-            <div
-              key={s.tag}
-              className={`grid grid-cols-12 gap-3 items-baseline border-b border-[#e8e2da] pb-1.5 sm:pb-2 ${isDefer ? 'pt-1 opacity-70' : ''}`}
-            >
-              <span className={`${fMono} text-[10px] text-[#7c2d2d] col-span-1`}>
-                {isDefer ? '·' : String(i + 1).padStart(2, '0')}
-              </span>
-              <div className="col-span-6 sm:col-span-5">
-                <span className={`${fDisplay} font-semibold text-[15px] sm:text-[19px] text-[#2a2522]`}>{s.tag}</span>
-                <span className={`${fDisplay} italic text-[11px] sm:text-[13px] text-[#9a928a] ml-2`}>· {s.sub}</span>
-              </div>
-              <span className={`${fMono} text-[10px] sm:text-[11px] text-[#9a928a] col-span-5 sm:col-span-6 text-right truncate`}>{s.dest}</span>
-            </div>
-          )
-        })}
+      <div className="flex-1 min-h-0 flex items-center justify-center my-1 sm:my-2">
+        <TechDiagram />
       </div>
-
-      <p className={`${fDisplay} italic text-[12px] sm:text-[14px] text-[#9a928a] text-center mt-3 shrink-0`}>
-        every transcript caught · every one routed to the surface that needs it
-      </p>
-    </div>
-  )
-}
-
-function WorldTab() {
-  const adventures = [
-    { name: 'Scavenger hunts', sub: 'Manhattan · recurring' },
-    { name: 'Kite trips', sub: 'Mistral · seasonal' },
-    { name: 'Investor caravans', sub: 'Aruba · custom' },
-    { name: 'Salons', sub: 'with academics, founders, engineers' },
-  ]
-  const work = [
-    { name: 'Talks', sub: 'conferences · podcasts · private rooms' },
-    { name: 'Papers', sub: 'macro signals · capacity testing · complexity econ' },
-    { name: 'Posts', sub: 'weekly · blog.loricorpuz.com' },
-  ]
-
-  return (
-    <div className="h-full flex flex-col px-5 sm:px-8 py-5 sm:py-7 max-w-3xl mx-auto w-full">
-      <Chapter label="iv · the world" title="Adventures. Salons. Work in public." />
-
-      <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-5 min-h-0">
-        <div className="flex flex-col min-h-0">
-          <p className={`${fMono} text-[10px] tracking-[0.2em] uppercase text-[#7c2d2d] mb-2.5`}>Adventures I organize</p>
-          <div className="space-y-2">
-            {adventures.map((a) => (
-              <div key={a.name} className="border-l-2 border-[#7c2d2d] pl-3 py-0.5">
-                <p className={`${fDisplay} text-[16px] sm:text-[19px] text-[#2a2522] leading-tight`}>{a.name}</p>
-                <p className={`${fMono} text-[10px] sm:text-[11px] text-[#9a928a]`}>{a.sub}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-        <div className="flex flex-col min-h-0">
-          <p className={`${fMono} text-[10px] tracking-[0.2em] uppercase text-[#7c2d2d] mb-2.5`}>
-            Work in public · <span className="text-[#9a928a] normal-case tracking-normal italic">aspirational</span>
-          </p>
-          <div className="space-y-2">
-            {work.map((w) => (
-              <div key={w.name} className="border-l border-dashed border-[#7c2d2d]/60 pl-3 py-0.5">
-                <p className={`${fDisplay} text-[16px] sm:text-[19px] text-[#2a2522] leading-tight`}>{w.name}</p>
-                <p className={`${fMono} text-[10px] sm:text-[11px] text-[#9a928a]`}>{w.sub}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      <p className={`${fDisplay} italic text-[12px] sm:text-[14px] text-[#9a928a] text-center mt-3 shrink-0`}>
-        software is the infrastructure · the practice is in the world
-      </p>
     </div>
   )
 }
 
 function MetricsTab() {
-  // Reframed per Lori: three INPUTS she cultivates weekly compound into two
-  // OUTPUTS she measures quarterly. "I'm an Artist and a Capitalist."
-  //   Aesthetic + Knowledge + Relationships  →  Creation  +  Net worth
-  // Body & mind are foundations (always on, footer note); they sustain the inputs.
+  // 3 INPUTS Lori cultivates weekly compound into 2 OUTPUTS measured quarterly.
+  // "I'm an Artist and a Capitalist." Body & mind are foundations (footer line).
   const inputs = [
     {
       name: 'Relationships',
@@ -506,14 +386,13 @@ function MetricsTab() {
   return (
     <div className="h-full flex flex-col px-4 sm:px-8 py-4 sm:py-6 max-w-5xl mx-auto w-full">
       <div className="shrink-0">
-        <Chapter label="v · what i count" title="An artist and a capitalist." italic />
+        <Chapter label="iii · what i count" title="An artist and a capitalist." italic />
         <p className={`${fBody} text-[12px] sm:text-[14px] leading-[1.5] text-[#2a2522]/85 max-w-2xl`}>
           Three things I cultivate. Two things they compound into. <span className="italic text-[#7c2d2d]">Each gets a compound metric, a leading indicator (cheap, weekly), and a drawdown trigger (when to act). Not a dashboard — a compass.</span>
         </p>
       </div>
 
       <div className="flex-1 flex flex-col justify-center gap-2 sm:gap-3 min-h-0 mt-2 sm:mt-3">
-        {/* INPUTS */}
         <div>
           <p className={`${fMono} text-[10px] sm:text-[11px] uppercase tracking-[0.2em] text-[#7c2d2d] font-semibold mb-1.5`}>Inputs · cultivated weekly</p>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
@@ -521,10 +400,8 @@ function MetricsTab() {
           </div>
         </div>
 
-        {/* Arrow */}
-        <div className={`${fMono} text-[12px] uppercase tracking-[0.25em] text-[#7c2d2d] text-center`}>↓ compounds into ↓</div>
+        <div className={`${fMono} text-[11px] uppercase tracking-[0.25em] text-[#7c2d2d] text-center`}>↓ compounds into ↓</div>
 
-        {/* OUTPUTS */}
         <div>
           <p className={`${fMono} text-[10px] sm:text-[11px] uppercase tracking-[0.2em] text-[#7c2d2d] font-semibold mb-1.5`}>Outputs · measured quarterly</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -534,7 +411,7 @@ function MetricsTab() {
       </div>
 
       <p className={`${fDisplay} italic text-[11px] sm:text-[13px] text-[#9a928a] text-center mt-2 sm:mt-3 shrink-0`}>
-        foundations always on: body · mind · experiences — the substrate that lets the inputs compound
+        foundations always on · body · mind · experiences
       </p>
     </div>
   )
@@ -558,13 +435,11 @@ export default function TechPage() {
           </span>
         </div>
         <div className="border-t border-[#e8e2da]">
-          <div className="max-w-5xl mx-auto flex overflow-x-auto no-scrollbar">
+          <div className="max-w-5xl mx-auto flex justify-center sm:justify-start">
             {([
               ['vision', 'I · Vision'],
-              ['alfred', 'II · Alfred'],
-              ['streams', 'III · Streams'],
-              ['world', 'IV · World'],
-              ['metrics', 'V · What I count'],
+              ['tech', 'II · Tech'],
+              ['metrics', 'III · What I count'],
             ] as Array<[Tab, string]>).map(([id, label]) => (
               <button
                 key={id}
@@ -584,9 +459,7 @@ export default function TechPage() {
 
       <main className="flex-1 overflow-hidden">
         {tab === 'vision' && <VisionTab />}
-        {tab === 'alfred' && <AlfredTab />}
-        {tab === 'streams' && <StreamsTab />}
-        {tab === 'world' && <WorldTab />}
+        {tab === 'tech' && <TechTab />}
         {tab === 'metrics' && <MetricsTab />}
       </main>
     </div>
