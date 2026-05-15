@@ -12,6 +12,8 @@ import { processTranscriptData, formatTranscriptSummary } from '@/lib/transcript
 import { matchPrefix } from '@/lib/inbox/route-prefix'
 import { buildAskKeyboard, buildAskPromptText, parseAskCallback } from '@/lib/inbox/ask-buttons'
 import type { InboxSource } from '@/lib/inbox/types'
+import { parseWaveCallback, labelForTag, type WaveTag } from '@/lib/wave/tag-buttons'
+import { processLordasTranscript } from '@/lib/wave/lordas-pipeline'
 
 export const maxDuration = 300
 
@@ -2909,6 +2911,184 @@ async function handleAskCallback(
   await editTelegramMessage(chatId, messageId, `Routed to [${SOURCE_LABEL[parsed.source]}].\n\n_"${draft.text.slice(0, 80)}${draft.text.length > 80 ? '…' : ''}"_`)
 }
 
+// =============================================================================
+// Phase 2B Wave fanout — 7-tag callback handler
+// =============================================================================
+
+// Project meetings-ingest URLs. Endpoints do not exist yet — POST will fail,
+// causing handleWaveCallback to stash. Once endpoints are deployed, no
+// Website-side change needed.
+const MEETINGS_INGEST_URL: Record<'deepops' | 'alamobernal', string> = {
+  deepops: process.env.ARMSTRONG_MEETINGS_INGEST_URL || 'https://armstrong.loricorpuz.com/api/meetings/ingest',
+  alamobernal: process.env.ALAMOBERNAL_MEETINGS_INGEST_URL || 'https://alamobernal.loricorpuz.com/api/meetings/ingest',
+}
+
+// Map each tag to its destination + surface label for downstream
+const TAG_DESTINATION: Record<WaveTag, { kind: 'deepops'; surface: string } | { kind: 'alamobernal' } | { kind: 'lordas' } | { kind: 'defer' }> = {
+  fundraising: { kind: 'deepops', surface: 'fundraising' },
+  research: { kind: 'deepops', surface: 'research' },
+  management: { kind: 'deepops', surface: 'management' },
+  investing: { kind: 'deepops', surface: 'investing' },
+  lordas: { kind: 'lordas' },
+  alamobernal: { kind: 'alamobernal' },
+  defer: { kind: 'defer' },
+}
+
+async function postMeetingsIngest(
+  url: string,
+  payload: Record<string, unknown>,
+): Promise<{ ok: true; meeting_id?: string } | { ok: false; error: string; status: number }> {
+  const secret = process.env.INBOX_SHARED_SECRET
+  if (!secret) return { ok: false, error: 'INBOX_SHARED_SECRET unset', status: 500 }
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-inbox-secret': secret },
+      body: JSON.stringify(payload),
+    })
+    const body = await res.text()
+    if (!res.ok) {
+      return { ok: false, error: `HTTP ${res.status}: ${body.slice(0, 200)}`, status: res.status }
+    }
+    try {
+      const parsed = JSON.parse(body)
+      return { ok: true, meeting_id: parsed?.meeting_id }
+    } catch {
+      return { ok: true }
+    }
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : String(err), status: 0 }
+  }
+}
+
+async function handleWaveCallback(
+  cbq: { data?: string; from: { id: number } },
+  chatId: number,
+  messageId: number,
+): Promise<void> {
+  const parsed = parseWaveCallback(cbq.data || '')
+  if (!parsed) {
+    await editTelegramMessage(chatId, messageId, '_Invalid wave callback. (Please retry.)_')
+    return
+  }
+  const { sessionId, tag } = parsed
+
+  const adminDb = await getAdminDb()
+  const pendingRef = adminDb.collection('wave_pending_decisions').doc(sessionId)
+  const pendingSnap = await pendingRef.get()
+  if (!pendingSnap.exists) {
+    await editTelegramMessage(chatId, messageId, `_No pending decision for this session. (Already tagged or expired.)_`)
+    return
+  }
+  const pending = pendingSnap.data() as {
+    sessionId: string
+    sessionTitle: string
+    durationSeconds: number | null
+    transcript: string
+    uid: string
+    chatId: number
+  }
+
+  const decisionsRef = adminDb.collection('wave_session_decisions').doc(sessionId)
+  const tagLabel = labelForTag(tag)
+
+  // Defer — write decision, no destination
+  if (tag === 'defer') {
+    await decisionsRef.set({
+      wave_session_id: sessionId,
+      decision: 'defer',
+      decided_at: new Date(),
+      decided_by_chat_id: cbq.from.id,
+    })
+    await pendingRef.delete()
+    await editTelegramMessage(chatId, messageId, `Deferred. (Wave will not re-prompt for this session.)`)
+    return
+  }
+
+  // Lordas — call the relational pipeline directly
+  if (tag === 'lordas') {
+    try {
+      await processLordasTranscript(
+        pending.uid,
+        adminDb,
+        sessionId,
+        pending.transcript,
+        pending.durationSeconds,
+      )
+      await decisionsRef.set({
+        wave_session_id: sessionId,
+        decision: 'lordas',
+        decided_at: new Date(),
+        decided_by_chat_id: cbq.from.id,
+      })
+      await pendingRef.delete()
+      await editTelegramMessage(chatId, messageId, `Routed to [Lordas]. Relational pipeline running — full results in a follow-up message.`)
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err)
+      await editTelegramMessage(chatId, messageId, `Lordas pipeline failed: ${msg.slice(0, 200)}`)
+    }
+    return
+  }
+
+  // DeepOps surfaces (fundraising/research/management/investing) and alamobernal
+  // → POST to meetings ingest; on failure stash to per-project pending collection
+  const dest = TAG_DESTINATION[tag]
+  const ingestPayload = {
+    wave_session_id: sessionId,
+    title: pending.sessionTitle,
+    transcript: pending.transcript,
+    duration_seconds: pending.durationSeconds,
+    surface: dest.kind === 'deepops' ? dest.surface : 'default',
+  }
+  let url: string
+  let stashCollection: string
+  if (dest.kind === 'deepops') {
+    url = MEETINGS_INGEST_URL.deepops
+    stashCollection = 'pending_deepops_meetings'
+  } else if (dest.kind === 'alamobernal') {
+    url = MEETINGS_INGEST_URL.alamobernal
+    stashCollection = 'pending_alamobernal_meetings'
+  } else {
+    await editTelegramMessage(chatId, messageId, `_Unknown tag destination for ${tag}_`)
+    return
+  }
+
+  const result = await postMeetingsIngest(url, ingestPayload)
+  if (result.ok) {
+    await decisionsRef.set({
+      wave_session_id: sessionId,
+      decision: tag,
+      decided_at: new Date(),
+      decided_by_chat_id: cbq.from.id,
+      meeting_id: result.meeting_id ?? null,
+    })
+    await pendingRef.delete()
+    await editTelegramMessage(chatId, messageId, `Routed to [${tagLabel}].`)
+  } else {
+    // Stash for later drain
+    const stashRef = adminDb.collection('users').doc(pending.uid).collection(stashCollection).doc()
+    await stashRef.set({
+      wave_session_id: sessionId,
+      title: pending.sessionTitle,
+      transcript: pending.transcript,
+      duration_seconds: pending.durationSeconds,
+      surface: dest.kind === 'deepops' ? (dest as { kind: 'deepops'; surface: string }).surface : 'default',
+      stashed_at: new Date(),
+      drained_at: null,
+      last_error: result.error.slice(0, 500),
+    })
+    await decisionsRef.set({
+      wave_session_id: sessionId,
+      decision: tag,
+      decided_at: new Date(),
+      decided_by_chat_id: cbq.from.id,
+      stashed_to: `users/${pending.uid}/${stashCollection}/${stashRef.id}`,
+    })
+    await pendingRef.delete()
+    await editTelegramMessage(chatId, messageId, `Stashed for [${tagLabel}] — project endpoint unreachable (${result.error.slice(0, 80)}).\n\nWill drain when endpoint is live.`)
+  }
+}
+
 export async function POST(req: NextRequest) {
   if (!BOT_TOKEN) {
     return NextResponse.json({ error: 'Bot not configured' }, { status: 500 })
@@ -2934,6 +3114,8 @@ export async function POST(req: NextRequest) {
         await handleTranscriptCallback(cbChatId, cbMessageId, cbq.data)
       } else if (cbChatId && cbMessageId && cbq.data?.startsWith('ask:')) {
         await handleAskCallback(cbq, cbChatId, cbMessageId)
+      } else if (cbChatId && cbMessageId && cbq.data?.startsWith('wave:')) {
+        await handleWaveCallback(cbq, cbChatId, cbMessageId)
       }
       // No callback queries needed for /todo — AI handles categorization directly
       return NextResponse.json({ ok: true })

@@ -25,6 +25,7 @@ import { processTranscriptData, formatTranscriptSummary } from '@/lib/transcript
 import { isRelationalTranscript } from '@/lib/relational-extraction'
 import { sendTelegramMessage } from '@/lib/telegram'
 import { processLordasTranscript } from '@/lib/wave/lordas-pipeline'
+import { buildWaveKeyboard, buildWavePromptText } from '@/lib/wave/tag-buttons'
 import crypto from 'crypto'
 
 export const runtime = 'nodejs'
@@ -215,6 +216,77 @@ export async function POST(request: NextRequest) {
     if (!transcriptText || transcriptText.trim().length < 100) {
       console.warn(`[webhooks/wave] Session ${sessionId} transcript too short, skipping`)
       return NextResponse.json({ ok: true, skipped: 'transcript_too_short' })
+    }
+
+    // Phase 2B prompt-mode: when WAVE_PROMPT_MODE=true, send 7-tag inline
+    // keyboard to Lori's Telegram instead of running the auto-classify or
+    // Lordas pipelines inline. Tag dispatch happens in the Telegram webhook's
+    // `wave:` callback handler. Default (env unset/false): existing behavior.
+    if (process.env.WAVE_PROMPT_MODE === 'true') {
+      // Dedupe — if Lori already tapped a tag (or 'defer') for this session,
+      // never re-prompt. Wave webhooks fire on retries; this guards against
+      // double-prompts after a successful dispatch.
+      const decisionRef = db.collection('wave_session_decisions').doc(sessionId)
+      const decisionDoc = await decisionRef.get()
+      if (decisionDoc.exists) {
+        console.log(`[webhooks/wave] Session ${sessionId} already has tag decision (${decisionDoc.data()?.decision}); skipping prompt`)
+        return NextResponse.json({ ok: true, skipped: 'already_tagged', decision: decisionDoc.data()?.decision })
+      }
+
+      // If a pending prompt already exists (Wave retried before user tapped),
+      // don't double-prompt. The original prompt message is still actionable.
+      const pendingRef = db.collection('wave_pending_decisions').doc(sessionId)
+      const pendingDoc = await pendingRef.get()
+      if (pendingDoc.exists) {
+        console.log(`[webhooks/wave] Session ${sessionId} already prompted; awaiting tap`)
+        return NextResponse.json({ ok: true, skipped: 'prompt_already_sent' })
+      }
+
+      // Stash transcript + metadata so the callback handler can dispatch
+      // without re-fetching from Wave API.
+      const userDoc = await db.collection('users').doc(uid).get()
+      const chatId = userDoc.data()?.settings?.telegramChatId
+      if (!chatId) {
+        console.warn(`[webhooks/wave] User ${uid} has no telegramChatId; falling back to legacy auto-classify`)
+        // fall through to legacy branch below
+      } else {
+        await pendingRef.set({
+          sessionId,
+          sessionTitle,
+          durationSeconds: payload.data.session.duration_seconds ?? null,
+          transcript: transcriptText,
+          uid,
+          chatId,
+          createdAt: new Date(),
+          status: 'awaiting_tap',
+        })
+
+        // Send 7-tag inline keyboard
+        const promptText = buildWavePromptText(sessionTitle, payload.data.session.duration_seconds)
+        const keyboard = buildWaveKeyboard(sessionId)
+        if (process.env.TELEGRAM_BOT_TOKEN) {
+          const res = await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              chat_id: chatId,
+              text: promptText,
+              parse_mode: 'Markdown',
+              reply_markup: { inline_keyboard: keyboard },
+            }),
+          })
+          if (!res.ok) {
+            const body = await res.text()
+            console.error(`[webhooks/wave] Telegram sendMessage failed: ${res.status} ${body}`)
+            // Don't fail the webhook — the pending doc is stored, Lori can
+            // still tap if Telegram delivers later via retry.
+          } else {
+            const data = await res.json()
+            await pendingRef.update({ prompt_message_id: data.result?.message_id ?? null })
+          }
+        }
+        return NextResponse.json({ ok: true, prompt_sent: true, sessionId })
+      }
     }
 
     // 1b. Check if this is a relational transcript → route to Lordas pipeline.
