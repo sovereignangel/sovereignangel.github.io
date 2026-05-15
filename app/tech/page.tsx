@@ -23,6 +23,135 @@ const fMono    = 'font-[var(--font-mono)]'
 
 // ── Diagrams ─────────────────────────────────────────────────────────────────
 
+// ── Architecture flow (Vision hero) ─────────────────────────────────────────
+// Captures Lori's actual mental model:
+//   world (meetings + ideas) → Alfred → 3 platforms
+//   the substrate (self-investment) underneath
+//   compounding goals above
+//   inverse-RL future direction noted at the bottom
+
+function ArchitectureFlow({ width = 480, height = 300 }: { width?: number; height?: number }) {
+  const [t, setT] = useState(0)
+  useEffect(() => {
+    const id = setInterval(() => setT((v) => v + 1), 95)
+    return () => clearInterval(id)
+  }, [])
+
+  const sources = [
+    { x: -130, y: -30, label: 'meetings', sub: 'via Wave' },
+    { x: -130, y: 28, label: 'ideas', sub: 'via text' },
+  ]
+  const platforms = [
+    { x: 105, y: -45, name: 'Personal OS', sub: 'thesis · apps · harness · files' },
+    { x: 105, y: 0, name: 'Alamo Bernal', sub: 'client work' },
+    { x: 105, y: 45, name: 'Armstrong', sub: 'fundraise · mgmt · tech · research' },
+  ]
+
+  return (
+    <svg viewBox="-170 -110 340 220" width={width} height={height} aria-hidden className="max-w-full h-auto">
+      {/* Compounding goals — north star */}
+      <text x="0" y="-96" textAnchor="middle" fontSize="4" fontFamily="serif" letterSpacing="1.2" fill="#7c2d2d">
+        ↑ COMPOUNDS INTO ↑
+      </text>
+      <text x="0" y="-86" textAnchor="middle" fontSize="6" fontStyle="italic" fontFamily="serif" fill="#2a2522">
+        relationships · aesthetic · net worth · knowledge
+      </text>
+      <text x="0" y="-78" textAnchor="middle" fontSize="3.5" fontFamily="serif" fill="#9a928a">
+        eventually: inverse RL on the blend
+      </text>
+
+      {/* Horizontal frame */}
+      <line x1="-160" y1="-66" x2="160" y2="-66" stroke="#d8d0c8" strokeWidth="0.4" />
+
+      {/* Sources */}
+      {sources.map((s) => (
+        <g key={s.label}>
+          <circle cx={s.x} cy={s.y} r="2.6" fill="#2a2522" />
+          <text x={s.x - 6} y={s.y + 1.5} textAnchor="end" fontSize="5.5" fontStyle="italic" fontFamily="serif" fill="#2a2522">
+            {s.label}
+          </text>
+          <text x={s.x - 6} y={s.y + 8} textAnchor="end" fontSize="3.8" fontFamily="serif" fill="#9a928a">
+            {s.sub}
+          </text>
+          <line x1={s.x + 3} y1={s.y} x2={-16} y2={0} stroke="#9a928a" strokeWidth="0.4" opacity="0.55" />
+        </g>
+      ))}
+
+      {/* Section caption */}
+      <text x="-130" y="-50" textAnchor="middle" fontSize="3.5" letterSpacing="0.8" fontFamily="serif" fill="#7c2d2d">
+        IN THE WORLD
+      </text>
+
+      {/* Alfred (center hub) */}
+      {[0, 1, 2].map((i) => {
+        const phase = (t / 14 + i * 0.7) % 4
+        const r = 16 + phase * 14
+        const op = Math.max(0, 0.22 - phase * 0.05)
+        return <circle key={i} cx="0" cy="0" r={r} fill="none" stroke="#7c2d2d" strokeWidth="0.3" opacity={op} />
+      })}
+      <circle cx="0" cy="0" r="14" fill="#f5f1ea" stroke="#7c2d2d" strokeWidth="0.7" />
+      <text x="0" y="2.2" textAnchor="middle" fontSize="6.5" fontStyle="italic" fontFamily="serif" fill="#7c2d2d">
+        Alfred
+      </text>
+      <text x="0" y="22" textAnchor="middle" fontSize="3.5" letterSpacing="0.8" fontFamily="serif" fill="#9a928a">
+        ONE THREAD · ONE TOKEN
+      </text>
+
+      {/* Platforms */}
+      <text x="105" y="-66" textAnchor="middle" fontSize="3.5" letterSpacing="0.8" fontFamily="serif" fill="#7c2d2d">
+        PLATFORMS
+      </text>
+      {platforms.map((p) => (
+        <g key={p.name}>
+          <line x1="16" y1="0" x2={p.x - 6} y2={p.y} stroke="#9a928a" strokeWidth="0.4" opacity="0.55" />
+          <circle cx={p.x - 3} cy={p.y} r="2.6" fill="#7c2d2d" />
+          <text x={p.x + 2} y={p.y + 0.5} fontSize="5.5" fontStyle="italic" fontFamily="serif" fill="#2a2522">
+            {p.name}
+          </text>
+          <text x={p.x + 2} y={p.y + 7} fontSize="3.8" fontFamily="serif" fill="#9a928a">
+            {p.sub}
+          </text>
+        </g>
+      ))}
+
+      {/* Inbound dots: sources → Alfred */}
+      {sources.map((s, i) =>
+        [0, 1].map((k) => {
+          const offset = (t + i * 25 + k * 50) % 100
+          const p = offset / 100
+          const cx = s.x + (-s.x - 14) * p
+          const cy = s.y + (-s.y) * p
+          return (
+            <circle key={`in-${i}-${k}`} cx={cx} cy={cy} r="0.7" fill="#7c2d2d" opacity={p > 0.08 && p < 0.92 ? 0.7 : 0} />
+          )
+        }),
+      )}
+
+      {/* Outbound dots: Alfred → platforms */}
+      {platforms.map((pl, i) =>
+        [0, 1].map((k) => {
+          const offset = (t + i * 25 + k * 50 + 50) % 100
+          const p = offset / 100
+          const cx = 14 + (pl.x - 14 - 6) * p
+          const cy = pl.y * p
+          return (
+            <circle key={`out-${i}-${k}`} cx={cx} cy={cy} r="0.7" fill="#7c2d2d" opacity={p > 0.08 && p < 0.92 ? 0.7 : 0} />
+          )
+        }),
+      )}
+
+      {/* The substrate (foundation) */}
+      <line x1="-160" y1="70" x2="160" y2="70" stroke="#d8d0c8" strokeWidth="0.4" />
+      <text x="0" y="80" textAnchor="middle" fontSize="4" letterSpacing="0.8" fontFamily="serif" fill="#7c2d2d">
+        THE SUBSTRATE
+      </text>
+      <text x="0" y="89" textAnchor="middle" fontSize="5" fontStyle="italic" fontFamily="serif" fill="#2a2522">
+        tantra · sleep · body · sitting in beauty · admin
+      </text>
+    </svg>
+  )
+}
+
 function RoomsWheel({ size = 280 }: { size?: number }) {
   const [t, setT] = useState(0)
   useEffect(() => {
@@ -204,8 +333,8 @@ function AlfredTab() {
     { n: 'IV', name: 'Alfred harness', state: 'scaffolded' },
   ]
   const tone = (s: string) =>
-    s === 'live' ? 'text-[#2d5f3f] border-[#2d5f3f]/40 bg-[#2d5f3f]/8' :
-    s === 'reconciling' ? 'text-[#8a6d2f] border-[#8a6d2f]/40 bg-[#8a6d2f]/8' :
+    s === 'live' ? 'text-[#2d5f3f] border-[#2d5f3f]/40 bg-[#2d5f3f]/[0.08]' :
+    s === 'reconciling' ? 'text-[#8a6d2f] border-[#8a6d2f]/40 bg-[#8a6d2f]/[0.08]' :
     'text-[#9a928a] border-[#d8d0c8] bg-[#faf8f4]'
 
   return (
@@ -404,22 +533,22 @@ function MetricsTab() {
           >
             <div className="flex items-baseline justify-between mb-1 sm:mb-1.5">
               <span className={`${fDisplay} text-[14px] sm:text-[17px] text-[#2a2522] leading-tight`}>{k.name}</span>
-              <span className={`${fMono} text-[8px] sm:text-[9px] text-[#7c2d2d]`}>{String(i + 1).padStart(2, '0')}</span>
+              <span className={`${fMono} text-[9px] sm:text-[10px] text-[#7c2d2d]`}>{String(i + 1).padStart(2, '0')}</span>
             </div>
             <p className={`${fDisplay} italic text-[10px] sm:text-[12px] text-[#7c2d2d] mb-1 sm:mb-1.5 leading-tight`}>
               {k.frame}
             </p>
             <div className="space-y-0.5 sm:space-y-1 flex-1">
               <div>
-                <p className={`${fMono} text-[7px] sm:text-[8px] uppercase tracking-[0.1em] text-[#9a928a]`}>compound</p>
+                <p className={`${fMono} text-[9px] uppercase tracking-[0.12em] text-[#9a928a]`}>compound</p>
                 <p className={`${fBody} text-[10px] sm:text-[11px] text-[#2a2522] leading-tight`}>{k.compound}</p>
               </div>
               <div>
-                <p className={`${fMono} text-[7px] sm:text-[8px] uppercase tracking-[0.1em] text-[#9a928a]`}>lead</p>
+                <p className={`${fMono} text-[9px] uppercase tracking-[0.12em] text-[#9a928a]`}>lead</p>
                 <p className={`${fBody} text-[10px] sm:text-[11px] text-[#2a2522] leading-tight`}>{k.lead}</p>
               </div>
               <div>
-                <p className={`${fMono} text-[7px] sm:text-[8px] uppercase tracking-[0.1em] text-[#9a928a]`}>drawdown</p>
+                <p className={`${fMono} text-[9px] uppercase tracking-[0.12em] text-[#9a928a]`}>drawdown</p>
                 <p className={`${fBody} text-[10px] sm:text-[11px] text-[#2a2522] leading-tight`}>{k.draw}</p>
               </div>
             </div>
