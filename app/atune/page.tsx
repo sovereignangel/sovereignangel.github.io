@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 // ── Visuals ─────────────────────────────────────────────────────────────────
 
@@ -106,6 +106,75 @@ function BateyDiagram() {
       <circle cx="100" cy="100" r="10" fill="none" stroke="#f4a261" strokeWidth="0.3" opacity="0.5" />
       <circle cx="100" cy="100" r="3.5" fill="#f4a261" />
     </svg>
+  )
+}
+
+// SoundCloud Widget API loader — track loops via FINISH event
+function AmbientAudio({ playing, onReady }: { playing: boolean; onReady: () => void }) {
+  const iframeRef = useRef<HTMLIFrameElement>(null)
+  const widgetRef = useRef<{ play: () => void; pause: () => void; seekTo: (n: number) => void } | null>(null)
+  const readyRef = useRef(false)
+
+  useEffect(() => {
+    function setupWidget() {
+      if (!iframeRef.current || readyRef.current) return
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const SC = (window as any).SC
+      if (!SC?.Widget) return
+      const widget = SC.Widget(iframeRef.current)
+      widgetRef.current = widget
+      widget.bind(SC.Widget.Events.READY, () => {
+        widget.setVolume(45)
+        readyRef.current = true
+        onReady()
+      })
+      widget.bind(SC.Widget.Events.FINISH, () => {
+        widget.seekTo(0)
+        widget.play()
+      })
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if ((window as any).SC?.Widget) {
+      setupWidget()
+      return
+    }
+    const existing = document.querySelector<HTMLScriptElement>('script[data-sc-api]')
+    if (existing) {
+      existing.addEventListener('load', setupWidget)
+      return () => existing.removeEventListener('load', setupWidget)
+    }
+    const script = document.createElement('script')
+    script.src = 'https://w.soundcloud.com/player/api.js'
+    script.async = true
+    script.dataset.scApi = 'true'
+    script.onload = setupWidget
+    document.head.appendChild(script)
+  }, [onReady])
+
+  useEffect(() => {
+    const w = widgetRef.current
+    if (!w || !readyRef.current) return
+    if (playing) w.play()
+    else w.pause()
+  }, [playing])
+
+  const trackUrl =
+    'https://soundcloud.com/scorpioscommunity/demaya-arkdayan-feat-yana-mann-esperanza-jean-claude-ades-remix'
+  const src = `https://w.soundcloud.com/player/?url=${encodeURIComponent(
+    trackUrl
+  )}&auto_play=false&hide_related=true&show_comments=false&show_user=false&show_reposts=false&show_teaser=false&visual=false&buying=false&sharing=false&liking=false&download=false&single_active=true`
+
+  return (
+    <iframe
+      ref={iframeRef}
+      src={src}
+      width="1"
+      height="1"
+      allow="autoplay"
+      title="Ambient — Demaya (Arkdayan, Jean Claude Ades Remix)"
+      style={{ position: 'fixed', left: -9999, top: -9999, opacity: 0, pointerEvents: 'none' }}
+    />
   )
 }
 
@@ -246,10 +315,27 @@ const PHASES = [
 ]
 
 const NEEDS = [
-  { role: 'CV / ML lead', body: 'Real-time pose + crowd density on edge hardware. You’d own the eye.' },
-  { role: 'Audio / DJ engineer', body: 'MIDI mapping, FX design, djay/Traktor depth, ideally a working DJ.' },
-  { role: 'Venue + first event', body: 'A small room (50–150 capacity) willing to host the first live test.' },
-  { role: 'Capital partner', body: 'Seed gear + early payroll. Sub-$200k gets us through P3 and a documented live show.' },
+  { role: 'A friend who plays with CV', body: 'Pose, density, optical flow — all runnable on a Mac today. You don’t need to be a research scientist. You need to be curious.' },
+  { role: 'A friend who DJs', body: 'Bring a deck, a library, and an open mind. djay Pro AI handles the stems — you handle the room.' },
+  { role: 'A room to make our own', body: 'A loft, a warehouse, a backyard, the playa. Small enough to feel, big enough to matter, dark enough to disappear into.' },
+  { role: 'A weekend and a few hands', body: 'Camera, cables, the patience to fail twice and get it right on the third night. No team, no roadmap — just the work.' },
+]
+
+const PLAYA_TIMELINE = [
+  { window: 'May → June', title: 'The eye', body: 'Webcam in someone’s apartment. Python pipeline outputs a live energy vector to a dashboard. Validate the read.' },
+  { window: 'June → July', title: 'The bridge', body: 'MIDI from the CV machine into djay Pro on a friend’s DJ rig. Filter, FX, stem mute responding to motion. Mistakes welcomed.' },
+  { window: 'July', title: 'The dress rehearsal', body: 'One small night in a Brooklyn loft or a friend’s living room. 30 people. Break things in private before we break them on the playa.' },
+  { window: 'August', title: 'The pack-out + the burn', body: 'Crate the rig, generator, sound system. Drive it out. Run it for one night. Take notes. Come home changed.' },
+]
+
+const PLAYA_COSTS = [
+  { item: 'Gear (camera, mounts, MIDI, cables)', range: 'free → $2,500', note: 'iPhone + Continuity Camera is real. New Sony A7S III if we want it.' },
+  { item: 'Software (djay Pro AI, Beatport LINK)', range: '$60 → $120', note: 'For 3–4 months of LINK + djay subscription.' },
+  { item: 'Burning Man tickets (2)', range: '$1,200', note: 'Standard tickets + vehicle pass.' },
+  { item: 'Camp logistics (RV share, food, water)', range: '$1,500 → $2,500', note: 'Costs scale with comfort level. Shared RV is the move.' },
+  { item: 'Power (Honda EU2200i + fuel)', range: '$800', note: 'Generator handles the rig and a small PA. Quiet enough to live with.' },
+  { item: 'Small PA / sound rental', range: '$500 → $1,000', note: 'A pair of QSC K12s and a sub. Doesn’t need to be huge — needs to be true.' },
+  { item: 'Dust protection + contingency', range: '$300 → $500', note: 'Cases, microfiber, redundancy. The playa eats electronics.' },
 ]
 
 // ── Page ────────────────────────────────────────────────────────────────────
@@ -258,10 +344,13 @@ type Tab = 'vision' | 'architecture'
 
 export default function AtunePage() {
   const [tab, setTab] = useState<Tab>('vision')
+  const [audioReady, setAudioReady] = useState(false)
+  const [audioPlaying, setAudioPlaying] = useState(false)
 
   return (
     <div className="min-h-screen bg-[#0a0807] text-[#f0e8de] antialiased relative">
       <Grain />
+      <AmbientAudio playing={audioPlaying} onReady={() => setAudioReady(true)} />
 
       {/* Nav */}
       <nav className="sticky top-0 z-40 backdrop-blur-md bg-[#0a0807]/80 border-b border-[#2a1f18]">
@@ -270,7 +359,23 @@ export default function AtunePage() {
             <span className="font-serif text-[20px] tracking-[-0.5px] text-[#f4a261]">atune</span>
             <span className="font-mono text-[9px] uppercase tracking-[3px] text-[#8a7a6c]">prelude · 01</span>
           </div>
-          <div className="flex gap-1">
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setAudioPlaying((v) => !v)}
+              disabled={!audioReady}
+              aria-label={audioPlaying ? 'Pause ambient music' : 'Play ambient music'}
+              className={`flex items-center gap-2 font-mono text-[10px] uppercase tracking-[2px] px-3 py-2 transition-colors ${
+                audioReady ? 'text-[#8a7a6c] hover:text-[#f4a261]' : 'text-[#3a2f28] cursor-wait'
+              }`}
+            >
+              <span
+                className={`inline-block w-1.5 h-1.5 rounded-full transition-colors ${
+                  audioPlaying ? 'bg-[#f4a261] animate-pulse' : 'bg-[#7a4a2a]'
+                }`}
+              />
+              <span className="hidden sm:inline">{audioPlaying ? 'sound on' : 'sound off'}</span>
+            </button>
+            <span className="text-[#2a1f18] mx-1">·</span>
             <button
               data-tab="vision"
               onClick={() => setTab('vision')}
@@ -307,7 +412,7 @@ export default function AtunePage() {
             href="mailto:loricorpuz@gmail.com?subject=atune"
             className="font-mono text-[10px] uppercase tracking-[2px] text-[#f4a261] border border-[#7a4a2a] px-4 py-2 hover:bg-[#1a120c] transition-colors"
           >
-            Build this with me
+            Come play
           </a>
         </div>
       </footer>
@@ -430,22 +535,26 @@ function VisionTab() {
         </div>
       </section>
 
-      {/* The party as research lab */}
+      {/* The spirit */}
       <section className="border-t border-[#2a1f18] py-32 bg-gradient-to-b from-[#0a0807] to-[#120c08]">
         <div className="max-w-3xl mx-auto px-6 text-center">
           <p className="font-mono text-[10px] uppercase tracking-[4px] text-[#7a4a2a] mb-8">
-            The bet
+            The spirit
           </p>
           <h2 className="font-serif text-[42px] leading-tight text-[#f0e8de] mb-8">
-            Build the technology by throwing the parties.
+            Built for the love of it.
           </h2>
           <p className="font-serif text-[18px] leading-relaxed text-[#a89786]">
-            We don’t need to convince a venue to take a risk. We don’t need a research grant.
-            We host the events ourselves, in rooms small enough to feel and large enough to matter,
-            and every night becomes labeled data — what the room felt, what the DJ played, what worked.
+            No round to raise, no team to scale, no roadmap to defend.
+            A few friends, a camera, a deck, a room — and the question of what happens
+            when the floor and the music start to talk.
           </p>
           <p className="font-serif text-[18px] leading-relaxed text-[#a89786] mt-6">
-            A model that gets better every set. A practice that compounds.
+            Maybe a loft in Brooklyn.
+            <br />
+            Maybe a backyard.
+            <br />
+            <span className="text-[#f4a261]">Maybe the playa.</span>
           </p>
         </div>
       </section>
@@ -457,13 +566,16 @@ function VisionTab() {
             Who this is for
           </p>
           <p className="font-serif text-[22px] leading-relaxed text-[#d4c4b0] mb-6">
-            If you build computer vision systems and dream about them living somewhere other than warehouses and security cameras —
+            If you build with computer vision and have always wanted it to do something tender —
           </p>
           <p className="font-serif text-[22px] leading-relaxed text-[#d4c4b0] mb-6">
-            If you DJ, or you love DJs, and you’ve felt the limit of human pattern-matching at hour four —
+            If you DJ, or love DJs, or just love a room that knows what it’s doing —
+          </p>
+          <p className="font-serif text-[22px] leading-relaxed text-[#d4c4b0] mb-6">
+            If the burn is calling you, or a loft is, or a backyard is —
           </p>
           <p className="font-serif text-[22px] leading-relaxed text-[#f4a261]">
-            We’re building the early team.
+            Come play. The circle is small on purpose.
           </p>
           <div className="mt-12 flex gap-3">
             <a
@@ -474,13 +586,13 @@ function VisionTab() {
               }}
               className="font-mono text-[10px] uppercase tracking-[3px] text-[#f4a261] border border-[#7a4a2a] px-5 py-3 hover:bg-[#1a120c] transition-colors"
             >
-              See the architecture →
+              See how we’d build it →
             </a>
             <a
               href="mailto:loricorpuz@gmail.com?subject=atune"
               className="font-mono text-[10px] uppercase tracking-[3px] text-[#d4c4b0] border border-[#2a1f18] px-5 py-3 hover:border-[#7a4a2a] transition-colors"
             >
-              Write to us
+              Tell me you’re in
             </a>
           </div>
         </div>
@@ -499,10 +611,10 @@ function ArchitectureTab() {
           The architecture
         </p>
         <h1 className="font-serif text-[clamp(36px,6vw,68px)] leading-[1.05] tracking-[-1px] text-[#f0e8de] mb-6">
-          What we build, what it touches, what it costs.
+          What we’d build, how it’d work, what it’d take.
         </h1>
         <p className="font-serif text-[17px] leading-relaxed text-[#a89786] max-w-2xl">
-          The full stack from camera lens to MIDI cable, the honest constraints on music sources, and a four-phase build path with timelines.
+          From camera lens to MIDI cable, the honest constraints on music sources, and a back-of-napkin plan for getting it on the playa.
         </p>
       </section>
 
@@ -659,13 +771,13 @@ function ArchitectureTab() {
         </div>
       </section>
 
-      {/* What we need */}
-      <section className="border-t border-[#2a1f18] py-20 bg-gradient-to-b from-[#0a0807] to-[#120c08]">
+      {/* What we’d need */}
+      <section className="border-t border-[#2a1f18] py-20">
         <div className="max-w-5xl mx-auto px-6">
           <p className="font-mono text-[10px] uppercase tracking-[3px] text-[#7a4a2a] mb-3">
-            What we need
+            What we’d need
           </p>
-          <h2 className="font-serif text-[32px] text-[#f0e8de] mb-10">Four chairs at the table.</h2>
+          <h2 className="font-serif text-[32px] text-[#f0e8de] mb-10">A short list of friends and things.</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-8">
             {NEEDS.map((n) => (
               <div key={n.role} className="border-t border-[#2a1f18] pt-6">
@@ -674,14 +786,105 @@ function ArchitectureTab() {
               </div>
             ))}
           </div>
-          <div className="mt-16 text-center">
-            <a
-              href="mailto:loricorpuz@gmail.com?subject=atune"
-              className="inline-block font-mono text-[10px] uppercase tracking-[3px] text-[#0a0807] bg-[#f4a261] px-6 py-3 hover:bg-[#e8a06c] transition-colors"
-            >
-              Build this with me
-            </a>
+        </div>
+      </section>
+
+      {/* If we did this for the burn */}
+      <section className="border-t border-[#2a1f18] py-20 bg-gradient-to-b from-[#0a0807] via-[#0e0a07] to-[#0a0807]">
+        <div className="max-w-5xl mx-auto px-6">
+          <p className="font-mono text-[10px] uppercase tracking-[3px] text-[#7a4a2a] mb-3">
+            If we did this for the burn
+          </p>
+          <h2 className="font-serif text-[32px] text-[#f0e8de] mb-3">
+            A back-of-napkin plan for one night on the playa.
+          </h2>
+          <p className="font-serif text-[15px] leading-relaxed text-[#a89786] mb-12 max-w-2xl">
+            Burning Man is roughly 14 weeks out. Tight, but doable if we move now. Here’s how it would sketch out — both the weeks and the wallet.
+          </p>
+
+          {/* Timeline */}
+          <div className="mb-16">
+            <p className="font-mono text-[10px] uppercase tracking-[2px] text-[#7a4a2a] mb-6">
+              Timeline
+            </p>
+            <div className="space-y-5">
+              {PLAYA_TIMELINE.map((t) => (
+                <div key={t.window} className="grid grid-cols-12 gap-6 border-l border-[#7a4a2a] pl-6 py-2">
+                  <div className="col-span-12 md:col-span-3">
+                    <p className="font-mono text-[10px] uppercase tracking-[2px] text-[#f4a261]">
+                      {t.window}
+                    </p>
+                  </div>
+                  <div className="col-span-12 md:col-span-9">
+                    <h3 className="font-serif text-[20px] text-[#f0e8de] mb-1">{t.title}</h3>
+                    <p className="font-serif text-[14px] leading-relaxed text-[#a89786]">{t.body}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
+
+          {/* Costs */}
+          <div>
+            <p className="font-mono text-[10px] uppercase tracking-[2px] text-[#7a4a2a] mb-6">
+              Money
+            </p>
+            <div className="border border-[#2a1f18]">
+              {PLAYA_COSTS.map((c, i) => (
+                <div
+                  key={c.item}
+                  className={`grid grid-cols-12 gap-4 px-5 py-4 ${
+                    i < PLAYA_COSTS.length - 1 ? 'border-b border-[#2a1f18]' : ''
+                  }`}
+                >
+                  <div className="col-span-12 md:col-span-4">
+                    <p className="font-serif text-[15px] text-[#f0e8de]">{c.item}</p>
+                  </div>
+                  <div className="col-span-4 md:col-span-2">
+                    <span className="font-mono text-[11px] text-[#f4a261]">{c.range}</span>
+                  </div>
+                  <p className="col-span-8 md:col-span-6 font-serif text-[14px] leading-relaxed text-[#a89786]">
+                    {c.note}
+                  </p>
+                </div>
+              ))}
+            </div>
+            <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="border border-[#2a1f18] p-5">
+                <p className="font-mono text-[10px] uppercase tracking-[2px] text-[#7a4a2a] mb-2">
+                  Scrappy total
+                </p>
+                <p className="font-serif text-[24px] text-[#f0e8de]">~$4,500</p>
+                <p className="font-serif text-[13px] leading-relaxed text-[#a89786] mt-2">
+                  Borrowed gear, friend’s DJ rig, shared RV, modest PA. Most of the cost is just being on the playa.
+                </p>
+              </div>
+              <div className="border border-[#7a4a2a] p-5 bg-[#1a120c]">
+                <p className="font-mono text-[10px] uppercase tracking-[2px] text-[#f4a261] mb-2">
+                  Comfortable total
+                </p>
+                <p className="font-serif text-[24px] text-[#f4a261]">~$7,500 – $9,000</p>
+                <p className="font-serif text-[13px] leading-relaxed text-[#d4c4b0] mt-2">
+                  New camera, dedicated MIDI rig, rented sound, dust-proof cases. Less duct tape, more sleep.
+                </p>
+              </div>
+            </div>
+            <p className="font-mono text-[10px] uppercase tracking-[2px] text-[#6a5a4c] mt-6">
+              Split across two or three friends, this is a normal vacation budget — for something that almost no one has done.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Closing CTA */}
+      <section className="border-t border-[#2a1f18] py-20">
+        <div className="max-w-3xl mx-auto px-6 text-center">
+          <a
+            href="mailto:loricorpuz@gmail.com?subject=atune"
+            className="inline-block font-mono text-[10px] uppercase tracking-[3px] text-[#0a0807] bg-[#f4a261] px-6 py-3 hover:bg-[#e8a06c] transition-colors"
+          >
+            Come play
+          </a>
         </div>
       </section>
     </>
