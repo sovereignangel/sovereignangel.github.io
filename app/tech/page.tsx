@@ -252,7 +252,7 @@ function TechDiagram() {
       </text>
 
       {/* === Seven tags fan, bottom === */}
-      <text x="-180" y="92" fontSize="3.8" letterSpacing="0.8" fontFamily="serif" fill="#7c2d2d">7-TAG FANOUT · Wave session.completed</text>
+      <text x="-180" y="92" fontSize="3.8" letterSpacing="0.8" fontFamily="serif" fill="#7c2d2d">WAVE TRANSCRIPTS · tap one of 7 to route</text>
       {['Fundraising', 'Research', 'Management', 'Investing', 'Alamo Bernal', 'Thesis Engine', 'Lordas'].map((tag, i) => {
         const x = -150 + i * 50
         return (
