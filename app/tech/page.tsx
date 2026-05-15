@@ -305,20 +305,20 @@ function Chapter({ label, title, italic }: { label: string; title: string; itali
 
 function VisionTab() {
   return (
-    <div className="h-full flex flex-col items-center justify-between px-5 sm:px-8 py-5 sm:py-7 max-w-3xl mx-auto w-full">
-      <div className="w-full">
-        <Chapter label="i · the vision" title="A life lived in many rooms at once." italic />
-        <p className={`${fBody} text-[14px] sm:text-[16px] leading-[1.55] text-[#2a2522]/85 max-w-xl`}>
-          Some days, founders in cafés. Some days, kiting in the Mistral. Some days, twenty pages of journal before anyone is awake. <span className="italic text-[#7c2d2d]">All of it routes through one chat.</span>
+    <div className="h-full flex flex-col px-5 sm:px-8 py-4 sm:py-6 max-w-5xl mx-auto w-full">
+      <div className="shrink-0">
+        <Chapter label="i · the vision" title="In the world. Through Alfred. Into what compounds." italic />
+        <p className={`${fBody} text-[13px] sm:text-[15px] leading-[1.55] text-[#2a2522]/85 max-w-2xl`}>
+          She moves in the world — meetings get transcribed by Wave, ideas get texted to Alfred. Both route to the platform that needs them. Outside that loop, she invests in the substrate. <span className="italic text-[#7c2d2d]">All of it compounds into the few things that matter.</span>
         </p>
       </div>
 
-      <div className="flex items-center justify-center my-4 sm:my-6">
-        <RoomsWheel size={240} />
+      <div className="flex-1 min-h-0 flex items-center justify-center">
+        <ArchitectureFlow width={620} height={320} />
       </div>
 
-      <p className={`${fDisplay} italic text-[13px] sm:text-[15px] text-[#9a928a] text-center shrink-0`}>
-        una vita in molte stanze · a renaissance practice, indexed
+      <p className={`${fDisplay} italic text-[12px] sm:text-[14px] text-[#9a928a] text-center shrink-0`}>
+        una vita in molte stanze — a renaissance practice, indexed
       </p>
     </div>
   )
