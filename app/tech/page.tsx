@@ -30,125 +30,98 @@ const fMono    = 'font-[var(--font-mono)]'
 //   compounding goals above
 //   inverse-RL future direction noted at the bottom
 
-function ArchitectureFlow({ width = 480, height = 300 }: { width?: number; height?: number }) {
-  const [t, setT] = useState(0)
-  useEffect(() => {
-    const id = setInterval(() => setT((v) => v + 1), 95)
-    return () => clearInterval(id)
-  }, [])
+function ArchitectureFlow() {
+  // Business-architecture diagram. Three platforms ordered per Lori's mental model:
+  //   Personal OS (Thesis Engine)  — top
+  //   Hedge Fund (Arete Technologies / Armstrong) — middle, the main vertical
+  //   Clients (Alamo Bernal) — bottom
+  // Wrapped above by sources + router, below by the cross-cutting harness layer.
+  const tiers: Array<{ label: string; tone: 'ink' | 'router' | 'platform' | 'fund' | 'harness'; items: Array<{ name: string; sub: string }> }> = [
+    {
+      label: 'Sources',
+      tone: 'ink',
+      items: [
+        { name: 'Telegram', sub: 'chat · voice · slash commands' },
+        { name: 'Wave AI', sub: 'session.completed → transcript' },
+        { name: 'journal · email', sub: 'passive ingest' },
+      ],
+    },
+    {
+      label: 'Router',
+      tone: 'router',
+      items: [
+        { name: 'Alfred · Website /api/inbox', sub: 'auth · prefix · ask-buttons · Wave 7-tag · dedupe · digest' },
+      ],
+    },
+    {
+      label: 'Personal OS',
+      tone: 'platform',
+      items: [
+        { name: 'Thesis Engine', sub: 'Website · wikis · journal · Lordas · the apps' },
+      ],
+    },
+    {
+      label: 'Hedge Fund',
+      tone: 'fund',
+      items: [
+        { name: 'Arete Technologies · Armstrong', sub: 'DeepOps · research · fundraising · management · investing' },
+      ],
+    },
+    {
+      label: 'Clients',
+      tone: 'platform',
+      items: [
+        { name: 'Alamo Bernal', sub: 'AB · partnership · screener · meetings · briefs' },
+      ],
+    },
+    {
+      label: 'Harness',
+      tone: 'harness',
+      items: [
+        { name: 'Alfred · workflows', sub: 'Ollama + Claude · reads queues, writes wikis, drafts memos' },
+      ],
+    },
+  ]
 
-  const sources = [
-    { x: -130, y: -30, label: 'meetings', sub: 'via Wave' },
-    { x: -130, y: 28, label: 'ideas', sub: 'via text' },
-  ]
-  const platforms = [
-    { x: 105, y: -45, name: 'Personal OS', sub: 'thesis · apps · harness · files' },
-    { x: 105, y: 0, name: 'Alamo Bernal', sub: 'client work' },
-    { x: 105, y: 45, name: 'Armstrong', sub: 'fundraise · mgmt · tech · research' },
-  ]
+  const itemStyle = (tone: 'ink' | 'router' | 'platform' | 'fund' | 'harness') =>
+    tone === 'router'
+      ? 'border border-[#7c2d2d] bg-[#7c2d2d]/[0.05]'
+      : tone === 'fund'
+        ? 'border-2 border-[#7c2d2d] bg-[#7c2d2d]/[0.08]'
+        : tone === 'platform'
+          ? 'border border-[#7c2d2d]/50 bg-[#faf8f4]'
+          : tone === 'harness'
+            ? 'border border-[#8a6d2f]/60 bg-[#8a6d2f]/[0.04]'
+            : 'border border-[#d8d0c8] bg-[#faf8f4]'
 
   return (
-    <svg viewBox="-170 -110 340 220" width={width} height={height} aria-hidden className="max-w-full h-auto">
-      {/* Compounding goals — north star */}
-      <text x="0" y="-96" textAnchor="middle" fontSize="4" fontFamily="serif" letterSpacing="1.2" fill="#7c2d2d">
-        ↑ COMPOUNDS INTO ↑
-      </text>
-      <text x="0" y="-86" textAnchor="middle" fontSize="6" fontStyle="italic" fontFamily="serif" fill="#2a2522">
-        relationships · aesthetic · net worth · knowledge
-      </text>
-      <text x="0" y="-78" textAnchor="middle" fontSize="3.5" fontFamily="serif" fill="#9a928a">
-        eventually: inverse RL on the blend
-      </text>
-
-      {/* Horizontal frame */}
-      <line x1="-160" y1="-66" x2="160" y2="-66" stroke="#d8d0c8" strokeWidth="0.4" />
-
-      {/* Sources */}
-      {sources.map((s) => (
-        <g key={s.label}>
-          <circle cx={s.x} cy={s.y} r="2.6" fill="#2a2522" />
-          <text x={s.x - 6} y={s.y + 1.5} textAnchor="end" fontSize="5.5" fontStyle="italic" fontFamily="serif" fill="#2a2522">
-            {s.label}
-          </text>
-          <text x={s.x - 6} y={s.y + 8} textAnchor="end" fontSize="3.8" fontFamily="serif" fill="#9a928a">
-            {s.sub}
-          </text>
-          <line x1={s.x + 3} y1={s.y} x2={-16} y2={0} stroke="#9a928a" strokeWidth="0.4" opacity="0.55" />
-        </g>
+    <div className="w-full max-w-4xl mx-auto flex flex-col gap-2 sm:gap-2.5">
+      {tiers.map((tier, ti) => (
+        <div key={tier.label}>
+          <div className="grid grid-cols-12 items-stretch gap-2 sm:gap-3">
+            <div className="col-span-3 sm:col-span-2 flex items-center justify-end pr-1.5 sm:pr-2 text-right">
+              <span className={`${fMono} text-[10px] sm:text-[12px] uppercase tracking-[0.18em] text-[#7c2d2d] font-semibold leading-tight`}>
+                {tier.label}
+              </span>
+            </div>
+            <div className={`col-span-9 sm:col-span-10 grid gap-2 ${tier.items.length === 1 ? 'grid-cols-1' : 'grid-cols-3'}`}>
+              {tier.items.map((it) => (
+                <div key={it.name} className={`${itemStyle(tier.tone)} px-2.5 sm:px-3 py-1.5 sm:py-2 min-w-0`}>
+                  <p className={`${fDisplay} font-semibold text-[14px] sm:text-[17px] text-[#2a2522] leading-tight truncate`}>{it.name}</p>
+                  <p className={`${fMono} text-[10px] sm:text-[11px] text-[#5c5550] leading-snug truncate`}>{it.sub}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+          {ti < tiers.length - 1 && (
+            <div className="grid grid-cols-12 gap-2 sm:gap-3 py-0.5">
+              <div className="col-span-3 sm:col-span-2" />
+              <div className={`col-span-9 sm:col-span-10 ${fMono} text-[14px] text-[#7c2d2d] leading-none`}>↓</div>
+            </div>
+          )}
+        </div>
       ))}
-
-      {/* Section caption */}
-      <text x="-130" y="-50" textAnchor="middle" fontSize="3.5" letterSpacing="0.8" fontFamily="serif" fill="#7c2d2d">
-        IN THE WORLD
-      </text>
-
-      {/* Alfred (center hub) */}
-      {[0, 1, 2].map((i) => {
-        const phase = (t / 14 + i * 0.7) % 4
-        const r = 16 + phase * 14
-        const op = Math.max(0, 0.22 - phase * 0.05)
-        return <circle key={i} cx="0" cy="0" r={r} fill="none" stroke="#7c2d2d" strokeWidth="0.3" opacity={op} />
-      })}
-      <circle cx="0" cy="0" r="14" fill="#f5f1ea" stroke="#7c2d2d" strokeWidth="0.7" />
-      <text x="0" y="2.2" textAnchor="middle" fontSize="6.5" fontStyle="italic" fontFamily="serif" fill="#7c2d2d">
-        Alfred
-      </text>
-      <text x="0" y="22" textAnchor="middle" fontSize="3.5" letterSpacing="0.8" fontFamily="serif" fill="#9a928a">
-        ONE THREAD · ONE TOKEN
-      </text>
-
-      {/* Platforms */}
-      <text x="105" y="-66" textAnchor="middle" fontSize="3.5" letterSpacing="0.8" fontFamily="serif" fill="#7c2d2d">
-        PLATFORMS
-      </text>
-      {platforms.map((p) => (
-        <g key={p.name}>
-          <line x1="16" y1="0" x2={p.x - 6} y2={p.y} stroke="#9a928a" strokeWidth="0.4" opacity="0.55" />
-          <circle cx={p.x - 3} cy={p.y} r="2.6" fill="#7c2d2d" />
-          <text x={p.x + 2} y={p.y + 0.5} fontSize="5.5" fontStyle="italic" fontFamily="serif" fill="#2a2522">
-            {p.name}
-          </text>
-          <text x={p.x + 2} y={p.y + 7} fontSize="3.8" fontFamily="serif" fill="#9a928a">
-            {p.sub}
-          </text>
-        </g>
-      ))}
-
-      {/* Inbound dots: sources → Alfred */}
-      {sources.map((s, i) =>
-        [0, 1].map((k) => {
-          const offset = (t + i * 25 + k * 50) % 100
-          const p = offset / 100
-          const cx = s.x + (-s.x - 14) * p
-          const cy = s.y + (-s.y) * p
-          return (
-            <circle key={`in-${i}-${k}`} cx={cx} cy={cy} r="0.7" fill="#7c2d2d" opacity={p > 0.08 && p < 0.92 ? 0.7 : 0} />
-          )
-        }),
-      )}
-
-      {/* Outbound dots: Alfred → platforms */}
-      {platforms.map((pl, i) =>
-        [0, 1].map((k) => {
-          const offset = (t + i * 25 + k * 50 + 50) % 100
-          const p = offset / 100
-          const cx = 14 + (pl.x - 14 - 6) * p
-          const cy = pl.y * p
-          return (
-            <circle key={`out-${i}-${k}`} cx={cx} cy={cy} r="0.7" fill="#7c2d2d" opacity={p > 0.08 && p < 0.92 ? 0.7 : 0} />
-          )
-        }),
-      )}
-
-      {/* The substrate (foundation) */}
-      <line x1="-160" y1="70" x2="160" y2="70" stroke="#d8d0c8" strokeWidth="0.4" />
-      <text x="0" y="80" textAnchor="middle" fontSize="4" letterSpacing="0.8" fontFamily="serif" fill="#7c2d2d">
-        THE SUBSTRATE
-      </text>
-      <text x="0" y="89" textAnchor="middle" fontSize="5" fontStyle="italic" fontFamily="serif" fill="#2a2522">
-        tantra · sleep · body · sitting in beauty · admin
-      </text>
-    </svg>
+    </div>
   )
 }
 
@@ -291,10 +264,10 @@ function RouterDiagram({ size = 260 }: { size?: number }) {
 function Chapter({ label, title, italic }: { label: string; title: string; italic?: boolean }) {
   return (
     <div className="mb-3 sm:mb-5 shrink-0">
-      <p className={`${fMono} text-[10px] sm:text-[11px] tracking-[0.2em] uppercase text-[#7c2d2d] mb-1.5`}>
+      <p className={`${fMono} text-[10px] sm:text-[11px] tracking-[0.22em] uppercase text-[#7c2d2d] font-semibold mb-1.5`}>
         {label}
       </p>
-      <h2 className={`${fDisplay} ${italic ? 'italic' : ''} text-[22px] sm:text-[32px] md:text-[38px] leading-[1.1] tracking-[-0.5px] text-[#2a2522]`}>
+      <h2 className={`${fDisplay} ${italic ? 'italic' : ''} font-semibold text-[24px] sm:text-[34px] md:text-[40px] leading-[1.05] tracking-[-0.6px] text-[#2a2522]`}>
         {title}
       </h2>
     </div>
@@ -309,12 +282,12 @@ function VisionTab() {
       <div className="shrink-0">
         <Chapter label="i · the vision" title="In the world. Through Alfred. Into what compounds." italic />
         <p className={`${fBody} text-[13px] sm:text-[15px] leading-[1.55] text-[#2a2522]/85 max-w-2xl`}>
-          She moves in the world — meetings get transcribed by Wave, ideas get texted to Alfred. Both route to the platform that needs them. Outside that loop, she invests in the substrate. <span className="italic text-[#7c2d2d]">All of it compounds into the few things that matter.</span>
+          She moves in the world — meetings get transcribed by Wave, ideas get texted to Alfred. Each one routes to the platform that needs it: Personal OS, the Hedge Fund, or the Clients. <span className="italic text-[#7c2d2d]">All of it compounds into the few things that matter.</span>
         </p>
       </div>
 
-      <div className="flex-1 min-h-0 flex items-center justify-center">
-        <ArchitectureFlow width={620} height={320} />
+      <div className="flex-1 min-h-0 flex items-center justify-center py-2">
+        <ArchitectureFlow />
       </div>
 
       <p className={`${fDisplay} italic text-[12px] sm:text-[14px] text-[#9a928a] text-center shrink-0`}>
@@ -373,26 +346,35 @@ function StreamsTab() {
     { tag: 'Research', sub: 'Armstrong', dest: 'DeepOps · meetings' },
     { tag: 'Management', sub: 'Armstrong', dest: 'DeepOps · meetings' },
     { tag: 'Investing', sub: 'Armstrong', dest: 'DeepOps · meetings' },
-    { tag: 'Lordas', sub: 'with Aidas', dest: 'Website · relational' },
     { tag: 'Alamo Bernal', sub: 'partnership', dest: 'AB · ab_meetings' },
+    { tag: 'Thesis Engine', sub: 'personal projects', dest: 'Website · inbox_messages' },
+    { tag: 'Lordas', sub: 'with Aidas', dest: 'Website · relational' },
     { tag: 'Defer', sub: 'escape hatch', dest: '— (no destination)' },
   ]
 
   return (
     <div className="h-full flex flex-col px-5 sm:px-8 py-5 sm:py-7 max-w-3xl mx-auto w-full">
-      <Chapter label="iii · seven streams" title="Seven destinations. One tap each." />
+      <Chapter label="iii · the streams" title="Seven destinations · one escape hatch." />
 
       <div className="flex-1 flex flex-col justify-center min-h-0 gap-1 sm:gap-1.5 overflow-hidden">
-        {streams.map((s, i) => (
-          <div key={s.tag} className="grid grid-cols-12 gap-3 items-baseline border-b border-[#e8e2da] pb-1.5 sm:pb-2">
-            <span className={`${fMono} text-[10px] text-[#7c2d2d] col-span-1`}>{String(i + 1).padStart(2, '0')}</span>
-            <div className="col-span-6 sm:col-span-5">
-              <span className={`${fDisplay} text-[15px] sm:text-[19px] text-[#2a2522]`}>{s.tag}</span>
-              <span className={`${fDisplay} italic text-[11px] sm:text-[13px] text-[#9a928a] ml-2`}>· {s.sub}</span>
+        {streams.map((s, i) => {
+          const isDefer = s.tag === 'Defer'
+          return (
+            <div
+              key={s.tag}
+              className={`grid grid-cols-12 gap-3 items-baseline border-b border-[#e8e2da] pb-1.5 sm:pb-2 ${isDefer ? 'pt-1 opacity-70' : ''}`}
+            >
+              <span className={`${fMono} text-[10px] text-[#7c2d2d] col-span-1`}>
+                {isDefer ? '·' : String(i + 1).padStart(2, '0')}
+              </span>
+              <div className="col-span-6 sm:col-span-5">
+                <span className={`${fDisplay} font-semibold text-[15px] sm:text-[19px] text-[#2a2522]`}>{s.tag}</span>
+                <span className={`${fDisplay} italic text-[11px] sm:text-[13px] text-[#9a928a] ml-2`}>· {s.sub}</span>
+              </div>
+              <span className={`${fMono} text-[10px] sm:text-[11px] text-[#9a928a] col-span-5 sm:col-span-6 text-right truncate`}>{s.dest}</span>
             </div>
-            <span className={`${fMono} text-[10px] sm:text-[11px] text-[#9a928a] col-span-5 sm:col-span-6 text-right truncate`}>{s.dest}</span>
-          </div>
-        ))}
+          )
+        })}
       </div>
 
       <p className={`${fDisplay} italic text-[12px] sm:text-[14px] text-[#9a928a] text-center mt-3 shrink-0`}>
@@ -447,7 +429,7 @@ function WorldTab() {
       </div>
 
       <p className={`${fDisplay} italic text-[12px] sm:text-[14px] text-[#9a928a] text-center mt-3 shrink-0`}>
-        software is the substrate · the practice is in the world
+        software is the infrastructure · the practice is in the world
       </p>
     </div>
   )
