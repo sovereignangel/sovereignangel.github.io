@@ -271,62 +271,45 @@ function Chapter({ label, title, italic }: { label: string; title: string; itali
 
 function TriadCrest() {
   return (
-    <div className="my-3 sm:my-4 flex flex-col items-center gap-1.5 sm:gap-2">
-      <div className="flex items-center justify-center gap-6 sm:gap-12">
-        {/* Leonardo · sight — Vitruvian geometry (circle inscribed in square) */}
-        <div className="flex flex-col items-center">
-          <svg viewBox="-30 -30 60 60" width="48" height="48" aria-hidden>
-            <rect x="-22" y="-22" width="44" height="44" fill="none" stroke="#2a2522" strokeWidth="0.9" />
-            <circle cx="0" cy="0" r="22" fill="none" stroke="#7c2d2d" strokeWidth="0.9" />
-            {/* faint radii / crosshair — the act of measure */}
-            <line x1="-22" y1="0" x2="22" y2="0" stroke="#9a928a" strokeWidth="0.25" />
-            <line x1="0" y1="-22" x2="0" y2="22" stroke="#9a928a" strokeWidth="0.25" />
-            <circle cx="0" cy="0" r="1" fill="#2a2522" />
-          </svg>
-          <span className={`${fMono} text-[9px] sm:text-[10px] uppercase tracking-[0.18em] text-[#7c2d2d] mt-1.5`}>sight</span>
-          <span className={`${fDisplay} italic text-[10px] sm:text-[11px] text-[#9a928a] leading-none`}>Leonardo</span>
-        </div>
+    <div className="flex flex-col items-center gap-2.5 sm:gap-3">
+      <div className="flex items-center justify-center gap-8 sm:gap-16">
+        {/* Leonardo · sight — Vitruvian geometry */}
+        <svg viewBox="-30 -30 60 60" width="56" height="56" aria-hidden>
+          <rect x="-22" y="-22" width="44" height="44" fill="none" stroke="#2a2522" strokeWidth="0.9" />
+          <circle cx="0" cy="0" r="22" fill="none" stroke="#7c2d2d" strokeWidth="0.9" />
+          <line x1="-22" y1="0" x2="22" y2="0" stroke="#9a928a" strokeWidth="0.25" />
+          <line x1="0" y1="-22" x2="0" y2="22" stroke="#9a928a" strokeWidth="0.25" />
+          <circle cx="0" cy="0" r="1" fill="#2a2522" />
+        </svg>
 
-        {/* Medici · discipline — the six palle in the 3-2-1 Florentine arrangement */}
-        <div className="flex flex-col items-center">
-          <svg viewBox="-30 -30 60 60" width="48" height="48" aria-hidden>
-            {/* row 1: three balls */}
-            <circle cx="-14" cy="-14" r="4.2" fill="#7c2d2d" />
-            <circle cx="0" cy="-16" r="4.8" fill="#7c2d2d" stroke="#7c2d2d" strokeWidth="0.4" />
-            <circle cx="14" cy="-14" r="4.2" fill="#7c2d2d" />
-            {/* row 2: two balls */}
-            <circle cx="-9" cy="-1" r="4.2" fill="#7c2d2d" />
-            <circle cx="9" cy="-1" r="4.2" fill="#7c2d2d" />
-            {/* row 3: one ball */}
-            <circle cx="0" cy="12" r="4.2" fill="#7c2d2d" />
-          </svg>
-          <span className={`${fMono} text-[9px] sm:text-[10px] uppercase tracking-[0.18em] text-[#7c2d2d] mt-1.5`}>discipline</span>
-          <span className={`${fDisplay} italic text-[10px] sm:text-[11px] text-[#9a928a] leading-none`}>Medici</span>
-        </div>
+        {/* Medici · discipline — the six palle, 3-2-1 Florentine */}
+        <svg viewBox="-30 -30 60 60" width="56" height="56" aria-hidden>
+          <circle cx="-14" cy="-14" r="4.2" fill="#7c2d2d" />
+          <circle cx="0" cy="-16" r="4.8" fill="#7c2d2d" stroke="#7c2d2d" strokeWidth="0.4" />
+          <circle cx="14" cy="-14" r="4.2" fill="#7c2d2d" />
+          <circle cx="-9" cy="-1" r="4.2" fill="#7c2d2d" />
+          <circle cx="9" cy="-1" r="4.2" fill="#7c2d2d" />
+          <circle cx="0" cy="12" r="4.2" fill="#7c2d2d" />
+        </svg>
 
-        {/* Mozart · play — five-line staff, simplified treble clef, three ascending notes */}
-        <div className="flex flex-col items-center">
-          <svg viewBox="-30 -30 60 60" width="48" height="48" aria-hidden>
-            {[-12, -6, 0, 6, 12].map((y) => (
-              <line key={y} x1="-22" y1={y} x2="22" y2={y} stroke="#2a2522" strokeWidth="0.5" />
-            ))}
-            <path
-              d="M -16 -12 Q -12 -18 -10 -10 Q -8 -2 -12 2 Q -16 6 -14 12 L -14 18"
-              fill="none" stroke="#7c2d2d" strokeWidth="1.1" strokeLinecap="round"
-            />
-            <ellipse cx="-2" cy="6" rx="2.4" ry="1.8" fill="#7c2d2d" transform="rotate(-18 -2 6)" />
-            <line x1="0.2" y1="6" x2="0.2" y2="-8" stroke="#7c2d2d" strokeWidth="0.9" />
-            <ellipse cx="7" cy="0" rx="2.4" ry="1.8" fill="#7c2d2d" transform="rotate(-18 7 0)" />
-            <line x1="9.2" y1="0" x2="9.2" y2="-14" stroke="#7c2d2d" strokeWidth="0.9" />
-            <ellipse cx="16" cy="-6" rx="2.4" ry="1.8" fill="#7c2d2d" transform="rotate(-18 16 -6)" />
-            <line x1="18.2" y1="-6" x2="18.2" y2="-20" stroke="#7c2d2d" strokeWidth="0.9" />
-          </svg>
-          <span className={`${fMono} text-[9px] sm:text-[10px] uppercase tracking-[0.18em] text-[#7c2d2d] mt-1.5`}>play</span>
-          <span className={`${fDisplay} italic text-[10px] sm:text-[11px] text-[#9a928a] leading-none`}>Mozart</span>
-        </div>
+        {/* Mozart · play — staff, clef, ascending notes */}
+        <svg viewBox="-30 -30 60 60" width="56" height="56" aria-hidden>
+          {[-12, -6, 0, 6, 12].map((y) => (
+            <line key={y} x1="-22" y1={y} x2="22" y2={y} stroke="#2a2522" strokeWidth="0.5" />
+          ))}
+          <path
+            d="M -16 -12 Q -12 -18 -10 -10 Q -8 -2 -12 2 Q -16 6 -14 12 L -14 18"
+            fill="none" stroke="#7c2d2d" strokeWidth="1.1" strokeLinecap="round"
+          />
+          <ellipse cx="-2" cy="6" rx="2.4" ry="1.8" fill="#7c2d2d" transform="rotate(-18 -2 6)" />
+          <line x1="0.2" y1="6" x2="0.2" y2="-8" stroke="#7c2d2d" strokeWidth="0.9" />
+          <ellipse cx="7" cy="0" rx="2.4" ry="1.8" fill="#7c2d2d" transform="rotate(-18 7 0)" />
+          <line x1="9.2" y1="0" x2="9.2" y2="-14" stroke="#7c2d2d" strokeWidth="0.9" />
+          <ellipse cx="16" cy="-6" rx="2.4" ry="1.8" fill="#7c2d2d" transform="rotate(-18 16 -6)" />
+          <line x1="18.2" y1="-6" x2="18.2" y2="-20" stroke="#7c2d2d" strokeWidth="0.9" />
+        </svg>
       </div>
-      {/* Daily-arc reading */}
-      <p className={`${fMono} text-[9px] sm:text-[10px] uppercase tracking-[0.25em] text-[#9a928a]`}>
+      <p className={`${fMono} text-[9px] sm:text-[10px] uppercase tracking-[0.3em] text-[#9a928a]`}>
         morning &middot; day &middot; evening
       </p>
     </div>
@@ -336,21 +319,33 @@ function TriadCrest() {
 // ── Tabs ─────────────────────────────────────────────────────────────────────
 
 function VisionTab() {
+  // Chapter opening. Editorial restraint:
+  //   chapter label (top) · hero title · ornamental crest · single Keynes anchor.
+  // Architecture diagram lives only on the Tech tab — Vision is the manifesto, not the system.
   return (
-    <div className="h-full flex flex-col px-5 sm:px-8 py-4 sm:py-6 max-w-5xl mx-auto w-full">
-      <div className="shrink-0">
-        <Chapter label="i · the vision" title="Leonardo sight. Medici discipline. Mozart play." italic />
+    <div className="h-full flex flex-col px-5 sm:px-8 py-5 sm:py-8 max-w-4xl mx-auto w-full">
+      <p className={`${fMono} text-[10px] sm:text-[11px] font-semibold tracking-[0.3em] uppercase text-[#7c2d2d] shrink-0`}>
+        i &middot; the vision
+      </p>
+
+      <div className="flex-1 min-h-0 flex flex-col items-center justify-center gap-7 sm:gap-10 text-center">
+        {/* Hero title — Roman with archetype names italicized */}
+        <h1 className={`${fDisplay} font-normal text-[30px] sm:text-[46px] md:text-[58px] leading-[1.05] tracking-[-0.8px] text-[#2a2522] max-w-3xl`}>
+          <em className="text-[#2a2522]">Leonardo</em> sight.{' '}
+          <em className="text-[#2a2522]">Medici</em> discipline.{' '}
+          <em className="text-[#2a2522]">Mozart</em> play.
+        </h1>
+
+        {/* Ornamental crest — three glyphs, no per-glyph labels */}
         <TriadCrest />
-        <p className={`${fBody} text-[13px] sm:text-[15px] leading-[1.55] text-[#2a2522]/85 max-w-2xl`}>
-          A life lived in many rooms at once. Meetings get transcribed by Wave; ideas get texted to Alfred. Each one routes to the platform that needs it — Personal OS, the Hedge Fund, or the Clients. <span className="italic text-[#7c2d2d]">All of it compounds into the few things that matter.</span>
-        </p>
-        <blockquote className={`${fDisplay} italic text-[13px] sm:text-[15px] leading-[1.55] text-[#2a2522]/90 max-w-2xl mt-3 pl-3 border-l-2 border-[#7c2d2d]/50`}>
-          &ldquo;Our prime objects in life were love, the creation and enjoyment of aesthetic experience, and the pursuit of knowledge. <span className="text-[#7c2d2d] font-semibold not-italic">Of these, love came a long way first.</span>&rdquo;
-          <span className={`${fMono} block not-italic text-[10px] sm:text-[11px] tracking-[0.15em] uppercase text-[#9a928a] mt-1.5`}>— J.M. Keynes · My Early Beliefs · 1938</span>
+
+        {/* Keynes as the page's stillpoint */}
+        <blockquote className={`${fDisplay} italic text-[15px] sm:text-[18px] leading-[1.55] text-[#2a2522]/85 max-w-xl`}>
+          &ldquo;Our prime objects in life were love, the creation and enjoyment of aesthetic experience, and the pursuit of knowledge. <span className="text-[#7c2d2d] not-italic font-semibold">Of these, love came a long way first.</span>&rdquo;
+          <footer className={`${fMono} not-italic text-[10px] sm:text-[11px] tracking-[0.22em] uppercase text-[#9a928a] mt-3`}>
+            J.M. Keynes &middot; My Early Beliefs &middot; 1938
+          </footer>
         </blockquote>
-      </div>
-      <div className="flex-1 min-h-0 flex items-center justify-center my-2 sm:my-3">
-        <ArchitectureFlow />
       </div>
     </div>
   )
