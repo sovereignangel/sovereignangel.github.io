@@ -271,7 +271,7 @@ function VisionTab() {
   return (
     <div className="h-full flex flex-col px-5 sm:px-8 py-4 sm:py-6 max-w-5xl mx-auto w-full">
       <div className="shrink-0">
-        <Chapter label="i · the vision" title="An artist and a capitalist." italic />
+        <Chapter label="i · the vision" title="Medici discipline. Leonardo range. Mozart play." italic />
         <p className={`${fBody} text-[13px] sm:text-[15px] leading-[1.55] text-[#2a2522]/85 max-w-2xl`}>
           A life lived in many rooms at once. Meetings get transcribed by Wave; ideas get texted to Alfred. Each one routes to the platform that needs it — Personal OS, the Hedge Fund, or the Clients. <span className="italic text-[#7c2d2d]">All of it compounds into the few things that matter.</span>
         </p>
@@ -372,7 +372,7 @@ function MetricsTab() {
   return (
     <div className="h-full flex flex-col px-4 sm:px-8 py-4 sm:py-6 max-w-5xl mx-auto w-full">
       <div className="shrink-0">
-        <Chapter label="iii · what i count" title="An artist and a capitalist." italic />
+        <Chapter label="iii · what i count" title="Three things tended. Two things compounded." italic />
         <p className={`${fBody} text-[12px] sm:text-[14px] leading-[1.5] text-[#2a2522]/85 max-w-2xl`}>
           Three things I cultivate. Two things they compound into. <span className="italic text-[#7c2d2d]">Each gets a compound metric, a leading indicator (cheap, weekly), and a drawdown trigger (when to act). Not a dashboard — a compass.</span>
         </p>
