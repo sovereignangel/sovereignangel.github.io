@@ -152,43 +152,68 @@ function TechDiagram() {
   }, [])
 
   return (
-    <svg viewBox="-200 -140 400 270" preserveAspectRatio="xMidYMid meet" className="w-full h-full max-w-[860px] max-h-full" aria-hidden>
-      {/* === Top: sources === */}
-      <text x="-180" y="-128" fontSize="3.8" letterSpacing="0.8" fontFamily="serif" fill="#7c2d2d">SOURCES</text>
+    <svg viewBox="-200 -120 400 240" preserveAspectRatio="xMidYMid meet" className="w-full h-full max-w-[900px] max-h-full" aria-hidden>
+      {/* === HARNESS · outer container wrapping everything === */}
+      <rect x="-194" y="-114" width="388" height="228" fill="#7c2d2d" fillOpacity="0.025" stroke="#7c2d2d" strokeWidth="0.45" strokeDasharray="3 1.8" />
+      <rect x="-194" y="-114" width="92" height="11" fill="#f5f1ea" stroke="none" />
+      <text x="-188" y="-106" fontSize="4.2" letterSpacing="1.2" fontFamily="serif" fontWeight="600" fill="#7c2d2d">HARNESS · ALFRED</text>
+      <text x="188" y="-106" textAnchor="end" fontSize="3.2" fontStyle="italic" fontFamily="serif" fill="#9a928a">
+        Ollama + Claude · reads queues · writes wikis · drafts memos
+      </text>
+
+      {/* === SOURCES === */}
+      <text x="-180" y="-90" fontSize="3.8" letterSpacing="0.8" fontFamily="serif" fill="#7c2d2d">SOURCES</text>
       {[
-        { x: -70, y: -118, label: 'Telegram', sub: 'chat · voice · slash · journal' },
-        { x: 70, y: -118, label: 'Wave AI', sub: 'session.completed' },
+        { x: -70, y: -78, label: 'Telegram', sub: 'chat · voice · slash · journal' },
+        { x: 70, y: -78, label: 'Wave AI', sub: 'session.completed' },
       ].map((s) => (
         <g key={s.label}>
-          <rect x={s.x - 32} y={s.y - 6} width="64" height="12" fill="#faf8f4" stroke="#2a2522" strokeWidth="0.4" />
+          <rect x={s.x - 36} y={s.y - 6} width="72" height="12" fill="#faf8f4" stroke="#2a2522" strokeWidth="0.4" />
           <text x={s.x} y={s.y - 1} textAnchor="middle" fontSize="4.8" fontFamily="serif" fontStyle="italic" fill="#2a2522">{s.label}</text>
           <text x={s.x} y={s.y + 4} textAnchor="middle" fontSize="3" fontFamily="serif" fill="#9a928a">{s.sub}</text>
-          <line x1={s.x} y1={s.y + 6} x2={s.x * 0.35} y2={-80} stroke="#9a928a" strokeWidth="0.35" opacity="0.55" />
+          <line x1={s.x} y1={s.y + 6} x2={s.x * 0.3} y2={-52} stroke="#9a928a" strokeWidth="0.35" opacity="0.55" />
         </g>
       ))}
 
-      {/* === Alfred router === */}
-      <text x="-180" y="-78" fontSize="3.8" letterSpacing="0.8" fontFamily="serif" fill="#7c2d2d">L1 · ROUTER</text>
-      <rect x="-95" y="-90" width="190" height="36" fill="#7c2d2d" fillOpacity="0.06" stroke="#7c2d2d" strokeWidth="0.6" />
-      <text x="0" y="-78" textAnchor="middle" fontSize="6.5" fontStyle="italic" fontFamily="serif" fontWeight="600" fill="#7c2d2d">
+      {/* === L1 · ROUTER === */}
+      <text x="-180" y="-46" fontSize="3.8" letterSpacing="0.8" fontFamily="serif" fill="#7c2d2d">L1 · ROUTER</text>
+      <rect x="-100" y="-56" width="200" height="22" fill="#7c2d2d" fillOpacity="0.06" stroke="#7c2d2d" strokeWidth="0.6" />
+      <text x="0" y="-48" textAnchor="middle" fontSize="6" fontStyle="italic" fontFamily="serif" fontWeight="600" fill="#7c2d2d">
         Alfred · Website /api/inbox
       </text>
-      <text x="0" y="-71" textAnchor="middle" fontSize="3.8" fontFamily="serif" fill="#5c5550">
-        prefix · ask-buttons · Wave 7-tag · dedupe · digest
-      </text>
-      <text x="0" y="-64" textAnchor="middle" fontSize="3.2" fontFamily="serif" fill="#9a928a" fontStyle="italic">
-        one HMAC-auth&apos;d endpoint · one bot token, never seven
+      <text x="0" y="-41" textAnchor="middle" fontSize="3.3" fontFamily="serif" fill="#5c5550">
+        prefix · ask-buttons · dedupe · digest · HMAC auth · one bot token
       </text>
       {/* breathing rings around the router */}
       {[0, 1, 2].map((i) => {
         const phase = (t / 14 + i * 0.7) % 4
-        const r = 24 + phase * 22
-        const op = Math.max(0, 0.18 - phase * 0.04)
-        return <ellipse key={i} cx="0" cy="-72" rx={r * 2} ry={r * 0.7} fill="none" stroke="#7c2d2d" strokeWidth="0.25" opacity={op} />
+        const r = 20 + phase * 18
+        const op = Math.max(0, 0.16 - phase * 0.04)
+        return <ellipse key={i} cx="0" cy="-45" rx={r * 2.2} ry={r * 0.55} fill="none" stroke="#7c2d2d" strokeWidth="0.22" opacity={op} />
       })}
 
-      {/* === Project queues (3 columns) === */}
-      <text x="-180" y="-38" fontSize="3.8" letterSpacing="0.8" fontFamily="serif" fill="#7c2d2d">L2 · QUEUES</text>
+      {/* === WAVE TRANSCRIPTS · tag selector (between router and queues) === */}
+      <text x="-180" y="-22" fontSize="3.8" letterSpacing="0.8" fontFamily="serif" fill="#7c2d2d">WAVE TRANSCRIPTS · tap one of 7 to route</text>
+      {['Fundraising', 'Research', 'Management', 'Investing', 'Alamo Bernal', 'Thesis Engine', 'Lordas'].map((tag, i) => {
+        const x = -150 + i * 50
+        return (
+          <g key={tag}>
+            <rect x={x - 23} y="-16" width="46" height="9" fill="#faf8f4" stroke="#7c2d2d" strokeWidth="0.4" strokeOpacity="0.6" />
+            <text x={x} y={-10} textAnchor="middle" fontSize="3.5" fontFamily="serif" fontStyle="italic" fill="#2a2522">{tag}</text>
+          </g>
+        )
+      })}
+      <text x="184" y="-1" textAnchor="end" fontSize="3" fontStyle="italic" fontFamily="serif" fill="#9a928a">+ defer (escape hatch)</text>
+      {/* dots from router to the tag strip */}
+      {[0, 1, 2].map((k) => {
+        const offset = (t + k * 33) % 100
+        const p = offset / 100
+        const cy = -34 + 18 * p
+        return <circle key={`r2t-${k}`} cx="0" cy={cy} r="0.7" fill="#7c2d2d" opacity={p > 0.08 && p < 0.92 ? 0.6 : 0} />
+      })}
+
+      {/* === L2 · QUEUES === */}
+      <text x="-180" y="6" fontSize="3.8" letterSpacing="0.8" fontFamily="serif" fill="#7c2d2d">L2 · QUEUES</text>
       {[
         {
           x: -110, label: 'Armstrong', emphasis: true,
@@ -204,65 +229,33 @@ function TechDiagram() {
         },
       ].map((p) => (
         <g key={p.label}>
-          <line x1={0} y1={-54} x2={p.x} y2={-30} stroke={p.emphasis ? '#7c2d2d' : '#9a928a'} strokeWidth={p.emphasis ? '0.55' : '0.4'} opacity="0.6" />
-          <rect x={p.x - 50} y={-30} width="100" height="36" fill="#faf8f4" stroke="#7c2d2d" strokeWidth={p.emphasis ? '0.8' : '0.5'} strokeOpacity={p.emphasis ? '1' : '0.55'} />
-          <text x={p.x} y={-22} textAnchor="middle" fontSize="5" fontStyle="italic" fontFamily="serif" fontWeight={p.emphasis ? '600' : '500'} fill="#2a2522">{p.label}</text>
+          <line x1={0} y1={-2} x2={p.x} y2={12} stroke={p.emphasis ? '#7c2d2d' : '#9a928a'} strokeWidth={p.emphasis ? '0.55' : '0.4'} opacity="0.6" />
+          <rect x={p.x - 50} y={12} width="100" height="36" fill="#faf8f4" stroke="#7c2d2d" strokeWidth={p.emphasis ? '0.8' : '0.5'} strokeOpacity={p.emphasis ? '1' : '0.55'} />
+          <text x={p.x} y={20} textAnchor="middle" fontSize="5" fontStyle="italic" fontFamily="serif" fontWeight={p.emphasis ? '600' : '500'} fill="#2a2522">{p.label}</text>
           {p.stack.map((line, j) => (
-            <text key={j} x={p.x} y={-15 + j * 6} textAnchor="middle" fontSize="3" fontFamily="serif" fill="#5c5550">{line}</text>
+            <text key={j} x={p.x} y={27 + j * 6} textAnchor="middle" fontSize="3" fontFamily="serif" fill="#5c5550">{line}</text>
           ))}
         </g>
       ))}
 
-      {/* outbound dots from router to each queue */}
-      {[-110, 0, 110].map((px, i) =>
-        [0, 1].map((k) => {
-          const offset = (t + i * 25 + k * 50 + 50) % 100
-          const p = offset / 100
-          const cx = px * p
-          const cy = -54 + (24) * p
-          return (
-            <circle key={`dq-${i}-${k}`} cx={cx} cy={cy} r="0.7" fill="#7c2d2d" opacity={p > 0.08 && p < 0.92 ? 0.65 : 0} />
-          )
-        }),
-      )}
-
-      {/* === Wikis (Layer 3) === */}
-      <text x="-180" y="24" fontSize="3.8" letterSpacing="0.8" fontFamily="serif" fill="#7c2d2d">L3 · WIKIS</text>
-      <rect x="-130" y="16" width="260" height="20" fill="#8a6d2f" fillOpacity="0.06" stroke="#8a6d2f" strokeWidth="0.45" strokeOpacity="0.7" />
-      <text x="0" y="25" textAnchor="middle" fontSize="5" fontStyle="italic" fontFamily="serif" fontWeight="600" fill="#2a2522">
+      {/* === L3 · WIKIS === */}
+      <text x="-180" y="62" fontSize="3.8" letterSpacing="0.8" fontFamily="serif" fill="#7c2d2d">L3 · WIKIS</text>
+      <rect x="-130" y="56" width="260" height="20" fill="#8a6d2f" fillOpacity="0.06" stroke="#8a6d2f" strokeWidth="0.45" strokeOpacity="0.7" />
+      <text x="0" y="65" textAnchor="middle" fontSize="5" fontStyle="italic" fontFamily="serif" fontWeight="600" fill="#2a2522">
         Karpathy Layer 2 — self-updating knowledge
       </text>
-      <text x="0" y="32" textAnchor="middle" fontSize="3.4" fontFamily="serif" fill="#5c5550">
+      <text x="0" y="72" textAnchor="middle" fontSize="3.4" fontFamily="serif" fill="#5c5550">
         contact / ticker / project / topic / meeting — wikis/{'{slug}'}
       </text>
       {/* upward arrows from queues into wikis */}
       {[-110, 0, 110].map((px) => (
-        <line key={'wU' + px} x1={px} y1={6} x2={px * 0.6} y2={16} stroke="#9a928a" strokeWidth="0.35" opacity="0.5" />
+        <line key={'wU' + px} x1={px} y1={48} x2={px * 0.6} y2={56} stroke="#9a928a" strokeWidth="0.35" opacity="0.5" />
       ))}
 
-      {/* === Harness (Layer 4) === */}
-      <text x="-180" y="56" fontSize="3.8" letterSpacing="0.8" fontFamily="serif" fill="#7c2d2d">L4 · HARNESS</text>
-      <rect x="-150" y="48" width="300" height="26" fill="#faf8f4" stroke="#7c2d2d" strokeWidth="0.7" />
-      <text x="0" y="58" textAnchor="middle" fontSize="5.5" fontStyle="italic" fontFamily="serif" fontWeight="600" fill="#7c2d2d">Alfred · the agent</text>
-      <text x="0" y="65" textAnchor="middle" fontSize="3.5" fontFamily="serif" fill="#5c5550">
-        Ollama (cheap) + Claude (premium) · launchd → Cloud Run
+      {/* tagline beneath the wikis row, inside the harness wrapper */}
+      <text x="0" y="92" textAnchor="middle" fontSize="3.3" fontStyle="italic" fontFamily="serif" fill="#9a928a">
+        every loop closes back inside the agent · one thread, one token, one operator
       </text>
-      <text x="0" y="71" textAnchor="middle" fontSize="3.2" fontStyle="italic" fontFamily="serif" fill="#9a928a">
-        reads queues · writes wikis · drafts memos · alerts Telegram
-      </text>
-
-      {/* === Seven tags fan, bottom === */}
-      <text x="-180" y="92" fontSize="3.8" letterSpacing="0.8" fontFamily="serif" fill="#7c2d2d">WAVE TRANSCRIPTS · tap one of 7 to route</text>
-      {['Fundraising', 'Research', 'Management', 'Investing', 'Alamo Bernal', 'Thesis Engine', 'Lordas'].map((tag, i) => {
-        const x = -150 + i * 50
-        return (
-          <g key={tag}>
-            <rect x={x - 23} y="100" width="46" height="9" fill="#faf8f4" stroke="#7c2d2d" strokeWidth="0.4" strokeOpacity="0.55" />
-            <text x={x} y="106" textAnchor="middle" fontSize="3.5" fontFamily="serif" fontStyle="italic" fill="#2a2522">{tag}</text>
-          </g>
-        )
-      })}
-      <text x="170" y="118" textAnchor="end" fontSize="3" fontStyle="italic" fontFamily="serif" fill="#9a928a">+ defer (no destination)</text>
     </svg>
   )
 }
