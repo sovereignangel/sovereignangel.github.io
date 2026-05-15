@@ -1,0 +1,17 @@
+[project]
+name = "alfred-harness"
+version = "0.0.1"
+description = "Alfred — persistent agent consuming Telegram/Wave queues; hybrid Ollama + Claude API"
+requires-python = ">=3.11"
+
+# Phase 4 will add real dependencies. Suggested starting set (see harness_phase4 handoff):
+#   anthropic>=0.40           # Claude API + Agent SDK
+#   firebase-admin>=6.5       # Firestore writes for wikis (via Website's API)
+#   supabase>=2.0             # DeepOps + AB queues
+#   httpx>=0.27               # Ollama HTTP API + general HTTP
+#   pydantic>=2.0             # workflow input/output validation
+#   pyyaml                    # prompt frontmatter
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["alfred*"]
