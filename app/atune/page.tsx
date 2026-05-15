@@ -109,6 +109,116 @@ function BateyDiagram() {
   )
 }
 
+// Brass facewear — digital echo of sculpted adornments worn to soften a face to a machine
+function BrassMask() {
+  return (
+    <svg viewBox="-110 -130 220 260" className="w-[min(78vw,340px)] h-auto" aria-hidden="true">
+      <defs>
+        <linearGradient id="brassPlate" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stopColor="#7a4a1f" />
+          <stop offset="35%" stopColor="#f4c489" />
+          <stop offset="65%" stopColor="#f4a261" />
+          <stop offset="100%" stopColor="#5a3a14" />
+        </linearGradient>
+        <radialGradient id="brassDisc" cx="35%" cy="35%" r="70%">
+          <stop offset="0%" stopColor="#f8d6a8" />
+          <stop offset="45%" stopColor="#f4a261" />
+          <stop offset="100%" stopColor="#7a4a1f" />
+        </radialGradient>
+        <filter id="brassSoft" x="-20%" y="-20%" width="140%" height="140%">
+          <feGaussianBlur stdDeviation="0.6" />
+        </filter>
+      </defs>
+
+      {/* Implied portrait — head, hair part, jaw */}
+      <ellipse cx="0" cy="0" rx="62" ry="82" fill="none" stroke="#2a1f18" strokeWidth="0.5" opacity="0.55" />
+      <path
+        d="M -62 -40 Q -78 -100 -28 -114 Q 0 -120 28 -114 Q 78 -100 62 -40"
+        fill="none"
+        stroke="#2a1f18"
+        strokeWidth="0.5"
+        opacity="0.4"
+      />
+      {/* Center part */}
+      <path d="M 0 -110 L 0 -82" stroke="#2a1f18" strokeWidth="0.4" opacity="0.45" />
+      {/* Lip line — barest hint */}
+      <path d="M -8 48 Q 0 52 8 48" fill="none" stroke="#2a1f18" strokeWidth="0.4" opacity="0.4" />
+
+      {/* Thin curving wire — bridges the two cheek discs around the nose */}
+      <path
+        d="M -52 -8 Q -42 8 -22 6 Q -10 4 0 -8 Q 10 4 22 6 Q 42 8 52 -8"
+        fill="none"
+        stroke="#f4a261"
+        strokeWidth="1.1"
+        opacity="0.9"
+      />
+
+      {/* Left disc */}
+      <g>
+        <circle cx="-46" cy="-2" r="15" fill="url(#brassDisc)" />
+        <circle cx="-46" cy="-2" r="15" fill="none" stroke="#7a4a1f" strokeWidth="0.5" opacity="0.7" />
+        <circle cx="-50" cy="-6" r="3" fill="#f8d6a8" opacity="0.55" filter="url(#brassSoft)" />
+      </g>
+
+      {/* Right disc */}
+      <g>
+        <circle cx="46" cy="-2" r="15" fill="url(#brassDisc)" />
+        <circle cx="46" cy="-2" r="15" fill="none" stroke="#7a4a1f" strokeWidth="0.5" opacity="0.7" />
+        <circle cx="42" cy="-6" r="3" fill="#f8d6a8" opacity="0.55" filter="url(#brassSoft)" />
+      </g>
+
+      {/* Vertical sculpted plate — forehead, down across the bridge, ending at the philtrum */}
+      <g>
+        <path
+          d="
+            M -7 -82
+            Q -8 -78 -8 -70
+            L -7 -30
+            Q -6 -10 -4 -2
+            L -3 12
+            Q -2 22 0 28
+            Q 2 22 3 12
+            L 4 -2
+            Q 6 -10 7 -30
+            L 8 -70
+            Q 8 -78 7 -82
+            Z
+          "
+          fill="url(#brassPlate)"
+        />
+        {/* Light edge */}
+        <path
+          d="M -3 -82 L -3 -30 Q -2 -10 0 -2 L 0 28"
+          stroke="#fde3c0"
+          strokeWidth="0.5"
+          fill="none"
+          opacity="0.65"
+        />
+        {/* Shadow edge */}
+        <path
+          d="M 5 -82 L 5 -30 Q 5 -10 2 -2 L 1 26"
+          stroke="#3a2210"
+          strokeWidth="0.4"
+          fill="none"
+          opacity="0.55"
+        />
+      </g>
+
+      {/* Caption marks — like a fashion plate */}
+      <text x="-100" y="-118" fontSize="6" fill="#7a4a2a" fontFamily="monospace" letterSpacing="2">
+        ATUNE · No.01
+      </text>
+      <text x="100" y="-118" fontSize="6" fill="#7a4a2a" fontFamily="monospace" letterSpacing="2" textAnchor="end">
+        la veladura
+      </text>
+      <line x1="-100" y1="118" x2="100" y2="118" stroke="#2a1f18" strokeWidth="0.4" />
+      <text x="0" y="126" fontSize="6" fill="#7a4a2a" fontFamily="monospace" letterSpacing="3" textAnchor="middle">
+        BRASS · WORN BY THE WILLING
+      </text>
+    </svg>
+  )
+}
+
 // SoundCloud Widget API loader — track loops via FINISH event
 function AmbientAudio({ playing, onReady }: { playing: boolean; onReady: () => void }) {
   const iframeRef = useRef<HTMLIFrameElement>(null)
@@ -531,6 +641,68 @@ function VisionTab() {
                 </p>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* The vow — privacy & adornment */}
+      <section className="border-t border-[#2a1f18] py-32">
+        <div className="max-w-6xl mx-auto px-6">
+          <p className="font-mono text-[10px] uppercase tracking-[4px] text-[#7a4a2a] mb-12 text-center">
+            A vow
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-10 md:gap-16 items-center">
+            <div className="md:col-span-5 flex justify-center">
+              <BrassMask />
+            </div>
+
+            <div className="md:col-span-7 space-y-8">
+              <h2 className="font-serif text-[clamp(36px,5vw,56px)] leading-[1.05] tracking-[-1px] text-[#f0e8de]">
+                The face
+                <br />
+                <em className="not-italic italic font-light text-[#f4a261]">stays sacred.</em>
+              </h2>
+
+              <div className="space-y-5 font-serif text-[17px] leading-[1.7] text-[#d4c4b0]">
+                <p>
+                  The system reads the body — pose, density, motion, the breath of the room.
+                  <span className="text-[#a89786]"> Never the face. Never a name. Never a record.</span>
+                </p>
+                <p className="text-[#a89786]">
+                  Faces are not stored. Faces are not matched. Faces are not learned. The eye blurs them on the wire,
+                  before the frame ever leaves the lens.
+                </p>
+                <p>
+                  And for those who want the refusal made tactile — who want their privacy
+                  <em className="text-[#f4a261] not-italic italic"> worn</em> — we sculpt adornments.
+                </p>
+                <p className="text-[#a89786]">
+                  Sheets of brass that meet the machine as ornament: discs that obscure, plates that confound,
+                  thin gold wire that turns a watching room into a jewel box. Anti-surveillance, designed by
+                  someone who loves beauty.
+                </p>
+              </div>
+
+              <div className="pt-4 border-t border-[#2a1f18] flex flex-col sm:flex-row gap-6 sm:gap-10">
+                <div>
+                  <p className="font-mono text-[9px] uppercase tracking-[3px] text-[#7a4a2a] mb-1">Privacy</p>
+                  <p className="font-serif text-[15px] text-[#f4a261]">as ornament</p>
+                </div>
+                <div>
+                  <p className="font-mono text-[9px] uppercase tracking-[3px] text-[#7a4a2a] mb-1">Anonymity</p>
+                  <p className="font-serif text-[15px] text-[#f4a261]">as elegance</p>
+                </div>
+                <div>
+                  <p className="font-mono text-[9px] uppercase tracking-[3px] text-[#7a4a2a] mb-1">The room</p>
+                  <p className="font-serif text-[15px] text-[#f4a261]">as a jewel box</p>
+                </div>
+              </div>
+
+              <p className="font-serif italic text-[15px] text-[#a89786] leading-relaxed pt-4">
+                The most beautiful disguise is one you wear with pride.
+              </p>
+            </div>
           </div>
         </div>
       </section>
