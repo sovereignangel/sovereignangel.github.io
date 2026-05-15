@@ -436,10 +436,11 @@ function WorldTab() {
 }
 
 function MetricsTab() {
-  // Hedge-fund-manager rigor: each KPI has a compound metric (what compounds),
-  // a leading indicator (cheap to measure, weekly cadence), and a drawdown
-  // trigger (the condition that demands action). Treat life as a portfolio.
-  const kpis = [
+  // Reframed per Lori: three INPUTS she cultivates weekly compound into two
+  // OUTPUTS she measures quarterly. "I'm an Artist and a Capitalist."
+  //   Aesthetic + Knowledge + Relationships  →  Creation  +  Net worth
+  // Body & mind are foundations (always on, footer note); they sustain the inputs.
+  const inputs = [
     {
       name: 'Relationships',
       frame: 'the asset class',
@@ -448,98 +449,92 @@ function MetricsTab() {
       draw: '14d w/o seeing the closest five',
     },
     {
-      name: 'Experiences',
-      frame: 'the income statement',
-      compound: 'peaks × variety × novelty',
-      lead: '1 first-time experience / mo',
-      draw: '60d of pure routine',
-    },
-    {
-      name: 'Body',
-      frame: 'the maintenance margin',
-      compound: 'VO₂max · sleep · HRV trajectory',
-      lead: 'sleep 7h+ · training 4×/wk',
-      draw: '3d nervous system spiked',
-    },
-    {
-      name: 'Mind',
-      frame: 'the cognitive engine',
-      compound: 'insights × retained × applied',
-      lead: 'morning pages · meditation streak',
-      draw: '14d w/o a wiki write or journal',
-    },
-    {
       name: 'Aesthetic',
-      frame: 'the signature',
+      frame: 'the signature · the artist',
       compound: 'taste × consistency × distinctness',
       lead: 'pieces curated > pieces consumed',
-      draw: 'output starts pleasing not signaturing',
-    },
-    {
-      name: 'Work',
-      frame: 'the human capital',
-      compound: 'skill depth × shipping rate × peer respect',
-      lead: '20h+ deep work / wk',
-      draw: '14d w/o shipping',
-    },
-    {
-      name: 'Net worth',
-      frame: 'the balance sheet',
-      compound: 'NAV CAGR · dividend yield · optionality',
-      lead: 'savings rate · allocation discipline',
-      draw: 'Sharpe (return / stress) declining',
+      draw: 'output starts pleasing, not signaturing',
     },
     {
       name: 'Knowledge',
       frame: 'the intellectual capital',
       compound: 'wikis × retrieval × half-life',
       lead: 'notes / wk · conversations indexed',
-      draw: 'wiki unused 12 mo → refresh or write-down',
+      draw: 'wiki unused 12 mo → refresh',
     },
   ]
+  const outputs = [
+    {
+      name: 'Creation',
+      frame: 'what reaches the world',
+      compound: 'things shipped × originality × reach',
+      lead: '1 thing shipped / wk · artifact · talk · gathering',
+      draw: '14d w/o shipping anything',
+    },
+    {
+      name: 'Net worth',
+      frame: 'the balance sheet · the capitalist',
+      compound: 'NAV CAGR · dividend yield · optionality',
+      lead: 'savings rate · allocation discipline',
+      draw: 'Sharpe (return / stress) declining',
+    },
+  ]
+
+  const Card = ({ k }: { k: { name: string; frame: string; compound: string; lead: string; draw: string } }) => (
+    <div className="border border-[#d8d0c8] bg-[#faf8f4] p-2.5 sm:p-3 flex flex-col">
+      <div className="flex items-baseline justify-between mb-1">
+        <span className={`${fDisplay} font-semibold text-[16px] sm:text-[19px] text-[#2a2522] leading-tight`}>{k.name}</span>
+      </div>
+      <p className={`${fDisplay} italic text-[11px] sm:text-[13px] text-[#7c2d2d] mb-1.5 leading-tight`}>{k.frame}</p>
+      <div className="space-y-1 flex-1">
+        <div>
+          <p className={`${fMono} text-[9px] sm:text-[10px] uppercase tracking-[0.14em] text-[#9a928a]`}>compound</p>
+          <p className={`${fBody} text-[11px] sm:text-[12px] text-[#2a2522] leading-snug`}>{k.compound}</p>
+        </div>
+        <div>
+          <p className={`${fMono} text-[9px] sm:text-[10px] uppercase tracking-[0.14em] text-[#9a928a]`}>lead</p>
+          <p className={`${fBody} text-[11px] sm:text-[12px] text-[#2a2522] leading-snug`}>{k.lead}</p>
+        </div>
+        <div>
+          <p className={`${fMono} text-[9px] sm:text-[10px] uppercase tracking-[0.14em] text-[#9a928a]`}>drawdown</p>
+          <p className={`${fBody} text-[11px] sm:text-[12px] text-[#2a2522] leading-snug`}>{k.draw}</p>
+        </div>
+      </div>
+    </div>
+  )
 
   return (
     <div className="h-full flex flex-col px-4 sm:px-8 py-4 sm:py-6 max-w-5xl mx-auto w-full">
       <div className="shrink-0">
-        <Chapter label="v · what i count" title="A portfolio of compounding lives." />
-        <p className={`${fBody} text-[12px] sm:text-[14px] leading-[1.5] text-[#2a2522]/80 max-w-2xl mb-2 sm:mb-3`}>
-          Each category gets the discipline of a position: a compound metric (what compounds), a leading indicator (cheap, weekly), a drawdown trigger (when to act). <span className="italic text-[#7c2d2d]">Not a dashboard. A compass.</span>
+        <Chapter label="v · what i count" title="An artist and a capitalist." italic />
+        <p className={`${fBody} text-[12px] sm:text-[14px] leading-[1.5] text-[#2a2522]/85 max-w-2xl`}>
+          Three things I cultivate. Two things they compound into. <span className="italic text-[#7c2d2d]">Each gets a compound metric, a leading indicator (cheap, weekly), and a drawdown trigger (when to act). Not a dashboard — a compass.</span>
         </p>
       </div>
 
-      <div className="flex-1 grid grid-cols-2 lg:grid-cols-4 gap-1.5 sm:gap-2 min-h-0">
-        {kpis.map((k, i) => (
-          <div
-            key={k.name}
-            className="border border-[#d8d0c8] bg-[#faf8f4] p-2 sm:p-3 flex flex-col"
-          >
-            <div className="flex items-baseline justify-between mb-1 sm:mb-1.5">
-              <span className={`${fDisplay} text-[14px] sm:text-[17px] text-[#2a2522] leading-tight`}>{k.name}</span>
-              <span className={`${fMono} text-[9px] sm:text-[10px] text-[#7c2d2d]`}>{String(i + 1).padStart(2, '0')}</span>
-            </div>
-            <p className={`${fDisplay} italic text-[10px] sm:text-[12px] text-[#7c2d2d] mb-1 sm:mb-1.5 leading-tight`}>
-              {k.frame}
-            </p>
-            <div className="space-y-0.5 sm:space-y-1 flex-1">
-              <div>
-                <p className={`${fMono} text-[9px] uppercase tracking-[0.12em] text-[#9a928a]`}>compound</p>
-                <p className={`${fBody} text-[10px] sm:text-[11px] text-[#2a2522] leading-tight`}>{k.compound}</p>
-              </div>
-              <div>
-                <p className={`${fMono} text-[9px] uppercase tracking-[0.12em] text-[#9a928a]`}>lead</p>
-                <p className={`${fBody} text-[10px] sm:text-[11px] text-[#2a2522] leading-tight`}>{k.lead}</p>
-              </div>
-              <div>
-                <p className={`${fMono} text-[9px] uppercase tracking-[0.12em] text-[#9a928a]`}>drawdown</p>
-                <p className={`${fBody} text-[10px] sm:text-[11px] text-[#2a2522] leading-tight`}>{k.draw}</p>
-              </div>
-            </div>
+      <div className="flex-1 flex flex-col justify-center gap-2 sm:gap-3 min-h-0 mt-2 sm:mt-3">
+        {/* INPUTS */}
+        <div>
+          <p className={`${fMono} text-[10px] sm:text-[11px] uppercase tracking-[0.2em] text-[#7c2d2d] font-semibold mb-1.5`}>Inputs · cultivated weekly</p>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            {inputs.map((k) => <Card key={k.name} k={k} />)}
           </div>
-        ))}
+        </div>
+
+        {/* Arrow */}
+        <div className={`${fMono} text-[12px] uppercase tracking-[0.25em] text-[#7c2d2d] text-center`}>↓ compounds into ↓</div>
+
+        {/* OUTPUTS */}
+        <div>
+          <p className={`${fMono} text-[10px] sm:text-[11px] uppercase tracking-[0.2em] text-[#7c2d2d] font-semibold mb-1.5`}>Outputs · measured quarterly</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {outputs.map((k) => <Card key={k.name} k={k} />)}
+          </div>
+        </div>
       </div>
 
       <p className={`${fDisplay} italic text-[11px] sm:text-[13px] text-[#9a928a] text-center mt-2 sm:mt-3 shrink-0`}>
-        you can&apos;t optimize what you don&apos;t notice · you can&apos;t notice what you don&apos;t name
+        foundations always on: body · mind · experiences — the substrate that lets the inputs compound
       </p>
     </div>
   )
