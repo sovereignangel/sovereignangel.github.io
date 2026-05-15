@@ -465,9 +465,6 @@ function MetricsTab() {
         </div>
       </div>
 
-      <p className={`${fDisplay} italic text-[11px] sm:text-[13px] text-[#9a928a] text-center mt-2 sm:mt-3 shrink-0`}>
-        foundations always on · body · mind · experiences
-      </p>
     </div>
   )
 }
