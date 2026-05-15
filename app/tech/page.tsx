@@ -152,19 +152,18 @@ function TechDiagram() {
   }, [])
 
   return (
-    <svg viewBox="-200 -150 400 300" className="w-full max-w-[min(96vw,860px)] h-auto" aria-hidden>
+    <svg viewBox="-200 -140 400 270" preserveAspectRatio="xMidYMid meet" className="w-full h-full max-w-[860px] max-h-full" aria-hidden>
       {/* === Top: sources === */}
-      <text x="-180" y="-138" fontSize="3.8" letterSpacing="0.8" fontFamily="serif" fill="#7c2d2d">SOURCES</text>
+      <text x="-180" y="-128" fontSize="3.8" letterSpacing="0.8" fontFamily="serif" fill="#7c2d2d">SOURCES</text>
       {[
-        { x: -150, y: -120, label: 'Telegram', sub: 'chat · voice · slash' },
-        { x: -50, y: -120, label: 'Wave AI', sub: 'session.completed' },
-        { x: 50, y: -120, label: 'journal · email', sub: 'passive ingest' },
+        { x: -70, y: -118, label: 'Telegram', sub: 'chat · voice · slash · journal' },
+        { x: 70, y: -118, label: 'Wave AI', sub: 'session.completed' },
       ].map((s) => (
         <g key={s.label}>
-          <rect x={s.x - 26} y={s.y - 6} width="52" height="12" fill="#faf8f4" stroke="#2a2522" strokeWidth="0.4" />
-          <text x={s.x} y={s.y - 1} textAnchor="middle" fontSize="4.5" fontFamily="serif" fontStyle="italic" fill="#2a2522">{s.label}</text>
+          <rect x={s.x - 32} y={s.y - 6} width="64" height="12" fill="#faf8f4" stroke="#2a2522" strokeWidth="0.4" />
+          <text x={s.x} y={s.y - 1} textAnchor="middle" fontSize="4.8" fontFamily="serif" fontStyle="italic" fill="#2a2522">{s.label}</text>
           <text x={s.x} y={s.y + 4} textAnchor="middle" fontSize="3" fontFamily="serif" fill="#9a928a">{s.sub}</text>
-          <line x1={s.x} y1={s.y + 6} x2={s.x * 0.45} y2={-80} stroke="#9a928a" strokeWidth="0.35" opacity="0.55" />
+          <line x1={s.x} y1={s.y + 6} x2={s.x * 0.35} y2={-80} stroke="#9a928a" strokeWidth="0.35" opacity="0.55" />
         </g>
       ))}
 
@@ -193,23 +192,23 @@ function TechDiagram() {
       {[
         {
           x: -110, label: 'Armstrong', emphasis: true,
-          stack: ['DeepOps · Supabase', 'research_requests · meetings', 'fundraising · research', 'management · investing'],
+          stack: ['DeepOps · Supabase', 'research_requests · meetings', 'fundraise · research · mgmt · invest'],
         },
         {
           x: 0, label: 'Alamo Bernal',
-          stack: ['AB · Supabase', 'ab_meetings · research_requests', 'screener · briefs', 'partnership work'],
+          stack: ['AB · Supabase', 'ab_meetings · research_requests', 'partnership · screener · briefs'],
         },
         {
           x: 110, label: 'Thesis · Lordas',
-          stack: ['Website · Firestore', 'inbox_messages · relational', 'wikis · journal', 'the apps'],
+          stack: ['Website · Firestore', 'inbox_messages · relational', 'wikis · journal · the apps'],
         },
       ].map((p) => (
         <g key={p.label}>
           <line x1={0} y1={-54} x2={p.x} y2={-30} stroke={p.emphasis ? '#7c2d2d' : '#9a928a'} strokeWidth={p.emphasis ? '0.55' : '0.4'} opacity="0.6" />
-          <rect x={p.x - 50} y={-30} width="100" height="62" fill="#faf8f4" stroke={p.emphasis ? '#7c2d2d' : '#7c2d2d'} strokeWidth={p.emphasis ? '0.8' : '0.5'} strokeOpacity={p.emphasis ? '1' : '0.55'} />
-          <text x={p.x} y={-22} textAnchor="middle" fontSize="5.5" fontStyle="italic" fontFamily="serif" fontWeight={p.emphasis ? '600' : '500'} fill="#2a2522">{p.label}</text>
+          <rect x={p.x - 50} y={-30} width="100" height="36" fill="#faf8f4" stroke="#7c2d2d" strokeWidth={p.emphasis ? '0.8' : '0.5'} strokeOpacity={p.emphasis ? '1' : '0.55'} />
+          <text x={p.x} y={-22} textAnchor="middle" fontSize="5" fontStyle="italic" fontFamily="serif" fontWeight={p.emphasis ? '600' : '500'} fill="#2a2522">{p.label}</text>
           {p.stack.map((line, j) => (
-            <text key={j} x={p.x} y={-13 + j * 6.5} textAnchor="middle" fontSize="3" fontFamily="serif" fill="#5c5550">{line}</text>
+            <text key={j} x={p.x} y={-15 + j * 6} textAnchor="middle" fontSize="3" fontFamily="serif" fill="#5c5550">{line}</text>
           ))}
         </g>
       ))}
@@ -228,42 +227,42 @@ function TechDiagram() {
       )}
 
       {/* === Wikis (Layer 3) === */}
-      <text x="-180" y="50" fontSize="3.8" letterSpacing="0.8" fontFamily="serif" fill="#7c2d2d">L3 · WIKIS</text>
-      <rect x="-130" y="42" width="260" height="22" fill="#8a6d2f" fillOpacity="0.06" stroke="#8a6d2f" strokeWidth="0.45" strokeOpacity="0.7" />
-      <text x="0" y="52" textAnchor="middle" fontSize="5" fontStyle="italic" fontFamily="serif" fontWeight="600" fill="#2a2522">
+      <text x="-180" y="24" fontSize="3.8" letterSpacing="0.8" fontFamily="serif" fill="#7c2d2d">L3 · WIKIS</text>
+      <rect x="-130" y="16" width="260" height="20" fill="#8a6d2f" fillOpacity="0.06" stroke="#8a6d2f" strokeWidth="0.45" strokeOpacity="0.7" />
+      <text x="0" y="25" textAnchor="middle" fontSize="5" fontStyle="italic" fontFamily="serif" fontWeight="600" fill="#2a2522">
         Karpathy Layer 2 — self-updating knowledge
       </text>
-      <text x="0" y="59" textAnchor="middle" fontSize="3.5" fontFamily="serif" fill="#5c5550">
+      <text x="0" y="32" textAnchor="middle" fontSize="3.4" fontFamily="serif" fill="#5c5550">
         contact / ticker / project / topic / meeting — wikis/{'{slug}'}
       </text>
       {/* upward arrows from queues into wikis */}
       {[-110, 0, 110].map((px) => (
-        <line key={'wU' + px} x1={px} y1={32} x2={px * 0.6} y2={42} stroke="#9a928a" strokeWidth="0.35" opacity="0.5" />
+        <line key={'wU' + px} x1={px} y1={6} x2={px * 0.6} y2={16} stroke="#9a928a" strokeWidth="0.35" opacity="0.5" />
       ))}
 
       {/* === Harness (Layer 4) === */}
-      <text x="-180" y="84" fontSize="3.8" letterSpacing="0.8" fontFamily="serif" fill="#7c2d2d">L4 · HARNESS</text>
-      <rect x="-150" y="74" width="300" height="28" fill="#faf8f4" stroke="#7c2d2d" strokeWidth="0.7" />
-      <text x="0" y="84" textAnchor="middle" fontSize="6" fontStyle="italic" fontFamily="serif" fontWeight="600" fill="#7c2d2d">Alfred · the agent</text>
-      <text x="0" y="91" textAnchor="middle" fontSize="3.8" fontFamily="serif" fill="#5c5550">
+      <text x="-180" y="56" fontSize="3.8" letterSpacing="0.8" fontFamily="serif" fill="#7c2d2d">L4 · HARNESS</text>
+      <rect x="-150" y="48" width="300" height="26" fill="#faf8f4" stroke="#7c2d2d" strokeWidth="0.7" />
+      <text x="0" y="58" textAnchor="middle" fontSize="5.5" fontStyle="italic" fontFamily="serif" fontWeight="600" fill="#7c2d2d">Alfred · the agent</text>
+      <text x="0" y="65" textAnchor="middle" fontSize="3.5" fontFamily="serif" fill="#5c5550">
         Ollama (cheap) + Claude (premium) · launchd → Cloud Run
       </text>
-      <text x="0" y="97" textAnchor="middle" fontSize="3.2" fontStyle="italic" fontFamily="serif" fill="#9a928a">
+      <text x="0" y="71" textAnchor="middle" fontSize="3.2" fontStyle="italic" fontFamily="serif" fill="#9a928a">
         reads queues · writes wikis · drafts memos · alerts Telegram
       </text>
 
       {/* === Seven tags fan, bottom === */}
-      <text x="-180" y="120" fontSize="3.8" letterSpacing="0.8" fontFamily="serif" fill="#7c2d2d">7-TAG FANOUT · Wave session.completed</text>
+      <text x="-180" y="92" fontSize="3.8" letterSpacing="0.8" fontFamily="serif" fill="#7c2d2d">7-TAG FANOUT · Wave session.completed</text>
       {['Fundraising', 'Research', 'Management', 'Investing', 'Alamo Bernal', 'Thesis Engine', 'Lordas'].map((tag, i) => {
         const x = -150 + i * 50
         return (
           <g key={tag}>
-            <rect x={x - 23} y="128" width="46" height="9" fill="#faf8f4" stroke="#7c2d2d" strokeWidth="0.4" strokeOpacity="0.55" />
-            <text x={x} y="134" textAnchor="middle" fontSize="3.5" fontFamily="serif" fontStyle="italic" fill="#2a2522">{tag}</text>
+            <rect x={x - 23} y="100" width="46" height="9" fill="#faf8f4" stroke="#7c2d2d" strokeWidth="0.4" strokeOpacity="0.55" />
+            <text x={x} y="106" textAnchor="middle" fontSize="3.5" fontFamily="serif" fontStyle="italic" fill="#2a2522">{tag}</text>
           </g>
         )
       })}
-      <text x="170" y="146" textAnchor="end" fontSize="3" fontStyle="italic" fontFamily="serif" fill="#9a928a">+ defer (no destination)</text>
+      <text x="170" y="118" textAnchor="end" fontSize="3" fontStyle="italic" fontFamily="serif" fill="#9a928a">+ defer (no destination)</text>
     </svg>
   )
 }
