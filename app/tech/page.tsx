@@ -324,25 +324,28 @@ function VisionTab() {
   // Architecture diagram lives only on the Tech tab — Vision is the manifesto, not the system.
   return (
     <div className="h-full flex flex-col px-5 sm:px-8 py-5 sm:py-8 max-w-4xl mx-auto w-full">
-      <p className={`${fMono} text-[10px] sm:text-[11px] font-semibold tracking-[0.3em] uppercase text-[#7c2d2d] shrink-0`}>
+      <p className={`${fMono} text-[10px] sm:text-[11px] font-semibold tracking-[0.32em] uppercase text-[#7c2d2d] text-center shrink-0`}>
         i &middot; the vision
       </p>
 
       <div className="flex-1 min-h-0 flex flex-col items-center justify-center gap-7 sm:gap-10 text-center">
-        {/* Hero title — Roman with archetype names italicized */}
-        <h1 className={`${fDisplay} font-normal text-[30px] sm:text-[46px] md:text-[58px] leading-[1.05] tracking-[-0.8px] text-[#2a2522] max-w-3xl`}>
-          <em className="text-[#2a2522]">Leonardo</em> sight.{' '}
-          <em className="text-[#2a2522]">Medici</em> discipline.{' '}
-          <em className="text-[#2a2522]">Mozart</em> play.
+        {/* Hero title — three-line stanza, all italic, one unified voice */}
+        <h1 className={`${fDisplay} italic font-medium text-[28px] sm:text-[44px] md:text-[54px] leading-[1.12] tracking-[-0.6px] text-[#2a2522]`}>
+          <span className="block">Leonardo sight.</span>
+          <span className="block">Medici discipline.</span>
+          <span className="block">Mozart play.</span>
         </h1>
 
-        {/* Ornamental crest — three glyphs, no per-glyph labels */}
+        {/* Ornamental crest — three glyphs as pure heraldry, no labels */}
         <TriadCrest />
 
+        {/* Hair-thin classical rule — the editorial pivot from heading to epigraph */}
+        <div className="border-t border-[#7c2d2d]/35 w-10 sm:w-14" aria-hidden />
+
         {/* Keynes as the page's stillpoint */}
-        <blockquote className={`${fDisplay} italic text-[15px] sm:text-[18px] leading-[1.55] text-[#2a2522]/85 max-w-xl`}>
+        <blockquote className={`${fDisplay} italic text-[15px] sm:text-[19px] leading-[1.6] text-[#2a2522]/90 max-w-xl`}>
           &ldquo;Our prime objects in life were love, the creation and enjoyment of aesthetic experience, and the pursuit of knowledge. <span className="text-[#7c2d2d] not-italic font-semibold">Of these, love came a long way first.</span>&rdquo;
-          <footer className={`${fMono} not-italic text-[10px] sm:text-[11px] tracking-[0.22em] uppercase text-[#9a928a] mt-3`}>
+          <footer className={`${fMono} not-italic text-[10px] sm:text-[11px] tracking-[0.25em] uppercase text-[#9a928a] mt-3 sm:mt-4`}>
             J.M. Keynes &middot; My Early Beliefs &middot; 1938
           </footer>
         </blockquote>
