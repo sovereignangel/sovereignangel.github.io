@@ -148,7 +148,7 @@ function TechDiagram() {
       <rect x="-194" y="-114" width="92" height="11" fill="#f5f1ea" stroke="none" />
       <text x="-188" y="-106" fontSize="4.2" letterSpacing="1.2" fontFamily="serif" fontWeight="600" fill="#7c2d2d">HARNESS · ALFRED</text>
       <text x="188" y="-106" textAnchor="end" fontSize="3.2" fontStyle="italic" fontFamily="serif" fill="#9a928a">
-        Ollama + Claude · reads queues · writes wikis · drafts memos
+        Ollama + Claude · reads platforms · writes wikis · drafts memos
       </text>
 
       {/* === SOURCES === */}
@@ -165,8 +165,8 @@ function TechDiagram() {
         </g>
       ))}
 
-      {/* === L1 · ROUTER === */}
-      <text x="-180" y="-46" fontSize="3.8" letterSpacing="0.8" fontFamily="serif" fill="#7c2d2d">L1 · ROUTER</text>
+      {/* === ROUTER === */}
+      <text x="-180" y="-46" fontSize="3.8" letterSpacing="1.2" fontWeight="600" fontFamily="serif" fill="#7c2d2d">ROUTER</text>
       <rect x="-100" y="-56" width="200" height="22" fill="#7c2d2d" fillOpacity="0.06" stroke="#7c2d2d" strokeWidth="0.6" />
       <text x="0" y="-48" textAnchor="middle" fontSize="6" fontStyle="italic" fontFamily="serif" fontWeight="600" fill="#7c2d2d">
         Alfred · Website /api/inbox
@@ -182,8 +182,8 @@ function TechDiagram() {
         return <ellipse key={i} cx="0" cy="-45" rx={r * 2.2} ry={r * 0.55} fill="none" stroke="#7c2d2d" strokeWidth="0.22" opacity={op} />
       })}
 
-      {/* === WAVE TRANSCRIPTS · tag selector (between router and queues) === */}
-      <text x="-180" y="-22" fontSize="3.8" letterSpacing="0.8" fontFamily="serif" fill="#7c2d2d">WAVE TRANSCRIPTS · tap one of 7 to route</text>
+      {/* === Wave tags (between router and platforms) === */}
+      <text x="-180" y="-22" fontSize="3.8" letterSpacing="1.2" fontWeight="600" fontFamily="serif" fill="#7c2d2d">WAVE TAGS <tspan fontWeight="400" letterSpacing="0.8" fill="#9a928a">· tap one of 7</tspan></text>
       {['Fundraising', 'Research', 'Management', 'Investing', 'Alamo Bernal', 'Thesis Engine', 'Lordas'].map((tag, i) => {
         const x = -150 + i * 50
         return (
@@ -202,8 +202,8 @@ function TechDiagram() {
         return <circle key={`r2t-${k}`} cx="0" cy={cy} r="0.7" fill="#7c2d2d" opacity={p > 0.08 && p < 0.92 ? 0.6 : 0} />
       })}
 
-      {/* === L2 · QUEUES === */}
-      <text x="-180" y="6" fontSize="3.8" letterSpacing="0.8" fontFamily="serif" fill="#7c2d2d">L2 · QUEUES</text>
+      {/* === PLATFORMS === */}
+      <text x="-180" y="6" fontSize="3.8" letterSpacing="1.2" fontWeight="600" fontFamily="serif" fill="#7c2d2d">PLATFORMS</text>
       {[
         {
           x: -110, label: 'Armstrong', emphasis: true,
@@ -228,11 +228,11 @@ function TechDiagram() {
         </g>
       ))}
 
-      {/* === L3 · WIKIS === */}
-      <text x="-180" y="62" fontSize="3.8" letterSpacing="0.8" fontFamily="serif" fill="#7c2d2d">L3 · WIKIS</text>
-      <rect x="-130" y="56" width="260" height="20" fill="#8a6d2f" fillOpacity="0.06" stroke="#8a6d2f" strokeWidth="0.45" strokeOpacity="0.7" />
+      {/* === WIKIS · karpathy layer 2 === */}
+      <text x="-180" y="62" fontSize="3.8" letterSpacing="1.2" fontWeight="600" fontFamily="serif" fill="#7c2d2d">WIKIS <tspan fontWeight="400" letterSpacing="0.8" fill="#9a928a">· karpathy layer 2</tspan></text>
+      <rect x="-130" y="56" width="260" height="20" fill="#7c2d2d" fillOpacity="0.04" stroke="#7c2d2d" strokeWidth="0.45" strokeOpacity="0.55" />
       <text x="0" y="65" textAnchor="middle" fontSize="5" fontStyle="italic" fontFamily="serif" fontWeight="600" fill="#2a2522">
-        Karpathy Layer 2 — self-updating knowledge
+        self-updating knowledge
       </text>
       <text x="0" y="72" textAnchor="middle" fontSize="3.4" fontFamily="serif" fill="#5c5550">
         contact / ticker / project / topic / meeting — wikis/{'{slug}'}
