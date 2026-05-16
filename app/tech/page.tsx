@@ -414,55 +414,52 @@ function MetricsTab() {
   ]
 
   const Card = ({ k }: { k: { name: string; frame: string; compound: string; lead: string; draw: string } }) => (
-    <div className="border border-[#d8d0c8] bg-[#faf8f4] p-2.5 sm:p-3 flex flex-col">
-      <div className="flex items-baseline justify-between mb-1">
-        <span className={`${fDisplay} font-semibold text-[16px] sm:text-[19px] text-[#2a2522] leading-tight`}>{k.name}</span>
-      </div>
-      <p className={`${fDisplay} italic text-[11px] sm:text-[13px] text-[#7c2d2d] mb-1.5 leading-tight`}>{k.frame}</p>
-      <div className="space-y-1 flex-1">
+    <div className="border border-[#d8d0c8] bg-[#faf8f4] p-1.5 sm:p-3 flex flex-col min-w-0">
+      <span className={`${fDisplay} font-semibold text-[13px] sm:text-[19px] text-[#2a2522] leading-tight`}>{k.name}</span>
+      <p className={`${fDisplay} italic text-[10px] sm:text-[13px] text-[#7c2d2d] leading-tight mt-0.5 sm:mt-1`}>{k.frame}</p>
+      <div className="mt-1 sm:mt-1.5 space-y-0.5 sm:space-y-1 flex-1">
         <div>
-          <p className={`${fMono} text-[9px] sm:text-[10px] uppercase tracking-[0.14em] text-[#9a928a]`}>compound</p>
-          <p className={`${fBody} text-[11px] sm:text-[12px] text-[#2a2522] leading-snug`}>{k.compound}</p>
+          <p className={`${fMono} text-[8px] sm:text-[10px] uppercase tracking-[0.12em] text-[#9a928a] leading-tight`}>compound</p>
+          <p className={`${fBody} text-[10px] sm:text-[12px] text-[#2a2522] leading-snug`}>{k.compound}</p>
         </div>
         <div>
-          <p className={`${fMono} text-[9px] sm:text-[10px] uppercase tracking-[0.14em] text-[#9a928a]`}>lead</p>
-          <p className={`${fBody} text-[11px] sm:text-[12px] text-[#2a2522] leading-snug`}>{k.lead}</p>
+          <p className={`${fMono} text-[8px] sm:text-[10px] uppercase tracking-[0.12em] text-[#9a928a] leading-tight`}>lead</p>
+          <p className={`${fBody} text-[10px] sm:text-[12px] text-[#2a2522] leading-snug`}>{k.lead}</p>
         </div>
         <div>
-          <p className={`${fMono} text-[9px] sm:text-[10px] uppercase tracking-[0.14em] text-[#9a928a]`}>drawdown</p>
-          <p className={`${fBody} text-[11px] sm:text-[12px] text-[#2a2522] leading-snug`}>{k.draw}</p>
+          <p className={`${fMono} text-[8px] sm:text-[10px] uppercase tracking-[0.12em] text-[#9a928a] leading-tight`}>drawdown</p>
+          <p className={`${fBody} text-[10px] sm:text-[12px] text-[#2a2522] leading-snug`}>{k.draw}</p>
         </div>
       </div>
     </div>
   )
 
   return (
-    <div className="h-full flex flex-col px-4 sm:px-8 py-4 sm:py-6 max-w-5xl mx-auto w-full">
+    <div className="h-full flex flex-col px-3 sm:px-8 py-3 sm:py-6 max-w-5xl mx-auto w-full">
       <div className="shrink-0">
         <Chapter label="iii · what i count" title="Three things practiced. Two things compounded." italic />
-        <p className={`${fBody} text-[12px] sm:text-[14px] leading-[1.5] text-[#2a2522]/85 max-w-2xl`}>
+        <p className={`${fBody} text-[11px] sm:text-[14px] leading-[1.45] text-[#2a2522]/85 max-w-2xl`}>
           Three things I cultivate. Two things they compound into. <span className="italic text-[#7c2d2d]">Each gets a compound metric, a leading indicator (cheap, weekly), and a drawdown trigger (when to act). Not a dashboard — a compass.</span>
         </p>
       </div>
 
       <div className="flex-1 flex flex-col justify-center gap-2 sm:gap-3 min-h-0 mt-2 sm:mt-3">
         <div>
-          <p className={`${fMono} text-[10px] sm:text-[11px] uppercase tracking-[0.2em] text-[#7c2d2d] font-semibold mb-1.5`}>Inputs · cultivated weekly</p>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+          <p className={`${fMono} text-[9px] sm:text-[11px] uppercase tracking-[0.18em] text-[#7c2d2d] font-semibold mb-1 sm:mb-1.5`}>Inputs &middot; cultivated weekly</p>
+          <div className="grid grid-cols-3 gap-1 sm:gap-2">
             {inputs.map((k) => <Card key={k.name} k={k} />)}
           </div>
         </div>
 
-        <div className={`${fMono} text-[11px] uppercase tracking-[0.25em] text-[#7c2d2d] text-center`}>↓ compounds into ↓</div>
+        <div className={`${fMono} text-[10px] sm:text-[11px] uppercase tracking-[0.25em] text-[#7c2d2d] text-center`}>↓ compounds into ↓</div>
 
         <div>
-          <p className={`${fMono} text-[10px] sm:text-[11px] uppercase tracking-[0.2em] text-[#7c2d2d] font-semibold mb-1.5`}>Outputs · measured quarterly</p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <p className={`${fMono} text-[9px] sm:text-[11px] uppercase tracking-[0.18em] text-[#7c2d2d] font-semibold mb-1 sm:mb-1.5`}>Outputs &middot; measured quarterly</p>
+          <div className="grid grid-cols-2 gap-1 sm:gap-2">
             {outputs.map((k) => <Card key={k.name} k={k} />)}
           </div>
         </div>
       </div>
-
     </div>
   )
 }
