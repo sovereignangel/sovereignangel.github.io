@@ -546,7 +546,7 @@ export default function TantraPage() {
             </div>
           </div>
           <div className="border-l border-rule-light pl-3 lg:pl-4 flex flex-col">
-            <div className="font-mono text-[8px] uppercase tracking-[1px] text-ink-muted">Total</div>
+            <div className="font-mono text-[8px] uppercase tracking-[1px] text-ink-muted">total practiced</div>
             <div className="font-serif text-[18px] font-semibold text-ink leading-none mt-0.5">{totalCompleted}</div>
           </div>
           <div className="border-l border-rule-light pl-3 lg:pl-4 flex flex-col min-w-0">
@@ -554,7 +554,7 @@ export default function TantraPage() {
               Start: {new Date(practiceStart + 'T00:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
             </div>
             <div className="font-serif text-[13px] font-semibold text-ink mt-0.5 leading-tight">
-              {daysSincePractice} days practiced
+              Days since Start: {daysSincePractice}
             </div>
           </div>
           <div className="flex items-center gap-2 ml-auto">
@@ -600,6 +600,55 @@ export default function TantraPage() {
               </button>
             </div>
           )}
+        </div>
+      </section>
+
+      {/* 40-day grid — practiced vs missed vs upcoming */}
+      <section className="mb-2 lg:mb-3">
+        <div className="bg-white border border-rule rounded-sm px-3 py-2">
+          <div className="flex items-baseline justify-between mb-1.5">
+            <div className="font-mono text-[8px] uppercase tracking-[1px] text-ink-muted">
+              {regimeName} · 40-day grid
+            </div>
+            <div className="flex items-center gap-3 font-mono text-[8px] uppercase tracking-[1px] text-ink-muted">
+              <span className="flex items-center gap-1">
+                <span className="inline-block w-2 h-2 bg-burgundy" /> practiced
+              </span>
+              <span className="flex items-center gap-1">
+                <span className="inline-block w-2 h-2 bg-cream border border-rule" /> missed
+              </span>
+              <span className="flex items-center gap-1">
+                <span className="inline-block w-2 h-2 border border-ink-faint" /> upcoming
+              </span>
+            </div>
+          </div>
+          <div className="grid grid-cols-[repeat(20,minmax(0,1fr))] lg:grid-cols-[repeat(40,minmax(0,1fr))] gap-[3px]">
+            {Array.from({ length: cycleLen }, (_, i) => {
+              const d = new Date(cycleStart + 'T00:00:00')
+              d.setDate(d.getDate() + i)
+              const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+              const completed = checkinDates.has(dateStr)
+              const isToday = dateStr === today
+              const isFuture = dateStr > today
+              const status = completed ? 'practiced' : isFuture ? 'upcoming' : isToday ? 'today' : 'missed'
+              const dayLabel = new Date(dateStr + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+              return (
+                <div
+                  key={i}
+                  title={`Day ${i + 1} · ${dayLabel} · ${status}`}
+                  className={`aspect-square rounded-sm ${
+                    completed
+                      ? 'bg-burgundy border border-burgundy'
+                      : isToday
+                      ? 'bg-cream border-2 border-burgundy'
+                      : isFuture
+                      ? 'bg-transparent border border-ink-faint/40'
+                      : 'bg-cream border border-rule'
+                  }`}
+                />
+              )
+            })}
+          </div>
         </div>
       </section>
 
@@ -844,8 +893,13 @@ export default function TantraPage() {
         )}
       </section>
 
-      <div className="font-mono text-[8px] uppercase tracking-[1px] text-ink-faint text-center">
-        — ⬩ — Armstrong · Confidential · For Daily Practice — ⬩ —
+      <div className="text-center">
+        <div className="font-serif italic text-[12px] text-ink-muted leading-tight">
+          what compounds, endures
+        </div>
+        <div className="font-mono text-[8px] uppercase tracking-[1px] text-ink-faint mt-1">
+          Generative Intelligence, LLC
+        </div>
       </div>
     </div>
   )
