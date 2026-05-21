@@ -253,10 +253,11 @@ export default function AretePage() {
           <div className="arete-secondary">
             <SecondaryCard
               name="Salons"
-              tagline="The long table."
+              tagline="The long view."
               description="Intellectual gatherings. A long table, returning guests, conversation as the practice."
-              status="Coming soon"
-              interactive={false}
+              status="Pre-launch · Jun 2026 →"
+              href="/salons"
+              interactive
             />
             <SecondaryCard
               name="Mistral"
