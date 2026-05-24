@@ -48,9 +48,6 @@ const DISSOLUTIONS: string[] = [
   'The woman who says “just,” “maybe,” “kind of,” “I think”',
 ]
 
-const LINGUISTIC_LOOSENING =
-  'The self is a shadow cast by grammar. Rest in the space where no shadow is being cast — vast, empty, aware, free.'
-
 // ── V2 · Generation: Seven Factors of Awakening ──────────────────────────────
 const FACTORS: { name: string; gloss: string }[] = [
   { name: 'Mindfulness', gloss: 'I am clearly aware of this moment, as it is' },
@@ -353,10 +350,8 @@ export default function TantraPage() {
   const practiceStart = config?.practiceStartDate || config?.startDate || PRACTICE_START
   const cycleStart = config?.cycleStartDate || PRACTICE_START
   const cycleLen = config?.cycleLengthDays || CYCLE_DAYS
-  const regimeName = config?.regimeName || CURRENT_REGIME
 
   const daysIntoCycle = Math.max(0, Math.min(cycleLen, daysBetween(cycleStart, today) + 1))
-  const daysRemaining = Math.max(0, cycleLen - daysIntoCycle)
   const daysSincePractice = Math.max(0, daysBetween(practiceStart, today) + 1)
 
   async function handleToggleToday() {
@@ -434,67 +429,57 @@ export default function TantraPage() {
 
   return (
     <div className="max-w-[1680px] mx-auto px-3 lg:px-6 py-2 lg:py-3 h-screen overflow-hidden flex flex-col">
-      {/* Top: who I am becoming (small, editable) */}
-      <div className="mb-2">
-        {editingOneliner ? (
-          <div className="flex flex-col gap-2">
-            <div className="font-mono text-[9px] uppercase tracking-[1px] text-burgundy">
-              Who I am becoming
-            </div>
-            <textarea
-              value={onelinerDraft}
-              onChange={(e) => setOnelinerDraft(e.target.value)}
-              className="font-serif italic text-[12px] text-ink bg-transparent border border-rule rounded-sm px-2 py-1.5 w-full focus:outline-none focus:border-burgundy resize-none"
-              rows={2}
-              autoFocus
-            />
-            <div className="flex gap-2">
-              <button
-                onClick={handleSaveOneliner}
-                className="font-serif text-[10px] uppercase tracking-[0.5px] px-3 py-1 bg-burgundy text-paper rounded-sm"
-              >
-                Save
-              </button>
-              <button
-                onClick={() => {
-                  setOnelinerDraft(config?.oneliner || '')
-                  setEditingOneliner(false)
-                }}
-                className="font-serif text-[10px] uppercase tracking-[0.5px] px-3 py-1 border border-rule text-ink-muted rounded-sm"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        ) : (
-          <button
-            onClick={() => setEditingOneliner(true)}
-            className="text-left w-full group"
-            title="Click to edit"
-          >
-            <span className="font-mono text-[9px] uppercase tracking-[1px] text-ink-muted mr-2">
-              Who I am becoming —
-            </span>
-            <span className="font-serif italic text-[12px] text-ink-muted group-hover:text-burgundy transition-colors">
-              {config?.oneliner}
-            </span>
-          </button>
-        )}
-      </div>
-
-      {/* Title row — title left, progress bar right */}
-      <div className="mb-3 pb-2 border-b border-rule-light grid grid-cols-1 lg:grid-cols-[auto_1fr] gap-3 lg:gap-6 items-end">
-        <div>
-          <h1 className="font-serif text-[22px] lg:text-[26px] font-semibold text-burgundy tracking-tight leading-tight">
+      {/* Title + oneliner + 40-day grid */}
+      <div className="mb-1.5 pb-1.5 border-b border-rule-light grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] gap-2 lg:gap-6 items-end">
+        <div className="min-w-0">
+          <h1 className="font-serif text-[20px] lg:text-[24px] font-semibold text-burgundy tracking-tight leading-tight">
             Daily Tantra Meditation
           </h1>
-          <div className="font-serif italic text-[11px] lg:text-[12px] text-ink-muted mt-0.5">
-            Becoming Her · {regimeName} · A 30-minute morning ritual
-          </div>
+          {editingOneliner ? (
+            <div className="flex flex-col gap-1 mt-1">
+              <textarea
+                value={onelinerDraft}
+                onChange={(e) => setOnelinerDraft(e.target.value)}
+                className="font-serif italic text-[11px] text-ink bg-transparent border border-rule rounded-sm px-2 py-1 w-full focus:outline-none focus:border-burgundy resize-none"
+                rows={2}
+                autoFocus
+              />
+              <div className="flex gap-1.5">
+                <button
+                  onClick={handleSaveOneliner}
+                  className="font-serif text-[9px] uppercase tracking-[0.5px] px-2 py-0.5 bg-burgundy text-paper rounded-sm"
+                >
+                  Save
+                </button>
+                <button
+                  onClick={() => {
+                    setOnelinerDraft(config?.oneliner || '')
+                    setEditingOneliner(false)
+                  }}
+                  className="font-serif text-[9px] uppercase tracking-[0.5px] px-2 py-0.5 border border-rule text-ink-muted rounded-sm"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              onClick={() => setEditingOneliner(true)}
+              className="text-left group block mt-0.5"
+              title="Click to edit"
+            >
+              <span className="font-mono text-[8px] uppercase tracking-[1px] text-ink-muted mr-1.5">
+                Who I am becoming —
+              </span>
+              <span className="font-serif italic text-[11px] text-ink-muted group-hover:text-burgundy transition-colors">
+                {config?.oneliner}
+              </span>
+            </button>
+          )}
         </div>
         <div className="flex flex-col gap-1 lg:pl-6 lg:border-l lg:border-rule-light">
           <div className="font-mono text-[9px] uppercase tracking-[1px] text-ink-muted flex justify-between items-baseline">
-            <span>{regimeName} cycle · Day {daysIntoCycle} / {cycleLen} · {daysRemaining} remaining</span>
+            <span>Day {daysIntoCycle} / {cycleLen}</span>
             <span className="text-burgundy">{totalCompleted} completed</span>
           </div>
           <div className="grid grid-cols-[repeat(40,minmax(0,1fr))] gap-[3px]">
@@ -535,70 +520,70 @@ export default function TantraPage() {
       </div>
 
       {/* Streak strip — single row */}
-      <section className="mb-2 lg:mb-3">
-        <div className="bg-white border border-rule rounded-sm px-3 py-2 flex items-center gap-3 lg:gap-4 flex-wrap">
-          <div className="flex flex-col">
+      <section className="mb-1.5 lg:mb-2">
+        <div className="bg-white border border-rule rounded-sm px-2.5 py-1.5 flex items-center gap-2 lg:gap-3 flex-nowrap overflow-hidden">
+          <div className="flex flex-col flex-shrink-0">
             <div className="font-mono text-[8px] uppercase tracking-[1px] text-ink-muted">Streak</div>
-            <div className="font-serif text-[26px] lg:text-[30px] font-semibold text-burgundy leading-none">
-              {streak}<span className="font-serif text-[10px] text-ink-muted ml-1">days</span>
+            <div className="font-serif text-[20px] lg:text-[24px] font-semibold text-burgundy leading-none">
+              {streak}<span className="font-serif text-[9px] text-ink-muted ml-1">d</span>
             </div>
           </div>
-          <div className="border-l border-rule-light pl-3 lg:pl-4 flex flex-col">
-            <div className="font-mono text-[8px] uppercase tracking-[1px] text-ink-muted">total practiced</div>
-            <div className="font-serif text-[18px] font-semibold text-ink leading-none mt-0.5">{totalCompleted}</div>
+          <div className="hidden sm:flex border-l border-rule-light pl-2.5 lg:pl-3 flex-col flex-shrink-0">
+            <div className="font-mono text-[8px] uppercase tracking-[1px] text-ink-muted">total</div>
+            <div className="font-serif text-[15px] font-semibold text-ink leading-none mt-0.5">{totalCompleted}</div>
           </div>
-          <div className="border-l border-rule-light pl-3 lg:pl-4 flex flex-col min-w-0">
-            <div className="font-mono text-[8px] uppercase tracking-[1px] text-ink-muted">
-              Start: {new Date(practiceStart + 'T00:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+          <div className="border-l border-rule-light pl-2.5 lg:pl-3 flex flex-col flex-shrink min-w-0">
+            <div className="font-mono text-[8px] uppercase tracking-[1px] text-ink-muted truncate">
+              since start
             </div>
-            <div className="font-serif text-[13px] font-semibold text-ink mt-0.5 leading-tight">
-              Days since Start: {daysSincePractice}
+            <div className="font-serif text-[13px] font-semibold text-ink mt-0.5 leading-none">
+              {daysSincePractice}<span className="font-serif text-[9px] text-ink-muted ml-1">d</span>
             </div>
           </div>
-          <div className="flex items-center gap-2 ml-auto">
+          <div className="flex items-center gap-1.5 ml-auto flex-shrink-0">
             <button
               onClick={handleToggleToday}
               disabled={submitting}
-              className={`font-serif text-[10px] uppercase tracking-[0.5px] px-3 py-1.5 rounded-sm border transition-colors ${
+              className={`font-serif text-[10px] uppercase tracking-[0.5px] px-2.5 py-1 rounded-sm border transition-colors whitespace-nowrap ${
                 checkedInToday
                   ? 'bg-burgundy text-paper border-burgundy'
                   : 'bg-transparent text-burgundy border-burgundy hover:bg-burgundy hover:text-paper'
               } disabled:opacity-50`}
             >
-              {checkedInToday ? 'Completed today' : 'Mark today complete'}
+              {checkedInToday ? 'Done' : 'Mark done'}
             </button>
             <button
               onClick={() => setBackfillOpen((o) => !o)}
-              className="font-mono text-[9px] uppercase tracking-[1px] text-ink-muted hover:text-burgundy transition-colors flex items-center gap-1"
+              className="font-mono text-[9px] uppercase tracking-[1px] text-ink-muted hover:text-burgundy transition-colors flex items-center gap-0.5 whitespace-nowrap"
             >
               <span>{backfillOpen ? '−' : '+'}</span>
               <span>Backfill</span>
             </button>
           </div>
-          {backfillOpen && (
-            <div className="basis-full flex items-center gap-1 pt-1.5 mt-1 border-t border-rule-light">
-              <input
-                type="date"
-                value={backfillDate}
-                onChange={(e) => setBackfillDate(e.target.value)}
-                className="font-mono text-[10px] text-ink bg-cream border border-rule rounded-sm px-2 py-1 focus:outline-none focus:border-burgundy"
-              />
-              <input
-                type="time"
-                value={backfillTime}
-                onChange={(e) => setBackfillTime(e.target.value)}
-                className="font-mono text-[10px] text-ink bg-cream border border-rule rounded-sm px-2 py-1 focus:outline-none focus:border-burgundy w-[80px]"
-              />
-              <button
-                onClick={handleBackfill}
-                disabled={submitting || !backfillDate}
-                className="font-serif text-[10px] uppercase tracking-[0.5px] px-2 py-1 border border-burgundy text-burgundy rounded-sm hover:bg-burgundy hover:text-paper disabled:opacity-40"
-              >
-                Record
-              </button>
-            </div>
-          )}
         </div>
+        {backfillOpen && (
+          <div className="bg-white border-l border-r border-b border-rule rounded-b-sm -mt-px px-2.5 py-1.5 flex items-center gap-1">
+            <input
+              type="date"
+              value={backfillDate}
+              onChange={(e) => setBackfillDate(e.target.value)}
+              className="font-mono text-[10px] text-ink bg-cream border border-rule rounded-sm px-2 py-1 focus:outline-none focus:border-burgundy"
+            />
+            <input
+              type="time"
+              value={backfillTime}
+              onChange={(e) => setBackfillTime(e.target.value)}
+              className="font-mono text-[10px] text-ink bg-cream border border-rule rounded-sm px-2 py-1 focus:outline-none focus:border-burgundy w-[80px]"
+            />
+            <button
+              onClick={handleBackfill}
+              disabled={submitting || !backfillDate}
+              className="font-serif text-[10px] uppercase tracking-[0.5px] px-2 py-1 border border-burgundy text-burgundy rounded-sm hover:bg-burgundy hover:text-paper disabled:opacity-40"
+            >
+              Record
+            </button>
+          </div>
+        )}
       </section>
 
       {/* SECTIONS — 4 cols, fill available space */}
@@ -631,7 +616,7 @@ export default function TantraPage() {
             <div className="w-7 h-7 flex items-center justify-center flex-shrink-0"><DissolutionsSigil /></div>
             <div className="flex-1 min-w-0">
               <h3 className="font-serif text-[10px] font-semibold uppercase tracking-[0.5px] text-burgundy leading-tight">Dissolutions</h3>
-              <div className="font-mono text-[8px] uppercase tracking-[1px] text-ink-muted">Layers B + C</div>
+              <div className="font-mono text-[8px] uppercase tracking-[1px] text-ink-muted">Layer B · Personal</div>
             </div>
           </div>
           <div className="flex-1 overflow-y-auto space-y-1.5 pr-1">
@@ -643,10 +628,6 @@ export default function TantraPage() {
                 </div>
               </div>
             ))}
-            <div className="mt-1.5 p-1.5 bg-burgundy-bg border border-burgundy/20 rounded-sm">
-              <div className="font-mono text-[8px] uppercase tracking-[1px] text-burgundy mb-0.5">Layer C · Linguistic</div>
-              <div className="font-serif text-[9px] italic text-ink leading-snug">&ldquo;{LINGUISTIC_LOOSENING}&rdquo;</div>
-            </div>
           </div>
         </section>
 
@@ -703,9 +684,9 @@ export default function TantraPage() {
         </section>
       </div>
 
-      {/* COMMENTS ~10vh */}
-      <section className="mb-2 lg:h-[10vh] lg:min-h-[88px]">
-        <div className="flex items-baseline justify-between mb-1.5">
+      {/* COMMENTS */}
+      <section className="mb-1.5">
+        <div className="flex items-baseline justify-between mb-1">
           <h2 className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-burgundy">
             Commentary
           </h2>
@@ -713,7 +694,7 @@ export default function TantraPage() {
             {comments.length} {comments.length === 1 ? 'entry' : 'entries'} · informs V3
           </div>
         </div>
-        <div className="bg-white border border-rule rounded-sm p-2 flex items-stretch gap-1.5">
+        <div className="bg-white border border-rule rounded-sm p-1.5 flex items-stretch gap-1.5">
           <div className="flex flex-col gap-0.5 flex-shrink-0">
             {(['other', 'dissolve', 'generate'] as TantraCommentKind[]).map((k) => (
               <button
@@ -733,7 +714,7 @@ export default function TantraPage() {
             value={commentText}
             onChange={(e) => setCommentText(e.target.value)}
             placeholder="What arose today?"
-            rows={2}
+            rows={1}
             className="flex-1 font-serif text-[11px] text-ink bg-cream border border-rule rounded-sm px-2 py-1 focus:outline-none focus:border-burgundy resize-none"
           />
           <div className="flex flex-col gap-0.5 flex-shrink-0 justify-between">
@@ -789,10 +770,10 @@ export default function TantraPage() {
       </section>
 
       {/* V1 archive — collapsed pill */}
-      <section className="mb-3">
+      <section className="mb-1.5">
         <button
           onClick={() => setShowArchive((o) => !o)}
-          className="w-full flex items-center justify-between bg-paper border border-rule-light rounded-sm px-2.5 py-1.5 hover:border-rule transition-colors"
+          className="w-full flex items-center justify-between bg-paper border border-rule-light rounded-sm px-2.5 py-1 hover:border-rule transition-colors"
         >
           <span className="font-mono text-[9px] uppercase tracking-[1px] text-ink-muted">
             <span className="text-burgundy mr-1.5">{showArchive ? '−' : '+'}</span>
@@ -843,11 +824,8 @@ export default function TantraPage() {
       </section>
 
       <div className="text-center">
-        <div className="font-serif italic text-[12px] text-ink-muted leading-tight">
-          what compounds, endures
-        </div>
-        <div className="font-mono text-[8px] uppercase tracking-[1px] text-ink-faint mt-1">
-          Generative Intelligence, LLC
+        <div className="font-serif italic text-[10px] text-ink-muted leading-tight">
+          what compounds, endures · <span className="font-mono not-italic uppercase tracking-[1px] text-ink-faint">Generative Intelligence, LLC</span>
         </div>
       </div>
     </div>
