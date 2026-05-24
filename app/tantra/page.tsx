@@ -433,7 +433,7 @@ export default function TantraPage() {
   }
 
   return (
-    <div className="max-w-[1680px] mx-auto px-4 lg:px-6 py-3 lg:h-screen lg:overflow-y-auto lg:flex lg:flex-col">
+    <div className="max-w-[1680px] mx-auto px-3 lg:px-6 py-2 lg:py-3 h-screen overflow-hidden flex flex-col">
       {/* Top: who I am becoming (small, editable) */}
       <div className="mb-2">
         {editingOneliner ? (
@@ -601,8 +601,8 @@ export default function TantraPage() {
         </div>
       </section>
 
-      {/* SECTIONS — 4 cols, natural height */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 mb-2 lg:mb-3 lg:h-[300px]">
+      {/* SECTIONS — 4 cols, fill available space */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 mb-2 lg:mb-3 flex-1 min-h-0 overflow-hidden">
         {/* Five Hindrances */}
         <section className="bg-white border border-rule rounded-sm p-2.5 flex flex-col min-h-0 overflow-hidden">
           <div className="flex items-center gap-1.5 mb-1.5 pb-1.5 border-b border-rule-light">
