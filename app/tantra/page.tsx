@@ -429,8 +429,8 @@ export default function TantraPage() {
 
   return (
     <div className="max-w-[1680px] mx-auto px-3 lg:px-6 py-2 lg:py-3 h-screen overflow-hidden flex flex-col">
-      {/* Title + oneliner + 40-day grid */}
-      <div className="mb-1.5 pb-1.5 border-b border-rule-light grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] gap-2 lg:gap-6 items-end">
+      {/* Header — left: title + oneliner + grid · right: streak stack */}
+      <div className="mb-1.5 pb-1.5 border-b border-rule-light grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_auto] gap-3 sm:gap-5 items-start">
         <div className="min-w-0">
           <h1 className="font-serif text-[20px] lg:text-[24px] font-semibold text-burgundy tracking-tight leading-none">
             Daily Tantra Meditation
@@ -465,7 +465,7 @@ export default function TantraPage() {
           ) : (
             <button
               onClick={() => setEditingOneliner(true)}
-              className="text-left group block leading-tight"
+              className="text-left group block leading-tight mb-1.5"
               title="Click to edit"
             >
               <span className="font-mono text-[8px] uppercase tracking-[1px] text-ink-muted mr-1.5">
@@ -476,9 +476,7 @@ export default function TantraPage() {
               </span>
             </button>
           )}
-        </div>
-        <div className="flex flex-col gap-1 lg:pl-6 lg:border-l lg:border-rule-light">
-          <div className="font-mono text-[9px] uppercase tracking-[1px] text-ink-muted flex justify-between items-baseline">
+          <div className="font-mono text-[9px] uppercase tracking-[1px] text-ink-muted flex justify-between items-baseline mb-1">
             <span>Day {daysIntoCycle} / {cycleLen}</span>
             <span className="text-burgundy">{totalCompleted} completed</span>
           </div>
@@ -509,7 +507,7 @@ export default function TantraPage() {
               )
             })}
           </div>
-          <div className="flex justify-between font-mono text-[8px] uppercase tracking-[1px] text-ink-muted">
+          <div className="flex justify-between font-mono text-[8px] uppercase tracking-[1px] text-ink-muted mt-0.5">
             <span>Day 1</span>
             <span>10</span>
             <span>20</span>
@@ -517,74 +515,62 @@ export default function TantraPage() {
             <span>Day 40</span>
           </div>
         </div>
-      </div>
-
-      {/* Streak strip — single row */}
-      <section className="mb-1.5 lg:mb-2">
-        <div className="bg-white border border-rule rounded-sm px-2.5 py-1.5 flex items-center gap-2 lg:gap-3 flex-nowrap overflow-hidden">
-          <div className="flex flex-col flex-shrink-0">
+        <div className="flex flex-col items-end gap-1 sm:min-w-[110px]">
+          <div className="flex flex-col items-end leading-none">
             <div className="font-mono text-[8px] uppercase tracking-[1px] text-ink-muted">Streak</div>
-            <div className="font-serif text-[20px] lg:text-[24px] font-semibold text-burgundy leading-none">
-              {streak}<span className="font-serif text-[9px] text-ink-muted ml-1">d</span>
+            <div className="font-serif text-[24px] lg:text-[28px] font-semibold text-burgundy leading-none mt-0.5">
+              {streak}<span className="font-serif text-[10px] text-ink-muted ml-1">d</span>
             </div>
           </div>
-          <div className="hidden sm:flex border-l border-rule-light pl-2.5 lg:pl-3 flex-col flex-shrink-0">
-            <div className="font-mono text-[8px] uppercase tracking-[1px] text-ink-muted">total</div>
-            <div className="font-serif text-[15px] font-semibold text-ink leading-none mt-0.5">{totalCompleted}</div>
-          </div>
-          <div className="border-l border-rule-light pl-2.5 lg:pl-3 flex flex-col flex-shrink min-w-0">
-            <div className="font-mono text-[8px] uppercase tracking-[1px] text-ink-muted truncate">
-              since start
-            </div>
-            <div className="font-serif text-[13px] font-semibold text-ink mt-0.5 leading-none">
+          <div className="flex flex-col items-end leading-none">
+            <div className="font-mono text-[8px] uppercase tracking-[1px] text-ink-muted">Since start</div>
+            <div className="font-serif text-[14px] font-semibold text-ink leading-none mt-0.5">
               {daysSincePractice}<span className="font-serif text-[9px] text-ink-muted ml-1">d</span>
             </div>
           </div>
-          <div className="flex items-center gap-1.5 ml-auto flex-shrink-0">
-            <button
-              onClick={handleToggleToday}
-              disabled={submitting}
-              className={`font-serif text-[10px] uppercase tracking-[0.5px] px-2.5 py-1 rounded-sm border transition-colors whitespace-nowrap ${
-                checkedInToday
-                  ? 'bg-burgundy text-paper border-burgundy'
-                  : 'bg-transparent text-burgundy border-burgundy hover:bg-burgundy hover:text-paper'
-              } disabled:opacity-50`}
-            >
-              {checkedInToday ? 'Done' : 'Mark done'}
-            </button>
-            <button
-              onClick={() => setBackfillOpen((o) => !o)}
-              className="font-mono text-[9px] uppercase tracking-[1px] text-ink-muted hover:text-burgundy transition-colors flex items-center gap-0.5 whitespace-nowrap"
-            >
-              <span>{backfillOpen ? '−' : '+'}</span>
-              <span>Backfill</span>
-            </button>
-          </div>
+          <button
+            onClick={handleToggleToday}
+            disabled={submitting}
+            className={`font-serif text-[10px] uppercase tracking-[0.5px] px-2.5 py-1 rounded-sm border transition-colors whitespace-nowrap mt-0.5 ${
+              checkedInToday
+                ? 'bg-burgundy text-paper border-burgundy'
+                : 'bg-transparent text-burgundy border-burgundy hover:bg-burgundy hover:text-paper'
+            } disabled:opacity-50`}
+          >
+            {checkedInToday ? 'Done' : 'Today complete'}
+          </button>
+          <button
+            onClick={() => setBackfillOpen((o) => !o)}
+            className="font-mono text-[8px] uppercase tracking-[1px] text-ink-muted hover:text-burgundy transition-colors flex items-center gap-0.5 whitespace-nowrap"
+          >
+            <span>{backfillOpen ? '−' : '+'}</span>
+            <span>Backfill</span>
+          </button>
+          {backfillOpen && (
+            <div className="flex items-center gap-1 mt-0.5">
+              <input
+                type="date"
+                value={backfillDate}
+                onChange={(e) => setBackfillDate(e.target.value)}
+                className="font-mono text-[9px] text-ink bg-cream border border-rule rounded-sm px-1.5 py-0.5 focus:outline-none focus:border-burgundy"
+              />
+              <input
+                type="time"
+                value={backfillTime}
+                onChange={(e) => setBackfillTime(e.target.value)}
+                className="font-mono text-[9px] text-ink bg-cream border border-rule rounded-sm px-1.5 py-0.5 focus:outline-none focus:border-burgundy w-[70px]"
+              />
+              <button
+                onClick={handleBackfill}
+                disabled={submitting || !backfillDate}
+                className="font-serif text-[9px] uppercase tracking-[0.5px] px-1.5 py-0.5 border border-burgundy text-burgundy rounded-sm hover:bg-burgundy hover:text-paper disabled:opacity-40"
+              >
+                Record
+              </button>
+            </div>
+          )}
         </div>
-        {backfillOpen && (
-          <div className="bg-white border-l border-r border-b border-rule rounded-b-sm -mt-px px-2.5 py-1.5 flex items-center gap-1">
-            <input
-              type="date"
-              value={backfillDate}
-              onChange={(e) => setBackfillDate(e.target.value)}
-              className="font-mono text-[10px] text-ink bg-cream border border-rule rounded-sm px-2 py-1 focus:outline-none focus:border-burgundy"
-            />
-            <input
-              type="time"
-              value={backfillTime}
-              onChange={(e) => setBackfillTime(e.target.value)}
-              className="font-mono text-[10px] text-ink bg-cream border border-rule rounded-sm px-2 py-1 focus:outline-none focus:border-burgundy w-[80px]"
-            />
-            <button
-              onClick={handleBackfill}
-              disabled={submitting || !backfillDate}
-              className="font-serif text-[10px] uppercase tracking-[0.5px] px-2 py-1 border border-burgundy text-burgundy rounded-sm hover:bg-burgundy hover:text-paper disabled:opacity-40"
-            >
-              Record
-            </button>
-          </div>
-        )}
-      </section>
+      </div>
 
       {/* SECTIONS — 4 cols, fill available space */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 mb-2 lg:mb-3 flex-1 min-h-0 overflow-hidden">
