@@ -497,34 +497,32 @@ export default function TantraPage() {
             <span>{regimeName} cycle · Day {daysIntoCycle} / {cycleLen} · {daysRemaining} remaining</span>
             <span className="text-burgundy">{totalCompleted} completed</span>
           </div>
-          <div className="relative h-3 bg-cream border border-rule rounded-sm overflow-hidden">
-            <div
-              className="absolute inset-y-0 left-0 bg-burgundy transition-all"
-              style={{ width: `${(daysIntoCycle / cycleLen) * 100}%` }}
-            />
-            {[10, 20, 30].map((d) => (
-              <div
-                key={d}
-                className="absolute inset-y-0 w-px bg-ink-faint/50"
-                style={{ left: `${(d / cycleLen) * 100}%` }}
-              />
-            ))}
-            {checkins
-              .filter((c) => {
-                const day = daysBetween(cycleStart, c.date) + 1
-                return day >= 1 && day <= cycleLen
-              })
-              .map((c) => {
-                const day = daysBetween(cycleStart, c.date) + 1
-                return (
-                  <div
-                    key={c.date}
-                    title={`${c.date} · Day ${day} · completed`}
-                    className="absolute top-0 bottom-0 w-[3px] bg-paper/80"
-                    style={{ left: `calc(${((day - 0.5) / cycleLen) * 100}% - 1.5px)` }}
-                  />
-                )
-              })}
+          <div className="grid grid-cols-[repeat(40,minmax(0,1fr))] gap-[3px]">
+            {Array.from({ length: cycleLen }, (_, i) => {
+              const d = new Date(cycleStart + 'T00:00:00')
+              d.setDate(d.getDate() + i)
+              const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+              const completed = checkinDates.has(dateStr)
+              const isToday = dateStr === today
+              const isFuture = dateStr > today
+              const status = completed ? 'practiced' : isFuture ? 'upcoming' : isToday ? 'today' : 'missed'
+              const dayLabel = new Date(dateStr + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+              return (
+                <div
+                  key={i}
+                  title={`Day ${i + 1} · ${dayLabel} · ${status}`}
+                  className={`aspect-square rounded-sm ${
+                    completed
+                      ? 'bg-burgundy border border-burgundy'
+                      : isToday
+                      ? 'bg-cream border-2 border-burgundy'
+                      : isFuture
+                      ? 'bg-transparent border border-ink-faint/40'
+                      : 'bg-cream border border-rule'
+                  }`}
+                />
+              )
+            })}
           </div>
           <div className="flex justify-between font-mono text-[8px] uppercase tracking-[1px] text-ink-muted">
             <span>Day 1</span>
@@ -600,55 +598,6 @@ export default function TantraPage() {
               </button>
             </div>
           )}
-        </div>
-      </section>
-
-      {/* 40-day grid — practiced vs missed vs upcoming */}
-      <section className="mb-2 lg:mb-3">
-        <div className="bg-white border border-rule rounded-sm px-3 py-2">
-          <div className="flex items-baseline justify-between mb-1.5">
-            <div className="font-mono text-[8px] uppercase tracking-[1px] text-ink-muted">
-              {regimeName} · 40-day grid
-            </div>
-            <div className="flex items-center gap-3 font-mono text-[8px] uppercase tracking-[1px] text-ink-muted">
-              <span className="flex items-center gap-1">
-                <span className="inline-block w-2 h-2 bg-burgundy" /> practiced
-              </span>
-              <span className="flex items-center gap-1">
-                <span className="inline-block w-2 h-2 bg-cream border border-rule" /> missed
-              </span>
-              <span className="flex items-center gap-1">
-                <span className="inline-block w-2 h-2 border border-ink-faint" /> upcoming
-              </span>
-            </div>
-          </div>
-          <div className="grid grid-cols-[repeat(20,minmax(0,1fr))] lg:grid-cols-[repeat(40,minmax(0,1fr))] gap-[3px]">
-            {Array.from({ length: cycleLen }, (_, i) => {
-              const d = new Date(cycleStart + 'T00:00:00')
-              d.setDate(d.getDate() + i)
-              const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-              const completed = checkinDates.has(dateStr)
-              const isToday = dateStr === today
-              const isFuture = dateStr > today
-              const status = completed ? 'practiced' : isFuture ? 'upcoming' : isToday ? 'today' : 'missed'
-              const dayLabel = new Date(dateStr + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-              return (
-                <div
-                  key={i}
-                  title={`Day ${i + 1} · ${dayLabel} · ${status}`}
-                  className={`aspect-square rounded-sm ${
-                    completed
-                      ? 'bg-burgundy border border-burgundy'
-                      : isToday
-                      ? 'bg-cream border-2 border-burgundy'
-                      : isFuture
-                      ? 'bg-transparent border border-ink-faint/40'
-                      : 'bg-cream border border-rule'
-                  }`}
-                />
-              )
-            })}
-          </div>
         </div>
       </section>
 
