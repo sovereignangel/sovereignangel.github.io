@@ -575,15 +575,15 @@ export default function TantraPage() {
       {/* SECTIONS — 4 cols, fill available space */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 mb-2 lg:mb-3 flex-1 min-h-0 overflow-hidden">
         {/* Five Hindrances */}
-        <section className="bg-white border border-rule rounded-sm p-2.5 flex flex-col min-h-0 overflow-hidden">
-          <div className="flex items-center gap-1.5 mb-1.5 pb-1.5 border-b border-rule-light">
+        <section className="bg-white border border-rule rounded-sm p-2 flex flex-col min-h-0 overflow-hidden">
+          <div className="flex items-center gap-1.5 mb-1 pb-1 border-b border-rule-light">
             <div className="w-7 h-7 flex items-center justify-center flex-shrink-0"><HindrancesSigil /></div>
             <div className="flex-1 min-w-0">
               <h3 className="font-serif text-[10px] font-semibold uppercase tracking-[0.5px] text-burgundy leading-tight">Five Hindrances</h3>
               <div className="font-mono text-[8px] uppercase tracking-[1px] text-ink-muted">Layer A · Universal</div>
             </div>
           </div>
-          <div className="flex-1 space-y-1 overflow-hidden">
+          <div className="flex-1 space-y-0.5 overflow-hidden">
             {HINDRANCES.map((h, i) => (
               <div key={h.name} className="border-l-2 border-burgundy/30 pl-1.5">
                 <div className="flex items-baseline gap-1">
@@ -597,15 +597,15 @@ export default function TantraPage() {
         </section>
 
         {/* Dissolutions */}
-        <section className="bg-white border border-rule rounded-sm p-2.5 flex flex-col min-h-0 overflow-hidden">
-          <div className="flex items-center gap-1.5 mb-1.5 pb-1.5 border-b border-rule-light">
+        <section className="bg-white border border-rule rounded-sm p-2 flex flex-col min-h-0 overflow-hidden">
+          <div className="flex items-center gap-1.5 mb-1 pb-1 border-b border-rule-light">
             <div className="w-7 h-7 flex items-center justify-center flex-shrink-0"><DissolutionsSigil /></div>
             <div className="flex-1 min-w-0">
               <h3 className="font-serif text-[10px] font-semibold uppercase tracking-[0.5px] text-burgundy leading-tight">Dissolutions</h3>
               <div className="font-mono text-[8px] uppercase tracking-[1px] text-ink-muted">Layer B · Personal</div>
             </div>
           </div>
-          <div className="flex-1 space-y-1 overflow-hidden">
+          <div className="flex-1 space-y-0.5 overflow-hidden">
             {DISSOLUTIONS.map((line, i) => (
               <div key={i} className="border-l-2 border-burgundy/30 pl-1.5">
                 <div className="flex items-baseline gap-1">
@@ -618,15 +618,15 @@ export default function TantraPage() {
         </section>
 
         {/* Seven Factors */}
-        <section className="bg-white border border-rule rounded-sm p-2.5 flex flex-col min-h-0 overflow-hidden">
-          <div className="flex items-center gap-1.5 mb-1.5 pb-1.5 border-b border-rule-light">
+        <section className="bg-white border border-rule rounded-sm p-2 flex flex-col min-h-0 overflow-hidden">
+          <div className="flex items-center gap-1.5 mb-1 pb-1 border-b border-rule-light">
             <div className="w-7 h-7 flex items-center justify-center flex-shrink-0"><FactorsSigil /></div>
             <div className="flex-1 min-w-0">
               <h3 className="font-serif text-[10px] font-semibold uppercase tracking-[0.5px] text-burgundy leading-tight">Seven Factors</h3>
               <div className="font-mono text-[8px] uppercase tracking-[1px] text-ink-muted">Awakening · Foundation</div>
             </div>
           </div>
-          <div className="flex-1 space-y-1 overflow-hidden">
+          <div className="flex-1 space-y-0.5 overflow-hidden">
             {FACTORS.map((f, i) => (
               <div key={f.name} className="border-l-2 border-burgundy/30 pl-1.5">
                 <div className="flex items-baseline gap-1">
@@ -640,15 +640,15 @@ export default function TantraPage() {
         </section>
 
         {/* Nine Aspects */}
-        <section className="bg-white border border-rule rounded-sm p-2.5 flex flex-col min-h-0 overflow-hidden">
-          <div className="flex items-center gap-1.5 mb-1.5 pb-1.5 border-b border-rule-light">
+        <section className="bg-white border border-rule rounded-sm p-2 flex flex-col min-h-0 overflow-hidden">
+          <div className="flex items-center gap-1.5 mb-1 pb-1 border-b border-rule-light">
             <div className="w-7 h-7 flex items-center justify-center flex-shrink-0"><AspectsSigil /></div>
             <div className="flex-1 min-w-0">
               <h3 className="font-serif text-[10px] font-semibold uppercase tracking-[0.5px] text-burgundy leading-tight">Nine Aspects</h3>
               <div className="font-mono text-[8px] uppercase tracking-[1px] text-ink-muted">Generation · 3 domains</div>
             </div>
           </div>
-          <div className="flex-1 space-y-1 overflow-hidden">
+          <div className="flex-1 space-y-0.5 overflow-hidden">
             {(['INNER', 'CREATION', 'RELATING'] as const).map((domain) => (
               <div key={domain}>
                 <div className="font-mono text-[8px] uppercase tracking-[1.2px] text-burgundy mb-0.5">
