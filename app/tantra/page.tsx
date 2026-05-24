@@ -432,7 +432,7 @@ export default function TantraPage() {
       {/* Title + oneliner + 40-day grid */}
       <div className="mb-1.5 pb-1.5 border-b border-rule-light grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] gap-2 lg:gap-6 items-end">
         <div className="min-w-0">
-          <h1 className="font-serif text-[20px] lg:text-[24px] font-semibold text-burgundy tracking-tight leading-tight">
+          <h1 className="font-serif text-[20px] lg:text-[24px] font-semibold text-burgundy tracking-tight leading-none">
             Daily Tantra Meditation
           </h1>
           {editingOneliner ? (
@@ -465,7 +465,7 @@ export default function TantraPage() {
           ) : (
             <button
               onClick={() => setEditingOneliner(true)}
-              className="text-left group block mt-0.5"
+              className="text-left group block leading-tight"
               title="Click to edit"
             >
               <span className="font-mono text-[8px] uppercase tracking-[1px] text-ink-muted mr-1.5">
@@ -597,7 +597,7 @@ export default function TantraPage() {
               <div className="font-mono text-[8px] uppercase tracking-[1px] text-ink-muted">Layer A · Universal</div>
             </div>
           </div>
-          <div className="flex-1 overflow-y-auto space-y-1.5 pr-1">
+          <div className="flex-1 space-y-1 overflow-hidden">
             {HINDRANCES.map((h, i) => (
               <div key={h.name} className="border-l-2 border-burgundy/30 pl-1.5">
                 <div className="flex items-baseline gap-1">
@@ -619,7 +619,7 @@ export default function TantraPage() {
               <div className="font-mono text-[8px] uppercase tracking-[1px] text-ink-muted">Layer B · Personal</div>
             </div>
           </div>
-          <div className="flex-1 overflow-y-auto space-y-1.5 pr-1">
+          <div className="flex-1 space-y-1 overflow-hidden">
             {DISSOLUTIONS.map((line, i) => (
               <div key={i} className="border-l-2 border-burgundy/30 pl-1.5">
                 <div className="flex items-baseline gap-1">
@@ -640,7 +640,7 @@ export default function TantraPage() {
               <div className="font-mono text-[8px] uppercase tracking-[1px] text-ink-muted">Awakening · Foundation</div>
             </div>
           </div>
-          <div className="flex-1 overflow-y-auto space-y-1.5 pr-1">
+          <div className="flex-1 space-y-1 overflow-hidden">
             {FACTORS.map((f, i) => (
               <div key={f.name} className="border-l-2 border-burgundy/30 pl-1.5">
                 <div className="flex items-baseline gap-1">
@@ -662,7 +662,7 @@ export default function TantraPage() {
               <div className="font-mono text-[8px] uppercase tracking-[1px] text-ink-muted">Generation · 3 domains</div>
             </div>
           </div>
-          <div className="flex-1 overflow-y-auto space-y-2 pr-1">
+          <div className="flex-1 space-y-1 overflow-hidden">
             {(['INNER', 'CREATION', 'RELATING'] as const).map((domain) => (
               <div key={domain}>
                 <div className="font-mono text-[8px] uppercase tracking-[1.2px] text-burgundy mb-0.5">
@@ -694,46 +694,48 @@ export default function TantraPage() {
             {comments.length} {comments.length === 1 ? 'entry' : 'entries'} · informs V3
           </div>
         </div>
-        <div className="bg-white border border-rule rounded-sm p-1.5 flex items-stretch gap-1.5">
-          <div className="flex flex-col gap-0.5 flex-shrink-0">
-            {(['other', 'dissolve', 'generate'] as TantraCommentKind[]).map((k) => (
-              <button
-                key={k}
-                onClick={() => setCommentKind(k)}
-                className={`font-mono text-[8px] uppercase tracking-[1px] px-1.5 py-0.5 rounded-sm border ${
-                  commentKind === k
-                    ? 'bg-burgundy text-paper border-burgundy'
-                    : 'bg-transparent text-ink-muted border-rule hover:border-ink-faint'
-                }`}
-              >
-                {k === 'other' ? 'Note' : k === 'dissolve' ? 'Diss' : 'Gen'}
-              </button>
-            ))}
-          </div>
-          <textarea
+        <div className="bg-white border border-rule rounded-sm p-1.5 flex items-center gap-1 flex-nowrap">
+          {(['other', 'dissolve', 'generate'] as TantraCommentKind[]).map((k) => (
+            <button
+              key={k}
+              onClick={() => setCommentKind(k)}
+              className={`font-mono text-[8px] uppercase tracking-[1px] px-1.5 py-1 rounded-sm border flex-shrink-0 ${
+                commentKind === k
+                  ? 'bg-burgundy text-paper border-burgundy'
+                  : 'bg-transparent text-ink-muted border-rule hover:border-ink-faint'
+              }`}
+            >
+              {k === 'other' ? 'Note' : k === 'dissolve' ? 'Diss' : 'Gen'}
+            </button>
+          ))}
+          <input
+            type="text"
             value={commentText}
             onChange={(e) => setCommentText(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && commentText.trim() && !submitting) {
+                e.preventDefault()
+                void handleAddComment()
+              }
+            }}
             placeholder="What arose today?"
-            rows={1}
-            className="flex-1 font-serif text-[11px] text-ink bg-cream border border-rule rounded-sm px-2 py-1 focus:outline-none focus:border-burgundy resize-none"
+            className="flex-1 min-w-0 font-serif text-[11px] text-ink bg-cream border border-rule rounded-sm px-2 py-1 focus:outline-none focus:border-burgundy"
           />
-          <div className="flex flex-col gap-0.5 flex-shrink-0 justify-between">
+          <button
+            onClick={handleAddComment}
+            disabled={submitting || !commentText.trim()}
+            className="font-serif text-[9px] uppercase tracking-[0.5px] px-2 py-1 bg-burgundy text-paper rounded-sm disabled:opacity-40 flex-shrink-0"
+          >
+            Add
+          </button>
+          {comments.length > 0 && (
             <button
-              onClick={handleAddComment}
-              disabled={submitting || !commentText.trim()}
-              className="font-serif text-[9px] uppercase tracking-[0.5px] px-2 py-1 bg-burgundy text-paper rounded-sm disabled:opacity-40"
+              onClick={() => setShowCommentHistory((o) => !o)}
+              className="font-mono text-[8px] uppercase tracking-[1px] text-ink-muted hover:text-burgundy whitespace-nowrap flex-shrink-0"
             >
-              Add
+              {showCommentHistory ? 'Hide' : `View ${comments.length}`}
             </button>
-            {comments.length > 0 && (
-              <button
-                onClick={() => setShowCommentHistory((o) => !o)}
-                className="font-mono text-[8px] uppercase tracking-[1px] text-ink-muted hover:text-burgundy whitespace-nowrap"
-              >
-                {showCommentHistory ? 'Hide' : `View ${comments.length}`}
-              </button>
-            )}
-          </div>
+          )}
         </div>
         {showCommentHistory && comments.length > 0 && (
           <div className="space-y-1 mt-2 max-h-[40vh] overflow-y-auto">
