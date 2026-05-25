@@ -336,8 +336,8 @@ export default function ComparisonBriefPage() {
                 </li>
                 <li>
                   <span className="text-ink-muted">Armstrong backtest deck (live):</span>{' '}
-                  <a href="https://armstrong.loricorpuz.com/#backtest" className="text-burgundy underline hover:text-burgundy/70">
-                    armstrong.loricorpuz.com/#backtest
+                  <a href="https://armstrong.aretetec.com/#backtest" className="text-burgundy underline hover:text-burgundy/70">
+                    armstrong.aretetec.com/#backtest
                   </a>
                 </li>
                 <li>

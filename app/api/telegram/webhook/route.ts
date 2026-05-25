@@ -9,7 +9,7 @@ import { DEFAULT_SETTINGS } from '@/lib/constants'
 import { resolveContactsBatch, buildAdminContactAdapter } from '@/lib/entity-resolution'
 import { embedJournalEntry } from '@/lib/embed-on-save'
 import { processTranscriptData, formatTranscriptSummary } from '@/lib/transcript-processing'
-import { matchPrefix } from '@/lib/inbox/route-prefix'
+import { matchPrefix, type RouteIntent } from '@/lib/inbox/route-prefix'
 import { buildAskKeyboard, buildAskPromptText, parseAskCallback } from '@/lib/inbox/ask-buttons'
 import type { InboxSource } from '@/lib/inbox/types'
 import { parseWaveCallback, labelForTag, type WaveTag } from '@/lib/wave/tag-buttons'
@@ -2778,7 +2778,7 @@ const SOURCE_LABEL: Record<InboxSource, string> = {
 // stand up their /api/inbox-ingest endpoints, these URLs reach them; until
 // then, the POST fails and we stash to Website Firestore as a fallback.
 const PROJECT_INGEST_URL: Partial<Record<InboxSource, string>> = {
-  armstrong: process.env.ARMSTRONG_INGEST_URL || 'https://armstrong.loricorpuz.com/api/inbox-ingest',
+  armstrong: process.env.ARMSTRONG_INGEST_URL || 'https://armstrong.aretetec.com/api/inbox-ingest',
   'alamo-bernal': process.env.ALAMOBERNAL_INGEST_URL || 'https://alamobernal.loricorpuz.com/api/inbox-ingest',
 }
 
@@ -2794,6 +2794,7 @@ async function handlePrefixRoute(
   chatId: number,
   source: InboxSource,
   text: string,
+  intent: RouteIntent | null = null,
 ): Promise<void> {
   const label = SOURCE_LABEL[source]
   if (!text || text.trim().length === 0) {
@@ -2801,11 +2802,16 @@ async function handlePrefixRoute(
     return
   }
 
+  // Intent becomes the queue's `kind` value so the harness knows which
+  // generator to run. Null intent → 'freeform' (preserves prior behavior).
+  const kind: 'freeform' | RouteIntent = intent ?? 'freeform'
+  const intentSuffix = intent ? ` · ${intent}` : ''
+
   const adminDb = await getAdminDb()
   const baseDoc = {
     source,
     text,
-    kind: 'freeform' as const,
+    kind,
     sender_chat_id: chatId,
     created_at: new Date(),
     routed_by: 'prefix' as const,
@@ -2815,7 +2821,7 @@ async function handlePrefixRoute(
   if (source === 'thesis' || source === 'lordas') {
     const ref = adminDb.collection('users').doc(uid).collection('inbox_messages').doc()
     await ref.set({ ...baseDoc, status: 'queued' })
-    await sendTelegramReply(chatId, `Routed to [${label}].\n\n_"${text.slice(0, 80)}${text.length > 80 ? '…' : ''}"_`)
+    await sendTelegramReply(chatId, `Routed to [${label}]${intentSuffix}.\n\n_"${text.slice(0, 80)}${text.length > 80 ? '…' : ''}"_`)
     return
   }
 
@@ -2825,7 +2831,7 @@ async function handlePrefixRoute(
   if (!ingestUrl || !secret) {
     const ref = adminDb.collection('users').doc(uid).collection('queued_routing').doc()
     await ref.set({ ...baseDoc, status: 'stashed', last_error: 'ingest config missing', attempts: 0 })
-    await sendTelegramReply(chatId, `Stashed for [${label}] — project ingest not configured yet.\n\n_"${text.slice(0, 80)}${text.length > 80 ? '…' : ''}"_`)
+    await sendTelegramReply(chatId, `Stashed for [${label}]${intentSuffix} — project ingest not configured yet.\n\n_"${text.slice(0, 80)}${text.length > 80 ? '…' : ''}"_`)
     return
   }
 
@@ -2837,19 +2843,19 @@ async function handlePrefixRoute(
         source,
         text,
         sender_chat_id: chatId,
-        kind: 'freeform',
+        kind,
       }),
     })
     if (!res.ok) {
       const body = await res.text()
       throw new Error(`HTTP ${res.status}: ${body.slice(0, 200)}`)
     }
-    await sendTelegramReply(chatId, `Routed to [${label}].\n\n_"${text.slice(0, 80)}${text.length > 80 ? '…' : ''}"_`)
+    await sendTelegramReply(chatId, `Routed to [${label}]${intentSuffix}.\n\n_"${text.slice(0, 80)}${text.length > 80 ? '…' : ''}"_`)
   } catch (err) {
     const errMsg = err instanceof Error ? err.message : String(err)
     const ref = adminDb.collection('users').doc(uid).collection('queued_routing').doc()
     await ref.set({ ...baseDoc, status: 'stashed', last_error: errMsg.slice(0, 500), attempts: 0 })
-    await sendTelegramReply(chatId, `Stashed for [${label}] — project endpoint unreachable (${errMsg.slice(0, 80)}).\n\nWill drain when endpoint is live.`)
+    await sendTelegramReply(chatId, `Stashed for [${label}]${intentSuffix} — project endpoint unreachable (${errMsg.slice(0, 80)}).\n\nWill drain when endpoint is live.`)
   }
 }
 
@@ -2919,7 +2925,7 @@ async function handleAskCallback(
 // causing handleWaveCallback to stash. Once endpoints are deployed, no
 // Website-side change needed.
 const MEETINGS_INGEST_URL: Record<'deepops' | 'alamobernal', string> = {
-  deepops: process.env.ARMSTRONG_MEETINGS_INGEST_URL || 'https://armstrong.loricorpuz.com/api/meetings/ingest',
+  deepops: process.env.ARMSTRONG_MEETINGS_INGEST_URL || 'https://armstrong.aretetec.com/api/meetings/ingest',
   alamobernal: process.env.ALAMOBERNAL_MEETINGS_INGEST_URL || 'https://alamobernal.loricorpuz.com/api/meetings/ingest',
 }
 
@@ -3282,7 +3288,7 @@ export async function POST(req: NextRequest) {
     // are untouched — they only fire when the text doesn't match a routing prefix.
     const prefixMatch = matchPrefix(message.text)
     if (prefixMatch) {
-      await handlePrefixRoute(uid, chatId, prefixMatch.source, prefixMatch.text)
+      await handlePrefixRoute(uid, chatId, prefixMatch.source, prefixMatch.text, prefixMatch.intent)
       return NextResponse.json({ ok: true })
     }
 

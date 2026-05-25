@@ -156,7 +156,7 @@ export default function AretePage() {
         <div className="arete-grid">
           {/* HERO — Armstrong (the fund) */}
           <a
-            href="https://armstrong.loricorpuz.com"
+            href="https://armstrong.aretetec.com"
             target="_blank"
             rel="noopener noreferrer"
             style={{

@@ -44,12 +44,12 @@ function secretMatches(provided: string, expected: string): boolean {
 }
 
 const PROJECT_INBOX_URL: Record<string, string> = {
-  armstrong: process.env.ARMSTRONG_INGEST_URL || 'https://armstrong.loricorpuz.com/api/inbox-ingest',
+  armstrong: process.env.ARMSTRONG_INGEST_URL || 'https://armstrong.aretetec.com/api/inbox-ingest',
   'alamo-bernal': process.env.ALAMOBERNAL_INGEST_URL || 'https://alamobernal.loricorpuz.com/api/inbox-ingest',
 }
 
 const PROJECT_MEETINGS_URL: Record<string, string> = {
-  armstrong: process.env.ARMSTRONG_MEETINGS_URL || 'https://armstrong.loricorpuz.com/api/meetings/ingest',
+  armstrong: process.env.ARMSTRONG_MEETINGS_URL || 'https://armstrong.aretetec.com/api/meetings/ingest',
   'alamo-bernal': process.env.ALAMOBERNAL_MEETINGS_URL || 'https://alamobernal.loricorpuz.com/api/meetings/ingest',
 }
 
