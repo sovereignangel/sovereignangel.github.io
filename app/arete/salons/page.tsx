@@ -2,7 +2,7 @@
 
 // Arete Technologies — The Long View (salon dashboard).
 // Pre-launch invitation page. Brand source: Arete Technologies/salons/.
-// Reached via arete.loricorpuz.com/salons (middleware rewrites to /arete/salons).
+// Reached via aretetec.com/salons (middleware rewrites apex/www/legacy hosts to /arete/salons).
 
 import { useState } from 'react'
 

@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'Arete Technologies',
     description: 'The long practice. Armstrong · Salons · Mistral.',
-    url: 'https://arete.loricorpuz.com',
+    url: 'https://aretetec.com',
     siteName: 'Arete Technologies',
     type: 'website',
   },

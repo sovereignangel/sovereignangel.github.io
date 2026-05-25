@@ -4,9 +4,12 @@ import type { NextRequest } from 'next/server'
 export function middleware(request: NextRequest) {
   const host = request.headers.get('host') || ''
 
-  // Force HTTPS on subdomains — prevents HTTP/HTTPS CORS mismatch
+  // Force HTTPS on managed hosts — prevents HTTP/HTTPS CORS mismatch
   const proto = request.headers.get('x-forwarded-proto') || 'https'
-  if (proto === 'http' && host.endsWith('.loricorpuz.com')) {
+  if (
+    proto === 'http' &&
+    (host.endsWith('.loricorpuz.com') || host === 'aretetec.com' || host.endsWith('.aretetec.com'))
+  ) {
     const httpsUrl = new URL(request.url)
     httpsUrl.protocol = 'https:'
     return NextResponse.redirect(httpsUrl, 308)
@@ -19,8 +22,14 @@ export function middleware(request: NextRequest) {
     return NextResponse.rewrite(url)
   }
 
-  // arete.loricorpuz.com → rewrite to /arete
-  if (host === 'arete.loricorpuz.com') {
+  // aretetec.com / www.aretetec.com (apex) → rewrite to /arete
+  // arete.loricorpuz.com (legacy) → rewrite to /arete; the Vercel UI 301 will
+  // handle most clients, but keep this fallback while DNS/redirect propagates.
+  if (
+    host === 'aretetec.com' ||
+    host === 'www.aretetec.com' ||
+    host === 'arete.loricorpuz.com'
+  ) {
     const url = request.nextUrl.clone()
     url.pathname = `/arete${url.pathname === '/' ? '' : url.pathname}`
     return NextResponse.rewrite(url)

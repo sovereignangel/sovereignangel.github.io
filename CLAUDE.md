@@ -540,6 +540,10 @@ git push origin master
 | `scavengerhunt.loricorpuz.com` | `/scavenger-hunt` | Scavenger hunt game |
 | `lordas.loricorpuz.com` | `/lordas` | Lori & Aidas relationship dashboard |
 
+### Brand-distinct host: aretetec.com (apex, NOT *.loricorpuz.com)
+
+`aretetec.com` is its own GoDaddy-registered domain, not a `*.loricorpuz.com` subdomain. It's added to this Vercel project as an additional domain (apex `aretetec.com` + `www.aretetec.com`). `middleware.ts` routes `aretetec.com`, `www.aretetec.com`, and the legacy `arete.loricorpuz.com` to `/arete`. Legacy host should 301 → `aretetec.com` via the Vercel UI "Redirect To" on the loricorpuz subdomain. The wildcard subdomain shortcut above does NOT apply — DNS for `aretetec.com` lives at GoDaddy as A `@ → 76.76.21.21` and CNAME `www → cname.vercel-dns.com`.
+
 ## Getting Help
 
 1. **Architecture questions**: See [THESIS_ENGINE_PHILOSOPHY.md](THESIS_ENGINE_PHILOSOPHY.md)

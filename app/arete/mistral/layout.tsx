@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'Mistral · F&F Retreat',
     description: 'On the wind, the long view. Four weeks of kitesurf on the French coast — July 2026.',
-    url: 'https://arete.loricorpuz.com/mistral',
+    url: 'https://aretetec.com/mistral',
     siteName: 'Arete Technologies',
     type: 'website',
   },
