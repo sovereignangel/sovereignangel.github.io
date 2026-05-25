@@ -454,4 +454,198 @@ This phase is one of five in the buildout. The full plan is tracked in [[telegra
 
 *Authored by the principal's Claude Code instance during the Phase 1 build session on 2026-05-14. Subject to revision as Phases 2–5 land. This is the canonical artifact for the inbox-router subsystem; later phases extend rather than replace it.*`,
   },
+  {
+    slug: 'tech-development/alamo-bernal-statements-pipeline-2026-05-25',
+    title: 'Alamo Bernal — Statement Ingest Pipeline (2026-05-25)',
+    surface: 'tech-development',
+    contentMd: `> **Status.** Shipped 2026-05-25. End-to-end pipeline ingesting Fidelity monthly brokerage statements (Z33-... · FOUNTAIN FARM INVESTMENTS, LLC) into Supabase as the partnership's legally-binding ground truth, audited against six independent recompute checks. Production Drive cron is wired but defaults to manual trigger pending one more iteration of \`realized_consistency\` parser work.
+
+> **TL;DR.** Statements are the broker's official period-end record. When SnapTrade live-data (\`sb_*\` tables) disagrees with the statement (\`stmt_*\` tables), statements win. The pipeline pulls PDFs from Drive, parses them with a Fidelity-specific parser tuned for two distinct text extractors (the MCP \`read_file_content\` tool used in backfill and \`pdf-parse\` used in the production cron), writes to ten append-only \`stmt_*\` tables, runs six audit checks, and persists per-period pass/fail to \`stmt_audit_runs\`. Current scoreboard: \`roll_forward\` 15/15, \`income_consistency\` 15/15, \`nav_reconstruction\` 12/15, \`realized_consistency\` 0/15 (known parser gap).
+
+---
+
+## 1. Why this exists
+
+SnapTrade is the operational data plane — it gives us intraday balances, holdings snapshots, and transaction streams via a live API. It is useful, fast, and unreliable. Examples seen in production:
+
+- \`sb_capture_cycles\` shows ~\\$3,333 in April 2026 dividends; the Fidelity statement shows \\$54,715.76. A 17× undercount.
+- SnapTrade misses entire dividend events when Polygon's frequency lookup fails to match.
+- The \`sb_holdings_snapshots\` table reflects a moment in time; it cannot answer "what did we own on April 30 at the close of business?" with the precision a 1099 requires.
+
+Statements solve this. They are:
+
+1. The broker's authoritative monthly record. Numbered, signed, audit-grade.
+2. Stable: a published statement does not change retroactively.
+3. Complete: every cash flow, every dividend, every trade — including ones SnapTrade missed.
+
+The pipeline treats them as canonical and the live SnapTrade data as best-effort. Cross-source reconciliation (Phase 5, deferred) will show deltas in the UI but never auto-resolve them — the human decides.
+
+## 2. Architecture (one paragraph each)
+
+**Schema** ([\`supabase/migrations/0017_statements.sql\`](../alamobernal/supabase/migrations/0017_statements.sql)). Ten append-only tables under the \`stmt_*\` namespace. \`stmt_files\` is the source-of-truth row per PDF, keyed by sha256(extracted_text). \`stmt_periods\` carries the broker's headline numbers verbatim (beginning/ending NAV, additions, withdrawals, dividends, realized G/L, margin info — both period and YTD). \`stmt_holdings\`, \`stmt_transactions\`, \`stmt_pending_trades\`, \`stmt_open_orders\`, \`stmt_estimated_cash_flow\` carry line-item detail. \`stmt_raw_text\` is the forensic backstop (full extracted text per file, so we can re-derive without re-fetching). \`stmt_audit_runs\` is append-only — every audit attempt creates a row so we have history, not just current state. \`stmt_ingest_runs\` mirrors \`sb_sync_runs\` for the statement side.
+
+**PII handling.** The full Fidelity account number (\`Z33-277917\`) lives only in \`stmt_files.raw_json.pii\`. Queryable columns store only \`account_last4\` (4 digits) and \`account_hash\` (sha256 of the full number) for joins. The address and holder name are also scrubbed from \`raw_json\` before storage. Lowest blast radius if Supabase is ever compromised.
+
+**Parser** ([\`lib/alamo-bernal/statements/parse-fidelity.ts\`](../alamobernal/lib/alamo-bernal/statements/parse-fidelity.ts)). Pure function: rawText → ParsedStatement. Tolerates both MCP and pdf-parse extractions, which produce structurally different output for the same PDF (see §4). Three-pass preprocessing (unescape markdown → normalize whitespace → strip page breaks), then section-anchored regex extraction. Section anchors deliberately exclude generic words ("Holdings", "Activity") that appear in both summary labels and data tables; we use mustFollow/fromOffset bounds to disambiguate.
+
+**Ingest** ([\`lib/alamo-bernal/statements/ingest.ts\`](../alamobernal/lib/alamo-bernal/statements/ingest.ts)). Shared pipeline called by three entry points: the local backfill script (\`scripts/backfill-statements.ts\`), the manual admin endpoint (\`POST /api/statements/ingest\`), and the monthly cron (\`GET /api/cron/statements-refresh\`). Idempotent: re-running skips files whose sha256 is already in \`stmt_files\`. A reparse=1 flag deletes-then-rewrites for parser updates. Every run opens a \`stmt_ingest_runs\` row up front and closes it on completion — partial failures still get a row.
+
+**Drive auth** ([\`lib/alamo-bernal/statements/drive.ts\`](../alamobernal/lib/alamo-bernal/statements/drive.ts)). Google service-account JWT scoped to \`drive.readonly\`. The account credential lives in env (\`GOOGLE_SERVICE_ACCOUNT_JSON_B64\` — base64 to survive dotenv newline mangling) and the Drive folder is shared with the service account's email at Viewer level. PDF bytes come down as ArrayBuffer; \`pdf-parse\` v2 extracts text in-process.
+
+**Audit** ([\`lib/alamo-bernal/statements/audit.ts\`](../alamobernal/lib/alamo-bernal/statements/audit.ts)). Six independent recompute functions, each returning an \`AuditResult\` with expected/computed/delta/status. Persisted to \`stmt_audit_runs\` append-only. See §3.
+
+**UI** (deferred — the user reverted the Statements subtab integration on 2026-05-25 pending a redesign). API routes \`/api/statements/data\` (list) and \`/api/statements/detail\` (per-period) are live; the React subtab is not.
+
+## 3. The six audit checks
+
+| Check | Identity | Status (15 periods) |
+|---|---|---|
+| \`roll_forward\` | Beginning + Additions + Subtractions + ΔInvestmentValue ≟ Ending | **15/15 pass** to the penny |
+| \`income_consistency\` | Σ(dividend + interest transactions) ≟ totalIncome (or taxableDividends + taxableInterest) | **15/15 pass** after the page-break dedupe fixes |
+| \`nav_reconstruction\` | Σ(holdings.ending_market_value) ≟ market_value_holdings | **12/15 pass**; 3 small <1% over-counts to investigate |
+| \`modified_dietz\` | (Ending - Beginning - NetFlows) / (Beginning + 0.5 × NetFlows) | 15/15 compute (informational only — broker doesn't publish a target) |
+| \`holdings_continuity\` | Every holding either bought this period OR carried from prior period's holdings | 15/15 warn — transactions store CUSIPs, holdings store tickers, the keys don't always line up (cosmetic) |
+| \`realized_consistency\` | Σ(securities realized G/L, term-weighted) ≟ net_short_term + net_long_term | **0/15** — parser misses G/L on a subset of sells; PR/wash-sale netting conventions need more iteration |
+
+The two cleanly-passing checks (\`roll_forward\` and \`income_consistency\`) are the structural identities that prove the period is correctly captured. \`nav_reconstruction\` is the line-item proof. The three remaining gaps are well-instrumented — each \`stmt_audit_runs\` row carries the exact delta, computed vs expected, and a notes string that points at the failure mode.
+
+## 4. The MCP vs pdf-parse extraction gap (and how we closed it)
+
+The backfill script and the production cron use **different PDF text extractors**, and they produce structurally different output for the same PDF. The parser had to be tuned to handle both.
+
+| Aspect | MCP (Google Drive's \`read_file_content\` tool) | pdf-parse v2 |
+|---|---|---|
+| Multi-line security names | Flattened to one line | Preserved across lines |
+| Page break marker | "\`<page> of <total> INVESTMENT REPORT <date> - <date>\`" | "\`-- <page> of <total> --\`" + "\`MR_CE _XXX_YYY YYYYMMDD\`" + stray "\` S \`" |
+| Page header inside Activity | "\`Holdings Account # Z33-... LIMITED LIABILITY CO\`" | bare "\`Account # Z33-... LIMITED LIABILITY CO\`" with no section-name prefix |
+| Continuation section name | Stripped after first occurrence | Repeated at each page top, prefixed by bare "\`Activity\`" |
+| Currency value with trailing dash | "\`$251,223.23-\`" (joined) | "\`$251,223.23 - \`" (space-separated, dash floats as its own token) |
+
+Three targeted parser fixes closed the gap to identical output:
+
+1. **Page-break stripping** now handles pdf-parse's markers in addition to MCP's. The "\`INVESTMENT REPORT <date> - <date>\`" header has a special case — keep the *first* occurrence (parsePeriodRange needs it), strip later ones.
+
+2. **\`numTok\` / \`pctTok\` accept standalone \`-\`** as a valid N/A column token. Previously the BRSL row in MCP and the NNN REIT row in pdf-parse parsed; with the fix both extractions handle their own dash convention.
+
+3. **Targeted "\`Activity\`" continuation strip.** pdf-parse repeats "Activity" at every page top inside the activity zone. Without the strip, \`sliceSection\` treats the second "Activity" as the end of "Securities Bought & Sold" — truncating to ~10 rows of 109. The fix matches "\`Activity \`" only when followed by a known activity-section name (preserving "Core Fund Activity" and "Other Activity In|Out" and the legitimate Activity section header).
+
+After these fixes, MCP and pdf-parse produce **identical** parser output on Apr 2026: 9 holdings, sumMV \\$1,680,949.73 matching the broker exactly, 158 transactions across all sections.
+
+## 5. The Fidelity layout (what the parser actually looks for)
+
+A Fidelity Investment Report PDF has a stable section order. The parser anchors on these literal strings:
+
+\`\`\`
+H05401220820YYMMDD           ← control code (sometimes absent in pdf-parse)
+Brokerage services...        ← contact info preamble
+INVESTMENT REPORT <date> - <date>
+FOUNTAIN FARM INVESTMENTS, LLC
+Account Number: Z33-XXXXXX
+Your Net Account Value: $X
+This Period | Year-to-Date
+  Beginning Net Account Value
+  Additions / Deposits
+  Subtractions / Withdrawals / Transaction Costs / Margin Interest / Taxes Withheld
+  Change in Investment Value *
+  Ending Net Account Value **
+Accrued Interest (AI)
+Account Summary
+  Top Holdings
+  Balance Details
+  Income Summary
+    Taxable Dividends / Taxable Interest / Return of Capital
+    Total Dividends, Interest & Other Income $X.XX  ← section footer (used for total)
+Realized Gains and Losses from Sales
+  Short-term Gain / Short-term Loss / Short-term Disallowed Loss / Net Short-term Gain/Loss
+  Long-term...
+Margin Information
+  Margin balance / Maximum amount you can borrow / Maximum rate
+Holdings                                    ← data section starts here
+  Core Account (SPAXX money market line)
+    Description | Begin MV | Qty | Price | End MV | Cost Basis | Unrealized G/L | EAI ($) / EY (%)
+  Stocks → Common Stock (rows, optionally with "M" margin prefix)
+  Other (REITs, non-equity holdings)
+  Total Holdings $X.XX
+EAI & EY (footnote)
+Activity
+  Securities Bought & Sold
+  Dividends, Interest & Other Income
+  Margin Interest
+  Other Activity In/Out
+  Deposits
+  Withdrawals
+  Taxes Withheld
+  Core Fund Activity
+  Trades Pending Settlement
+Open Orders
+Estimated Cash Flow
+Additional Information and Endnotes
+\`\`\`
+
+Two quirks worth knowing:
+
+- **The "M" margin prefix sometimes merges with the next word.** Apr 2026 NNN REIT shows up as "MNNN REIT INC COM" — the M margin indicator and the NNN ticker name collapsed. The parser detects this by comparing the description's opening letters to the captured (TICKER) symbol.
+
+- **"Realized Gains and Losses from Sales" appears twice in multi-page statements.** Once at the front (Account Summary) and once mid-Holdings as a continuation header. \`parseHoldings\` anchors directly between "Margin Information" and "EAI & EY" rather than using the generic section anchor list, so the second occurrence doesn't truncate the section.
+
+## 6. Production workflow (when statements drift)
+
+### When a new statement lands
+
+1. Fidelity posts the prior month's statement to the Drive folder (typically within 5 business days of month-end).
+2. The cron at \`/api/cron/statements-refresh\` fires daily 14:00 UTC for the first week of each month. First fire that sees a new file ingests it; subsequent fires return \`skipped: 'sha256 already ingested'\`.
+3. The new \`stmt_files\` row appears with \`parse_status = 'parsed'\` (or \`review_required\` if the parser raised warnings).
+4. Audit runs are not yet automatic post-ingest — run \`scripts/audit-statements.ts\` after to populate \`stmt_audit_runs\`.
+
+### When parsing drifts (Fidelity layout change)
+
+The audit framework is the early-warning system. Two signals:
+
+- \`nav_reconstruction\` drops below 12/15 → a new holding row format isn't being matched. Most likely cause: a new column was added, or "M" prefix handling broke for a new ticker family.
+- \`income_consistency\` drops below 15/15 → a new dividend row format isn't being matched, or "Total Dividends, Interest & Other Income $X.XX" was renamed.
+
+Workflow:
+
+1. Identify the failing periods from the audit run summary.
+2. \`npx tsx --env-file=.env scripts/parse-statements-dryrun.ts <YYYY-MM-DD>\` to see what the parser captured.
+3. Compare against the raw text at \`/tmp/statements/raw/<YYYY-MM-DD>.txt\` or fetch fresh via the Drive client.
+4. Adjust regexes in [\`parse-fidelity.ts\`](../alamobernal/lib/alamo-bernal/statements/parse-fidelity.ts). Add comments documenting the new edge case.
+5. \`npx tsx --env-file=.env scripts/backfill-statements.ts --reparse\` to rewrite the local data.
+6. Re-run audit. Confirm pass rate returns to baseline.
+7. Commit with a message that names the specific layout change (e.g., "fix(statements): handle new Activity continuation header format").
+
+### When adding a new broker
+
+Most of the schema is broker-agnostic — \`stmt_*\` tables don't assume Fidelity. The parser is broker-specific. To add Schwab/IBKR:
+
+1. New parser module: \`parse-schwab.ts\` or similar. Same shape as \`parse-fidelity.ts\` (rawText → ParsedStatement).
+2. Update \`drive.ts\` to route by file naming convention or by parsing the first 200 chars to detect broker.
+3. Add \`broker: 'schwab' | 'ibkr'\` enum value handling in \`stmt_files.broker\`.
+4. Audits run unchanged — they operate on the unified \`stmt_periods\` / \`stmt_holdings\` / \`stmt_transactions\` schema.
+
+## 7. Known open work
+
+- **\`realized_consistency\` parser gap.** The audit detects the issue cleanly; the parser doesn't capture realized G/L on every sell. The PR (Previously Reported) marker convention and wash-sale netting need more iteration. Affects no other audit check.
+- **\`holdings_continuity\` matching key.** Securities transactions store CUSIPs (no ticker); holdings store tickers (no CUSIP). A CUSIP→ticker lookup at ingest time would close this trivially; deferred.
+- **Three \`nav_reconstruction\` over-counts** (Nov/Dec 2025, Jan 2026). Each <1%. Likely a single duplicated holding row or a column mis-alignment in those specific months — the audit panel will show the offending row when the UI is wired.
+- **Phase 5: Cross-source reconciliation.** A \`stmt_*\` vs \`sb_*\` delta view that surfaces (but doesn't auto-resolve) discrepancies. Most useful surface is dividends — broker says \\$55k in April, SnapTrade says \\$3k.
+- **UI integration.** \`StatementsTab\` subtab was reverted on 2026-05-25 pending a redesign. The two API routes are live and ready.
+
+## 8. Related artifacts
+
+- Repository: [github.com/sovereignangel/alamobernal](https://github.com/sovereignangel/alamobernal)
+- Schema migration: \`supabase/migrations/0017_statements.sql\`
+- Parser: \`lib/alamo-bernal/statements/parse-fidelity.ts\`
+- Audit module: \`lib/alamo-bernal/statements/audit.ts\`
+- Ingest pipeline: \`lib/alamo-bernal/statements/ingest.ts\`
+- Drive client: \`lib/alamo-bernal/statements/drive.ts\`
+- Backfill script: \`scripts/backfill-statements.ts\`
+- Audit runner: \`scripts/audit-statements.ts\`
+- Companion brief: [[tech-development/inbox-router-phase1-2026-05-14]] is the closest analog buildout — same documentation style, different subsystem.
+- Forward references: [[tech-development/alamobernal-statements-phase5-reconciliation]] (deferred — \`stmt_*\` vs \`sb_*\` delta view), [[tech-development/alamobernal-realized-gl-parser]] (deferred — close the \`realized_consistency\` gap).
+
+---
+
+*Authored by the principal's Claude Code instance during the Phase 2A/2B/3/4 build session on 2026-05-24/25. Pipeline is shipped end-to-end and production-validated; the open items in §7 are scoped and instrumented but deferred pending higher-priority work.*`,
+  },
 ]
