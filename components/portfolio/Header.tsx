@@ -8,7 +8,7 @@ export default function Header() {
         alt="Lori Corpuz"
         width={120}
         height={120}
-        className="rounded-full object-cover mb-6 grayscale-[10%]"
+        className="rounded-full object-cover object-[80%_center] mb-6 grayscale-[10%]"
         priority
       />
       <h1 className="text-[28px] font-semibold tracking-tight mb-2">
