@@ -7,6 +7,7 @@ import { useAuth } from '@/components/auth/AuthProvider'
 import MarkdownView from '@/components/wikis/MarkdownView'
 import BacklinksPanel from '@/components/wikis/BacklinksPanel'
 import WikiEditor, { type WikiEditorValue } from '@/components/wikis/WikiEditor'
+import WikiErrorBoundary from '@/components/wikis/WikiErrorBoundary'
 import {
   getWikiBySlug,
   upsertWiki,
@@ -33,8 +34,12 @@ export default function WikiDetailPage({ params }: { params: Promise<{ slug: str
     if (!user) return
     let cancelled = false
     setLoading(true)
+    setError(null)
     getWikiBySlug(user.uid, slug)
       .then(w => { if (!cancelled) setWiki(w) })
+      .catch(e => {
+        if (!cancelled) setError(e instanceof Error ? e.message : String(e))
+      })
       .finally(() => { if (!cancelled) setLoading(false) })
     return () => { cancelled = true }
   }, [user, slug])
@@ -45,6 +50,20 @@ export default function WikiDetailPage({ params }: { params: Promise<{ slug: str
     return (
       <div className="max-w-[1100px] mx-auto px-4 sm:px-6 py-4">
         <div className="font-mono text-[11px] text-ink-muted">Loading…</div>
+      </div>
+    )
+  }
+
+  if (error && !wiki) {
+    return (
+      <div className="max-w-[1100px] mx-auto px-4 sm:px-6 py-4">
+        <div className="bg-white border border-red-ink/30 rounded-sm p-4">
+          <div className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-red-ink mb-1">
+            Failed to load wiki
+          </div>
+          <div className="font-mono text-[11px] text-ink mb-2">{error}</div>
+          <Link href="/thesis/wikis" className="font-serif text-[12px] text-burgundy underline">← Back</Link>
+        </div>
       </div>
     )
   }
@@ -106,6 +125,22 @@ export default function WikiDetailPage({ params }: { params: Promise<{ slug: str
   }
 
   return (
+    <WikiErrorBoundary
+      fallback={(e) => (
+        <div className="max-w-[1100px] mx-auto px-4 sm:px-6 py-4">
+          <Link href="/thesis/wikis" className="font-serif text-[11px] text-burgundy underline mb-3 inline-block">
+            ← All wikis
+          </Link>
+          <div className="bg-white border border-red-ink/30 rounded-sm p-4">
+            <div className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-red-ink mb-1">
+              Render failed
+            </div>
+            <div className="font-mono text-[11px] text-ink mb-2 whitespace-pre-wrap break-words">{e.message}</div>
+            <div className="font-mono text-[10px] text-ink-muted">slug: {slug}</div>
+          </div>
+        </div>
+      )}
+    >
     <div className="max-w-[1100px] mx-auto px-4 sm:px-6 py-4">
       <div className="flex items-baseline justify-between mb-3">
         <Link
@@ -153,7 +188,7 @@ export default function WikiDetailPage({ params }: { params: Promise<{ slug: str
               <span className="font-mono text-[10px] text-ink-faint">{wiki.slug}</span>
               <span className="font-mono text-[10px] text-ink-faint">·</span>
               <span className="font-mono text-[10px] text-ink-faint">
-                updated {wiki.updatedAt.slice(0, 10)} by {wiki.updatedBy}
+                updated {(wiki.updatedAt || '').slice(0, 10)} by {wiki.updatedBy}
               </span>
               {wiki.agentVersion && (
                 <span className="font-mono text-[10px] text-amber-ink">{wiki.agentVersion}</span>
@@ -163,7 +198,9 @@ export default function WikiDetailPage({ params }: { params: Promise<{ slug: str
 
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_240px] gap-4">
             <article className="bg-white border border-rule rounded-sm p-4">
-              <MarkdownView content={wiki.contentMd || '*(empty wiki)*'} />
+              <WikiErrorBoundary>
+                <MarkdownView content={wiki.contentMd || '*(empty wiki)*'} />
+              </WikiErrorBoundary>
             </article>
             <aside className="space-y-3">
               <BacklinksPanel backlinks={wiki.backlinks} />
@@ -199,5 +236,6 @@ export default function WikiDetailPage({ params }: { params: Promise<{ slug: str
         </div>
       )}
     </div>
+    </WikiErrorBoundary>
   )
 }

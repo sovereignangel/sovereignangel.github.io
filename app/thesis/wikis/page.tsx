@@ -32,7 +32,7 @@ export default function WikisIndexPage() {
     }
     return out.sort((a, b) => {
       if (a.pinned !== b.pinned) return a.pinned ? -1 : 1
-      return b.updatedAt.localeCompare(a.updatedAt)
+      return (b.updatedAt || '').localeCompare(a.updatedAt || '')
     })
   }, [items, surface, search])
 
@@ -49,12 +49,20 @@ export default function WikisIndexPage() {
             Layer 2 — Distilled, self-updating knowledge. Linked with <code className="font-mono text-[11px] text-burgundy">[[slug]]</code>.
           </p>
         </div>
-        <Link
-          href="/thesis/wikis/new"
-          className="font-serif text-[12px] font-semibold px-3 py-1.5 rounded-sm border border-burgundy bg-burgundy text-paper hover:bg-burgundy/90 no-underline"
-        >
-          + New Wiki
-        </Link>
+        <div className="flex items-center gap-1">
+          <Link
+            href="/thesis/wikis/auto-generate"
+            className="font-serif text-[12px] font-semibold px-3 py-1.5 rounded-sm border border-burgundy text-burgundy hover:bg-burgundy/5 no-underline"
+          >
+            Auto-Generate
+          </Link>
+          <Link
+            href="/thesis/wikis/new"
+            className="font-serif text-[12px] font-semibold px-3 py-1.5 rounded-sm border border-burgundy bg-burgundy text-paper hover:bg-burgundy/90 no-underline"
+          >
+            + New Wiki
+          </Link>
+        </div>
       </div>
 
       <div className="flex flex-wrap items-center gap-2 mb-3">
@@ -76,13 +84,24 @@ export default function WikisIndexPage() {
         <div className="font-mono text-[11px] text-ink-muted">Loading…</div>
       ) : filtered.length === 0 ? (
         <div className="bg-white border border-rule rounded-sm p-6 text-center">
-          <div className="font-serif text-[14px] text-ink-muted">No wikis match.</div>
-          <Link
-            href="/thesis/wikis/new"
-            className="font-serif text-[12px] font-semibold text-burgundy underline mt-2 inline-block"
-          >
-            Create the first one
-          </Link>
+          <div className="font-serif text-[14px] text-ink mb-1">No wikis yet.</div>
+          <div className="font-serif text-[12px] italic text-ink-muted mb-3">
+            Auto-generate from your existing projects, ventures, contacts, decisions and meetings — or write one by hand.
+          </div>
+          <div className="flex items-center justify-center gap-2">
+            <Link
+              href="/thesis/wikis/auto-generate"
+              className="font-serif text-[12px] font-semibold px-3 py-1.5 rounded-sm border border-burgundy bg-burgundy text-paper no-underline hover:bg-burgundy/90"
+            >
+              Auto-Generate from Data
+            </Link>
+            <Link
+              href="/thesis/wikis/new"
+              className="font-serif text-[12px] font-semibold px-3 py-1.5 rounded-sm border border-burgundy text-burgundy no-underline hover:bg-burgundy/5"
+            >
+              + New Wiki
+            </Link>
+          </div>
         </div>
       ) : (
         <div className="bg-white border border-rule rounded-sm">
@@ -103,10 +122,10 @@ export default function WikisIndexPage() {
                 <span className="font-mono text-[9px] uppercase px-1.5 py-0.5 rounded-sm border bg-burgundy-bg text-burgundy border-burgundy/20">
                   {w.surface}
                 </span>
-                {w.updatedBy.startsWith('agent:') && (
+                {w.updatedBy?.startsWith('agent:') && (
                   <span className="font-mono text-[9px] uppercase text-amber-ink">{w.updatedBy}</span>
                 )}
-                <span className="font-mono text-[10px] text-ink-faint">{w.updatedAt.slice(0, 10)}</span>
+                <span className="font-mono text-[10px] text-ink-faint">{(w.updatedAt || '').slice(0, 10)}</span>
               </div>
             </Link>
           ))}
