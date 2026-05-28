@@ -648,4 +648,186 @@ Most of the schema is broker-agnostic — \`stmt_*\` tables don't assume Fidelit
 
 *Authored by the principal's Claude Code instance during the Phase 2A/2B/3/4 build session on 2026-05-24/25. Pipeline is shipped end-to-end and production-validated; the open items in §7 are scoped and instrumented but deferred pending higher-priority work.*`,
   },
+  {
+    slug: 'tech-development/fundamentals-report-flow-2026-05-28',
+    title: 'Fundamentals Report Flow — End-to-End (2026-05-28): Daemon → Telegram Deep Link → Comment + Regenerate',
+    surface: 'tech-development',
+    contentMd: `> **Status.** Shipped 2026-05-28. Adds (a) per-report deep linking from Telegram alerts into the Armstrong UI via the public \`/r/{TICKER}/{PERIOD}/{YEAR}\` route, (b) a reviewer "comment + regenerate" loop that turns Lori or Dave's notes into a queued revision draft. Builds on top of [[tech-development/inbox-router-phase1-2026-05-14]] (the outbound Telegram router) and the existing R&D worker daemon. Sibling to [[tech-development/alamo-bernal-statements-pipeline-2026-05-25]].
+
+> **TL;DR.** A fundamentals memo drafted by the local Ollama-backed daemon used to land in Telegram with a link to the fund homepage — useless for actually reading the report. After this buildout, the Telegram payload contains a direct link to the just-drafted memo, and the report viewer surfaces a "Notes for revision" textarea (gated to Lori + Dave) that re-enqueues the same harness with the reviewer's feedback. Revisions are tagged \`-rev{N}\` so the original draft is preserved for audit and A/B comparison.
+
+---
+
+## 1. Why This Matters
+
+The fundamentals memo is the artifact Dave evaluates before sizing a position. Two friction points existed before today:
+
+1. **Telegram → fund homepage**. The "draft ready" alert linked to \`armstrong.aretetec.com\` instead of the specific report. Lori (or Dave) had to manually navigate Research → Fundamentals → search → open. On mobile (where these alerts are read), that's three taps + a typed ticker.
+2. **No revision loop**. If a draft missed the thesis (hallucinated peer set, weak section, bad assumption), the only options were to either (a) regenerate from scratch with the same prompt and pray for variance, or (b) ignore the draft. Neither captures *what specifically* should change.
+
+This buildout closes both gaps with one routed surface.
+
+## 2. End-to-End Flow
+
+\`\`\`
+┌─────────────────────────────────────┐
+│ Drafting (local Ollama on Lori M1)  │
+│ scripts/research_worker/daemon.py    │
+│ → run_fundamentals_harness(rec)      │
+│   → generate_report()                │
+│     → Ollama qwen2.5:14b (streamed)  │
+│     → INSERT fundamental_reports     │
+│       prompt_version = base | -revN  │
+└──────────────┬──────────────────────┘
+               │
+               ▼
+┌─────────────────────────────────────┐
+│ Notification dispatch                │
+│ daemon.notify("Armstrong RnD:        │
+│   draft ready", link=DEEP_LINK)      │
+│ where DEEP_LINK now = armstrong/r/   │
+│   {TICKER}/{PERIOD}/{YEAR}           │
+└──────────────┬──────────────────────┘
+               │  POST { link }
+               ▼
+┌─────────────────────────────────────┐
+│ Outbound Inbox Router                │
+│ Website /api/inbox → routeMessage()  │
+│ [[tech-development/inbox-router-     │
+│   phase1-2026-05-14]]                │
+└──────────────┬──────────────────────┘
+               │
+               ▼
+┌─────────────────────────────────────┐
+│ Telegram (Lori + Alamo chat 489...)  │
+│ "[Armstrong] Armstrong RnD: draft    │
+│   ready  AES Q1 2026 — 9.2K chars    │
+│   Open the drafted memo:             │
+│   armstrong/r/AES/Q1/2026"           │
+└──────────────┬──────────────────────┘
+               │  tap link
+               ▼
+┌─────────────────────────────────────┐
+│ Armstrong UI public route /r/...     │
+│ armstrong-ui/src/SharedReportPage    │
+│ → renders ReportBody (auth bypassed; │
+│   RLS allows public read on          │
+│   fundamental_reports)               │
+└──────────────┬──────────────────────┘
+               │  Lori signs in,
+               │  types notes,
+               │  hits "Regenerate"
+               ▼
+┌─────────────────────────────────────┐
+│ Vercel /api/queue-revision           │
+│ JWT-auth → INSERT research_requests  │
+│ { type: 'fundamentals',              │
+│   payload: { ticker, period, year,   │
+│     revision_notes, force: true } }  │
+└──────────────┬──────────────────────┘
+               │  daemon claims next
+               ▼
+            (back to top with -rev1)
+\`\`\`
+
+## 3. The Deep Link Patch
+
+**File:** \`scripts/research_worker/daemon.py\`
+
+The harness contract changed from \`(output, invocations)\` to \`(output, invocations, deep_link_or_None)\`. Fundamentals returns a deep link constructed from the just-generated report:
+
+\`\`\`python
+def _share_link_for_report(result):
+    """result['period'] is '{fiscal_period} {fiscal_year}' (space-delimited)."""
+    ticker = result['ticker']
+    fp, fy = result['period'].split()
+    return f"https://armstrong.aretetec.com/r/{ticker}/{fp}/{fy}"
+\`\`\`
+
+Other harness types (\`backtest\`, \`research\`, \`development\`, \`paper_trade\`, \`audit\`) return \`None\` and fall back to the dashboard root URL. The dispatcher in \`dispatch()\` and the caller in \`process_one()\` were extended uniformly so the contract is consistent.
+
+The link is passed verbatim into \`notify(kind, severity, title, body, link)\`, which composes the \`/api/inbox\` payload. The router (Website \`lib/inbox/router.ts\`) renders the link in the Telegram message body — this required no changes on the Website side.
+
+## 4. The Comment + Regenerate Flow
+
+### 4a. The UI surface
+
+**File:** \`armstrong-ui/src/ReportViewerModal.jsx\`
+
+The modal now reads the current Supabase user via \`getCurrentUser()\`. If the email is in \`REVISION_ALLOWED_EMAILS\` (currently \`loricorpuz@gmail.com\`, \`mossda@gmail.com\`), a sticky "Notes for revision" textarea renders below the rendered memo. The button POSTs to \`/api/queue-revision\` with:
+
+\`\`\`json
+{
+  "ticker": "AES",
+  "fiscal_period": "Q1",
+  "fiscal_year": "2026",
+  "revision_notes": "Peer set is wrong — exclude utilities, include independent power producers.",
+  "ollama_model": "qwen2.5:14b"
+}
+\`\`\`
+
+On success the button collapses to a "Queued. Telegram alert will arrive when the revision is drafted." chip. The reviewer can close the modal — the daemon will Telegram a new deep link when the \`-rev1\` draft is persisted.
+
+### 4b. The API endpoint
+
+**File:** \`armstrong-ui/api/queue-revision.js\`
+
+JWT-authenticated. Verifies the user's email against the Lori + Dave allowlist (same pattern as \`api/queue-submit.js\`). Inserts into \`research_requests\` with \`type: 'fundamentals'\` and the revision payload. Reuses the existing daemon — no new daemon mode, no new poll loop.
+
+### 4c. The generator revision branch
+
+**File:** \`scripts/generate_fundamental_report.py\`
+
+\`generate_report()\` gains a \`revision_notes\` keyword. When provided:
+
+1. Fetch the most-recent prior draft for \`(ticker, period, year, prompt_version LIKE base*)\`. This recovers both the original and any earlier \`-revN\`.
+2. Count existing \`-rev\` rows to derive \`N+1\`. Stamp the new draft as \`prompt_version=<base>-rev{N+1}\`.
+3. Append the prior draft (truncated to ~4K chars) and the reviewer's notes to the prompt with an explicit *"address each, then re-emit the full memo"* directive. Same JSON-then-markdown schema, just revised.
+4. Persist alongside the original — both rows visible in the Library, deduped per (ticker, period, year) by \`generated_at DESC\`.
+5. Store \`revision_notes\` in a new column on \`fundamental_reports\` (migration: \`add_revision_notes_to_fundamental_reports.sql\`) so revisions are reproducible.
+
+## 5. Auth + RLS Map
+
+| Surface | Auth | Notes |
+|---|---|---|
+| Public \`/r/{TICKER}/{PERIOD}/{YEAR}\` read | None (RLS \`USING (true)\` on \`fundamental_reports\`) | Telegram recipients can preview without signing in |
+| Report viewer (modal in app) | Supabase session | Revision controls render only for \`REVISION_ALLOWED_EMAILS\` |
+| \`/api/queue-revision\` | JWT + email allowlist | Rejects 403 outside Lori/Dave |
+| \`research_requests\` insert | Service role | Inserted server-side from the API; never from browser |
+| \`/api/inbox\` (Website) | \`INBOX_SHARED_SECRET\` | Same as everything else in [[tech-development/inbox-router-phase1-2026-05-14]] |
+
+The public \`/r/\` route is intentionally read-only. Sharing a memo with a third party (e.g., a co-investor for a single thesis) doesn't grant them revision capability — that requires a signed-in Lori/Dave session.
+
+## 6. Dev / QA Labeling
+
+Reports generated by the local Ollama path are tagged \`prompt_version=fundamentals-report-v3-ollama-qwen2.5-14b\` (or whichever model). The Library and the modal both render a burgundy **DEV** badge next to those rows, and a green **REV** badge on any \`-revN\` row. This is the visual cue that the row hasn't been promoted to production. Bulk overnight generation is off until the principal manually green-lights a prompt version.
+
+## 7. Failure Modes / Operational Notes
+
+- **Daemon offline.** Revision requests stack in \`research_requests\` (\`status=queued\`). They process FIFO when the daemon restarts (\`launchctl bootstrap gui/<uid>/com.loricorpuz.armstrong-rnd-worker\`).
+- **Ollama not warm.** First revision after a daemon restart pays the ~9s model load. Subsequent requests in the same session reuse the warm runner thanks to \`keep_alive: 4h\`.
+- **Reviewer notes exceeding 4000 chars.** API rejects with \`revision_notes_too_long_4000_max\`. This matches the prompt context-window budget (the prior draft itself is truncated to 4K).
+- **Telegram link broken (e.g., off-cycle ticker with no Q1 2026)**. The route falls back to "Report not found." Lori can still find the actual report by opening the Library and filtering by ticker; the slug is descriptive, so the bad URL is self-explanatory.
+- **Migration not applied.** \`revision_notes\` column absent → revision write throws \`column does not exist\`. The migration must be applied in Supabase SQL Editor before the first revision is submitted.
+
+## 8. Open Items
+
+- **Per-thread revision history view.** The Library shows only the newest row per \`(ticker, period, year)\`. A side-panel or stacked view that surfaces *"v1 base → v2 with notes 'fix peer set' → v3 with notes 'add 2026 catalysts'"* would let the reviewer audit how the memo evolved. Deferred until 3+ revisions exist on any one report.
+- **Dave SMS path.** Dave is not in the Telegram chat (per [[tech-development/inbox-router-phase1-2026-05-14]] §3). When he submits revision notes via UI, the notification still lands only in Lori's Telegram. A future enhancement is to dispatch an SMS/email alert to the submitter alongside the Telegram alert.
+- **Auto-evaluate against the prior draft.** A diff view or LLM-as-judge pass that scores *"did the revision actually address the reviewer's note?"* before the daemon marks the draft ready. Currently the harness assumes any output is the revised memo.
+
+---
+
+**Code references:**
+- Daemon: \`scripts/research_worker/daemon.py:401-500\` (\`run_fundamentals_harness\`), \`:570-630\` (\`process_one\` with deep link)
+- Generator: \`scripts/generate_fundamental_report.py:280-470\` (\`generate_report\` with revision branch)
+- API: \`armstrong-ui/api/queue-revision.js\`
+- UI: \`armstrong-ui/src/ReportViewerModal.jsx:246-380\` (revision textarea + button), \`src/FundamentalsLibrary.jsx\` (DEV/REV badges)
+- Public route: \`armstrong-ui/src/SharedReportPage.jsx\`, registered in \`src/App.jsx:32-34\`
+- Migration: \`migrations/add_revision_notes_to_fundamental_reports.sql\`
+
+---
+
+*Authored by the principal's Claude Code instance during the 2026-05-28 build session. Companion to [[tech-development/inbox-router-phase1-2026-05-14]]. All five surfaces (daemon, generator, API, UI, migration) shipped to working tree; the migration must be applied in Supabase before the first revision request, and the prompt version is labeled DEV/QA until the principal promotes it to production.*`,
+  },
 ]
