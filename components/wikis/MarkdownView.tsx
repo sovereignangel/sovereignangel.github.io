@@ -4,6 +4,7 @@ import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import Link from 'next/link'
 import { preprocessWikiLinks } from '@/lib/wikis/parse-links'
+import MermaidBlock from './MermaidBlock'
 
 export default function MarkdownView({ content }: { content: string }) {
   const processed = preprocessWikiLinks(content)
@@ -56,6 +57,11 @@ export default function MarkdownView({ content }: { content: string }) {
           },
           code: ({ children, className }) => {
             const isBlock = className?.startsWith('language-')
+            // Intercept ```mermaid``` fenced blocks and render as SVG.
+            if (className === 'language-mermaid') {
+              const source = Array.isArray(children) ? children.join('') : String(children ?? '')
+              return <MermaidBlock source={source.trim()} />
+            }
             if (isBlock) {
               return (
                 <code className={`font-mono text-[12px] ${className}`}>{children}</code>
