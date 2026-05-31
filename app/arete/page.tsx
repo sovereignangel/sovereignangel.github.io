@@ -1,6 +1,7 @@
 // Arete Technologies — parent landing page.
-// Armstrong (the fund) is the front door; Salons + Mistral are events
-// alongside, visually subordinate. Brand system: arete_brand_system.md.
+// Armstrong (the fund) is the front door. Salons + Mistral pages remain
+// reachable directly at /salons and /mistral but are not surfaced here.
+// Brand system: arete_brand_system.md.
 
 const C = {
   cream: '#f5f1ea',
@@ -55,32 +56,9 @@ function SpiralMark({ size = 120, strokeWidth = 1.2 }: { size?: number; strokeWi
 }
 
 const RESPONSIVE_CSS = `
-  .arete-grid {
-    display: grid;
-    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
-    gap: 20px;
+  .arete-hero {
     width: 100%;
-    max-width: 980px;
-    align-items: stretch;
-  }
-  .arete-grid > * { min-width: 0; }
-  .arete-secondary {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-  }
-  @media (max-width: 780px) {
-    .arete-grid {
-      grid-template-columns: 1fr;
-    }
-    .arete-secondary {
-      flex-direction: row;
-      gap: 12px;
-    }
-    .arete-secondary > * {
-      flex: 1;
-      min-width: 0;
-    }
+    max-width: 720px;
   }
 `
 
@@ -153,122 +131,97 @@ export default function AretePage() {
           The long practice.
         </div>
 
-        <div className="arete-grid">
-          {/* HERO — Armstrong (the fund) */}
-          <a
-            href="https://armstrong.aretetec.com"
-            target="_blank"
-            rel="noopener noreferrer"
+        {/* HERO — Armstrong (the fund) */}
+        <a
+          className="arete-hero"
+          href="https://armstrong.aretetec.com"
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            background: C.paper,
+            border: `1px solid ${C.rule}`,
+            padding: 'clamp(28px, 4vw, 44px)',
+            textAlign: 'left',
+            color: C.ink,
+            textDecoration: 'none',
+            cursor: 'pointer',
+            position: 'relative',
+          }}
+        >
+          <div
             style={{
-              display: 'flex',
-              flexDirection: 'column',
-              background: C.paper,
-              border: `1px solid ${C.rule}`,
-              padding: 'clamp(28px, 4vw, 40px)',
-              textAlign: 'left',
-              color: C.ink,
-              textDecoration: 'none',
-              cursor: 'pointer',
-              position: 'relative',
+              fontFamily: C.mono,
+              fontSize: 9,
+              letterSpacing: '0.32em',
+              color: C.burgundy,
+              textTransform: 'uppercase',
+              marginBottom: 18,
+              paddingBottom: 12,
+              borderBottom: `1px solid ${C.burgundy}33`,
             }}
           >
-            <div
-              style={{
-                fontFamily: C.mono,
-                fontSize: 9,
-                letterSpacing: '0.32em',
-                color: C.burgundy,
-                textTransform: 'uppercase',
-                marginBottom: 18,
-                paddingBottom: 12,
-                borderBottom: `1px solid ${C.burgundy}33`,
-              }}
-            >
-              The Fund
-            </div>
-
-            <div
-              style={{
-                fontFamily: C.serif,
-                fontWeight: 600,
-                fontSize: 'clamp(40px, 5.5vw, 56px)',
-                letterSpacing: '-0.015em',
-                color: C.ink,
-                lineHeight: 0.95,
-                marginBottom: 12,
-              }}
-            >
-              Armstrong
-            </div>
-
-            <div
-              style={{
-                fontFamily: C.serif,
-                fontStyle: 'italic',
-                fontSize: 'clamp(18px, 2.2vw, 22px)',
-                color: C.burgundy,
-                lineHeight: 1.3,
-                marginBottom: 22,
-              }}
-            >
-              The long arithmetic.
-            </div>
-
-            <p
-              style={{
-                fontFamily: C.serif,
-                fontSize: 16,
-                lineHeight: 1.55,
-                color: C.inkMuted,
-                margin: 0,
-                maxWidth: 480,
-              }}
-            >
-              A quantamental fund — value investing with time as leverage. Pre-launch details on the fund website.
-            </p>
-
-            <div style={{ flex: 1 }} />
-
-            <div
-              style={{
-                marginTop: 28,
-                display: 'inline-flex',
-                alignSelf: 'flex-start',
-                alignItems: 'center',
-                gap: 10,
-                background: C.burgundy,
-                color: C.cream,
-                padding: '14px 22px',
-                fontFamily: C.mono,
-                fontSize: 11,
-                letterSpacing: '0.28em',
-                textTransform: 'uppercase',
-              }}
-            >
-              Enter the fund <span aria-hidden="true">→</span>
-            </div>
-          </a>
-
-          {/* SECONDARY STACK — Salons + Mistral */}
-          <div className="arete-secondary">
-            <SecondaryCard
-              name="Salons"
-              tagline="The long view."
-              description="Intellectual gatherings. A long table, returning guests, conversation as the practice."
-              status="Pre-launch · Jun 2026 →"
-              href="/salons"
-              interactive
-            />
-            <SecondaryCard
-              name="Mistral"
-              tagline="The long horizon."
-              description="A kitesurf retreat on the French coast — four weeks of kite, symposium, and patient craft."
-              status="F&F retreat · Jul 2026 →"
-              href="/mistral"
-              interactive
-            />
+            The Fund
           </div>
-        </div>
+
+          <div
+            style={{
+              fontFamily: C.serif,
+              fontWeight: 600,
+              fontSize: 'clamp(40px, 6vw, 64px)',
+              letterSpacing: '-0.015em',
+              color: C.ink,
+              lineHeight: 0.95,
+              marginBottom: 12,
+            }}
+          >
+            Armstrong
+          </div>
+
+          <div
+            style={{
+              fontFamily: C.serif,
+              fontStyle: 'italic',
+              fontSize: 'clamp(18px, 2.4vw, 24px)',
+              color: C.burgundy,
+              lineHeight: 1.3,
+              marginBottom: 22,
+            }}
+          >
+            The long arithmetic.
+          </div>
+
+          <p
+            style={{
+              fontFamily: C.serif,
+              fontSize: 17,
+              lineHeight: 1.55,
+              color: C.inkMuted,
+              margin: 0,
+              maxWidth: 560,
+            }}
+          >
+            A quantamental fund — value investing with time as leverage. Pre-launch details on the fund website.
+          </p>
+
+          <div
+            style={{
+              marginTop: 28,
+              display: 'inline-flex',
+              alignSelf: 'flex-start',
+              alignItems: 'center',
+              gap: 10,
+              background: C.burgundy,
+              color: C.cream,
+              padding: '14px 22px',
+              fontFamily: C.mono,
+              fontSize: 11,
+              letterSpacing: '0.28em',
+              textTransform: 'uppercase',
+            }}
+          >
+            Enter the fund <span aria-hidden="true">→</span>
+          </div>
+        </a>
       </section>
 
       <footer
@@ -303,94 +256,5 @@ export default function AretePage() {
         </div>
       </footer>
     </main>
-  )
-}
-
-function SecondaryCard({
-  name,
-  tagline,
-  description,
-  status,
-  href,
-  interactive,
-}: {
-  name: string
-  tagline: string
-  description?: string
-  status: string
-  href?: string
-  interactive: boolean
-}) {
-  const Tag = interactive && href ? 'a' : 'div'
-  return (
-    <Tag
-      {...(interactive && href ? { href } : {})}
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        background: C.paper,
-        border: `1px solid ${C.rule}`,
-        padding: '22px 22px 20px',
-        textAlign: 'left',
-        color: C.ink,
-        textDecoration: 'none',
-        cursor: interactive ? 'pointer' : 'default',
-        opacity: interactive ? 1 : 0.72,
-        flex: 1,
-      }}
-    >
-      <div
-        style={{
-          fontFamily: C.serif,
-          fontWeight: 600,
-          fontSize: 24,
-          letterSpacing: '-0.01em',
-          color: C.ink,
-          lineHeight: 1,
-          marginBottom: 6,
-        }}
-      >
-        {name}
-      </div>
-      <div
-        style={{
-          fontFamily: C.serif,
-          fontStyle: 'italic',
-          fontSize: 15,
-          color: C.burgundy,
-          lineHeight: 1.3,
-          marginBottom: description ? 10 : 0,
-        }}
-      >
-        {tagline}
-      </div>
-      {description && (
-        <p
-          style={{
-            fontFamily: C.serif,
-            fontSize: 13,
-            lineHeight: 1.55,
-            color: C.inkMuted,
-            margin: 0,
-          }}
-        >
-          {description}
-        </p>
-      )}
-      <div style={{ flex: 1, minHeight: 14 }} />
-      <div
-        style={{
-          fontFamily: C.mono,
-          fontSize: 9,
-          letterSpacing: '0.26em',
-          color: interactive ? C.burgundy : C.inkSoft,
-          textTransform: 'uppercase',
-          paddingTop: 12,
-          borderTop: `1px solid ${C.ruleSoft}`,
-        }}
-      >
-        {status}
-      </div>
-    </Tag>
   )
 }
