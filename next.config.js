@@ -19,6 +19,20 @@ const nextConfig = {
       ],
     }
   },
+  async redirects() {
+    return [
+      {
+        source: '/arete/mistral/:path*',
+        destination: '/arete',
+        permanent: true,
+      },
+      {
+        source: '/arete/salons/:path*',
+        destination: '/arete',
+        permanent: true,
+      },
+    ]
+  },
 }
 
 module.exports = nextConfig
