@@ -3,6 +3,8 @@
 import { useState } from 'react'
 import type { SummerPlan } from '@/lib/types'
 import { computePlanStats } from '@/lib/adventure-scheming'
+import { PlanCalendarGrid } from './PlanCalendarGrid'
+import { PlanWorldMap } from './PlanWorldMap'
 
 interface PlanSwipeCardProps {
   plan: SummerPlan
@@ -123,34 +125,14 @@ export function PlanSwipeCard({ plan, index, total, onSwipe, onUndo }: PlanSwipe
         {plan.phases[0]?.name} → {plan.phases[plan.phases.length - 1]?.name}
       </h2>
 
-      {/* Visual calendar preview (simplified) */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(4, 1fr)',
-          gap: '8px',
-          marginBottom: '20px',
-          padding: '16px',
-          background: '#ebe4d4',
-          borderRadius: '4px',
-        }}
-      >
-        {plan.phases.map((phase) => (
-          <div
-            key={phase.name}
-            style={{
-              padding: '8px',
-              background: getPhaseColor(phase.icon),
-              color: '#faf7f2',
-              borderRadius: '4px',
-              fontSize: '11px',
-              fontWeight: 600,
-              textAlign: 'center',
-            }}
-          >
-            {phase.name}
-          </div>
-        ))}
+      {/* Calendar grid view */}
+      <div style={{ marginBottom: '20px' }}>
+        <PlanCalendarGrid plan={plan} />
+      </div>
+
+      {/* World map with route */}
+      <div style={{ marginBottom: '20px' }}>
+        <PlanWorldMap plan={plan} compact={true} />
       </div>
 
       {/* Stats grid */}

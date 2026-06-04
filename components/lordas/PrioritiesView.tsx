@@ -1,10 +1,12 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import type { SummerPlan, PlanVote } from '@/lib/types'
 import { computePlanScore, rankPlans, computeCombinedSummary } from '@/lib/adventure-preferences'
 import { computePlanStats } from '@/lib/adventure-scheming'
 import { VoteBreakdown } from './VoteBreakdown'
+import { PlanWorldMap } from './PlanWorldMap'
+import { PlanCalendarGrid } from './PlanCalendarGrid'
 
 interface PrioritiesViewProps {
   plans: SummerPlan[]
@@ -12,6 +14,8 @@ interface PrioritiesViewProps {
 }
 
 export function PrioritiesView({ plans, votes }: PrioritiesViewProps) {
+  const [expandedPlanId, setExpandedPlanId] = useState<string | null>(null)
+
   const { scores, ranked, summary } = useMemo(() => {
     // Group votes by plan
     const votesByPlan = new Map<string, PlanVote[]>()
@@ -102,6 +106,7 @@ export function PrioritiesView({ plans, votes }: PrioritiesViewProps) {
               if (!plan) return null
 
               const stats = computePlanStats(plan)
+              const isExpanded = expandedPlanId === score.planId
 
               return (
                 <div
@@ -111,12 +116,16 @@ export function PrioritiesView({ plans, votes }: PrioritiesViewProps) {
                     background: '#faf8f4',
                     border: '1px solid #d8cfc4',
                     borderRadius: '8px',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
                   }}
+                  onClick={() => setExpandedPlanId(isExpanded ? null : score.planId)}
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '8px' }}>
                     <div style={{ fontSize: '14px', fontWeight: 600, color: '#2a2420' }}>
                       #{idx + 1} {plan.phases[0]?.name} → {plan.phases[plan.phases.length - 1]?.name}
                     </div>
+                    <span style={{ fontSize: '12px', color: '#8a7e72' }}>{isExpanded ? '▼' : '▶'}</span>
                   </div>
 
                   <div style={{ marginBottom: '12px' }}>
@@ -134,6 +143,24 @@ export function PrioritiesView({ plans, votes }: PrioritiesViewProps) {
                       <span style={{ color: '#8a7e72' }}>Budget:</span> ${stats.budget.toLocaleString()}
                     </div>
                   </div>
+
+                  {isExpanded && (
+                    <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid #d8cfc4' }}>
+                      <div style={{ marginBottom: '12px' }}>
+                        <h4 style={{ fontSize: '11px', fontWeight: 600, color: '#b85c38', marginBottom: '8px', textTransform: 'uppercase' }}>
+                          Timeline
+                        </h4>
+                        <PlanCalendarGrid plan={plan} />
+                      </div>
+
+                      <div>
+                        <h4 style={{ fontSize: '11px', fontWeight: 600, color: '#b85c38', marginBottom: '8px', textTransform: 'uppercase' }}>
+                          Route Map
+                        </h4>
+                        <PlanWorldMap plan={plan} compact={false} />
+                      </div>
+                    </div>
+                  )}
                 </div>
               )
             })}
