@@ -132,6 +132,7 @@ export default function LordasPage() {
 
       {/* Tab nav */}
       <div className="flex gap-4 mt-4 border-b" style={{ borderColor: '#d8cfc4' }}>
+        {/* DEBUG: Tab array = {JSON.stringify(['dashboard', 'adventures', 'theory'])} */}
         {(['dashboard', 'adventures', 'theory'] as Tab[]).map((t) => (
           <button
             key={t}
