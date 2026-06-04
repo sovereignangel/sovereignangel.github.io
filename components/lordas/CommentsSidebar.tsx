@@ -43,20 +43,20 @@ export function CommentsSidebar({
         }`}
       >
         {/* Header */}
-        <div className="border-b border-rule p-4 flex items-center justify-between">
+        <div className="border-b border-rule p-4 flex items-center justify-between flex-shrink-0">
           <h3 className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy">
             Summer Plan Comments
           </h3>
           <button
             onClick={onClose}
-            className="text-ink-muted hover:text-ink text-[16px] leading-none"
+            className="text-ink-muted hover:text-ink text-[16px] leading-none flex-shrink-0"
           >
             ×
           </button>
         </div>
 
         {/* Comments List */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        <div className="flex-1 overflow-y-auto p-4 space-y-4 min-h-0">
           {comments.length === 0 ? (
             <div className="text-[11px] text-ink-muted text-center py-8">
               No comments yet. Start the conversation!
@@ -81,7 +81,7 @@ export function CommentsSidebar({
         </div>
 
         {/* Input Area */}
-        <div className="border-t border-rule p-4 space-y-3">
+        <div className="border-t border-rule p-4 space-y-3 flex-shrink-0">
           {/* Author Toggle */}
           <div className="flex gap-2">
             {(['lori', 'aidas'] as RelationalSpeaker[]).map((person) => (
