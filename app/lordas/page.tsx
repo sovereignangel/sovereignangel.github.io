@@ -125,96 +125,111 @@ export default function LordasPage() {
   }
 
   return (
-    <div className="max-w-[1100px] mx-auto px-4 py-6">
-      <DashboardHeader
-        latest={latest}
-        snapshot={latestSnapshot}
-        conversationCount={conversations.length}
-      />
+    <div className="min-h-screen" style={{ backgroundColor: '#f5f0e8' }}>
+      {/* Section toggle: Connection Insights vs Adventures - at top */}
+      <div className="border-b" style={{ borderColor: '#d8cfc4' }}>
+        <div className="max-w-[1100px] mx-auto px-4 py-3 flex gap-4">
+          <button
+            onClick={() => setTab('dashboard')}
+            className="flex items-center gap-2 px-4 py-2 rounded-sm border transition-colors"
+            style={{
+              backgroundColor: tab === 'dashboard' ? '#b85c38' : 'transparent',
+              color: tab === 'dashboard' ? '#faf7f2' : '#8a7e72',
+              borderColor: tab === 'dashboard' ? '#b85c38' : '#d8cfc4',
+            }}
+          >
+            {/* Design/Connection logo - circle with three connected dots */}
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round">
+              <circle cx="8" cy="3" r="1.5" />
+              <circle cx="5" cy="10" r="1.5" />
+              <circle cx="11" cy="10" r="1.5" />
+              <path d="M8 4.5 L5 8.5 M8 4.5 L11 8.5 M5 10 L11 10" />
+            </svg>
+            <span className="font-serif text-[12px] font-semibold">Connection Insights</span>
+          </button>
 
-      {/* Section toggle: Connection Insights vs Adventures */}
-      <div className="flex gap-3 mt-6 mb-6">
-        <button
-          onClick={() => setTab('dashboard')}
-          className="flex items-center gap-2 px-4 py-2 rounded-sm border transition-colors"
-          style={{
-            backgroundColor: tab === 'dashboard' ? '#b85c38' : 'transparent',
-            color: tab === 'dashboard' ? '#faf7f2' : '#8a7e72',
-            borderColor: tab === 'dashboard' ? '#b85c38' : '#d8cfc4',
-          }}
-        >
-          {/* Circle + T logo */}
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.2">
-            <circle cx="8" cy="8" r="7" />
-            <path d="M8 3 L8 10 M5 4 L11 4" />
-          </svg>
-          <span className="font-serif text-[12px] font-semibold">Connection Insights</span>
-        </button>
-
-        <button
-          onClick={() => setTab('adventures')}
-          className="flex items-center gap-2 px-4 py-2 rounded-sm border transition-colors"
-          style={{
-            backgroundColor: tab === 'adventures' ? '#b85c38' : 'transparent',
-            color: tab === 'adventures' ? '#faf7f2' : '#8a7e72',
-            borderColor: tab === 'adventures' ? '#b85c38' : '#d8cfc4',
-          }}
-        >
-          {/* Kite icon */}
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round">
-            <path d="M8 1 L13 6 L8 13 L3 6 Z" />
-            <path d="M8 1 L8 13 M3 6 L13 6" />
-          </svg>
-          <span className="font-serif text-[12px] font-semibold">Adventures</span>
-        </button>
+          <button
+            onClick={() => setTab('adventures')}
+            className="flex items-center gap-3 px-4 py-2 rounded-sm border transition-colors"
+            style={{
+              backgroundColor: tab === 'adventures' ? '#b85c38' : 'transparent',
+              color: tab === 'adventures' ? '#faf7f2' : '#8a7e72',
+              borderColor: tab === 'adventures' ? '#b85c38' : '#d8cfc4',
+            }}
+          >
+            {/* Kite icon */}
+            <svg width="14" height="16" viewBox="0 0 14 16" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M7 1 L12 6 L7 13 L2 6 Z" />
+              <path d="M7 1 L7 13 M2 6 L12 6" />
+            </svg>
+            {/* Bicycle icon */}
+            <svg width="14" height="12" viewBox="0 0 14 12" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="2" cy="10" r="1.8" />
+              <circle cx="12" cy="10" r="1.8" />
+              <path d="M2 10 L5 4 L9 4 L12 10 M5 4 L8 4 M5 4 L6 10" />
+            </svg>
+            <span className="font-serif text-[12px] font-semibold">Adventures</span>
+          </button>
+        </div>
       </div>
 
-      {/* Sub-tabs for Connection Insights */}
-      {tab === 'dashboard' && (
-        <div className="flex gap-4 mt-4 border-b" style={{ borderColor: '#d8cfc4' }}>
-          {(['dashboard', 'theory'] as const).map((t) => (
-            <button
-              key={t}
-              onClick={() => setTab(t)}
-              className="font-serif text-[14px] pb-2 transition-colors"
-              style={{
-                color: tab === t ? '#b85c38' : '#8a7e72',
-                fontWeight: tab === t ? 600 : 400,
-                borderBottom: tab === t ? '2px solid #b85c38' : '2px solid transparent',
-                marginBottom: '-1px',
-              }}
-            >
-              {t === 'dashboard' ? 'Dashboard' : 'Theory & Application'}
-            </button>
-          ))}
-        </div>
-      )}
-
-      <div className="mt-6 space-y-6">
-        {tab === 'adventures' ? (
-          <AdventuresView
-            summerPlan={summerPlan}
-            comments={adventureComments}
-            onAddComment={handleAddComment}
+      {/* Main content */}
+      <div className="max-w-[1100px] mx-auto px-4 py-6">
+        {tab === 'dashboard' && (
+          <DashboardHeader
+            latest={latest}
+            snapshot={latestSnapshot}
+            conversationCount={conversations.length}
           />
-        ) : tab === 'theory' ? (
-          <TheorySection conversations={conversations} />
-        ) : tab === 'dashboard' ? (
-          conversations.length === 0 ? (
-            <EmptyOutline />
-          ) : (
-            <>
-              <SafetyPillar conversations={conversations} />
-              <GrowthPillar conversations={conversations} />
-              <AlignmentPillar
-                conversations={conversations}
-                themes={themes}
-                values={values}
-              />
-              <SessionTimeline conversations={conversations} />
-            </>
-          )
-        ) : null}
+        )}
+
+        {/* Sub-tabs for Connection Insights */}
+        {tab === 'dashboard' && (
+          <div className="flex gap-4 mt-4 border-b" style={{ borderColor: '#d8cfc4' }}>
+            {(['dashboard', 'theory'] as const).map((t) => (
+              <button
+                key={t}
+                onClick={() => setTab(t)}
+                className="font-serif text-[14px] pb-2 transition-colors"
+                style={{
+                  color: tab === t ? '#b85c38' : '#8a7e72',
+                  fontWeight: tab === t ? 600 : 400,
+                  borderBottom: tab === t ? '2px solid #b85c38' : '2px solid transparent',
+                  marginBottom: '-1px',
+                }}
+              >
+                {t === 'dashboard' ? 'Dashboard' : 'Theory & Application'}
+              </button>
+            ))}
+          </div>
+        )}
+
+        <div className="mt-6 space-y-6">
+          {tab === 'adventures' ? (
+            <AdventuresView
+              summerPlan={summerPlan}
+              comments={adventureComments}
+              onAddComment={handleAddComment}
+            />
+          ) : tab === 'theory' ? (
+            <TheorySection conversations={conversations} />
+          ) : tab === 'dashboard' ? (
+            conversations.length === 0 ? (
+              <EmptyOutline />
+            ) : (
+              <>
+                <SafetyPillar conversations={conversations} />
+                <GrowthPillar conversations={conversations} />
+                <AlignmentPillar
+                  conversations={conversations}
+                  themes={themes}
+                  values={values}
+                />
+                <SessionTimeline conversations={conversations} />
+              </>
+            )
+          ) : null}
+        </div>
       </div>
     </div>
   )
