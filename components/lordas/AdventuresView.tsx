@@ -116,11 +116,11 @@ export function AdventuresView({
         {
           id: `temp-${Date.now()}`,
           planId: plan.id,
-          user: 'lori',
+          user: 'lori' as const,
           vote,
           feedback,
           timestamp: new Date() as any,
-        },
+        } as PlanVote,
       ]
       setVotes(newVotes)
 
