@@ -37,9 +37,11 @@ export default function LordasPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [tab, setTab] = useState<Tab>('dashboard')
+  const [mounted, setMounted] = useState(false)
 
   // Check for stored PIN on mount
   useEffect(() => {
+    setMounted(true)
     const stored = sessionStorage.getItem('lordas_pin')
     if (stored) setPin(stored)
   }, [])
@@ -76,7 +78,7 @@ export default function LordasPage() {
     setPin(value)
   }
 
-  if (!pin) {
+  if (!mounted || !pin) {
     return <PinGate onSubmit={handlePin} error={error} />
   }
 
@@ -130,29 +132,63 @@ export default function LordasPage() {
         conversationCount={conversations.length}
       />
 
-      {/* Tab nav */}
-      <div className="flex gap-4 mt-4 border-b" style={{ borderColor: '#d8cfc4' }}>
-        {(['dashboard', 'adventures', 'theory'] as Tab[]).map((t) => (
-          <button
-            key={t}
-            onClick={() => setTab(t)}
-            className="font-serif text-[14px] pb-2 transition-colors"
-            style={{
-              color: tab === t ? '#b85c38' : '#8a7e72',
-              fontWeight: tab === t ? 600 : 400,
-              borderBottom: tab === t ? '2px solid #b85c38' : '2px solid transparent',
-              marginBottom: '-1px',
-            }}
-          >
-            {t === 'dashboard' ? 'Dashboard' : t === 'adventures' ? 'Adventures' : 'Theory & Application'}
-          </button>
-        ))}
+      {/* Section toggle: Connection Insights vs Adventures */}
+      <div className="flex gap-3 mt-6 mb-6">
+        <button
+          onClick={() => setTab('dashboard')}
+          className="flex items-center gap-2 px-4 py-2 rounded-sm border transition-colors"
+          style={{
+            backgroundColor: tab === 'dashboard' ? '#b85c38' : 'transparent',
+            color: tab === 'dashboard' ? '#faf7f2' : '#8a7e72',
+            borderColor: tab === 'dashboard' ? '#b85c38' : '#d8cfc4',
+          }}
+        >
+          {/* Circle + T logo */}
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.2">
+            <circle cx="8" cy="8" r="7" />
+            <path d="M8 3 L8 10 M5 4 L11 4" />
+          </svg>
+          <span className="font-serif text-[12px] font-semibold">Connection Insights</span>
+        </button>
+
+        <button
+          onClick={() => setTab('adventures')}
+          className="flex items-center gap-2 px-4 py-2 rounded-sm border transition-colors"
+          style={{
+            backgroundColor: tab === 'adventures' ? '#b85c38' : 'transparent',
+            color: tab === 'adventures' ? '#faf7f2' : '#8a7e72',
+            borderColor: tab === 'adventures' ? '#b85c38' : '#d8cfc4',
+          }}
+        >
+          {/* Kite icon */}
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round">
+            <path d="M8 1 L13 6 L8 13 L3 6 Z" />
+            <path d="M8 1 L8 13 M3 6 L13 6" />
+          </svg>
+          <span className="font-serif text-[12px] font-semibold">Adventures</span>
+        </button>
       </div>
 
-      {/* TEST: If you see this text, the latest code is deployed */}
-      <div style={{ fontSize: '12px', color: 'red', marginTop: '10px', padding: '10px', backgroundColor: '#fff0f0' }}>
-        TEST: Latest code is running - Adventures tab should appear above
-      </div>
+      {/* Sub-tabs for Connection Insights */}
+      {tab === 'dashboard' && (
+        <div className="flex gap-4 mt-4 border-b" style={{ borderColor: '#d8cfc4' }}>
+          {(['dashboard', 'theory'] as const).map((t) => (
+            <button
+              key={t}
+              onClick={() => setTab(t)}
+              className="font-serif text-[14px] pb-2 transition-colors"
+              style={{
+                color: tab === t ? '#b85c38' : '#8a7e72',
+                fontWeight: tab === t ? 600 : 400,
+                borderBottom: tab === t ? '2px solid #b85c38' : '2px solid transparent',
+                marginBottom: '-1px',
+              }}
+            >
+              {t === 'dashboard' ? 'Dashboard' : 'Theory & Application'}
+            </button>
+          ))}
+        </div>
+      )}
 
       <div className="mt-6 space-y-6">
         {tab === 'adventures' ? (
@@ -163,20 +199,22 @@ export default function LordasPage() {
           />
         ) : tab === 'theory' ? (
           <TheorySection conversations={conversations} />
-        ) : conversations.length === 0 ? (
-          <EmptyOutline />
-        ) : (
-          <>
-            <SafetyPillar conversations={conversations} />
-            <GrowthPillar conversations={conversations} />
-            <AlignmentPillar
-              conversations={conversations}
-              themes={themes}
-              values={values}
-            />
-            <SessionTimeline conversations={conversations} />
-          </>
-        )}
+        ) : tab === 'dashboard' ? (
+          conversations.length === 0 ? (
+            <EmptyOutline />
+          ) : (
+            <>
+              <SafetyPillar conversations={conversations} />
+              <GrowthPillar conversations={conversations} />
+              <AlignmentPillar
+                conversations={conversations}
+                themes={themes}
+                values={values}
+              />
+              <SessionTimeline conversations={conversations} />
+            </>
+          )
+        ) : null}
       </div>
     </div>
   )
