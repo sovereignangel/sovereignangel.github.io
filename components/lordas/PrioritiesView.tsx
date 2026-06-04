@@ -4,6 +4,7 @@ import { useMemo } from 'react'
 import type { SummerPlan, PlanVote } from '@/lib/types'
 import { computePlanScore, rankPlans, computeCombinedSummary } from '@/lib/adventure-preferences'
 import { computePlanStats } from '@/lib/adventure-scheming'
+import { VoteBreakdown } from './VoteBreakdown'
 
 interface PrioritiesViewProps {
   plans: SummerPlan[]
@@ -116,13 +117,10 @@ export function PrioritiesView({ plans, votes }: PrioritiesViewProps) {
                     <div style={{ fontSize: '14px', fontWeight: 600, color: '#2a2420' }}>
                       #{idx + 1} {plan.phases[0]?.name} → {plan.phases[plan.phases.length - 1]?.name}
                     </div>
-                    <div style={{ fontSize: '14px', fontWeight: 600, color: '#b85c38' }}>{score.score} pts</div>
                   </div>
 
-                  <div style={{ display: 'flex', gap: '8px', fontSize: '11px', color: '#8a7e72', marginBottom: '8px' }}>
-                    <span>❤️ {score.rightVotes}</span>
-                    <span>? {score.maybeVotes}</span>
-                    <span>👋 {score.leftVotes}</span>
+                  <div style={{ marginBottom: '12px' }}>
+                    <VoteBreakdown planId={score.planId} votes={votes} />
                   </div>
 
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', fontSize: '10px' }}>
