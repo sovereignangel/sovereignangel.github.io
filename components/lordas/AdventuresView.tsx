@@ -9,8 +9,9 @@ import { ConstraintInput } from './ConstraintInput'
 import { PlanSwipeCard } from './PlanSwipeCard'
 import { PrioritiesView } from './PrioritiesView'
 import { generatePlanVariant } from '@/lib/adventure-scheming'
-import { recordPlanVote, getSessionVotes } from '@/lib/firestore/adventure-votes'
+import { recordPlanVote, getSessionVotes, recordRankingVote } from '@/lib/firestore/adventure-votes'
 import { useAuth } from '@/components/auth/AuthProvider'
+import { RankingChallenge } from './RankingChallenge'
 
 interface AdventuresViewProps {
   summerPlan: SummerPlan | null
@@ -40,6 +41,8 @@ export function AdventuresView({
   ])
   const [votes, setVotes] = useState<PlanVote[]>([])
   const [loadingVotes, setLoadingVotes] = useState(true)
+  const [showRankingChallenge, setShowRankingChallenge] = useState(false)
+  const [rankingChallengeIndex, setRankingChallengeIndex] = useState(0)
 
   // Load votes on mount
   useEffect(() => {
@@ -108,7 +111,7 @@ export function AdventuresView({
       await recordPlanVote(user.uid, plan.id, 'lori', vote, feedback)
 
       // Update local votes
-      setVotes([
+      const newVotes = [
         ...votes,
         {
           id: `temp-${Date.now()}`,
@@ -118,7 +121,22 @@ export function AdventuresView({
           feedback,
           timestamp: new Date() as any,
         },
-      ])
+      ]
+      setVotes(newVotes)
+
+      // Check if we should trigger ranking challenge (every 5-8 swipes)
+      const swipesSinceLastRanking = newVotes.filter((v) => v.user === 'lori').length % 6
+      if (swipesSinceLastRanking === 0 && plans.length >= 2) {
+        // Show ranking challenge with random plans
+        const randIdx1 = Math.floor(Math.random() * plans.length)
+        let randIdx2 = Math.floor(Math.random() * plans.length)
+        while (randIdx2 === randIdx1 && plans.length > 1) {
+          randIdx2 = Math.floor(Math.random() * plans.length)
+        }
+        setRankingChallengeIndex(Math.min(randIdx1, randIdx2))
+        setShowRankingChallenge(true)
+        return
+      }
 
       // Move to next plan
       if (currentPlanIndex < plans.length - 1) {
@@ -129,6 +147,33 @@ export function AdventuresView({
       }
     } catch (err) {
       console.error('Error recording vote:', err)
+    }
+  }
+
+  const handleRankingChoice = async (winnerId: string) => {
+    if (!user?.uid) return
+
+    try {
+      const loserIdx = (rankingChallengeIndex + 1) % plans.length
+      const loserId = plans[loserIdx].id
+
+      // Record ranking vote
+      await recordRankingVote(user.uid, 'lori', winnerId, loserId)
+
+      // Close challenge and continue
+      setShowRankingChallenge(false)
+      if (currentPlanIndex < plans.length - 1) {
+        setCurrentPlanIndex(currentPlanIndex + 1)
+      }
+    } catch (err) {
+      console.error('Error recording ranking vote:', err)
+    }
+  }
+
+  const handleSkipRanking = () => {
+    setShowRankingChallenge(false)
+    if (currentPlanIndex < plans.length - 1) {
+      setCurrentPlanIndex(currentPlanIndex + 1)
     }
   }
 
@@ -181,6 +226,15 @@ export function AdventuresView({
       {/* Play Tab - Swipe interface */}
       {tab === 'play' && (
         <div className="space-y-6">
+          {showRankingChallenge && plans.length >= 2 && (
+            <RankingChallenge
+              planA={plans[rankingChallengeIndex]}
+              planB={plans[(rankingChallengeIndex + 1) % plans.length]}
+              onChoose={handleRankingChoice}
+              onSkip={handleSkipRanking}
+            />
+          )}
+
           {!swipeStarted ? (
             <ConstraintInput onSubmit={handleConstraintSubmit} loading={isSubmitting} />
           ) : (

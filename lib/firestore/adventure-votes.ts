@@ -74,3 +74,40 @@ export async function getUserVotes(uid: string, user: RelationalSpeaker): Promis
     ...d.data(),
   })) as PlanVote[]
 }
+
+/**
+ * Record a ranking vote (comparison)
+ */
+export async function recordRankingVote(
+  uid: string,
+  user: RelationalSpeaker,
+  winnerId: string,
+  loserId: string
+): Promise<string> {
+  const userRef = doc(clientDb, 'users', uid)
+  const rankingRef = collection(userRef, 'plan_rankings')
+
+  const result = await addDoc(rankingRef, {
+    winnerId,
+    loserId,
+    user,
+    timestamp: Timestamp.now(),
+  })
+
+  return result.id
+}
+
+/**
+ * Get all ranking votes
+ */
+export async function getRankingVotes(uid: string): Promise<Array<{ winnerId: string; loserId: string; user: RelationalSpeaker }>> {
+  const userRef = doc(clientDb, 'users', uid)
+  const rankingRef = collection(userRef, 'plan_rankings')
+  const snapshot = await getDocs(rankingRef)
+
+  return snapshot.docs.map((d) => ({
+    winnerId: d.data().winnerId,
+    loserId: d.data().loserId,
+    user: d.data().user,
+  }))
+}
