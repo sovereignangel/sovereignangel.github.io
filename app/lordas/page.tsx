@@ -126,50 +126,71 @@ export default function LordasPage() {
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#f5f0e8' }}>
-      {/* Section toggle: Connection Insights vs Adventures - at top */}
+      {/* Header with logo and section buttons */}
       <div className="border-b" style={{ borderColor: '#d8cfc4' }}>
-        <div className="max-w-[1100px] mx-auto px-4 py-3 flex gap-4">
-          <button
-            onClick={() => setTab('dashboard')}
-            className="flex items-center gap-2 px-4 py-2 rounded-sm border transition-colors"
-            style={{
-              backgroundColor: tab === 'dashboard' ? '#b85c38' : 'transparent',
-              color: tab === 'dashboard' ? '#faf7f2' : '#8a7e72',
-              borderColor: tab === 'dashboard' ? '#b85c38' : '#d8cfc4',
-            }}
-          >
-            {/* Design/Connection logo - circle with three connected dots */}
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round">
-              <circle cx="8" cy="3" r="1.5" />
-              <circle cx="5" cy="10" r="1.5" />
-              <circle cx="11" cy="10" r="1.5" />
-              <path d="M8 4.5 L5 8.5 M8 4.5 L11 8.5 M5 10 L11 10" />
+        <div className="max-w-[1100px] mx-auto px-4 py-4 flex items-center justify-between">
+          {/* Left: Logo and title */}
+          <div className="flex items-center gap-3">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" style={{ color: '#b85c38' }}>
+              <circle cx="12" cy="5" r="2" />
+              <circle cx="6" cy="15" r="2" />
+              <circle cx="18" cy="15" r="2" />
+              <path d="M12 7 L6 13 M12 7 L18 13 M6 15 L18 15" />
             </svg>
-            <span className="font-serif text-[12px] font-semibold">Connection Insights</span>
-          </button>
+            <div>
+              <h1 className="font-serif text-[20px] font-semibold tracking-[0.5px]" style={{ color: '#b85c38' }}>
+                lordas
+              </h1>
+              <p className="text-[10px] uppercase tracking-[0.5px]" style={{ color: '#8a7e72' }}>
+                Lori & Aidas
+              </p>
+            </div>
+          </div>
 
-          <button
-            onClick={() => setTab('adventures')}
-            className="flex items-center gap-3 px-4 py-2 rounded-sm border transition-colors"
-            style={{
-              backgroundColor: tab === 'adventures' ? '#b85c38' : 'transparent',
-              color: tab === 'adventures' ? '#faf7f2' : '#8a7e72',
-              borderColor: tab === 'adventures' ? '#b85c38' : '#d8cfc4',
-            }}
-          >
-            {/* Kite icon */}
-            <svg width="14" height="16" viewBox="0 0 14 16" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M7 1 L12 6 L7 13 L2 6 Z" />
-              <path d="M7 1 L7 13 M2 6 L12 6" />
-            </svg>
-            {/* Bicycle icon */}
-            <svg width="14" height="12" viewBox="0 0 14 12" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="2" cy="10" r="1.8" />
-              <circle cx="12" cy="10" r="1.8" />
-              <path d="M2 10 L5 4 L9 4 L12 10 M5 4 L8 4 M5 4 L6 10" />
-            </svg>
-            <span className="font-serif text-[12px] font-semibold">Adventures</span>
-          </button>
+          {/* Right: Section buttons */}
+          <div className="flex gap-2">
+            <button
+              onClick={() => setTab('dashboard')}
+              className="flex items-center gap-2 px-3 py-2 rounded-sm border text-[11px] font-serif font-semibold uppercase tracking-[0.5px] transition-colors"
+              style={{
+                backgroundColor: tab === 'dashboard' ? '#b85c38' : 'transparent',
+                color: tab === 'dashboard' ? '#faf7f2' : '#8a7e72',
+                borderColor: tab === 'dashboard' ? '#b85c38' : '#d8cfc4',
+              }}
+            >
+              {/* Design/Connection logo - circle with three connected dots */}
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round">
+                <circle cx="8" cy="3" r="1.5" />
+                <circle cx="5" cy="10" r="1.5" />
+                <circle cx="11" cy="10" r="1.5" />
+                <path d="M8 4.5 L5 8.5 M8 4.5 L11 8.5 M5 10 L11 10" />
+              </svg>
+              Connection Insights
+            </button>
+
+            <button
+              onClick={() => setTab('adventures')}
+              className="flex items-center gap-2 px-3 py-2 rounded-sm border text-[11px] font-serif font-semibold uppercase tracking-[0.5px] transition-colors"
+              style={{
+                backgroundColor: tab === 'adventures' ? '#b85c38' : 'transparent',
+                color: tab === 'adventures' ? '#faf7f2' : '#8a7e72',
+                borderColor: tab === 'adventures' ? '#b85c38' : '#d8cfc4',
+              }}
+            >
+              {/* Kite icon */}
+              <svg width="12" height="14" viewBox="0 0 14 16" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M7 1 L12 6 L7 13 L2 6 Z" />
+                <path d="M7 1 L7 13 M2 6 L12 6" />
+              </svg>
+              {/* Bicycle icon */}
+              <svg width="12" height="10" viewBox="0 0 14 12" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="2" cy="10" r="1.8" />
+                <circle cx="12" cy="10" r="1.8" />
+                <path d="M2 10 L5 4 L9 4 L12 10 M5 4 L8 4 M5 4 L6 10" />
+              </svg>
+              Adventure Scheming
+            </button>
+          </div>
         </div>
       </div>
 

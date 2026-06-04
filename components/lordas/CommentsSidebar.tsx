@@ -97,7 +97,22 @@ export function CommentsSidebar({
                   </span>
                   <span className="text-[9px] text-ink-muted">
                     {comment.createdAt
-                      ? new Date(comment.createdAt.toDate?.() || '').toLocaleDateString()
+                      ? (() => {
+                          let date: Date | null = null
+                          // Handle Firestore Timestamp object
+                          if (typeof comment.createdAt === 'object' && 'toDate' in comment.createdAt) {
+                            date = (comment.createdAt as any).toDate()
+                          }
+                          // Handle ISO string or timestamp number
+                          else if (typeof comment.createdAt === 'string' || typeof comment.createdAt === 'number') {
+                            date = new Date(comment.createdAt)
+                          }
+                          // Handle serialized Firestore Timestamp { _seconds, _nanoseconds }
+                          else if (typeof comment.createdAt === 'object' && '_seconds' in comment.createdAt) {
+                            date = new Date((comment.createdAt as any)._seconds * 1000)
+                          }
+                          return date ? date.toLocaleDateString() : 'Date unknown'
+                        })()
                       : ''}
                   </span>
                 </div>
