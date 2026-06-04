@@ -164,9 +164,9 @@ export default function LordasPage() {
                   onClick={() => setTab('dashboard')}
                   className="flex items-center gap-1 px-2 py-1.5 rounded-sm border text-[9px] font-serif font-semibold uppercase transition-colors flex-shrink-0"
                   style={{
-                    backgroundColor: tab === 'dashboard' ? '#b85c38' : 'transparent',
-                    color: tab === 'dashboard' ? '#faf7f2' : '#8a7e72',
-                    borderColor: tab === 'dashboard' ? '#b85c38' : '#d8cfc4',
+                    backgroundColor: 'transparent',
+                    color: '#8a7e72',
+                    borderColor: '#d8cfc4',
                   }}
                 >
                   <svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round">
@@ -182,9 +182,9 @@ export default function LordasPage() {
                   onClick={() => setTab('adventures')}
                   className="flex items-center gap-1 px-2 py-1.5 rounded-sm border text-[9px] font-serif font-semibold uppercase transition-colors flex-shrink-0"
                   style={{
-                    backgroundColor: tab === 'adventures' ? '#b85c38' : 'transparent',
-                    color: tab === 'adventures' ? '#faf7f2' : '#8a7e72',
-                    borderColor: tab === 'adventures' ? '#b85c38' : '#d8cfc4',
+                    backgroundColor: '#b85c38',
+                    color: '#faf7f2',
+                    borderColor: '#b85c38',
                   }}
                 >
                   <svg width="9" height="10" viewBox="0 0 14 16" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
