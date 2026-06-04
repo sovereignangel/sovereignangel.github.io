@@ -6,6 +6,7 @@ import type { AdventureComment, RelationalSpeaker } from '@/lib/types'
 interface CommentsSidebarProps {
   isOpen: boolean
   onClose: () => void
+  onOpen: () => void
   comments: AdventureComment[]
   onAddComment: (author: RelationalSpeaker, text: string) => void
 }
@@ -13,6 +14,7 @@ interface CommentsSidebarProps {
 export function CommentsSidebar({
   isOpen,
   onClose,
+  onOpen,
   comments,
   onAddComment,
 }: CommentsSidebarProps) {
@@ -34,6 +36,31 @@ export function CommentsSidebar({
           className="fixed inset-0 bg-black/20 z-40 transition-opacity"
           onClick={onClose}
         />
+      )}
+
+      {/* Tab - sticks out from right edge when closed */}
+      {!isOpen && (
+        <button
+          onClick={onOpen}
+          className="fixed right-0 top-1/3 z-45 flex items-center justify-center rounded-l-sm border border-r-0 border-rule bg-white hover:bg-paper transition-colors"
+          style={{
+            width: '32px',
+            height: '80px',
+            borderRadius: '8px 0 0 8px',
+            boxShadow: '-2px 4px 12px rgba(72,40,28,0.15)',
+            cursor: 'pointer',
+          }}
+          title="Comments"
+        >
+          <div className="flex flex-col items-center gap-1">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" className="text-burgundy">
+              <path d="M1 3h12v7H4l-2 2v-2H1z" />
+            </svg>
+            {comments.length > 0 && (
+              <span className="text-[9px] font-mono font-semibold text-burgundy">{comments.length}</span>
+            )}
+          </div>
+        </button>
       )}
 
       {/* Sidebar */}

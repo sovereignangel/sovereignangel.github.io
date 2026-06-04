@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Arete Technologies — Logo Exploration</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=GFS+Didot&display=swap" rel="stylesheet" />
+<style>
+  html, body { margin: 0; padding: 0; background: #1a1815; }
+  body { font-family: Helvetica, "Helvetica Neue", Arial, sans-serif; }
+</style>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script type="text/babel" src="design-canvas.jsx"></script>
+<script type="text/babel" src="logos.jsx"></script>
+<script type="text/babel" src="kiting.jsx"></script>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState } = React;
+
+function Brief() {
+  return (
+    <div style={{
+      width: 1100, padding: '56px 64px', background: '#f4efe6', color: '#1a1815',
+      fontFamily: '"Cormorant Garamond", Georgia, serif',
+      boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0.06)',
+    }}>
+      <div style={{
+        fontSize: 10, letterSpacing: '0.42em', opacity: 0.6,
+        fontFamily: 'ui-monospace, Menlo, monospace',
+      }}>
+        BRIEF · MMXXVI · LOGO EXPLORATION
+      </div>
+      <div style={{ height: 1, background: '#1a1815', opacity: 0.35, margin: '24px 0 32px' }} />
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 56 }}>
+        <div>
+          <div style={{ fontSize: 13, letterSpacing: '0.3em', textTransform: 'uppercase', opacity: 0.55, fontFamily: 'ui-monospace, Menlo, monospace', marginBottom: 14 }}>The fund</div>
+          <div style={{ fontSize: 22, lineHeight: 1.5, fontWeight: 400 }}>
+            A management company for a hedge fund — built by a builder-philosopher quant and a systems-thinking investor. The fund is framed as a <em>conduit</em>: capital and craft as a path to becoming our best selves.
+          </div>
+        </div>
+        <div>
+          <div style={{ fontSize: 13, letterSpacing: '0.3em', textTransform: 'uppercase', opacity: 0.55, fontFamily: 'ui-monospace, Menlo, monospace', marginBottom: 14 }}>The aesthetic</div>
+          <div style={{ fontSize: 22, lineHeight: 1.5, fontWeight: 400 }}>
+            Aristotelian virtue and excellence — <em>ἀρετή</em>. Stone-cut, scholarly, geometrically restrained. A modern register that earns its classical roots: Helvetica or monospace next to italic Garamond. Cream, ink, a sliver of bronze.
+          </div>
+        </div>
+      </div>
+      <div style={{ height: 1, background: '#1a1815', opacity: 0.2, margin: '40px 0 32px' }} />
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 24 }}>
+        {[
+          ['01', 'Stone-cut', 'Roman capitals, carved authority'],
+          ['02', 'Golden Mean', 'φ as a graphic argument'],
+          ['03', 'Bilingual', 'ἀρετή stacked with ARETE'],
+          ['04', 'The Aim', 'τέλος as schematic'],
+          ['05', 'Monogram', 'Seal-ready A with mean'],
+          ['06', 'The Conduit', 'Wordmark in a channel'],
+        ].map(([n, t, d]) => (
+          <div key={n}>
+            <div style={{ fontSize: 10, letterSpacing: '0.3em', opacity: 0.55, fontFamily: 'ui-monospace, Menlo, monospace' }}>{n}</div>
+            <div style={{ fontSize: 16, fontWeight: 500, marginTop: 6 }}>{t}</div>
+            <div style={{ fontSize: 12, opacity: 0.65, marginTop: 4, lineHeight: 1.4 }}>{d}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function App() {
+  const {
+    DesignCanvas, DCSection, DCArtboard,
+  } = window.DesignCanvas ? window : window;
+  const { DesignCanvas: DC } = window;
+
+  return (
+    <window.DesignCanvas title="Arete Technologies" subtitle="Logo exploration + LP retreat">
+      <window.DCSection id="brief" title="Brief">
+        <window.DCArtboard id="brief-card" label="The brief" width={1100} height={420}>
+          <Brief />
+        </window.DCArtboard>
+      </window.DCSection>
+
+      <window.DCSection id="primary" title="Primary lockups — on cream, white, and ink">
+        <window.DCArtboard id="01-stonecut" label="01 · Stone-cut Trajan" width={520} height={720}>
+          <window.LogoSet Logo={window.StoneCut} />
+        </window.DCArtboard>
+        <window.DCArtboard id="02-goldenmean" label="02 · The Golden Mean" width={520} height={720}>
+          <window.LogoSet Logo={window.GoldenMean} />
+        </window.DCArtboard>
+        <window.DCArtboard id="03-bilingual" label="03 · Bilingual stack" width={520} height={720}>
+          <window.LogoSet Logo={window.Bilingual} />
+        </window.DCArtboard>
+        <window.DCArtboard id="04-theaim" label="04 · The Aim (τέλος)" width={520} height={720}>
+          <window.LogoSet Logo={window.TheAim} />
+        </window.DCArtboard>
+        <window.DCArtboard id="05-monogram" label="05 · Monogram & seal" width={520} height={720}>
+          <window.LogoSet Logo={window.Monogram} />
+        </window.DCArtboard>
+        <window.DCArtboard id="06-conduit" label="06 · The Conduit" width={520} height={720}>
+          <window.LogoSet Logo={window.Conduit} />
+        </window.DCArtboard>
+      </window.DCSection>
+
+      <window.DCSection id="applied" title="Applied — letterhead">
+        <window.DCArtboard id="letterhead" label="Letterhead · 03 Bilingual" width={600} height={800}>
+          <window.Letterhead />
+        </window.DCArtboard>
+      </window.DCSection>
+
+      <window.DCSection id="kiting" title="LP Retreat — Kitesurf · France · July 2026">
+        <window.DCArtboard id="k-vintage" label="01 · Vintage travel poster" width={600} height={800}>
+          <window.PosterVintage />
+        </window.DCArtboard>
+        <window.DCArtboard id="k-editorial" label="02 · Editorial / scholarly" width={600} height={800}>
+          <window.PosterEditorial />
+        </window.DCArtboard>
+        <window.DCArtboard id="k-modernist" label="03 · Modernist sport" width={600} height={800}>
+          <window.PosterModernist />
+        </window.DCArtboard>
+        <window.DCArtboard id="k-classical" label="04 · Classical invitation" width={600} height={800}>
+          <window.PosterClassical />
+        </window.DCArtboard>
+      </window.DCSection>
+
+      <window.DCSection id="cards" title="Applied — business cards">
+        <window.DCArtboard id="card-stonecut" label="01 Stone-cut" width={420} height={240}>
+          <window.Card Logo={window.StoneCut} name="Dave —" role="Partner · Investments" />
+        </window.DCArtboard>
+        <window.DCArtboard id="card-goldenmean" label="02 Golden Mean" width={420} height={240}>
+          <window.Card Logo={window.GoldenMean} name="—" role="Partner · Research" />
+        </window.DCArtboard>
+        <window.DCArtboard id="card-bilingual" label="03 Bilingual" width={420} height={240}>
+          <window.Card Logo={window.Bilingual} name="Dave —" role="Partner · Investments" />
+        </window.DCArtboard>
+        <window.DCArtboard id="card-monogram" label="05 Monogram" width={420} height={240}>
+          <window.Card Logo={window.Monogram} name="—" role="Partner · Research" />
+        </window.DCArtboard>
+      </window.DCSection>
+    </window.DesignCanvas>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>

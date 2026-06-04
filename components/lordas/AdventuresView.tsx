@@ -39,28 +39,14 @@ export function AdventuresView({
         <GrandTourCalendar />
       </div>
 
-      {/* Plan + Comments Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {/* Summer Plan */}
-        <div className="lg:col-span-2">
-          <SummerPlanCard plan={summerPlan} />
-        </div>
-
-        {/* Comments Button */}
-        <div className="flex items-start">
-          <button
-            onClick={() => setSidebarOpen(true)}
-            className="w-full py-3 rounded-sm border border-rule text-ink-muted hover:text-ink hover:border-burgundy transition-colors text-[11px] font-mono uppercase tracking-[0.08em]"
-          >
-            {comments.length > 0 ? `View Comments (${comments.length})` : 'Add Comments'}
-          </button>
-        </div>
-      </div>
+      {/* Summer Plan */}
+      <SummerPlanCard plan={summerPlan} />
 
       {/* Comments Sidebar */}
       <CommentsSidebar
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
+        onOpen={() => setSidebarOpen(true)}
         comments={comments}
         onAddComment={handleAddComment}
       />
