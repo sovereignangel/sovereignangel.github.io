@@ -126,7 +126,7 @@ export default function LordasPage() {
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#f5f0e8' }}>
-      {/* Header with logo and section buttons */}
+      {/* Header with logo and buttons - always visible */}
       <div className="border-b" style={{ borderColor: '#d8cfc4' }}>
         <div className="max-w-[1100px] mx-auto px-4 py-4 flex items-center justify-between">
           {/* Left: Logo and title */}
@@ -158,7 +158,6 @@ export default function LordasPage() {
                 borderColor: tab === 'dashboard' ? '#b85c38' : '#d8cfc4',
               }}
             >
-              {/* Design/Connection logo - circle with three connected dots */}
               <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round">
                 <circle cx="8" cy="3" r="1.5" />
                 <circle cx="5" cy="10" r="1.5" />
@@ -177,12 +176,10 @@ export default function LordasPage() {
                 borderColor: tab === 'adventures' ? '#b85c38' : '#d8cfc4',
               }}
             >
-              {/* Kite icon */}
               <svg width="12" height="14" viewBox="0 0 14 16" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M7 1 L12 6 L7 13 L2 6 Z" />
                 <path d="M7 1 L7 13 M2 6 L12 6" />
               </svg>
-              {/* Bicycle icon */}
               <svg width="12" height="10" viewBox="0 0 14 12" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="2" cy="10" r="1.8" />
                 <circle cx="12" cy="10" r="1.8" />
