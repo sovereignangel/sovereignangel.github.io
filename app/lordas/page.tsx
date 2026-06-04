@@ -9,11 +9,15 @@ import { GrowthPillar } from '@/components/lordas/GrowthPillar'
 import { AlignmentPillar } from '@/components/lordas/AlignmentPillar'
 import { SessionTimeline } from '@/components/lordas/SessionTimeline'
 import { TheorySection } from '@/components/lordas/TheorySection'
+import { AdventuresView } from '@/components/lordas/AdventuresView'
 import type {
   RelationshipConversation,
   RelationshipTheme,
   RelationshipValue,
   RelationshipSnapshot,
+  SummerPlan,
+  AdventureComment,
+  RelationalSpeaker,
 } from '@/lib/types'
 
 interface DashboardData {
@@ -21,9 +25,11 @@ interface DashboardData {
   themes: RelationshipTheme[]
   values: RelationshipValue[]
   snapshots: RelationshipSnapshot[]
+  summerPlan?: SummerPlan
+  adventureComments?: AdventureComment[]
 }
 
-type Tab = 'dashboard' | 'theory'
+type Tab = 'dashboard' | 'theory' | 'adventures'
 
 export default function LordasPage() {
   const [pin, setPin] = useState<string | null>(null)
@@ -96,9 +102,25 @@ export default function LordasPage() {
   const themes = data?.themes || []
   const values = data?.values || []
   const snapshots = data?.snapshots || []
+  const summerPlan = data?.summerPlan || null
+  const adventureComments = data?.adventureComments || []
 
   const latest = conversations[0] || null
   const latestSnapshot = snapshots[0] || null
+
+  const handleAddComment = async (author: RelationalSpeaker, text: string) => {
+    try {
+      const res = await fetch(`/api/lordas/adventures/comments?pin=${encodeURIComponent(pin!)}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ author, text }),
+      })
+      if (!res.ok) throw new Error('Failed to post comment')
+      await fetchData(pin!)
+    } catch (err) {
+      console.error('Error posting comment:', err)
+    }
+  }
 
   return (
     <div className="max-w-[1100px] mx-auto px-4 py-6">
@@ -110,7 +132,7 @@ export default function LordasPage() {
 
       {/* Tab nav */}
       <div className="flex gap-4 mt-4 border-b" style={{ borderColor: '#d8cfc4' }}>
-        {(['dashboard', 'theory'] as Tab[]).map((t) => (
+        {(['dashboard', 'adventures', 'theory'] as Tab[]).map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
@@ -122,13 +144,19 @@ export default function LordasPage() {
               marginBottom: '-1px',
             }}
           >
-            {t === 'dashboard' ? 'Dashboard' : 'Theory & Application'}
+            {t === 'dashboard' ? 'Dashboard' : t === 'adventures' ? 'Adventures' : 'Theory & Application'}
           </button>
         ))}
       </div>
 
       <div className="mt-6 space-y-6">
-        {tab === 'theory' ? (
+        {tab === 'adventures' ? (
+          <AdventuresView
+            summerPlan={summerPlan}
+            comments={adventureComments}
+            onAddComment={handleAddComment}
+          />
+        ) : tab === 'theory' ? (
           <TheorySection conversations={conversations} />
         ) : conversations.length === 0 ? (
           <EmptyOutline />

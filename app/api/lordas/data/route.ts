@@ -31,24 +31,35 @@ export async function GET(request: NextRequest) {
     const userRef = db.collection('users').doc(uid)
 
     // Fetch all data in parallel
-    const [convsSnap, themesSnap, valuesSnap, snapshotsSnap] = await Promise.all([
+    const [convsSnap, themesSnap, valuesSnap, snapshotsSnap, summerPlanSnap, adventureSessionSnap] = await Promise.all([
       userRef.collection('relationship_conversations').orderBy('date', 'desc').limit(50).get(),
       userRef.collection('relationship_themes').get(),
       userRef.collection('relationship_values').get(),
       userRef.collection('relationship_snapshots').orderBy('date', 'desc').limit(30).get(),
+      userRef.collection('summer_plans').orderBy('createdAt', 'desc').limit(1).get(),
+      userRef.collection('adventure_sessions').limit(1).get(),
     ])
 
     const conversations = convsSnap.docs.map(d => d.data())
-
     const themes = themesSnap.docs.map(d => d.data())
     const values = valuesSnap.docs.map(d => d.data())
     const snapshots = snapshotsSnap.docs.map(d => d.data())
+
+    const summerPlan = summerPlanSnap.docs[0]?.data() || null
+    let adventureComments: any[] = []
+
+    if (adventureSessionSnap.docs[0]) {
+      const sessionData = adventureSessionSnap.docs[0].data()
+      adventureComments = sessionData.comments || []
+    }
 
     return NextResponse.json({
       conversations,
       themes,
       values,
       snapshots,
+      summerPlan,
+      adventureComments,
     })
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error)

@@ -189,3 +189,65 @@ export interface RelationshipSnapshot {
   conversationCount: number
   rollingAverage: PillarScores
 }
+
+// ---------------------------------------------------------------------------
+// Adventures & Summer Planning
+// ---------------------------------------------------------------------------
+
+export interface SummerPhase {
+  name: string
+  startDate: string
+  endDate: string
+  location: string
+  description: string
+  icon: 'morocco' | 'base' | 'spoke' | 'ride' | 'como'
+}
+
+export interface PersonDreamsConstraints {
+  person: RelationalSpeaker
+  dreams: string[]
+  constraints: string[]
+}
+
+export interface SummerMilestone {
+  date: string
+  title: string
+  description: string
+}
+
+export interface SummerPlan {
+  id: string
+  year: number
+  dateRange: {
+    start: string
+    end: string
+  }
+  baseLocation: string
+  phases: SummerPhase[]
+
+  dreamsConstraints: PersonDreamsConstraints[]
+
+  milestones: SummerMilestone[]
+  priorities: string[]
+  focuses: string[]
+  estimatedCost: number
+
+  updatedAt: Timestamp
+  createdAt: Timestamp
+}
+
+export interface AdventureComment {
+  id: string
+  author: RelationalSpeaker
+  text: string
+  createdAt: Timestamp
+  editedAt?: Timestamp
+}
+
+export interface AdventureSession {
+  id: string
+  summerPlanId: string
+  comments: AdventureComment[]
+  lastCommentAt?: Timestamp
+  createdAt: Timestamp
+}
