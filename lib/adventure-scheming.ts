@@ -6,11 +6,52 @@
 import type { SummerPlan, SummerPhase, SummerMilestone, AdventureComment } from '@/lib/types'
 
 /**
+ * Extract keywords from comments to inform plan generation
+ */
+function extractKeywords(comments: AdventureComment[]): Set<string> {
+  const keywords = new Set<string>()
+  const keywords_to_match = [
+    'kite', 'kiting', 'bike', 'cycling', 'bicycle',
+    'friends', 'group', 'people',
+    'deep', 'slow', 'fast', 'speed',
+    'budget', 'expensive', 'cheap', 'cost',
+    'activities', 'activity', 'active',
+    'home', 'base', 'palanga',
+  ]
+
+  comments.forEach((c) => {
+    const text = c.text.toLowerCase()
+    keywords_to_match.forEach((kw) => {
+      if (text.includes(kw)) {
+        keywords.add(kw)
+      }
+    })
+  })
+
+  return keywords
+}
+
+/**
  * Generate a sample plan variant based on comments
  * This is a simple implementation using hardcoded data
  * Real implementation would use AI/constraints
  */
 export function generatePlanVariant(index: number, comments: AdventureComment[]): SummerPlan {
+  // Extract keywords from comments to bias variant selection
+  const keywords = extractKeywords(comments)
+
+  // Use keyword hints to pick variants
+  let variantIndex = index
+  if (keywords.has('kite') || keywords.has('kiting')) {
+    variantIndex = index % 2 === 0 ? 3 : index // Activities First variant
+  }
+  if (keywords.has('friends') || keywords.has('group')) {
+    variantIndex = 4 // Friends & Community variant
+  }
+  if (keywords.has('fast') || keywords.has('speed')) {
+    variantIndex = 2 // Speed Run variant
+  }
+
   // For MVP, cycle through a few hand-crafted variants based on comment sentiment
   const variants = [
     createPlanVariant(1, 'European Deep Dive', [

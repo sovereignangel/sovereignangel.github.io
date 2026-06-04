@@ -47,6 +47,13 @@ export function AdventuresView({
     loadVotes()
   }, [user?.uid])
 
+  // Regenerate plans when comments change (if swiping has started)
+  useEffect(() => {
+    if (swipeStarted && comments.length > 0) {
+      regeneratePlans(comments)
+    }
+  }, [comments])
+
   const loadVotes = async () => {
     if (!user?.uid) return
     try {
@@ -57,6 +64,19 @@ export function AdventuresView({
     } finally {
       setLoadingVotes(false)
     }
+  }
+
+  const regeneratePlans = (updatedComments: AdventureComment[]) => {
+    // Generate 5 fresh plans based on updated comments
+    const newPlans = [
+      generatePlanVariant(0, updatedComments),
+      generatePlanVariant(1, updatedComments),
+      generatePlanVariant(2, updatedComments),
+      generatePlanVariant(3, updatedComments),
+      generatePlanVariant(4, updatedComments),
+    ]
+    setPlans(newPlans)
+    setCurrentPlanIndex(0) // Reset to first plan
   }
 
   const handleAddComment = useCallback(
