@@ -52,8 +52,8 @@ Visa/budget blockers?
 
 **Button behavior**:
 - "All good, take me to the plans" proceeds whether or not input is filled
-- Allows users to skip if they have no new constraints
-- Plans still generate from previous comments/constraints if input is empty
+- If new text is added: generate new 5-plan batch from updated constraints
+- If no new text: show existing plans from last generation (no regeneration)
 
 ---
 
@@ -167,9 +167,10 @@ Click into a plan to see:
 **Batch Size**: 5 plans per generation (not 40+)
 
 **Trigger for Regeneration**:
-- When user adds new comment/constraint
-- When batch is depleted (user swiped through all)
+- When user adds new comment/constraint in the input box
+- When batch is depleted (user swiped through all 5)
 - **NOT repetitive**: each generation creates entirely new variants
+- **No regeneration** if input is empty (just review existing plans)
 
 **Input** (from comments & preferences):
 - Locations mentioned (Morocco, Greece, Como, Berlin, etc.)
