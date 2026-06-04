@@ -149,6 +149,11 @@ export default function LordasPage() {
         ))}
       </div>
 
+      {/* TEST: If you see this text, the latest code is deployed */}
+      <div style={{ fontSize: '12px', color: 'red', marginTop: '10px', padding: '10px', backgroundColor: '#fff0f0' }}>
+        TEST: Latest code is running - Adventures tab should appear above
+      </div>
+
       <div className="mt-6 space-y-6">
         {tab === 'adventures' ? (
           <AdventuresView
