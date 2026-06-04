@@ -11,12 +11,16 @@ import type { SummerPlan, SummerPhase, SummerMilestone, AdventureComment } from 
 function extractKeywords(comments: AdventureComment[]): Set<string> {
   const keywords = new Set<string>()
   const keywords_to_match = [
-    'kite', 'kiting', 'bike', 'cycling', 'bicycle',
-    'friends', 'group', 'people',
-    'deep', 'slow', 'fast', 'speed',
-    'budget', 'expensive', 'cheap', 'cost',
-    'activities', 'activity', 'active',
-    'home', 'base', 'palanga',
+    'kite', 'kiting', 'wind',
+    'bike', 'cycling', 'bicycle', 'ride',
+    'friends', 'group', 'people', 'party', 'gather',
+    'deep', 'slow', 'relax', 'chill', 'extended',
+    'fast', 'speed', 'quick', 'quick',
+    'budget', 'expensive', 'cheap', 'cost', 'money',
+    'activities', 'activity', 'active', 'sports',
+    'home', 'base', 'palanga', 'stay',
+    'greece', 'berlin', 'como', 'italy', 'europe',
+    'culture', 'cities', 'urban', 'food',
   ]
 
   comments.forEach((c) => {
@@ -83,6 +87,36 @@ export function generatePlanVariant(index: number, comments: AdventureComment[])
       createPhase('Base Visits', '2026-07-11', '2026-08-20', 'base', 'Friends come stay'),
       createPhase('Bigger Group', '2026-08-21', '2026-09-10', 'spoke', 'Gather friends in Europe'),
       createPhase('Intimate Finish', '2026-09-11', '2026-09-20', 'como', 'Close friends only'),
+    ]),
+    createPlanVariant(6, 'Urban Explorer', [
+      createPhase('Marrakech City', '2026-07-01', '2026-07-10', 'morocco', 'Urban culture & medinas'),
+      createPhase('Palanga Breather', '2026-07-11', '2026-07-25', 'base', 'Reset before cities'),
+      createPhase('European Capitals', '2026-07-26', '2026-09-05', 'spoke', 'Berlin, Prague, Budapest'),
+      createPhase('Alpine Como', '2026-09-06', '2026-09-20', 'como', 'Mountain scenery'),
+    ]),
+    createPlanVariant(7, 'Wellness Focus', [
+      createPhase('Morocco Retreat', '2026-07-01', '2026-07-15', 'morocco', 'Relax & reset'),
+      createPhase('Palanga Spa', '2026-07-16', '2026-08-25', 'base', 'Wellness routines'),
+      createPhase('Alpine Hikes', '2026-08-26', '2026-09-10', 'spoke', 'Mountain wellness'),
+      createPhase('Como Reflection', '2026-09-11', '2026-09-20', 'como', 'Final restoration'),
+    ]),
+    createPlanVariant(8, 'Hybrid Mix', [
+      createPhase('Morocco Taster', '2026-07-01', '2026-07-06', 'morocco', 'Quick intro'),
+      createPhase('Palanga Base', '2026-07-07', '2026-08-10', 'base', 'Extended home'),
+      createPhase('Greece & Cities', '2026-08-11', '2026-09-05', 'spoke', 'Beach & urban'),
+      createPhase('Como Finish', '2026-09-06', '2026-09-20', 'como', 'Quiet conclusion'),
+    ]),
+    createPlanVariant(9, 'Nature Immersion', [
+      createPhase('Sahara Desert', '2026-07-01', '2026-07-18', 'morocco', 'Deep desert experience'),
+      createPhase('Palanga Nature', '2026-07-19', '2026-08-15', 'base', 'Outdoor activities'),
+      createPhase('Mountain Ranges', '2026-08-16', '2026-09-10', 'spoke', 'Hiking & climbing'),
+      createPhase('Lake Como', '2026-09-11', '2026-09-20', 'como', 'Alpine beauty'),
+    ]),
+    createPlanVariant(10, 'Social Butterfly', [
+      createPhase('Morocco Networking', '2026-07-01', '2026-07-12', 'morocco', 'Meet people'),
+      createPhase('Palanga Hub', '2026-07-13', '2026-08-15', 'base', 'Host friends'),
+      createPhase('Festival Circuit', '2026-08-16', '2026-09-10', 'spoke', 'Events & gatherings'),
+      createPhase('Como Party', '2026-09-11', '2026-09-20', 'como', 'Celebration retreat'),
     ]),
   ]
 

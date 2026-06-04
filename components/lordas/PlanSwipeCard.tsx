@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import type { SummerPlan } from '@/lib/types'
 import { computePlanStats } from '@/lib/adventure-scheming'
 import { PlanCalendarGrid } from './PlanCalendarGrid'
@@ -50,6 +50,23 @@ export function PlanSwipeCard({ plan, index, total, onSwipe, onUndo }: PlanSwipe
       onSwipe('left')
     }
   }
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (showFeedback) return
+      if (e.key === 'ArrowRight') {
+        handleRight()
+      } else if (e.key === 'ArrowLeft') {
+        handleLeftSwipe()
+      } else if (e.key === '?') {
+        handleMaybe()
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [showFeedback])
 
   const handleLeftSwipe = () => {
     setShowFeedback(true)
@@ -189,6 +206,7 @@ export function PlanSwipeCard({ plan, index, total, onSwipe, onUndo }: PlanSwipe
       <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
         <button
           onClick={handleLeftSwipe}
+          title="Keyboard: Left Arrow"
           style={{
             flex: 1,
             padding: '12px',
@@ -205,6 +223,7 @@ export function PlanSwipeCard({ plan, index, total, onSwipe, onUndo }: PlanSwipe
         </button>
         <button
           onClick={handleMaybe}
+          title="Keyboard: ?"
           style={{
             flex: 1,
             padding: '12px',
@@ -221,6 +240,7 @@ export function PlanSwipeCard({ plan, index, total, onSwipe, onUndo }: PlanSwipe
         </button>
         <button
           onClick={handleRight}
+          title="Keyboard: Right Arrow"
           style={{
             flex: 1,
             padding: '12px',
@@ -235,6 +255,21 @@ export function PlanSwipeCard({ plan, index, total, onSwipe, onUndo }: PlanSwipe
         >
           ❤️ Love
         </button>
+      </div>
+
+      {/* Keyboard help */}
+      <div
+        style={{
+          padding: '12px',
+          background: '#ebe4d4',
+          borderRadius: '4px',
+          fontSize: '10px',
+          color: '#8a7e72',
+          textAlign: 'center',
+          marginBottom: '12px',
+        }}
+      >
+        Desktop: arrow keys (← / →) or ? key
       </div>
 
       {onUndo && (
