@@ -1,13 +1,16 @@
 'use client'
 
-import { useState, useCallback } from 'react'
-import type { SummerPlan, AdventureComment, RelationalSpeaker } from '@/lib/types'
+import { useState, useCallback, useEffect } from 'react'
+import type { SummerPlan, AdventureComment, RelationalSpeaker, PlanVote } from '@/lib/types'
 import { GrandTourCalendar } from './GrandTourCalendar'
 import { SummerPlanCard } from './SummerPlanCard'
 import { CommentsSidebar } from './CommentsSidebar'
 import { ConstraintInput } from './ConstraintInput'
 import { PlanSwipeCard } from './PlanSwipeCard'
+import { PrioritiesView } from './PrioritiesView'
 import { generatePlanVariant } from '@/lib/adventure-scheming'
+import { recordPlanVote, getSessionVotes } from '@/lib/firestore/adventure-votes'
+import { useAuth } from '@/components/auth/AuthProvider'
 
 interface AdventuresViewProps {
   summerPlan: SummerPlan | null
@@ -22,6 +25,7 @@ export function AdventuresView({
   comments,
   onAddComment,
 }: AdventuresViewProps) {
+  const { user } = useAuth()
   const [tab, setTab] = useState<Tab>('play')
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -34,7 +38,26 @@ export function AdventuresView({
     generatePlanVariant(3, comments),
     generatePlanVariant(4, comments),
   ])
-  const [swipeHistory, setSwipeHistory] = useState<Array<{ planId: string; vote: string }>>([])
+  const [votes, setVotes] = useState<PlanVote[]>([])
+  const [loadingVotes, setLoadingVotes] = useState(true)
+
+  // Load votes on mount
+  useEffect(() => {
+    if (!user?.uid) return
+    loadVotes()
+  }, [user?.uid])
+
+  const loadVotes = async () => {
+    if (!user?.uid) return
+    try {
+      const allVotes = await getSessionVotes(user.uid)
+      setVotes(allVotes)
+    } catch (err) {
+      console.error('Error loading votes:', err)
+    } finally {
+      setLoadingVotes(false)
+    }
+  }
 
   const handleAddComment = useCallback(
     async (author: RelationalSpeaker, text: string) => {
@@ -55,21 +78,43 @@ export function AdventuresView({
     setSwipeStarted(true)
   }
 
-  const handleSwipe = (vote: 'right' | 'left' | 'maybe', feedback?: string) => {
-    const plan = plans[currentPlanIndex]
-    setSwipeHistory([...swipeHistory, { planId: plan.id, vote }])
+  const handleSwipe = async (vote: 'right' | 'left' | 'maybe', feedback?: string) => {
+    if (!user?.uid) return
 
-    if (currentPlanIndex < plans.length - 1) {
-      setCurrentPlanIndex(currentPlanIndex + 1)
-    } else {
-      // Batch depleted - regenerate or show summary
-      alert('Batch swiped! Ready to regenerate on next comment.')
+    const plan = plans[currentPlanIndex]
+
+    try {
+      // Save to Firestore
+      await recordPlanVote(user.uid, plan.id, 'lori', vote, feedback)
+
+      // Update local votes
+      setVotes([
+        ...votes,
+        {
+          id: `temp-${Date.now()}`,
+          planId: plan.id,
+          user: 'lori',
+          vote,
+          feedback,
+          timestamp: new Date() as any,
+        },
+      ])
+
+      // Move to next plan
+      if (currentPlanIndex < plans.length - 1) {
+        setCurrentPlanIndex(currentPlanIndex + 1)
+      } else {
+        // Batch depleted
+        alert('Batch swiped! Ready to regenerate on next comment.')
+      }
+    } catch (err) {
+      console.error('Error recording vote:', err)
     }
   }
 
   const handleUndo = () => {
-    if (swipeHistory.length > 0) {
-      setSwipeHistory(swipeHistory.slice(0, -1))
+    if (votes.length > 0) {
+      setVotes(votes.slice(0, -1))
       if (currentPlanIndex > 0) {
         setCurrentPlanIndex(currentPlanIndex - 1)
       }
@@ -132,12 +177,7 @@ export function AdventuresView({
 
       {/* Priorities Tab - Ranked list */}
       {tab === 'priorities' && (
-        <div style={{ padding: '24px', background: '#faf8f4', borderRadius: '8px', textAlign: 'center' }}>
-          <p style={{ color: '#8a7e72', fontSize: '13px' }}>Swipe some plans first to see your priorities!</p>
-          <p style={{ color: '#8a7e72', fontSize: '11px', marginTop: '8px' }}>
-            ({swipeHistory.length} swipes so far)
-          </p>
-        </div>
+        <PrioritiesView plans={plans} votes={votes} />
       )}
 
       {/* Comments Sidebar */}
