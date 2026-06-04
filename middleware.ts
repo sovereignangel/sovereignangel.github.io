@@ -22,6 +22,13 @@ export function middleware(request: NextRequest) {
     return NextResponse.rewrite(url)
   }
 
+  // armstrong.arete.com → rewrite to /armstrong
+  if (host === 'armstrong.arete.com') {
+    const url = request.nextUrl.clone()
+    url.pathname = `/armstrong${url.pathname === '/' ? '' : url.pathname}`
+    return NextResponse.rewrite(url)
+  }
+
   // aretetec.com / www.aretetec.com (apex) → rewrite to /arete
   // arete.loricorpuz.com (legacy) → rewrite to /arete; the Vercel UI 301 will
   // handle most clients, but keep this fallback while DNS/redirect propagates.

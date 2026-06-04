@@ -1486,11 +1486,154 @@ export default function SalonsPage() {
     >
       <style dangerouslySetInnerHTML={{ __html: PAGE_CSS }} />
       <Hero />
-      <Format />
-      <Schedule />
-      <House />
-      <RSVP />
+      <SimplifiedRSVP />
       <Footer />
     </div>
+  )
+}
+
+// Simplified RSVP section with purpose statement
+function SimplifiedRSVP() {
+  const isMobile = useIsMobile()
+  const [taken, setTaken] = useState(EVENT.initialTaken)
+  const [seats, setSeats] = useState<1 | 2>(1)
+  const [name, setName] = useState('')
+  const [email, setEmail] = useState('')
+  const [submitted, setSubmitted] = useState(false)
+
+  const remaining = EVENT.cap - taken
+
+  const submit = (e: React.FormEvent) => {
+    e.preventDefault()
+    setTaken((t) => Math.min(EVENT.cap, t + seats))
+    setSubmitted(true)
+  }
+
+  return (
+    <section
+      id="rsvp"
+      style={{
+        background: T.cream,
+        color: T.ink,
+        padding: isMobile ? '64px 20px' : '120px 48px',
+        position: 'relative',
+      }}
+    >
+      <div style={{ maxWidth: 980, margin: '0 auto' }}>
+        <div style={{ marginBottom: isMobile ? 32 : 48 }}>
+          <div style={{ fontSize: 11, letterSpacing: '0.5em', paddingLeft: '0.5em', fontFamily: T.mono, opacity: 0.6, marginBottom: 16 }}>
+            SALON CONCEPT
+          </div>
+          <p style={{ fontFamily: T.serif, fontSize: isMobile ? 18 : 22, lineHeight: 1.6, maxWidth: 760, color: T.ink }}>
+            The Long View brings together leaders in technology and thought. Three speakers, ten minutes each. One idea, well-formed. Then a panel, open questions, and a long dinner at a private table in lower Manhattan. For twenty-four by invitation only.
+          </p>
+          <div style={{ marginTop: 24 }}>
+            <a
+              href="https://armstrong.arete.com"
+              style={{
+                display: 'inline-block',
+                background: T.wine,
+                color: T.cream,
+                padding: '14px 28px',
+                textDecoration: 'none',
+                fontFamily: T.mono,
+                fontSize: 10,
+                letterSpacing: '0.32em',
+                textTransform: 'uppercase',
+                marginRight: 16,
+              }}
+            >
+              Armstrong Invest →
+            </a>
+          </div>
+        </div>
+
+        <div style={{ borderTop: `1px solid ${T.ink}33`, paddingTop: 48 }}>
+          <h2
+            style={{
+              fontFamily: T.serif,
+              fontSize: isMobile ? 34 : 56,
+              fontWeight: 400,
+              lineHeight: 1,
+              margin: '0 0 16px',
+              fontStyle: 'italic',
+            }}
+          >
+            Request an invitation.
+          </h2>
+
+          {!submitted ? (
+            <form onSubmit={submit}>
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: isMobile ? '1fr' : '2fr 2fr 1fr',
+                  gap: isMobile ? 20 : 24,
+                  marginBottom: isMobile ? 24 : 32,
+                }}
+              >
+                <Field label="Name" value={name} onChange={setName} placeholder="Your full name" />
+                <Field label="Email" value={email} onChange={setEmail} placeholder="you@example.com" type="email" />
+                <label style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <span style={{ fontFamily: T.mono, fontSize: 9, letterSpacing: '0.32em', textTransform: 'uppercase', opacity: 0.65 }}>
+                    Seats
+                  </span>
+                  <select
+                    value={seats}
+                    onChange={(e) => setSeats(Number(e.target.value) as 1 | 2)}
+                    style={{
+                      background: 'transparent',
+                      border: 'none',
+                      borderBottom: `1px solid ${T.ink}`,
+                      padding: '10px 0',
+                      fontFamily: T.serif,
+                      fontSize: 17,
+                      color: T.ink,
+                      outline: 'none',
+                    }}
+                  >
+                    <option value={1}>1 — just me</option>
+                    <option value={2}>2 — with guest</option>
+                  </select>
+                </label>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 32 }}>
+                <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: '0.3em', opacity: 0.6, textTransform: 'uppercase' }}>
+                  {remaining}/{EVENT.cap} seats · {seats} requested
+                </div>
+                <button
+                  type="submit"
+                  disabled={!name || !email}
+                  style={{
+                    background: T.ink,
+                    color: T.cream,
+                    padding: '12px 28px',
+                    border: 'none',
+                    cursor: !name || !email ? 'not-allowed' : 'pointer',
+                    fontFamily: T.mono,
+                    fontSize: 11,
+                    letterSpacing: '0.32em',
+                    textTransform: 'uppercase',
+                    opacity: !name || !email ? 0.4 : 1,
+                  }}
+                >
+                  Submit →
+                </button>
+              </div>
+            </form>
+          ) : (
+            <div style={{ border: `1px solid ${T.ink}33`, padding: 48, textAlign: 'center', background: T.paper }}>
+              <div style={{ fontFamily: T.serif, fontSize: 32, fontStyle: 'italic', marginBottom: 12 }}>
+                Merci, {name.split(' ')[0] || 'ami'}.
+              </div>
+              <div style={{ fontFamily: T.serif, fontSize: 16, opacity: 0.75 }}>
+                Confirmation arriving at {email} within 48 hours.
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </section>
   )
 }
