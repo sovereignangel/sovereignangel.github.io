@@ -75,16 +75,64 @@ Visa/budget blockers?
 **Plan Card Design** (visual, compact):
 ```
 ┌─────────────────────────────────┐
-│ PLAN 3 OF 7                     │ (shows progress in batch)
+│ PLAN 3 OF 5                     │ (shows progress in batch)
 ├─────────────────────────────────┤
-│ [Calendar Grid Visual]          │ (countries/cities as color blocks)
 │ Morocco → Base → Spoke → Como   │
+│                                 │
+│ [Calendar Grid]                 │
+│ ┌────────┬────────┬───────┐    │
+│ │Morocco │ Palanga│ Greece│... │
+│ │ Jul 1  │ 12 day │ Jul 8 │    │
+│ └────────┴────────┴───────┘    │
+│                                 │
+│ [World Map - Compact]           │
+│ (Route lines, locations,        │
+│  dates at nodes)                │
 ├─────────────────────────────────┤
 │ Kiting: 24 hrs  │ Cycling: 180 mi │
 │ Budget: $9.2k   │ Transit: 48 hrs  │
 │ Cities: 6       │ Friends: 12      │
 └─────────────────────────────────┘
 ```
+
+**Plan Detail View** (in Priorities queue, expandable):
+```
+▶ #1 Morocco → Como
+  Lori: ❤️❤️ | Aidas: ❤️ | 8 pts
+  Kiting: 24h | Cycling: 240mi | Budget: $10.5k
+  
+  ▼ [CLICK TO EXPAND]
+    
+    Timeline:
+    ┌─────────────────────────────────┐
+    │ Morocco │ Palanga │ Greece │ Como│
+    │ Jul 1   │ Jul 12  │ Aug 1  │Sep 1│
+    │ 12 days │ 20 days │ 30 day │ 20d │
+    └─────────────────────────────────┘
+    
+    Route Map:
+    [SVG World Map]
+    Morocco (Jul 1)
+      ↓ (Jul 12)
+    Palanga (Jul 12)
+      ↓ (Aug 1)
+    Greece (Aug 1)
+      ↓ (Sep 1)
+    Como (Sep 1)
+```
+
+**Calendar Grid** shows:
+- Phase name (location)
+- Start date (abbreviated: "Jul 1")
+- Duration in days
+
+**World Map** shows:
+- Geographic locations as colored dots (phase colors)
+- Location names above dots
+- Start dates below dots
+- Arrow routes between locations
+- Travel dates labeled on arrows
+- Simplified lat/long mapping for accuracy
 
 **Swiping Actions**:
 - **Right** (❤️): "Love this" — counts 2x in preference ranking
