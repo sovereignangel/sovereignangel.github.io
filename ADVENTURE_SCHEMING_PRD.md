@@ -33,7 +33,7 @@ Transform summer plan creation into a collaborative, gamified experience. Users 
 
 📝 Add your ideas, inspiration, constraints, events, people.
 
-[Text input]
+[Text input - multi-line]
 
 Any new ideas?
 Inspiration or constraints?
@@ -41,7 +41,7 @@ Events you want to hit?
 People you want to see?
 Visa/budget blockers?
 
-[Save] → Regenerate Plans
+[All good, take me to the plans →]
 ```
 
 **Why here**:
@@ -50,6 +50,11 @@ Visa/budget blockers?
 - Each new comment triggers fresh variant generation
 - No stale plans from old sessions
 
+**Button behavior**:
+- "All good, take me to the plans" proceeds whether or not input is filled
+- Allows users to skip if they have no new constraints
+- Plans still generate from previous comments/constraints if input is empty
+
 ---
 
 ### Flow 1: Swipe & React (Main Game)
@@ -57,7 +62,7 @@ Visa/budget blockers?
 **Entry Point**: After constraint input → "Play" mode
 
 **Flow**:
-1. System generates 5-7 summer plan variants (based on latest comments/constraints)
+1. System generates 5 summer plan variants (based on latest comments/constraints)
 2. User sees first plan card
 3. Plan shows: visual calendar with countries/cities, activity hours, budget, transit time, city count, friends count
 4. User swipes **right** (love it), **left** (not for us), or taps **?** (maybe / need to think)
@@ -159,7 +164,7 @@ Click into a plan to see:
 
 ### Plan Generation
 
-**Batch Size**: 5-7 plans per generation (not 40+)
+**Batch Size**: 5 plans per generation (not 40+)
 
 **Trigger for Regeneration**:
 - When user adds new comment/constraint
