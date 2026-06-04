@@ -251,3 +251,23 @@ export interface AdventureSession {
   lastCommentAt?: Timestamp
   createdAt: Timestamp
 }
+
+// Plan swiping & voting
+export interface PlanVote {
+  id: string
+  planId: string
+  user: RelationalSpeaker
+  vote: 'right' | 'left' | 'maybe'
+  feedback?: string // "Why?" response for left swipes
+  timestamp: Timestamp
+}
+
+export interface PreferenceSummary {
+  user: RelationalSpeaker | 'combined'
+  totalVotes: number
+  rightCount: number
+  maybeCount: number
+  leftCount: number
+  alignmentScore?: number // % agreement between both players (combined only)
+  topThemes?: string[]
+}

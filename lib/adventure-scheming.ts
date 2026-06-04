@@ -1,0 +1,114 @@
+/**
+ * Adventure Scheming utilities
+ * Plan generation, voting, preference computation
+ */
+
+import type { SummerPlan, SummerPhase, SummerMilestone, AdventureComment } from '@/lib/types'
+
+/**
+ * Generate a sample plan variant based on comments
+ * This is a simple implementation using hardcoded data
+ * Real implementation would use AI/constraints
+ */
+export function generatePlanVariant(index: number, comments: AdventureComment[]): SummerPlan {
+  // For MVP, cycle through a few hand-crafted variants based on comment sentiment
+  const variants = [
+    createPlanVariant(1, 'European Deep Dive', [
+      createPhase('Morocco', '2026-07-01', '2026-07-12', 'morocco', 'Deep exploration of Sahara & coastal regions'),
+      createPhase('Palanga Base', '2026-07-13', '2026-08-10', 'base', 'Extended base stay, local life'),
+      createPhase('Central Europe', '2026-08-11', '2026-09-10', 'spoke', 'Berlin, Zürich, Slovenia'),
+      createPhase('Lake Como', '2026-09-11', '2026-09-20', 'como', 'Wind down & reflect'),
+    ]),
+    createPlanVariant(2, 'Balanced Mix', [
+      createPhase('Morocco', '2026-07-01', '2026-07-08', 'morocco', 'Quick introduction'),
+      createPhase('Palanga Base', '2026-07-09', '2026-08-05', 'base', 'Mid-length base'),
+      createPhase('Bike Ride', '2026-08-06', '2026-08-20', 'ride', 'Cross Europe by bike'),
+      createPhase('Como Finish', '2026-08-21', '2026-09-20', 'como', 'Final wind-down'),
+    ]),
+    createPlanVariant(3, 'Speed Run', [
+      createPhase('Morocco + Greece', '2026-07-01', '2026-07-15', 'morocco', 'Fast pace, many cities'),
+      createPhase('Home Base', '2026-07-16', '2026-08-15', 'base', 'Longer home time'),
+      createPhase('Brief Tour', '2026-08-16', '2026-09-10', 'spoke', 'Final cities'),
+      createPhase('Como', '2026-09-11', '2026-09-20', 'como', 'Finish in Italy'),
+    ]),
+    createPlanVariant(4, 'Activities First', [
+      createPhase('Kiting Paradise', '2026-07-01', '2026-07-20', 'morocco', 'Kite-heavy Morocco'),
+      createPhase('Home Cycling', '2026-07-21', '2026-08-25', 'base', 'Bike training focus'),
+      createPhase('European Cities', '2026-08-26', '2026-09-15', 'spoke', 'Culture & food'),
+      createPhase('Como Lakes', '2026-09-16', '2026-09-20', 'como', 'Final relaxation'),
+    ]),
+    createPlanVariant(5, 'Friends & Community', [
+      createPhase('Morocco Group', '2026-07-01', '2026-07-10', 'morocco', 'Extended group travel'),
+      createPhase('Base Visits', '2026-07-11', '2026-08-20', 'base', 'Friends come stay'),
+      createPhase('Bigger Group', '2026-08-21', '2026-09-10', 'spoke', 'Gather friends in Europe'),
+      createPhase('Intimate Finish', '2026-09-11', '2026-09-20', 'como', 'Close friends only'),
+    ]),
+  ]
+
+  return variants[index % variants.length]
+}
+
+function createPlanVariant(
+  id: number,
+  title: string,
+  phases: SummerPhase[]
+): SummerPlan {
+  return {
+    id: `plan-${id}`,
+    year: 2026,
+    dateRange: {
+      start: '2026-07-01',
+      end: '2026-09-20',
+    },
+    baseLocation: 'Palanga',
+    phases,
+    dreamsConstraints: [],
+    milestones: [
+      {
+        date: '2026-08-05',
+        title: "Lori's Birthday",
+        description: 'Birthday celebration',
+      },
+    ],
+    priorities: [],
+    focuses: [],
+    estimatedCost: 9500,
+    updatedAt: new Date(),
+    createdAt: new Date(),
+  } as any
+}
+
+function createPhase(
+  name: string,
+  startDate: string,
+  endDate: string,
+  icon: 'morocco' | 'base' | 'spoke' | 'ride' | 'como',
+  description: string
+): SummerPhase {
+  return {
+    name,
+    startDate,
+    endDate,
+    location: name,
+    description,
+    icon,
+  }
+}
+
+/**
+ * Compute plan stats from phase data
+ */
+export function computePlanStats(plan: SummerPlan) {
+  // Simplified stats - in real implementation would parse activities
+  const phaseCount = plan.phases.length
+  const dayCount = 81 // Jul 1 - Sep 20
+
+  return {
+    kitingHours: 24 + Math.random() * 20,
+    cyclingMiles: 180 + Math.random() * 100,
+    budget: plan.estimatedCost,
+    transitHours: 48 + Math.random() * 24,
+    citiesCount: phaseCount + 1,
+    friendsCount: 8 + Math.random() * 8,
+  }
+}
