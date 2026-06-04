@@ -8,6 +8,7 @@ import { VoteBreakdown } from './VoteBreakdown'
 import { PlanWorldMap } from './PlanWorldMap'
 import { PlanCalendarGrid } from './PlanCalendarGrid'
 import { PreferenceInsights } from './PreferenceInsights'
+import { PlanExport } from './PlanExport'
 import { getRankingVotes } from '@/lib/firestore/adventure-votes'
 import { useAuth } from '@/components/auth/AuthProvider'
 
@@ -59,9 +60,32 @@ export function PrioritiesView({ plans, votes }: PrioritiesViewProps) {
   const planMap = new Map(plans.map((p) => [p.id, p]))
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" style={{ maxWidth: '100%', overflowX: 'hidden' }}>
       {/* Insights */}
       {votes.length > 0 && <PreferenceInsights plans={plans} votes={votes} />}
+
+      {/* Top Plan Export */}
+      {ranked.length > 0 && (() => {
+        const topScore = ranked[0]
+        const topPlan = planMap.get(topScore.planId)
+        if (!topPlan) return null
+
+        const topVotes = votes.filter((v) => v.planId === topScore.planId)
+        const rightCount = topVotes.filter((v) => v.vote === 'right').length
+        const maybeCount = topVotes.filter((v) => v.vote === 'maybe').length
+
+        return (
+          <div style={{ padding: '20px', background: '#b85c38', borderRadius: '8px', color: '#faf7f2' }}>
+            <h3 style={{ fontSize: '13px', fontWeight: 600, marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              Winner: {topPlan.phases[0]?.name} → {topPlan.phases[topPlan.phases.length - 1]?.name}
+            </h3>
+            <p style={{ fontSize: '11px', marginBottom: '12px', opacity: 0.9 }}>
+              {topScore.score} points • {rightCount} loves • {maybeCount} maybes
+            </p>
+            <PlanExport plan={topPlan} votes={{ right: rightCount, maybe: maybeCount, total: votes.length }} />
+          </div>
+        )
+      })()}
 
       {/* Summary */}
       {votes.length > 0 && (

@@ -93,9 +93,11 @@ export function PlanSwipeCard({ plan, index, total, onSwipe, onUndo }: PlanSwipe
           background: '#faf8f4',
           border: '1px solid #d8cfc4',
           borderRadius: '8px',
-          padding: '24px',
-          maxWidth: '500px',
+          padding: 'clamp(16px, 5vw, 24px)',
+          width: '100%',
+          maxWidth: '600px',
           margin: '0 auto',
+          boxSizing: 'border-box',
         }}
       >
         <h3 style={{ marginBottom: '16px', color: '#b85c38', fontSize: '14px', fontWeight: 600 }}>
@@ -159,14 +161,16 @@ export function PlanSwipeCard({ plan, index, total, onSwipe, onUndo }: PlanSwipe
         background: '#faf8f4',
         border: '1px solid #d8cfc4',
         borderRadius: '8px',
-        padding: '24px',
-        maxWidth: '500px',
+        padding: 'clamp(16px, 5vw, 24px)',
+        width: '100%',
+        maxWidth: '600px',
         margin: '0 auto',
         transform: `rotate(${cardRotation}deg)`,
         opacity: cardOpacity,
         transition: cardRotation === 0 ? 'all 0.3s ease' : 'none',
         cursor: 'grab',
         userSelect: 'none',
+        boxSizing: 'border-box',
       }}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
