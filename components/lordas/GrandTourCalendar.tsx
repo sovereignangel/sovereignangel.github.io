@@ -116,8 +116,8 @@ export function GrandTourCalendar() {
         </div>
       </div>
 
-      {/* Calendar */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '22px' }}>
+      {/* Calendar - responsive stacking on mobile */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {MONTHS.map((month) => (
           <div
             key={month.name}

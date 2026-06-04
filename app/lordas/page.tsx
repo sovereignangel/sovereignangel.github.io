@@ -126,71 +126,6 @@ export default function LordasPage() {
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#f5f0e8' }}>
-      {/* Header with logo and buttons - always visible */}
-      <div className="border-b" style={{ borderColor: '#d8cfc4' }}>
-        <div className="max-w-[1100px] mx-auto px-4 py-4 flex items-center justify-between">
-          {/* Left: Logo and title */}
-          <div className="flex items-center gap-3">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" style={{ color: '#b85c38' }}>
-              <circle cx="12" cy="5" r="2" />
-              <circle cx="6" cy="15" r="2" />
-              <circle cx="18" cy="15" r="2" />
-              <path d="M12 7 L6 13 M12 7 L18 13 M6 15 L18 15" />
-            </svg>
-            <div>
-              <h1 className="font-serif text-[20px] font-semibold tracking-[0.5px]" style={{ color: '#b85c38' }}>
-                lordas
-              </h1>
-              <p className="text-[10px] uppercase tracking-[0.5px]" style={{ color: '#8a7e72' }}>
-                Lori & Aidas
-              </p>
-            </div>
-          </div>
-
-          {/* Right: Section buttons */}
-          <div className="flex gap-2">
-            <button
-              onClick={() => setTab('dashboard')}
-              className="flex items-center gap-2 px-3 py-2 rounded-sm border text-[11px] font-serif font-semibold uppercase tracking-[0.5px] transition-colors"
-              style={{
-                backgroundColor: tab === 'dashboard' ? '#b85c38' : 'transparent',
-                color: tab === 'dashboard' ? '#faf7f2' : '#8a7e72',
-                borderColor: tab === 'dashboard' ? '#b85c38' : '#d8cfc4',
-              }}
-            >
-              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round">
-                <circle cx="8" cy="3" r="1.5" />
-                <circle cx="5" cy="10" r="1.5" />
-                <circle cx="11" cy="10" r="1.5" />
-                <path d="M8 4.5 L5 8.5 M8 4.5 L11 8.5 M5 10 L11 10" />
-              </svg>
-              Connection Insights
-            </button>
-
-            <button
-              onClick={() => setTab('adventures')}
-              className="flex items-center gap-2 px-3 py-2 rounded-sm border text-[11px] font-serif font-semibold uppercase tracking-[0.5px] transition-colors"
-              style={{
-                backgroundColor: tab === 'adventures' ? '#b85c38' : 'transparent',
-                color: tab === 'adventures' ? '#faf7f2' : '#8a7e72',
-                borderColor: tab === 'adventures' ? '#b85c38' : '#d8cfc4',
-              }}
-            >
-              <svg width="12" height="14" viewBox="0 0 14 16" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M7 1 L12 6 L7 13 L2 6 Z" />
-                <path d="M7 1 L7 13 M2 6 L12 6" />
-              </svg>
-              <svg width="12" height="10" viewBox="0 0 14 12" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="2" cy="10" r="1.8" />
-                <circle cx="12" cy="10" r="1.8" />
-                <path d="M2 10 L5 4 L9 4 L12 10 M5 4 L8 4 M5 4 L6 10" />
-              </svg>
-              Adventure Scheming
-            </button>
-          </div>
-        </div>
-      </div>
-
       {/* Main content */}
       <div className="max-w-[1100px] mx-auto px-4 py-6">
         {tab === 'dashboard' && (
@@ -198,7 +133,74 @@ export default function LordasPage() {
             latest={latest}
             snapshot={latestSnapshot}
             conversationCount={conversations.length}
+            currentTab={tab}
+            onTabChange={setTab}
           />
+        )}
+
+        {/* Header for Adventure Scheming tab */}
+        {tab === 'adventures' && (
+          <div className="border-b-2 pb-4 mb-6" style={{ borderColor: '#d8cfc4' }}>
+            <div className="flex items-center justify-between flex-wrap gap-3">
+              <div className="flex items-center gap-3">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" style={{ color: '#b85c38' }}>
+                  <circle cx="12" cy="5" r="2" />
+                  <circle cx="6" cy="15" r="2" />
+                  <circle cx="18" cy="15" r="2" />
+                  <path d="M12 7 L6 13 M12 7 L18 13 M6 15 L18 15" />
+                </svg>
+                <div>
+                  <h1 className="font-serif text-[20px] font-semibold tracking-[0.5px]" style={{ color: '#b85c38' }}>
+                    lordas
+                  </h1>
+                  <p className="text-[10px] uppercase tracking-[0.5px]" style={{ color: '#8a7e72' }}>
+                    Lori & Aidas · Adventure Scheming
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex gap-1.5">
+                <button
+                  onClick={() => setTab('dashboard')}
+                  className="flex items-center gap-1 px-2 py-1.5 rounded-sm border text-[9px] font-serif font-semibold uppercase transition-colors flex-shrink-0"
+                  style={{
+                    backgroundColor: tab === 'dashboard' ? '#b85c38' : 'transparent',
+                    color: tab === 'dashboard' ? '#faf7f2' : '#8a7e72',
+                    borderColor: tab === 'dashboard' ? '#b85c38' : '#d8cfc4',
+                  }}
+                >
+                  <svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round">
+                    <circle cx="8" cy="3" r="1.5" />
+                    <circle cx="5" cy="10" r="1.5" />
+                    <circle cx="11" cy="10" r="1.5" />
+                    <path d="M8 4.5 L5 8.5 M8 4.5 L11 8.5 M5 10 L11 10" />
+                  </svg>
+                  Insights
+                </button>
+
+                <button
+                  onClick={() => setTab('adventures')}
+                  className="flex items-center gap-1 px-2 py-1.5 rounded-sm border text-[9px] font-serif font-semibold uppercase transition-colors flex-shrink-0"
+                  style={{
+                    backgroundColor: tab === 'adventures' ? '#b85c38' : 'transparent',
+                    color: tab === 'adventures' ? '#faf7f2' : '#8a7e72',
+                    borderColor: tab === 'adventures' ? '#b85c38' : '#d8cfc4',
+                  }}
+                >
+                  <svg width="9" height="10" viewBox="0 0 14 16" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M7 1 L12 6 L7 13 L2 6 Z" />
+                    <path d="M7 1 L7 13 M2 6 L12 6" />
+                  </svg>
+                  <svg width="9" height="8" viewBox="0 0 14 12" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="2" cy="10" r="1.8" />
+                    <circle cx="12" cy="10" r="1.8" />
+                    <path d="M2 10 L5 4 L9 4 L12 10 M5 4 L8 4 M5 4 L6 10" />
+                  </svg>
+                  Scheming
+                </button>
+              </div>
+            </div>
+          </div>
         )}
 
         {/* Sub-tabs for Connection Insights */}
