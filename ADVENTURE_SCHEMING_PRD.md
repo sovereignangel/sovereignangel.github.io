@@ -24,22 +24,53 @@ Transform summer plan creation into a collaborative, gamified experience. Users 
 
 ## User Flows
 
+### Pre-Game: Constraint Input (Entry Point)
+
+**Before any swiping**, user sees:
+
+```
+"Before we generate summer plans, what's on your mind?"
+
+📝 Add your ideas, inspiration, constraints, events, people.
+
+[Text input]
+
+Any new ideas?
+Inspiration or constraints?
+Events you want to hit?
+People you want to see?
+Visa/budget blockers?
+
+[Save] → Regenerate Plans
+```
+
+**Why here**:
+- Captures preferences before plan generation
+- Feeds directly into plan variants
+- Each new comment triggers fresh variant generation
+- No stale plans from old sessions
+
+---
+
 ### Flow 1: Swipe & React (Main Game)
 
-**Entry Point**: "Adventure Scheming" tab → "Play" mode
+**Entry Point**: After constraint input → "Play" mode
 
 **Flow**:
-1. User sees a summer plan card (generated variant)
-2. Plan shows: visual calendar with countries/cities, activity hours, budget, transit time, city count, friends count
-3. User swipes **right** (love it) or **left** (not now) or taps **?** (maybe / need to think)
-4. System records the vote and preference
-5. Next plan appears (randomly generated from constraint space)
-6. Occasionally (every 5-10 swipes): **Ranking Challenge** — "Choose your favorite between these 3" (forces prioritization)
+1. System generates 5-7 summer plan variants (based on latest comments/constraints)
+2. User sees first plan card
+3. Plan shows: visual calendar with countries/cities, activity hours, budget, transit time, city count, friends count
+4. User swipes **right** (love it), **left** (not for us), or taps **?** (maybe / need to think)
+5. **If left**: Ask "What's driving the no?" (visa issues, budget, timing, etc.) — captured as feedback comment
+6. System records the vote, feedback, and updates preferences
+7. Next plan appears (from generated batch, or regenerated if batch depleted)
+8. **Undo button**: User can undo last swipe if they change their mind
+9. Occasionally (every 5-8 swipes): **Ranking Challenge** — "Which of these 2 do you prefer?" (forces head-to-head comparison)
 
 **Plan Card Design** (visual, compact):
 ```
 ┌─────────────────────────────────┐
-│ SUMMER PLAN VARIANT #47         │ (small label)
+│ PLAN 3 OF 7                     │ (shows progress in batch)
 ├─────────────────────────────────┤
 │ [Calendar Grid Visual]          │ (countries/cities as color blocks)
 │ Morocco → Base → Spoke → Como   │
@@ -51,15 +82,15 @@ Transform summer plan creation into a collaborative, gamified experience. Users 
 ```
 
 **Swiping Actions**:
-- **Right** (❤️): "Love this" — counts toward preference ranking
-- **Left** (👋): "Not for me" — noted but doesn't lower score
-- **Maybe** (?): "Interesting but unsure" — lower weight in analysis
+- **Right** (❤️): "Love this" — counts 2x in preference ranking
+- **Left** (👋): "Not for us" — prompts "Why?" feedback, notes but doesn't reduce score
+- **Maybe** (?): "Interesting but unsure" — counts 1x in ranking
 
-**Ranking Challenge** (every 5-10 swipes):
-- "Which of these 3 excites you most?"
-- Forces head-to-head comparison
-- Reveals relative preferences
-- Results feed into final prioritization
+**Ranking Challenge** (every 5-8 swipes):
+- "Which of these 2 excites you most?"
+- Compare 2 previously-swiped plans (can be older cards to refresh memory)
+- Forces head-to-head ranking
+- Results feed into final prioritization priority
 
 ---
 
@@ -87,28 +118,32 @@ Based on your 47 swipes & 8 rankings:
   • 63% agreement on activity mix
 ```
 
-#### B. Plan Queue (Ranked List)
-Ordered by preference votes and ranking challenges:
+#### B. Plan Queue (Ranked List, Top 10)
+Ordered by combined preference votes and ranking challenges:
 
 ```
-1. [Plan #47] EUROPEAN DEEP DIVE
-   Swipes: 8 rights, 2 maybes
-   Ranking: Beat 14 other plans
+1. [Plan 3] EUROPEAN DEEP DIVE
+   Lori: ❤️ ❤️ ❤️ (3 rights)
+   Aidas: ❤️ ❤️ (2 rights)
+   Combined Score: 8 points
    
    [Visual: Countries colored, stats]
    Kiting: 24 hrs | Cycling: 240 mi | Budget: $10.5k
    Transit: 52 hrs | Cities: 5 | Friends: 8
    
-   [Click to expand] View full details, edit preferences
+   [Click to expand] View full details & individual preferences
 
-2. [Plan #31] BALANCED ADVENTURE
-   Swipes: 7 rights, 1 maybe
-   Ranking: Beat 9 other plans
+2. [Plan 1] BALANCED ADVENTURE
+   Lori: ❤️ ❤️ ? (2 rights, 1 maybe)
+   Aidas: ❤️ (1 right)
+   Combined Score: 6 points
    ...
 
-3. [Plan #62] SPEED RUN
+3. [Plan 7] SPEED RUN
    ...
 ```
+
+**View Toggle**: "My swipes" / "Aidas' swipes" / "Both (combined)"
 
 #### C. Individual Preference Breakdown
 Click into a plan to see:
@@ -124,13 +159,19 @@ Click into a plan to see:
 
 ### Plan Generation
 
+**Batch Size**: 5-7 plans per generation (not 40+)
+
+**Trigger for Regeneration**:
+- When user adds new comment/constraint
+- When batch is depleted (user swiped through all)
+- **NOT repetitive**: each generation creates entirely new variants
+
 **Input** (from comments & preferences):
 - Locations mentioned (Morocco, Greece, Como, Berlin, etc.)
-- Activity preferences (kiting hours, cycling miles, etc.)
-- Budget range ($8k-$12k)
-- Trip duration (70 days, Jul 1 - Sep 20)
-- Group preferences (solo travel, small group, bringing friends)
-- Pacing (deep vs. breadth)
+- Activities mentioned (kiting, cycling, hiking, etc.)
+- Hard constraints (visa blockers, budget limits, timing conflicts)
+- Soft preferences (pacing, group size, event attendance)
+- Blockers from left-swipe feedback ("too expensive", "visa issues", etc.)
 
 **Generation Strategy**:
 - Each "plan variant" is a different combination of:
@@ -139,13 +180,22 @@ Click into a plan to see:
   - Activity allocation (how many hours kiting vs. cycling)
   - Budget split (flights, lodging, food, activities)
 - Variants are **pseudo-random but constrained** (respect hard limits, vary soft preferences)
-- System learns from swipes: future variants lean into loved themes
+- System learns from:
+  - Swipes: future variants lean into loved themes, avoid disliked patterns
+  - Left-swipe feedback: respect stated blockers
+  - Ranking challenges: prioritizes patterns that win comparisons
+- **No repeats**: each new batch is entirely fresh
 
-**Constraints**:
+**Hard Constraints** (must-respects):
 - Must fit within 70-day window
 - Must respect budget cap
-- Must include mentioned locations
+- Must NOT violate stated blockers (visa countries, excluded regions)
 - Must be geographically coherent (no teleporting)
+
+**Soft Preferences** (guide but don't mandate):
+- Prefer mentioned locations when possible
+- Balance activity types based on swipe history
+- Respect pacing preferences (slow vs. fast)
 
 ---
 
@@ -235,12 +285,14 @@ type PlanVote = {
   plan_id: string
   user: 'lori' | 'aidas'
   vote: 'right' | 'left' | 'maybe'
+  feedback?: string // "Why?" response for left swipes (visa, budget, etc.)
   timestamp: Timestamp
 }
 
 type RankingVote = {
   user: 'lori' | 'aidas'
-  ranking: [plan_id, plan_id, plan_id] // Ordered by preference
+  winner_id: string // Plan chosen in comparison
+  loser_id: string // Plan NOT chosen
   timestamp: Timestamp
 }
 ```
@@ -332,51 +384,59 @@ type PreferenceSummary = {
 
 ---
 
-## Open Questions for Review
+## Decisions Made
 
-1. **Plan Generation**:
-   - How often should we generate new variants? (every swipe, batch of 10?)
-   - Should variants be seeded from comments, or fully random within constraints?
-   - How do we avoid repetitive plans?
+✅ **Plan Generation**:
+   - Generate new batch (5-7 plans) each time comments change
+   - No repetitive plans—each batch entirely fresh
+   - Seed from comments, blockers, and swipe feedback
 
-2. **Voting Weight**:
-   - Are "right" swipes worth 2x a "maybe"? Or equal?
-   - Do recent votes matter more than old ones?
-   - How much do ranking challenges influence final ranking?
+✅ **Voting Weight**:
+   - Right swipes: 2x weight (vs. maybe: 1x)
+   - Recent votes matter more, but ranking challenges can refresh older cards
+   - Ranking challenges have significant weight in final ordering
 
-3. **Preference Summary**:
-   - Should summary update in real-time, or batch?
-   - What level of detail is useful without being overwhelming?
+✅ **Preference Summary**:
+   - Real-time updates as swiping, feedback, or comments change
 
-4. **UI Polish**:
-   - Should swiped cards show a brief animation/sound?
-   - Do we need a "undo last swipe" button?
-   - How many plans to show in the prioritization queue? (top 5, top 10, all?)
+✅ **UI Polish**:
+   - No sound effects
+   - Include "undo last swipe" button
+   - Show progress: "Plan 3 of 7"
 
-5. **Individual Preferences**:
-   - Should Lori & Aidas see each other's individual swipes before a final vote?
-   - Or only see combined/overlap summary?
+✅ **Individual Preferences**:
+   - Show each other's swipes: "Lori: ❤️❤️ | Aidas: ❤️"
+   - Show combined score & individual scores
+   - Toggle: "My swipes" / "Aidas' swipes" / "Both"
 
-6. **Constraints in Comments**:
-   - Should commenting on a specific plan auto-extract constraints?
-   - Should there be a structured constraint input, or just freeform text?
+✅ **Constraints & Feedback**:
+   - Commenting goes through same flow as regular comments (no structured input)
+   - Left-swipe feedback: "Why?" captures blockers (visa, budget, etc.)
+   - Feedback auto-extracted and incorporated into next generation
+
+✅ **Prioritization Queue**:
+   - Top 10 plans only
 
 ---
 
 ## Phase 1 MVP
 
 **In Scope**:
-- Swipe interface (left/right voting)
-- Plan generation from static constraints
-- Ranked list of voted plans
-- Basic preference summary (top themes)
+- Constraint input form (before any plans shown)
+- Plan generation (5-7 per batch) from comments
+- Swipe interface (left/right voting + left-swipe "why?" feedback)
+- Plan regeneration when comments change
+- Ranked list of top 10 voted plans
+- Basic preference summary (themes, alignment score)
+- Undo last swipe button
+- Show both players' swipes with combined score
 
 **Out of Scope (Phase 2+)**:
-- Ranking challenges
-- Individual preference breakdown
-- Plan regeneration with edited constraints
-- AI-driven theme extraction from comments
-- Advanced analytics (trend lines, heatmaps)
+- Ranking challenges (force-comparison voting)
+- Detailed individual preference breakdown (themes per person)
+- AI-driven constraint extraction from comments
+- Advanced analytics (trend lines, divergence heatmaps)
+- Plan detail view with editability
 
 ---
 
