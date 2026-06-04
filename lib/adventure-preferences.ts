@@ -19,8 +19,12 @@ export interface PlanScore {
  * Right swipes = 2 points
  * Maybe swipes = 1 point
  * Left swipes = 0 points (recorded but not counted)
+ * Ranking wins = 3 points bonus
  */
-export function computePlanScore(votes: PlanVote[]): PlanScore {
+export function computePlanScore(
+  votes: PlanVote[],
+  rankingVotes?: Array<{ winnerId: string; loserId: string }>
+): PlanScore {
   const planId = votes[0]?.planId || ''
   let score = 0
   let rightCount = 0
@@ -40,6 +44,12 @@ export function computePlanScore(votes: PlanVote[]): PlanScore {
       leftCount++
     }
   })
+
+  // Add ranking vote bonuses
+  if (rankingVotes) {
+    const rankingWins = rankingVotes.filter((r) => r.winnerId === planId).length
+    score += rankingWins * 3
+  }
 
   return {
     planId,

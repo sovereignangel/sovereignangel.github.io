@@ -1,12 +1,15 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import type { SummerPlan, PlanVote } from '@/lib/types'
 import { computePlanScore, rankPlans, computeCombinedSummary } from '@/lib/adventure-preferences'
 import { computePlanStats } from '@/lib/adventure-scheming'
 import { VoteBreakdown } from './VoteBreakdown'
 import { PlanWorldMap } from './PlanWorldMap'
 import { PlanCalendarGrid } from './PlanCalendarGrid'
+import { PreferenceInsights } from './PreferenceInsights'
+import { getRankingVotes } from '@/lib/firestore/adventure-votes'
+import { useAuth } from '@/components/auth/AuthProvider'
 
 interface PrioritiesViewProps {
   plans: SummerPlan[]
@@ -14,7 +17,24 @@ interface PrioritiesViewProps {
 }
 
 export function PrioritiesView({ plans, votes }: PrioritiesViewProps) {
+  const { user } = useAuth()
   const [expandedPlanId, setExpandedPlanId] = useState<string | null>(null)
+  const [rankingVotes, setRankingVotes] = useState<Array<{ winnerId: string; loserId: string }>>([])
+
+  useEffect(() => {
+    if (!user?.uid) return
+    loadRankingVotes()
+  }, [user?.uid])
+
+  const loadRankingVotes = async () => {
+    if (!user?.uid) return
+    try {
+      const ranking = await getRankingVotes(user.uid)
+      setRankingVotes(ranking)
+    } catch (err) {
+      console.error('Error loading ranking votes:', err)
+    }
+  }
 
   const { scores, ranked, summary } = useMemo(() => {
     // Group votes by plan
@@ -26,18 +46,23 @@ export function PrioritiesView({ plans, votes }: PrioritiesViewProps) {
       votesByPlan.get(v.planId)!.push(v)
     })
 
-    // Compute scores
-    const planScores = Array.from(votesByPlan.values()).map(computePlanScore)
+    // Compute scores with ranking vote bonuses
+    const planScores = Array.from(votesByPlan.values()).map((planVotes) =>
+      computePlanScore(planVotes, rankingVotes)
+    )
     const ranked = rankPlans(planScores)
     const summary = computeCombinedSummary(votes)
 
     return { scores: planScores, ranked, summary }
-  }, [votes])
+  }, [votes, rankingVotes])
 
   const planMap = new Map(plans.map((p) => [p.id, p]))
 
   return (
     <div className="space-y-6">
+      {/* Insights */}
+      {votes.length > 0 && <PreferenceInsights plans={plans} votes={votes} />}
+
       {/* Summary */}
       {votes.length > 0 && (
         <div style={{ padding: '24px', background: '#ebe4d4', borderRadius: '8px' }}>

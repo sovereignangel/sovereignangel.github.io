@@ -17,7 +17,39 @@ interface PlanSwipeCardProps {
 export function PlanSwipeCard({ plan, index, total, onSwipe, onUndo }: PlanSwipeCardProps) {
   const [showFeedback, setShowFeedback] = useState(false)
   const [feedback, setFeedback] = useState('')
+  const [touchStart, setTouchStart] = useState(0)
+  const [cardRotation, setCardRotation] = useState(0)
+  const [cardOpacity, setCardOpacity] = useState(1)
   const stats = computePlanStats(plan)
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchStart(e.touches[0].clientX)
+  }
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (showFeedback) return
+    const touchCurrent = e.touches[0].clientX
+    const diff = touchCurrent - touchStart
+    const rotation = diff / 20
+    const opacity = Math.max(0.6, 1 - Math.abs(diff) / 400)
+    setCardRotation(rotation)
+    setCardOpacity(opacity)
+  }
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    const touchEnd = e.changedTouches[0].clientX
+    const diff = touchEnd - touchStart
+
+    setCardRotation(0)
+    setCardOpacity(1)
+
+    // Swipe threshold: 100px
+    if (diff > 100) {
+      onSwipe('right')
+    } else if (diff < -100) {
+      onSwipe('left')
+    }
+  }
 
   const handleLeftSwipe = () => {
     setShowFeedback(true)
@@ -113,7 +145,15 @@ export function PlanSwipeCard({ plan, index, total, onSwipe, onUndo }: PlanSwipe
         padding: '24px',
         maxWidth: '500px',
         margin: '0 auto',
+        transform: `rotate(${cardRotation}deg)`,
+        opacity: cardOpacity,
+        transition: cardRotation === 0 ? 'all 0.3s ease' : 'none',
+        cursor: 'grab',
+        userSelect: 'none',
       }}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
     >
       {/* Progress */}
       <div style={{ fontSize: '11px', color: '#8a7e72', marginBottom: '16px', textAlign: 'center' }}>

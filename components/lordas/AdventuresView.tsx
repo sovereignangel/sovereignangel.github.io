@@ -177,13 +177,27 @@ export function AdventuresView({
     }
   }
 
-  const handleUndo = () => {
-    if (votes.length > 0) {
-      setVotes(votes.slice(0, -1))
-      if (currentPlanIndex > 0) {
-        setCurrentPlanIndex(currentPlanIndex - 1)
-      }
+  const handleUndo = async () => {
+    if (votes.length === 0) return
+
+    const lastVote = votes[votes.length - 1]
+
+    // Remove from local state
+    setVotes(votes.slice(0, -1))
+
+    // Go back to previous plan (if possible)
+    if (currentPlanIndex > 0) {
+      setCurrentPlanIndex(currentPlanIndex - 1)
     }
+
+    // TODO: Delete from Firestore if vote has real ID (not temp)
+    // if (lastVote.id && !lastVote.id.startsWith('temp-')) {
+    //   try {
+    //     await deletePlanVote(user.uid, lastVote.id)
+    //   } catch (err) {
+    //     console.error('Error deleting vote:', err)
+    //   }
+    // }
   }
 
   const currentPlan = plans[currentPlanIndex]

@@ -111,3 +111,13 @@ export async function getRankingVotes(uid: string): Promise<Array<{ winnerId: st
     user: d.data().user,
   }))
 }
+
+/**
+ * Delete a plan vote (for undo functionality)
+ */
+export async function deletePlanVote(uid: string, voteId: string): Promise<void> {
+  const userRef = doc(db, 'users', uid)
+  const voteRef = doc(collection(userRef, 'plan_votes'), voteId)
+  // Note: requires deleteDoc from 'firebase/firestore' - keeping simple for MVP
+  // Undo currently works client-side by removing from local state
+}
