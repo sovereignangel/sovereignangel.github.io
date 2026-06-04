@@ -42,8 +42,9 @@ export function CommentsSidebar({
       {!isOpen && (
         <button
           onClick={onOpen}
-          className="fixed right-0 top-1/3 z-45 flex items-center justify-center rounded-l-sm border border-r-0 border-rule bg-white hover:bg-paper transition-colors"
+          className="fixed right-0 z-45 flex items-center justify-center rounded-l-sm border border-r-0 border-rule bg-white hover:bg-paper transition-colors"
           style={{
+            top: '160px',
             width: '32px',
             height: '80px',
             borderRadius: '8px 0 0 8px',
