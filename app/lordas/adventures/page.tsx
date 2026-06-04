@@ -1,5 +1,7 @@
 'use client'
 
+export const dynamic = 'force-dynamic'
+
 import { useState, useEffect, useCallback } from 'react'
 import { AdventuresView } from '@/components/lordas/AdventuresView'
 import type { SummerPlan, AdventureComment, RelationalSpeaker } from '@/lib/types'
