@@ -95,20 +95,34 @@ export function AdventuresView({
   )
 
   const handleConstraintSubmit = async (text: string) => {
+    console.log('📋 Constraint submitted:', text.substring(0, 50))
     if (text.trim()) {
+      console.log('💬 Adding comment...')
       await handleAddComment('lori', text)
     }
+    console.log('🎮 Starting swipe mode!')
     setSwipeStarted(true)
   }
 
   const handleSwipe = async (vote: 'right' | 'left' | 'maybe', feedback?: string) => {
-    if (!user?.uid) return
+    console.log('🎯 Swipe:', vote, 'Plan:', plans[currentPlanIndex]?.id)
+
+    if (!user?.uid) {
+      console.warn('No user UID')
+      return
+    }
 
     const plan = plans[currentPlanIndex]
+    if (!plan) {
+      console.warn('No current plan')
+      return
+    }
 
     try {
       // Save to Firestore
+      console.log('📝 Saving vote to Firestore...')
       await recordPlanVote(user.uid, plan.id, 'lori', vote, feedback)
+      console.log('✅ Vote saved')
 
       // Update local votes
       const newVotes = [
@@ -123,10 +137,14 @@ export function AdventuresView({
         } as PlanVote,
       ]
       setVotes(newVotes)
+      console.log('📊 Local votes updated:', newVotes.length)
 
-      // Check if we should trigger ranking challenge (every 5-8 swipes)
+      // Check if we should trigger ranking challenge (every 6 swipes)
       const swipesSinceLastRanking = newVotes.filter((v) => v.user === 'lori').length % 6
+      console.log('📈 Swipes since ranking:', swipesSinceLastRanking)
+
       if (swipesSinceLastRanking === 0 && plans.length >= 2) {
+        console.log('🏆 Showing ranking challenge')
         // Show ranking challenge with random plans
         const randIdx1 = Math.floor(Math.random() * plans.length)
         let randIdx2 = Math.floor(Math.random() * plans.length)
@@ -140,13 +158,16 @@ export function AdventuresView({
 
       // Move to next plan
       if (currentPlanIndex < plans.length - 1) {
+        console.log('➡️ Moving to next plan:', currentPlanIndex + 1)
         setCurrentPlanIndex(currentPlanIndex + 1)
       } else {
         // Batch depleted
+        console.log('🎉 Batch depleted!')
         alert('Batch swiped! Ready to regenerate on next comment.')
       }
     } catch (err) {
-      console.error('Error recording vote:', err)
+      console.error('❌ Error recording vote:', err)
+      alert('Error saving vote: ' + (err instanceof Error ? err.message : 'Unknown error'))
     }
   }
 
