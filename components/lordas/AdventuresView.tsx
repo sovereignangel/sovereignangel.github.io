@@ -27,7 +27,7 @@ export function AdventuresView({
   onAddComment,
 }: AdventuresViewProps) {
   const { user } = useAuth()
-  const [tab, setTab] = useState<Tab>('play')
+  const [tab, setTab] = useState<Tab>('browse')
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [swipeStarted, setSwipeStarted] = useState(false)
