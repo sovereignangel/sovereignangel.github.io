@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import Link from 'next/link'
 import { useAuth } from '@/components/auth/AuthProvider'
 import {
   getTantraConfig,
@@ -151,6 +152,16 @@ const V1_GENERATING: Aspect[] = [
 ]
 
 // ── Section design assets (SVG sigils) ───────────────────────────────────────
+function PyramidIcon() {
+  return (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-burgundy">
+      <path d="M12 2L22 20H2L12 2Z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
+      <line x1="12" y1="2" x2="12" y2="20" stroke="currentColor" strokeWidth="0.8" opacity="0.5" />
+      <line x1="2" y1="20" x2="22" y2="20" stroke="currentColor" strokeWidth="1" />
+    </svg>
+  )
+}
+
 function HindrancesSigil() {
   return (
     <svg width="40" height="40" viewBox="0 0 40 40" fill="none" className="text-burgundy">
@@ -429,8 +440,8 @@ export default function TantraPage() {
 
   return (
     <div className="max-w-[1680px] mx-auto px-3 lg:px-6 py-2 lg:py-3 h-screen overflow-hidden flex flex-col">
-      {/* Header — left: title + oneliner + grid · right: streak stack */}
-      <div className="mb-1.5 pb-1.5 border-b border-rule-light grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_auto] gap-3 sm:gap-5 items-start">
+      {/* Header — left: title + oneliner + grid · right: streak stack + pyramid icon */}
+      <div className="mb-1.5 pb-1.5 border-b border-rule-light grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_auto] gap-3 sm:gap-5 items-start relative">
         <div className="min-w-0">
           <h1 className="font-serif text-[20px] lg:text-[24px] font-semibold text-burgundy tracking-tight leading-none">
             Daily Tantra Meditation
@@ -515,7 +526,16 @@ export default function TantraPage() {
             <span>Day 40</span>
           </div>
         </div>
-        <div className="flex flex-col items-end gap-1 sm:min-w-[110px]">
+        <div className="flex flex-col items-end gap-1 sm:min-w-[110px] relative">
+          <Link
+            href="/tantra/mastery"
+            target="_blank"
+            rel="noopener noreferrer"
+            title="The Mastery Pyramid"
+            className="absolute -top-1 -right-1 p-1.5 hover:opacity-75 transition-opacity"
+          >
+            <PyramidIcon />
+          </Link>
           <div className="flex flex-col items-end leading-none">
             <div className="font-mono text-[8px] uppercase tracking-[1px] text-ink-muted">Streak</div>
             <div className="font-serif text-[24px] lg:text-[28px] font-semibold text-burgundy leading-none mt-0.5">

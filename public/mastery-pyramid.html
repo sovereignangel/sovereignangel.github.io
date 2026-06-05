@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Mastery Pyramid · A Black-Belt Progression for the Research-&-Technology Fund Manager</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Spectral:ital,wght@0,300;0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --parchment:#f3ead7;
+    --parchment-2:#efe4cd;
+    --paper:#faf6ec;
+    --navy:#1b2c47;
+    --navy-deep:#12203a;
+    --navy-soft:#2c416a;
+    --cream:#f0e6cd;
+    --cream-line:#d8c79c;
+    --ink:#2a2722;
+    --muted:#6f6757;
+    --brass:#9a7b3f;
+    --oxblood:#6e2a2a;
+    --rule:#cdbf9c;
+    --shadow:0 18px 40px -22px rgba(18,32,58,.45);
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:
+      radial-gradient(1200px 600px at 80% -10%, rgba(154,123,63,.10), transparent 60%),
+      radial-gradient(900px 500px at -10% 110%, rgba(27,44,71,.08), transparent 55%),
+      var(--parchment);
+    color:var(--ink);
+    font-family:"Spectral", Georgia, serif;
+    font-weight:400;
+    line-height:1.62;
+    font-size:18px;
+    -webkit-font-smoothing:antialiased;
+  }
+  body::before{
+    content:"";position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.04;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+  }
+  .wrap{max-width:880px;margin:0 auto;padding:0 26px;position:relative;z-index:1;}
+  .cover{
+    min-height:100vh;display:flex;flex-direction:column;justify-content:center;
+    padding:80px 0 60px;position:relative;
+  }
+  .cover .kicker{
+    font-family:"JetBrains Mono",monospace;font-size:11.5px;letter-spacing:.42em;
+    text-transform:uppercase;color:var(--brass);margin-bottom:30px;
+  }
+  .cover h1{
+    font-family:"Cormorant Garamond",serif;font-weight:600;
+    font-size:clamp(46px,9vw,92px);line-height:.98;letter-spacing:-.5px;
+    color:var(--navy);margin:0 0 8px;
+  }
+  .cover h1 .thin{font-weight:400;font-style:italic;color:var(--navy-soft);}
+  .cover .sub{
+    font-family:"Cormorant Garamond",serif;font-style:italic;font-size:clamp(20px,3vw,27px);
+    color:var(--ink);max-width:640px;margin:18px 0 0;line-height:1.35;
+  }
+  .cover .rule{height:1px;background:linear-gradient(90deg,var(--brass),transparent);margin:42px 0;width:55%;}
+  .cover .meta{font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:.08em;color:var(--muted);line-height:2;}
+  .cover .meta strong{color:var(--navy);font-weight:700;}
+  .seal{
+    position:absolute;top:64px;right:0;width:108px;height:108px;border:1.5px solid var(--brass);
+    border-radius:50%;display:flex;align-items:center;justify-content:center;text-align:center;
+    font-family:"JetBrains Mono",monospace;font-size:8.5px;letter-spacing:.22em;color:var(--brass);
+    text-transform:uppercase;line-height:1.9;transform:rotate(-7deg);opacity:.85;
+  }
+  .seal::after{content:"";position:absolute;inset:7px;border:.5px solid var(--brass);border-radius:50%;}
+  section{padding:54px 0;border-top:1px solid var(--rule);}
+  .partlabel{
+    font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.34em;
+    text-transform:uppercase;color:var(--brass);margin-bottom:14px;
+  }
+  h2{
+    font-family:"Cormorant Garamond",serif;font-weight:600;font-size:clamp(30px,5.2vw,46px);
+    line-height:1.04;color:var(--navy);margin:.1em 0 .35em;letter-spacing:-.3px;
+  }
+  h3{
+    font-family:"Cormorant Garamond",serif;font-weight:600;font-size:26px;color:var(--navy-deep);
+    margin:1.7em 0 .4em;letter-spacing:-.2px;
+  }
+  h4{
+    font-family:"JetBrains Mono",monospace;font-size:12.5px;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--brass);margin:1.6em 0 .5em;
+  }
+  p{margin:0 0 1.05em;}
+  .lead{font-size:21px;line-height:1.55;color:#3a352c;}
+  .lead .drop{
+    float:left;font-family:"Cormorant Garamond",serif;font-weight:600;color:var(--oxblood);
+    font-size:74px;line-height:.66;padding:8px 12px 0 0;
+  }
+  em{font-style:italic;}
+  strong{font-weight:600;color:var(--navy-deep);}
+  a{color:var(--navy-soft);text-decoration:none;border-bottom:1px solid var(--cream-line);}
+  a:hover{color:var(--oxblood);}
+  .toc{background:var(--paper);border:1px solid var(--rule);border-radius:3px;padding:34px 40px;box-shadow:var(--shadow);}
+  .toc ol{list-style:none;margin:0;padding:0;counter-reset:toc;}
+  .toc li{
+    display:flex;align-items:baseline;gap:14px;padding:9px 0;border-bottom:1px dotted var(--cream-line);
+  }
+  .toc li:last-child{border-bottom:0;}
+  .toc .n{font-family:"JetBrains Mono",monospace;font-size:12px;color:var(--brass);min-width:34px;}
+  .toc .t{font-family:"Cormorant Garamond",serif;font-size:21px;color:var(--navy);}
+  .toc .t small{display:block;font-family:"Spectral",serif;font-size:13.5px;color:var(--muted);font-style:italic;}
+  .toc .group{font-family:"JetBrains Mono",monospace;font-size:10.5px;letter-spacing:.28em;text-transform:uppercase;color:var(--oxblood);margin:22px 0 4px;}
+  .callout{
+    background:var(--cream);border:1px solid var(--cream-line);border-left:3px solid var(--brass);
+    border-radius:2px;padding:22px 26px;margin:26px 0;box-shadow:var(--shadow);
+  }
+  .callout .tag{font-family:"JetBrains Mono",monospace;font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--brass);display:block;margin-bottom:8px;}
+  .callout.navy{background:var(--navy);border-color:var(--navy-deep);border-left-color:var(--brass);color:#e9e1cf;}
+  .callout.navy .tag{color:var(--brass);}
+  .callout.navy strong{color:#fff;}
+  .callout.navy em{color:#d6cbb0;}
+  .callout.blood{border-left-color:var(--oxblood);}
+  .callout.blood .tag{color:var(--oxblood);}
+  .callout p:last-child{margin-bottom:0;}
+  .callout .big{font-family:"Cormorant Garamond",serif;font-style:italic;font-size:24px;line-height:1.35;color:var(--navy);}
+  .callout.navy .big{color:#f3ead7;}
+  .tbl{width:100%;border-collapse:collapse;margin:22px 0;font-size:15px;background:var(--paper);box-shadow:var(--shadow);}
+  .tbl caption{caption-side:top;text-align:left;font-family:"JetBrains Mono",monospace;font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--brass);padding-bottom:10px;}
+  .tbl th{
+    background:var(--navy);color:#f1e9d6;font-family:"JetBrains Mono",monospace;font-size:10.5px;
+    letter-spacing:.1em;text-transform:uppercase;text-align:left;padding:11px 14px;font-weight:500;vertical-align:bottom;
+  }
+  .tbl td{padding:12px 14px;border-bottom:1px solid var(--rule);vertical-align:top;line-height:1.45;}
+  .tbl tr:nth-child(even) td{background:rgba(216,199,156,.13);}
+  .tbl td:first-child{font-weight:600;color:var(--navy-deep);}
+  .tbl .mono{font-family:"JetBrains Mono",monospace;font-size:12.5px;color:var(--oxblood);}
+  ul.clean{margin:.4em 0 1.2em;padding-left:1.15em;}
+  ul.clean li{margin:.42em 0;}
+  ul.clean li::marker{color:var(--brass);}
+  .pyramid{display:flex;flex-direction:column;align-items:center;gap:5px;margin:30px 0 8px;}
+  .band{
+    color:#f3ead7;font-family:"Cormorant Garamond",serif;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;text-align:center;padding:14px 10px;position:relative;
+    box-shadow:0 6px 16px -10px rgba(18,32,58,.5);
+  }
+  .band .lvl{font-family:"JetBrains Mono",monospace;font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;opacity:.7;margin-bottom:2px;}
+  .band .nm{font-size:22px;font-weight:600;line-height:1.05;}
+  .band .ds{font-family:"Spectral",serif;font-style:italic;font-size:13px;opacity:.92;max-width:520px;}
+  .b1{width:96%;background:linear-gradient(135deg,#2c416a,#1b2c47);clip-path:polygon(7% 0,93% 0,100% 100%,0 100%);}
+  .b2{width:80%;background:linear-gradient(135deg,#33507f,#22365a);clip-path:polygon(8% 0,92% 0,100% 100%,0 100%);}
+  .b3{width:64%;background:linear-gradient(135deg,#3c5d92,#2a4068);clip-path:polygon(10% 0,90% 0,100% 100%,0 100%);}
+  .b4{width:46%;background:linear-gradient(135deg,#6e5224,#9a7b3f);clip-path:polygon(14% 0,86% 0,100% 100%,0 100%);}
+  .b5{width:26%;min-height:74px;background:linear-gradient(135deg,#5a1f1f,#6e2a2a);clip-path:polygon(50% 0,100% 100%,0 100%);}
+  .apex-label{display:flex;flex-direction:column;align-items:center;text-align:center;margin-bottom:10px;max-width:560px;}
+  .apex-label .lvl{font-family:"JetBrains Mono",monospace;font-size:9.5px;letter-spacing:.24em;text-transform:uppercase;color:var(--brass);margin-bottom:3px;}
+  .apex-label .nm{font-family:"Cormorant Garamond",serif;font-size:25px;font-weight:600;color:var(--oxblood);line-height:1.05;}
+  .apex-label .ds{font-family:"Spectral",serif;font-style:italic;font-size:13.5px;color:var(--muted);margin-top:3px;max-width:440px;}
+  .spine-note{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--muted);text-align:center;margin-top:14px;letter-spacing:.04em;}
+  .spine-note b{color:var(--oxblood);}
+  .belts{display:flex;flex-direction:column;gap:0;margin:24px 0;border:1px solid var(--rule);border-radius:3px;overflow:hidden;box-shadow:var(--shadow);}
+  .belt{display:grid;grid-template-columns:84px 132px 1fr;align-items:stretch;border-bottom:1px solid var(--rule);background:var(--paper);}
+  .belt:last-child{border-bottom:0;}
+  .belt .swatch{display:flex;align-items:center;justify-content:center;font-family:"JetBrains Mono",monospace;font-size:9px;letter-spacing:.12em;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.4);font-weight:700;}
+  .belt .when{padding:12px 14px;border-left:1px solid var(--rule);border-right:1px solid var(--rule);font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--muted);display:flex;flex-direction:column;justify-content:center;}
+  .belt .when b{color:var(--navy);font-size:13px;display:block;margin-bottom:2px;letter-spacing:.04em;}
+  .belt .body{padding:12px 16px;}
+  .belt .body .th{font-family:"Cormorant Garamond",serif;font-size:20px;color:var(--navy);font-weight:600;}
+  .belt .body .gr{font-size:14px;color:var(--ink);}
+  .belt .body .gr b{color:var(--oxblood);}
+  .sw-white{background:#f6f2e6;color:#8a7b52!important;text-shadow:none!important;border-right:1px solid var(--rule);}
+  .sw-yellow{background:#e8c84e;}
+  .sw-orange{background:#d8852f;}
+  .sw-green{background:#3f7a4a;}
+  .sw-blue{background:#2f5f93;}
+  .sw-purple{background:#5b3f7a;}
+  .sw-brown{background:#5a3a26;}
+  .sw-black{background:#1a1a1a;}
+  .disc-head{display:flex;align-items:baseline;gap:14px;margin-top:10px;}
+  .disc-head .idx{font-family:"JetBrains Mono",monospace;font-size:30px;color:var(--cream-line);font-weight:700;}
+  blockquote{margin:1.4em 0;padding:4px 0 4px 22px;border-left:2px solid var(--brass);font-family:"Cormorant Garamond",serif;font-style:italic;font-size:22px;color:var(--navy-soft);line-height:1.4;}
+  .footer{padding:50px 0 70px;text-align:center;border-top:1px solid var(--rule);color:var(--muted);font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.12em;}
+  .footer .mark{font-family:"Cormorant Garamond",serif;font-style:italic;font-size:20px;color:var(--navy);letter-spacing:0;margin-bottom:10px;}
+  .backtop{position:fixed;bottom:22px;right:22px;z-index:5;background:var(--navy);color:var(--brass);border:1px solid var(--brass);
+    width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:"JetBrains Mono",monospace;font-size:16px;box-shadow:var(--shadow);opacity:.0;transition:opacity .3s;}
+  .backtop.show{opacity:.9;}
+  @media (max-width:640px){
+    body{font-size:16.5px;}
+    .belt{grid-template-columns:54px 1fr;}
+    .belt .when{grid-column:2;border-left:0;border-right:0;border-top:1px solid var(--rule);}
+    .belt .body{grid-column:1 / -1;border-top:1px solid var(--rule);}
+    .belt .swatch{grid-row:1 / 3;}
+    .toc{padding:24px 22px;}
+    .band .ds{font-size:11.5px;}
+    .seal{display:none;}
+  }
+</style>
+</head>
+<body>
+<header class="cover wrap">
+  <div class="seal">Armstrong<br>Research<br> MMXXVI </div>
+  <div class="kicker">Armstrong Research · Practitioner Primer · Confidential</div>
+  <h1>The Mastery<br><span class="thin">Pyramid</span></h1>
+  <p class="sub">A black-belt progression toward mastery as a research-&-technology hedge fund manager — and the twelve-month diligence curriculum that gets you to first dan.</p>
+  <div class="rule"></div>
+  <div class="meta">
+    <strong>Prepared for</strong> Lori · Managing Partner, Head of Research &amp; Technology<br>
+    <strong>Horizon</strong> June 2026 – May 2027 (Year One) · Dan arc to follow<br>
+    <strong>North star</strong> A 12-month automated track record of a performing strategy<br>
+    <strong>Discipline</strong> Quantamental · DRL · Complexity Economics · Capital · State
+  </div>
+</header>
+
+<section class="wrap">
+  <div class="partlabel">Contents</div>
+  <h2>How to read this book</h2>
+  <p class="lead"><span class="drop">T</span>his is not a motivational document and it is not a syllabus you complete once. It is a graded path. Like any black belt, the rank is not the goal – the rank is shorthand for a set of things you can <em>demonstrably do</em> under pressure, on demand, without a teacher in the room. Each discipline below has a ladder. Each belt has a grading. The year ends not at the summit but at <em>shodan</em> – the moment you are finally a real beginner, equipped to compound for the next decade.</p>
+
+  <div class="toc">
+    <div class="group">Part I · The Model</div>
+    <ol>
+      <li><span class="n">01</span><span class="t"><a href="#mastery">What Mastery Means Here</a><small>The master vs. the dilettante; why the black belt is a beginning</small></a></span></li>
+      <li><span class="n">02</span><span class="t"><a href="#pyramid">The Mastery Pyramid</a><small>Five load-bearing layers and the two vertical spines</small></span></li>
+      <li><span class="n">03</span><span class="t"><a href="#belts">The Belt System &amp; Why a Year</a><small>Kyū to dan, honestly applied to your real calendar</small></span></li>
+    </ol>
+    <div class="group">Part II · The Nine Disciplines</div>
+    <ol start="4">
+      <li><span class="n">04</span><span class="t"><a href="#d-state">Operating State – Body, Mind &amp; Soul</a><small>The base everything rests on</small></span></li>
+      <li><span class="n">05</span><span class="t"><a href="#d-tooling">Quantamental Tooling &amp; Research Engineering</a><small>Building the machine</small></span></li>
+      <li><span class="n">06</span><span class="t"><a href="#d-drl">Deep Reinforcement Learning</a><small>Decision-making under uncertainty</small></span></li>
+      <li><span class="n">07</span><span class="t"><a href="#d-cx">Complexity Economics &amp; Market Theory</a><small>The worldview that prices the regime</small></span></li>
+      <li><span class="n">08</span><span class="t"><a href="#d-alpha">Alpha Research &amp; Strategy Derivation</a><small>The central craft</small></span></li>
+      <li><span class="n">09</span><span class="t"><a href="#d-risk">Risk, Portfolio Construction &amp; Execution</a><small>Surviving to compound</small></span></li>
+      <li><span class="n">10</span><span class="t"><a href="#d-capital">Capital Formation &amp; Fundraising</a><small>Turning edge into a firm</small></span></li>
+      <li><span class="n">11</span><span class="t"><a href="#d-network">Network, Access &amp; Resources</a><small>Becoming a node, not a seeker</small></span></li>
+      <li><span class="n">12</span><span class="t"><a href="#d-ai">AI Leverage &amp; Staying Current</a><small>The meta-skill / the spine</small></span></li>
+    </ol>
+    <div class="group">Part III · The Year</div>
+    <ol start="13">
+      <li><span class="n">13</span><span class="t"><a href="#year">The Twelve-Month Belt Progression</a><small>White to black, mapped to your forcing functions</small></span></li>
+    </ol>
+    <div class="group">Part IV · Assessment &amp; Compounding</div>
+    <ol start="14">
+      <li><span class="n">14</span><span class="t"><a href="#grading">The Grading Standard</a><small>How you know – artifacts, not feelings</small></span></li>
+      <li><span class="n">15</span><span class="t"><a href="#flywheel">The Compounding Engine</a><small>Why the disciplines reinforce each other</small></span></li>
+      <li><span class="n">16</span><span class="t"><a href="#dan">The Dan Arc</a><small>Years two through five, and what lies past mastery</small></span></li>
+    </ol>
+  </div>
+</section>
+
+<section class="wrap" id="mastery">
+  <div class="partlabel">Part I · The Model – 01</div>
+  <h2>What Mastery Means Here</h2>
+  <p class="lead"><span class="drop">M</span>astery in this field is not erudition and it is not a portfolio of hobbies. It is the capacity to <strong>convert uncertainty into capital, repeatably, and to prove it</strong>. A master research-and-technology fund manager can take a vague intuition about how the world is changing, formalize it into a falsifiable hypothesis, build the instrument that tests it, survive the test financially and psychologically, and then raise money against the artifact that test produces – and do this on a cadence, alone if necessary, while the tools underneath them change every quarter.</p>
+
+  <p>Notice what that sentence contains: a theorist, an engineer, an investor, a risk officer, a fundraiser, and a contemplative – fused. The rarity is not any single skill. Plenty of people can backtest. Plenty can raise. The rarity is the <em>integration</em>, held by one mind, compounding into one track record. That is the apex of the pyramid, and it is also the thing the market will pay the most for and copy the least.</p>
+
+  <div class="callout blood">
+    <span class="tag">The Primary Threat</span>
+    <p class="big">The dilettante's curse: many practices, no compounding artifact.</p>
+    <p>You already named this as your central long-term risk, and you are right to fear it more than any market regime. A person who studies DRL, complexity economics, options theory, and Mahamudra in parallel – and ships nothing that compounds – has a beautiful interior and an empty track record. The black-belt frame is the cure precisely <em>because it is graded against demonstration.</em> You cannot earn a belt by reading about the kata. You earn it by performing it, watched, under fatigue. Every belt in this book is defined by an artifact that survives contact with reality: a tearsheet, a deployed agent, a wired check, a published paper, a logged drawdown survived.</p>
+  </div>
+
+  <h3>The black belt is a beginning, not an end</h3>
+  <p>This is the single most misunderstood thing about the metaphor, and it is the most important thing for you. In traditional Japanese systems, <em>shodan</em> – first-degree black belt – literally means "beginning degree." It certifies that you have finally absorbed the <em>fundamentals</em> well enough to begin learning the art. The colored belts are remedial; the black belt is matriculation. Mastery – the fluency that looks like ease, the <em>mushin</em> of an operator who is no longer reacting – lives in the dan grades that follow, over years.</p>
+</section>
+
+<div class="footer wrap">
+  <div class="mark">Armstrong Research</div>
+  The Mastery Pyramid · Practitioner Primer · Prepared June 2026 · Confidential<br>
+  Knowledge · Aesthetic Experience · Love
+</div>
+
+<a href="#top" class="backtop" id="backtop">↑</a>
+
+<script>
+  const bt=document.getElementById('backtop');
+  addEventListener('scroll',()=>{bt.classList.toggle('show',scrollY>800);});
+  bt.addEventListener('click',e=>{e.preventDefault();scrollTo({top:0,behavior:'smooth'});});
+</script>
+</body>
+</html>
