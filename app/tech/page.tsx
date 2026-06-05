@@ -1,8 +1,38 @@
 'use client'
 
+import Link from 'next/link'
 import { useEffect, useState } from 'react'
 
 type Tab = 'vision' | 'tech' | 'metrics'
+
+function EyeIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="text-burgundy">
+      <path d="M12 5C7 5 2.73 8.11 1 12.46c1.73 4.35 6 7.54 11 7.54s9.27-3.19 11-7.54C21.27 8.11 17 5 12 5z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
+      <circle cx="12" cy="12" r="2.5" fill="currentColor" />
+    </svg>
+  )
+}
+
+function GearIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="text-burgundy">
+      <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.2" />
+      <path d="M12 2v3M12 19v3M22 12h-3M5 12h-3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+      <path d="M19.07 4.93l-2.12 2.12M6.93 17.07l-2.12 2.12M19.07 19.07l-2.12-2.12M6.93 6.93l-2.12-2.12" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+    </svg>
+  )
+}
+
+function PyramidIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="text-burgundy">
+      <path d="M12 2L22 20H2L12 2Z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
+      <line x1="12" y1="2" x2="12" y2="20" stroke="currentColor" strokeWidth="0.8" opacity="0.5" />
+      <line x1="2" y1="20" x2="22" y2="20" stroke="currentColor" strokeWidth="1" />
+    </svg>
+  )
+}
 
 // ── Palette (Armstrong brand) ────────────────────────────────────────────────
 // cream      #f5f1ea  bg
@@ -477,9 +507,36 @@ export default function TechPage() {
             <span className={`${fDisplay} italic text-[18px] sm:text-[22px] text-[#2a2522] truncate`}>loricorpuz.com</span>
             <span className={`${fMono} text-[10px] sm:text-[11px] tracking-[0.18em] uppercase text-[#7c2d2d]`}>/tech</span>
           </div>
-          <span className={`${fDisplay} italic text-[11px] sm:text-[13px] text-[#9a928a] hidden xs:inline`}>
-            a notebook
-          </span>
+          <div className="flex items-center gap-2 sm:gap-3">
+            <span className={`${fDisplay} italic text-[11px] sm:text-[13px] text-[#9a928a] hidden xs:inline`}>
+              a notebook
+            </span>
+            <div className="flex items-center gap-1.5">
+              <Link
+                href="/tantra"
+                title="Daily Practice — Sight"
+                className="p-1 hover:opacity-75 transition-opacity"
+              >
+                <EyeIcon />
+              </Link>
+              <Link
+                href="/tech"
+                title="Tech & Systems"
+                className="p-1 hover:opacity-75 transition-opacity"
+              >
+                <GearIcon />
+              </Link>
+              <Link
+                href="/tantra/mastery"
+                target="_blank"
+                rel="noopener noreferrer"
+                title="Progression & Mastery"
+                className="p-1 hover:opacity-75 transition-opacity"
+              >
+                <PyramidIcon />
+              </Link>
+            </div>
+          </div>
         </div>
         <div className="border-t border-[#e8e2da]">
           <div className="max-w-5xl mx-auto flex justify-center sm:justify-start">

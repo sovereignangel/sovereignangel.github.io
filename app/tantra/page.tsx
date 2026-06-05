@@ -172,6 +172,15 @@ function GearIcon() {
   )
 }
 
+function EyeIcon() {
+  return (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-burgundy">
+      <path d="M12 5C7 5 2.73 8.11 1 12.46c1.73 4.35 6 7.54 11 7.54s9.27-3.19 11-7.54C21.27 8.11 17 5 12 5z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
+      <circle cx="12" cy="12" r="2.5" fill="currentColor" />
+    </svg>
+  )
+}
+
 function HindrancesSigil() {
   return (
     <svg width="40" height="40" viewBox="0 0 40 40" fill="none" className="text-burgundy">
@@ -551,20 +560,27 @@ export default function TantraPage() {
           </div>
           <div className="flex items-center gap-2">
             <Link
-              href="/tantra/mastery"
-              target="_blank"
-              rel="noopener noreferrer"
-              title="The Mastery Pyramid"
+              href="/tantra"
+              title="Daily Practice — Sight"
               className="p-1.5 hover:opacity-75 transition-opacity"
             >
-              <PyramidIcon />
+              <EyeIcon />
             </Link>
             <Link
               href="/tech"
-              title="Tech Stack & Tools"
+              title="Tech & Systems"
               className="p-1.5 hover:opacity-75 transition-opacity"
             >
               <GearIcon />
+            </Link>
+            <Link
+              href="/tantra/mastery"
+              target="_blank"
+              rel="noopener noreferrer"
+              title="Progression & Mastery"
+              className="p-1.5 hover:opacity-75 transition-opacity"
+            >
+              <PyramidIcon />
             </Link>
           </div>
         </div>
