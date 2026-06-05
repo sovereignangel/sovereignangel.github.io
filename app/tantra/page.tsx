@@ -162,6 +162,16 @@ function PyramidIcon() {
   )
 }
 
+function GearIcon() {
+  return (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-burgundy">
+      <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.2" />
+      <path d="M12 2v3M12 19v3M22 12h-3M5 12h-3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+      <path d="M19.07 4.93l-2.12 2.12M6.93 17.07l-2.12 2.12M19.07 19.07l-2.12-2.12M6.93 6.93l-2.12-2.12" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+    </svg>
+  )
+}
+
 function HindrancesSigil() {
   return (
     <svg width="40" height="40" viewBox="0 0 40 40" fill="none" className="text-burgundy">
@@ -526,16 +536,7 @@ export default function TantraPage() {
             <span>Day 40</span>
           </div>
         </div>
-        <div className="flex flex-col items-end gap-1 sm:min-w-[110px] relative">
-          <Link
-            href="/tantra/mastery"
-            target="_blank"
-            rel="noopener noreferrer"
-            title="The Mastery Pyramid"
-            className="absolute -top-1 -right-1 p-1.5 hover:opacity-75 transition-opacity"
-          >
-            <PyramidIcon />
-          </Link>
+        <div className="flex items-start gap-4 sm:gap-5">
           <div className="flex flex-col items-end leading-none">
             <div className="font-mono text-[8px] uppercase tracking-[1px] text-ink-muted">Streak</div>
             <div className="font-serif text-[24px] lg:text-[28px] font-semibold text-burgundy leading-none mt-0.5">
@@ -548,10 +549,30 @@ export default function TantraPage() {
               {daysSincePractice}<span className="font-serif text-[9px] text-ink-muted ml-1">d</span>
             </div>
           </div>
+          <div className="flex items-center gap-2">
+            <Link
+              href="/tantra/mastery"
+              target="_blank"
+              rel="noopener noreferrer"
+              title="The Mastery Pyramid"
+              className="p-1.5 hover:opacity-75 transition-opacity"
+            >
+              <PyramidIcon />
+            </Link>
+            <Link
+              href="/tech"
+              title="Tech Stack & Tools"
+              className="p-1.5 hover:opacity-75 transition-opacity"
+            >
+              <GearIcon />
+            </Link>
+          </div>
+        </div>
+        <div className="flex flex-col gap-1 items-end">
           <button
             onClick={handleToggleToday}
             disabled={submitting}
-            className={`font-serif text-[10px] uppercase tracking-[0.5px] px-2.5 py-1 rounded-sm border transition-colors whitespace-nowrap mt-0.5 ${
+            className={`font-serif text-[10px] uppercase tracking-[0.5px] px-2.5 py-1 rounded-sm border transition-colors whitespace-nowrap ${
               checkedInToday
                 ? 'bg-burgundy text-paper border-burgundy'
                 : 'bg-transparent text-burgundy border-burgundy hover:bg-burgundy hover:text-paper'
