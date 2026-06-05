@@ -17,9 +17,17 @@ function EyeIcon() {
 function GearIcon() {
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="text-burgundy">
-      <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.2" />
-      <path d="M12 2v3M12 19v3M22 12h-3M5 12h-3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
-      <path d="M19.07 4.93l-2.12 2.12M6.93 17.07l-2.12 2.12M19.07 19.07l-2.12-2.12M6.93 6.93l-2.12-2.12" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+      <circle cx="12" cy="12" r="4" stroke="currentColor" strokeWidth="1.2" fill="none" />
+      <g stroke="currentColor" strokeWidth="1.2" strokeLinecap="round">
+        <rect x="11" y="1" width="2" height="2.5" rx="0.5" />
+        <rect x="11" y="20.5" width="2" height="2.5" rx="0.5" />
+        <rect x="20.5" y="11" width="2.5" height="2" rx="0.5" />
+        <rect x="1" y="11" width="2.5" height="2" rx="0.5" />
+        <rect x="17.66" y="4.34" width="2.5" height="2" rx="0.5" transform="rotate(45 18.66 5.34)" />
+        <rect x="3.84" y="18.16" width="2.5" height="2" rx="0.5" transform="rotate(45 4.84 19.16)" />
+        <rect x="4.34" y="4.34" width="2" height="2.5" rx="0.5" transform="rotate(-45 5.34 5.84)" />
+        <rect x="18.16" y="18.16" width="2" height="2.5" rx="0.5" transform="rotate(-45 19.16 19.66)" />
+      </g>
     </svg>
   )
 }
