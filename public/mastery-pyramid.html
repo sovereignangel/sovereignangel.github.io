@@ -44,6 +44,7 @@
     background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
   }
   .wrap{max-width:880px;margin:0 auto;padding:0 26px;position:relative;z-index:1;}
+
   .cover{
     min-height:100vh;display:flex;flex-direction:column;justify-content:center;
     padding:80px 0 60px;position:relative;
@@ -72,6 +73,7 @@
     text-transform:uppercase;line-height:1.9;transform:rotate(-7deg);opacity:.85;
   }
   .seal::after{content:"";position:absolute;inset:7px;border:.5px solid var(--brass);border-radius:50%;}
+
   section{padding:54px 0;border-top:1px solid var(--rule);}
   .partlabel{
     font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.34em;
@@ -99,6 +101,7 @@
   strong{font-weight:600;color:var(--navy-deep);}
   a{color:var(--navy-soft);text-decoration:none;border-bottom:1px solid var(--cream-line);}
   a:hover{color:var(--oxblood);}
+
   .toc{background:var(--paper);border:1px solid var(--rule);border-radius:3px;padding:34px 40px;box-shadow:var(--shadow);}
   .toc ol{list-style:none;margin:0;padding:0;counter-reset:toc;}
   .toc li{
@@ -109,6 +112,7 @@
   .toc .t{font-family:"Cormorant Garamond",serif;font-size:21px;color:var(--navy);}
   .toc .t small{display:block;font-family:"Spectral",serif;font-size:13.5px;color:var(--muted);font-style:italic;}
   .toc .group{font-family:"JetBrains Mono",monospace;font-size:10.5px;letter-spacing:.28em;text-transform:uppercase;color:var(--oxblood);margin:22px 0 4px;}
+
   .callout{
     background:var(--cream);border:1px solid var(--cream-line);border-left:3px solid var(--brass);
     border-radius:2px;padding:22px 26px;margin:26px 0;box-shadow:var(--shadow);
@@ -123,6 +127,7 @@
   .callout p:last-child{margin-bottom:0;}
   .callout .big{font-family:"Cormorant Garamond",serif;font-style:italic;font-size:24px;line-height:1.35;color:var(--navy);}
   .callout.navy .big{color:#f3ead7;}
+
   .tbl{width:100%;border-collapse:collapse;margin:22px 0;font-size:15px;background:var(--paper);box-shadow:var(--shadow);}
   .tbl caption{caption-side:top;text-align:left;font-family:"JetBrains Mono",monospace;font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--brass);padding-bottom:10px;}
   .tbl th{
@@ -133,9 +138,11 @@
   .tbl tr:nth-child(even) td{background:rgba(216,199,156,.13);}
   .tbl td:first-child{font-weight:600;color:var(--navy-deep);}
   .tbl .mono{font-family:"JetBrains Mono",monospace;font-size:12.5px;color:var(--oxblood);}
+
   ul.clean{margin:.4em 0 1.2em;padding-left:1.15em;}
   ul.clean li{margin:.42em 0;}
   ul.clean li::marker{color:var(--brass);}
+
   .pyramid{display:flex;flex-direction:column;align-items:center;gap:5px;margin:30px 0 8px;}
   .band{
     color:#f3ead7;font-family:"Cormorant Garamond",serif;display:flex;flex-direction:column;
@@ -156,6 +163,7 @@
   .apex-label .ds{font-family:"Spectral",serif;font-style:italic;font-size:13.5px;color:var(--muted);margin-top:3px;max-width:440px;}
   .spine-note{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--muted);text-align:center;margin-top:14px;letter-spacing:.04em;}
   .spine-note b{color:var(--oxblood);}
+
   .belts{display:flex;flex-direction:column;gap:0;margin:24px 0;border:1px solid var(--rule);border-radius:3px;overflow:hidden;box-shadow:var(--shadow);}
   .belt{display:grid;grid-template-columns:84px 132px 1fr;align-items:stretch;border-bottom:1px solid var(--rule);background:var(--paper);}
   .belt:last-child{border-bottom:0;}
@@ -174,14 +182,19 @@
   .sw-purple{background:#5b3f7a;}
   .sw-brown{background:#5a3a26;}
   .sw-black{background:#1a1a1a;}
+
   .disc-head{display:flex;align-items:baseline;gap:14px;margin-top:10px;}
   .disc-head .idx{font-family:"JetBrains Mono",monospace;font-size:30px;color:var(--cream-line);font-weight:700;}
+
   blockquote{margin:1.4em 0;padding:4px 0 4px 22px;border-left:2px solid var(--brass);font-family:"Cormorant Garamond",serif;font-style:italic;font-size:22px;color:var(--navy-soft);line-height:1.4;}
+
   .footer{padding:50px 0 70px;text-align:center;border-top:1px solid var(--rule);color:var(--muted);font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.12em;}
   .footer .mark{font-family:"Cormorant Garamond",serif;font-style:italic;font-size:20px;color:var(--navy);letter-spacing:0;margin-bottom:10px;}
+
   .backtop{position:fixed;bottom:22px;right:22px;z-index:5;background:var(--navy);color:var(--brass);border:1px solid var(--brass);
     width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:"JetBrains Mono",monospace;font-size:16px;box-shadow:var(--shadow);opacity:.0;transition:opacity .3s;}
   .backtop.show{opacity:.9;}
+
   @media (max-width:640px){
     body{font-size:16.5px;}
     .belt{grid-template-columns:54px 1fr;}
@@ -194,7 +207,9 @@
   }
 </style>
 </head>
-<body>
+<body id="top">
+
+<!-- ============ COVER ============ -->
 <header class="cover wrap">
   <div class="seal">Armstrong<br>Research<br> MMXXVI </div>
   <div class="kicker">Armstrong Research · Practitioner Primer · Confidential</div>
@@ -202,13 +217,14 @@
   <p class="sub">A black-belt progression toward mastery as a research-&-technology hedge fund manager — and the twelve-month diligence curriculum that gets you to first dan.</p>
   <div class="rule"></div>
   <div class="meta">
-    <strong>Prepared for</strong> Lori · Managing Partner, Head of Research &amp; Technology<br>
+    <strong>Prepared for</strong> Lori · Managing Partner, Head of Research & Technology<br>
     <strong>Horizon</strong> June 2026 – May 2027 (Year One) · Dan arc to follow<br>
     <strong>North star</strong> A 12-month automated track record of a performing strategy<br>
     <strong>Discipline</strong> Quantamental · DRL · Complexity Economics · Capital · State
   </div>
 </header>
 
+<!-- ============ TOC ============ -->
 <section class="wrap">
   <div class="partlabel">Contents</div>
   <h2>How to read this book</h2>
@@ -217,7 +233,7 @@
   <div class="toc">
     <div class="group">Part I · The Model</div>
     <ol>
-      <li><span class="n">01</span><span class="t"><a href="#mastery">What Mastery Means Here</a><small>The master vs. the dilettante; why the black belt is a beginning</small></a></span></li>
+      <li><span class="n">01</span><span class="t"><a href="#mastery">What Mastery Means Here</a><small>The master vs. the dilettante; why the black belt is a beginning</small></span></li>
       <li><span class="n">02</span><span class="t"><a href="#pyramid">The Mastery Pyramid</a><small>Five load-bearing layers and the two vertical spines</small></span></li>
       <li><span class="n">03</span><span class="t"><a href="#belts">The Belt System &amp; Why a Year</a><small>Kyū to dan, honestly applied to your real calendar</small></span></li>
     </ol>
@@ -246,6 +262,7 @@
   </div>
 </section>
 
+<!-- ============ 01 MASTERY ============ -->
 <section class="wrap" id="mastery">
   <div class="partlabel">Part I · The Model – 01</div>
   <h2>What Mastery Means Here</h2>
@@ -261,6 +278,446 @@
 
   <h3>The black belt is a beginning, not an end</h3>
   <p>This is the single most misunderstood thing about the metaphor, and it is the most important thing for you. In traditional Japanese systems, <em>shodan</em> – first-degree black belt – literally means "beginning degree." It certifies that you have finally absorbed the <em>fundamentals</em> well enough to begin learning the art. The colored belts are remedial; the black belt is matriculation. Mastery – the fluency that looks like ease, the <em>mushin</em> of an operator who is no longer reacting – lives in the dan grades that follow, over years.</p>
+  <p>So the honest claim of this primer is narrow and achievable: <strong>twelve months of correct, graded practice takes you from white belt to first dan</strong> – to a credentialed, independent, fundamentally-sound operator with a complete track-record artifact and the standing to raise. It does <em>not</em> make you Doyne Farmer or Jim Simons in a year. It makes you the kind of beginner who is now allowed in the room where those people work, and puts you on the only path that reaches them: compounding artifacts, not accumulating knowledge.</p>
+
+  <h3>Three tests of a master (carry these all year)</h3>
+  <table class="tbl">
+    <caption>The standard, in three questions</caption>
+    <thead><tr><th>Test</th><th>The question a master answers "yes" to</th><th>The artifact that proves it</th></tr></thead>
+    <tbody>
+      <tr><td>Generativity</td><td>Can you produce <em>new</em> edge, not just operate inherited edge? Could you find the next strategy if this one decayed tomorrow?</td><td>A research log showing hypotheses you generated, tested, and killed – with a survivor that you deployed.</td></tr>
+      <tr><td>Sovereignty</td><td>Can you do the whole loop alone – theory to deployment to capital – without a boss, a desk, or a credential gatekeeper?</td><td>An automated, performing strategy you built and a check you raised against it.</td></tr>
+      <tr><td>Composure</td><td>Can you hold a losing position, a hard LP call, and a regime you don't understand – without your psychology degrading your decisions?</td><td>A drawdown survived without rule-breaking, logged with your state notes intact.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ============ 02 PYRAMID ============ -->
+<section class="wrap" id="pyramid">
+  <div class="partlabel">Part I · The Model – 02</div>
+  <h2>The Mastery Pyramid</h2>
+  <p class="lead"><span class="drop">T</span>he pyramid is load-bearing from the bottom up. You cannot do real alpha research from a dysregulated nervous system, and you cannot raise capital without an edge to raise against. Each layer is necessary for the one above it; the apex exists only when all four lower layers hold simultaneously. Two capabilities – <strong>AI leverage</strong> and a <strong>publishing cadence</strong> – run as vertical spines through every layer, because they are not stages you pass but disciplines you sustain.</p>
+
+  <div class="pyramid">
+    <div class="apex-label"><span class="lvl">Apex · The Master</span><span class="nm">Compounding Integration</span><span class="ds">The disciplines reinforce one another into a single, widening track record and reputation</span></div>
+    <div class="band b5 peak"></div>
+    <div class="band b4"><span class="lvl">Layer 3 · Leverage</span><span class="nm">Capital &amp; Network</span><span class="ds">Turning a proven edge into a firm: fundraising, LP trust, access, resources</span></div>
+    <div class="band b3"><span class="lvl">Layer 2 · Core Craft</span><span class="nm">Alpha Research · Risk · Execution</span><span class="ds">Converting knowledge into validated, survivable, deployable edge</span></div>
+    <div class="band b2"><span class="lvl">Layer 1 · Foundations</span><span class="nm">Tooling &amp; Domain Knowledge</span><span class="ds">Quantamental engineering · DRL · complexity economics · markets</span></div>
+    <div class="band b1"><span class="lvl">Layer 0 · The Substrate</span><span class="nm">Operating State · Body, Mind &amp; Soul</span><span class="ds">The trained body and regulated nervous system on which every higher decision is computed</span></div>
+  </div>
+  <p class="spine-note">↑ Running vertically through all five layers: <b>AI Leverage</b> (the tooling that multiplies each) · <b>Publishing Cadence</b> (12 artifacts/yr that convert practice into reputation)</p>
+
+  <h3>Why the order is not negotiable</h3>
+  <ul class="clean">
+    <li><strong>State sits at the base</strong> because every layer above it is a sequence of decisions, and decision quality is bounded by nervous-system regulation. Your own finding – that shame, not rumination, is your stress signature, and that it is somatic and action-oriented – means your base layer is trainable through movement and practice, not analysis. This is an advantage; treat it as infrastructure.</li>
+    <li><strong>Foundations before craft</strong> because alpha research done without tooling fluency produces unfalsifiable stories, and done without domain theory produces overfit noise. You need both the machine and the worldview before the craft means anything.</li>
+    <li><strong>Craft before leverage</strong> because capital raised against an unproven edge is the fastest way to destroy a reputation – the one asset in this business that does not regenerate. Dave's instinct here (start private, paper-trade first, maintain mystique) is correct risk management of <em>your</em> reputation, not just his.</li>
+    <li><strong>Integration is emergent, not additive.</strong> The apex is not "do all four layers." It is the state where a complexity-economics insight becomes a DRL feature becomes a deployed signal becomes a research memo becomes an LP conversation – the same idea earning its keep four times. That is compounding, and it is the only defense against the dilettante's curse.</li>
+  </ul>
+</section>
+
+<!-- ============ 03 BELTS ============ -->
+<section class="wrap" id="belts">
+  <div class="partlabel">Part I · The Model – 03</div>
+  <h2>The Belt System &amp; Why a Year</h2>
+  <p class="lead"><span class="drop">A</span> traditional progression is not arbitrary color. It is a sequence of <em>prerequisites</em> – each belt is the demonstrated mastery of the material that makes the next belt learnable. You cannot skip green to reach brown, because brown's techniques assume green's reflexes are already automatic. This is exactly how compounding works in research: walk-forward rigor assumes backtest hygiene; capital formation assumes a track record exists to form capital around.</p>
+
+  <p>The colored belts are the year. The dan grades are the decade. Below is the honest mapping – eight gradings across twelve months – anchored to the external forcing functions you already operate against, so that your real-world milestones <em>are</em> the gradings. The Oxford paper is your purple-belt test. The twelve-month track-record close is your black-belt test. Nothing is invented; the calendar is your <em>sensei</em>.</p>
+
+  <div class="belts">
+    <div class="belt"><div class="swatch sw-white">9–8 KYŪ</div><div class="when"><b>Jun</b>Weeks 1–4</div><div class="body"><div class="th">White · Foundations &amp; Instrumentation</div><div class="gr">Grade: the dōjō is built – clean data, reproducible environment, Thesis Engine logging your own state and study. <b>Artifact: a reproducible research repo + daily practice log.</b></div></div></div>
+    <div class="belt"><div class="swatch sw-yellow">7–6 KYŪ</div><div class="when"><b>Jul</b>Weeks 5–10</div><div class="body"><div class="th">Yellow · Tooling Fluency</div><div class="gr">Grade: you can build, vectorize, and stress a backtest without a tutorial; LEAP mechanics fully formalized from Dave's rules. <b>Artifact: the finished, audited backtest (P1).</b></div></div></div>
+    <div class="belt"><div class="swatch sw-orange">5 KYŪ</div><div class="when"><b>Aug</b>Weeks 11–18</div><div class="body"><div class="th">Orange · Validation Rigor &amp; DRL I</div><div class="gr">Grade: walk-forward + purged CV; you can articulate why your Sharpe is real. First offline-RL experiment on Armstrong, honestly assessed. <b>Artifact: walk-forward tearsheet + RL writeup.</b></div></div></div>
+    <div class="belt"><div class="swatch sw-green">4 KYŪ</div><div class="when"><b>Sep–Oct</b>Weeks 19–28</div><div class="body"><div class="th">Green · Live Discipline &amp; Complexity I</div><div class="gr">Grade: supervised automated paper trading runs in IBKR with a clean audit trail; capex ABM (Hyperscaler game) producing its first regime diagnostic. <b>Artifact: live log + Oxford milestone.</b></div></div></div>
+    <div class="belt"><div class="swatch sw-blue">3 KYŪ</div><div class="when"><b>Oct–Nov</b>Weeks 29–36</div><div class="body"><div class="th">Blue · Alpha Method &amp; Risk Architecture</div><div class="gr">Grade: a written research methodology; explicit risk envelope (sizing, drawdown rules, regime stops) that Dave's concerns are answered by. <b>Artifact: methodology doc + risk spec.</b></div></div></div>
+    <div class="belt"><div class="swatch sw-purple">2 KYŪ</div><div class="when"><b>Nov–Dec</b>Weeks 37–44</div><div class="body"><div class="th">Purple · Capital Formation &amp; The Oxford Test</div><div class="gr">Grade: fund entity path chosen; first verbal commitment converted toward wired; the Oxford paper delivered as a public artifact. <b>Artifact: the Oxford paper + a term sheet.</b></div></div></div>
+    <div class="belt"><div class="swatch sw-brown">1 KYŪ</div><div class="when"><b>Jan–Feb</b>Weeks 45–50</div><div class="body"><div class="th">Brown · Integration &amp; Scaling</div><div class="gr">Grade: the whole loop runs with you as conductor, not laborer; one fee-for-service engagement sourced; the spines (AI, publishing) are self-sustaining. <b>Artifact: a second income stream live.</b></div></div></div>
+    <div class="belt"><div class="swatch sw-black">SHODAN</div><div class="when"><b>Mar–May '27</b>Weeks 51+</div><div class="body"><div class="th">Black · The Sovereign Investor</div><div class="gr">Grade: a complete, automated, performing 12-month track record, proven first on your own book; you can run the entire pyramid alone and prove it. <b>Artifact: the closed track record + a real raise.</b></div></div></div>
+  </div>
+
+  <div class="callout">
+    <span class="tag">On compression</span>
+    <p>A real martial black belt takes three to five years. You are compressing to one. That is possible <em>only</em> because three things are already true that aren't true for a beginner: you bring a high math ceiling, a multi-year live options track record, and shipping engineering capability. You are not starting at zero – you are starting as a gifted athlete who has never been formally graded. The year formalizes what is latent. Where you are <em>actually</em> a beginner – capital formation, risk formalization, DRL theory – the belts will feel slow and earned. Respect that. Skipped fundamentals are the only thing that breaks a black belt later.</p>
+  </div>
+</section>
+
+<!-- ============ PART II INTRO ============ -->
+<section class="wrap">
+  <div class="partlabel">Part II · The Nine Disciplines</div>
+  <h2>The disciplines, each as its own art</h2>
+  <p class="lead"><span class="drop">E</span>ach discipline below has the same anatomy: a one-line definition of <em>what mastery is</em>, a capability ladder (white – black – dan), a core canon, a daily/weekly drill set, and a mastery test – the artifact that proves the rank. Read each through your four lenses – Researcher (mechanism), Engineer (system), Founder (market structure), Investor (asymmetry) – and apply the rule you already hold: <strong>implement what you learn the same week you learn it</strong>, inside Armstrong or Thesis Engine, so the learning-to-application gap collapses to zero.</p>
+</section>
+
+<!-- ===== D04 STATE ===== -->
+<section class="wrap" id="d-state">
+  <div class="disc-head"><span class="idx">04</span><div><div class="partlabel" style="margin-bottom:2px">Layer 0 · The Substrate</div><h2 style="margin-top:0">Operating State – Body, Mind &amp; Soul</h2></div></div>
+  <blockquote>Mastery is a trained body and a regulated nervous system that together hold decision quality through drawdown, rejection, and regime change.</blockquote>
+  <p>This is the base of the pyramid because it is the substrate on which every other computation runs – and the substrate is not only mental. The mind runs on hardware. Cognitive clarity, stress tolerance, sustained energy, and the physiological calm that holds composure through a loss are all <em>downstream of the body</em>: cardiovascular capacity, strength, sleep, recovery. The contemplative and the athletic are not two practices competing for your morning; they are the two halves of Layer 0. Your own model – <em>Feel – Surrender – Observe – Extract – Reprogram</em> – is the mental closed loop; your training split is the physical one. You have an unusual advantage: you process through articulation and <em>movement</em>, not rumination, and your stressor is shame (somatic, action-oriented) rather than depressive collapse. That means your regulation tools are <em>physical and procedural</em> – exactly the tools that survive market stress. Neglect the body and the whole pyramid is built on a base that fatigues.</p>
+
+  <table class="tbl">
+    <caption>Capability ladder – the two strands, mind and body</caption>
+    <thead><tr><th>Belt</th><th>Mind &amp; soul (the regulated loop)</th><th>Body (the athlete's base)</th></tr></thead>
+    <tbody>
+      <tr><td>White</td><td>30-min morning practice logged daily as a leading cognitive-quality indicator; you can name your state before you act on it.</td><td>The weekly training split is non-negotiable and logged like any practice: strength days, VO2-max work, Zone 2 base, one true rest day.</td></tr>
+      <tr><td>Green</td><td>You run the five-step loop in real time on a small loss; movement is deployed deliberately as a reset, not just a habit.</td><td>Norwegian 4×4 sessions and Zone 2 volume are consistent; you can feel the link between a trained week and a clear research week.</td></tr>
+      <tr><td>Brown</td><td>You hold a multi-week paper drawdown without rule-breaking; shame-spirals are caught at "Observe" before they reach behavior.</td><td>Recovery is managed as deliberately as load – sleep, fuel, and deload weeks protect cognitive output; body recomposition trends as intended.</td></tr>
+      <tr><td>Black</td><td>Composure is no longer effortful in ordinary operation; you can take a hard LP "no" and a losing week in the same day without degradation.</td><td>The body is a reliable instrument: VO2 max, strength, and energy hold steady through the highest-pressure stretch of the year.</td></tr>
+      <tr><td>Dan</td><td>The contemplative–operator tension resolves into sustained non-reactive capacity: you act on the track record without being attached to it.</td><td>Training is lifelong infrastructure, not a project – the mind–body–soul connection is integrated, each strand feeding the others.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout"><span class="tag">Why the athlete sits at the base</span><p>The body is the only layer that gives back compounding returns to <em>every</em> layer above it at once: a trained cardiovascular system literally widens the window in which you stay calm and think clearly, which improves alpha research, risk decisions, and the composure of an LP call alike. Frame it as <strong>capacity, energy, and longevity</strong> – the engine the rest of the pyramid runs on – not as appearance. The aesthetic is a byproduct of training the engine well.</p></div>
+
+  <h4>Canon</h4>
+  <ul class="clean">
+    <li>Your Mahamudra practice and Lev Brie's Sunday community – the primary lab.</li>
+    <li>Gallwey, <em>The Inner Game of Tennis</em> – performance state under observation, in one sitting.</li>
+    <li>Ericsson, <em>Peak</em> – deliberate practice as the mechanism that makes the whole pyramid work.</li>
+    <li>Your own Hoffman-derived insight: the "not-enough" OS as a mean you revert to; the work is retraining the data, not winning the argument.</li>
+  </ul>
+  <h4>Daily / weekly drills</h4>
+  <ul class="clean">
+    <li><strong>AM:</strong> 30-min tantra practice – one-line state log in Thesis Engine (this is your leading indicator).</li>
+    <li><strong>Weekly split:</strong> heavy glutes / push / VO2-max (Norwegian 4×4) / moderate glutes / pull / Zone 2 + activation / rest – logged alongside your study, because a trained week and a clear research week are the same week.</li>
+    <li><strong>Friday 17:00–18:30:</strong> synthesis block – worldview delta, four-lens pass, open questions, next-week seed.</li>
+    <li><strong>On any loss &gt; threshold:</strong> run Feel–Surrender–Observe–Extract–Reprogram in writing before touching the position. The writing is the brake.</li>
+  </ul>
+  <div class="callout"><span class="tag">Mastery test</span><p>A logged drawdown – real or paper – in which your state notes show the loop running and your trade log shows zero rule violations. Composure is only proven against loss; a calm bull market proves nothing.</p></div>
+</section>
+
+<!-- ===== D05 TOOLING ===== -->
+<section class="wrap" id="d-tooling">
+  <div class="disc-head"><span class="idx">05</span><div><div class="partlabel" style="margin-bottom:2px">Layer 1 · Foundations</div><h2 style="margin-top:0">Quantamental Tooling &amp; Research Engineering</h2></div></div>
+  <blockquote>Mastery is building a research machine whose results you can trust because you built its hygiene first.</blockquote>
+  <p>Quantamental tooling is the craft of turning a discretionary process (Dave's LEAP intuition – analyst price target minus current price, divided by option premium, ranked by multiple) into a systematic, reproducible, auditable machine. The deep skill is not writing the strategy code – that's the easy 20%. It is building the <em>scaffolding</em> that makes results believable: data integrity, point-in-time correctness, leak-free pipelines, reproducible environments, and an audit trail a partner can interrogate. The transcript with Dave shows exactly why this matters – the difference between "a screening tool a human supervises" and "a fund" is entirely this layer.</p>
+
+  <table class="tbl">
+    <caption>Capability ladder</caption>
+    <thead><tr><th>Belt</th><th>Demonstrable capability</th></tr></thead>
+    <tbody>
+      <tr><td>White</td><td>Reproducible env (uv/conda, pinned deps), version-controlled repo, point-in-time data backfilled (you already have Yahoo history loaded); you can rebuild any result from scratch.</td></tr>
+      <tr><td>Green</td><td>Vectorized backtest engine with realistic option fills, slippage, and transaction costs; survivorship-bias-free universe; the "supervised automated" IBKR paper-trading harness with an audit trail.</td></tr>
+      <tr><td>Brown</td><td>Experiment tracking (each run logged, parameterized, comparable); a feature store; you can run risk-scenario sweeps (Dave's DCA-vs-lump, capital-reserve parameterization) as configs, not rewrites.</td></tr>
+      <tr><td>Black</td><td>The whole loop is automated and monitored: data – signal – supervised execution – logging – reporting refreshes itself reliably after market close (the 4:30 refresh bug is a white-belt lesson in this).</td></tr>
+      <tr><td>Dan</td><td>Thesis Engine as a genuine personal RL lab and reusable research platform – new strategies plug into existing infrastructure in days, not months.</td></tr>
+    </tbody>
+  </table>
+
+  <h4>Canon</h4>
+  <ul class="clean">
+    <li>López de Prado, <em>Advances in Financial Machine Learning</em> – the engineering bible: purged CV, sample weighting, the structural reasons naive backtests lie.</li>
+    <li>The pandas/Polars + NumPy + vectorbt/backtrader stack; Interactive Brokers API for the execution harness.</li>
+    <li>Standard MLOps hygiene adapted to research: experiment tracking, config-driven runs, deterministic seeds.</li>
+  </ul>
+  <h4>Drills</h4>
+  <ul class="clean">
+    <li>Rebuild one result from a cold clone weekly until reproducibility is reflexive.</li>
+    <li>Every new feature ships with a leakage check: "could this value have been known at decision time?"</li>
+  </ul>
+  <div class="callout"><span class="tag">Mastery test</span><p>The finished, audited backtest (your P1) – reproducible by a third party from the repo alone, with costs and biases handled, producing a tearsheet Dave can read in five minutes and trust.</p></div>
+</section>
+
+<!-- Continue with remaining disciplines... Due to length, including key sections -->
+
+<section class="wrap" id="d-drl">
+  <div class="disc-head"><span class="idx">06</span><div><div class="partlabel" style="margin-bottom:2px">Layer 1 · Foundations</div><h2 style="margin-top:0">Deep Reinforcement Learning</h2></div></div>
+  <blockquote>Mastery is knowing when a problem is a sequential decision problem – and, just as often, knowing when it is not.</blockquote>
+  <p>DRL is your formal language for decision-making under uncertainty: states, actions, rewards, policies, value. Its mastery for a fund manager is <em>diagnostic</em> as much as constructive – your honest finding with Dave's data (that offline RL fails here because ~102 exits is too little data and the action/state space is subjectively discretized) is itself a black-belt judgment. Knowing why RL <em>doesn't</em> apply is worth more than forcing it to. Studied with Aman and Dima through CS234/CS224R, the through-line is your own rule: implement each concept in Armstrong or Thesis Engine the week you learn it.</p>
+
+  <table class="tbl">
+    <caption>Capability ladder</caption>
+    <thead><tr><th>Belt</th><th>Demonstrable capability</th></tr></thead>
+    <tbody>
+      <tr><td>White</td><td>MDP fluency: you can formalize a problem as states/actions/rewards and explain why discounting and the Bellman equation matter.</td></tr>
+      <tr><td>Green</td><td>You implement tabular and value-based methods from scratch (Q-learning, DQN); you can articulate the deadly triad and why off-policy + function approximation + bootstrapping is dangerous.</td></tr>
+      <tr><td>Brown</td><td>Policy-gradient and actor-critic (REINFORCE, PPO) implemented; offline-RL pitfalls (distributional shift, the reason your 102-trade dataset fails) understood deeply enough to defend in front of a skeptic.</td></tr>
+      <tr><td>Black</td><td>You can take a real Armstrong sub-problem (e.g., signal-timing, sizing) and correctly decide RL vs. supervised vs. rules – and deploy the right one with an honest evaluation.</td></tr>
+      <tr><td>Dan</td><td>You contribute to the frontier: e.g., adversarial-RL for robust policy in ABMs (the live research edge connecting DRL to your complexity work and the Oxford agenda).</td></tr>
+    </tbody>
+  </table>
+
+  <h4>Canon</h4>
+  <ul class="clean">
+    <li>Sutton &amp; Barto, <em>Reinforcement Learning: An Introduction</em> – the spine; work the exercises, don't just read.</li>
+    <li>Stanford CS234 (Brunskill) and CS224R – your active curriculum with Aman &amp; Dima.</li>
+    <li>OpenAI <em>Spinning Up</em> for implementation; Levine et al. offline-RL survey for the failure modes that matter to you.</li>
+    <li>López de Prado (again) for the ML-in-finance reality check – where RL helps and where it overfits.</li>
+  </ul>
+  <h4>Drills</h4>
+  <ul class="clean">
+    <li>2-hour protected daily block. Each week: one concept – one implementation in your codebase – one honest writeup of whether it helped.</li>
+    <li>Months 3/6/9/12: the implementation writeup becomes a public GitHub artifact (your DRL publishing slot).</li>
+  </ul>
+  <div class="callout"><span class="tag">Mastery test</span><p>A deployed (or deliberately rejected, with rigorous justification) RL component in Armstrong, accompanied by a writeup that a CS234 TA and a quant PM would both respect.</p></div>
+</section>
+
+<section class="wrap" id="d-cx">
+  <div class="disc-head"><span class="idx">07</span><div><div class="partlabel" style="margin-bottom:2px">Layer 1 · Foundations</div><h2 style="margin-top:0">Complexity Economics &amp; Market Theory</h2></div></div>
+  <blockquote>Mastery is reading the regime – knowing which world's rules currently apply, and pricing the transition between them.</blockquote>
+  <p>This is your differentiating worldview and the engine of the Oxford paper. The core thesis you've already articulated – that the <em>Intelligence Inversion</em> (cognition approaching zero marginal cost) breaks the scarcity assumption beneath every classical valuation object – is genuinely a research frontier, because "complexity corporate finance" does not yet exist as a discipline. Mastery here means moving from <em>reading</em> the canon to <em>building</em> with it: the Hyperscaler Capex agent-based model with Michael Ralph is the proof that you can wield the tools, not just cite them.</p>
+
+  <table class="tbl">
+    <caption>Capability ladder</caption>
+    <thead><tr><th>Belt</th><th>Demonstrable capability</th></tr></thead>
+    <tbody>
+      <tr><td>White</td><td>You can state the neoclassical-vs-complexity contrast (equilibrium vs. out-of-equilibrium, diminishing vs. increasing returns) and why 2008 mattered for the field.</td></tr>
+      <tr><td>Green</td><td>You build a working ABM in NetLogo/Mesa; you can explain increasing returns, lock-in, and path dependency from Arthur with your own examples.</td></tr>
+      <tr><td>Brown</td><td>The capex ABM produces a defensible regime diagnostic (capex-to-D&amp;A as series opener); you can connect Farmer's methodology to your own market model.</td></tr>
+      <tr><td>Black</td><td>You can argue the Intelligence-Inversion valuation thesis in front of Damodaran-literate skeptics and hold your ground on mechanism, not vibes.</td></tr>
+      <tr><td>Dan</td><td>You author original work that others cite – a genuine contribution to complexity corporate finance, the gap you identified.</td></tr>
+    </tbody>
+  </table>
+
+  <h4>Canon (your four-layer curriculum, sharpened)</h4>
+  <ul class="clean">
+    <li><strong>Ontology:</strong> Arthur, <em>Complexity and the Economy</em>; Beinhocker, <em>The Origin of Wealth</em>; Farmer, <em>Making Sense of Chaos</em>; Hidalgo, <em>Why Information Grows</em>.</li>
+    <li><strong>Tools:</strong> Wilensky &amp; Rand, <em>Intro to Agent-Based Modeling</em>; Mitchell, <em>Complexity: A Guided Tour</em>; Page, <em>The Model Thinker</em>.</li>
+    <li><strong>Markets:</strong> Sornette, Bouchaud, Mauboussin, Damodaran (narrative valuation as an implicit concession of regime shift – your read).</li>
+    <li><strong>Macro/civilizational:</strong> Dalio, Perez (<em>Technological Revolutions and Financial Capital</em> – the S-curve/installation-deployment frame), Aschenbrenner.</li>
+  </ul>
+  <div class="callout"><span class="tag">Mastery test</span><p>The Oxford paper delivered (December 2026) – and, as a leading indicator, each monthly milestone of the Hyperscaler Capex model shipped on schedule from May through November.</p></div>
+</section>
+
+<section class="wrap" id="d-alpha">
+  <div class="disc-head"><span class="idx">08</span><div><div class="partlabel" style="margin-bottom:2px">Layer 2 · Core Craft</div><h2 style="margin-top:0">Alpha Research &amp; Strategy Derivation</h2></div></div>
+  <blockquote>Mastery is generating edge as a repeatable scientific process, and defending it against your own desire for it to be real.</blockquote>
+  <p>This is the central craft – the thing the other disciplines exist to serve. Alpha research is the disciplined search for and validation of edge, and its hardest skill is <em>adversarial honesty</em>: the market pays you precisely to the extent that your edge survives every attempt you make to disprove it. Most strategies that "work" are overfit ghosts. The master treats every promising backtest as guilty until proven innocent – multiple-testing corrections, out-of-sample holdouts, economic-rationale gates ("why does this edge exist and who is paying for it?"). Dave's own instinct – maintain information asymmetry, the strategy is simple but the discipline is the moat – is the founder's version of this truth.</p>
+
+  <table class="tbl">
+    <caption>Capability ladder</caption>
+    <thead><tr><th>Belt</th><th>Demonstrable capability</th></tr></thead>
+    <tbody>
+      <tr><td>White</td><td>You can articulate where an edge comes from economically (risk premium, structural, behavioral, informational) before testing it.</td></tr>
+      <tr><td>Green</td><td>You run a clean backtest and explain its assumptions; you understand why a high Sharpe from many trials is probably noise.</td></tr>
+      <tr><td>Brown</td><td>You deploy walk-forward + purged/combinatorial CV; you compute a deflated Sharpe and probability of backtest overfitting; you kill more hypotheses than you keep.</td></tr>
+      <tr><td>Black</td><td>You run the full research loop – hypothesis – test – adversarial validation – deploy or kill – as a logged, repeatable process, and the survivors perform live.</td></tr>
+      <tr><td>Dan</td><td>You generate genuinely novel edge from your own worldview (e.g., a regime signal from the complexity/Intelligence-Inversion thesis) that no inherited rule gave you.</td></tr>
+    </tbody>
+  </table>
+
+  <h4>Canon</h4>
+  <ul class="clean">
+    <li>López de Prado, <em>Advances in Financial ML</em> &amp; <em>Machine Learning for Asset Managers</em> – overfitting defense, the deflated Sharpe, PBO.</li>
+    <li>Options-specific: Natenberg, <em>Option Volatility &amp; Pricing</em>; Sinclair, <em>Volatility Trading</em> &amp; <em>Positional Option Trading</em> – essential given the LEAP strategy.</li>
+    <li>Bouchaud et al., <em>Trades, Quotes and Prices</em>; Mauboussin on base rates and the process-vs-outcome distinction.</li>
+    <li>Grinold &amp; Kahn, <em>Active Portfolio Management</em> – the fundamental law (information ratio ∝ skill × √breadth): your edge scales with <em>independent</em> bets, which is why regime and sizing matter.</li>
+  </ul>
+  <div class="callout blood"><span class="tag">The discipline that defines the belt</span><p>Keep a research log in which you record every hypothesis, its economic rationale, its test, and its verdict – <em>including the kills.</em> A log with no dead hypotheses is a confession that you are confirming, not researching. The ratio of killed-to-kept is a direct readout of your alpha-research belt.</p></div>
+  <div class="callout"><span class="tag">Mastery test</span><p>A written research methodology document plus a logged history of hypotheses tested and killed, with at least one survivor that performs out-of-sample and in live paper trading.</p></div>
+</section>
+
+<section class="wrap" id="d-risk">
+  <div class="disc-head"><span class="idx">09</span><div><div class="partlabel" style="margin-bottom:2px">Layer 2 · Core Craft</div><h2 style="margin-top:0">Risk, Portfolio Construction &amp; Execution</h2></div></div>
+  <blockquote>Mastery is surviving long enough to compound – sizing so that being right eventually is not bankrupted by being wrong first.</blockquote>
+  <p>Edge is necessary; survival is what lets edge compound. This discipline is where Dave's most substantive contribution lives – his point that the same strategy run with different risk parameterizations (lump-sum vs. dollar-cost-averaging, capital held in reserve to keep betting) produces entirely different outcomes is portfolio construction and risk management talking. The Taleb example you both discussed – bleeding for years before the convex payoff – is the deepest lesson here: the position sizing <em>is</em> the strategy, because it determines whether you are still solvent and composed when the thesis finally pays.</p>
+
+  <table class="tbl">
+    <caption>Capability ladder</caption>
+    <thead><tr><th>Belt</th><th>Demonstrable capability</th></tr></thead>
+    <tbody>
+      <tr><td>White</td><td>You can distinguish position sizing, portfolio construction, and risk management, and say which problem you're solving.</td></tr>
+      <tr><td>Green</td><td>You implement explicit stop rules and max-position limits; you can run Dave's DCA-vs-lump scenarios as parameters and read the drawdown differences.</td></tr>
+      <tr><td>Brown</td><td>You apply fractional-Kelly sizing with the leverage/ruin tradeoff understood; you parameterize risk by mandate (your capital vs. Dave's vs. an outside LP's risk appetite – exactly your overlap question with Dave).</td></tr>
+      <tr><td>Black</td><td>A complete written risk envelope – sizing, drawdown limits, regime stops, reserve policy – that turns "trust me" into "here are the explicit parameters," directly answering Dave's reputational-exposure concern.</td></tr>
+      <tr><td>Dan</td><td>Risk is dynamic and regime-aware: the complexity-economics regime diagnostic feeds the sizing, so the book de-risks <em>before</em> the regime breaks, not after.</td></tr>
+    </tbody>
+  </table>
+
+  <h4>Canon</h4>
+  <ul class="clean">
+    <li>Thorp / the Kelly criterion literature; Sinclair on sizing and edge-to-variance.</li>
+    <li>Ole Peters' ergodicity economics – time-average vs. ensemble-average return is <em>the</em> reason naive expected-value sizing ruins you; it sits exactly at the complexity/risk intersection.</li>
+    <li>Shreve, <em>Stochastic Calculus for Finance II</em> – the option-pricing rigor under the LEAP exposure.</li>
+  </ul>
+  <div class="callout"><span class="tag">Mastery test</span><p>A risk specification document precise enough that the strategy could be run by someone else without your judgment in the loop – and a paper-trading period that respects it through at least one drawdown.</p></div>
+</section>
+
+<section class="wrap" id="d-capital">
+  <div class="disc-head"><span class="idx">10</span><div><div class="partlabel" style="margin-bottom:2px">Layer 3 · Leverage</div><h2 style="margin-top:0">Capital Formation &amp; Fundraising</h2></div></div>
+  <blockquote>Mastery is asking for capital as a calm, repeatable skill – because intelligence without distribution is a private library.</blockquote>
+  <p>This is your most honestly-acknowledged gap and therefore your highest-leverage belt. Selling is a skill with reps, not a personality trait; the master fundraiser has simply de-shamed the ask and systematized it. The structure here is layered: the <em>first</em> external check (Dave's friend's $50k) is economically trivial and strategically everything – it converts "I paper-trade" into "I manage outside capital," which is the sentence that opens ten times the doors. Mastery is understanding both the human craft (LP psychology, the narrative, the calm follow-up) and the machinery (entity, regulatory posture, the gap between verbal and wired).</p>
+
+  <table class="tbl">
+    <caption>Capability ladder</caption>
+    <thead><tr><th>Belt</th><th>Demonstrable capability</th></tr></thead>
+    <tbody>
+      <tr><td>White</td><td>Two asks per day, logged – the ask muscle exists. You can deliver the thesis statement in 60 seconds without flinching.</td></tr>
+      <tr><td>Green</td><td>A tearsheet and a clean partnership deck (you have the Armstrong deck pattern); you can run a 20-minute pitch and handle the obvious objections.</td></tr>
+      <tr><td>Brown</td><td>You understand fund structure (3(c)(1) vs 3(c)(7), RIA vs. exempt-reporting-adviser), the high-watermark/fee mechanics Dave cares about, and the operational build (custodian, admin, auditor, insurance).</td></tr>
+      <tr><td>Black</td><td>You close the first external check and convert at least one verbal commitment to wired capital – and you can name and manage the verbal-to-wired gap as an operational process, not a hope.</td></tr>
+      <tr><td>Dan</td><td>Capital comes to you on the strength of track record and reputation; you choose LPs rather than chase them.</td></tr>
+    </tbody>
+  </table>
+
+  <h4>Canon</h4>
+  <ul class="clean">
+    <li>Capital-allocator literature: Ted Seides, <em>Capital Allocators</em>; the emerging-manager playbooks on first-fund formation.</li>
+    <li>The mechanics: fund-formation counsel (the three-quotes step you already flagged), exempt-reporting-adviser thresholds, friends-and-family/Reg D realities – get current legal advice; this primer is not legal advice.</li>
+    <li>LP psychology: they buy a person and a process before a number; the track record is permission, the relationship is the decision.</li>
+  </ul>
+  <div class="callout blood"><span class="tag">The reframe that unlocks the belt</span><p>Your boundary insight transfers directly: relief comes from <em>making and meaning the ask</em>, not from the other person's yes. Detach the ask from the outcome and the reps stop costing you. The shame you feel around selling is the same somatic signal you already know how to run the loop on – Feel – Surrender – Observe – Extract – Reprogram, then ask again tomorrow.</p></div>
+  <div class="callout"><span class="tag">Mastery test</span><p>A wired check from a non-founder investor and a documented pipeline converting verbal commitments to capital – the moment "builder" becomes "fund manager."</p></div>
+</section>
+
+<section class="wrap" id="d-network">
+  <div class="disc-head"><span class="idx">11</span><div><div class="partlabel" style="margin-bottom:2px">Layer 3 · Leverage</div><h2 style="margin-top:0">Network, Access &amp; Resources</h2></div></div>
+  <blockquote>Mastery is becoming a node others route through – so that capital, talent, and ideas arrive without being chased.</blockquote>
+  <p>The highest-value networks are not collected; they are earned by being a source of signal. You already sit in unusually good rooms – the Saturday frontier-AI reading group, Homebrew in Chinatown, the Sunday Mahamudra community, an SFI affiliation, Michael Ralph at Oxford, Dave's family-office reach. Mastery is converting <em>membership</em> into <em>centrality</em>: publishing the artifacts that make people bring you their hardest problems, and warm-sourcing the fee-for-service engagement that closes your income gap from inside these rooms rather than cold outside them.</p>
+
+  <table class="tbl">
+    <caption>Capability ladder</caption>
+    <thead><tr><th>Belt</th><th>Demonstrable capability</th></tr></thead>
+    <tbody>
+      <tr><td>White</td><td>You show up consistently and contribute; people know what you work on.</td></tr>
+      <tr><td>Green</td><td>You give before you take – sharing useful artifacts into the reading group, Homebrew, family-office contacts.</td></tr>
+      <tr><td>Brown</td><td>Warm channels produce a fee-for-service consulting lead; people route relevant opportunities to you unprompted.</td></tr>
+      <tr><td>Black</td><td>Your published work (Armstrong memos, DRL writeups, the Oxford paper) makes you a known quantity; inbound exceeds outbound.</td></tr>
+      <tr><td>Dan</td><td>You convene – you are the person who can gather the right room, the local Mont-Pèlerin function for your field.</td></tr>
+    </tbody>
+  </table>
+  <h4>Drills</h4>
+  <ul class="clean">
+    <li>Every public artifact is distributed deliberately into one warm room with a specific person in mind.</li>
+    <li>X/social monetization activates around month 6, paid tier around month 9 – distribution as a compounding asset, not vanity.</li>
+  </ul>
+  <div class="callout"><span class="tag">Mastery test</span><p>One fee-for-service engagement sourced entirely through a warm channel – proof the network produces resources, not just company.</p></div>
+</section>
+
+<section class="wrap" id="d-ai">
+  <div class="disc-head"><span class="idx">12</span><div><div class="partlabel" style="margin-bottom:2px">The Vertical Spine</div><h2 style="margin-top:0">AI Leverage &amp; Staying Current</h2></div></div>
+  <blockquote>Mastery is treating your toolset as a depreciating asset – and refreshing it faster than the field re-credentials around you.</blockquote>
+  <p>This is not a chapter you finish; it is the spine running through all five layers, because the half-life of any specific tool is now measured in months. You already operate code-natively (the Dave transcript – building slides, research, and the whole "operating system" inside Armstrong through prompting – is exactly this). The danger is twofold: (1) staleness, mistaking last year's workflow for current best practice; (2) the inverse – chasing every new tool and never compounding. Mastery is a <em>protocol</em> that refreshes the toolset on a cadence while protecting the artifacts underneath from churn.</p>
+
+  <table class="tbl">
+    <caption>Capability ladder</caption>
+    <thead><tr><th>Belt</th><th>Demonstrable capability</th></tr></thead>
+    <tbody>
+      <tr><td>White</td><td>Code-native research: you build analyses, docs, and tooling through AI fluently; the learning-to-application gap is near zero.</td></tr>
+      <tr><td>Green</td><td>You run a structured intake (below) and can name what changed in your field this month and whether it matters to Armstrong.</td></tr>
+      <tr><td>Brown</td><td>You build agentic / automated research workflows; you evaluate new tools against a fixed benchmark rather than novelty.</td></tr>
+      <tr><td>Black</td><td>You have a quarterly tool-refresh ritual: adopt, deprecate, document – your stack is deliberately current and you can defend each choice.</td></tr>
+      <tr><td>Dan</td><td>You are at the frontier of applying AI to your own domain (DRL-in-finance, RL-for-ABMs) – contributing techniques, not just consuming them.</td></tr>
+    </tbody>
+  </table>
+
+  <h4>The intake rhythm (your standing protocol)</h4>
+  <ul class="clean">
+    <li><strong>Daily – Tier 1:</strong> Matt Levine (Money Stuff), Semianalysis (Dylan Patel), Stratechery; rotating primary docs (earnings calls, 10-Ks) on the hyperscaler schedule.</li>
+    <li><strong>Weekly – Tier 2:</strong> The Diff, Dwarkesh Patel, Damodaran, Epoch AI.</li>
+    <li><strong>Periodic – Tier 3:</strong> ARK, Mauboussin, INET Oxford, hyperscaler earnings.</li>
+    <li><strong>Quarterly:</strong> a deliberate tool-refresh – what to adopt, what to deprecate – logged in Thesis Engine like any other experiment.</li>
+  </ul>
+  <div class="callout navy"><span class="tag">The current-ness rule</span><p class="big">Because the field moves, this primer's tool names will age – the <em>protocol</em> will not.</p><p>When you reach for a specific model, framework, or library, verify it against the live state of the field rather than memory. The discipline is not "know the newest tool"; it is "have a fixed cadence for finding out, and a fixed benchmark for deciding whether it earns a place in the stack." Stack churn without a benchmark is just a new way to be a dilettante.</p></div>
+</section>
+
+<!-- ============ 13 YEAR ============ -->
+<section class="wrap" id="year">
+  <div class="partlabel">Part III · The Year</div>
+  <h2>The Twelve-Month Belt Progression</h2>
+  <p class="lead"><span class="drop">T</span>his is the periodized plan: each belt is a training block with a focus, a curriculum slice across the disciplines, a drill set, and a single grading – the artifact that earns the rank. The gradings are deliberately your real forcing functions, so that passing the belt and hitting the milestone are the same act. Daily structure stays constant underneath: backtest/research as the spine (5–6 hrs), the protected 2-hr DRL block, 30+15 min of practice and synthesis, and the two daily asks.</p>
+
+  <h3>白 · White – Foundations &amp; Instrumentation <span style="font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--muted)">· June, wks 1–4</span></h3>
+  <p><strong>Focus:</strong> build the dōjō before you train in it. Reproducible environment, clean point-in-time data, Thesis Engine logging your study and morning state. <strong>Disciplines:</strong> Tooling (white), State (white), AI-spine (white). <strong>Grading:</strong> a reproducible research repo a stranger could clone and run, plus 28 consecutive days of practice logs. <em>Risk it removes:</em> irreproducible results – the silent killer of every later claim.</p>
+
+  <h3>黄 · Yellow – Tooling Fluency <span style="font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--muted)">· July, wks 5–10</span></h3>
+  <p><strong>Focus:</strong> backtest fluency and full formalization of the LEAP rules from Dave's mechanics (price-target spread ÷ premium, ranked by multiple, with the macro-headwind overlay). <strong>Disciplines:</strong> Tooling (green), Alpha (white–green), DRL (white). <strong>Grading:</strong> the finished, audited backtest – your P1 – with realistic costs and a five-minute tearsheet. <em>Removes:</em> the "unverified claim" risk; performance becomes an artifact.</p>
+
+  <h3>橙 · Orange – Validation Rigor &amp; DRL I <span style="font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--muted)">· August, wks 11–18</span></h3>
+  <p><strong>Focus:</strong> prove the backtest isn't a ghost – walk-forward, purged/combinatorial CV, deflated Sharpe, the explicit economic rationale for the edge. First offline-RL experiment, honestly assessed (you already expect it to fail on data grounds – document <em>why</em> rigorously). <strong>Disciplines:</strong> Alpha (brown), DRL (green), Tooling (brown). <strong>Grading:</strong> walk-forward tearsheet + the RL writeup (a public GitHub artifact). <em>Removes:</em> overfitting risk.</p>
+
+  <h3>緑 · Green – Live Discipline &amp; Complexity I <span style="font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--muted)">· Sep–Oct, wks 19–28</span></h3>
+  <p><strong>Focus:</strong> supervised automated paper trading live in IBKR with a clean audit trail (the parallel paper-trade you walked Dave through); fix the post-close refresh discipline. In parallel, the Hyperscaler Capex ABM produces its first regime diagnostic. <strong>Disciplines:</strong> Tooling (black), Risk (green), Complexity (green–brown), State (green – first live-stakes composure). <strong>Grading:</strong> a clean live paper-trade log + the capex ABM's opening diagnostic (an Oxford milestone). <em>Removes:</em> the auditable-track-record gap; the clock now has evidence behind it.</p>
+
+  <h3>青 · Blue – Alpha Method &amp; Risk Architecture <span style="font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--muted)">· Oct–Nov, wks 29–36</span></h3>
+  <p><strong>Focus:</strong> write down the science. A research methodology document and an explicit risk envelope – sizing, drawdown limits, regime stops, reserve policy, mandate-dependent parameterization – that directly answers Dave's reputational and operational concerns. <strong>Disciplines:</strong> Alpha (black), Risk (black), Complexity (brown). <strong>Grading:</strong> methodology doc + risk spec, both detailed enough to hand off. <em>Removes:</em> the "trust me" risk; the strategy becomes a defined system.</p>
+
+  <h3>紫 · Purple – Capital Formation &amp; the Oxford Test <span style="font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--muted)">· Nov–Dec, wks 37–44</span></h3>
+  <p><strong>Focus:</strong> two artifacts converge. The fund entity path is chosen and the first external commitment is pushed toward wired; and the Oxford paper is delivered as a public artifact (December). This is the belt where theory and capital meet. <strong>Disciplines:</strong> Capital (brown–black), Network (black), Complexity (black). <strong>Grading:</strong> the Oxford paper, delivered + a drafted term sheet and an entity decision. <em>Removes:</em> the "researcher who can't monetize" risk and the "operator who doesn't contribute to the field" risk – simultaneously.</p>
+
+  <h3>褐 · Brown – Integration &amp; Scaling <span style="font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--muted)">· Jan–Feb, wks 45–50</span></h3>
+  <p><strong>Focus:</strong> the whole loop runs with you as conductor, not laborer. Source one fee-for-service engagement through a warm channel to close the income gap; the AI and publishing spines are self-sustaining (monetized social, regular memos). <strong>Disciplines:</strong> all disciplines at brown+, Network (brown–black), AI-spine (black). <strong>Grading:</strong> a second income stream live + a quarter of artifacts shipped on cadence. <em>Removes:</em> the structural cash-flow vulnerability of all-performance-contingent income.</p>
+
+  <h3>黒 · Black (Shodan) – The Sovereign Investor <span style="font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--muted)">· Mar–May 2027, wks 51+</span></h3>
+  <p><strong>Focus:</strong> close the twelve-month automated track record (clock started April 1, 2026) – proven <em>first on your own book</em>, capital you manage and risk yourself before a dollar of anyone else's – and demonstrate the full pyramid run by one person. Investing your own book is what makes the belt <em>sovereign</em> rather than merely independent: skin in the game is the difference between someone who can operate a strategy and someone who owns the consequences of it. <strong>Grading – the black-belt test, all three master-questions answered:</strong> Generativity (your research log shows edge you generated and killed); Sovereignty (an automated, performing strategy you built and run on your own capital, plus a check you raised); Composure (a drawdown survived clean). <em>Removes:</em> the question of whether you can do this at all. The answer is the track record.</p>
+
+  <div class="callout navy"><span class="tag">On the shape of the year</span><p>Notice the arc: the first half (White–Green) is almost entirely <em>foundations and craft</em> – building the machine and proving the edge. The second half (Blue–Black) is <em>leverage and integration</em> – turning the proven edge into a firm. This is the pyramid, walked from base to apex over twelve months. You do not raise in month two because there is nothing yet to raise against; you do not still be polishing tooling in month ten because by then the machine must already run while you sell.</p></div>
+</section>
+
+<!-- ============ 14 GRADING ============ -->
+<section class="wrap" id="grading">
+  <div class="partlabel">Part IV · Assessment &amp; Compounding – 14</div>
+  <h2>The Grading Standard</h2>
+  <p class="lead"><span class="drop">A</span> belt is never awarded for feeling ready. It is awarded for performing the required demonstration in front of a standard you cannot argue with. The whole point of the artifact-per-belt design is that your gradings are <em>self-verifying</em> – a reproducible repo either reproduces or it doesn't; a wired check either cleared or it didn't; a drawdown either broke your rules or it didn't. This is the dilettante-proofing. You can lie to yourself about how much you know. You cannot lie to yourself about whether the artifact exists.</p>
+
+  <table class="tbl">
+    <caption>The eight gradings, as falsifiable tests</caption>
+    <thead><tr><th>Belt</th><th>You have earned it when…</th><th>Falsifiable artifact</th></tr></thead>
+    <tbody>
+      <tr><td>White</td><td>A stranger can rebuild your results from the repo alone.</td><td class="mono">repo + 28-day log</td></tr>
+      <tr><td>Yellow</td><td>The backtest is finished and survives an audit of its costs and biases.</td><td class="mono">audited backtest / tearsheet</td></tr>
+      <tr><td>Orange</td><td>You can quantify how likely your edge is to be noise – and it passes.</td><td class="mono">walk-forward + RL writeup</td></tr>
+      <tr><td>Green</td><td>Real-time supervised trades log cleanly for weeks; ABM gives a diagnostic.</td><td class="mono">live log + capex ABM</td></tr>
+      <tr><td>Blue</td><td>The strategy is written down precisely enough to be handed off.</td><td class="mono">methodology + risk spec</td></tr>
+      <tr><td>Purple</td><td>The paper is public and the first capital is committed.</td><td class="mono">Oxford paper + term sheet</td></tr>
+      <tr><td>Brown</td><td>A second, non-performance-contingent income stream is live.</td><td class="mono">signed engagement</td></tr>
+      <tr><td>Black</td><td>Twelve months of automated, performing, logged track record exist.</td><td class="mono">closed track record + raise</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout blood"><span class="tag">The honest failure mode</span><p>If a belt's artifact slips, you do not get to award yourself the next belt anyway. Slippage is information: it means a prerequisite isn't automatic yet. The correct response is to hold rank and re-drill – not to skip ahead and discover three belts later that the foundation was hollow. In martial terms: a black belt who never truly earned green has a beautiful belt and breakable knees.</p></div>
+</section>
+
+<!-- ============ 15 FLYWHEEL ============ -->
+<section class="wrap" id="flywheel">
+  <div class="partlabel">Part IV · Assessment &amp; Compounding – 15</div>
+  <h2>The Compounding Engine</h2>
+  <p class="lead"><span class="drop">T</span>he apex of the pyramid is not a ninth skill. It is the state in which the eight disciplines stop being separate and start feeding each other – where the same intellectual move earns its keep in four places at once. This is the structural answer to the dilettante's curse: breadth becomes an asset rather than a liability <em>only</em> when the practices share a substrate and compound into common artifacts.</p>
+
+  <h3>How one idea pays four times</h3>
+  <p>Take the Intelligence-Inversion thesis. As <strong>complexity economics</strong>, it is the spine of the Oxford paper. As <strong>alpha research</strong>, it generates a regime hypothesis about hyperscaler valuation that you can test. As <strong>DRL</strong>, the regime signal becomes a feature or a reward-shaping term in a policy. As <strong>risk</strong>, the regime diagnostic tells the book when to de-risk. As <strong>network/capital</strong>, the published paper makes you the person an LP wants managing money <em>through</em> the regime change. One thesis, five disciplines, and a single widening track record carrying all of it. That is compounding – and it is invisible to anyone trying to copy a single one of your skills in isolation.</p>
+
+  <div class="callout"><span class="tag">The artifact flywheel</span>
+  <p>Your publishing cadence is the flywheel that converts private practice into public reputation, on a schedule that forces the compounding:</p>
+  <ul class="clean" style="margin-top:.6em">
+    <li><strong>Months 1/4/7/10 –</strong> complexity-economics essays (Oxford-directed).</li>
+    <li><strong>Months 2/5/8/11 –</strong> Armstrong research memos (the alpha craft, made legible).</li>
+    <li><strong>Months 3/6/9/12 –</strong> DRL implementation writeups on GitHub.</li>
+  </ul>
+  <p>Twelve artifacts a year. Each one is simultaneously a grading (it proves a discipline), a network act (it earns access), and a piece of the track record (it compounds your reputation). Miss the cadence and the disciplines drift apart again into hobbies. Hold it and they fuse.</p>
+  </div>
+
+  <h3>The five identities, one spine</h3>
+  <p>Your identity architecture – Hedge Fund Manager, Complexity Economist, Athlete, Mahamudra Meditator, Traveler, grounded in Knowledge / Aesthetic Experience / Love – is not five lives competing for hours. It is the pyramid described from the inside. The Athlete and the Meditator <em>are</em> Layer 0, the operating state on which everything computes. The Economist and the Fund Manager are Layers 1–3. The Traveler is the aesthetic-experience input that keeps the whole system from collapsing into pure achievement – and the eventual site of the contemplative-operator resolution. The integration is the point. Mastery is when these stop trading off and start subsidizing one another.</p>
+</section>
+
+<!-- ============ 16 DAN ============ -->
+<section class="wrap" id="dan">
+  <div class="partlabel">Part IV · Assessment &amp; Compounding – 16</div>
+  <h2>The Dan Arc</h2>
+  <p class="lead"><span class="drop">B</span>lack belt is the end of the book and the beginning of the art. The year gets you to <em>shodan</em>: a sound, independent operator with a complete track record and the standing to raise. What follows is the multi-year arc where competence becomes mastery and mastery becomes something quieter. The dan grades are not earned on a calendar; they are earned on compounding.</p>
+
+  <table class="tbl">
+    <caption>The arc beyond Year One</caption>
+    <thead><tr><th>Grade</th><th>Horizon</th><th>What it means</th></tr></thead>
+    <tbody>
+      <tr><td>初段 · Shodan</td><td>End of Year 1</td><td>Independent, fundamentally sound. A complete 12-month track record. You can run the whole pyramid alone and prove it. <em>A real beginner, finally.</em></td></tr>
+      <tr><td>二段 · Nidan</td><td>Years 2–3</td><td>The fund has external AUM and a 2–3 year auditable record; the strategy survived a regime it didn't expect; you've raised beyond friends-and-family.</td></tr>
+      <tr><td>三段 · Sandan</td><td>Years 3–4</td><td>You generate genuinely novel edge from your own worldview; the Oxford work has citations; you are a known node, with inbound exceeding outbound.</td></tr>
+      <tr><td>四段 · Yondan</td><td>Years 4–6</td><td>You can teach the whole path – others' careers compound through you; "complexity corporate finance" exists partly because you built it.</td></tr>
+      <tr><td>五段 · Godan</td><td>Years 6+</td><td>The contemplative–operator tension resolves. You act on the track record without attachment to it; the work continues because it is the work, not because it proves anything. Possibly a turn toward teaching and synthesis.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout navy">
+    <span class="tag">The deepest grading of all</span>
+    <p class="big">The highest dan is not more alpha. It is non-reactive capacity sustained over a career.</p>
+    <p>You have already identified the real long-horizon question: that Mahamudra practice tends, over time, to reduce attachment to external achievement, while fund management compounds on exactly that achievement. The naïve reading treats this as a contradiction to be managed. The master's reading is that it is the <em>point</em> – that the rarest operator is the one who can run a performing book from a place of genuine non-attachment, because that is the only psychology that holds its decision quality through every regime, every drawdown, every rejection. The composure that earns your black belt and the equanimity your practice cultivates are the same capacity, met from two directions. When they fully meet, that is godan. Everything in this book is, ultimately, in service of arriving there with a track record in hand.</p>
+  </div>
+
+  <blockquote>You do not rise to the level of your goals. You fall to the level of your systems – and then, if you have built them well, you keep your composure while they compound.</blockquote>
+
+  <p style="text-align:center;font-family:'Cormorant Garamond',serif;font-style:italic;font-size:24px;color:var(--navy);margin-top:36px">Begin at white. The belt is already around your waist;<br>it simply has not changed color yet.</p>
 </section>
 
 <div class="footer wrap">
