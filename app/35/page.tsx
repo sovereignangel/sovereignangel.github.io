@@ -25,30 +25,42 @@ const VENMO_URL = 'https://venmo.com/u/loricorpuz'
 const PROGRAM = [
   {
     idx: '01',
-    kick: 'Arrival · near the house · canal & forest',
-    title: 'The Hunt',
-    desc: 'A scavenger hunt around the fjord town — the old canal, the gunpowder works, a paddle on Arresø — closing with a welcome dinner back at the house.',
-    state: 'Warm-up',
+    kick: 'Arrival · fit the bikes · welcome dinner',
+    title: 'The Welcome',
+    desc: 'Land at the fjord house, fit and rent the bikes, settle in over an easy first dinner together.',
+    am: 'Morning sit — calm abiding (śamatha)',
+    state: 'Settle',
   },
   {
     idx: '02',
-    kick: '~100 km · the full coast · train home with the bikes',
-    title: 'The Long Way Round',
-    desc: 'Out to the north coast and east past the troll-forest beaches to Kronborg, then down Strandvejen into the city — finishing with the sauna, a cold harbour dip and dinner at La Banchina. Bikes on the evening train home.',
-    state: 'Exertion',
+    kick: 'Easy spin · then the hunt',
+    title: 'Spin & Seek',
+    desc: 'A gentle loop along the fjord to find the legs, then a scavenger hunt through town — the old canal, the gunpowder works, the lake.',
+    am: 'Morning sit — one-pointedness (rtse gcig)',
+    state: 'Warm-up',
   },
   {
     idx: '03',
-    kick: 'Birthday · in the city · Kødbyen / Reffen',
-    title: 'Deep House',
-    desc: 'Slow morning, a long dinner, then four-to-the-floor until the lights come up over the harbour.',
-    state: 'Peak',
+    kick: '~100 km · the full coast · train home with the bikes',
+    title: 'The Long Way Round',
+    desc: 'North coast and east past the troll-forest beaches to Kronborg, then down Strandvejen into the city — finishing with the sauna, a cold harbour dip and dinner at La Banchina.',
+    am: 'Morning sit — simplicity (spros bral)',
+    state: 'Exertion',
   },
   {
     idx: '04',
-    kick: 'The house · eat local · farewell',
+    kick: 'Birthday · the city · stay the night',
+    title: 'Deep House',
+    desc: 'A day loose in the city, a long dinner, then four-to-the-floor until the lights come up — crash in town, no dawn commute.',
+    am: 'Morning sit — one taste (ro gcig)',
+    state: 'Peak',
+  },
+  {
+    idx: '05',
+    kick: 'Home · last meal · farewell',
     title: 'The Slow Day',
-    desc: 'No agenda — a long morning by the lake and canal, the sauna, an unhurried dinner in town, then goodbyes.',
+    desc: 'Drift back to the fjord — a long morning by the lake and canal, the sauna, a final dinner in town, then goodbyes.',
+    am: 'Morning sit — non-meditation (sgom med)',
     state: 'Recovery',
   },
 ]
@@ -220,7 +232,10 @@ export default function PeakStateIIPage() {
               Copenhagen Edition
             </div>
             <div style={{ fontFamily: mono, fontSize: 10.5, letterSpacing: '0.22em', textTransform: 'uppercase', color: C.navySoft, marginTop: 10 }}>
-              Four days · the fjord &amp; the city · the thirty-fifth year
+              Five days · the fjord &amp; the city · the thirty-fifth year
+            </div>
+            <div style={{ fontFamily: serif, fontStyle: 'italic', fontSize: 'clamp(14px,3.4vw,16px)', color: C.coffee, marginTop: 13, letterSpacing: '0.01em' }}>
+              Each morning opens with a guided Mahamudra sit — the four yogas, settling to non-meditation.
             </div>
           </header>
 
@@ -233,7 +248,7 @@ export default function PeakStateIIPage() {
             <section style={cardStyle}>
               <div style={{ ...sectionLabel, marginBottom: 6 }}>The Program</div>
               <p style={{ fontFamily: serif, fontStyle: 'italic', fontSize: 17, color: C.coffee, margin: '0 0 6px' }}>
-                Four days drawn as one curve — warm-up, exertion, peak, recovery.
+                Five days drawn as one curve — settle, warm-up, exertion, peak, recovery — each dawn met first in stillness.
               </p>
               <div style={{ borderTop: `1px solid ${C.line}`, marginTop: 16 }}>
                 {PROGRAM.map((day) => (
@@ -259,6 +274,10 @@ export default function PeakStateIIPage() {
                       <p style={{ fontFamily: serif, fontSize: 16.5, lineHeight: 1.38, color: '#46556a', margin: '4px 0 0', maxWidth: '52ch' }}>
                         {day.desc}
                       </p>
+                      <div style={{ fontFamily: serif, fontStyle: 'italic', fontSize: 14.5, color: C.coffee, marginTop: 8, display: 'flex', alignItems: 'baseline', gap: 9 }}>
+                        <span style={{ flex: '0 0 auto', width: 5, height: 5, borderRadius: '50%', border: `1px solid ${C.coffee}`, transform: 'translateY(-2px)' }} />
+                        {day.am}
+                      </div>
                       <div style={{ fontFamily: mono, fontSize: 9.5, letterSpacing: '0.16em', textTransform: 'uppercase', color: C.coffeeSoft, marginTop: 8 }}>
                         {day.state}
                       </div>
