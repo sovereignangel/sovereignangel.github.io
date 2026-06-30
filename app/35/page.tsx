@@ -197,51 +197,13 @@ export default function PeakStateIIPage() {
   }
 
   return (
-    <div style={{ background: C.page, minHeight: '100vh', padding: '34px 14px 70px' }}>
+    <div style={{ background: C.page, minHeight: '100vh', padding: '0 14px 70px' }}>
       <div style={{ maxWidth: 1080, margin: '0 auto' }}>
         {/* Frame */}
-        <div style={{ background: C.frame, padding: 'clamp(12px,2.4vw,18px)', boxShadow: '0 26px 64px -30px rgba(38,30,18,.5)' }}>
-          {/* Header */}
-          <header
-            style={{
-              ...cardStyle,
-              textAlign: 'center',
-              padding: 'clamp(30px,5vw,46px) clamp(22px,5vw,46px)',
-            }}
-          >
-            <h1
-              style={{
-                fontFamily: serif,
-                fontWeight: 500,
-                letterSpacing: '0.07em',
-                lineHeight: 0.9,
-                fontSize: 'clamp(44px,9vw,78px)',
-                color: C.navy,
-                margin: 0,
-              }}
-            >
-              PEAK STATE{' '}
-              <span style={{ fontStyle: 'italic', fontWeight: 400, color: C.coffee }}>II</span>
-            </h1>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 14, margin: '18px auto 14px', maxWidth: 300, color: C.coffeeSoft }}>
-              <span style={{ height: 1, flex: 1, background: C.line }} />
-              <span style={{ width: 5, height: 5, borderRadius: '50%', background: C.coffee }} />
-              <span style={{ height: 1, flex: 1, background: C.line }} />
-            </div>
-            <div style={{ fontFamily: mono, fontSize: 13, letterSpacing: '0.34em', textTransform: 'uppercase', color: C.navy, fontWeight: 500 }}>
-              Copenhagen Edition
-            </div>
-            <div style={{ fontFamily: mono, fontSize: 10.5, letterSpacing: '0.22em', textTransform: 'uppercase', color: C.navySoft, marginTop: 10 }}>
-              Five days · the fjord &amp; the city · the thirty-fifth year
-            </div>
-            <div style={{ fontFamily: serif, fontStyle: 'italic', fontSize: 'clamp(14px,3.4vw,16px)', color: C.coffee, marginTop: 13, letterSpacing: '0.01em' }}>
-              Each morning opens with a guided Mahamudra sit — the four yogas, settling to non-meditation.
-            </div>
-          </header>
-
-          {/* Two columns: program (left) + flyer (right) */}
+        <div style={{ background: C.frame, padding: '0 clamp(12px,2.4vw,18px) clamp(12px,2.4vw,18px)', boxShadow: '0 26px 64px -30px rgba(38,30,18,.5)' }}>
+          {/* Two columns: program (left) + flyer (right) — flush to top, flyer wider */}
           <div
-            style={{ display: 'grid', gap: 'clamp(12px,2.4vw,18px)', marginTop: 'clamp(12px,2.4vw,18px)' }}
+            style={{ display: 'grid', gap: 'clamp(12px,2.4vw,18px)' }}
             className="ps2-grid"
           >
             {/* Program */}
@@ -289,13 +251,12 @@ export default function PeakStateIIPage() {
 
             {/* Flyer — stretches to match the program height on desktop */}
             <aside className="ps2-aside">
-              <div className="ps2-flyer-card" style={{ ...cardStyle, padding: 'clamp(12px,2vw,16px)' }}>
+              <div className="ps2-flyer-card" style={{ ...cardStyle, padding: 0, overflow: 'hidden' }}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src="/peak-state-ii.png"
                   alt="Peak State II — Copenhagen, August 2026"
                   className="ps2-flyer-img"
-                  style={{ border: `1px solid ${C.line}` }}
                 />
               </div>
             </aside>
@@ -507,10 +468,11 @@ export default function PeakStateIIPage() {
 
       <style>{`
         .ps2-grid { grid-template-columns: 1fr; }
+        .ps2-aside { order: -1; }
         .ps2-flyer-img { width: 100%; height: auto; display: block; }
         @media (min-width: 880px) {
-          .ps2-grid { grid-template-columns: 1.35fr 1fr; align-items: stretch; }
-          .ps2-aside { display: flex; }
+          .ps2-grid { grid-template-columns: 1fr 1.45fr; align-items: stretch; }
+          .ps2-aside { order: 0; display: flex; }
           .ps2-flyer-card { width: 100%; display: flex; }
           .ps2-flyer-img { height: 100%; object-fit: cover; }
         }
