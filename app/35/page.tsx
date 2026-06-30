@@ -197,10 +197,10 @@ export default function PeakStateIIPage() {
   }
 
   return (
-    <div style={{ background: C.page, minHeight: '100vh', padding: '0 14px 70px' }}>
-      <div style={{ maxWidth: 1080, margin: '0 auto' }}>
+    <div style={{ background: C.page, minHeight: '100vh', padding: '0 0 70px' }}>
+      <div style={{ maxWidth: 'none', margin: 0 }}>
         {/* Frame */}
-        <div style={{ background: C.frame, padding: '0 clamp(12px,2.4vw,18px) clamp(12px,2.4vw,18px)', boxShadow: '0 26px 64px -30px rgba(38,30,18,.5)' }}>
+        <div style={{ background: C.frame, padding: '0 0 clamp(12px,2.4vw,18px)', boxShadow: '0 26px 64px -30px rgba(38,30,18,.5)' }}>
           {/* Two columns: program (left) + flyer (right) — flush to top, flyer wider */}
           <div
             style={{ display: 'grid', gap: 'clamp(12px,2.4vw,18px)' }}
@@ -251,7 +251,7 @@ export default function PeakStateIIPage() {
 
             {/* Flyer — stretches to match the program height on desktop */}
             <aside className="ps2-aside">
-              <div className="ps2-flyer-card" style={{ ...cardStyle, padding: 0, overflow: 'hidden' }}>
+              <div className="ps2-flyer-card" style={{ background: C.frame, border: `1px solid ${C.line}`, padding: 0, overflow: 'hidden' }}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src="/peak-state-ii.png"
@@ -474,7 +474,7 @@ export default function PeakStateIIPage() {
           .ps2-grid { grid-template-columns: 1fr 1.45fr; align-items: stretch; }
           .ps2-aside { order: 0; display: flex; }
           .ps2-flyer-card { width: 100%; display: flex; }
-          .ps2-flyer-img { height: 100%; object-fit: cover; }
+          .ps2-flyer-img { height: 100%; object-fit: contain; }
         }
       `}</style>
     </div>
