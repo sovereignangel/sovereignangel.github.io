@@ -287,17 +287,16 @@ export default function PeakStateIIPage() {
               </div>
             </section>
 
-            {/* Flyer */}
-            <aside>
-              <div style={{ position: 'sticky', top: 18 }}>
-                <div style={{ ...cardStyle, padding: 'clamp(12px,2vw,16px)' }}>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src="/peak-state-ii.png"
-                    alt="Peak State II — Copenhagen, August 2026"
-                    style={{ width: '100%', height: 'auto', display: 'block', border: `1px solid ${C.line}` }}
-                  />
-                </div>
+            {/* Flyer — stretches to match the program height on desktop */}
+            <aside className="ps2-aside">
+              <div className="ps2-flyer-card" style={{ ...cardStyle, padding: 'clamp(12px,2vw,16px)' }}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="/peak-state-ii.png"
+                  alt="Peak State II — Copenhagen, August 2026"
+                  className="ps2-flyer-img"
+                  style={{ border: `1px solid ${C.line}` }}
+                />
               </div>
             </aside>
           </div>
@@ -508,8 +507,12 @@ export default function PeakStateIIPage() {
 
       <style>{`
         .ps2-grid { grid-template-columns: 1fr; }
+        .ps2-flyer-img { width: 100%; height: auto; display: block; }
         @media (min-width: 880px) {
-          .ps2-grid { grid-template-columns: 1.35fr 1fr; align-items: start; }
+          .ps2-grid { grid-template-columns: 1.35fr 1fr; align-items: stretch; }
+          .ps2-aside { display: flex; }
+          .ps2-flyer-card { width: 100%; display: flex; }
+          .ps2-flyer-img { height: 100%; object-fit: cover; }
         }
       `}</style>
     </div>
