@@ -138,9 +138,10 @@ const DAYS_PROGRAM = [
   {
     idx: '04',
     date: 'Thu · Aug 6',
-    title: 'The Hunt',
-    desc: 'Another full working day, then a scavenger hunt through the area in the evening — the canal, the lake, the town.',
+    title: 'Music & Connection',
+    desc: 'Save this one too. Another full working day, then an evening of music and connection at the house — bring an instrument, a song, a voice, a story. We play, we listen, we linger.',
     am: 'Sit — one taste (ro gcig)',
+    mark: true,
   },
   {
     idx: '05',
