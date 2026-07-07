@@ -920,17 +920,13 @@ export default function PeakStateIIPage() {
           .ps2-house-info { grid-template-columns: 1fr 1fr; }
           .ps2-week-day { grid-template-columns: 190px 1fr; gap: 18px; align-items: baseline; }
           .ps2-signup-fields { grid-template-columns: 1fr 160px 1fr; }
-          .ps2-board { grid-template-columns: repeat(2, 1fr); }
         }
         @media (min-width: 880px) {
           .ps2-grid { grid-template-columns: 1.7fr 1fr; grid-template-areas: "main aside" "main wall"; align-items: start; }
           .ps2-flyer-card { width: 100%; }
           .ps2-flyer-img { height: auto; object-fit: contain; }
         }
-        @media (min-width: 1100px) {
-          .ps2-gallery { grid-template-columns: repeat(4, 1fr); }
-          .ps2-board { grid-template-columns: repeat(3, 1fr); }
-        }
+        @media (min-width: 1100px) { .ps2-gallery { grid-template-columns: repeat(4, 1fr); } }
       `}</style>
     </div>
   )
