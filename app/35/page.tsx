@@ -21,37 +21,109 @@ const mono = 'var(--font-plex-mono), monospace'
 const VENMO_HANDLE = '@loricorpuz'
 const VENMO_URL = 'https://venmo.com/u/loricorpuz'
 
-// ── The four pillars ─────────────────────────────────────────────────────────
+// ── The five pillars ─────────────────────────────────────────────────────────
 const PILLARS = [
   {
+    icon: 'enso',
     title: 'Morning Meditation · 30 min',
-    body: 'A daily practice to refine discernment, clarity, and focus — the retreat opens each day in stillness.',
+    body: 'Every day opens in stillness — a daily 30-minute sit facilitated by Lev David, refining discernment, clarity, and focus before the world gets loud.',
   },
   {
+    icon: 'wheel',
     title: 'Mahamudra Buddhism',
-    body: 'A foundational intro facilitated by Lev David — a Buddhist practice refined in the language of Western thought by the recent masters who translate it to our lens, from backgrounds at U Chicago, Stanford, and Harvard.',
+    body: 'A foundational introduction guided by Lev David — a Buddhist practice carried into the language of Western thought by a recent generation of masters, translating the tradition to our lens from backgrounds at U Chicago, Stanford, and Harvard.',
   },
   {
+    icon: 'bowl',
+    title: 'The Table',
+    body: 'Selected chefs take breakfast, lunch, and dinner each day, backed by a supportive clean-up crew. Claim a meal below — feeding the house is part of the practice.',
+  },
+  {
+    icon: 'plunge',
     title: 'Sauna & Cold Plunge',
     body: 'The nervous-system reset, every evening — heat, then the cold shock of the harbour and the ocean.',
   },
   {
+    icon: 'moon',
     title: 'Attendee-led Evenings',
-    body: 'Each night a new activity orchestrated by us: a day of cycling ending at La Banchina, a scavenger hunt through the area, and more to come — add yours below.',
+    body: 'Evenings stay open on purpose. Each night a new activity orchestrated by one of us — a day of cycling ending at La Banchina, a scavenger hunt through the area, and whatever you want to bring. Suggest and claim yours in advance below.',
   },
 ]
+
+// ── Line-art marks for the pillars (flyer palette, stroke only) ──────────────
+function PillarIcon({ kind }: { kind: string }) {
+  const s = {
+    fill: 'none',
+    stroke: C.coffee,
+    strokeWidth: 1.4,
+    strokeLinecap: 'round' as const,
+    strokeLinejoin: 'round' as const,
+  }
+  return (
+    <svg width={34} height={34} viewBox="0 0 32 32" aria-hidden="true">
+      {kind === 'enso' && (
+        <>
+          <path {...s} d="M 22.6 7.2 A 10.8 10.8 0 1 0 26.6 13.8" />
+          <circle cx={16} cy={16} r={1.1} fill={C.coffee} />
+        </>
+      )}
+      {kind === 'wheel' && (
+        <>
+          <circle {...s} cx={16} cy={16} r={10.4} />
+          <circle {...s} cx={16} cy={16} r={3.3} />
+          {Array.from({ length: 8 }).map((_, i) => {
+            const a = (i * Math.PI) / 4
+            return (
+              <line
+                key={i}
+                {...s}
+                x1={16 + 3.3 * Math.cos(a)}
+                y1={16 + 3.3 * Math.sin(a)}
+                x2={16 + 10.4 * Math.cos(a)}
+                y2={16 + 10.4 * Math.sin(a)}
+              />
+            )
+          })}
+        </>
+      )}
+      {kind === 'bowl' && (
+        <>
+          <path {...s} d="M 6.5 16.5 h 19" />
+          <path {...s} d="M 8 16.5 a 8 8 0 0 0 16 0" />
+          <path {...s} d="M 13 12.5 c 1.4 -1.5 -1.4 -3 0 -4.5" />
+          <path {...s} d="M 19 12.5 c 1.4 -1.5 -1.4 -3 0 -4.5" />
+        </>
+      )}
+      {kind === 'plunge' && (
+        <>
+          <path {...s} d="M 4.5 23.5 c 2 -2.4 4 -2.4 6 0 s 4 2.4 6 0 s 4 -2.4 6 0 s 4 2.4 5 0.6" />
+          <path {...s} d="M 10 17 c 1.5 -1.7 -1.5 -3.4 0 -5.1" />
+          <path {...s} d="M 16 17 c 1.5 -1.7 -1.5 -3.4 0 -5.1" />
+          <path {...s} d="M 22 17 c 1.5 -1.7 -1.5 -3.4 0 -5.1" />
+        </>
+      )}
+      {kind === 'moon' && (
+        <>
+          <path {...s} d="M 18.5 5.8 a 10.2 10.2 0 1 0 7.4 16.4 a 8.6 8.6 0 0 1 -7.4 -16.4 Z" />
+          <circle cx={23.5} cy={8.5} r={0.9} fill={C.coffee} />
+          <circle cx={27} cy={13} r={0.7} fill={C.coffee} />
+        </>
+      )}
+    </svg>
+  )
+}
 
 // ── Daily rhythm (Copenhagen local CEST · New York EST) ──────────────────────
 // CEST = UTC+2 · EST column is 6h behind (US Eastern in August). Adjust freely.
 const SCHEDULE = [
-  { cest: '07:30', est: '01:30', label: 'Morning Mahamudra sit · 30 min', sub: 'led by Lev David', mark: true },
-  { cest: '08:15', est: '02:15', label: 'Breakfast · slow start', sub: '' },
-  { cest: '09:00', est: '03:00', label: 'Deep work', sub: 'heads-down, our own projects' },
-  { cest: '13:00', est: '07:00', label: 'Lunch', sub: "today's lunch lead" },
-  { cest: '14:00', est: '08:00', label: 'Deep work', sub: '' },
-  { cest: '17:30', est: '11:30', label: 'Laptops closed', sub: '' },
-  { cest: '18:00', est: '12:00', label: 'Sauna & cold plunge · evening activity', sub: 'attendee-led', mark: true },
-  { cest: '20:00', est: '14:00', label: 'Dinner, then clean-up', sub: 'dinner lead · cleanup lead' },
+  { cest: '7:30 AM', est: '1:30 AM', label: 'Morning Mahamudra sit · 30 min', sub: 'facilitated by Lev David', mark: true },
+  { cest: '8:15 AM', est: '2:15 AM', label: 'Breakfast · slow start', sub: "today's breakfast chef" },
+  { cest: '9:00 AM', est: '3:00 AM', label: 'Deep work', sub: 'heads-down, our own projects' },
+  { cest: '1:00 PM', est: '7:00 AM', label: 'Lunch', sub: "today's lunch chef" },
+  { cest: '2:00 PM', est: '8:00 AM', label: 'Deep work', sub: '' },
+  { cest: '5:30 PM', est: '11:30 AM', label: 'Laptops closed', sub: '' },
+  { cest: '6:00 PM', est: '12:00 PM', label: 'Sauna & cold plunge · evening activity', sub: 'attendee-led', mark: true },
+  { cest: '8:00 PM', est: '2:00 PM', label: 'Dinner, then clean-up', sub: 'dinner chef · clean-up crew' },
 ]
 
 // ── The five days · Aug 3–7 (Mon–Fri) ────────────────────────────────────────
@@ -73,9 +145,10 @@ const DAYS_PROGRAM = [
   {
     idx: '03',
     date: 'Wed · Aug 5',
-    title: 'The Ride',
-    desc: 'After work: a day of cycling out and into the city, ending at La Banchina to eat, sauna, and cold-plunge in the ocean.',
+    title: 'The Birthday',
+    desc: 'Save this one. The ride out and into the city — cyclists and non-cyclists both land at La Banchina for the birthday dinner: eat, sauna, and cold-plunge in the ocean.',
     am: 'Sit — simplicity (spros bral)',
+    mark: true,
   },
   {
     idx: '04',
@@ -94,7 +167,22 @@ const DAYS_PROGRAM = [
 ]
 
 const SIGNUP_DAYS = ['Mon Aug 3', 'Tue Aug 4', 'Wed Aug 5', 'Thu Aug 6', 'Fri Aug 7']
-const SIGNUP_ROLES = ['Lunch', 'Dinner', 'Cleanup', 'Evening activity']
+const SIGNUP_ROLES = ['Breakfast', 'Lunch', 'Dinner', 'Cleanup', 'Evening activity']
+
+// ── The house & getting there ────────────────────────────────────────────────
+const HOUSE_ADDRESS = 'Store Ryvej 39A, 3300 Frederiksværk, Denmark'
+const HOUSE_MAPS_URL = 'https://maps.google.com/?q=Store+Ryvej+39A,+3300+Frederiksv%C3%A6rk,+Denmark'
+const BIKE_RENTAL_NAME = 'Ditlev Cykler'
+const BIKE_RENTAL_ADDRESS = 'Vinderød Skov 3, 3300 Frederiksværk, Denmark'
+const BIKE_RENTAL_MAPS_URL = 'https://maps.google.com/?q=Ditlev+Cykler,+Vinder%C3%B8d+Skov+3,+3300+Frederiksv%C3%A6rk,+Denmark'
+
+const HOUSE_PHOTOS = [
+  'house-01.avif', 'house-02.avif', 'house-03.avif', 'house-04.avif', 'house-05.avif',
+  'house-06.avif', 'house-07.avif', 'house-08.avif', 'house-09.avif', 'house-10.avif',
+  'house-11.avif', 'house-12.avif', 'house-13.jpeg', 'house-14.avif', 'house-15.avif',
+  'house-16.avif', 'house-17.avif', 'house-18.avif', 'house-19.avif', 'house-20.jpeg',
+  'house-21.jpeg',
+].map((f) => `/peak-state-ii/house/${f}`)
 
 type Comment = { id: string; name: string; message: string; createdAt: string }
 type Rsvp = { id: string; name: string; guests: number; note: string; createdAt: string }
@@ -292,23 +380,46 @@ export default function PeakStateIIPage() {
             <section style={cardStyle}>
               <div style={{ ...sectionLabel, marginBottom: 6 }}>The Retreat</div>
               <p style={{ fontFamily: serif, fontStyle: 'italic', fontSize: 'clamp(19px,2.6vw,23px)', lineHeight: 1.3, color: C.coffee, margin: '0 0 12px' }}>
-                A week for building the micro-habits of peak performance — the small daily practices that compound into our best versions.
+                A week for developing the micro-habits of peak performance — the small daily practices that compound into our best versions.
+              </p>
+              <p style={{ fontFamily: serif, fontSize: 16.5, lineHeight: 1.45, color: '#46556a', margin: '0 0 10px' }}>
+                <strong style={{ color: C.navy }}>Aug 3–7, 2026 · Frederiksværk, north of Copenhagen · 10–16 of us.</strong>{' '}
+                An intimate crew — remote workers, cyclists and non-cyclists alike — sharing a house, keeping our
+                working hours, and exploring the area together. Meditation opens each morning, chefs among us take
+                the meals, and every evening ends in the sauna and the cold.
               </p>
               <p style={{ fontFamily: serif, fontSize: 16.5, lineHeight: 1.45, color: '#46556a', margin: '0 0 6px' }}>
-                <strong style={{ color: C.navy }}>Aug 3–7, 2026 · Copenhagen · 10–16 of us.</strong> We keep our
-                working hours and build the retreat around them: a meditation to open each morning, meals we cook
-                and clean together, and an evening reset — sauna, cold plunge, and a new ritual each night, led by
-                whoever's holding the day.
+                A few key moments to save on your calendar — <strong style={{ color: C.navy }}>Wed Aug 5, the
+                birthday dinner</strong>, and <strong style={{ color: C.navy }}>an evening at La Banchina</strong> —
+                while the rest is choose-your-own-adventure. More coming soon; I welcome ideas and any activity you
+                want to facilitate.
               </p>
 
               <div style={{ ...kicker, margin: '20px 0 10px', color: C.coffee }}>The Daily Practice</div>
               <div style={{ borderTop: `1px solid ${C.line}` }}>
                 {PILLARS.map((p) => (
-                  <div key={p.title} style={{ padding: '13px 0', borderBottom: `1px solid ${C.line}` }}>
-                    <div style={{ fontFamily: serif, fontSize: 19, fontWeight: 600, color: C.navy }}>{p.title}</div>
-                    <p style={{ fontFamily: serif, fontSize: 16, lineHeight: 1.38, color: '#46556a', margin: '2px 0 0', maxWidth: '54ch' }}>
-                      {p.body}
-                    </p>
+                  <div key={p.title} style={{ padding: '13px 0', borderBottom: `1px solid ${C.line}`, display: 'flex', gap: 14, alignItems: 'flex-start' }}>
+                    <div
+                      style={{
+                        flex: '0 0 auto',
+                        width: 48,
+                        height: 48,
+                        border: `1px solid ${C.line}`,
+                        background: C.frame,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        marginTop: 3,
+                      }}
+                    >
+                      <PillarIcon kind={p.icon} />
+                    </div>
+                    <div>
+                      <div style={{ fontFamily: serif, fontSize: 19, fontWeight: 600, color: C.navy }}>{p.title}</div>
+                      <p style={{ fontFamily: serif, fontSize: 16, lineHeight: 1.38, color: '#46556a', margin: '2px 0 0', maxWidth: '54ch' }}>
+                        {p.body}
+                      </p>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -367,9 +478,17 @@ export default function PeakStateIIPage() {
             </p>
             <div style={{ borderTop: `1px solid ${C.line}` }} className="ps2-week">
               {DAYS_PROGRAM.map((day) => (
-                <article key={day.idx} className="ps2-week-day" style={{ borderBottom: `1px solid ${C.line}`, padding: '16px 0' }}>
+                <article
+                  key={day.idx}
+                  className="ps2-week-day"
+                  style={{
+                    borderBottom: `1px solid ${C.line}`,
+                    padding: '16px 0',
+                    background: 'mark' in day && day.mark ? '#6E4A300C' : 'transparent',
+                  }}
+                >
                   <div>
-                    <div style={{ ...kicker, color: C.coffee }}>{day.date}</div>
+                    <div style={{ ...kicker, color: C.coffee }}>{day.date}{'mark' in day && day.mark ? ' · save the date' : ''}</div>
                     <h2 style={{ fontFamily: serif, fontSize: 'clamp(22px,3vw,27px)', fontWeight: 600, lineHeight: 1.05, color: C.navy, margin: '2px 0 0' }}>
                       {day.title}
                     </h2>
@@ -388,12 +507,59 @@ export default function PeakStateIIPage() {
             </div>
           </section>
 
+          {/* The House — photos & getting there */}
+          <section style={{ ...cardStyle, marginTop: 'clamp(12px,2.4vw,18px)' }}>
+            <div style={{ ...sectionLabel, marginBottom: 4 }}>The House</div>
+            <p style={{ fontFamily: serif, fontStyle: 'italic', fontSize: 16.5, color: C.coffee, margin: '0 0 14px', maxWidth: '64ch' }}>
+              Our home for the week — a house by the fjord in Frederiksværk, with the sauna and plunge tub out back.
+            </p>
+
+            <div className="ps2-house-info" style={{ display: 'grid', gap: 10, marginBottom: 18 }}>
+              <div style={{ border: `1px solid ${C.line}`, background: C.frame, padding: '12px 14px' }}>
+                <div style={{ ...kicker, color: C.coffee, marginBottom: 4 }}>Address</div>
+                <a
+                  href={HOUSE_MAPS_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ fontFamily: serif, fontSize: 17, fontWeight: 600, color: C.navy, textDecoration: 'underline', textDecorationColor: C.line, textUnderlineOffset: 3 }}
+                >
+                  {HOUSE_ADDRESS}
+                </a>
+              </div>
+              <div style={{ border: `1px solid ${C.line}`, background: C.frame, padding: '12px 14px' }}>
+                <div style={{ ...kicker, color: C.coffee, marginBottom: 4 }}>Bike Rental · Road & Electric</div>
+                <a
+                  href={BIKE_RENTAL_MAPS_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ fontFamily: serif, fontSize: 17, fontWeight: 600, color: C.navy, textDecoration: 'underline', textDecorationColor: C.line, textUnderlineOffset: 3 }}
+                >
+                  {BIKE_RENTAL_NAME} · {BIKE_RENTAL_ADDRESS}
+                </a>
+                <div style={{ fontFamily: serif, fontStyle: 'italic', fontSize: 14.5, color: C.coffee, marginTop: 3 }}>
+                  8 min drive · 18 min by bike from the house
+                </div>
+              </div>
+            </div>
+
+            <div className="ps2-gallery">
+              {HOUSE_PHOTOS.map((src, i) => (
+                <div key={src} style={{ border: `1px solid ${C.line}`, background: C.frame, overflow: 'hidden' }}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={src} alt={`The house · photo ${i + 1}`} loading="lazy" />
+                </div>
+              ))}
+            </div>
+          </section>
+
           {/* Facilitate / Sign-ups */}
           <section style={{ ...cardStyle, marginTop: 'clamp(12px,2.4vw,18px)' }}>
             <div style={{ ...sectionLabel, marginBottom: 4 }}>Take a Slot · Facilitate</div>
             <p style={{ fontFamily: serif, fontSize: 16.5, lineHeight: 1.45, color: '#46556a', margin: '0 0 16px', maxWidth: '64ch' }}>
-              The retreat runs on all of us. Claim a meal to lead, a clean-up, or offer an evening activity you want to
-              facilitate — a run, a sit, a swim, a workshop, a hunt. Pick a day and a role.
+              The retreat runs on all of us. Claim a meal to chef — breakfast, lunch, or dinner — join a clean-up
+              crew, or offer an evening activity you want to facilitate: a run, a sit, a swim, a workshop, a hunt.
+              Evenings stay open on purpose, so suggest and contribute in advance. More coming soon — I welcome
+              ideas and anything you want to lead.
             </p>
 
             <form onSubmit={submitSignup} style={{ display: 'grid', gap: 12, maxWidth: 720, marginBottom: 22 }}>
@@ -457,7 +623,8 @@ export default function PeakStateIIPage() {
           <section style={{ ...cardStyle, marginTop: 'clamp(12px,2.4vw,18px)' }}>
             <div style={{ ...sectionLabel, marginBottom: 6 }}>Confirm Your Place</div>
             <p style={{ fontFamily: serif, fontSize: 17, lineHeight: 1.45, color: '#46556a', margin: '0 0 4px', maxWidth: '60ch' }}>
-              Spots are held with a deposit. Send yours on Venmo to{' '}
+              Spots are held with an <strong style={{ color: C.navy }}>$800 deposit</strong> to confirm your place
+              in the Airbnb. Send yours on Venmo to{' '}
               <strong style={{ color: C.coffee }}>{VENMO_HANDLE}</strong>, then confirm below so I can count you in.
             </p>
 
@@ -589,11 +756,16 @@ export default function PeakStateIIPage() {
         .ps2-grid { grid-template-columns: 1fr; }
         .ps2-aside { order: -1; }
         .ps2-flyer-img { width: 100%; height: auto; display: block; }
-        .ps2-sched-row { display: grid; grid-template-columns: 64px 56px 1fr; gap: 14px; align-items: baseline; }
+        .ps2-sched-row { display: grid; grid-template-columns: 84px 76px 1fr; gap: 14px; align-items: baseline; }
+        .ps2-gallery { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+        .ps2-gallery img { width: 100%; height: 100%; object-fit: cover; aspect-ratio: 4 / 3; display: block; }
+        @media (min-width: 720px) { .ps2-gallery { grid-template-columns: repeat(3, 1fr); } }
+        @media (min-width: 1100px) { .ps2-gallery { grid-template-columns: repeat(4, 1fr); } }
         .ps2-week-day { display: grid; grid-template-columns: 1fr; gap: 4px; }
         .ps2-signup-fields { display: grid; grid-template-columns: 1fr; gap: 12px; }
         .ps2-board { display: grid; grid-template-columns: 1fr; gap: 10px; }
         @media (min-width: 720px) {
+          .ps2-house-info { grid-template-columns: 1fr 1fr; }
           .ps2-week-day { grid-template-columns: 190px 1fr; gap: 18px; align-items: baseline; }
           .ps2-signup-fields { grid-template-columns: 1fr 160px 180px; }
           .ps2-board { grid-template-columns: repeat(5, 1fr); }
