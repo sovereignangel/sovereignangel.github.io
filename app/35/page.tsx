@@ -21,52 +21,84 @@ const mono = 'var(--font-plex-mono), monospace'
 const VENMO_HANDLE = '@loricorpuz'
 const VENMO_URL = 'https://venmo.com/u/loricorpuz'
 
-// ── Program ──────────────────────────────────────────────────────────────────
-const PROGRAM = [
+// ── The four pillars ─────────────────────────────────────────────────────────
+const PILLARS = [
   {
-    idx: '01',
-    kick: 'Arrival · fit the bikes · welcome dinner',
-    title: 'The Welcome',
-    desc: 'Land at the fjord house, fit and rent the bikes, settle in over an easy first dinner together.',
-    am: 'Morning sit — calm abiding (śamatha)',
-    state: 'Settle',
+    title: 'Morning Meditation · 30 min',
+    body: 'A daily practice to refine discernment, clarity, and focus — the retreat opens each day in stillness.',
   },
   {
-    idx: '02',
-    kick: 'Easy spin · then the hunt',
-    title: 'Spin & Seek',
-    desc: 'A gentle loop along the fjord to find the legs, then a scavenger hunt through town — the old canal, the gunpowder works, the lake.',
-    am: 'Morning sit — one-pointedness (rtse gcig)',
-    state: 'Warm-up',
+    title: 'Mahamudra Buddhism',
+    body: 'A foundational intro facilitated by Lev David — a Buddhist practice refined in the language of Western thought by the recent masters who translate it to our lens, from backgrounds at U Chicago, Stanford, and Harvard.',
   },
   {
-    idx: '03',
-    kick: '~100 km · the full coast · train home with the bikes',
-    title: 'The Long Way Round',
-    desc: 'North coast and east past the troll-forest beaches to Kronborg, then down Strandvejen into the city — finishing with the sauna, a cold harbour dip and dinner at La Banchina.',
-    am: 'Morning sit — simplicity (spros bral)',
-    state: 'Exertion',
+    title: 'Sauna & Cold Plunge',
+    body: 'The nervous-system reset, every evening — heat, then the cold shock of the harbour and the ocean.',
   },
   {
-    idx: '04',
-    kick: 'Birthday · the city · stay the night',
-    title: 'Deep House',
-    desc: 'A day loose in the city, a long dinner, then four-to-the-floor until the lights come up — crash in town, no dawn commute.',
-    am: 'Morning sit — one taste (ro gcig)',
-    state: 'Peak',
-  },
-  {
-    idx: '05',
-    kick: 'Home · last meal · farewell',
-    title: 'The Slow Day',
-    desc: 'Drift back to the fjord — a long morning by the lake and canal, the sauna, a final dinner in town, then goodbyes.',
-    am: 'Morning sit — non-meditation (sgom med)',
-    state: 'Recovery',
+    title: 'Attendee-led Evenings',
+    body: 'Each night a new activity orchestrated by us: a day of cycling ending at La Banchina, a scavenger hunt through the area, and more to come — add yours below.',
   },
 ]
 
+// ── Daily rhythm (Copenhagen local CEST · New York EST) ──────────────────────
+// CEST = UTC+2 · EST column is 6h behind (US Eastern in August). Adjust freely.
+const SCHEDULE = [
+  { cest: '07:30', est: '01:30', label: 'Morning Mahamudra sit · 30 min', sub: 'led by Lev David', mark: true },
+  { cest: '08:15', est: '02:15', label: 'Breakfast · slow start', sub: '' },
+  { cest: '09:00', est: '03:00', label: 'Deep work', sub: 'heads-down, our own projects' },
+  { cest: '13:00', est: '07:00', label: 'Lunch', sub: "today's lunch lead" },
+  { cest: '14:00', est: '08:00', label: 'Deep work', sub: '' },
+  { cest: '17:30', est: '11:30', label: 'Laptops closed', sub: '' },
+  { cest: '18:00', est: '12:00', label: 'Sauna & cold plunge · evening activity', sub: 'attendee-led', mark: true },
+  { cest: '20:00', est: '14:00', label: 'Dinner, then clean-up', sub: 'dinner lead · cleanup lead' },
+]
+
+// ── The five days · Aug 3–7 (Mon–Fri) ────────────────────────────────────────
+const DAYS_PROGRAM = [
+  {
+    idx: '01',
+    date: 'Mon · Aug 3',
+    title: 'Arrival & Settle',
+    desc: 'Land, settle into the house, fit the bikes. An easy welcome dinner and a first warm-up in the sauna.',
+    am: 'Sit — calm abiding (śamatha)',
+  },
+  {
+    idx: '02',
+    date: 'Tue · Aug 4',
+    title: 'First Full Day',
+    desc: 'The rhythm finds itself — morning sit, a full working day, sauna and cold plunge, an attendee-led evening.',
+    am: 'Sit — one-pointedness (rtse gcig)',
+  },
+  {
+    idx: '03',
+    date: 'Wed · Aug 5',
+    title: 'The Ride',
+    desc: 'After work: a day of cycling out and into the city, ending at La Banchina to eat, sauna, and cold-plunge in the ocean.',
+    am: 'Sit — simplicity (spros bral)',
+  },
+  {
+    idx: '04',
+    date: 'Thu · Aug 6',
+    title: 'The Hunt',
+    desc: 'Another full working day, then a scavenger hunt through the area in the evening — the canal, the lake, the town.',
+    am: 'Sit — one taste (ro gcig)',
+  },
+  {
+    idx: '05',
+    date: 'Fri · Aug 7',
+    title: 'Farewell',
+    desc: 'A last morning sit and working block, a final sauna, and an unhurried farewell dinner before goodbyes.',
+    am: 'Sit — non-meditation (sgom med)',
+  },
+]
+
+const SIGNUP_DAYS = ['Mon Aug 3', 'Tue Aug 4', 'Wed Aug 5', 'Thu Aug 6', 'Fri Aug 7']
+const SIGNUP_ROLES = ['Lunch', 'Dinner', 'Cleanup', 'Evening activity']
+
 type Comment = { id: string; name: string; message: string; createdAt: string }
 type Rsvp = { id: string; name: string; guests: number; note: string; createdAt: string }
+type Signup = { id: string; name: string; day: string; role: string; what: string; createdAt: string }
 
 function formatDate(iso: string) {
   try {
@@ -94,6 +126,15 @@ export default function PeakStateIIPage() {
   const [rDone, setRDone] = useState(false)
   const [rError, setRError] = useState('')
 
+  // Signups / facilitation
+  const [signups, setSignups] = useState<Signup[]>([])
+  const [sName, setSName] = useState('')
+  const [sDay, setSDay] = useState(SIGNUP_DAYS[0])
+  const [sRole, setSRole] = useState(SIGNUP_ROLES[0])
+  const [sWhat, setSWhat] = useState('')
+  const [sSending, setSSending] = useState(false)
+  const [sError, setSError] = useState('')
+
   useEffect(() => {
     fetch('/api/peak-state-ii/comments')
       .then((r) => r.json())
@@ -102,6 +143,10 @@ export default function PeakStateIIPage() {
     fetch('/api/peak-state-ii/rsvp')
       .then((r) => r.json())
       .then((d) => setRsvps(d.rsvps || []))
+      .catch(() => {})
+    fetch('/api/peak-state-ii/signups')
+      .then((r) => r.json())
+      .then((d) => setSignups(d.signups || []))
       .catch(() => {})
   }, [])
 
@@ -164,6 +209,34 @@ export default function PeakStateIIPage() {
     }
   }
 
+  async function submitSignup(e: React.FormEvent) {
+    e.preventDefault()
+    setSError('')
+    if (!sName.trim()) {
+      setSError('Please add your name.')
+      return
+    }
+    setSSending(true)
+    try {
+      const res = await fetch('/api/peak-state-ii/signups', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: sName, day: sDay, role: sRole, what: sWhat }),
+      })
+      const data = await res.json()
+      if (data.success && data.signup) {
+        setSignups((prev) => [...prev, data.signup])
+        setSWhat('')
+      } else {
+        setSError(data.error || 'Something went wrong.')
+      }
+    } catch {
+      setSError('Something went wrong.')
+    } finally {
+      setSSending(false)
+    }
+  }
+
   // ── Shared style atoms ─────────────────────────────────────────────────────
   const kicker: React.CSSProperties = {
     fontFamily: mono,
@@ -195,115 +268,213 @@ export default function PeakStateIIPage() {
     border: `1px solid ${C.line}`,
     padding: 'clamp(22px, 4vw, 34px)',
   }
+  const btnNavy: React.CSSProperties = {
+    justifySelf: 'start',
+    fontFamily: mono,
+    fontSize: 11,
+    letterSpacing: '0.2em',
+    textTransform: 'uppercase',
+    color: C.frame,
+    background: C.navy,
+    border: `1px solid ${C.navy}`,
+    padding: '11px 22px',
+    cursor: 'pointer',
+  }
 
   return (
     <div style={{ background: C.page, minHeight: '100vh', padding: '0 0 70px' }}>
       <div style={{ maxWidth: 'none', margin: 0 }}>
         {/* Frame */}
         <div style={{ background: C.frame, padding: '0 0 clamp(12px,2.4vw,18px)', boxShadow: '0 26px 64px -30px rgba(38,30,18,.5)' }}>
-          {/* Two columns: program (left) + flyer (right) — flush to top, flyer wider */}
-          <div
-            style={{ display: 'grid', gap: 'clamp(12px,2.4vw,18px)' }}
-            className="ps2-grid"
-          >
-            {/* Program */}
+          {/* Two columns: description (left) + flyer (right) — flush to top, flyer wider */}
+          <div style={{ display: 'grid', gap: 'clamp(12px,2.4vw,18px)' }} className="ps2-grid">
+            {/* Description */}
             <section style={cardStyle}>
-              <div style={{ ...sectionLabel, marginBottom: 6 }}>The Program</div>
-              <p style={{ fontFamily: serif, fontStyle: 'italic', fontSize: 17, color: C.coffee, margin: '0 0 6px' }}>
-                Five days drawn as one curve — settle, warm-up, exertion, peak, recovery — each dawn met first in stillness.
+              <div style={{ ...sectionLabel, marginBottom: 6 }}>The Retreat</div>
+              <p style={{ fontFamily: serif, fontStyle: 'italic', fontSize: 'clamp(19px,2.6vw,23px)', lineHeight: 1.3, color: C.coffee, margin: '0 0 12px' }}>
+                A week for building the micro-habits of peak performance — the small daily practices that compound into our best versions.
               </p>
-              <div style={{ borderTop: `1px solid ${C.line}`, marginTop: 16 }}>
-                {PROGRAM.map((day) => (
-                  <article
-                    key={day.idx}
-                    style={{
-                      display: 'grid',
-                      gridTemplateColumns: 'auto 1fr',
-                      gap: '0 18px',
-                      alignItems: 'baseline',
-                      padding: '18px 2px',
-                      borderBottom: `1px solid ${C.line}`,
-                    }}
-                  >
-                    <div style={{ fontFamily: mono, fontSize: 12, fontWeight: 600, color: C.coffee, letterSpacing: '0.05em', paddingTop: 6, gridRow: 'span 2' }}>
-                      {day.idx}
-                    </div>
-                    <div>
-                      <div style={kicker}>{day.kick}</div>
-                      <h2 style={{ fontFamily: serif, fontSize: 'clamp(24px,4vw,30px)', fontWeight: 600, lineHeight: 1.02, color: C.navy, margin: '4px 0 0' }}>
-                        {day.title}
-                      </h2>
-                      <p style={{ fontFamily: serif, fontSize: 16.5, lineHeight: 1.38, color: '#46556a', margin: '4px 0 0', maxWidth: '52ch' }}>
-                        {day.desc}
-                      </p>
-                      <div style={{ fontFamily: serif, fontStyle: 'italic', fontSize: 14.5, color: C.coffee, marginTop: 8, display: 'flex', alignItems: 'baseline', gap: 9 }}>
-                        <span style={{ flex: '0 0 auto', width: 5, height: 5, borderRadius: '50%', border: `1px solid ${C.coffee}`, transform: 'translateY(-2px)' }} />
-                        {day.am}
-                      </div>
-                      <div style={{ fontFamily: mono, fontSize: 9.5, letterSpacing: '0.16em', textTransform: 'uppercase', color: C.coffeeSoft, marginTop: 8 }}>
-                        {day.state}
-                      </div>
-                    </div>
-                  </article>
+              <p style={{ fontFamily: serif, fontSize: 16.5, lineHeight: 1.45, color: '#46556a', margin: '0 0 6px' }}>
+                <strong style={{ color: C.navy }}>Aug 3–7, 2026 · Copenhagen · 10–16 of us.</strong> We keep our
+                working hours and build the retreat around them: a meditation to open each morning, meals we cook
+                and clean together, and an evening reset — sauna, cold plunge, and a new ritual each night, led by
+                whoever's holding the day.
+              </p>
+
+              <div style={{ ...kicker, margin: '20px 0 10px', color: C.coffee }}>The Daily Practice</div>
+              <div style={{ borderTop: `1px solid ${C.line}` }}>
+                {PILLARS.map((p) => (
+                  <div key={p.title} style={{ padding: '13px 0', borderBottom: `1px solid ${C.line}` }}>
+                    <div style={{ fontFamily: serif, fontSize: 19, fontWeight: 600, color: C.navy }}>{p.title}</div>
+                    <p style={{ fontFamily: serif, fontSize: 16, lineHeight: 1.38, color: '#46556a', margin: '2px 0 0', maxWidth: '54ch' }}>
+                      {p.body}
+                    </p>
+                  </div>
                 ))}
               </div>
             </section>
 
-            {/* Flyer — stretches to match the program height on desktop */}
+            {/* Flyer */}
             <aside className="ps2-aside">
               <div className="ps2-flyer-card" style={{ background: C.frame, border: `1px solid ${C.line}`, padding: 0, overflow: 'hidden' }}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src="/peak-state-ii.png"
-                  alt="Peak State II — Copenhagen, August 2026"
-                  className="ps2-flyer-img"
-                />
+                <img src="/peak-state-ii.png" alt="Peak State II — Copenhagen, August 2026" className="ps2-flyer-img" />
               </div>
             </aside>
           </div>
+
+          {/* Daily Schedule — dual timezone */}
+          <section style={{ ...cardStyle, marginTop: 'clamp(12px,2.4vw,18px)' }}>
+            <div style={{ ...sectionLabel, marginBottom: 4 }}>A Day in the Retreat</div>
+            <p style={{ fontFamily: serif, fontStyle: 'italic', fontSize: 16.5, color: C.coffee, margin: '0 0 16px' }}>
+              The same rhythm each day, Mon–Fri. Times in Copenhagen (CEST) and New York (EST).
+            </p>
+
+            {/* Header row */}
+            <div className="ps2-sched-row" style={{ borderBottom: `2px solid ${C.line}`, paddingBottom: 8 }}>
+              <div style={{ ...kicker, color: C.coffee }}>CEST</div>
+              <div style={{ ...kicker, color: C.coffeeSoft }}>EST</div>
+              <div style={{ ...kicker }}>What</div>
+            </div>
+
+            {SCHEDULE.map((row, i) => (
+              <div
+                key={i}
+                className="ps2-sched-row"
+                style={{ borderBottom: `1px solid ${C.line}`, padding: '12px 0', background: row.mark ? '#6E4A3008' : 'transparent' }}
+              >
+                <div style={{ fontFamily: mono, fontSize: 15, fontWeight: 600, color: C.navy }}>{row.cest}</div>
+                <div style={{ fontFamily: mono, fontSize: 13, color: C.coffeeSoft }}>{row.est}</div>
+                <div>
+                  <div style={{ fontFamily: serif, fontSize: 17.5, fontWeight: row.mark ? 600 : 500, color: C.navy }}>
+                    {row.label}
+                  </div>
+                  {row.sub && (
+                    <div style={{ fontFamily: serif, fontStyle: 'italic', fontSize: 14.5, color: C.coffee, marginTop: 1 }}>
+                      {row.sub}
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </section>
+
+          {/* The Week — five days */}
+          <section style={{ ...cardStyle, marginTop: 'clamp(12px,2.4vw,18px)' }}>
+            <div style={{ ...sectionLabel, marginBottom: 4 }}>The Week</div>
+            <p style={{ fontFamily: serif, fontStyle: 'italic', fontSize: 16.5, color: C.coffee, margin: '0 0 8px' }}>
+              Five days · settle, work, sweat, plunge, repeat — each dawn met first in stillness.
+            </p>
+            <div style={{ borderTop: `1px solid ${C.line}` }} className="ps2-week">
+              {DAYS_PROGRAM.map((day) => (
+                <article key={day.idx} className="ps2-week-day" style={{ borderBottom: `1px solid ${C.line}`, padding: '16px 0' }}>
+                  <div>
+                    <div style={{ ...kicker, color: C.coffee }}>{day.date}</div>
+                    <h2 style={{ fontFamily: serif, fontSize: 'clamp(22px,3vw,27px)', fontWeight: 600, lineHeight: 1.05, color: C.navy, margin: '2px 0 0' }}>
+                      {day.title}
+                    </h2>
+                  </div>
+                  <div>
+                    <p style={{ fontFamily: serif, fontSize: 16.5, lineHeight: 1.4, color: '#46556a', margin: 0, maxWidth: '56ch' }}>
+                      {day.desc}
+                    </p>
+                    <div style={{ fontFamily: serif, fontStyle: 'italic', fontSize: 14.5, color: C.coffee, marginTop: 7, display: 'flex', alignItems: 'baseline', gap: 9 }}>
+                      <span style={{ flex: '0 0 auto', width: 5, height: 5, borderRadius: '50%', border: `1px solid ${C.coffee}`, transform: 'translateY(-2px)' }} />
+                      {day.am}
+                    </div>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </section>
+
+          {/* Facilitate / Sign-ups */}
+          <section style={{ ...cardStyle, marginTop: 'clamp(12px,2.4vw,18px)' }}>
+            <div style={{ ...sectionLabel, marginBottom: 4 }}>Take a Slot · Facilitate</div>
+            <p style={{ fontFamily: serif, fontSize: 16.5, lineHeight: 1.45, color: '#46556a', margin: '0 0 16px', maxWidth: '64ch' }}>
+              The retreat runs on all of us. Claim a meal to lead, a clean-up, or offer an evening activity you want to
+              facilitate — a run, a sit, a swim, a workshop, a hunt. Pick a day and a role.
+            </p>
+
+            <form onSubmit={submitSignup} style={{ display: 'grid', gap: 12, maxWidth: 720, marginBottom: 22 }}>
+              <div className="ps2-signup-fields">
+                <div>
+                  <label style={{ ...kicker, display: 'block', marginBottom: 5 }}>Your name</label>
+                  <input style={inputStyle} value={sName} onChange={(e) => setSName(e.target.value)} placeholder="Name" />
+                </div>
+                <div>
+                  <label style={{ ...kicker, display: 'block', marginBottom: 5 }}>Day</label>
+                  <select style={{ ...inputStyle, appearance: 'none' }} value={sDay} onChange={(e) => setSDay(e.target.value)}>
+                    {SIGNUP_DAYS.map((d) => <option key={d} value={d}>{d}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label style={{ ...kicker, display: 'block', marginBottom: 5 }}>Role</label>
+                  <select style={{ ...inputStyle, appearance: 'none' }} value={sRole} onChange={(e) => setSRole(e.target.value)}>
+                    {SIGNUP_ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label style={{ ...kicker, display: 'block', marginBottom: 5 }}>What are you bringing? (optional)</label>
+                <input style={inputStyle} value={sWhat} onChange={(e) => setSWhat(e.target.value)} placeholder="Dish, activity, or details" />
+              </div>
+              {sError && <div style={{ fontFamily: mono, fontSize: 11, color: '#8c2d2d' }}>{sError}</div>}
+              <button type="submit" disabled={sSending} style={{ ...btnNavy, background: C.coffee, border: `1px solid ${C.coffee}`, opacity: sSending ? 0.6 : 1 }}>
+                {sSending ? 'Adding…' : 'Add my slot'}
+              </button>
+            </form>
+
+            {/* Board grouped by day */}
+            <div className="ps2-board">
+              {SIGNUP_DAYS.map((d) => {
+                const items = signups.filter((s) => s.day === d)
+                return (
+                  <div key={d} style={{ border: `1px solid ${C.line}`, background: C.frame, padding: '12px 14px' }}>
+                    <div style={{ ...kicker, color: C.coffee, marginBottom: 8 }}>{d}</div>
+                    {items.length === 0 ? (
+                      <div style={{ fontFamily: serif, fontStyle: 'italic', fontSize: 15, color: C.coffeeSoft }}>Open</div>
+                    ) : (
+                      <div style={{ display: 'grid', gap: 7 }}>
+                        {items.map((s) => (
+                          <div key={s.id} style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'baseline', gap: 7 }}>
+                            <span style={{ fontFamily: mono, fontSize: 9.5, letterSpacing: '0.1em', textTransform: 'uppercase', color: C.frame, background: C.navy, padding: '2px 7px' }}>
+                              {s.role}
+                            </span>
+                            <span style={{ fontFamily: serif, fontSize: 16, fontWeight: 600, color: C.navy }}>{s.name}</span>
+                            {s.what && <span style={{ fontFamily: serif, fontStyle: 'italic', fontSize: 15, color: C.coffee }}>— {s.what}</span>}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          </section>
 
           {/* Deposit / Confirm */}
           <section style={{ ...cardStyle, marginTop: 'clamp(12px,2.4vw,18px)' }}>
             <div style={{ ...sectionLabel, marginBottom: 6 }}>Confirm Your Place</div>
             <p style={{ fontFamily: serif, fontSize: 17, lineHeight: 1.45, color: '#46556a', margin: '0 0 4px', maxWidth: '60ch' }}>
               Spots are held with a deposit. Send yours on Venmo to{' '}
-              <strong style={{ color: C.coffee }}>{VENMO_HANDLE}</strong>, then confirm below so I can
-              count you in.
+              <strong style={{ color: C.coffee }}>{VENMO_HANDLE}</strong>, then confirm below so I can count you in.
             </p>
 
             <a
               href={VENMO_URL}
               target="_blank"
               rel="noopener noreferrer"
-              style={{
-                display: 'inline-block',
-                fontFamily: mono,
-                fontSize: 11,
-                letterSpacing: '0.2em',
-                textTransform: 'uppercase',
-                color: C.frame,
-                background: C.navy,
-                border: `1px solid ${C.navy}`,
-                padding: '11px 20px',
-                margin: '12px 0 18px',
-                textDecoration: 'none',
-              }}
+              style={{ ...btnNavy, display: 'inline-block', padding: '11px 20px', margin: '12px 0 18px', textDecoration: 'none' }}
             >
               Send deposit on Venmo · {VENMO_HANDLE}
             </a>
 
             {rDone ? (
-              <div
-                style={{
-                  border: `1px solid ${C.line}`,
-                  background: C.frame,
-                  padding: '18px 20px',
-                  maxWidth: 560,
-                }}
-              >
+              <div style={{ border: `1px solid ${C.line}`, background: C.frame, padding: '18px 20px', maxWidth: 560 }}>
                 <div style={{ fontFamily: serif, fontSize: 22, color: C.navy }}>You're in.</div>
                 <p style={{ fontFamily: serif, fontSize: 16.5, color: '#46556a', margin: '4px 0 0' }}>
-                  Thank you — deposit noted. See you on the fjord.
+                  Thank you — deposit noted. See you in Copenhagen.
                 </p>
               </div>
             ) : (
@@ -315,14 +486,7 @@ export default function PeakStateIIPage() {
                   </div>
                   <div>
                     <label style={{ ...kicker, display: 'block', marginBottom: 5 }}>Guests</label>
-                    <input
-                      style={inputStyle}
-                      type="number"
-                      min={1}
-                      max={20}
-                      value={rGuests}
-                      onChange={(e) => setRGuests(e.target.value)}
-                    />
+                    <input style={inputStyle} type="number" min={1} max={20} value={rGuests} onChange={(e) => setRGuests(e.target.value)} />
                   </div>
                 </div>
                 <div>
@@ -340,26 +504,8 @@ export default function PeakStateIIPage() {
                     I've sent my deposit to <strong style={{ color: C.coffee }}>{VENMO_HANDLE}</strong> on Venmo.
                   </span>
                 </label>
-                {rError && (
-                  <div style={{ fontFamily: mono, fontSize: 11, letterSpacing: '0.04em', color: '#8c2d2d' }}>{rError}</div>
-                )}
-                <button
-                  type="submit"
-                  disabled={rSending}
-                  style={{
-                    justifySelf: 'start',
-                    fontFamily: mono,
-                    fontSize: 11,
-                    letterSpacing: '0.2em',
-                    textTransform: 'uppercase',
-                    color: C.frame,
-                    background: C.coffee,
-                    border: `1px solid ${C.coffee}`,
-                    padding: '11px 22px',
-                    cursor: rSending ? 'default' : 'pointer',
-                    opacity: rSending ? 0.6 : 1,
-                  }}
-                >
+                {rError && <div style={{ fontFamily: mono, fontSize: 11, letterSpacing: '0.04em', color: '#8c2d2d' }}>{rError}</div>}
+                <button type="submit" disabled={rSending} style={{ ...btnNavy, background: C.coffee, border: `1px solid ${C.coffee}`, opacity: rSending ? 0.6 : 1 }}>
                   {rSending ? 'Confirming…' : 'Confirm my place'}
                 </button>
               </form>
@@ -372,18 +518,7 @@ export default function PeakStateIIPage() {
                 </div>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                   {rsvps.map((r) => (
-                    <span
-                      key={r.id}
-                      style={{
-                        fontFamily: mono,
-                        fontSize: 11,
-                        letterSpacing: '0.04em',
-                        color: C.navy,
-                        background: C.frame,
-                        border: `1px solid ${C.line}`,
-                        padding: '5px 11px',
-                      }}
-                    >
+                    <span key={r.id} style={{ fontFamily: mono, fontSize: 11, letterSpacing: '0.04em', color: C.navy, background: C.frame, border: `1px solid ${C.line}`, padding: '5px 11px' }}>
                       {r.name}
                       {r.guests > 1 ? ` +${r.guests - 1}` : ''}
                     </span>
@@ -403,25 +538,9 @@ export default function PeakStateIIPage() {
                 style={{ ...inputStyle, minHeight: 84, resize: 'vertical' }}
                 value={cMessage}
                 onChange={(e) => setCMessage(e.target.value)}
-                placeholder="Leave a note for the table…"
+                placeholder="Leave a note for the group…"
               />
-              <button
-                type="submit"
-                disabled={cSending}
-                style={{
-                  justifySelf: 'start',
-                  fontFamily: mono,
-                  fontSize: 11,
-                  letterSpacing: '0.2em',
-                  textTransform: 'uppercase',
-                  color: C.frame,
-                  background: C.navy,
-                  border: `1px solid ${C.navy}`,
-                  padding: '10px 20px',
-                  cursor: cSending ? 'default' : 'pointer',
-                  opacity: cSending ? 0.6 : 1,
-                }}
-              >
+              <button type="submit" disabled={cSending} style={{ ...btnNavy, padding: '10px 20px', opacity: cSending ? 0.6 : 1 }}>
                 {cSending ? 'Posting…' : 'Post'}
               </button>
             </form>
@@ -461,7 +580,7 @@ export default function PeakStateIIPage() {
               color: C.navySoft,
             }}
           >
-            Peak State <strong style={{ color: C.coffee, fontWeight: 600 }}>II · Copenhagen</strong> · MMXXVI
+            Peak State <strong style={{ color: C.coffee, fontWeight: 600 }}>II · Copenhagen</strong> · Aug 3–7 · MMXXVI
           </div>
         </div>
       </div>
@@ -470,6 +589,15 @@ export default function PeakStateIIPage() {
         .ps2-grid { grid-template-columns: 1fr; }
         .ps2-aside { order: -1; }
         .ps2-flyer-img { width: 100%; height: auto; display: block; }
+        .ps2-sched-row { display: grid; grid-template-columns: 64px 56px 1fr; gap: 14px; align-items: baseline; }
+        .ps2-week-day { display: grid; grid-template-columns: 1fr; gap: 4px; }
+        .ps2-signup-fields { display: grid; grid-template-columns: 1fr; gap: 12px; }
+        .ps2-board { display: grid; grid-template-columns: 1fr; gap: 10px; }
+        @media (min-width: 720px) {
+          .ps2-week-day { grid-template-columns: 190px 1fr; gap: 18px; align-items: baseline; }
+          .ps2-signup-fields { grid-template-columns: 1fr 160px 180px; }
+          .ps2-board { grid-template-columns: repeat(5, 1fr); }
+        }
         @media (min-width: 880px) {
           .ps2-grid { grid-template-columns: 1fr 1.45fr; align-items: stretch; }
           .ps2-aside { order: 0; display: flex; }
