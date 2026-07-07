@@ -3,7 +3,7 @@ import { adminDb } from '@/lib/firebase-admin'
 import { verifyGuest } from '../_auth'
 
 const DAYS = ['Mon Aug 3', 'Tue Aug 4', 'Wed Aug 5', 'Thu Aug 6', 'Fri Aug 7']
-const ROLES = ['Breakfast', 'Lunch', 'Dinner', 'Cleanup', 'Evening activity']
+const ROLES = ['Breakfast', 'Brunch', 'Lunch', 'Dinner', 'Cleanup', 'Evening activity']
 
 // GET — list signups (oldest first, so day boards read in claim order)
 export async function GET() {

@@ -40,7 +40,7 @@ const PILLARS = [
   {
     icon: 'bowl',
     title: 'Shared Meals',
-    body: 'The chefs are us. We take turns cooking breakfast, lunch, and dinner for the house — backed by a clean-up crew — and slip out to a nearby harbour restaurant on the nights no one’s at the stove. Claim a meal in Your Plan; feeding the house is part of the practice.',
+    body: 'The chefs are us. We take turns cooking breakfast, lunch, and dinner for the house — backed by a clean-up crew — and slip out to a nearby harbour restaurant on the nights no one’s at the stove. Claim a meal in Your Itinerary; feeding the house is part of the practice.',
   },
   {
     icon: 'plunge',
@@ -50,7 +50,7 @@ const PILLARS = [
   {
     icon: 'moon',
     title: 'Attendee-led Evenings',
-    body: 'Evenings stay open on purpose. Each night a new activity orchestrated by one of us — a day of cycling ending at La Banchina, a scavenger hunt through the area, and whatever you want to bring. Suggest and claim yours in Your Plan.',
+    body: 'Evenings stay open on purpose. Each night a new activity orchestrated by one of us — a day of cycling ending at La Banchina, a scavenger hunt through the area, and whatever you want to bring. Suggest and claim yours in Your Itinerary.',
   },
 ]
 
@@ -152,7 +152,21 @@ const DAYS_PROGRAM = [
 ]
 
 const SIGNUP_DAYS = ['Mon Aug 3', 'Tue Aug 4', 'Wed Aug 5', 'Thu Aug 6', 'Fri Aug 7']
-const SIGNUP_ROLES = ['Breakfast', 'Lunch', 'Dinner', 'Cleanup', 'Evening activity']
+
+// Open meal / clean-up slots per day. Evenings are always open to facilitate,
+// so 'Evening activity' is offered on every day in the form (below).
+const DAY_SLOTS: { day: string; roles: string[]; note?: string }[] = [
+  { day: 'Mon Aug 3', roles: ['Lunch', 'Dinner', 'Cleanup'] },
+  { day: 'Tue Aug 4', roles: ['Breakfast', 'Lunch', 'Dinner', 'Cleanup'] },
+  { day: 'Wed Aug 5', roles: ['Breakfast'], note: 'Lunch & dinner — we’ll be cycling / commuting to Copenhagen' },
+  { day: 'Thu Aug 6', roles: ['Breakfast', 'Lunch', 'Dinner', 'Cleanup'] },
+  { day: 'Fri Aug 7', roles: ['Brunch'], note: 'One large farewell brunch to close' },
+]
+
+function rolesForDay(day: string): string[] {
+  const slot = DAY_SLOTS.find((d) => d.day === day)
+  return [...(slot?.roles || []), 'Evening activity']
+}
 
 // ── The house & getting there ────────────────────────────────────────────────
 const HOUSE_ADDRESS = 'Store Ryvej 39A, 3300 Frederiksværk, Denmark'
@@ -179,7 +193,7 @@ const TABS = [
   { key: 'day', label: 'Day Rhythm' },
   { key: 'week', label: 'Week' },
   { key: 'house', label: 'House' },
-  { key: 'plan', label: 'Your Contributions' },
+  { key: 'plan', label: 'Your Itinerary' },
 ] as const
 type TabKey = (typeof TABS)[number]['key']
 
@@ -223,7 +237,7 @@ export default function PeakStateIIPage() {
   // Signups / facilitation
   const [signups, setSignups] = useState<Signup[]>([])
   const [sDay, setSDay] = useState(SIGNUP_DAYS[0])
-  const [sRole, setSRole] = useState(SIGNUP_ROLES[0])
+  const [sRole, setSRole] = useState(rolesForDay(SIGNUP_DAYS[0])[0])
   const [sWhat, setSWhat] = useState('')
   const [sSending, setSSending] = useState(false)
   const [sError, setSError] = useState('')
@@ -602,7 +616,7 @@ export default function PeakStateIIPage() {
       {/* Identity / sign-in bar */}
       <div style={{ border: `1px solid ${C.line}`, background: C.frame, padding: '14px 16px', marginBottom: 18, display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
         <div>
-          <div style={{ ...sectionLabel, marginBottom: 2 }}>Your Plan</div>
+          <div style={{ ...sectionLabel, marginBottom: 2 }}>Your Itinerary</div>
           <div style={{ fontFamily: serif, fontSize: 16, color: '#46556a' }}>
             {user ? 'Signed in — everything you claim is saved to your name.' : 'Sign in with Google to claim slots and confirm your place. Your picks save to you.'}
           </div>
@@ -614,7 +628,7 @@ export default function PeakStateIIPage() {
       {/* Your commitments */}
       {user && (
         <div style={{ marginBottom: 22 }}>
-          <div style={{ ...kicker, color: C.coffee, marginBottom: 8 }}>Your commitments</div>
+          <div style={{ ...kicker, color: C.coffee, marginBottom: 8 }}>Your itinerary</div>
           {mySignups.length === 0 && !myRsvp ? (
             <div style={{ fontFamily: serif, fontStyle: 'italic', fontSize: 15.5, color: C.coffeeSoft }}>Nothing yet — claim a meal or an evening below.</div>
           ) : (
@@ -647,14 +661,24 @@ export default function PeakStateIIPage() {
         <div className="ps2-signup-fields">
           <div>
             <label style={{ ...kicker, display: 'block', marginBottom: 5 }}>Day</label>
-            <select style={{ ...inputStyle, appearance: 'none' }} value={sDay} onChange={(e) => setSDay(e.target.value)} disabled={!user}>
+            <select
+              style={{ ...inputStyle, appearance: 'none' }}
+              value={sDay}
+              onChange={(e) => {
+                const d = e.target.value
+                setSDay(d)
+                const roles = rolesForDay(d)
+                if (!roles.includes(sRole)) setSRole(roles[0])
+              }}
+              disabled={!user}
+            >
               {SIGNUP_DAYS.map((d) => <option key={d} value={d}>{d}</option>)}
             </select>
           </div>
           <div>
             <label style={{ ...kicker, display: 'block', marginBottom: 5 }}>Role</label>
             <select style={{ ...inputStyle, appearance: 'none' }} value={sRole} onChange={(e) => setSRole(e.target.value)} disabled={!user}>
-              {SIGNUP_ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
+              {rolesForDay(sDay).map((r) => <option key={r} value={r}>{r}</option>)}
             </select>
           </div>
           <div>
@@ -668,26 +692,44 @@ export default function PeakStateIIPage() {
         </button>
       </form>
 
-      {/* Board grouped by day */}
-      <div style={{ ...kicker, color: C.coffee, marginBottom: 8 }}>The board</div>
+      {/* Board — open slots per day */}
+      <div style={{ ...kicker, color: C.coffee, marginBottom: 8 }}>Open slots</div>
       <div className="ps2-board" style={{ marginBottom: 26 }}>
-        {SIGNUP_DAYS.map((d) => {
-          const items = signups.filter((s) => s.day === d)
+        {DAY_SLOTS.map(({ day, roles, note }) => {
+          const dayItems = signups.filter((s) => s.day === day)
+          const extras = dayItems.filter((s) => !roles.includes(s.role))
           return (
-            <div key={d} style={{ border: `1px solid ${C.line}`, background: C.frame, padding: '12px 14px' }}>
-              <div style={{ ...kicker, color: C.coffee, marginBottom: 8 }}>{d}</div>
-              {items.length === 0 ? (
-                <div style={{ fontFamily: serif, fontStyle: 'italic', fontSize: 15, color: C.coffeeSoft }}>Open</div>
-              ) : (
-                <div style={{ display: 'grid', gap: 7 }}>
-                  {items.map((s) => (
-                    <div key={s.id} style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'baseline', gap: 7 }}>
-                      <span style={{ fontFamily: mono, fontSize: 9.5, letterSpacing: '0.1em', textTransform: 'uppercase', color: C.frame, background: C.navy, padding: '2px 7px' }}>{s.role}</span>
-                      <span style={{ fontFamily: serif, fontSize: 16, fontWeight: 600, color: C.navy }}>{s.name}</span>
-                      {s.what && <span style={{ fontFamily: serif, fontStyle: 'italic', fontSize: 15, color: C.coffee }}>— {s.what}</span>}
+            <div key={day} style={{ border: `1px solid ${C.line}`, background: C.frame, padding: '12px 14px' }}>
+              <div style={{ ...kicker, color: C.coffee, marginBottom: 8 }}>{day}</div>
+              <div style={{ display: 'grid', gap: 7 }}>
+                {roles.map((role) => {
+                  const claimants = dayItems.filter((s) => s.role === role)
+                  return (
+                    <div key={role} style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'baseline', gap: 7 }}>
+                      <span style={{ fontFamily: mono, fontSize: 9.5, letterSpacing: '0.1em', textTransform: 'uppercase', color: C.frame, background: C.navy, padding: '2px 7px' }}>{role}</span>
+                      {claimants.length === 0 ? (
+                        <span style={{ fontFamily: serif, fontStyle: 'italic', fontSize: 15, color: C.coffeeSoft }}>Open</span>
+                      ) : (
+                        claimants.map((s) => (
+                          <span key={s.id} style={{ fontFamily: serif, fontSize: 15.5, color: C.navy }}>
+                            <strong style={{ fontWeight: 600 }}>{s.name}</strong>
+                            {s.what ? <span style={{ fontStyle: 'italic', color: C.coffee }}> — {s.what}</span> : null}
+                          </span>
+                        ))
+                      )}
                     </div>
-                  ))}
-                </div>
+                  )
+                })}
+                {extras.map((s) => (
+                  <div key={s.id} style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'baseline', gap: 7 }}>
+                    <span style={{ fontFamily: mono, fontSize: 9.5, letterSpacing: '0.1em', textTransform: 'uppercase', color: C.frame, background: C.coffee, padding: '2px 7px' }}>{s.role}</span>
+                    <span style={{ fontFamily: serif, fontSize: 15.5, fontWeight: 600, color: C.navy }}>{s.name}</span>
+                    {s.what && <span style={{ fontFamily: serif, fontStyle: 'italic', fontSize: 15, color: C.coffee }}>— {s.what}</span>}
+                  </div>
+                ))}
+              </div>
+              {note && (
+                <div style={{ fontFamily: serif, fontStyle: 'italic', fontSize: 13.5, lineHeight: 1.35, color: C.coffeeSoft, marginTop: 9, paddingTop: 8, borderTop: `1px solid ${C.line}` }}>{note}</div>
               )}
             </div>
           )
@@ -878,14 +920,17 @@ export default function PeakStateIIPage() {
           .ps2-house-info { grid-template-columns: 1fr 1fr; }
           .ps2-week-day { grid-template-columns: 190px 1fr; gap: 18px; align-items: baseline; }
           .ps2-signup-fields { grid-template-columns: 1fr 160px 1fr; }
-          .ps2-board { grid-template-columns: repeat(5, 1fr); }
+          .ps2-board { grid-template-columns: repeat(2, 1fr); }
         }
         @media (min-width: 880px) {
           .ps2-grid { grid-template-columns: 1.7fr 1fr; grid-template-areas: "main aside" "main wall"; align-items: start; }
           .ps2-flyer-card { width: 100%; }
           .ps2-flyer-img { height: auto; object-fit: contain; }
         }
-        @media (min-width: 1100px) { .ps2-gallery { grid-template-columns: repeat(4, 1fr); } }
+        @media (min-width: 1100px) {
+          .ps2-gallery { grid-template-columns: repeat(4, 1fr); }
+          .ps2-board { grid-template-columns: repeat(3, 1fr); }
+        }
       `}</style>
     </div>
   )
