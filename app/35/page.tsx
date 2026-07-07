@@ -483,7 +483,7 @@ export default function PeakStateIIPage() {
             </div>
             <div>
               <div style={{ fontFamily: serif, fontSize: 19, fontWeight: 600, color: C.navy }}>{p.title}</div>
-              <p style={{ fontFamily: serif, fontSize: 16, lineHeight: 1.38, color: '#46556a', margin: '2px 0 0', maxWidth: '54ch' }}>{p.body}</p>
+              <p style={{ fontFamily: serif, fontSize: 16, lineHeight: 1.38, color: '#46556a', margin: '2px 0 0', maxWidth: '78ch' }}>{p.body}</p>
             </div>
           </div>
         ))}
@@ -537,7 +537,7 @@ export default function PeakStateIIPage() {
               <h2 style={{ fontFamily: serif, fontSize: 'clamp(22px,3vw,27px)', fontWeight: 600, lineHeight: 1.05, color: C.navy, margin: '2px 0 0' }}>{day.title}</h2>
             </div>
             <div>
-              <p style={{ fontFamily: serif, fontSize: 16.5, lineHeight: 1.4, color: '#46556a', margin: 0, maxWidth: '56ch' }}>{day.desc}</p>
+              <p style={{ fontFamily: serif, fontSize: 16.5, lineHeight: 1.4, color: '#46556a', margin: 0, maxWidth: '78ch' }}>{day.desc}</p>
               {'link' in day && day.link && (
                 <a
                   href={day.link.href}
@@ -561,7 +561,7 @@ export default function PeakStateIIPage() {
 
   const houseTab = (
     <div>
-      <p style={{ fontFamily: serif, fontStyle: 'italic', fontSize: 16.5, color: C.coffee, margin: '0 0 14px', maxWidth: '64ch' }}>
+      <p style={{ fontFamily: serif, fontStyle: 'italic', fontSize: 16.5, color: C.coffee, margin: '0 0 14px', maxWidth: '78ch' }}>
         Our home for the week — a house by the fjord in Frederiksværk, with the sauna and plunge tub out back.
       </p>
       <div className="ps2-house-info" style={{ display: 'grid', gap: 10, marginBottom: 18 }}>
@@ -640,7 +640,7 @@ export default function PeakStateIIPage() {
 
       {/* Claim a slot */}
       <div style={{ ...kicker, color: C.coffee, marginBottom: 8 }}>Take a slot · facilitate</div>
-      <p style={{ fontFamily: serif, fontSize: 16, lineHeight: 1.45, color: '#46556a', margin: '0 0 14px', maxWidth: '64ch' }}>
+      <p style={{ fontFamily: serif, fontSize: 16, lineHeight: 1.45, color: '#46556a', margin: '0 0 14px', maxWidth: '78ch' }}>
         The chefs are us. Claim a meal to cook — breakfast, lunch, or dinner — join a clean-up crew, or offer an evening you want to facilitate: a run, a sit, a swim, a workshop, a hunt. Evenings stay open on purpose, so suggest yours in advance.
       </p>
       <form onSubmit={submitSignup} style={{ display: 'grid', gap: 12, maxWidth: 720, marginBottom: 22, opacity: user ? 1 : 0.6 }}>
@@ -697,7 +697,7 @@ export default function PeakStateIIPage() {
       {/* Deposit / confirm place */}
       <div style={{ borderTop: `1px solid ${C.line}`, paddingTop: 20 }}>
         <div style={{ ...kicker, color: C.coffee, marginBottom: 6 }}>Confirm your place</div>
-        <p style={{ fontFamily: serif, fontSize: 16.5, lineHeight: 1.45, color: '#46556a', margin: '0 0 4px', maxWidth: '60ch' }}>
+        <p style={{ fontFamily: serif, fontSize: 16.5, lineHeight: 1.45, color: '#46556a', margin: '0 0 4px', maxWidth: '78ch' }}>
           Spots are held with an <strong style={{ color: C.navy }}>$800 deposit</strong> to confirm your place in the Airbnb. Send yours on Venmo to <strong style={{ color: C.coffee }}>{VENMO_HANDLE}</strong>, then confirm below.
         </p>
         <a href={VENMO_URL} target="_blank" rel="noopener noreferrer" style={{ ...btnNavy, display: 'inline-block', padding: '11px 20px', margin: '12px 0 18px', textDecoration: 'none' }}>
@@ -751,14 +751,14 @@ export default function PeakStateIIPage() {
     <div style={{ background: C.page, minHeight: '100vh', padding: '0 0 70px' }}>
       <div style={{ maxWidth: 'none', margin: 0 }}>
         <div style={{ background: C.frame, padding: '0 0 clamp(12px,2.4vw,18px)', boxShadow: '0 26px 64px -30px rgba(38,30,18,.5)' }}>
-          {/* Hero + tabs (left, wider) · flyer (right) */}
+          {/* Hero + tabs (left, wider) · flyer + wall (right) */}
           <div style={{ display: 'grid', gap: 'clamp(12px,2.4vw,18px)' }} className="ps2-grid">
-            <section style={cardStyle}>
+            <section style={cardStyle} className="ps2-main">
               <div style={{ ...sectionLabel, marginBottom: 8 }}>Peak State II · Copenhagen</div>
               <h1 style={{ fontFamily: serif, fontSize: 'clamp(32px,5vw,46px)', fontWeight: 600, lineHeight: 1.02, color: C.navy, margin: '0 0 10px' }}>
                 Birthday Retreat
               </h1>
-              <p style={{ fontFamily: serif, fontStyle: 'italic', fontSize: 'clamp(18px,2.4vw,22px)', lineHeight: 1.3, color: C.coffee, margin: '0 0 14px', maxWidth: '48ch' }}>
+              <p style={{ fontFamily: serif, fontStyle: 'italic', fontSize: 'clamp(18px,2.4vw,22px)', lineHeight: 1.3, color: C.coffee, margin: '0 0 14px', maxWidth: '60ch' }}>
                 A week for developing the micro-habits of peak performance — the small daily practices to compound into our best versions.
               </p>
               <p style={{ fontFamily: serif, fontSize: 17, lineHeight: 1.4, color: C.navy, fontWeight: 600, margin: '0 0 2px' }}>
@@ -803,6 +803,55 @@ export default function PeakStateIIPage() {
                 <img src="/peak-state-ii.png" alt="Peak State II — Copenhagen, August 2026" className="ps2-flyer-img" />
               </div>
             </aside>
+
+            {/* The Wall — under the flyer on the right */}
+            <div
+              className="ps2-wall"
+              style={{
+                backgroundImage: `linear-gradient(180deg, rgba(20,16,10,.60) 0%, rgba(20,16,10,.74) 55%, rgba(20,16,10,.86) 100%), url(${WALL_BG})`,
+                border: `1px solid ${C.line}`,
+              }}
+            >
+              <div style={{ fontFamily: mono, fontSize: 11, letterSpacing: '0.28em', textTransform: 'uppercase', color: '#f0e6d2', fontWeight: 600, marginBottom: 6 }}>The Wall</div>
+              <p style={{ fontFamily: serif, fontStyle: 'italic', fontSize: 16, color: '#e8dcc6', margin: '0 0 16px' }}>
+                Leave a note for the group — ideas, hellos, an activity you want to run.
+              </p>
+              <form onSubmit={submitComment} style={{ display: 'grid', gap: 10, marginBottom: 20 }}>
+                {!user && (
+                  <input style={{ ...inputStyle, background: 'rgba(243,236,219,.92)' }} value={cName} onChange={(e) => setCName(e.target.value)} placeholder="Your name" />
+                )}
+                {user && (
+                  <div style={{ fontFamily: serif, fontSize: 15.5, color: '#e8dcc6' }}>Posting as <strong style={{ color: '#fff' }}>{user.displayName || user.email}</strong></div>
+                )}
+                <textarea
+                  style={{ ...inputStyle, background: 'rgba(243,236,219,.92)', minHeight: 76, resize: 'vertical' }}
+                  value={cMessage}
+                  onChange={(e) => setCMessage(e.target.value)}
+                  placeholder="Leave a note…"
+                />
+                <button type="submit" disabled={cSending} style={{ ...btnNavy, background: C.coffee, border: `1px solid ${C.coffee}`, padding: '9px 18px', opacity: cSending ? 0.6 : 1 }}>
+                  {cSending ? 'Posting…' : 'Post to the wall'}
+                </button>
+              </form>
+              <div style={{ display: 'grid', gap: 0 }}>
+                {comments.length === 0 && (
+                  <p style={{ fontFamily: serif, fontStyle: 'italic', fontSize: 16, color: '#cdbfa6', margin: 0 }}>No notes yet — be the first.</p>
+                )}
+                {comments.map((c) => (
+                  <div key={c.id} style={{ padding: '12px 0', borderTop: '1px solid rgba(232,220,198,.28)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+                      {c.photoURL ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={c.photoURL} alt="" width={22} height={22} style={{ borderRadius: '50%' }} />
+                      ) : null}
+                      <span style={{ fontFamily: serif, fontSize: 18, fontWeight: 600, color: '#fff' }}>{c.name}</span>
+                      <span style={{ fontFamily: mono, fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#c9b59a' }}>{formatDate(c.createdAt)}</span>
+                    </div>
+                    <p style={{ fontFamily: serif, fontSize: 16, lineHeight: 1.4, color: '#e8dcc6', margin: '3px 0 0', whiteSpace: 'pre-wrap' }}>{c.message}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
 
           {/* Footer line */}
@@ -812,61 +861,10 @@ export default function PeakStateIIPage() {
         </div>
       </div>
 
-      {/* The Wall — overlaid on the house at the very bottom */}
-      <section className="ps2-wall" style={{ backgroundImage: `linear-gradient(180deg, rgba(20,16,10,.55) 0%, rgba(20,16,10,.72) 55%, rgba(20,16,10,.85) 100%), url(${WALL_BG})` }}>
-        <div className="ps2-wall-inner">
-          <div style={{ fontFamily: mono, fontSize: 11, letterSpacing: '0.28em', textTransform: 'uppercase', color: '#f0e6d2', fontWeight: 600, marginBottom: 6 }}>The Wall</div>
-          <p style={{ fontFamily: serif, fontStyle: 'italic', fontSize: 17, color: '#e8dcc6', margin: '0 0 20px' }}>
-            Leave a note for the group — ideas, hellos, an activity you want to run.
-          </p>
-
-          <form onSubmit={submitComment} style={{ maxWidth: 640, display: 'grid', gap: 12, marginBottom: 26 }}>
-            {!user && (
-              <input
-                style={{ ...inputStyle, background: 'rgba(243,236,219,.92)' }}
-                value={cName}
-                onChange={(e) => setCName(e.target.value)}
-                placeholder="Your name"
-              />
-            )}
-            {user && (
-              <div style={{ fontFamily: serif, fontSize: 16, color: '#e8dcc6' }}>Posting as <strong style={{ color: '#fff' }}>{user.displayName || user.email}</strong></div>
-            )}
-            <textarea
-              style={{ ...inputStyle, background: 'rgba(243,236,219,.92)', minHeight: 84, resize: 'vertical' }}
-              value={cMessage}
-              onChange={(e) => setCMessage(e.target.value)}
-              placeholder="Leave a note for the group…"
-            />
-            <button type="submit" disabled={cSending} style={{ ...btnNavy, background: C.coffee, border: `1px solid ${C.coffee}`, padding: '10px 20px', opacity: cSending ? 0.6 : 1 }}>
-              {cSending ? 'Posting…' : 'Post to the wall'}
-            </button>
-          </form>
-
-          <div style={{ display: 'grid', gap: 0 }}>
-            {comments.length === 0 && (
-              <p style={{ fontFamily: serif, fontStyle: 'italic', fontSize: 16.5, color: '#cdbfa6', margin: 0 }}>No notes yet — be the first.</p>
-            )}
-            {comments.map((c) => (
-              <div key={c.id} style={{ padding: '14px 0', borderTop: '1px solid rgba(232,220,198,.28)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  {c.photoURL ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={c.photoURL} alt="" width={24} height={24} style={{ borderRadius: '50%' }} />
-                  ) : null}
-                  <span style={{ fontFamily: serif, fontSize: 19, fontWeight: 600, color: '#fff' }}>{c.name}</span>
-                  <span style={{ fontFamily: mono, fontSize: 9.5, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#c9b59a' }}>{formatDate(c.createdAt)}</span>
-                </div>
-                <p style={{ fontFamily: serif, fontSize: 16.5, lineHeight: 1.4, color: '#e8dcc6', margin: '3px 0 0', whiteSpace: 'pre-wrap' }}>{c.message}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       <style>{`
-        .ps2-grid { grid-template-columns: 1fr; }
-        .ps2-aside { order: -1; }
+        .ps2-grid { grid-template-columns: 1fr; grid-template-areas: "aside" "main" "wall"; }
+        .ps2-main { grid-area: main; }
+        .ps2-aside { grid-area: aside; }
         .ps2-flyer-img { width: 100%; height: auto; display: block; }
         .ps2-sched-row { display: grid; grid-template-columns: 84px 76px 1fr; gap: 14px; align-items: baseline; }
         .ps2-gallery { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
@@ -874,8 +872,7 @@ export default function PeakStateIIPage() {
         .ps2-week-day { display: grid; grid-template-columns: 1fr; gap: 4px; }
         .ps2-signup-fields { display: grid; grid-template-columns: 1fr; gap: 12px; }
         .ps2-board { display: grid; grid-template-columns: 1fr; gap: 10px; }
-        .ps2-wall { background-size: cover; background-position: center; padding: clamp(40px,7vw,84px) clamp(20px,5vw,60px); }
-        .ps2-wall-inner { max-width: 820px; margin: 0 auto; }
+        .ps2-wall { grid-area: wall; background-size: cover; background-position: center; padding: clamp(22px,4vw,30px); }
         @media (min-width: 720px) {
           .ps2-gallery { grid-template-columns: repeat(3, 1fr); }
           .ps2-house-info { grid-template-columns: 1fr 1fr; }
@@ -884,8 +881,7 @@ export default function PeakStateIIPage() {
           .ps2-board { grid-template-columns: repeat(5, 1fr); }
         }
         @media (min-width: 880px) {
-          .ps2-grid { grid-template-columns: 1.6fr 1fr; align-items: start; }
-          .ps2-aside { order: 0; position: sticky; top: 10px; align-self: start; }
+          .ps2-grid { grid-template-columns: 1.7fr 1fr; grid-template-areas: "main aside" "main wall"; align-items: start; }
           .ps2-flyer-card { width: 100%; }
           .ps2-flyer-img { height: auto; object-fit: contain; }
         }
