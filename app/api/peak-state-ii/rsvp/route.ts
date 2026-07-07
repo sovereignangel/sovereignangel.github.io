@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { adminDb } from '@/lib/firebase-admin'
+import { verifyGuest } from '../_auth'
 
 // GET — list confirmed guests (newest first)
 export async function GET() {
@@ -18,6 +19,8 @@ export async function GET() {
         guests: data.guests,
         depositConfirmed: data.depositConfirmed,
         note: data.note || '',
+        uid: data.uid || '',
+        photoURL: data.photoURL || '',
         createdAt: data.createdAt,
       }
     })
@@ -29,27 +32,31 @@ export async function GET() {
   }
 }
 
-// POST — confirm attendance with a Venmo deposit
+// POST — confirm attendance with a Venmo deposit (signed in with Google)
 export async function POST(req: Request) {
   try {
-    const { name, guests, depositConfirmed, note } = await req.json()
+    const guest = await verifyGuest(req)
+    if (!guest) {
+      return NextResponse.json({ error: 'Please sign in with Google first.' }, { status: 401 })
+    }
 
-    const cleanName = (name || '').toString().trim().slice(0, 80)
+    const { guests, depositConfirmed, note } = await req.json()
+
     const cleanNote = (note || '').toString().trim().slice(0, 500)
     const cleanGuests = Math.max(1, Math.min(20, parseInt(guests, 10) || 1))
 
-    if (!cleanName) {
-      return NextResponse.json({ error: 'Name required' }, { status: 400 })
-    }
     if (!depositConfirmed) {
       return NextResponse.json({ error: 'Please confirm your deposit' }, { status: 400 })
     }
 
     const doc = {
-      name: cleanName,
+      name: guest.name,
       guests: cleanGuests,
       depositConfirmed: true,
       note: cleanNote,
+      uid: guest.uid,
+      email: guest.email,
+      photoURL: guest.photoURL,
       createdAt: new Date().toISOString(),
     }
 

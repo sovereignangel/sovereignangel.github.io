@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { adminDb } from '@/lib/firebase-admin'
+import { verifyGuest } from '../_auth'
 
 // GET — list comments (newest first)
 export async function GET() {
@@ -16,6 +17,7 @@ export async function GET() {
         id: d.id,
         name: data.name,
         message: data.message,
+        photoURL: data.photoURL || '',
         createdAt: data.createdAt,
       }
     })
@@ -27,12 +29,14 @@ export async function GET() {
   }
 }
 
-// POST — add a comment
+// POST — add a comment. Signed-in guests post under their Google name + avatar;
+// anyone else can still leave a note with a typed name.
 export async function POST(req: Request) {
   try {
+    const guest = await verifyGuest(req)
     const { name, message } = await req.json()
 
-    const cleanName = (name || '').toString().trim().slice(0, 80)
+    const cleanName = guest ? guest.name : (name || '').toString().trim().slice(0, 80)
     const cleanMessage = (message || '').toString().trim().slice(0, 1000)
 
     if (!cleanName || !cleanMessage) {
@@ -42,6 +46,8 @@ export async function POST(req: Request) {
     const doc = {
       name: cleanName,
       message: cleanMessage,
+      photoURL: guest ? guest.photoURL : '',
+      uid: guest ? guest.uid : '',
       createdAt: new Date().toISOString(),
     }
 

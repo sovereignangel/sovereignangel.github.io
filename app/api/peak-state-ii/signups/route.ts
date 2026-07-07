@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server'
 import { adminDb } from '@/lib/firebase-admin'
+import { verifyGuest } from '../_auth'
 
 const DAYS = ['Mon Aug 3', 'Tue Aug 4', 'Wed Aug 5', 'Thu Aug 6', 'Fri Aug 7']
-const ROLES = ['Lunch', 'Dinner', 'Cleanup', 'Evening activity']
+const ROLES = ['Breakfast', 'Lunch', 'Dinner', 'Cleanup', 'Evening activity']
 
 // GET — list signups (oldest first, so day boards read in claim order)
 export async function GET() {
@@ -21,6 +22,9 @@ export async function GET() {
         day: data.day,
         role: data.role,
         what: data.what || '',
+        uid: data.uid || '',
+        email: data.email || '',
+        photoURL: data.photoURL || '',
         createdAt: data.createdAt,
       }
     })
@@ -32,25 +36,32 @@ export async function GET() {
   }
 }
 
-// POST — claim a slot / offer to facilitate
+// POST — claim a slot / offer to facilitate (must be signed in with Google)
 export async function POST(req: Request) {
   try {
-    const { name, day, role, what } = await req.json()
+    const guest = await verifyGuest(req)
+    if (!guest) {
+      return NextResponse.json({ error: 'Please sign in with Google first.' }, { status: 401 })
+    }
 
-    const cleanName = (name || '').toString().trim().slice(0, 80)
+    const { day, role, what } = await req.json()
+
     const cleanWhat = (what || '').toString().trim().slice(0, 300)
     const cleanDay = DAYS.includes(day) ? day : ''
     const cleanRole = ROLES.includes(role) ? role : ''
 
-    if (!cleanName || !cleanDay || !cleanRole) {
-      return NextResponse.json({ error: 'Name, day and role required' }, { status: 400 })
+    if (!cleanDay || !cleanRole) {
+      return NextResponse.json({ error: 'Day and role required' }, { status: 400 })
     }
 
     const doc = {
-      name: cleanName,
+      name: guest.name,
       day: cleanDay,
       role: cleanRole,
       what: cleanWhat,
+      uid: guest.uid,
+      email: guest.email,
+      photoURL: guest.photoURL,
       createdAt: new Date().toISOString(),
     }
 
@@ -59,6 +70,36 @@ export async function POST(req: Request) {
     return NextResponse.json({ success: true, signup: { id: ref.id, ...doc } })
   } catch (error) {
     console.error('Peak State II signups POST error:', error)
+    return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
+  }
+}
+
+// DELETE — remove one of your own slots (?id=...)
+export async function DELETE(req: Request) {
+  try {
+    const guest = await verifyGuest(req)
+    if (!guest) {
+      return NextResponse.json({ error: 'Please sign in with Google first.' }, { status: 401 })
+    }
+
+    const id = new URL(req.url).searchParams.get('id') || ''
+    if (!id) {
+      return NextResponse.json({ error: 'Missing id' }, { status: 400 })
+    }
+
+    const ref = adminDb.collection('peak_state_ii_signups').doc(id)
+    const doc = await ref.get()
+    if (!doc.exists) {
+      return NextResponse.json({ success: true })
+    }
+    if (doc.data()?.uid !== guest.uid) {
+      return NextResponse.json({ error: 'That slot is not yours.' }, { status: 403 })
+    }
+
+    await ref.delete()
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    console.error('Peak State II signups DELETE error:', error)
     return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
   }
 }
