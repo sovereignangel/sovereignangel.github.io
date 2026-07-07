@@ -168,9 +168,11 @@ function ArchitectureFlow() {
   )
 }
 
-// ── Tech diagram (detailed, technical, used on Tech tab) ─────────────────────
-// Same flow but with the full technical surface visible: router endpoints,
-// project queues, wikis, harness, model routing.
+// ── Tech diagram (the control loop, used on Tech tab) ────────────────────────
+// Loop-engineering view: five sensor streams → a summing junction (error vs.
+// setpoint) → Alfred the controller + wikis as state estimate → actuators →
+// the world, re-measured every loop. The feedback path along the bottom is
+// what closes it. Same components as the old pipeline, drawn as a control system.
 
 function TechDiagram() {
   const [t, setT] = useState(0)
@@ -179,110 +181,132 @@ function TechDiagram() {
     return () => clearInterval(id)
   }, [])
 
+  // Five sensor streams, inner (fast) to outer (slow). Energy gates all loops;
+  // markets is the disturbance input — exogenous, only to be rejected or exploited.
+  const sensors = [
+    { label: 'energy',       sense: 'the gate',      clock: 'min–hr'     },
+    { label: 'transactions', sense: 'allocation',    clock: 'daily'      },
+    { label: 'transcripts',  sense: 'relationships', clock: 'daily'      },
+    { label: 'ideas',        sense: 'optionality',   clock: 'weekly'     },
+    { label: 'markets',      sense: 'disturbance',   clock: 'continuous' },
+  ]
+  const sensorY = (i: number) => -62 + i * 31   // centers: -62,-31,0,31,62
+  const jx = -96, jy = 0                          // summing junction
+
+  const actuators = [
+    'drafts — memos & replies',
+    'alerts — a drawdown is hit',
+    'nudges — allocation has drifted',
+    'holds — calendar & focus blocks',
+  ]
+
   return (
     <svg viewBox="-200 -120 400 240" preserveAspectRatio="xMidYMid meet" className="w-full h-full max-w-[900px] max-h-full" aria-hidden>
-      {/* === HARNESS · outer container wrapping everything === */}
+      {/* === HARNESS · outer container wrapping the whole loop === */}
       <rect x="-194" y="-114" width="388" height="228" fill="#7c2d2d" fillOpacity="0.025" stroke="#7c2d2d" strokeWidth="0.45" strokeDasharray="3 1.8" />
       <rect x="-194" y="-114" width="92" height="11" fill="#f5f1ea" stroke="none" />
       <text x="-188" y="-106" fontSize="4.2" letterSpacing="1.2" fontFamily="serif" fontWeight="600" fill="#7c2d2d">HARNESS · ALFRED</text>
       <text x="188" y="-106" textAnchor="end" fontSize="3.2" fontStyle="italic" fontFamily="serif" fill="#9a928a">
-        Ollama + Claude · reads platforms · writes wikis · drafts memos
+        one controller · senses the world · writes back · closes every loop
       </text>
 
-      {/* === SOURCES === */}
-      <text x="-180" y="-90" fontSize="3.8" letterSpacing="0.8" fontFamily="serif" fill="#7c2d2d">SOURCES</text>
-      {[
-        { x: -70, y: -78, label: 'Telegram', sub: 'chat · voice · slash · journal' },
-        { x: 70, y: -78, label: 'Wave AI', sub: 'session.completed' },
-      ].map((s) => (
-        <g key={s.label}>
-          <rect x={s.x - 36} y={s.y - 6} width="72" height="12" fill="#faf8f4" stroke="#2a2522" strokeWidth="0.4" />
-          <text x={s.x} y={s.y - 1} textAnchor="middle" fontSize="4.8" fontFamily="serif" fontStyle="italic" fill="#2a2522">{s.label}</text>
-          <text x={s.x} y={s.y + 4} textAnchor="middle" fontSize="3" fontFamily="serif" fill="#9a928a">{s.sub}</text>
-          <line x1={s.x} y1={s.y + 6} x2={s.x * 0.3} y2={-52} stroke="#9a928a" strokeWidth="0.35" opacity="0.55" />
-        </g>
-      ))}
-
-      {/* === ROUTER === */}
-      <text x="-180" y="-46" fontSize="3.8" letterSpacing="1.2" fontWeight="600" fontFamily="serif" fill="#7c2d2d">ROUTER</text>
-      <rect x="-100" y="-56" width="200" height="22" fill="#7c2d2d" fillOpacity="0.06" stroke="#7c2d2d" strokeWidth="0.6" />
-      <text x="0" y="-48" textAnchor="middle" fontSize="6" fontStyle="italic" fontFamily="serif" fontWeight="600" fill="#7c2d2d">
-        Alfred · Website /api/inbox
+      {/* === SETPOINTS · the reference signal, from “what I count” === */}
+      <text x="-190" y="-90" fontSize="3.8" letterSpacing="0.8" fontFamily="serif" fill="#7c2d2d">SETPOINTS</text>
+      <rect x="-140" y="-95" width="300" height="12" fill="#7c2d2d" fillOpacity="0.05" stroke="#7c2d2d" strokeWidth="0.4" strokeOpacity="0.55" />
+      <text x="10" y="-88.6" textAnchor="middle" fontSize="3.5" fontStyle="italic" fontFamily="serif" fill="#2a2522">
+        ≥2 deep convos / wk · 1 thing shipped / wk · NAV CAGR · regulated nervous system
       </text>
-      <text x="0" y="-41" textAnchor="middle" fontSize="3.3" fontFamily="serif" fill="#5c5550">
-        prefix · ask-buttons · dedupe · digest · HMAC auth · one bot token
-      </text>
-      {/* breathing rings around the router */}
-      {[0, 1, 2].map((i) => {
-        const phase = (t / 14 + i * 0.7) % 4
-        const r = 20 + phase * 18
-        const op = Math.max(0, 0.16 - phase * 0.04)
-        return <ellipse key={i} cx="0" cy="-45" rx={r * 2.2} ry={r * 0.55} fill="none" stroke="#7c2d2d" strokeWidth="0.22" opacity={op} />
-      })}
+      {/* setpoint drops into the summing junction from above */}
+      <line x1={jx} y1={-83} x2={jx} y2={jy - 6} stroke="#9a928a" strokeWidth="0.4" opacity="0.6" />
+      <text x={jx - 4} y={-40} textAnchor="end" fontSize="2.8" fontStyle="italic" fontFamily="serif" fill="#9a928a">the goal</text>
 
-      {/* === Wave tags (between router and platforms) === */}
-      <text x="-180" y="-22" fontSize="3.8" letterSpacing="1.2" fontWeight="600" fontFamily="serif" fill="#7c2d2d">WAVE TAGS <tspan fontWeight="400" letterSpacing="0.8" fill="#9a928a">· tap one of 7</tspan></text>
-      {['Fundraising', 'Research', 'Management', 'Investing', 'Alamo Bernal', 'Thesis Engine', 'Lordas'].map((tag, i) => {
-        const x = -150 + i * 50
+      {/* === SENSORS · the five input streams === */}
+      <text x="-190" y="-72" fontSize="3.8" letterSpacing="0.8" fontFamily="serif" fill="#7c2d2d">SENSORS <tspan fontWeight="400" fill="#9a928a">· 5 streams</tspan></text>
+      {sensors.map((s, i) => {
+        const y = sensorY(i)
+        const gate = s.label === 'energy'
         return (
-          <g key={tag}>
-            <rect x={x - 23} y="-16" width="46" height="9" fill="#faf8f4" stroke="#7c2d2d" strokeWidth="0.4" strokeOpacity="0.6" />
-            <text x={x} y={-10} textAnchor="middle" fontSize="3.5" fontFamily="serif" fontStyle="italic" fill="#2a2522">{tag}</text>
+          <g key={s.label}>
+            <rect x="-192" y={y - 8} width="66" height="16" fill="#faf8f4" stroke="#2a2522" strokeWidth="0.4" strokeOpacity={gate ? '0.9' : '0.6'} />
+            <text x="-188" y={y - 1.5} fontSize="4.6" fontStyle="italic" fontFamily="serif" fill="#2a2522">{s.label}</text>
+            <text x="-188" y={y + 4.5} fontSize="3" fontFamily="serif" fill="#9a928a">{s.sense} · {s.clock}</text>
+            {/* converge into the summing junction */}
+            <line x1="-126" y1={y} x2={jx - 5} y2={jy} stroke={gate ? '#7c2d2d' : '#9a928a'} strokeWidth={gate ? '0.5' : '0.4'} opacity={gate ? '0.65' : '0.5'} />
           </g>
         )
       })}
-      <text x="184" y="-1" textAnchor="end" fontSize="3" fontStyle="italic" fontFamily="serif" fill="#9a928a">+ defer (escape hatch)</text>
-      {/* dots from router to the tag strip */}
-      {[0, 1, 2].map((k) => {
-        const offset = (t + k * 33) % 100
-        const p = offset / 100
-        const cy = -34 + 18 * p
-        return <circle key={`r2t-${k}`} cx="0" cy={cy} r="0.7" fill="#7c2d2d" opacity={p > 0.08 && p < 0.92 ? 0.6 : 0} />
+
+      {/* === SUMMING JUNCTION · error = setpoint − state === */}
+      <circle cx={jx} cy={jy} r="5" fill="#f5f1ea" stroke="#7c2d2d" strokeWidth="0.6" />
+      <line x1={jx - 3} y1={jy} x2={jx + 3} y2={jy} stroke="#7c2d2d" strokeWidth="0.5" />
+      <line x1={jx} y1={jy - 3} x2={jx} y2={jy + 3} stroke="#7c2d2d" strokeWidth="0.5" />
+      <text x={jx} y={jy + 11} textAnchor="middle" fontSize="2.9" fontStyle="italic" fontFamily="serif" fill="#9a928a">error</text>
+      {/* junction → controller */}
+      <line x1={jx + 5} y1="0" x2="-24" y2="0" stroke="#7c2d2d" strokeWidth="0.5" opacity="0.7" />
+
+      {/* === ALFRED · the controller (breathing) === */}
+      {[0, 1, 2].map((i) => {
+        const phase = (t / 14 + i * 0.7) % 4
+        const r = 16 + phase * 14
+        const op = Math.max(0, 0.2 - phase * 0.045)
+        return <circle key={i} cx="-5" cy="0" r={r} fill="none" stroke="#7c2d2d" strokeWidth="0.3" opacity={op} />
+      })}
+      <circle cx="-5" cy="0" r="15" fill="#f5f1ea" stroke="#7c2d2d" strokeWidth="0.7" />
+      <text x="-5" y="-1.5" textAnchor="middle" fontSize="6" fontStyle="italic" fontFamily="serif" fontWeight="600" fill="#7c2d2d">Alfred</text>
+      <text x="-5" y="4.5" textAnchor="middle" fontSize="2.9" fontFamily="serif" fill="#9a928a">controller</text>
+
+      {/* === WIKIS · the self-updating state estimate === */}
+      <line x1="-5" y1="15" x2="-5" y2="26" stroke="#9a928a" strokeWidth="0.35" opacity="0.5" />
+      <rect x="-56" y="26" width="102" height="15" fill="#7c2d2d" fillOpacity="0.04" stroke="#7c2d2d" strokeWidth="0.4" strokeOpacity="0.55" />
+      <text x="-5" y="32" textAnchor="middle" fontSize="3.8" fontStyle="italic" fontFamily="serif" fontWeight="600" fill="#2a2522">wikis · state estimate</text>
+      <text x="-5" y="37.5" textAnchor="middle" fontSize="2.9" fontFamily="serif" fill="#5c5550">self-updating · karpathy L2 · contact / ticker / project / topic</text>
+
+      {/* controller → actuators */}
+      <line x1="10" y1="0" x2="88" y2="0" stroke="#7c2d2d" strokeWidth="0.5" opacity="0.7" />
+
+      {/* === ACTUATORS · what Alfred does === */}
+      <text x="176" y="-30" textAnchor="end" fontSize="3.8" letterSpacing="0.8" fontFamily="serif" fill="#7c2d2d">ACTUATORS</text>
+      {actuators.map((a, i) => {
+        const y = -18 + i * 12
+        return (
+          <g key={a}>
+            <rect x="90" y={y - 5} width="86" height="10" fill="#faf8f4" stroke="#7c2d2d" strokeWidth="0.4" strokeOpacity="0.55" />
+            <text x="133" y={y + 1.6} textAnchor="middle" fontSize="3.4" fontStyle="italic" fontFamily="serif" fill="#2a2522">{a}</text>
+          </g>
+        )
       })}
 
-      {/* === PLATFORMS === */}
-      <text x="-180" y="6" fontSize="3.8" letterSpacing="1.2" fontWeight="600" fontFamily="serif" fill="#7c2d2d">PLATFORMS</text>
-      {[
-        {
-          x: -110, label: 'Armstrong', emphasis: true,
-          stack: ['DeepOps · Supabase', 'research_requests · meetings', 'fundraise · research · mgmt · invest'],
-        },
-        {
-          x: 0, label: 'Alamo Bernal',
-          stack: ['AB · Supabase', 'ab_meetings · research_requests', 'partnership · screener · briefs'],
-        },
-        {
-          x: 110, label: 'Thesis Engine',
-          stack: ['Website · Firestore', 'wikis · journal · inbox_messages', 'Lordas · the apps · relational'],
-        },
-      ].map((p) => (
-        <g key={p.label}>
-          <line x1={0} y1={-2} x2={p.x} y2={12} stroke={p.emphasis ? '#7c2d2d' : '#9a928a'} strokeWidth={p.emphasis ? '0.55' : '0.4'} opacity="0.6" />
-          <rect x={p.x - 50} y={12} width="100" height="36" fill="#faf8f4" stroke="#7c2d2d" strokeWidth={p.emphasis ? '0.8' : '0.5'} strokeOpacity={p.emphasis ? '1' : '0.55'} />
-          <text x={p.x} y={20} textAnchor="middle" fontSize="5" fontStyle="italic" fontFamily="serif" fontWeight={p.emphasis ? '600' : '500'} fill="#2a2522">{p.label}</text>
-          {p.stack.map((line, j) => (
-            <text key={j} x={p.x} y={27 + j * 6} textAnchor="middle" fontSize="3" fontFamily="serif" fill="#5c5550">{line}</text>
-          ))}
-        </g>
-      ))}
-
-      {/* === WIKIS · karpathy layer 2 === */}
-      <text x="-180" y="62" fontSize="3.8" letterSpacing="1.2" fontWeight="600" fontFamily="serif" fill="#7c2d2d">WIKIS <tspan fontWeight="400" letterSpacing="0.8" fill="#9a928a">· karpathy layer 2</tspan></text>
-      <rect x="-130" y="56" width="260" height="20" fill="#7c2d2d" fillOpacity="0.04" stroke="#7c2d2d" strokeWidth="0.45" strokeOpacity="0.55" />
-      <text x="0" y="65" textAnchor="middle" fontSize="5" fontStyle="italic" fontFamily="serif" fontWeight="600" fill="#2a2522">
-        self-updating knowledge
+      {/* === FEEDBACK · the return path that closes the loop === */}
+      <path d="M 133 19 L 133 94 L -159 94 L -159 71" fill="none" stroke="#7c2d2d" strokeWidth="0.45" strokeDasharray="2 1.5" opacity="0.6" />
+      <text x="-13" y="91" textAnchor="middle" fontSize="3.4" fontStyle="italic" fontFamily="serif" fill="#7c2d2d">
+        the world, re-measured every loop
       </text>
-      <text x="0" y="72" textAnchor="middle" fontSize="3.4" fontFamily="serif" fill="#5c5550">
-        contact / ticker / project / topic / meeting — wikis/{'{slug}'}
-      </text>
-      {/* upward arrows from queues into wikis */}
-      {[-110, 0, 110].map((px) => (
-        <line key={'wU' + px} x1={px} y1={48} x2={px * 0.6} y2={56} stroke="#9a928a" strokeWidth="0.35" opacity="0.5" />
-      ))}
+      <text x="130" y="91" textAnchor="end" fontSize="2.9" fontFamily="serif" fill="#9a928a">drawdown triggers = when to act</text>
 
-      {/* tagline beneath the wikis row, inside the harness wrapper */}
-      <text x="0" y="92" textAnchor="middle" fontSize="3.3" fontStyle="italic" fontFamily="serif" fill="#9a928a">
-        every loop closes back inside the agent · one thread, one token, one operator
+      {/* flowing dots — sensors → junction */}
+      {sensors.map((s, i) => {
+        const y = sensorY(i)
+        const p = ((t + i * 20) % 100) / 100
+        const cx = -126 + (jx - 5 - -126) * p
+        const cy = y + (jy - y) * p
+        return <circle key={`sen-${i}`} cx={cx} cy={cy} r="0.6" fill="#7c2d2d" opacity={p > 0.05 && p < 0.95 ? 0.55 : 0} />
+      })}
+      {/* flowing dots — junction → controller → actuators */}
+      {[0, 1, 2].map((k) => {
+        const p = ((t + k * 33) % 100) / 100
+        const cx = -91 + (88 - -91) * p
+        return <circle key={`fwd-${k}`} cx={cx} cy="0" r="0.7" fill="#7c2d2d" opacity={p > 0.05 && p < 0.95 ? 0.7 : 0} />
+      })}
+      {/* flowing dots — feedback path back to the sensors */}
+      {[0, 1].map((k) => {
+        const p = ((t + k * 50) % 100) / 100
+        const cx = 133 + (-159 - 133) * p
+        return <circle key={`fb-${k}`} cx={cx} cy="94" r="0.7" fill="#7c2d2d" opacity={p > 0.05 && p < 0.95 ? 0.55 : 0} />
+      })}
+
+      {/* tagline inside the harness wrapper */}
+      <text x="0" y="107" textAnchor="middle" fontSize="3.3" fontStyle="italic" fontFamily="serif" fill="#9a928a">
+        I set the setpoints and review the exceptions · the loops run themselves in between
       </text>
     </svg>
   )
@@ -396,9 +420,9 @@ function TechTab() {
   return (
     <div className="h-full flex flex-col px-4 sm:px-8 py-4 sm:py-6 max-w-6xl mx-auto w-full">
       <div className="shrink-0">
-        <Chapter label="ii · the tech" title="One bot. One thread. Five layers." />
+        <Chapter label="ii · the tech" title="Five sensors. One controller. Loops that close." />
         <p className={`${fBody} text-[12px] sm:text-[14px] leading-[1.5] text-[#2a2522]/85 max-w-3xl`}>
-          Sources route through a single auth&apos;d HTTP endpoint into per-project queues. Queues feed wikis (Karpathy L2). Wikis feed the agent (Alfred, Phase 4) — which drafts memos, alerts, and updates back. <span className="italic text-[#7c2d2d]">No LLM auto-classification; every routing decision is explicit (slash prefix or 5/7-button keyboard).</span>
+          Not a pipeline — a control system. Five input streams (energy, transactions, transcripts, ideas, markets) are <span className="italic">sensors</span>. Alfred is the <span className="italic">controller</span>; the wikis are its self-updating <span className="italic">state estimate</span>. It measures each stream against a setpoint — the things I count — and <span className="italic">actuates</span>: drafts, alerts, nudges, holds. The world changes, gets re-measured, and the loop closes. <span className="italic text-[#7c2d2d]">No dashboard to stare at — a system that runs itself, with me on the setpoints and the exceptions.</span>
         </p>
       </div>
       <div className="flex-1 min-h-0 flex items-center justify-center my-1 sm:my-2">
