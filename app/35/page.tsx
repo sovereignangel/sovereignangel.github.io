@@ -130,7 +130,7 @@ const DAYS_PROGRAM = [
     idx: '03',
     date: 'Wed · Aug 5',
     title: 'The Birthday',
-    desc: 'Save this one. Ride ~63 km into the city (2 hr back by train for the legs that want it), pausing for lunch by Frederiksborg Castle in Hillerød about 90 minutes in. Cyclists and non-cyclists all land at La Banchina for the birthday dinner — eat, sauna, and cold-plunge in the ocean — then a last glow at Kalvebod Bølge before we drive home.',
+    desc: 'Save this one. Ride ~63 km into the city (2 hr back by train for the legs that want it), pausing for lunch by Frederiksborg Castle in Hillerød about 90 minutes in. Non-cyclists can train in or drive into Copenhagen and meet us there — everyone lands at La Banchina for the birthday dinner to eat, sauna, and cold-plunge in the ocean, then a last glow at Kalvebod Bølge before we drive home.',
     am: 'Sit — simplicity (spros bral)',
     mark: true,
     link: { href: LA_BANCHINA_IG, label: 'La Banchina · @labanchinacph' },
@@ -548,7 +548,10 @@ export default function PeakStateIIPage() {
           >
             <div>
               <div style={{ ...kicker, color: C.coffee }}>{day.date}{'mark' in day && day.mark ? ' · save the date' : ''}</div>
-              <h2 style={{ fontFamily: serif, fontSize: 'clamp(22px,3vw,27px)', fontWeight: 600, lineHeight: 1.05, color: C.navy, margin: '2px 0 0' }}>{day.title}</h2>
+              <h2 style={{ fontFamily: serif, fontSize: 'clamp(22px,3vw,27px)', fontWeight: 600, lineHeight: 1.05, color: C.navy, margin: '2px 0 0' }}>
+                {'mark' in day && day.mark && <span style={{ color: C.coffee, marginRight: 6 }}>★</span>}
+                {day.title}
+              </h2>
             </div>
             <div>
               <p style={{ fontFamily: serif, fontSize: 16.5, lineHeight: 1.4, color: '#46556a', margin: 0, maxWidth: '78ch' }}>{day.desc}</p>
