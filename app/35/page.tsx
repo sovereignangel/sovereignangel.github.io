@@ -175,10 +175,11 @@ const HOUSE_PHOTOS = [
 const WALL_BG = '/peak-state-ii/house/house-21.jpeg'
 
 const TABS = [
-  { key: 'day', label: 'A Day in the Retreat' },
-  { key: 'week', label: 'The Week' },
-  { key: 'house', label: 'The House' },
-  { key: 'plan', label: 'Your Plan' },
+  { key: 'program', label: 'Program' },
+  { key: 'day', label: 'Day Rhythm' },
+  { key: 'week', label: 'Week' },
+  { key: 'house', label: 'House' },
+  { key: 'plan', label: 'Your Contributions' },
 ] as const
 type TabKey = (typeof TABS)[number]['key']
 
@@ -198,7 +199,7 @@ function formatDate(iso: string) {
 }
 
 export default function PeakStateIIPage() {
-  const [tab, setTab] = useState<TabKey>('day')
+  const [tab, setTab] = useState<TabKey>('program')
 
   // Auth
   const [user, setUser] = useState<User | null>(null)
@@ -469,6 +470,27 @@ export default function PeakStateIIPage() {
   )
 
   // ── Tab bodies ─────────────────────────────────────────────────────────────
+  const programTab = (
+    <div>
+      <p style={{ fontFamily: serif, fontStyle: 'italic', fontSize: 16.5, color: C.coffee, margin: '0 0 12px' }}>
+        Four things we hold each day — the shape of the week.
+      </p>
+      <div style={{ borderTop: `1px solid ${C.line}` }}>
+        {PILLARS.map((p) => (
+          <div key={p.title} style={{ padding: '13px 0', borderBottom: `1px solid ${C.line}`, display: 'flex', gap: 14, alignItems: 'flex-start' }}>
+            <div style={{ flex: '0 0 auto', width: 48, height: 48, border: `1px solid ${C.line}`, background: C.frame, display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: 3 }}>
+              <PillarIcon kind={p.icon} />
+            </div>
+            <div>
+              <div style={{ fontFamily: serif, fontSize: 19, fontWeight: 600, color: C.navy }}>{p.title}</div>
+              <p style={{ fontFamily: serif, fontSize: 16, lineHeight: 1.38, color: '#46556a', margin: '2px 0 0', maxWidth: '54ch' }}>{p.body}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+
   const dayTab = (
     <div>
       <p style={{ fontFamily: serif, fontStyle: 'italic', fontSize: 16.5, color: C.coffee, margin: '0 0 16px' }}>
@@ -722,45 +744,57 @@ export default function PeakStateIIPage() {
     </div>
   )
 
-  const tabBody = tab === 'day' ? dayTab : tab === 'week' ? weekTab : tab === 'house' ? houseTab : planTab
+  const tabBody =
+    tab === 'program' ? programTab : tab === 'day' ? dayTab : tab === 'week' ? weekTab : tab === 'house' ? houseTab : planTab
 
   return (
     <div style={{ background: C.page, minHeight: '100vh', padding: '0 0 70px' }}>
       <div style={{ maxWidth: 'none', margin: 0 }}>
         <div style={{ background: C.frame, padding: '0 0 clamp(12px,2.4vw,18px)', boxShadow: '0 26px 64px -30px rgba(38,30,18,.5)' }}>
-          {/* Hero: description + flyer */}
+          {/* Hero + tabs (left, wider) · flyer (right) */}
           <div style={{ display: 'grid', gap: 'clamp(12px,2.4vw,18px)' }} className="ps2-grid">
             <section style={cardStyle}>
-              <div style={{ ...sectionLabel, marginBottom: 6 }}>The Retreat</div>
-              <p style={{ fontFamily: serif, fontStyle: 'italic', fontSize: 'clamp(19px,2.6vw,23px)', lineHeight: 1.3, color: C.coffee, margin: '0 0 12px' }}>
-                A week for developing the micro-habits of peak performance — the small daily practices that compound into our best versions.
+              <div style={{ ...sectionLabel, marginBottom: 8 }}>Peak State II · Copenhagen</div>
+              <h1 style={{ fontFamily: serif, fontSize: 'clamp(32px,5vw,46px)', fontWeight: 600, lineHeight: 1.02, color: C.navy, margin: '0 0 10px' }}>
+                Birthday Retreat
+              </h1>
+              <p style={{ fontFamily: serif, fontStyle: 'italic', fontSize: 'clamp(18px,2.4vw,22px)', lineHeight: 1.3, color: C.coffee, margin: '0 0 14px', maxWidth: '48ch' }}>
+                A week for developing the micro-habits of peak performance — the small daily practices to compound into our best versions.
               </p>
-              <p style={{ fontFamily: serif, fontSize: 16.5, lineHeight: 1.45, color: '#46556a', margin: '0 0 10px' }}>
-                <strong style={{ color: C.navy }}>Aug 3–7, 2026 · Frederiksværk, north of Copenhagen · 10–16 of us.</strong>{' '}
-                An intimate crew — remote workers, cyclists and non-cyclists alike — sharing a house, keeping our
-                working hours, and exploring the area together. Meditation opens each morning, we cook for each other,
-                and every evening ends in the sauna and the cold.
+              <p style={{ fontFamily: serif, fontSize: 17, lineHeight: 1.4, color: C.navy, fontWeight: 600, margin: '0 0 2px' }}>
+                Aug 3–7, 2026 · Frederiksværk, north of Copenhagen · 10–16 of us
               </p>
-              <p style={{ fontFamily: serif, fontSize: 16.5, lineHeight: 1.45, color: '#46556a', margin: '0 0 6px' }}>
-                A few key moments to save on your calendar — <strong style={{ color: C.navy }}>Wed Aug 5, the
-                birthday dinner</strong>, and <strong style={{ color: C.navy }}>an evening at La Banchina</strong> —
-                while the rest is choose-your-own-adventure. More coming soon; I welcome ideas and any activity you
-                want to facilitate.
+              <p style={{ fontFamily: serif, fontStyle: 'italic', fontSize: 15.5, color: C.coffeeSoft, margin: '0 0 20px' }}>
+                remote workers, cyclists and non-cyclists alike
               </p>
 
-              <div style={{ borderTop: `1px solid ${C.line}`, marginTop: 18 }}>
-                {PILLARS.map((p) => (
-                  <div key={p.title} style={{ padding: '13px 0', borderBottom: `1px solid ${C.line}`, display: 'flex', gap: 14, alignItems: 'flex-start' }}>
-                    <div style={{ flex: '0 0 auto', width: 48, height: 48, border: `1px solid ${C.line}`, background: C.frame, display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: 3 }}>
-                      <PillarIcon kind={p.icon} />
-                    </div>
-                    <div>
-                      <div style={{ fontFamily: serif, fontSize: 19, fontWeight: 600, color: C.navy }}>{p.title}</div>
-                      <p style={{ fontFamily: serif, fontSize: 16, lineHeight: 1.38, color: '#46556a', margin: '2px 0 0', maxWidth: '54ch' }}>{p.body}</p>
-                    </div>
-                  </div>
-                ))}
+              {/* Tabs */}
+              <div className="ps2-tabs" style={{ display: 'flex', flexWrap: 'wrap', gap: 4, borderBottom: `1px solid ${C.line}`, marginBottom: 20 }}>
+                {TABS.map((t) => {
+                  const active = t.key === tab
+                  return (
+                    <button
+                      key={t.key}
+                      onClick={() => setTab(t.key)}
+                      style={{
+                        fontFamily: serif,
+                        fontSize: 'clamp(15px,1.8vw,17px)',
+                        padding: '8px 13px',
+                        background: 'transparent',
+                        border: 'none',
+                        borderBottom: active ? `2px solid ${C.coffee}` : '2px solid transparent',
+                        color: active ? C.coffee : C.navySoft,
+                        fontWeight: active ? 600 : 400,
+                        cursor: 'pointer',
+                        marginBottom: -1,
+                      }}
+                    >
+                      {t.label}
+                    </button>
+                  )
+                })}
               </div>
+              {tabBody}
             </section>
 
             <aside className="ps2-aside">
@@ -770,37 +804,6 @@ export default function PeakStateIIPage() {
               </div>
             </aside>
           </div>
-
-          {/* The Daily Practice — tabbed */}
-          <section style={{ ...cardStyle, marginTop: 'clamp(12px,2.4vw,18px)' }}>
-            <div style={{ ...sectionLabel, marginBottom: 12 }}>The Daily Practice</div>
-            <div className="ps2-tabs" style={{ display: 'flex', flexWrap: 'wrap', gap: 4, borderBottom: `1px solid ${C.line}`, marginBottom: 20 }}>
-              {TABS.map((t) => {
-                const active = t.key === tab
-                return (
-                  <button
-                    key={t.key}
-                    onClick={() => setTab(t.key)}
-                    style={{
-                      fontFamily: serif,
-                      fontSize: 'clamp(15px,1.8vw,17px)',
-                      padding: '8px 14px',
-                      background: 'transparent',
-                      border: 'none',
-                      borderBottom: active ? `2px solid ${C.coffee}` : '2px solid transparent',
-                      color: active ? C.coffee : C.navySoft,
-                      fontWeight: active ? 600 : 400,
-                      cursor: 'pointer',
-                      marginBottom: -1,
-                    }}
-                  >
-                    {t.label}
-                  </button>
-                )
-              })}
-            </div>
-            {tabBody}
-          </section>
 
           {/* Footer line */}
           <div style={{ ...cardStyle, marginTop: 'clamp(12px,2.4vw,18px)', textAlign: 'center', fontFamily: mono, fontSize: 9.5, letterSpacing: '0.22em', textTransform: 'uppercase', color: C.navySoft }}>
@@ -881,10 +884,10 @@ export default function PeakStateIIPage() {
           .ps2-board { grid-template-columns: repeat(5, 1fr); }
         }
         @media (min-width: 880px) {
-          .ps2-grid { grid-template-columns: 1fr 1.45fr; align-items: stretch; }
-          .ps2-aside { order: 0; display: flex; }
-          .ps2-flyer-card { width: 100%; display: flex; }
-          .ps2-flyer-img { height: 100%; object-fit: contain; }
+          .ps2-grid { grid-template-columns: 1.6fr 1fr; align-items: start; }
+          .ps2-aside { order: 0; position: sticky; top: 10px; align-self: start; }
+          .ps2-flyer-card { width: 100%; }
+          .ps2-flyer-img { height: auto; object-fit: contain; }
         }
         @media (min-width: 1100px) { .ps2-gallery { grid-template-columns: repeat(4, 1fr); } }
       `}</style>
