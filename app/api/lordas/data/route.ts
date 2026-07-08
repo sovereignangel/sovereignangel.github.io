@@ -5,7 +5,6 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { FieldPath } from 'firebase-admin/firestore'
 import {
   DEFAULT_NORTH_STARS,
   EMPTY_CAMPAIGN,
@@ -49,7 +48,9 @@ export async function GET(request: NextRequest) {
       userRef.collection('adventure_sessions').limit(1).get(),
       userRef.collection('lordas_goals').doc('north_stars').get(),
       userRef.collection('lordas_goals').doc(`campaign_${LORDAS_CAMPAIGN_ID}`).get(),
-      userRef.collection('lordas_weeks').orderBy(FieldPath.documentId(), 'desc').limit(28).get(),
+      // No orderBy: descending __name__ needs a composite index; the
+      // collection is one doc per week, so sort in code instead.
+      userRef.collection('lordas_weeks').get(),
     ])
 
     const conversations = convsSnap.docs.map(d => d.data())
@@ -76,13 +77,15 @@ export async function GET(request: NextRequest) {
 
     const thisWeek = currentWeekStart()
     const comingWeek = nextWeekStart()
-    const weeks = weeksSnap.docs.map(d => d.data() as LordasWeek)
+    const weeks = weeksSnap.docs
+      .map(d => d.data() as LordasWeek)
+      .sort((a, b) => b.weekStart.localeCompare(a.weekStart))
     const goals: LordasGoalsData = {
       northStars,
       campaign,
       currentWeek: weeks.find(w => w.weekStart === thisWeek) || null,
       nextWeek: weeks.find(w => w.weekStart === comingWeek) || null,
-      weekHistory: weeks.filter(w => w.weekStart < thisWeek),
+      weekHistory: weeks.filter(w => w.weekStart < thisWeek).slice(0, 26),
     }
 
     return NextResponse.json({
