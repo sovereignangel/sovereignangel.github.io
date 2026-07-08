@@ -91,10 +91,17 @@ export function middleware(request: NextRequest) {
     return NextResponse.rewrite(url)
   }
 
-  // atune.loricorpuz.com → rewrite to /atune
+  // attune.loricorpuz.com → rewrite to /attune
+  if (host === 'attune.loricorpuz.com') {
+    const url = request.nextUrl.clone()
+    url.pathname = `/attune${url.pathname === '/' ? '' : url.pathname}`
+    return NextResponse.rewrite(url)
+  }
+
+  // atune.loricorpuz.com (legacy) → rewrite to /attune
   if (host === 'atune.loricorpuz.com') {
     const url = request.nextUrl.clone()
-    url.pathname = `/atune${url.pathname === '/' ? '' : url.pathname}`
+    url.pathname = `/attune${url.pathname === '/' ? '' : url.pathname}`
     return NextResponse.rewrite(url)
   }
 

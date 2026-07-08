@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'Atune',
     description: 'The crowd composes the night. A real-time, vision-driven music system.',
-    url: 'https://atune.loricorpuz.com',
+    url: 'https://attune.loricorpuz.com',
     siteName: 'Atune',
     type: 'website',
   },

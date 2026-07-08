@@ -466,7 +466,7 @@ export default function AtunePage() {
       <nav className="sticky top-0 z-40 backdrop-blur-md bg-[#0a0807]/80 border-b border-[#2a1f18]">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-baseline gap-3">
-            <span className="font-serif text-[20px] tracking-[-0.5px] text-[#f4a261]">atune</span>
+            <span className="font-serif text-[20px] tracking-[-0.5px] text-[#f4a261]">attune</span>
             <span className="font-mono text-[9px] uppercase tracking-[3px] text-[#8a7a6c]">prelude · 01</span>
           </div>
           <div className="flex items-center gap-1">
@@ -504,6 +504,14 @@ export default function AtunePage() {
             >
               The architecture
             </button>
+            <span className="text-[#2a1f18] mx-1">·</span>
+            <a
+              href="ATTUNE_PRD.md"
+              className="font-mono text-[10px] uppercase tracking-[2px] px-3 py-2 text-[#8a7a6c] hover:text-[#f4a261] transition-colors"
+              title="Attune Product Requirements Document — for Aidas to train the model"
+            >
+              PRD
+            </a>
           </div>
         </div>
       </nav>
@@ -513,13 +521,13 @@ export default function AtunePage() {
       <footer className="border-t border-[#2a1f18] mt-32">
         <div className="max-w-6xl mx-auto px-6 py-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
-            <p className="font-serif text-[14px] text-[#d4c4b0]">atune</p>
+            <p className="font-serif text-[14px] text-[#d4c4b0]">attune</p>
             <p className="font-mono text-[9px] uppercase tracking-[2px] text-[#6a5a4c] mt-1">
               The crowd composes the night
             </p>
           </div>
           <a
-            href="mailto:loricorpuz@gmail.com?subject=atune"
+            href="mailto:loricorpuz@gmail.com?subject=attune"
             className="font-mono text-[10px] uppercase tracking-[2px] text-[#f4a261] border border-[#7a4a2a] px-4 py-2 hover:bg-[#1a120c] transition-colors"
           >
             Come play
@@ -761,7 +769,7 @@ function VisionTab() {
               See how we’d build it →
             </a>
             <a
-              href="mailto:loricorpuz@gmail.com?subject=atune"
+              href="mailto:loricorpuz@gmail.com?subject=attune"
               className="font-mono text-[10px] uppercase tracking-[3px] text-[#d4c4b0] border border-[#2a1f18] px-5 py-3 hover:border-[#7a4a2a] transition-colors"
             >
               Tell me you’re in
@@ -1052,7 +1060,7 @@ function ArchitectureTab() {
       <section className="border-t border-[#2a1f18] py-20">
         <div className="max-w-3xl mx-auto px-6 text-center">
           <a
-            href="mailto:loricorpuz@gmail.com?subject=atune"
+            href="mailto:loricorpuz@gmail.com?subject=attune"
             className="inline-block font-mono text-[10px] uppercase tracking-[3px] text-[#0a0807] bg-[#f4a261] px-6 py-3 hover:bg-[#e8a06c] transition-colors"
           >
             Come play
