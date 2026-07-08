@@ -3,6 +3,7 @@
 import type { LordasGoalsData, LordasMilestone, LordasPerson } from '@/lib/types'
 import { LordasTabs, type LordasTab } from './LordasTabs'
 import { PersonSwitch } from './PersonPicker'
+import { PlaybookPanel } from './PlaybookPanel'
 import { NorthStarCard } from './NorthStarCard'
 import { CampaignBoard } from './CampaignBoard'
 import { WeekSprint } from './WeekSprint'
@@ -42,6 +43,7 @@ export function GoalsView({ goals, person, tab, onTabChange, onPersonChange, mut
 
           <div className="flex items-center gap-1.5 flex-wrap">
             <PersonSwitch person={person} onChange={onPersonChange} />
+            <PlaybookPanel />
             <LordasTabs current={tab} onChange={onTabChange} />
           </div>
         </div>
