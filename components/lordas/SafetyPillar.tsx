@@ -27,8 +27,20 @@ export function SafetyPillar({ conversations }: SafetyPillarProps) {
 
   if (!latest) return null
 
-  const { extraction } = latest
   const horsemenTypes = ['criticism', 'contempt', 'defensiveness', 'stonewalling'] as const
+
+  // Aggregate horsemen across recent sessions so one quiet session
+  // doesn't blank the panel
+  const horsemenTotals = {
+    lori: { criticism: 0, contempt: 0, defensiveness: 0, stonewalling: 0 },
+    aidas: { criticism: 0, contempt: 0, defensiveness: 0, stonewalling: 0 },
+  }
+  for (const c of recent) {
+    for (const type of horsemenTypes) {
+      horsemenTotals.lori[type] += c.extraction.horsemen.lori[type]
+      horsemenTotals.aidas[type] += c.extraction.horsemen.aidas[type]
+    }
+  }
 
   // Aggregate repair stats across recent conversations
   const totalRepairs = recent.reduce((sum, c) => sum + c.extraction.repairAttempts.length, 0)
@@ -36,6 +48,10 @@ export function SafetyPillar({ conversations }: SafetyPillarProps) {
     (sum, c) => sum + c.extraction.repairAttempts.filter(r => r.successful).length, 0
   )
   const repairRate = totalRepairs > 0 ? Math.round((successfulRepairs / totalRepairs) * 100) : 0
+
+  // Most recent sessions that actually contain repairs / vulnerability
+  const repairSession = recent.find(c => c.extraction.repairAttempts.length > 0)
+  const vulnSession = recent.find(c => c.extraction.vulnerabilityMoments.length > 0)
 
   return (
     <div>
@@ -57,13 +73,13 @@ export function SafetyPillar({ conversations }: SafetyPillarProps) {
             Four Horsemen
           </h3>
           <p className="text-[10px] mb-3" style={{ color: '#8a7e72' }}>
-            Latest session · Lower is better
+            Last {recent.length} session{recent.length !== 1 ? 's' : ''} · Lower is better
           </p>
 
           <div className="space-y-2">
             {horsemenTypes.map((type) => {
-              const loriCount = extraction.horsemen.lori[type]
-              const aidasCount = extraction.horsemen.aidas[type]
+              const loriCount = horsemenTotals.lori[type]
+              const aidasCount = horsemenTotals.aidas[type]
               const total = loriCount + aidasCount
               const isContempt = type === 'contempt'
 
@@ -93,8 +109,8 @@ export function SafetyPillar({ conversations }: SafetyPillarProps) {
                   </p>
                   {/* Bar */}
                   <div className="flex gap-1 mt-0.5">
-                    <HorsemenBar count={loriCount} max={5} color="#b85c38" />
-                    <HorsemenBar count={aidasCount} max={5} color="#2d5f4a" />
+                    <HorsemenBar count={loriCount} max={recent.length * 2} color="#b85c38" />
+                    <HorsemenBar count={aidasCount} max={recent.length * 2} color="#2d5f4a" />
                   </div>
                 </div>
               )
@@ -157,14 +173,14 @@ export function SafetyPillar({ conversations }: SafetyPillarProps) {
             </div>
           </div>
 
-          {/* Recent repairs from latest session */}
-          {extraction.repairAttempts.length > 0 && (
+          {/* Repairs from the most recent session that has any */}
+          {repairSession && (
             <div className="mb-3">
               <p className="text-[10px] font-medium mb-1" style={{ color: '#2a2420' }}>
-                Latest repairs
+                Latest repairs · {repairSession.date}
               </p>
               <div className="space-y-1">
-                {extraction.repairAttempts.map((repair, i) => (
+                {repairSession.extraction.repairAttempts.map((repair, i) => (
                   <div key={i} className="flex items-center gap-2 text-[10px]">
                     <span style={{ color: repair.successful ? '#2d5f4a' : '#8c3d3d' }}>
                       {repair.successful ? '✓' : '✗'}
@@ -186,14 +202,14 @@ export function SafetyPillar({ conversations }: SafetyPillarProps) {
             </div>
           )}
 
-          {/* Vulnerability moments */}
-          {extraction.vulnerabilityMoments.length > 0 && (
+          {/* Vulnerability moments from the most recent session that has any */}
+          {vulnSession && (
             <div>
               <p className="text-[10px] font-medium mb-1" style={{ color: '#2a2420' }}>
-                Vulnerability moments
+                Vulnerability moments · {vulnSession.date}
               </p>
               <div className="space-y-1">
-                {extraction.vulnerabilityMoments.map((v, i) => (
+                {vulnSession.extraction.vulnerabilityMoments.map((v, i) => (
                   <div key={i} className="flex gap-2 text-[10px]">
                     <span className="font-medium capitalize shrink-0" style={{
                       color: v.by === 'lori' ? '#b85c38' : '#2d5f4a'
