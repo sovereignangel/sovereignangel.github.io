@@ -2,13 +2,14 @@
 
 import type { RelationshipConversation, RelationshipSnapshot } from '@/lib/types'
 import { CompassIcon } from './pillar-icons'
+import { LordasTabs, type LordasTab } from './LordasTabs'
 
 interface DashboardHeaderProps {
   latest: RelationshipConversation | null
   snapshot: RelationshipSnapshot | null
   conversationCount: number
-  currentTab?: 'dashboard' | 'theory' | 'adventures'
-  onTabChange?: (tab: 'dashboard' | 'theory' | 'adventures') => void
+  currentTab?: LordasTab
+  onTabChange?: (tab: LordasTab) => void
 }
 
 export function DashboardHeader({ latest, snapshot, conversationCount, currentTab = 'dashboard', onTabChange }: DashboardHeaderProps) {
@@ -32,48 +33,7 @@ export function DashboardHeader({ latest, snapshot, conversationCount, currentTa
         </div>
 
         {/* Buttons */}
-        {onTabChange && (
-          <div className="flex gap-1.5">
-            <button
-              onClick={() => onTabChange('dashboard')}
-              className="flex items-center gap-1 px-2 py-1.5 rounded-sm border text-[9px] font-serif font-semibold uppercase transition-colors flex-shrink-0"
-              style={{
-                backgroundColor: currentTab === 'dashboard' ? '#b85c38' : 'transparent',
-                color: currentTab === 'dashboard' ? '#faf7f2' : '#8a7e72',
-                borderColor: currentTab === 'dashboard' ? '#b85c38' : '#d8cfc4',
-              }}
-            >
-              <svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round">
-                <circle cx="8" cy="3" r="1.5" />
-                <circle cx="5" cy="10" r="1.5" />
-                <circle cx="11" cy="10" r="1.5" />
-                <path d="M8 4.5 L5 8.5 M8 4.5 L11 8.5 M5 10 L11 10" />
-              </svg>
-              Insights
-            </button>
-
-            <button
-              onClick={() => onTabChange('adventures')}
-              className="flex items-center gap-1 px-2 py-1.5 rounded-sm border text-[9px] font-serif font-semibold uppercase transition-colors flex-shrink-0"
-              style={{
-                backgroundColor: currentTab === 'adventures' ? '#b85c38' : 'transparent',
-                color: currentTab === 'adventures' ? '#faf7f2' : '#8a7e72',
-                borderColor: currentTab === 'adventures' ? '#b85c38' : '#d8cfc4',
-              }}
-            >
-              <svg width="9" height="10" viewBox="0 0 14 16" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M7 1 L12 6 L7 13 L2 6 Z" />
-                <path d="M7 1 L7 13 M2 6 L12 6" />
-              </svg>
-              <svg width="9" height="8" viewBox="0 0 14 12" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="2" cy="10" r="1.8" />
-                <circle cx="12" cy="10" r="1.8" />
-                <path d="M2 10 L5 4 L9 4 L12 10 M5 4 L8 4 M5 4 L6 10" />
-              </svg>
-              Scheming
-            </button>
-          </div>
-        )}
+        {onTabChange && <LordasTabs current={currentTab} onChange={onTabChange} />}
 
         {latest && (
           <div className="text-right">

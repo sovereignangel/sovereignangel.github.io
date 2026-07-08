@@ -5,6 +5,15 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
+import { FieldPath } from 'firebase-admin/firestore'
+import {
+  DEFAULT_NORTH_STARS,
+  EMPTY_CAMPAIGN,
+  LORDAS_CAMPAIGN_ID,
+  currentWeekStart,
+  nextWeekStart,
+} from '@/lib/lordas-goals'
+import type { LordasGoalsData, LordasNorthStar, LordasWeek } from '@/lib/types'
 
 export const runtime = 'nodejs'
 
@@ -31,13 +40,16 @@ export async function GET(request: NextRequest) {
     const userRef = db.collection('users').doc(uid)
 
     // Fetch all data in parallel
-    const [convsSnap, themesSnap, valuesSnap, snapshotsSnap, summerPlanSnap, adventureSessionSnap] = await Promise.all([
+    const [convsSnap, themesSnap, valuesSnap, snapshotsSnap, summerPlanSnap, adventureSessionSnap, northStarsSnap, campaignSnap, weeksSnap] = await Promise.all([
       userRef.collection('relationship_conversations').orderBy('date', 'desc').limit(50).get(),
       userRef.collection('relationship_themes').get(),
       userRef.collection('relationship_values').get(),
       userRef.collection('relationship_snapshots').orderBy('date', 'desc').limit(30).get(),
       userRef.collection('summer_plans').orderBy('createdAt', 'desc').limit(1).get(),
       userRef.collection('adventure_sessions').limit(1).get(),
+      userRef.collection('lordas_goals').doc('north_stars').get(),
+      userRef.collection('lordas_goals').doc(`campaign_${LORDAS_CAMPAIGN_ID}`).get(),
+      userRef.collection('lordas_weeks').orderBy(FieldPath.documentId(), 'desc').limit(28).get(),
     ])
 
     const conversations = convsSnap.docs.map(d => d.data())
@@ -53,6 +65,26 @@ export async function GET(request: NextRequest) {
       adventureComments = sessionData.comments || []
     }
 
+    // Goals: lazy defaults — north stars and campaign are seeded in the
+    // response until the first mutation writes real docs.
+    const storedNorthStars = northStarsSnap.exists ? northStarsSnap.data() : null
+    const northStars: LordasGoalsData['northStars'] = {
+      lori: (storedNorthStars?.lori as LordasNorthStar) || { ...DEFAULT_NORTH_STARS.lori, updatedAt: 0, updatedBy: 'lori' },
+      aidas: (storedNorthStars?.aidas as LordasNorthStar) || { ...DEFAULT_NORTH_STARS.aidas, updatedAt: 0, updatedBy: 'aidas' },
+    }
+    const campaign = campaignSnap.exists ? (campaignSnap.data() as LordasGoalsData['campaign']) : EMPTY_CAMPAIGN
+
+    const thisWeek = currentWeekStart()
+    const comingWeek = nextWeekStart()
+    const weeks = weeksSnap.docs.map(d => d.data() as LordasWeek)
+    const goals: LordasGoalsData = {
+      northStars,
+      campaign,
+      currentWeek: weeks.find(w => w.weekStart === thisWeek) || null,
+      nextWeek: weeks.find(w => w.weekStart === comingWeek) || null,
+      weekHistory: weeks.filter(w => w.weekStart < thisWeek),
+    }
+
     return NextResponse.json({
       conversations,
       themes,
@@ -60,6 +92,7 @@ export async function GET(request: NextRequest) {
       snapshots,
       summerPlan,
       adventureComments,
+      goals,
     })
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error)

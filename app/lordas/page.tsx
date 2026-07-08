@@ -10,6 +10,9 @@ import { AlignmentPillar } from '@/components/lordas/AlignmentPillar'
 import { SessionTimeline } from '@/components/lordas/SessionTimeline'
 import { TheorySection } from '@/components/lordas/TheorySection'
 import { AdventuresView } from '@/components/lordas/AdventuresView'
+import { GoalsView } from '@/components/lordas/GoalsView'
+import { PersonPicker } from '@/components/lordas/PersonPicker'
+import { LordasTabs, type LordasTab } from '@/components/lordas/LordasTabs'
 import type {
   RelationshipConversation,
   RelationshipTheme,
@@ -18,6 +21,8 @@ import type {
   SummerPlan,
   AdventureComment,
   RelationalSpeaker,
+  LordasGoalsData,
+  LordasPerson,
 } from '@/lib/types'
 
 interface DashboardData {
@@ -27,23 +32,27 @@ interface DashboardData {
   snapshots: RelationshipSnapshot[]
   summerPlan?: SummerPlan
   adventureComments?: AdventureComment[]
+  goals?: LordasGoalsData
 }
 
-type Tab = 'dashboard' | 'theory' | 'adventures'
+type Tab = LordasTab
 
 export default function LordasPage() {
   const [pin, setPin] = useState<string | null>(null)
+  const [person, setPerson] = useState<LordasPerson | null>(null)
   const [data, setData] = useState<DashboardData | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [tab, setTab] = useState<Tab>('dashboard')
+  const [tab, setTab] = useState<Tab>('goals')
   const [mounted, setMounted] = useState(false)
 
-  // Check for stored PIN on mount
+  // Check for stored PIN + person on mount
   useEffect(() => {
     setMounted(true)
     const stored = sessionStorage.getItem('lordas_pin')
     if (stored) setPin(stored)
+    const storedPerson = localStorage.getItem('lordas_person')
+    if (storedPerson === 'lori' || storedPerson === 'aidas') setPerson(storedPerson)
   }, [])
 
   const fetchData = useCallback(async (pinValue: string) => {
@@ -78,11 +87,41 @@ export default function LordasPage() {
     setPin(value)
   }
 
+  const handlePersonChange = (p: LordasPerson) => {
+    localStorage.setItem('lordas_person', p)
+    setPerson(p)
+  }
+
+  const handleGoalsAction = useCallback(
+    async (action: string, payload: Record<string, unknown>) => {
+      if (!pin || !person) return
+      try {
+        const res = await fetch(`/api/lordas/goals?pin=${encodeURIComponent(pin)}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action, person, ...payload }),
+        })
+        if (!res.ok) {
+          const json = await res.json().catch(() => null)
+          console.error('[lordas/goals]', json?.error || res.status)
+        }
+        await fetchData(pin)
+      } catch (err) {
+        console.error('Error running goals action:', err)
+      }
+    },
+    [pin, person, fetchData]
+  )
+
   if (!mounted || !pin) {
     return <PinGate onSubmit={handlePin} error={error} />
   }
 
-  if (loading) {
+  if (!person) {
+    return <PersonPicker onSelect={handlePersonChange} />
+  }
+
+  if (loading && !data) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#f5f0e8' }}>
         <div className="text-[13px] font-serif uppercase tracking-[0.5px]" style={{ color: '#b85c38' }}>
@@ -106,6 +145,7 @@ export default function LordasPage() {
   const snapshots = data?.snapshots || []
   const summerPlan = data?.summerPlan || null
   const adventureComments = data?.adventureComments || []
+  const goals = data?.goals || null
 
   const latest = conversations[0] || null
   const latestSnapshot = snapshots[0] || null
@@ -128,7 +168,7 @@ export default function LordasPage() {
     <div className="min-h-screen" style={{ backgroundColor: '#f5f0e8' }}>
       {/* Main content */}
       <div className="max-w-[1100px] mx-auto px-4 py-6">
-        {tab === 'dashboard' && (
+        {(tab === 'dashboard' || tab === 'theory') && (
           <DashboardHeader
             latest={latest}
             snapshot={latestSnapshot}
@@ -159,52 +199,13 @@ export default function LordasPage() {
                 </div>
               </div>
 
-              <div className="flex gap-1.5">
-                <button
-                  onClick={() => setTab('dashboard')}
-                  className="flex items-center gap-1 px-2 py-1.5 rounded-sm border text-[9px] font-serif font-semibold uppercase transition-colors flex-shrink-0"
-                  style={{
-                    backgroundColor: 'transparent',
-                    color: '#8a7e72',
-                    borderColor: '#d8cfc4',
-                  }}
-                >
-                  <svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round">
-                    <circle cx="8" cy="3" r="1.5" />
-                    <circle cx="5" cy="10" r="1.5" />
-                    <circle cx="11" cy="10" r="1.5" />
-                    <path d="M8 4.5 L5 8.5 M8 4.5 L11 8.5 M5 10 L11 10" />
-                  </svg>
-                  Insights
-                </button>
-
-                <button
-                  onClick={() => setTab('adventures')}
-                  className="flex items-center gap-1 px-2 py-1.5 rounded-sm border text-[9px] font-serif font-semibold uppercase transition-colors flex-shrink-0"
-                  style={{
-                    backgroundColor: '#b85c38',
-                    color: '#faf7f2',
-                    borderColor: '#b85c38',
-                  }}
-                >
-                  <svg width="9" height="10" viewBox="0 0 14 16" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M7 1 L12 6 L7 13 L2 6 Z" />
-                    <path d="M7 1 L7 13 M2 6 L12 6" />
-                  </svg>
-                  <svg width="9" height="8" viewBox="0 0 14 12" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="2" cy="10" r="1.8" />
-                    <circle cx="12" cy="10" r="1.8" />
-                    <path d="M2 10 L5 4 L9 4 L12 10 M5 4 L8 4 M5 4 L6 10" />
-                  </svg>
-                  Scheming
-                </button>
-              </div>
+              <LordasTabs current={tab} onChange={setTab} />
             </div>
           </div>
         )}
 
         {/* Sub-tabs for Connection Insights */}
-        {tab === 'dashboard' && (
+        {(tab === 'dashboard' || tab === 'theory') && (
           <div className="flex gap-4 mt-4 border-b" style={{ borderColor: '#d8cfc4' }}>
             {(['dashboard', 'theory'] as const).map((t) => (
               <button
@@ -224,8 +225,28 @@ export default function LordasPage() {
           </div>
         )}
 
-        <div className="mt-6 space-y-6">
-          {tab === 'adventures' ? (
+        <div className={tab === 'goals' ? '' : 'mt-6 space-y-6'}>
+          {tab === 'goals' ? (
+            goals ? (
+              <GoalsView
+                goals={goals}
+                person={person}
+                tab={tab}
+                onTabChange={setTab}
+                onPersonChange={handlePersonChange}
+                mutate={handleGoalsAction}
+              />
+            ) : (
+              <div>
+                <div className="flex justify-end mb-4">
+                  <LordasTabs current={tab} onChange={setTab} />
+                </div>
+                <p className="text-[12px] font-serif" style={{ color: '#8a7e72' }}>
+                  Goals data unavailable. Refresh to try again.
+                </p>
+              </div>
+            )
+          ) : tab === 'adventures' ? (
             <AdventuresView
               summerPlan={summerPlan}
               comments={adventureComments}
