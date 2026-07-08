@@ -143,9 +143,7 @@ function CharterCard({
         </div>
       ) : (
         <>
-          <p className="font-serif text-[15px] leading-snug mb-3" style={{ color: INK }}>
-            {star?.statement || '—'}
-          </p>
+          <StatementBlock text={star?.statement || '—'} accent={accent} />
           {star?.doneLooksLike && (
             <div className="mb-2">
               <p className="text-[9px] uppercase tracking-[0.5px]" style={{ color: MUTED }}>
@@ -163,6 +161,36 @@ function CharterCard({
           )}
         </>
       )}
+    </div>
+  )
+}
+
+/**
+ * Renders a north star statement with bullet support: lines starting with
+ * "·" or "- " become indented bullet rows; other lines render as the
+ * serif headline.
+ */
+function StatementBlock({ text, accent }: { text: string; accent: string }) {
+  const lines = text.split('\n').map((l) => l.trim()).filter(Boolean)
+  return (
+    <div className="mb-3">
+      {lines.map((line, i) => {
+        const bullet = line.startsWith('·') || line.startsWith('- ')
+        if (!bullet) {
+          return (
+            <p key={i} className="font-serif text-[15px] leading-snug" style={{ color: INK }}>
+              {line}
+            </p>
+          )
+        }
+        const content = line.replace(/^·\s*|^-\s+/, '')
+        return (
+          <p key={i} className="text-[12px] leading-snug mt-1.5 pl-3 relative" style={{ color: INK }}>
+            <span className="absolute left-0" style={{ color: accent }}>·</span>
+            {content}
+          </p>
+        )
+      })}
     </div>
   )
 }
