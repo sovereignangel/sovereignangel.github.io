@@ -184,6 +184,7 @@ function OwnerWeekColumn({
             milestones={milestones}
             onCycleStatus={cycleStatus}
             onLock={(x) => mutate('lockCommitment', { weekStart, commitmentId: x.id })}
+            onUnlock={(x) => mutate('unlockCommitment', { weekStart, commitmentId: x.id })}
             onEdit={(x) =>
               setDraft({
                 id: x.id,

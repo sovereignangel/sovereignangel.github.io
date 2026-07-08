@@ -132,13 +132,17 @@ export async function POST(request: NextRequest) {
       if (action === 'setCampaignCharter') {
         const owner = asOwner(body.owner, person)
         if (!owner) return bad('Invalid owner')
-        if (!body.statement?.trim()) return bad('Missing statement')
-        charters[owner] = {
-          owner,
-          statement: body.statement.trim(),
-          doneLooksLike: (body.doneLooksLike || '').trim(),
-          updatedAt: now,
-          updatedBy: person,
+        if (!body.statement?.trim()) {
+          // Empty statement clears the charter
+          delete charters[owner]
+        } else {
+          charters[owner] = {
+            owner,
+            statement: body.statement.trim(),
+            doneLooksLike: (body.doneLooksLike || '').trim(),
+            updatedAt: now,
+            updatedBy: person,
+          }
         }
       }
 
@@ -198,7 +202,7 @@ export async function POST(request: NextRequest) {
     // ------------------------------------------------------------------
     // Weekly sprint
     // ------------------------------------------------------------------
-    const weekActions = ['upsertCommitment', 'deleteCommitment', 'lockCommitment', 'setCommitmentStatus', 'submitReview', 'submitPartnerNote']
+    const weekActions = ['upsertCommitment', 'deleteCommitment', 'lockCommitment', 'unlockCommitment', 'setCommitmentStatus', 'submitReview', 'submitPartnerNote']
     if (weekActions.includes(action)) {
       const { weekStart } = body
       if (!/^\d{4}-\d{2}-\d{2}$/.test(weekStart || '')) return bad('Invalid weekStart')
@@ -276,6 +280,18 @@ export async function POST(request: NextRequest) {
           target.lockedAt = now
           target.updatedAt = now
         }
+      }
+
+      if (action === 'unlockCommitment') {
+        const target = week.commitments.find(x => x.id === body.commitmentId)
+        if (!target) return bad('Commitment not found', 404)
+        if (!target.lockedBy) return bad('Commitment is not locked')
+        if (target.lockedBy !== person) {
+          return bad('Only whoever countersigned can withdraw the lock', 403)
+        }
+        target.lockedBy = undefined
+        target.lockedAt = undefined
+        target.updatedAt = now
       }
 
       if (action === 'setCommitmentStatus') {

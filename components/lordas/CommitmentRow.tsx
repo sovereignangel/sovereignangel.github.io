@@ -60,6 +60,7 @@ interface CommitmentRowProps {
   readOnly?: boolean
   onCycleStatus?: (c: LordasCommitment) => void
   onLock?: (c: LordasCommitment) => void
+  onUnlock?: (c: LordasCommitment) => void
   onEdit?: (c: LordasCommitment) => void
   onDelete?: (c: LordasCommitment) => void
 }
@@ -71,6 +72,7 @@ export function CommitmentRow({
   readOnly = false,
   onCycleStatus,
   onLock,
+  onUnlock,
   onEdit,
   onDelete,
 }: CommitmentRowProps) {
@@ -128,17 +130,24 @@ export function CommitmentRow({
 
         <div className="flex items-center gap-1 flex-shrink-0">
           {locked ? (
-            <span
-              className="flex items-center gap-1 font-mono text-[8px] uppercase px-1.5 py-0.5 rounded-sm"
-              title={`Locked in by ${personLabel(c.lockedBy!)}`}
-              style={{ color: SAGE, backgroundColor: `${SAGE}0d`, border: `1px solid ${SAGE}40` }}
-            >
-              <svg width="8" height="9" viewBox="0 0 10 12" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="1.5" y="5" width="7" height="5.5" rx="0.5" />
-                <path d="M3 5 V3.5 A2 2 0 0 1 7 3.5 V5" />
-              </svg>
-              {personLabel(c.lockedBy!).charAt(0)}
-            </span>
+            (() => {
+              const canUnlock = !readOnly && viewer === c.lockedBy && onUnlock
+              return (
+                <button
+                  onClick={() => canUnlock && onUnlock!(c)}
+                  disabled={!canUnlock}
+                  className="flex items-center gap-1 font-mono text-[8px] uppercase px-1.5 py-0.5 rounded-sm"
+                  title={canUnlock ? 'Withdraw your countersignature' : `Locked in by ${personLabel(c.lockedBy!)}`}
+                  style={{ color: SAGE, backgroundColor: `${SAGE}0d`, border: `1px solid ${SAGE}40`, cursor: canUnlock ? 'pointer' : 'default' }}
+                >
+                  <svg width="8" height="9" viewBox="0 0 10 12" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="1.5" y="5" width="7" height="5.5" rx="0.5" />
+                    <path d="M3 5 V3.5 A2 2 0 0 1 7 3.5 V5" />
+                  </svg>
+                  {personLabel(c.lockedBy!).charAt(0)}
+                </button>
+              )
+            })()
           ) : readOnly ? (
             <span className="font-mono text-[8px] uppercase px-1.5 py-0.5 rounded-sm border" style={{ color: MUTED, borderColor: RULE }}>
               Unwitnessed
