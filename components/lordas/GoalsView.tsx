@@ -56,7 +56,7 @@ export function GoalsView({ goals, person, tab, onTabChange, onPersonChange, mut
 
         <CampaignBoard
           campaign={goals.campaign}
-          person={person}
+          onSetCharter={(payload) => mutate('setCampaignCharter', payload)}
           onUpsert={(milestone: Partial<LordasMilestone>) => mutate('upsertMilestone', { milestone })}
           onDelete={(milestoneId: string) => mutate('deleteMilestone', { milestoneId })}
         />

@@ -72,8 +72,12 @@ export async function GET(request: NextRequest) {
     const northStars: LordasGoalsData['northStars'] = {
       lori: (storedNorthStars?.lori as LordasNorthStar) || { ...DEFAULT_NORTH_STARS.lori, updatedAt: 0, updatedBy: 'lori' },
       aidas: (storedNorthStars?.aidas as LordasNorthStar) || { ...DEFAULT_NORTH_STARS.aidas, updatedAt: 0, updatedBy: 'aidas' },
+      relationship:
+        (storedNorthStars?.relationship as LordasNorthStar) || { ...DEFAULT_NORTH_STARS.relationship, updatedAt: 0, updatedBy: 'lori' },
     }
-    const campaign = campaignSnap.exists ? (campaignSnap.data() as LordasGoalsData['campaign']) : EMPTY_CAMPAIGN
+    const campaign = campaignSnap.exists
+      ? { charters: {}, ...(campaignSnap.data() as LordasGoalsData['campaign']) }
+      : EMPTY_CAMPAIGN
 
     const thisWeek = currentWeekStart()
     const comingWeek = nextWeekStart()

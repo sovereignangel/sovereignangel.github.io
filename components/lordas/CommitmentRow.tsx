@@ -1,9 +1,8 @@
 'use client'
 
 import type { LordasCommitment, LordasCommitmentStatus, LordasMilestone, LordasPerson } from '@/lib/types'
-import { personLabel, INK, MUTED, RULE, SAGE, AMBER, ROSE } from './goals-theme'
-
-const STATUS_CYCLE: LordasCommitmentStatus[] = ['pending', 'in-progress', 'done', 'partial', 'missed']
+import { proposerOf } from '@/lib/lordas-goals'
+import { personLabel, CATEGORY_LABELS, INK, MUTED, RULE, SAGE, AMBER, ROSE } from './goals-theme'
 
 const STATUS_META: Record<LordasCommitmentStatus, { label: string; color: string }> = {
   pending: { label: 'Pending', color: MUTED },
@@ -75,11 +74,13 @@ export function CommitmentRow({
   onEdit,
   onDelete,
 }: CommitmentRowProps) {
-  const isOwner = c.person === viewer
   const locked = Boolean(c.lockedBy)
+  const proposer = proposerOf(c)
   const milestone = c.milestoneId ? milestones.find((m) => m.id === c.milestoneId) : undefined
-  const canCycle = !readOnly && isOwner && onCycleStatus
-  const canLock = !readOnly && !isOwner && !locked && onLock
+  // Owner reports status; relationship goals can be reported by either partner
+  const canCycle = !readOnly && (c.person === viewer || c.person === 'relationship') && onCycleStatus
+  // The countersign must come from someone other than the proposer
+  const canLock = !readOnly && viewer !== proposer && !locked && onLock
 
   return (
     <div className="rounded-sm border bg-white p-2 group" style={{ borderColor: locked ? `${STATUS_META[c.status].color}50` : RULE }}>
@@ -101,11 +102,23 @@ export function CommitmentRow({
           >
             {c.title}
           </p>
-          {milestone && (
-            <span className="inline-block font-mono text-[8px] uppercase px-1.5 py-0.5 rounded-sm border mt-1 mr-1" style={{ color: MUTED, borderColor: RULE }}>
-              {milestone.title.length > 34 ? `${milestone.title.slice(0, 34)}…` : milestone.title}
-            </span>
+          {c.successCriteria && (
+            <p className="font-mono text-[10px] mt-0.5" style={{ color: MUTED }}>
+              Done = <span style={{ color: INK }}>{c.successCriteria}</span>
+            </p>
           )}
+          <div className="flex items-center gap-1 mt-1 flex-wrap">
+            {c.category && (
+              <span className="font-mono text-[8px] uppercase px-1.5 py-0.5 rounded-sm border" style={{ color: MUTED, borderColor: RULE }}>
+                {CATEGORY_LABELS[c.category]}
+              </span>
+            )}
+            {milestone && (
+              <span className="inline-block font-mono text-[8px] uppercase px-1.5 py-0.5 rounded-sm border" style={{ color: MUTED, borderColor: RULE }}>
+                {milestone.title.length > 30 ? `${milestone.title.slice(0, 30)}…` : milestone.title}
+              </span>
+            )}
+          </div>
           {c.why && (
             <p className="text-[10px] italic mt-0.5" style={{ color: MUTED }}>
               {c.why}
@@ -133,7 +146,7 @@ export function CommitmentRow({
           ) : canLock ? (
             <button
               onClick={() => onLock!(c)}
-              title={`Countersign ${personLabel(c.person)}'s commitment`}
+              title="Countersign this commitment"
               className="flex items-center gap-1 font-serif text-[9px] font-semibold uppercase px-2 py-1 rounded-sm border transition-colors"
               style={{ color: SAGE, borderColor: `${SAGE}60` }}
             >
@@ -143,13 +156,13 @@ export function CommitmentRow({
               </svg>
               Lock in
             </button>
-          ) : isOwner ? (
-            <span className="font-mono text-[8px] uppercase px-1.5 py-0.5 rounded-sm border" title="Waiting for your partner to countersign" style={{ color: AMBER, borderColor: `${AMBER}40` }}>
+          ) : (
+            <span className="font-mono text-[8px] uppercase px-1.5 py-0.5 rounded-sm border" title={`Waiting for ${personLabel(viewer === 'lori' ? 'aidas' : 'lori')} to countersign`} style={{ color: AMBER, borderColor: `${AMBER}40` }}>
               Proposed
             </span>
-          ) : null}
+          )}
 
-          {!readOnly && isOwner && !locked && (
+          {!readOnly && !locked && (
             <>
               {onEdit && (
                 <button onClick={() => onEdit(c)} title="Edit" className="p-0.5 opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: MUTED }}>

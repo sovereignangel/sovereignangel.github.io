@@ -1,8 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import type { LordasGoalsData, LordasNorthStar, LordasPerson } from '@/lib/types'
-import { personLabel, PERSON_COLORS } from './goals-theme'
+import type { LordasGoalsData, LordasNorthStar, LordasGoalOwner, LordasPerson } from '@/lib/types'
+import { GOAL_OWNERS } from '@/lib/lordas-goals'
+import { ownerLabel, OWNER_COLORS } from './goals-theme'
 
 const PAPER = '#faf7f2'
 const INK = '#2a2420'
@@ -12,20 +13,20 @@ const RULE = '#d8cfc4'
 interface NorthStarCardProps {
   northStars: LordasGoalsData['northStars']
   person: LordasPerson
-  onSave: (payload: { statement: string; doneLooksLike: string; targetDate: string }) => Promise<void>
+  onSave: (payload: { owner: LordasGoalOwner; statement: string; doneLooksLike: string; targetDate: string }) => Promise<void>
 }
 
 export function NorthStarCard({ northStars, person, onSave }: NorthStarCardProps) {
   return (
     <section>
-      <SectionHeading title="North Star" subtitle="The identity each of us is building" />
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        {(['lori', 'aidas'] as LordasPerson[]).map((p) => (
+      <SectionHeading title="North Star" subtitle="Identity statements — who each of us is becoming" />
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        {GOAL_OWNERS.map((o) => (
           <CharterCard
-            key={p}
-            star={northStars[p]}
-            owner={p}
-            editable={p === person}
+            key={o}
+            star={northStars[o]}
+            owner={o}
+            editable={o === person || o === 'relationship'}
             onSave={onSave}
           />
         ))}
@@ -41,7 +42,7 @@ function CharterCard({
   onSave,
 }: {
   star?: LordasNorthStar
-  owner: LordasPerson
+  owner: LordasGoalOwner
   editable: boolean
   onSave: NorthStarCardProps['onSave']
 }) {
@@ -50,7 +51,7 @@ function CharterCard({
   const [doneLooksLike, setDoneLooksLike] = useState('')
   const [targetDate, setTargetDate] = useState('')
   const [saving, setSaving] = useState(false)
-  const accent = PERSON_COLORS[owner]
+  const accent = OWNER_COLORS[owner]
 
   const startEdit = () => {
     setStatement(star?.statement || '')
@@ -63,7 +64,7 @@ function CharterCard({
     if (!statement.trim() || saving) return
     setSaving(true)
     try {
-      await onSave({ statement, doneLooksLike, targetDate })
+      await onSave({ owner, statement, doneLooksLike, targetDate })
       setEditing(false)
     } finally {
       setSaving(false)
@@ -74,12 +75,12 @@ function CharterCard({
     <div className="rounded-sm border p-4 relative" style={{ backgroundColor: PAPER, borderColor: RULE, borderTop: `3px solid ${accent}` }}>
       <div className="flex items-start justify-between mb-2">
         <p className="text-[10px] uppercase tracking-[0.5px] font-semibold" style={{ color: accent }}>
-          {personLabel(owner)}
+          {ownerLabel(owner)}
         </p>
         {editable && !editing && (
           <button
             onClick={startEdit}
-            title="Edit your north star"
+            title="Edit"
             className="p-1 rounded-sm transition-colors"
             style={{ color: MUTED }}
           >
@@ -142,7 +143,7 @@ function CharterCard({
         </div>
       ) : (
         <>
-          <p className="font-serif text-[16px] leading-snug mb-3" style={{ color: INK }}>
+          <p className="font-serif text-[15px] leading-snug mb-3" style={{ color: INK }}>
             {star?.statement || '—'}
           </p>
           {star?.doneLooksLike && (

@@ -1,12 +1,12 @@
 'use client'
 
 import { useState } from 'react'
-import type { LordasMilestone, LordasPerson, LordasWeek } from '@/lib/types'
-import { hitRate, weekStreak, personLabel } from '@/lib/lordas-goals'
+import type { LordasGoalOwner, LordasMilestone, LordasPerson, LordasWeek } from '@/lib/types'
+import { GOAL_OWNERS, hitRate, weekStreak, ownerLabel, personLabel } from '@/lib/lordas-goals'
 import { dateShort } from '@/lib/date-utils'
 import { SectionHeading } from './NorthStarCard'
 import { CommitmentRow } from './CommitmentRow'
-import { PERSON_COLORS, PAPER, INK, MUTED, RULE, SAGE } from './goals-theme'
+import { OWNER_COLORS, PAPER, INK, MUTED, RULE, SAGE } from './goals-theme'
 
 interface WeekHistoryProps {
   weekHistory: LordasWeek[] // desc by weekStart
@@ -37,20 +37,20 @@ export function WeekHistory({ weekHistory, milestones, person }: WeekHistoryProp
       <SectionHeading title="Track Record" subtitle="Past weeks, hit rates, and streaks" />
 
       <div className="rounded-sm border p-3 mb-3" style={{ backgroundColor: PAPER, borderColor: RULE }}>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {(['lori', 'aidas'] as LordasPerson[]).map((p) => {
-            const streak = weekStreak(weekHistory, p)
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {GOAL_OWNERS.map((o) => {
+            const streak = weekStreak(weekHistory, o)
             return (
-              <div key={p}>
+              <div key={o}>
                 <div className="flex items-baseline justify-between mb-1.5">
-                  <p className="text-[10px] uppercase tracking-[0.5px] font-semibold" style={{ color: PERSON_COLORS[p] }}>
-                    {personLabel(p)}
+                  <p className="text-[10px] uppercase tracking-[0.5px] font-semibold" style={{ color: OWNER_COLORS[o] }}>
+                    {ownerLabel(o)}
                   </p>
                   <p className="font-mono text-[10px]" style={{ color: streak > 0 ? SAGE : MUTED }}>
                     {streak > 0 ? `${streak} wk streak` : 'No streak'}
                   </p>
                 </div>
-                <HitRateBars weeks={ascending} person={p} />
+                <HitRateBars weeks={ascending} owner={o} />
               </div>
             )
           })}
@@ -70,11 +70,12 @@ export function WeekHistory({ weekHistory, milestones, person }: WeekHistoryProp
                   Week of {dateShort(week.weekStart)}
                 </span>
                 <span className="flex items-center gap-3">
-                  {(['lori', 'aidas'] as LordasPerson[]).map((p) => {
-                    const rate = hitRate(week, p)
+                  {GOAL_OWNERS.map((o) => {
+                    const rate = hitRate(week, o)
+                    if (rate === null && o === 'relationship') return null
                     return (
-                      <span key={p} className="font-mono text-[10px]" style={{ color: rate === null ? MUTED : PERSON_COLORS[p] }}>
-                        {personLabel(p).charAt(0)} {rate === null ? '—' : `${Math.round(rate * 100)}%`}
+                      <span key={o} className="font-mono text-[10px]" style={{ color: rate === null ? MUTED : OWNER_COLORS[o] }}>
+                        {ownerLabel(o).charAt(0)} {rate === null ? '—' : `${Math.round(rate * 100)}%`}
                       </span>
                     )
                   })}
@@ -96,37 +97,38 @@ export function WeekHistory({ weekHistory, milestones, person }: WeekHistoryProp
 
               {isOpen && (
                 <div className="px-2.5 pb-2.5 space-y-2 border-t pt-2" style={{ borderColor: RULE }}>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                    {(['lori', 'aidas'] as LordasPerson[]).map((p) => (
-                      <div key={p}>
-                        <p className="text-[9px] uppercase tracking-[0.5px] font-semibold mb-1" style={{ color: PERSON_COLORS[p] }}>
-                          {personLabel(p)}
-                        </p>
-                        <div className="space-y-1">
-                          {week.commitments.filter((c) => c.person === p).length === 0 ? (
-                            <p className="text-[10px] italic" style={{ color: MUTED }}>No commitments</p>
-                          ) : (
-                            week.commitments
-                              .filter((c) => c.person === p)
-                              .map((c) => (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                    {GOAL_OWNERS.map((o) => {
+                      const theirs = week.commitments.filter((c) => c.person === o)
+                      if (theirs.length === 0 && o === 'relationship') return null
+                      return (
+                        <div key={o}>
+                          <p className="text-[9px] uppercase tracking-[0.5px] font-semibold mb-1" style={{ color: OWNER_COLORS[o] }}>
+                            {ownerLabel(o)}
+                          </p>
+                          <div className="space-y-1">
+                            {theirs.length === 0 ? (
+                              <p className="text-[10px] italic" style={{ color: MUTED }}>No commitments</p>
+                            ) : (
+                              theirs.map((c) => (
                                 <CommitmentRow key={c.id} commitment={c} viewer={person} milestones={milestones} readOnly />
                               ))
+                            )}
+                          </div>
+                          {o !== 'relationship' && week.reviews[o] && (
+                            <div className="mt-1.5 text-[10px] rounded-sm border p-1.5" style={{ borderColor: RULE, color: INK, backgroundColor: PAPER }}>
+                              {week.reviews[o]!.win && <p><span style={{ color: SAGE }}>Win · </span>{week.reviews[o]!.win}</p>}
+                              {week.reviews[o]!.lesson && <p><span style={{ color: MUTED }}>Lesson · </span>{week.reviews[o]!.lesson}</p>}
+                            </div>
+                          )}
+                          {o !== 'relationship' && week.partnerNotes[o === 'lori' ? 'aidas' : 'lori'] && (
+                            <p className="mt-1 text-[10px] font-serif italic" style={{ color: MUTED }}>
+                              &ldquo;{week.partnerNotes[o === 'lori' ? 'aidas' : 'lori']!.text}&rdquo; — {personLabel(o === 'lori' ? 'aidas' : 'lori')}
+                            </p>
                           )}
                         </div>
-                        {week.reviews[p] && (
-                          <div className="mt-1.5 text-[10px] rounded-sm border p-1.5" style={{ borderColor: RULE, color: INK, backgroundColor: PAPER }}>
-                            {week.reviews[p]!.win && <p><span style={{ color: SAGE }}>Win · </span>{week.reviews[p]!.win}</p>}
-                            {week.reviews[p]!.lesson && <p><span style={{ color: MUTED }}>Lesson · </span>{week.reviews[p]!.lesson}</p>}
-                          </div>
-                        )}
-                        {/* Note the partner wrote about this person */}
-                        {week.partnerNotes[p === 'lori' ? 'aidas' : 'lori'] && (
-                          <p className="mt-1 text-[10px] font-serif italic" style={{ color: MUTED }}>
-                            &ldquo;{week.partnerNotes[p === 'lori' ? 'aidas' : 'lori']!.text}&rdquo; — {personLabel(p === 'lori' ? 'aidas' : 'lori')}
-                          </p>
-                        )}
-                      </div>
-                    ))}
+                      )
+                    })}
                   </div>
                 </div>
               )}
@@ -141,19 +143,19 @@ export function WeekHistory({ weekHistory, milestones, person }: WeekHistoryProp
 /**
  * Inline SVG bar chart: one bar per past week (oldest left), height = hit rate.
  */
-function HitRateBars({ weeks, person }: { weeks: LordasWeek[]; person: LordasPerson }) {
+function HitRateBars({ weeks, owner }: { weeks: LordasWeek[]; owner: LordasGoalOwner }) {
   const H = 44
   const BAR_W = 14
   const GAP = 5
   const LABEL_H = 14
   const shown = weeks.slice(-12)
   const width = shown.length * (BAR_W + GAP) - GAP
-  const color = PERSON_COLORS[person]
+  const color = OWNER_COLORS[owner]
 
   return (
-    <svg width={Math.max(width, BAR_W)} height={H + LABEL_H} role="img" aria-label={`${personLabel(person)} weekly hit rate`}>
+    <svg width={Math.max(width, BAR_W)} height={H + LABEL_H} role="img" aria-label={`${ownerLabel(owner)} weekly hit rate`}>
       {shown.map((week, i) => {
-        const rate = hitRate(week, person)
+        const rate = hitRate(week, owner)
         const x = i * (BAR_W + GAP)
         const barH = rate === null ? 2 : Math.max(2, Math.round(rate * H))
         return (
