@@ -582,7 +582,7 @@ export default function TantraPage() {
               <GearIcon />
             </Link>
             <Link
-              href="/tantra/mastery"
+              href="/mastery"
               target="_blank"
               rel="noopener noreferrer"
               title="Progression & Mastery"

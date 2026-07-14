@@ -166,9 +166,26 @@ function CharterCard({
 }
 
 /**
+ * Maps a mastery bullet line to its plan anchor on loricorpuz.com/mastery.
+ * Keyword-matched so the freeform north star text stays editable.
+ */
+const MASTERY_PLANS = 'https://www.loricorpuz.com/mastery'
+const PLAN_ANCHORS: Array<{ pattern: RegExp; anchor: string }> = [
+  { pattern: /operator/i, anchor: 'operator' },
+  { pattern: /research/i, anchor: 'researcher' },
+  { pattern: /gravitas|presence|sales|narrative/i, anchor: 'gravitas' },
+  { pattern: /athlete|kite|triath/i, anchor: 'athlete' },
+]
+
+function planUrlFor(line: string): string | null {
+  const match = PLAN_ANCHORS.find(({ pattern }) => pattern.test(line))
+  return match ? `${MASTERY_PLANS}#${match.anchor}` : null
+}
+
+/**
  * Renders a north star statement with bullet support: lines starting with
  * "·" or "- " become indented bullet rows; other lines render as the
- * serif headline.
+ * serif headline. Bullets that match a mastery front link to its plan.
  */
 function StatementBlock({ text, accent }: { text: string; accent: string }) {
   const lines = text.split('\n').map((l) => l.trim()).filter(Boolean)
@@ -184,10 +201,22 @@ function StatementBlock({ text, accent }: { text: string; accent: string }) {
           )
         }
         const content = line.replace(/^·\s*|^-\s+/, '')
+        const planUrl = planUrlFor(content)
         return (
           <p key={i} className="text-[12px] leading-snug mt-1.5 pl-3 relative" style={{ color: INK }}>
             <span className="absolute left-0" style={{ color: accent }}>·</span>
             {content}
+            {planUrl && (
+              <a
+                href={planUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-mono text-[10px] uppercase tracking-[0.5px] ml-1.5 whitespace-nowrap hover:underline"
+                style={{ color: accent }}
+              >
+                plan →
+              </a>
+            )}
           </p>
         )
       })}
