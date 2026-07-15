@@ -37,6 +37,7 @@ export async function GET(request: NextRequest) {
       severity: 'info',
       title: `Kite Wind — Palanga ${today}`,
       body: message,
+      link: 'https://juraspot.lt/',
       dedupe_key: `kite-wind:${today}`,
     })
 

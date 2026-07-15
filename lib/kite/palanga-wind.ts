@@ -15,9 +15,11 @@ const PALANGA_LAT = 55.9175
 const PALANGA_LON = 21.0686
 const TIMEZONE = 'Europe/Vilnius'
 
-// Session-viable hours (local): daylight with rescue/foot traffic around
+// Session-viable hours (local): from morning until that day's sunset
+// (Palanga sunset is ~22:10 in July, ~19:15 by late September)
 const DAY_START_HOUR = 8
-const DAY_END_HOUR = 21
+const FALLBACK_END_HOUR = 21
+const MAX_END_HOUR = 22
 
 // Rideability thresholds (knots) for an intermediate twin-tip rider
 const MIN_WIND_KN = 11
@@ -49,6 +51,7 @@ export interface DayAnalysis {
   window: KiteWindow | null
   peakSpeedKn: number
   note: string
+  sunset: string | null // HH:MM local
 }
 
 interface OpenMeteoResponse {
@@ -57,6 +60,10 @@ interface OpenMeteoResponse {
     wind_speed_10m: number[]
     wind_gusts_10m: number[]
     wind_direction_10m: number[]
+  }
+  daily: {
+    time: string[]
+    sunset: string[]
   }
 }
 
@@ -90,8 +97,8 @@ function isRideableHour(h: HourForecast): boolean {
 }
 
 /** Find the best contiguous rideable window of >= 2 hours (best = highest mean wind). */
-export function findBestWindow(hours: HourForecast[]): KiteWindow | null {
-  const daylight = hours.filter(h => h.hour >= DAY_START_HOUR && h.hour < DAY_END_HOUR)
+export function findBestWindow(hours: HourForecast[], endHour: number = FALLBACK_END_HOUR): KiteWindow | null {
+  const daylight = hours.filter(h => h.hour >= DAY_START_HOUR && h.hour < endHour)
   let best: KiteWindow | null = null
 
   let run: HourForecast[] = []
@@ -125,40 +132,48 @@ export function findBestWindow(hours: HourForecast[]): KiteWindow | null {
   return best
 }
 
-export function analyzeDay(date: string, hours: HourForecast[]): DayAnalysis {
-  const daylight = hours.filter(h => h.hour >= DAY_START_HOUR && h.hour < DAY_END_HOUR)
+export function analyzeDay(date: string, hours: HourForecast[], sunset: string | null = null): DayAnalysis {
+  // Ride until sunset (capped at 22:00); e.g. July sunset 22:11 -> hours through 21:00 count
+  const sunsetHour = sunset ? parseInt(sunset.slice(0, 2), 10) : null
+  const endHour = sunsetHour ? Math.min(MAX_END_HOUR, sunsetHour) : FALLBACK_END_HOUR
+  const daylight = hours.filter(h => h.hour >= DAY_START_HOUR && h.hour < endHour)
   const peakSpeedKn = Math.round(Math.max(0, ...daylight.map(h => h.speedKn)))
-  const window = findBestWindow(hours)
+  const window = findBestWindow(hours, endHour)
 
   if (window) {
     const verdict: DayVerdict = window.avgSpeedKn >= 14 ? 'good' : 'marginal'
     const note = verdict === 'good' ? 'solid session' : 'light — big kite, work upwind drills'
-    return { date, verdict, window, peakSpeedKn, note }
+    return { date, verdict, window, peakSpeedKn, note, sunset }
   }
 
   // No window — figure out why
   const windyHours = daylight.filter(h => h.speedKn >= MIN_WIND_KN)
   const offshoreWindy = windyHours.filter(h => isOffshore(h.directionDeg))
   if (windyHours.length > 0 && offshoreWindy.length >= windyHours.length / 2) {
-    return { date, verdict: 'offshore', window: null, peakSpeedKn, note: 'offshore E wind — do not ride' }
+    return { date, verdict: 'offshore', window: null, peakSpeedKn, note: 'offshore E wind — do not ride', sunset }
   }
   if (windyHours.some(h => h.speedKn > MAX_WIND_KN || h.gustKn > MAX_GUST_KN)) {
-    return { date, verdict: 'no_wind', window: null, peakSpeedKn, note: 'too strong / gusty — stay on the beach' }
+    return { date, verdict: 'no_wind', window: null, peakSpeedKn, note: 'too strong / gusty — stay on the beach', sunset }
   }
-  return { date, verdict: 'no_wind', window: null, peakSpeedKn, note: `light (peak ${peakSpeedKn} kn) — kite-flying or land drills` }
+  return { date, verdict: 'no_wind', window: null, peakSpeedKn, note: `light (peak ${peakSpeedKn} kn) — kite-flying or land drills`, sunset }
 }
 
-export async function fetchPalangaForecast(): Promise<Map<string, HourForecast[]>> {
+export interface PalangaForecast {
+  hoursByDate: Map<string, HourForecast[]>
+  sunsetByDate: Map<string, string> // HH:MM local
+}
+
+export async function fetchPalangaForecast(): Promise<PalangaForecast> {
   const url =
     `https://api.open-meteo.com/v1/forecast?latitude=${PALANGA_LAT}&longitude=${PALANGA_LON}` +
-    `&hourly=wind_speed_10m,wind_gusts_10m,wind_direction_10m` +
+    `&hourly=wind_speed_10m,wind_gusts_10m,wind_direction_10m&daily=sunset` +
     `&wind_speed_unit=kn&timezone=${encodeURIComponent(TIMEZONE)}&forecast_days=8`
 
   const res = await fetch(url, { cache: 'no-store' })
   if (!res.ok) throw new Error(`Open-Meteo request failed: ${res.status}`)
   const data: OpenMeteoResponse = await res.json()
 
-  const byDate = new Map<string, HourForecast[]>()
+  const hoursByDate = new Map<string, HourForecast[]>()
   data.hourly.time.forEach((time, i) => {
     const [date, clock] = time.split('T')
     const hour = parseInt(clock.slice(0, 2), 10)
@@ -169,18 +184,25 @@ export async function fetchPalangaForecast(): Promise<Map<string, HourForecast[]
       gustKn: data.hourly.wind_gusts_10m[i],
       directionDeg: data.hourly.wind_direction_10m[i],
     }
-    const list = byDate.get(date) ?? []
+    const list = hoursByDate.get(date) ?? []
     list.push(entry)
-    byDate.set(date, list)
+    hoursByDate.set(date, list)
   })
-  return byDate
+
+  const sunsetByDate = new Map<string, string>()
+  data.daily.time.forEach((date, i) => {
+    const sunset = data.daily.sunset[i]
+    if (sunset) sunsetByDate.set(date, sunset.split('T')[1] ?? '')
+  })
+
+  return { hoursByDate, sunsetByDate }
 }
 
 export async function analyzePalangaWeek(): Promise<DayAnalysis[]> {
-  const byDate = await fetchPalangaForecast()
-  return Array.from(byDate.entries())
+  const { hoursByDate, sunsetByDate } = await fetchPalangaForecast()
+  return Array.from(hoursByDate.entries())
     .sort(([a], [b]) => a.localeCompare(b))
-    .map(([date, hours]) => analyzeDay(date, hours))
+    .map(([date, hours]) => analyzeDay(date, hours, sunsetByDate.get(date) ?? null))
 }
 
 function fmtDay(date: string): string {
@@ -215,6 +237,9 @@ export function formatKiteMessage(days: DayAnalysis[]): string {
   } else {
     lines.push(`*Today: ${VERDICT_TAG[today.verdict]}* — ${today.note}`)
   }
+  if (today.sunset) {
+    lines.push(`Light until ${today.sunset}`)
+  }
 
   lines.push('')
   lines.push('*Week ahead:*')
@@ -229,6 +254,7 @@ export function formatKiteMessage(days: DayAnalysis[]): string {
   const goodDays = days.filter(d => d.verdict === 'good').length
   lines.push('')
   lines.push(`${goodDays}/${days.length} good days this week. Log every session in Surfr.`)
+  lines.push(`Live station + webcam: juraspot.lt (Monciskes)`)
 
   return lines.join('\n')
 }
