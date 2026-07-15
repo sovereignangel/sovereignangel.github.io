@@ -21,15 +21,7 @@ function KiteMasteryInner() {
   }
 
   return (
-    <main className="max-w-[1200px] mx-auto px-4 sm:px-6 py-4">
-      <header className="mb-3 pb-2 border-b-2 border-ink">
-        <h1 className="font-serif text-[22px] font-bold text-ink tracking-tight leading-none">
-          Kite Mastery
-        </h1>
-        <p className="text-[11px] text-ink-muted mt-1">
-          Palanga Sprint · Jul 14 — Sep 26 · Belt progression, Surfr KPIs, hours on water
-        </p>
-      </header>
+    <main className="max-w-[1200px] mx-auto px-4 sm:px-6 py-3 lg:h-screen lg:overflow-hidden">
       <KiteMasteryDashboard uid={user.uid} />
     </main>
   )

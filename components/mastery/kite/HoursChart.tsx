@@ -45,10 +45,10 @@ export function HoursChart({ sessions }: Props) {
     return { days, hoursByDay, maxHours, ticks, todayIdx }
   }, [sessions])
 
-  const W = 900
-  const H = 180
+  const W = 1160
+  const H = 150
   const PAD_L = 30
-  const PAD_B = 24
+  const PAD_B = 22
   const PAD_T = 8
   const plotW = W - PAD_L - 8
   const plotH = H - PAD_T - PAD_B
@@ -64,8 +64,8 @@ export function HoursChart({ sessions }: Props) {
       <div className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-2 pb-1.5 border-b-2 border-rule">
         Hours on Water — Daily
       </div>
-      <div className="overflow-x-auto">
-        <svg viewBox={`0 0 ${W} ${H}`} className="w-full min-w-[600px]" role="img" aria-label="Daily hours on water">
+      <div>
+        <svg viewBox={`0 0 ${W} ${H}`} className="w-full" role="img" aria-label="Daily hours on water">
           {/* Gridlines */}
           {[1, 2, 3].filter(h => h <= maxHours).map(h => (
             <g key={h}>
@@ -149,7 +149,7 @@ export function HoursChart({ sessions }: Props) {
           ))}
         </svg>
       </div>
-      <div className="text-[10px] text-ink-muted mt-1">
+      <div className="text-[10px] text-ink-muted mt-0.5">
         Palanga sprint window: Jul 14 — Sep 26. Dashed line marks today.
       </div>
     </div>

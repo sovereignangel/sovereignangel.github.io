@@ -22,11 +22,17 @@ export function BeltLadder({ stats, milestones, onToggleMilestone }: Props) {
 
   return (
     <div className="bg-white border border-rule rounded-sm p-3">
-      <div className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-2 pb-1.5 border-b-2 border-rule">
-        Belt Progression
+      <div className="flex items-baseline justify-between mb-2 pb-1.5 border-b-2 border-rule">
+        <div className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy">
+          Belt Progression
+        </div>
+        <div className="text-[10px] text-ink-muted">
+          Current: <span className="font-semibold text-ink">{currentIndex >= 0 ? KITE_BELTS[currentIndex].name : 'Unranked'}</span>
+          {' '}· Next: <span className="font-semibold text-burgundy">{KITE_BELTS[targetIndex].name} — {KITE_BELTS[targetIndex].title}</span>
+        </div>
       </div>
 
-      <div className="space-y-1">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 items-start">
         {statuses.map(({ belt, earned, metCount, totalCount }, i) => {
           const isTarget = i === targetIndex && !earned
           const isOpen = expanded === belt.id
@@ -45,9 +51,9 @@ export function BeltLadder({ stats, milestones, onToggleMilestone }: Props) {
                   className="inline-block w-4 h-2.5 rounded-sm border border-ink/20 shrink-0"
                   style={{ backgroundColor: belt.color }}
                 />
-                <span className="font-serif text-[12px] font-semibold text-ink w-16 shrink-0">{belt.name}</span>
-                <span className="text-[11px] text-ink-muted flex-1 truncate">{belt.title} · {belt.summary}</span>
-                <span className="font-mono text-[9px] uppercase px-1.5 py-0.5 rounded-sm border shrink-0 ml-1 bg-transparent text-ink-muted border-rule">
+                <span className="font-serif text-[12px] font-semibold text-ink w-14 shrink-0">{belt.name}</span>
+                <span className="text-[11px] text-ink-muted flex-1 truncate">{belt.title}</span>
+                <span className="font-mono text-[9px] uppercase px-1.5 py-0.5 rounded-sm border shrink-0 bg-transparent text-ink-muted border-rule">
                   {belt.hoursGuide}
                 </span>
                 <span
@@ -64,7 +70,8 @@ export function BeltLadder({ stats, milestones, onToggleMilestone }: Props) {
               </button>
 
               {isOpen && (
-                <div className="px-2 pb-2 pt-0.5 space-y-1 border-t border-rule-light">
+                <div className="px-2 pb-2 pt-1 space-y-1 border-t border-rule-light">
+                  <div className="text-[10px] text-ink-muted italic">{belt.summary}</div>
                   {belt.criteria.map(c => {
                     const met = isCriterionMet(c, stats, milestones)
                     return (
@@ -85,14 +92,11 @@ export function BeltLadder({ stats, milestones, onToggleMilestone }: Props) {
                             {met ? '✓' : ''}
                           </span>
                         )}
-                        <span className={`text-[11px] ${met ? 'text-ink' : 'text-ink-muted'}`}>{c.label}</span>
+                        <span className={`text-[10px] ${met ? 'text-ink' : 'text-ink-muted'}`}>{c.label}</span>
                         {c.kind === 'auto' && (
                           <span className={`font-mono text-[10px] ml-auto shrink-0 ${met ? 'text-green-ink' : 'text-ink-muted'}`}>
                             {autoValue(c, stats)}
                           </span>
-                        )}
-                        {c.kind === 'manual' && (
-                          <span className="font-mono text-[9px] uppercase text-ink-faint ml-auto shrink-0">self-check</span>
                         )}
                       </div>
                     )
@@ -102,11 +106,6 @@ export function BeltLadder({ stats, milestones, onToggleMilestone }: Props) {
             </div>
           )
         })}
-      </div>
-
-      <div className="mt-2 pt-1.5 border-t border-rule-light text-[10px] text-ink-muted">
-        Current: <span className="font-semibold text-ink">{currentIndex >= 0 ? KITE_BELTS[currentIndex].name : 'Unranked'}</span>
-        {' '}· Working toward: <span className="font-semibold text-burgundy">{KITE_BELTS[targetIndex].name} — {KITE_BELTS[targetIndex].title}</span>
       </div>
     </div>
   )

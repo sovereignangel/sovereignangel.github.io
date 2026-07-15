@@ -5,6 +5,7 @@ import type { KiteSession } from '@/lib/types'
 
 interface Props {
   onAdd: (session: Omit<KiteSession, 'id' | 'createdAt'>) => Promise<void>
+  onSkip: () => void
 }
 
 function localToday(): string {
@@ -14,7 +15,7 @@ function localToday(): string {
 
 const num = (v: string): number | null => (v.trim() === '' ? null : Number(v))
 
-export function SessionForm({ onAdd }: Props) {
+export function SessionForm({ onAdd, onSkip }: Props) {
   const [date, setDate] = useState(localToday())
   const [hours, setHours] = useState('')
   const [windKn, setWindKn] = useState('')
@@ -47,8 +48,6 @@ export function SessionForm({ onAdd }: Props) {
         jumps: num(jumps),
         landed: num(landed),
       })
-      setHours(''); setWindKn(''); setKiteSize(''); setFocus('')
-      setAirtime(''); setHeight(''); setDistance(''); setJumps(''); setLanded(''); setNotes('')
     } finally {
       setSaving(false)
     }
@@ -58,11 +57,7 @@ export function SessionForm({ onAdd }: Props) {
   const label = 'block text-[10px] text-ink-muted mb-0.5'
 
   return (
-    <div className="bg-white border border-rule rounded-sm p-3">
-      <div className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-2 pb-1.5 border-b-2 border-rule">
-        Log Session
-      </div>
-
+    <div>
       <div className="grid grid-cols-3 gap-2 mb-2">
         <div>
           <label className={label}>Date</label>
@@ -112,7 +107,7 @@ export function SessionForm({ onAdd }: Props) {
         </div>
       </div>
 
-      <div className="mb-2">
+      <div className="mb-3">
         <label className={label}>Notes</label>
         <textarea
           rows={2}
@@ -123,17 +118,25 @@ export function SessionForm({ onAdd }: Props) {
         />
       </div>
 
-      <button
-        onClick={submit}
-        disabled={!canSave}
-        className={`font-serif text-[11px] font-medium px-3 py-1 rounded-sm border ${
-          canSave
-            ? 'bg-burgundy text-paper border-burgundy hover:bg-burgundy/90'
-            : 'bg-transparent text-ink-faint border-rule cursor-not-allowed'
-        }`}
-      >
-        {saving ? 'Saving…' : 'Add Session'}
-      </button>
+      <div className="flex items-center gap-2">
+        <button
+          onClick={submit}
+          disabled={!canSave}
+          className={`font-serif text-[11px] font-medium px-3 py-1 rounded-sm border ${
+            canSave
+              ? 'bg-burgundy text-paper border-burgundy hover:bg-burgundy/90'
+              : 'bg-transparent text-ink-faint border-rule cursor-not-allowed'
+          }`}
+        >
+          {saving ? 'Saving…' : 'Add Session'}
+        </button>
+        <button
+          onClick={onSkip}
+          className="font-serif text-[11px] font-medium px-3 py-1 rounded-sm border bg-transparent text-ink-muted border-rule hover:border-ink-faint"
+        >
+          Skip — review logs
+        </button>
+      </div>
     </div>
   )
 }
