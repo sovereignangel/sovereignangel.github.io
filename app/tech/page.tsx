@@ -190,122 +190,122 @@ function TechDiagram() {
     { label: 'ideas',        sense: 'optionality',   clock: 'weekly'     },
     { label: 'markets',      sense: 'disturbance',   clock: 'continuous' },
   ]
-  const sensorY = (i: number) => -62 + i * 31   // centers: -62,-31,0,31,62
-  const jx = -96, jy = 0                          // summing junction
+  const sensorY = (i: number) => -78 + i * 39   // centers: -78,-39,0,39,78
+  const jx = -104, jy = 0                         // summing junction
 
   const actuators = [
     'drafts — memos & replies',
     'alerts — a drawdown is hit',
-    'nudges — allocation has drifted',
-    'holds — calendar & focus blocks',
+    'nudges — allocation drift',
+    'holds — calendar & focus',
   ]
 
   return (
-    <svg viewBox="-200 -120 400 240" preserveAspectRatio="xMidYMid meet" className="w-full h-full max-w-[900px] max-h-full" aria-hidden>
+    <svg viewBox="-210 -145 420 290" preserveAspectRatio="xMidYMid meet" className="w-full h-full max-w-[900px] max-h-full" aria-hidden>
       {/* === HARNESS · outer container wrapping the whole loop === */}
-      <rect x="-194" y="-114" width="388" height="228" fill="#7c2d2d" fillOpacity="0.025" stroke="#7c2d2d" strokeWidth="0.45" strokeDasharray="3 1.8" />
-      <rect x="-194" y="-114" width="92" height="11" fill="#f5f1ea" stroke="none" />
-      <text x="-188" y="-106" fontSize="4.2" letterSpacing="1.2" fontFamily="serif" fontWeight="600" fill="#7c2d2d">HARNESS · ALFRED</text>
-      <text x="188" y="-106" textAnchor="end" fontSize="3.2" fontStyle="italic" fontFamily="serif" fill="#9a928a">
-        one controller · senses the world · writes back · closes every loop
+      <rect x="-204" y="-139" width="408" height="278" fill="#7c2d2d" fillOpacity="0.025" stroke="#7c2d2d" strokeWidth="0.5" strokeDasharray="3.4 2" />
+      <rect x="-204" y="-139" width="150" height="18" fill="#f5f1ea" stroke="none" />
+      <text x="-198" y="-127" fontSize="7.5" letterSpacing="1.4" fontFamily="serif" fontWeight="600" fill="#7c2d2d">HARNESS · ALFRED</text>
+      <text x="198" y="-127" textAnchor="end" fontSize="5.4" fontStyle="italic" fontFamily="serif" fill="#9a928a">
+        one controller · senses the world · closes every loop
       </text>
 
       {/* === SETPOINTS · the reference signal, from “what I count” === */}
-      <text x="-190" y="-90" fontSize="3.8" letterSpacing="0.8" fontFamily="serif" fill="#7c2d2d">SETPOINTS</text>
-      <rect x="-140" y="-95" width="300" height="12" fill="#7c2d2d" fillOpacity="0.05" stroke="#7c2d2d" strokeWidth="0.4" strokeOpacity="0.55" />
-      <text x="10" y="-88.6" textAnchor="middle" fontSize="3.5" fontStyle="italic" fontFamily="serif" fill="#2a2522">
-        ≥2 deep convos / wk · 1 thing shipped / wk · NAV CAGR · regulated nervous system
+      <text x="-204" y="-108" fontSize="7" letterSpacing="0.9" fontFamily="serif" fill="#7c2d2d">SETPOINTS</text>
+      <rect x="-150" y="-118" width="336" height="20" fill="#7c2d2d" fillOpacity="0.05" stroke="#7c2d2d" strokeWidth="0.5" strokeOpacity="0.55" />
+      <text x="18" y="-104" textAnchor="middle" fontSize="6.4" fontStyle="italic" fontFamily="serif" fill="#2a2522">
+        ≥2 deep convos/wk · 1 ship/wk · NAV CAGR · regulated nervous system
       </text>
       {/* setpoint drops into the summing junction from above */}
-      <line x1={jx} y1={-83} x2={jx} y2={jy - 6} stroke="#9a928a" strokeWidth="0.4" opacity="0.6" />
-      <text x={jx - 4} y={-40} textAnchor="end" fontSize="2.8" fontStyle="italic" fontFamily="serif" fill="#9a928a">the goal</text>
+      <line x1={jx} y1={-98} x2={jx} y2={jy - 9} stroke="#9a928a" strokeWidth="0.6" opacity="0.6" />
+      <text x={jx - 7} y={-52} textAnchor="end" fontSize="5" fontStyle="italic" fontFamily="serif" fill="#9a928a">the goal</text>
 
       {/* === SENSORS · the five input streams === */}
-      <text x="-190" y="-72" fontSize="3.8" letterSpacing="0.8" fontFamily="serif" fill="#7c2d2d">SENSORS <tspan fontWeight="400" fill="#9a928a">· 5 streams</tspan></text>
+      <text x="-204" y="-92" fontSize="7" letterSpacing="0.9" fontFamily="serif" fill="#7c2d2d">SENSORS <tspan fontWeight="400" fill="#9a928a">· 5 streams</tspan></text>
       {sensors.map((s, i) => {
         const y = sensorY(i)
         const gate = s.label === 'energy'
         return (
           <g key={s.label}>
-            <rect x="-192" y={y - 8} width="66" height="16" fill="#faf8f4" stroke="#2a2522" strokeWidth="0.4" strokeOpacity={gate ? '0.9' : '0.6'} />
-            <text x="-188" y={y - 1.5} fontSize="4.6" fontStyle="italic" fontFamily="serif" fill="#2a2522">{s.label}</text>
-            <text x="-188" y={y + 4.5} fontSize="3" fontFamily="serif" fill="#9a928a">{s.sense} · {s.clock}</text>
+            <rect x="-206" y={y - 13} width="82" height="26" fill="#faf8f4" stroke="#2a2522" strokeWidth="0.5" strokeOpacity={gate ? '0.9' : '0.6'} />
+            <text x="-200" y={y - 2} fontSize="9" fontStyle="italic" fontFamily="serif" fill="#2a2522">{s.label}</text>
+            <text x="-200" y={y + 8} fontSize="6" fontFamily="serif" fill="#9a928a">{s.sense} · {s.clock}</text>
             {/* converge into the summing junction */}
-            <line x1="-126" y1={y} x2={jx - 5} y2={jy} stroke={gate ? '#7c2d2d' : '#9a928a'} strokeWidth={gate ? '0.5' : '0.4'} opacity={gate ? '0.65' : '0.5'} />
+            <line x1="-124" y1={y} x2={jx - 8} y2={jy} stroke={gate ? '#7c2d2d' : '#9a928a'} strokeWidth={gate ? '0.7' : '0.5'} opacity={gate ? '0.65' : '0.5'} />
           </g>
         )
       })}
 
       {/* === SUMMING JUNCTION · error = setpoint − state === */}
-      <circle cx={jx} cy={jy} r="5" fill="#f5f1ea" stroke="#7c2d2d" strokeWidth="0.6" />
-      <line x1={jx - 3} y1={jy} x2={jx + 3} y2={jy} stroke="#7c2d2d" strokeWidth="0.5" />
-      <line x1={jx} y1={jy - 3} x2={jx} y2={jy + 3} stroke="#7c2d2d" strokeWidth="0.5" />
-      <text x={jx} y={jy + 11} textAnchor="middle" fontSize="2.9" fontStyle="italic" fontFamily="serif" fill="#9a928a">error</text>
+      <circle cx={jx} cy={jy} r="8" fill="#f5f1ea" stroke="#7c2d2d" strokeWidth="0.8" />
+      <line x1={jx - 4.5} y1={jy} x2={jx + 4.5} y2={jy} stroke="#7c2d2d" strokeWidth="0.7" />
+      <line x1={jx} y1={jy - 4.5} x2={jx} y2={jy + 4.5} stroke="#7c2d2d" strokeWidth="0.7" />
+      <text x={jx} y={jy + 18} textAnchor="middle" fontSize="5.5" fontStyle="italic" fontFamily="serif" fill="#9a928a">error</text>
       {/* junction → controller */}
-      <line x1={jx + 5} y1="0" x2="-24" y2="0" stroke="#7c2d2d" strokeWidth="0.5" opacity="0.7" />
+      <line x1={jx + 8} y1="0" x2="-24" y2="0" stroke="#7c2d2d" strokeWidth="0.7" opacity="0.7" />
 
       {/* === ALFRED · the controller (breathing) === */}
       {[0, 1, 2].map((i) => {
         const phase = (t / 14 + i * 0.7) % 4
-        const r = 16 + phase * 14
+        const r = 22 + phase * 20
         const op = Math.max(0, 0.2 - phase * 0.045)
-        return <circle key={i} cx="-5" cy="0" r={r} fill="none" stroke="#7c2d2d" strokeWidth="0.3" opacity={op} />
+        return <circle key={i} cx="0" cy="0" r={r} fill="none" stroke="#7c2d2d" strokeWidth="0.4" opacity={op} />
       })}
-      <circle cx="-5" cy="0" r="15" fill="#f5f1ea" stroke="#7c2d2d" strokeWidth="0.7" />
-      <text x="-5" y="-1.5" textAnchor="middle" fontSize="6" fontStyle="italic" fontFamily="serif" fontWeight="600" fill="#7c2d2d">Alfred</text>
-      <text x="-5" y="4.5" textAnchor="middle" fontSize="2.9" fontFamily="serif" fill="#9a928a">controller</text>
+      <circle cx="0" cy="0" r="22" fill="#f5f1ea" stroke="#7c2d2d" strokeWidth="0.9" />
+      <text x="0" y="-2" textAnchor="middle" fontSize="11" fontStyle="italic" fontFamily="serif" fontWeight="600" fill="#7c2d2d">Alfred</text>
+      <text x="0" y="8" textAnchor="middle" fontSize="5.5" fontFamily="serif" fill="#9a928a">controller</text>
 
       {/* === WIKIS · the self-updating state estimate === */}
-      <line x1="-5" y1="15" x2="-5" y2="26" stroke="#9a928a" strokeWidth="0.35" opacity="0.5" />
-      <rect x="-56" y="26" width="102" height="15" fill="#7c2d2d" fillOpacity="0.04" stroke="#7c2d2d" strokeWidth="0.4" strokeOpacity="0.55" />
-      <text x="-5" y="32" textAnchor="middle" fontSize="3.8" fontStyle="italic" fontFamily="serif" fontWeight="600" fill="#2a2522">wikis · state estimate</text>
-      <text x="-5" y="37.5" textAnchor="middle" fontSize="2.9" fontFamily="serif" fill="#5c5550">self-updating · karpathy L2 · contact / ticker / project / topic</text>
+      <line x1="0" y1="22" x2="0" y2="40" stroke="#9a928a" strokeWidth="0.5" opacity="0.5" />
+      <rect x="-64" y="40" width="128" height="26" fill="#7c2d2d" fillOpacity="0.04" stroke="#7c2d2d" strokeWidth="0.5" strokeOpacity="0.55" />
+      <text x="0" y="51" textAnchor="middle" fontSize="7" fontStyle="italic" fontFamily="serif" fontWeight="600" fill="#2a2522">wikis · state estimate</text>
+      <text x="0" y="60" textAnchor="middle" fontSize="5.5" fontFamily="serif" fill="#5c5550">self-updating · karpathy L2</text>
 
       {/* controller → actuators */}
-      <line x1="10" y1="0" x2="88" y2="0" stroke="#7c2d2d" strokeWidth="0.5" opacity="0.7" />
+      <line x1="22" y1="0" x2="92" y2="0" stroke="#7c2d2d" strokeWidth="0.7" opacity="0.7" />
 
       {/* === ACTUATORS · what Alfred does === */}
-      <text x="176" y="-30" textAnchor="end" fontSize="3.8" letterSpacing="0.8" fontFamily="serif" fill="#7c2d2d">ACTUATORS</text>
+      <text x="198" y="-52" textAnchor="end" fontSize="7" letterSpacing="0.9" fontFamily="serif" fill="#7c2d2d">ACTUATORS</text>
       {actuators.map((a, i) => {
-        const y = -18 + i * 12
+        const y = -30 + i * 20
         return (
           <g key={a}>
-            <rect x="90" y={y - 5} width="86" height="10" fill="#faf8f4" stroke="#7c2d2d" strokeWidth="0.4" strokeOpacity="0.55" />
-            <text x="133" y={y + 1.6} textAnchor="middle" fontSize="3.4" fontStyle="italic" fontFamily="serif" fill="#2a2522">{a}</text>
+            <rect x="94" y={y - 9} width="104" height="18" fill="#faf8f4" stroke="#7c2d2d" strokeWidth="0.5" strokeOpacity="0.55" />
+            <text x="146" y={y + 3} textAnchor="middle" fontSize="6" fontStyle="italic" fontFamily="serif" fill="#2a2522">{a}</text>
           </g>
         )
       })}
 
       {/* === FEEDBACK · the return path that closes the loop === */}
-      <path d="M 133 19 L 133 94 L -159 94 L -159 71" fill="none" stroke="#7c2d2d" strokeWidth="0.45" strokeDasharray="2 1.5" opacity="0.6" />
-      <text x="-13" y="91" textAnchor="middle" fontSize="3.4" fontStyle="italic" fontFamily="serif" fill="#7c2d2d">
+      <path d="M 146 39 L 146 122 L -167 122 L -167 92" fill="none" stroke="#7c2d2d" strokeWidth="0.6" strokeDasharray="2.6 2" opacity="0.6" />
+      <text x="-15" y="118" textAnchor="middle" fontSize="6" fontStyle="italic" fontFamily="serif" fill="#7c2d2d">
         the world, re-measured every loop
       </text>
-      <text x="130" y="91" textAnchor="end" fontSize="2.9" fontFamily="serif" fill="#9a928a">drawdown triggers = when to act</text>
+      <text x="140" y="118" textAnchor="end" fontSize="5" fontFamily="serif" fill="#9a928a">drawdown triggers = when to act</text>
 
       {/* flowing dots — sensors → junction */}
       {sensors.map((s, i) => {
         const y = sensorY(i)
         const p = ((t + i * 20) % 100) / 100
-        const cx = -126 + (jx - 5 - -126) * p
+        const cx = -124 + (jx - 8 - -124) * p
         const cy = y + (jy - y) * p
-        return <circle key={`sen-${i}`} cx={cx} cy={cy} r="0.6" fill="#7c2d2d" opacity={p > 0.05 && p < 0.95 ? 0.55 : 0} />
+        return <circle key={`sen-${i}`} cx={cx} cy={cy} r="1.1" fill="#7c2d2d" opacity={p > 0.05 && p < 0.95 ? 0.55 : 0} />
       })}
       {/* flowing dots — junction → controller → actuators */}
       {[0, 1, 2].map((k) => {
         const p = ((t + k * 33) % 100) / 100
-        const cx = -91 + (88 - -91) * p
-        return <circle key={`fwd-${k}`} cx={cx} cy="0" r="0.7" fill="#7c2d2d" opacity={p > 0.05 && p < 0.95 ? 0.7 : 0} />
+        const cx = -96 + (92 - -96) * p
+        return <circle key={`fwd-${k}`} cx={cx} cy="0" r="1.3" fill="#7c2d2d" opacity={p > 0.05 && p < 0.95 ? 0.7 : 0} />
       })}
       {/* flowing dots — feedback path back to the sensors */}
       {[0, 1].map((k) => {
         const p = ((t + k * 50) % 100) / 100
-        const cx = 133 + (-159 - 133) * p
-        return <circle key={`fb-${k}`} cx={cx} cy="94" r="0.7" fill="#7c2d2d" opacity={p > 0.05 && p < 0.95 ? 0.55 : 0} />
+        const cx = 146 + (-167 - 146) * p
+        return <circle key={`fb-${k}`} cx={cx} cy="122" r="1.3" fill="#7c2d2d" opacity={p > 0.05 && p < 0.95 ? 0.55 : 0} />
       })}
 
       {/* tagline inside the harness wrapper */}
-      <text x="0" y="107" textAnchor="middle" fontSize="3.3" fontStyle="italic" fontFamily="serif" fill="#9a928a">
+      <text x="0" y="134" textAnchor="middle" fontSize="5.5" fontStyle="italic" fontFamily="serif" fill="#9a928a">
         I set the setpoints and review the exceptions · the loops run themselves in between
       </text>
     </svg>
