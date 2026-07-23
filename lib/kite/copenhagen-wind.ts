@@ -1,5 +1,5 @@
 /**
- * Copenhagen kiteboarding wind forecast for a fixed trip window (Aug 8-9).
+ * Copenhagen kiteboarding wind forecast for a fixed trip window (Aug 7-10).
  *
  * Fetches hourly wind from Open-Meteo (free, no API key) for Amager Strandpark —
  * the central, most-consistent spot among Copenhagen's kite beaches — and scores
@@ -11,7 +11,7 @@ const SPOT_LAT = 55.66
 const SPOT_LON = 12.624
 const TIMEZONE = 'Europe/Copenhagen'
 
-export const TRIP_DATES = ['2026-08-08', '2026-08-09'] as const
+export const TRIP_DATES = ['2026-08-07', '2026-08-08', '2026-08-09', '2026-08-10'] as const
 
 const DAY_START_HOUR = 7
 const DAY_END_HOUR = 21
@@ -124,12 +124,17 @@ export async function analyzeTripDates(): Promise<DayAnalysis[]> {
   const hoursByDate = await fetchCopenhagenWind()
   return TRIP_DATES.map((date) => {
     const allHours = hoursByDate.get(date)
-    if (!allHours) {
+    // Open-Meteo pads its nominal forecast_days window with null values once the
+    // underlying model runs out of real data, so a present date key isn't enough —
+    // require actual finite readings before treating the day as forecasted.
+    const daylight = (allHours ?? []).filter(
+      h => h.hour >= DAY_START_HOUR && h.hour <= DAY_END_HOUR && Number.isFinite(h.speedKn)
+    )
+    if (daylight.length === 0) {
       return { date, verdict: 'unavailable', window: null, peakSpeedKn: 0, avgSpeedKn: 0, hours: [] }
     }
-    const daylight = allHours.filter(h => h.hour >= DAY_START_HOUR && h.hour <= DAY_END_HOUR)
     const peakSpeedKn = Math.round(Math.max(0, ...daylight.map(h => h.speedKn)))
-    const avgSpeedKn = Math.round(daylight.reduce((s, h) => s + h.speedKn, 0) / (daylight.length || 1))
+    const avgSpeedKn = Math.round(daylight.reduce((s, h) => s + h.speedKn, 0) / daylight.length)
     const window = findBestWindow(daylight)
     const verdict: DayVerdict = !window ? 'light' : window.avgSpeedKn >= MIN_GOOD_KN ? 'good' : 'marginal'
     return { date, verdict, window, peakSpeedKn, avgSpeedKn, hours: daylight }
