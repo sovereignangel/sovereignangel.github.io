@@ -9,6 +9,13 @@ export async function getGarminMetrics(uid: string, date: string): Promise<Garmi
   return snap.exists() ? { id: snap.id, ...snap.data() } as GarminMetrics : null
 }
 
+export async function getAllGarminMetrics(uid: string): Promise<GarminMetrics[]> {
+  const ref = collection(db, 'users', uid, 'garmin_metrics')
+  const q = query(ref, orderBy('date', 'asc'))
+  const snap = await getDocs(q)
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }) as GarminMetrics)
+}
+
 export async function getRecentGarminMetrics(uid: string, days: number = 7): Promise<GarminMetrics[]> {
   const startDate = new Date()
   startDate.setDate(startDate.getDate() - days)
