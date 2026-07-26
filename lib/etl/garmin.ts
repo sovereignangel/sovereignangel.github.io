@@ -81,6 +81,10 @@ async function fetchGarminData(
     bodyBatteryDrained: null,
     respirationRate: null,
     spo2: null,
+    vo2max: null,
+    weightKg: null,
+    enduranceScore: null,
+    intensityMinutes: null,
   }
 
   const dateObj = new Date(date + 'T00:00:00')
@@ -189,6 +193,56 @@ async function fetchGarminData(
     }
   } catch (e) {
     console.warn('Garmin SpO2 fetch failed:', (e as Error).message)
+  }
+
+  // VO2max (only present on days with a qualifying activity)
+  try {
+    const vo2 = await garmin.get<any>(
+      `${GC_API}/metrics-service/metrics/maxmet/daily/${date}/${date}`
+    )
+    if (Array.isArray(vo2) && vo2.length > 0) {
+      metrics.vo2max = vo2[0]?.generic?.vo2MaxPreciseValue ?? null
+    }
+  } catch (e) {
+    console.warn('Garmin VO2max fetch failed:', (e as Error).message)
+  }
+
+  // Weight (sparse — only on weigh-in days; Garmin reports grams)
+  try {
+    const w = await garmin.get<any>(
+      `${GC_API}/weight-service/weight/dayview/${date}`
+    )
+    const grams = w?.dateWeightList?.[0]?.weight
+    if (grams) {
+      metrics.weightKg = Math.round(grams / 100) / 10
+    }
+  } catch (e) {
+    console.warn('Garmin weight fetch failed:', (e as Error).message)
+  }
+
+  // Endurance score
+  try {
+    const es = await garmin.get<any>(
+      `${GC_API}/metrics-service/metrics/endurancescore/stats?startDate=${date}&endDate=${date}&aggregation=daily`
+    )
+    metrics.enduranceScore =
+      es?.groupMap?.[date]?.groupAverage ?? es?.avg ?? null
+  } catch (e) {
+    console.warn('Garmin endurance score fetch failed:', (e as Error).message)
+  }
+
+  // Intensity minutes (Garmin convention: vigorous counts double)
+  try {
+    const im = await garmin.get<any>(
+      `${GC_API}/usersummary-service/stats/im/daily/${date}/${date}`
+    )
+    if (Array.isArray(im) && im.length > 0) {
+      const moderate = im[0].moderateValue ?? 0
+      const vigorous = im[0].vigorousValue ?? 0
+      metrics.intensityMinutes = moderate + 2 * vigorous
+    }
+  } catch (e) {
+    console.warn('Garmin intensity minutes fetch failed:', (e as Error).message)
   }
 
   return metrics as Omit<GarminMetrics, 'syncedAt'>

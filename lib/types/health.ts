@@ -32,5 +32,9 @@ export interface GarminMetrics {
   bodyBatteryDrained: number | null
   respirationRate: number | null
   spo2: number | null
+  vo2max?: number | null
+  weightKg?: number | null
+  enduranceScore?: number | null
+  intensityMinutes?: number | null
   syncedAt: Timestamp
 }
