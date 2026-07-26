@@ -31,7 +31,7 @@ function GarminLayoutInner({ children }: { children: React.ReactNode }) {
         <div className="flex items-baseline justify-between border-b-2 border-ink pb-2">
           <div className="flex items-baseline gap-3">
             <h1 className="font-serif text-[20px] font-bold text-ink tracking-tight">
-              Armstrong Health
+              Loribel Health
             </h1>
             <span className="font-serif text-[12px] italic text-ink-muted hidden sm:inline">
               Garmin intelligence — sleep first, then training and recovery

@@ -1,7 +1,7 @@
 import GarminDashboard from '@/components/garmin/GarminDashboard'
 
 export const metadata = {
-  title: 'Armstrong Health — Garmin',
+  title: 'Loribel Health — Garmin',
   description: 'Personal Garmin sleep and recovery intelligence',
 }
 
