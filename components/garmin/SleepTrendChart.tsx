@@ -14,6 +14,7 @@ const PAD = { top: 12, right: 56, bottom: 24, left: 36 }
 
 const NIGHTLY_COLOR = '#9a928a'
 const AVG_COLOR = '#7c2d2d'
+const DAY_MS = 86400000
 
 export default function SleepTrendChart({ nights }: { nights: Night[] }) {
   const [hover, setHover] = useState<number | null>(null)
@@ -23,6 +24,7 @@ export default function SleepTrendChart({ nights }: { nights: Night[] }) {
     () => rollingMean(nights.map(n => n.score), 7),
     [nights]
   )
+  const times = useMemo(() => nights.map(n => Date.parse(n.date + 'T12:00:00')), [nights])
 
   const scores = nights.map(n => n.score).filter((v): v is number => v !== null)
   if (scores.length < 2) {
@@ -31,16 +33,22 @@ export default function SleepTrendChart({ nights }: { nights: Night[] }) {
 
   const yMin = Math.max(0, Math.floor((Math.min(...scores) - 5) / 10) * 10)
   const yMax = Math.min(100, Math.ceil((Math.max(...scores) + 5) / 10) * 10)
+  const t0 = times[0]
+  const t1 = times[times.length - 1]
+  const spanDays = Math.max(1, (t1 - t0) / DAY_MS)
   const plotW = W - PAD.left - PAD.right
   const plotH = H - PAD.top - PAD.bottom
-  const x = (i: number) => PAD.left + (nights.length <= 1 ? 0 : (i / (nights.length - 1)) * plotW)
+  const x = (i: number) => PAD.left + (t1 === t0 ? 0 : ((times[i] - t0) / (t1 - t0)) * plotW)
   const y = (v: number) => PAD.top + plotH - ((v - yMin) / (yMax - yMin)) * plotH
 
+  // Break the line where nights are more than a week apart, so multi-month
+  // device gaps render as gaps instead of a connecting stroke.
   const path = (vals: Array<number | null>) => {
     let d = ''
     let pen = false
     vals.forEach((v, i) => {
       if (v === null) { pen = false; return }
+      if (pen && i > 0 && times[i] - times[i - 1] > 7 * DAY_MS) pen = false
       d += `${pen ? 'L' : 'M'}${x(i).toFixed(1)},${y(v).toFixed(1)}`
       pen = true
     })
@@ -50,17 +58,35 @@ export default function SleepTrendChart({ nights }: { nights: Night[] }) {
   const yTicks: number[] = []
   for (let t = yMin; t <= yMax; t += 10) yTicks.push(t)
 
-  const monthTicks = nights
-    .map((n, i) => ({ i, date: n.date }))
-    .filter(({ date }, idx, arr) => idx === 0 || date.slice(0, 7) !== arr[idx - 1].date.slice(0, 7))
-  const showEvery = Math.ceil(monthTicks.length / 8)
+  // Adaptive x ticks: years for multi-year spans, months otherwise
+  const byYear = spanDays > 550
+  const seen = new Set<string>()
+  const xTicks: Array<{ i: number; label: string }> = []
+  nights.forEach((n, i) => {
+    const key = byYear ? n.date.slice(0, 4) : n.date.slice(0, 7)
+    if (!seen.has(key)) {
+      seen.add(key)
+      xTicks.push({
+        i,
+        label: byYear
+          ? n.date.slice(0, 4)
+          : new Date(n.date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short' }),
+      })
+    }
+  })
+  const showEvery = Math.ceil(xTicks.length / 8)
 
   const onMove = (e: React.MouseEvent<SVGSVGElement>) => {
     const rect = svgRef.current?.getBoundingClientRect()
     if (!rect) return
     const px = ((e.clientX - rect.left) / rect.width) * W
-    const idx = Math.round(((px - PAD.left) / plotW) * (nights.length - 1))
-    setHover(idx >= 0 && idx < nights.length ? idx : null)
+    let best = 0
+    let bestDist = Infinity
+    for (let i = 0; i < nights.length; i++) {
+      const d = Math.abs(x(i) - px)
+      if (d < bestDist) { bestDist = d; best = i }
+    }
+    setHover(bestDist < 40 ? best : null)
   }
 
   const h = hover !== null ? nights[hover] : null
@@ -91,12 +117,12 @@ export default function SleepTrendChart({ nights }: { nights: Night[] }) {
             <text x={PAD.left - 6} y={y(t) + 4} textAnchor="end" fontSize={11} fill="#9a928a">{t}</text>
           </g>
         ))}
-        {monthTicks.filter((_, idx) => idx % showEvery === 0).map(({ i, date }) => (
-          <text key={date} x={x(i)} y={H - 6} textAnchor="middle" fontSize={11} fill="#9a928a">
-            {new Date(date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short' })}
+        {xTicks.filter((_, idx) => idx % showEvery === 0).map(({ i, label }) => (
+          <text key={`${label}-${i}`} x={x(i)} y={H - 6} textAnchor="middle" fontSize={11} fill="#9a928a">
+            {label}
           </text>
         ))}
-        <path d={path(nights.map(n => n.score))} fill="none" stroke={NIGHTLY_COLOR} strokeWidth={1.5} strokeLinejoin="round" />
+        <path d={path(nights.map(n => n.score))} fill="none" stroke={NIGHTLY_COLOR} strokeWidth={spanDays > 550 ? 1 : 1.5} strokeLinejoin="round" opacity={spanDays > 550 ? 0.6 : 1} />
         <path d={path(rolling)} fill="none" stroke={AVG_COLOR} strokeWidth={2} strokeLinejoin="round" />
         {hover !== null && h && (
           <g>
@@ -120,7 +146,7 @@ export default function SleepTrendChart({ nights }: { nights: Night[] }) {
           }}
         >
           <div className="text-[10px] text-ink-muted whitespace-nowrap">
-            {new Date(h.date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+            {new Date(h.date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
           </div>
           <div className="font-mono text-[11px] font-semibold text-ink whitespace-nowrap">
             Score {h.score ?? '—'}
