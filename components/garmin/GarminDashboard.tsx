@@ -293,7 +293,7 @@ export default function GarminDashboard() {
       </details>
 
       <div className="text-[10px] text-ink-muted pb-4">
-        {metrics.length} days synced · {metrics[0].date} to {metrics[metrics.length - 1].date} · synced daily from Garmin Connect
+        {metrics.length} days synced · {metrics[0].date} to {metrics[metrics.length - 1].date} · synced daily from Garmin Connect · ui v4
       </div>
     </div>
   )
