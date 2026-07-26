@@ -164,7 +164,7 @@ export default function GarminDashboard() {
         />
       </div>
 
-      <Card title="Sleep Score Trend">
+      <Card title="Sleep Score Trend — Since Jun 2021">
         <div className="flex gap-1 mb-2">
           {RANGES.map(r => (
             <button
@@ -180,7 +180,28 @@ export default function GarminDashboard() {
             </button>
           ))}
         </div>
-        <SleepTrendChart nights={ranged.map(m => ({ date: m.date, score: m.sleepScore }))} />
+        <SleepTrendChart
+          nights={ranged
+            .filter(m => m.date >= '2021-06-03')
+            .map(m => ({ date: m.date, score: m.sleepScore }))}
+        />
+        <div className="text-[10px] text-ink-muted mt-1">
+          Garmin sleep scores begin Jun 2021 (first score-capable watch) — this metric cannot go back further. The full 10-year record is the duration chart below.
+        </div>
+      </Card>
+
+      <Card title="Sleep Duration — 10 Years, Since Jun 2016">
+        <MetricTrendChart
+          points={metrics
+            .filter(m => m.sleepDurationMinutes != null)
+            .map(m => ({ date: m.date, value: (m.sleepDurationMinutes as number) / 60 }))}
+          unit="h"
+          rollingWindow={30}
+          valueFormat={v => v.toFixed(1)}
+        />
+        <div className="text-[10px] text-ink-muted mt-1">
+          Nightly sleep duration (grey) with 30-night average (burgundy). Pre-2021 is duration-only tracking from the older watch; gaps are unworn stretches.
+        </div>
       </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
@@ -197,20 +218,6 @@ export default function GarminDashboard() {
 
       <Card title="Sleep Drivers">
         <SleepDriversPanel groups={drivers} />
-      </Card>
-
-      <Card title="Sleep Duration — Since 2016">
-        <MetricTrendChart
-          points={metrics
-            .filter(m => m.sleepDurationMinutes != null)
-            .map(m => ({ date: m.date, value: (m.sleepDurationMinutes as number) / 60 }))}
-          unit="h"
-          rollingWindow={30}
-          valueFormat={v => v.toFixed(1)}
-        />
-        <div className="text-[10px] text-ink-muted mt-1">
-          Nightly sleep duration (grey) with 30-night average (burgundy). Pre-2021 is duration-only tracking from the older watch.
-        </div>
       </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
