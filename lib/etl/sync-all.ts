@@ -54,24 +54,26 @@ export async function syncAllData(date?: string): Promise<SyncResult> {
   // Dynamic imports — some modules (chess, stripe, github) init Supabase at
   // module scope and will throw if SUPABASE_URL is not set. Wrap each import
   // so one failing module doesn't prevent the rest from running.
-  async function safeImport<T>(path: string): Promise<T | null> {
+  // Loaders must be literal import() expressions so the bundler can resolve
+  // them — a runtime path string fails with "Cannot find module" on Vercel.
+  async function safeImport<T>(name: string, loader: () => Promise<T>): Promise<T | null> {
     try {
-      return await import(path) as T
+      return await loader()
     } catch (e: any) {
-      errors.push(`Import ${path}: ${e.message}`)
+      errors.push(`Import ${name}: ${e.message}`)
       return null
     }
   }
 
   const [garminMod, calendarMod, chessMod, stripeMod, githubMod, edgarMod, arxivMod, twitterMod] = await Promise.all([
-    safeImport<{ syncGarminMetrics: typeof import('./garmin').syncGarminMetrics }>('./garmin'),
-    safeImport<{ syncCalendarTime: typeof import('./calendar').syncCalendarTime }>('./calendar'),
-    safeImport<{ syncChessProgress: typeof import('./chess').syncChessProgress }>('./chess'),
-    safeImport<{ syncRevenueMetrics: typeof import('./stripe').syncRevenueMetrics }>('./stripe'),
-    safeImport<{ syncGitHubActivity: typeof import('./github').syncGitHubActivity }>('./github'),
-    safeImport<{ syncEdgarFilings: typeof import('./edgar').syncEdgarFilings }>('./edgar'),
-    safeImport<{ syncArxivPapers: typeof import('./arxiv').syncArxivPapers }>('./arxiv'),
-    safeImport<{ syncTwitterLists: typeof import('./twitter').syncTwitterLists }>('./twitter'),
+    safeImport('garmin', () => import('./garmin')),
+    safeImport('calendar', () => import('./calendar')),
+    safeImport('chess', () => import('./chess')),
+    safeImport('stripe', () => import('./stripe')),
+    safeImport('github', () => import('./github')),
+    safeImport('edgar', () => import('./edgar')),
+    safeImport('arxiv', () => import('./arxiv')),
+    safeImport('twitter', () => import('./twitter')),
   ])
 
   // Signal sources need a uid to write to Firestore
