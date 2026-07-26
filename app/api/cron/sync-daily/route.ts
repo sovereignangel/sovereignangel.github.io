@@ -37,6 +37,17 @@ export async function GET(request: NextRequest) {
     yesterday.setDate(yesterday.getDate() - 1)
     const yesterdayResult = await syncAllData(yesterday.toISOString().split('T')[0])
 
+    // Rebuild the dashboard rollup cache from the freshly synced data
+    try {
+      const uid = process.env.FIREBASE_UID
+      if (uid) {
+        const { buildGarminRollups } = await import('@/lib/etl/garmin-rollup')
+        await buildGarminRollups(uid)
+      }
+    } catch (e) {
+      console.warn('Garmin rollup rebuild failed:', (e as Error).message)
+    }
+
     const todaySuccess = Object.values(todayResult.results).filter(Boolean).length
     const yesterdaySuccess = Object.values(yesterdayResult.results).filter(Boolean).length
 

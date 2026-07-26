@@ -2,12 +2,13 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { useAuth } from '@/components/auth/AuthProvider'
-import { getAllGarminMetrics, getAllGarminActivities } from '@/lib/firestore'
+import { getAllGarminMetrics, getAllGarminActivities, getGarminRollups } from '@/lib/firestore'
 import type { GarminMetrics, GarminActivity } from '@/lib/types'
-import { computeSleepDrivers, weekdaySleepPattern, mean } from '@/lib/garmin-analysis'
+import { weekdaySleepPattern, mean } from '@/lib/garmin-analysis'
+import { computeFactorAnalysis } from '@/lib/garmin-factor-analysis'
 import SleepTrendChart from './SleepTrendChart'
 import SleepStagesChart from './SleepStagesChart'
-import SleepDriversPanel from './SleepDriversPanel'
+import FactorAnalysisPanel from './FactorAnalysisPanel'
 import WeekdayPatternChart from './WeekdayPatternChart'
 import MetricTrendChart from './MetricTrendChart'
 import TrainingHistory from './TrainingHistory'
@@ -75,12 +76,29 @@ export default function GarminDashboard() {
 
   useEffect(() => {
     if (!user) return
-    getAllGarminMetrics(user.uid)
-      .then(setMetrics)
-      .catch(e => setError((e as Error).message))
-    getAllGarminActivities(user.uid)
-      .then(setActivities)
-      .catch(() => setActivities([]))
+    // Rollup cache first (2 reads); full collection scans only as fallback
+    getGarminRollups(user.uid)
+      .then(rollup => {
+        if (rollup && rollup.metrics.length > 0) {
+          setMetrics(rollup.metrics)
+          setActivities(rollup.activities)
+          return
+        }
+        getAllGarminMetrics(user.uid)
+          .then(setMetrics)
+          .catch(e => setError((e as Error).message))
+        getAllGarminActivities(user.uid)
+          .then(setActivities)
+          .catch(() => setActivities([]))
+      })
+      .catch(() => {
+        getAllGarminMetrics(user.uid)
+          .then(setMetrics)
+          .catch(e => setError((e as Error).message))
+        getAllGarminActivities(user.uid)
+          .then(setActivities)
+          .catch(() => setActivities([]))
+      })
   }, [user])
 
   const ranged = useMemo(() => {
@@ -92,7 +110,10 @@ export default function GarminDashboard() {
     return metrics.filter(m => m.date >= cutoff)
   }, [metrics, range])
 
-  const drivers = useMemo(() => (metrics ? computeSleepDrivers(metrics) : []), [metrics])
+  const factorAnalysis = useMemo(
+    () => (metrics ? computeFactorAnalysis(metrics, activities) : null),
+    [metrics, activities]
+  )
   const weekday = useMemo(() => (metrics ? weekdaySleepPattern(metrics) : []), [metrics])
 
   if (error) {
@@ -221,9 +242,11 @@ export default function GarminDashboard() {
         </Card>
       </div>
 
-      <Card title="Sleep Drivers">
-        <SleepDriversPanel groups={drivers} />
-      </Card>
+      {factorAnalysis && factorAnalysis.universeN > 100 && (
+        <Card title="Factor Analysis — Maximizing Sleep Score">
+          <FactorAnalysisPanel fa={factorAnalysis} />
+        </Card>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
         <Card title="VO2max — Since 2016">
@@ -293,7 +316,7 @@ export default function GarminDashboard() {
       </details>
 
       <div className="text-[10px] text-ink-muted pb-4">
-        {metrics.length} days synced · {metrics[0].date} to {metrics[metrics.length - 1].date} · synced daily from Garmin Connect · ui v5
+        {metrics.length} days synced · {metrics[0].date} to {metrics[metrics.length - 1].date} · synced daily from Garmin Connect · ui v6
       </div>
     </div>
   )
