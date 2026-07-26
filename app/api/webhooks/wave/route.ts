@@ -170,9 +170,13 @@ export async function POST(request: NextRequest) {
 
   const hmacValid = verifyWaveSignature({ webhookId, timestamp, body: rawBody, signature })
   if (!hmacValid) {
-    console.warn('[webhooks/wave] HMAC verification failed — proceeding anyway (debug mode)')
-    // TODO: re-enable strict HMAC check once we know the correct encoding
-    // return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
+    if (process.env.WAVE_HMAC_STRICT === 'true') {
+      console.warn('[webhooks/wave] HMAC verification failed — rejecting (strict mode)')
+      return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
+    }
+    // Permissive fallback until logs confirm signatures validate; set
+    // WAVE_HMAC_STRICT=true in Vercel to enforce.
+    console.warn('[webhooks/wave] HMAC verification failed — proceeding (set WAVE_HMAC_STRICT=true to enforce)')
   }
 
   let payload: WaveWebhookPayload

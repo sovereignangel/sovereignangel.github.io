@@ -1180,205 +1180,6 @@ async function handleFeedback(uid: string, text: string, chatId: number) {
   }
 }
 
-async function handleIterate(uid: string, text: string, chatId: number) {
-  const adminDb = await getAdminDb()
-
-  if (!text.trim()) {
-    await sendTelegramReply(chatId, 'Usage: `/iterate project-name add dark mode`\n\nFirst word is the project name, rest is the change request.')
-    return
-  }
-
-  // Parse: first word = project name slug, rest = changes
-  const parts = text.trim().split(/\s+/)
-  const projectSlug = parts[0].toLowerCase()
-  const changes = parts.slice(1).join(' ')
-
-  if (!changes) {
-    await sendTelegramReply(chatId, 'Missing change description. Usage: `/iterate project-name add dark mode`')
-    return
-  }
-
-  // Find venture by matching prd.projectName or spec.name
-  const venturesSnap = await adminDb.collection('users').doc(uid).collection('ventures')
-    .where('stage', '==', 'deployed')
-    .get()
-
-  const matchedDoc = venturesSnap.docs.find(d => {
-    const data = d.data()
-    const prdName = data.prd?.projectName?.toLowerCase()
-    const specName = data.spec?.name?.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-+$/, '')
-    return prdName === projectSlug || specName === projectSlug ||
-      data.spec?.name?.toLowerCase() === projectSlug
-  })
-
-  if (!matchedDoc) {
-    await sendTelegramReply(chatId, `No deployed venture found matching "${projectSlug}".\n\nUse the project name from the PRD (kebab-case).`)
-    return
-  }
-
-  const venture = matchedDoc.data()
-  const ventureId = matchedDoc.id
-
-  // Update stage to building, append to iterations
-  const iterations = venture.iterations || []
-  iterations.push({ request: changes, completedAt: null })
-
-  await matchedDoc.ref.update({
-    stage: 'building',
-    iterations,
-    'build.status': 'generating',
-    'build.startedAt': new Date(),
-    'build.errorMessage': null,
-    updatedAt: new Date(),
-  })
-
-  await sendTelegramReply(chatId, `*Iterating on ${venture.spec.name}...*\n\n_"${changes}"_\n\nThis may take a few minutes.`)
-
-  // Fire repository_dispatch for iterate
-  const githubToken = process.env.GITHUB_TOKEN
-  const githubOwner = process.env.GITHUB_OWNER || 'sovereignangel'
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '')
-  const callbackUrl = `${baseUrl}/api/ventures/build/callback`
-
-  if (!githubToken) {
-    await matchedDoc.ref.update({
-      'build.status': 'failed',
-      'build.errorMessage': 'GITHUB_TOKEN not configured',
-      'build.completedAt': new Date(),
-      stage: 'deployed', // revert
-      updatedAt: new Date(),
-    })
-    await sendTelegramReply(chatId, 'Iterate failed: GITHUB_TOKEN not configured on server.')
-    return
-  }
-
-  try {
-    const dispatchRes = await fetch(`https://api.github.com/repos/${githubOwner}/venture-builder/dispatches`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${githubToken}`,
-        'Accept': 'application/vnd.github.v3+json',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        event_type: 'iterate-venture',
-        client_payload: {
-          uid,
-          ventureId,
-          repoName: venture.build.repoName,
-          changes,
-          spec: venture.spec,
-          prd: venture.prd,
-          chatId,
-          callbackUrl,
-        },
-      }),
-    })
-
-    if (!dispatchRes.ok) {
-      const errText = await dispatchRes.text()
-      throw new Error(`GitHub dispatch failed (${dispatchRes.status}): ${errText}`)
-    }
-  } catch (error) {
-    console.error('Iterate dispatch error:', error)
-    await matchedDoc.ref.update({
-      'build.status': 'failed',
-      'build.errorMessage': error instanceof Error ? error.message : 'Dispatch failed',
-      'build.completedAt': new Date(),
-      stage: 'deployed', // revert
-      updatedAt: new Date(),
-    })
-    await sendTelegramReply(chatId,
-      `Iterate dispatch failed for ${venture.spec.name}.\n\n_${error instanceof Error ? error.message : 'Unknown error'}_`)
-  }
-}
-
-async function handleBuild(uid: string, text: string, chatId: number) {
-  const adminDb = await getAdminDb()
-
-  try {
-    const { num } = parseVentureNumber(text.trim())
-    const ventureDoc = await findVentureByNumberOrStage(adminDb, uid, num, 'prd_draft')
-
-    if (!ventureDoc) {
-      await sendTelegramReply(chatId, num
-        ? `Venture #${num} not found.`
-        : 'No venture with a PRD ready to build.\n\nUse /venture to spec one first.')
-      return
-    }
-
-    const venture = ventureDoc.data()
-    const ventureId = ventureDoc.id
-    const spec = venture.spec
-    const vNum = venture.ventureNumber ? `#${venture.ventureNumber} ` : ''
-
-    if (!venture.prd) {
-      await sendTelegramReply(chatId, `${vNum}${spec.name} has no PRD yet.\n\nUse /feedback ${venture.ventureNumber || ''} <text> to generate one.`)
-      return
-    }
-
-    if (venture.stage === 'building' || venture.stage === 'deployed') {
-      await sendTelegramReply(chatId, `${vNum}${spec.name} is already in "${venture.stage}" stage.`)
-      return
-    }
-
-    // Mark as building
-    await ventureDoc.ref.update({
-      stage: 'building',
-      'build.status': 'generating',
-      'build.startedAt': new Date(),
-      updatedAt: new Date(),
-    })
-
-    await sendTelegramReply(chatId, `${vNum}Build started for ${spec.name}\n\nGenerating codebase... This may take a few minutes.`)
-
-    // Fire repository_dispatch to the builder repo (fire-and-forget)
-    const githubToken = process.env.GITHUB_TOKEN
-    const githubOwner = process.env.GITHUB_OWNER || 'sovereignangel'
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '')
-    const callbackUrl = `${baseUrl}/api/ventures/build/callback`
-
-    if (!githubToken) {
-      await ventureDoc.ref.update({
-        'build.status': 'failed',
-        'build.errorMessage': 'GITHUB_TOKEN not configured',
-        'build.completedAt': new Date(),
-        updatedAt: new Date(),
-      })
-      await sendTelegramReply(chatId, 'Build failed: GITHUB_TOKEN not configured on server.')
-      return
-    }
-
-    const dispatchRes = await fetch(`https://api.github.com/repos/${githubOwner}/venture-builder/dispatches`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${githubToken}`,
-        'Accept': 'application/vnd.github.v3+json',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        event_type: 'build-venture',
-        client_payload: {
-          uid,
-          ventureId,
-          spec,
-          prd: venture.prd,
-          chatId,
-          callbackUrl,
-        },
-      }),
-    })
-
-    if (!dispatchRes.ok) {
-      const errText = await dispatchRes.text()
-      throw new Error(`GitHub dispatch failed (${dispatchRes.status}): ${errText}`)
-    }
-  } catch (error) {
-    console.error('Build error:', error)
-    await sendTelegramReply(chatId, `Build failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
-  }
-}
-
 async function handleMemo(uid: string, text: string, chatId: number) {
   const adminDb = await getAdminDb()
 
@@ -2486,282 +2287,6 @@ async function handleTranscriptCallback(chatId: number, messageId: number, callb
   }
 }
 
-// ---------------------------------------------------------------------------
-// Job Pipeline handlers
-// ---------------------------------------------------------------------------
-
-const JOB_STAGE_EMOJI: Record<string, string> = {
-  researching: '🔍', applied: '📨', phone_screen: '📞', interview: '🎤',
-  take_home: '💻', final_round: '🏁', offer: '💰', accepted: '✅',
-  rejected: '❌', ghosted: '👻', withdrawn: '🚪',
-}
-
-const JOB_STAGE_LABELS: Record<string, string> = {
-  researching: 'Researching', applied: 'Applied', phone_screen: 'Phone Screen',
-  interview: 'Interview', take_home: 'Take Home', final_round: 'Final Round',
-  offer: 'Offer', accepted: 'Accepted', rejected: 'Rejected',
-  ghosted: 'Ghosted', withdrawn: 'Withdrawn',
-}
-
-const ACTIVE_JOB_STAGES = ['researching', 'applied', 'phone_screen', 'interview', 'take_home', 'final_round', 'offer']
-
-async function handlePipeline(uid: string, text: string, chatId: number) {
-  const adminDb = await getAdminDb()
-  const showAll = text.toLowerCase() === 'all'
-
-  const snap = showAll
-    ? await adminDb.collection('users').doc(uid).collection('job_pipeline').orderBy('updatedAt', 'desc').get()
-    : await adminDb.collection('users').doc(uid).collection('job_pipeline')
-        .where('stage', 'in', ACTIVE_JOB_STAGES)
-        .orderBy('updatedAt', 'desc')
-        .get()
-
-  if (snap.empty) {
-    await sendTelegramReply(chatId, 'No jobs in pipeline.\n\nAdd one: /apply Company — Role')
-    return
-  }
-
-  const lines: string[] = ['*JOB PIPELINE*', '']
-
-  // Group by stage
-  const byStage: Record<string, Array<{ id: string; company: string; role: string; nextAction: string; nextActionDate: string | null; priority: string }>> = {}
-  snap.docs.forEach(d => {
-    const data = d.data()
-    const stage = data.stage as string
-    if (!byStage[stage]) byStage[stage] = []
-    byStage[stage].push({
-      id: d.id,
-      company: data.company as string,
-      role: data.role as string,
-      nextAction: data.nextAction as string || '',
-      nextActionDate: data.nextActionDate as string | null,
-      priority: data.priority as string || 'medium',
-    })
-  })
-
-  const stageOrder = showAll
-    ? ['offer', 'final_round', 'take_home', 'interview', 'phone_screen', 'applied', 'researching', 'accepted', 'rejected', 'ghosted', 'withdrawn']
-    : ['offer', 'final_round', 'take_home', 'interview', 'phone_screen', 'applied', 'researching']
-
-  for (const stage of stageOrder) {
-    const entries = byStage[stage]
-    if (!entries || entries.length === 0) continue
-    const emoji = JOB_STAGE_EMOJI[stage] || ''
-    const label = JOB_STAGE_LABELS[stage] || stage
-    lines.push(`${emoji} *${label}* (${entries.length})`)
-    entries.forEach(e => {
-      const pri = e.priority === 'high' ? '!' : ''
-      const next = e.nextAction ? ` → ${e.nextAction}` : ''
-      const due = e.nextActionDate ? ` (${e.nextActionDate})` : ''
-      lines.push(`  ${pri}${e.company} — ${e.role}${next}${due}`)
-    })
-    lines.push('')
-  }
-
-  lines.push(`${snap.size} total | /apply Company — Role to add`)
-  lines.push('Update: /edit move chronograph to interview')
-
-  await sendTelegramReply(chatId, lines.join('\n'))
-}
-
-async function handleApply(uid: string, text: string, chatId: number) {
-  if (!text) {
-    await sendTelegramReply(chatId, 'Usage: /apply Company — Role\n\nExamples:\n/apply Chronograph — Quant Researcher\n/apply Bridgewater — Investment Engineer\n/apply Two Sigma — Quant Dev, source: LinkedIn, contact: Jane Smith')
-    return
-  }
-
-  // Parse: "Company — Role" with optional comma-separated fields
-  const parts = text.split('—').map(s => s.trim())
-  if (parts.length < 2) {
-    // Try with dash
-    const dashParts = text.split(' - ').map(s => s.trim())
-    if (dashParts.length >= 2) {
-      parts[0] = dashParts[0]
-      parts[1] = dashParts.slice(1).join(' - ')
-    } else {
-      await sendTelegramReply(chatId, 'Format: /apply Company — Role\nExample: /apply Bridgewater — Investment Engineer')
-      return
-    }
-  }
-
-  const company = parts[0]
-  // Role might have extra fields after commas
-  const roleParts = parts[1].split(',').map(s => s.trim())
-  const role = roleParts[0]
-
-  // Parse optional fields
-  let source = ''
-  let contactName: string | null = null
-  let priority: 'high' | 'medium' | 'low' = 'medium'
-  let salary: string | null = null
-
-  for (let i = 1; i < roleParts.length; i++) {
-    const part = roleParts[i].toLowerCase()
-    if (part.startsWith('source:')) source = roleParts[i].slice('source:'.length).trim()
-    else if (part.startsWith('contact:')) contactName = roleParts[i].slice('contact:'.length).trim()
-    else if (part.startsWith('priority:')) priority = roleParts[i].slice('priority:'.length).trim() as 'high' | 'medium' | 'low'
-    else if (part.startsWith('salary:') || part.startsWith('comp:')) salary = roleParts[i].split(':').slice(1).join(':').trim()
-  }
-
-  const adminDb = await getAdminDb()
-  const todayKey = getTodayKey()
-  const ref = adminDb.collection('users').doc(uid).collection('job_pipeline').doc()
-  await ref.set({
-    company,
-    role,
-    stage: 'applied',
-    nextAction: 'Wait for response / follow up in 1 week',
-    nextActionDate: null,
-    appliedDate: todayKey,
-    source,
-    contactName,
-    notes: [`[${todayKey}] Added to pipeline`],
-    salary,
-    priority,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  })
-
-  const emoji = JOB_STAGE_EMOJI.applied
-  const contactStr = contactName ? `\nContact: ${contactName}` : ''
-  const sourceStr = source ? `\nSource: ${source}` : ''
-  await sendTelegramReply(chatId, `${emoji} Added to pipeline:\n\n${company} — ${role}${contactStr}${sourceStr}\n\nStage: Applied\n\nView all: /pipeline`)
-}
-
-// ── Scavenger Hunt handlers ──
-
-const ARUBA_START = '2026-03-22'
-const ARUBA_END = '2026-03-28'
-const GAME_DOC = 'aruba_2026'
-
-function getTodayAruba(): string {
-  // Aruba is UTC-4 (AST)
-  const now = new Date()
-  const aruba = new Date(now.getTime() - 4 * 60 * 60 * 1000)
-  return aruba.toISOString().slice(0, 10)
-}
-
-async function handleScavengerHunt(_uid: string, text: string, chatId: number) {
-  if (!text) {
-    await sendTelegramReply(chatId, '🔍 Scavenger Hunt!\n\nUsage: /sh <ingenious thing you spotted>\n\nExample: /sh Solar-powered beach trash compactor\n\nEach find = 1 banana (1 min with Lori)\n\nDashboard: scavengerhunt.loricorpuz.com')
-    return
-  }
-
-  const adminDb = await getAdminDb()
-  const today = getTodayAruba()
-
-  const entry = {
-    description: text,
-    createdAt: new Date().toISOString(),
-    date: today,
-    pointsValue: 1,
-    redeemed: false,
-  }
-
-  await adminDb.collection('scavenger_hunt').doc(GAME_DOC).collection('entries').add(entry)
-
-  // Get total count
-  const allSnap = await adminDb.collection('scavenger_hunt').doc(GAME_DOC).collection('entries').get()
-  const totalPoints = allSnap.size
-
-  // Get today's count
-  let todayCount = 0
-  allSnap.docs.forEach(d => {
-    if (d.data().date === today) todayCount++
-  })
-
-  // Get total redeemed
-  const redemptionSnap = await adminDb.collection('scavenger_hunt').doc(GAME_DOC).collection('redemptions').get()
-  let totalRedeemed = 0
-  redemptionSnap.docs.forEach(d => {
-    totalRedeemed += d.data().pointsRedeemed || 0
-  })
-
-  const available = totalPoints - totalRedeemed
-
-  const bananas = '🍌'.repeat(Math.min(todayCount, 20))
-  await sendTelegramReply(chatId,
-    `🍌 BANANA COLLECTED!\n\n` +
-    `"${text}"\n\n` +
-    `${bananas}\n\n` +
-    `Today: ${todayCount} banana${todayCount !== 1 ? 's' : ''}\n` +
-    `Total: ${totalPoints} banana${totalPoints !== 1 ? 's' : ''}\n` +
-    `Available: ${available} min with Lori\n\n` +
-    `Dashboard: scavengerhunt.loricorpuz.com`
-  )
-}
-
-async function handleScavengerRedeem(_uid: string, text: string, chatId: number) {
-  const adminDb = await getAdminDb()
-
-  // Parse: /redeem <number> [description]
-  const match = text.match(/^(\d+)\s*(.*)$/)
-  if (!match) {
-    // Show current balance
-    const allSnap = await adminDb.collection('scavenger_hunt').doc(GAME_DOC).collection('entries').get()
-    const totalPoints = allSnap.size
-
-    const redemptionSnap = await adminDb.collection('scavenger_hunt').doc(GAME_DOC).collection('redemptions').get()
-    let totalRedeemed = 0
-    redemptionSnap.docs.forEach(d => {
-      totalRedeemed += d.data().pointsRedeemed || 0
-    })
-
-    const available = totalPoints - totalRedeemed
-    await sendTelegramReply(chatId,
-      `🍌 Banana Balance\n\n` +
-      `Total earned: ${totalPoints}\n` +
-      `Redeemed: ${totalRedeemed}\n` +
-      `Available: ${available} min\n\n` +
-      `To redeem: /redeem <minutes> <what for>\n` +
-      `Example: /redeem 10 sunset walk`
-    )
-    return
-  }
-
-  const pointsToRedeem = parseInt(match[1], 10)
-  const description = match[2] || 'Redeemed'
-
-  // Check balance
-  const allSnap = await adminDb.collection('scavenger_hunt').doc(GAME_DOC).collection('entries').get()
-  const totalPoints = allSnap.size
-
-  const redemptionSnap = await adminDb.collection('scavenger_hunt').doc(GAME_DOC).collection('redemptions').get()
-  let totalRedeemed = 0
-  redemptionSnap.docs.forEach(d => {
-    totalRedeemed += d.data().pointsRedeemed || 0
-  })
-
-  const available = totalPoints - totalRedeemed
-
-  if (pointsToRedeem > available) {
-    await sendTelegramReply(chatId,
-      `Not enough bananas! 🍌\n\n` +
-      `Requested: ${pointsToRedeem} min\n` +
-      `Available: ${available} min\n\n` +
-      `Keep hunting! /sh <ingenious thing>`
-    )
-    return
-  }
-
-  const today = getTodayAruba()
-  await adminDb.collection('scavenger_hunt').doc(GAME_DOC).collection('redemptions').add({
-    pointsRedeemed: pointsToRedeem,
-    description,
-    createdAt: new Date().toISOString(),
-    date: today,
-  })
-
-  const newAvailable = available - pointsToRedeem
-  await sendTelegramReply(chatId,
-    `✅ REDEEMED ${pointsToRedeem} banana${pointsToRedeem !== 1 ? 's' : ''}!\n\n` +
-    `"${description}"\n\n` +
-    `That's ${pointsToRedeem} min with Lori 🎉\n\n` +
-    `Remaining: ${newAvailable} banana${newAvailable !== 1 ? 's' : ''}\n\n` +
-    `Dashboard: scavengerhunt.loricorpuz.com`
-  )
-}
-
 // =============================================================================
 // Phase 2 inbound router — prefix dispatch + free-form ask-button flow
 // =============================================================================
@@ -3225,40 +2750,35 @@ export async function POST(req: NextRequest) {
     // /start command — show help
     if (message.text.startsWith('/start')) {
       await sendTelegramReply(chatId, [
-        '*Thesis Engine Signal Bot*',
+        '*Thesis Engine*',
         '',
-        'Commands:',
-        '`/signal <text>` — Create external signal',
-        '`/signal #ai <text>` — Signal with pillar',
-        '`/note <text>` — Quick note',
-        '`/journal <text>` — Journal entry (AI-parsed)',
-        '`/predict <text>` — Log a prediction (AI-analyzed)',
+        '*Capture:*',
+        '`/journal <text>` — Journal entry (AI-parsed into daily log, decisions, beliefs)',
+        'Voice note — auto-transcribed as journal',
+        '`/signal <text>` — Save an external signal (`#ai` `#markets` `#mind`)',
+        '`/note <text>` — Quick note (low-relevance signal)',
+        '`/predict <text>` — Log a prediction with antithesis + review date',
+        '`/transcript <text>` — Process a meeting transcript (choose template)',
+        '`/rss <url> #pillar` — Subscribe to an RSS feed',
         '',
-        '*Venture Builder:*',
-        '`/venture <text>` — Spec + auto-PRD a business idea',
-        '`/feedback <text>` — Revise the PRD with feedback',
-        '`/build` — Build the venture from its PRD',
-        '`/memo [#]` — Generate Sequoia-style pitch memo',
-        '`/iterate <project> <changes>` — Iterate on deployed venture',
-        '`/reset [#]` — Roll back a venture to its previous stage',
-        '',
+        '*Plan:*',
         '`/intent <text>` — Set your daily plan of attack',
-        '`/brief <text>` — Feedback on morning brief',
-        '`/rss <url> #pillar` — Subscribe to RSS feed',
-        '`/transcript <text>` — Process a Wave.ai meeting transcript (AI extracts insights, decisions, hypotheses)',
+        '`/todo <text>` — Create todos (AI parses + matches projects)',
+        '`/done [#]` — List open todos or complete one by number',
+        '`/edit <text>` — Edit todos/projects in natural language',
         '',
-        '*Todos:*',
-        '`/todo <text>` — Create todos (voice-dictate naturally, AI parses + matches projects)',
-        '`/done [#]` — List open todos or mark one complete by number',
-        '`/edit <text>` — Edit todos/projects (natural language: "move 3 to schedule", "archive deep tech fund")',
+        '*Route to a project:*',
+        '`/arm` `/ab` `/thesis` `/lordas` `<text>` — Send to that project inbox',
+        'Free-form text — bot asks where to route it',
+        '',
+        '*Briefs:*',
+        '`/morning` — Generate morning brief on demand',
+        '`/brief <text>` or reply to a brief — Feedback to shape future briefs',
+        '',
+        '*Venture builder:*',
+        '`/venture` `/feedback` `/build` `/memo` `/iterate` `/reset` `/skill`',
         '',
         '`/id` — Show your chat ID (for settings)',
-        '',
-        'Reply to a morning brief to send feedback.',
-        'Voice notes → auto-transcribed as journal',
-        'Say "venture" to spec, "build" to build, "signal" to save as signal',
-        '',
-        'Pillar tags: `#ai` `#markets` `#mind`',
       ].join('\n'))
       return NextResponse.json({ ok: true })
     }
@@ -3332,12 +2852,6 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ ok: true })
       }
       waitUntil(handleVenture(uid, parsed.text, chatId))
-      return NextResponse.json({ ok: true })
-    }
-
-    // /approve removed — /build works directly from prd_draft
-    if (parsed.command === 'approve') {
-      await sendTelegramReply(chatId, '/approve is no longer needed. Just use /build to build directly from the PRD.')
       return NextResponse.json({ ok: true })
     }
 
@@ -3469,30 +2983,6 @@ export async function POST(req: NextRequest) {
     // Handle edit command (/edit <natural language>)
     if (parsed.command === 'edit') {
       await handleEdit(uid, parsed.text, chatId)
-      return NextResponse.json({ ok: true })
-    }
-
-    // Handle pipeline command (/pipeline [all])
-    if (parsed.command === 'pipeline') {
-      await handlePipeline(uid, parsed.text, chatId)
-      return NextResponse.json({ ok: true })
-    }
-
-    // Handle apply command (/apply Company — Role)
-    if (parsed.command === 'apply') {
-      await handleApply(uid, parsed.text, chatId)
-      return NextResponse.json({ ok: true })
-    }
-
-    // Handle scavenger hunt command (/sh <description of ingenious thing>)
-    if (parsed.command === 'sh') {
-      await handleScavengerHunt(uid, parsed.text, chatId)
-      return NextResponse.json({ ok: true })
-    }
-
-    // Handle redeem command (/redeem <number> [description])
-    if (parsed.command === 'redeem') {
-      await handleScavengerRedeem(uid, parsed.text, chatId)
       return NextResponse.json({ ok: true })
     }
 

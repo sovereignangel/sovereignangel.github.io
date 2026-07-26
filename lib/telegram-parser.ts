@@ -10,22 +10,15 @@
  *   /predict <text>          — Log a prediction with AI analysis
  *   /venture <text>          — Spec a business idea with AI
  *   /build                   — Auto-build the most recent approved venture
- *   /approve                 — Approve the most recent PRD draft
  *   /feedback <text>         — Send feedback on the most recent PRD draft
  *   /iterate <project> <changes> — Request changes to a deployed venture
  *   /cbuild [#] [with skills]   — Claude-powered build (composable skills)
  *   /citerate <project> <changes> — Claude-powered iterate on deployed venture
  *   /skill <subcommand>          — Manage composable builder skills
- *   /sbuild [#]                    — Start Superpowers structured build
- *   /srespond <text>               — Respond to structured build questions
- *   /sapprove                      — Approve structured build design
- *   /discipline                    — Toggle superpowers-methodology as default skill
  *   /intent <text>                  — Set daily intent (plan of attack for the day)
  *   /todo <text>                    — Create todo items (AI-parsed, multi-item, project-matched)
  *   /done [#]                       — Mark a todo as completed (by position number)
  *   /edit <text>                    — Edit todos/projects via natural language (AI-parsed)
- *   /sh <text>                      — Scavenger hunt: log an ingenious find
- *   /shr <points> [description]     — Scavenger hunt: redeem points (subtracts from total)
  *
  * Pillar hashtags: #ai, #markets, #mind
  */
@@ -33,7 +26,7 @@
 import type { ThesisPillar } from '@/lib/types'
 
 export interface ParsedTelegramMessage {
-  command: 'signal' | 'note' | 'journal' | 'rss' | 'predict' | 'venture' | 'build' | 'approve' | 'feedback' | 'iterate' | 'reset' | 'brief' | 'memo' | 'morning' | 'cbuild' | 'citerate' | 'skill' | 'sbuild' | 'srespond' | 'sapprove' | 'discipline' | 'transcript' | 'intent' | 'todo' | 'done' | 'edit' | 'pipeline' | 'apply' | 'sh' | 'redeem' | 'unknown'
+  command: 'signal' | 'note' | 'journal' | 'rss' | 'predict' | 'venture' | 'build' | 'feedback' | 'iterate' | 'reset' | 'brief' | 'memo' | 'morning' | 'cbuild' | 'citerate' | 'skill' | 'transcript' | 'intent' | 'todo' | 'done' | 'edit' | 'unknown'
   text: string
   pillars: ThesisPillar[]
   raw: string
@@ -86,12 +79,6 @@ export function parseTelegramMessage(text: string): ParsedTelegramMessage {
   if (raw.startsWith('/venture')) {
     const body = raw.slice('/venture'.length).trim()
     return { command: 'venture', text: body, pillars: [], raw }
-  }
-
-  // /approve command (optional number: /approve 3)
-  if (raw.startsWith('/approve')) {
-    const body = raw.slice('/approve'.length).trim()
-    return { command: 'approve', text: body, pillars: [], raw }
   }
 
   // /feedback command
@@ -147,29 +134,6 @@ export function parseTelegramMessage(text: string): ParsedTelegramMessage {
     return { command: 'citerate', text: body, pillars: [], raw }
   }
 
-  // /sbuild command — Superpowers structured build (optional number: /sbuild 3)
-  if (raw.startsWith('/sbuild')) {
-    const body = raw.slice('/sbuild'.length).trim()
-    return { command: 'sbuild', text: body, pillars: [], raw }
-  }
-
-  // /srespond command — respond to structured build brainstorm/design questions
-  if (raw.startsWith('/srespond')) {
-    const body = raw.slice('/srespond'.length).trim()
-    return { command: 'srespond', text: body, pillars: [], raw }
-  }
-
-  // /sapprove command — approve structured build design
-  if (raw.startsWith('/sapprove')) {
-    const body = raw.slice('/sapprove'.length).trim()
-    return { command: 'sapprove', text: body, pillars: [], raw }
-  }
-
-  // /discipline command — toggle superpowers-methodology as default skill
-  if (raw.startsWith('/discipline')) {
-    return { command: 'discipline', text: '', pillars: [], raw }
-  }
-
   // /skill command — manage composable builder skills
   if (raw.startsWith('/skill')) {
     const body = raw.slice('/skill'.length).trim()
@@ -204,36 +168,6 @@ export function parseTelegramMessage(text: string): ParsedTelegramMessage {
   if (raw.startsWith('/edit')) {
     const body = raw.slice('/edit'.length).trim()
     return { command: 'edit', text: body, pillars: [], raw }
-  }
-
-  // /pipeline command — view job pipeline
-  if (raw.startsWith('/pipeline')) {
-    const body = raw.slice('/pipeline'.length).trim()
-    return { command: 'pipeline', text: body, pillars: [], raw }
-  }
-
-  // /apply command — add new job to pipeline
-  if (raw.startsWith('/apply')) {
-    const body = raw.slice('/apply'.length).trim()
-    return { command: 'apply', text: body, pillars: [], raw }
-  }
-
-  // /shr command — scavenger hunt: redeem points (must be before /sh)
-  if (raw.startsWith('/shr')) {
-    const body = raw.slice('/shr'.length).trim()
-    return { command: 'redeem', text: body, pillars: [], raw }
-  }
-
-  // /sh command — scavenger hunt: log an ingenious find
-  if (raw.startsWith('/sh')) {
-    const body = raw.slice('/sh'.length).trim()
-    return { command: 'sh', text: body, pillars: [], raw }
-  }
-
-  // /redeem command — alias for /shr
-  if (raw.startsWith('/redeem')) {
-    const body = raw.slice('/redeem'.length).trim()
-    return { command: 'redeem', text: body, pillars: [], raw }
   }
 
   // Plain text — treat as signal
