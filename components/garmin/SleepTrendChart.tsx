@@ -26,7 +26,7 @@ export default function SleepTrendChart({ nights }: { nights: Night[] }) {
   )
   const times = useMemo(() => nights.map(n => Date.parse(n.date + 'T12:00:00')), [nights])
 
-  const scores = nights.map(n => n.score).filter((v): v is number => v !== null)
+  const scores = nights.map(n => n.score).filter((v): v is number => v != null)
   if (scores.length < 2) {
     return <div className="text-[11px] text-ink-muted py-8 text-center">Not enough sleep data in this range.</div>
   }
@@ -47,7 +47,7 @@ export default function SleepTrendChart({ nights }: { nights: Night[] }) {
     let d = ''
     let pen = false
     vals.forEach((v, i) => {
-      if (v === null) { pen = false; return }
+      if (v == null) { pen = false; return }
       if (pen && i > 0 && times[i] - times[i - 1] > 7 * DAY_MS) pen = false
       d += `${pen ? 'L' : 'M'}${x(i).toFixed(1)},${y(v).toFixed(1)}`
       pen = true

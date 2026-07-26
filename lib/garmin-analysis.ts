@@ -41,12 +41,12 @@ export function pearson(pairs: Array<[number, number]>): { r: number; n: number 
 }
 
 export function rollingMean(
-  values: Array<number | null>,
+  values: Array<number | null | undefined>,
   window: number
 ): Array<number | null> {
   return values.map((_, i) => {
     const slice = values.slice(Math.max(0, i - window + 1), i + 1).filter(
-      (v): v is number => v !== null
+      (v): v is number => v != null
     )
     return slice.length >= Math.min(3, window) ? slice.reduce((s, v) => s + v, 0) / slice.length : null
   })

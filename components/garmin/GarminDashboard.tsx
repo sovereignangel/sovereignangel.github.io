@@ -188,7 +188,7 @@ export default function GarminDashboard() {
         <SleepTrendChart
           nights={ranged
             .filter(m => m.date >= '2021-06-03')
-            .map(m => ({ date: m.date, score: m.sleepScore }))}
+            .map(m => ({ date: m.date, score: m.sleepScore ?? null }))}
         />
         <div className="text-[10px] text-ink-muted mt-1">
           Garmin sleep scores begin Jun 2021 (first score-capable watch) — this metric cannot go back further. The full 10-year record is the duration chart below.
@@ -293,7 +293,7 @@ export default function GarminDashboard() {
       </details>
 
       <div className="text-[10px] text-ink-muted pb-4">
-        {metrics.length} days synced · {metrics[0].date} to {metrics[metrics.length - 1].date} · synced daily from Garmin Connect · ui v4
+        {metrics.length} days synced · {metrics[0].date} to {metrics[metrics.length - 1].date} · synced daily from Garmin Connect · ui v5
       </div>
     </div>
   )
