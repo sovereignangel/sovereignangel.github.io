@@ -277,6 +277,13 @@ export async function syncGarminMetrics(
       { merge: true }
     )
 
+    // Upsert recent activities so new workouts land in garmin_activities
+    try {
+      await syncRecentActivities(garmin, uid)
+    } catch (e) {
+      console.warn('Garmin activities sync failed:', (e as Error).message)
+    }
+
     // Persist refreshed tokens
     try {
       await saveGarminTokens(garmin)
@@ -289,6 +296,45 @@ export async function syncGarminMetrics(
   } catch (error: any) {
     console.error(`❌ Garmin sync failed for ${date}:`, error.message)
     return null
+  }
+}
+
+// ─── Activities ─────────────────────────────────────────────────────────
+
+async function syncRecentActivities(garmin: GarminConnect, uid: string) {
+  const num = (v: any) => (typeof v === 'number' && isFinite(v) ? v : null)
+  const acts = await garmin.get<any>(
+    `${GC_API}/activitylist-service/activities/search/activities?limit=15&start=0`
+  )
+  if (!Array.isArray(acts)) return
+
+  const col = adminDb.collection('users').doc(uid).collection('garmin_activities')
+  for (const a of acts) {
+    if (!a.activityId) continue
+    await col.doc(String(a.activityId)).set(
+      {
+        activityId: a.activityId,
+        name: a.activityName ?? null,
+        type: a.activityType?.typeKey ?? 'other',
+        date: (a.startTimeLocal ?? '').slice(0, 10) || null,
+        startTimeLocal: a.startTimeLocal ?? null,
+        durationSeconds: num(a.duration) ? Math.round(a.duration) : null,
+        distanceMeters: num(a.distance) ? Math.round(a.distance) : null,
+        calories: num(a.calories),
+        averageHr: num(a.averageHR),
+        maxHr: num(a.maxHR),
+        averageSpeed: num(a.averageSpeed),
+        elevationGain: num(a.elevationGain),
+        aerobicTrainingEffect: num(a.aerobicTrainingEffect),
+        anaerobicTrainingEffect: num(a.anaerobicTrainingEffect),
+        trainingLoad: num(a.activityTrainingLoad),
+        vo2max: num(a.vO2MaxValue),
+        locationName: a.locationName ?? null,
+        source: 'garmin',
+        syncedAt: FieldValue.serverTimestamp(),
+      },
+      { merge: true }
+    )
   }
 }
 

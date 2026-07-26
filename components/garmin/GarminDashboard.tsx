@@ -2,13 +2,15 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { useAuth } from '@/components/auth/AuthProvider'
-import { getAllGarminMetrics } from '@/lib/firestore'
-import type { GarminMetrics } from '@/lib/types'
+import { getAllGarminMetrics, getAllGarminActivities } from '@/lib/firestore'
+import type { GarminMetrics, GarminActivity } from '@/lib/types'
 import { computeSleepDrivers, weekdaySleepPattern, mean } from '@/lib/garmin-analysis'
 import SleepTrendChart from './SleepTrendChart'
 import SleepStagesChart from './SleepStagesChart'
 import SleepDriversPanel from './SleepDriversPanel'
 import WeekdayPatternChart from './WeekdayPatternChart'
+import MetricTrendChart from './MetricTrendChart'
+import TrainingHistory from './TrainingHistory'
 
 type Range = '30' | '90' | '365' | 'all'
 
@@ -65,6 +67,7 @@ function StatTile({
 export default function GarminDashboard() {
   const { user } = useAuth()
   const [metrics, setMetrics] = useState<GarminMetrics[] | null>(null)
+  const [activities, setActivities] = useState<GarminActivity[]>([])
   const [error, setError] = useState<string | null>(null)
   const [range, setRange] = useState<Range>('90')
 
@@ -73,6 +76,9 @@ export default function GarminDashboard() {
     getAllGarminMetrics(user.uid)
       .then(setMetrics)
       .catch(e => setError((e as Error).message))
+    getAllGarminActivities(user.uid)
+      .then(setActivities)
+      .catch(() => setActivities([]))
   }, [user])
 
   const ranged = useMemo(() => {
@@ -192,6 +198,54 @@ export default function GarminDashboard() {
       <Card title="Sleep Drivers">
         <SleepDriversPanel groups={drivers} />
       </Card>
+
+      <Card title="Sleep Duration — Since 2016">
+        <MetricTrendChart
+          points={metrics
+            .filter(m => m.sleepDurationMinutes != null)
+            .map(m => ({ date: m.date, value: (m.sleepDurationMinutes as number) / 60 }))}
+          unit="h"
+          rollingWindow={30}
+          valueFormat={v => v.toFixed(1)}
+        />
+        <div className="text-[10px] text-ink-muted mt-1">
+          Nightly sleep duration (grey) with 30-night average (burgundy). Pre-2021 is duration-only tracking from the older watch.
+        </div>
+      </Card>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+        <Card title="VO2max — Since 2016">
+          <MetricTrendChart
+            points={metrics
+              .filter(m => m.vo2max != null)
+              .map(m => ({ date: m.date, value: m.vo2max as number }))}
+            rollingWindow={10}
+            valueFormat={v => v.toFixed(1)}
+            showDots
+          />
+          <div className="text-[10px] text-ink-muted mt-1">
+            Garmin estimate on qualifying activity days; 10-reading average in burgundy.
+          </div>
+        </Card>
+        <Card title="Endurance Score">
+          <MetricTrendChart
+            points={metrics
+              .filter(m => m.enduranceScore != null)
+              .map(m => ({ date: m.date, value: m.enduranceScore as number }))}
+            rollingWindow={14}
+            valueFormat={v => Math.round(v).toLocaleString()}
+          />
+          <div className="text-[10px] text-ink-muted mt-1">
+            Available since the Forerunner 970 (May 2025); 14-day average in burgundy.
+          </div>
+        </Card>
+      </div>
+
+      {activities.length > 0 && (
+        <Card title={`Training History — ${activities.length} Activities`}>
+          <TrainingHistory activities={activities} />
+        </Card>
+      )}
 
       <details className="bg-white border border-rule rounded-sm p-3">
         <summary className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-burgundy cursor-pointer">

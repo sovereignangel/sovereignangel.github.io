@@ -38,7 +38,7 @@ function GarminLayoutInner({ children }: { children: React.ReactNode }) {
             </span>
           </div>
           <span className="font-serif text-[11px] uppercase tracking-[0.5px] text-burgundy font-semibold">
-            Sleep
+            Sleep · Fitness · Training
           </span>
         </div>
       </header>

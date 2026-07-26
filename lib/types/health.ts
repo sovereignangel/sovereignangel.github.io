@@ -38,3 +38,26 @@ export interface GarminMetrics {
   intensityMinutes?: number | null
   syncedAt: Timestamp
 }
+
+export interface GarminActivity {
+  id?: string
+  activityId: number
+  name: string | null
+  type: string
+  date: string | null
+  startTimeLocal: string | null
+  durationSeconds: number | null
+  distanceMeters: number | null
+  calories: number | null
+  averageHr: number | null
+  maxHr: number | null
+  averageSpeed: number | null
+  elevationGain: number | null
+  aerobicTrainingEffect: number | null
+  anaerobicTrainingEffect: number | null
+  trainingLoad: number | null
+  vo2max: number | null
+  locationName: string | null
+  source: string
+  syncedAt: Timestamp
+}
