@@ -12,13 +12,15 @@ import WeekdayPatternChart from './WeekdayPatternChart'
 import MetricTrendChart from './MetricTrendChart'
 import TrainingHistory from './TrainingHistory'
 
-type Range = '30' | '90' | '365' | 'all'
+type Range = '30' | '90' | '365' | '1095' | '1825' | 'si'
 
 const RANGES: Array<{ key: Range; label: string }> = [
   { key: '30', label: '30D' },
   { key: '90', label: '90D' },
   { key: '365', label: '1Y' },
-  { key: 'all', label: 'All' },
+  { key: '1095', label: '3Y' },
+  { key: '1825', label: '5Y' },
+  { key: 'si', label: 'SI' },
 ]
 
 function Card({ title, children, className = '' }: { title: string; children: React.ReactNode; className?: string }) {
@@ -83,8 +85,11 @@ export default function GarminDashboard() {
 
   const ranged = useMemo(() => {
     if (!metrics) return []
-    if (range === 'all') return metrics
-    return metrics.slice(-Number(range))
+    if (range === 'si') return metrics
+    const cutoff = new Date(Date.now() - Number(range) * 86400000)
+      .toISOString()
+      .slice(0, 10)
+    return metrics.filter(m => m.date >= cutoff)
   }, [metrics, range])
 
   const drivers = useMemo(() => (metrics ? computeSleepDrivers(metrics) : []), [metrics])
