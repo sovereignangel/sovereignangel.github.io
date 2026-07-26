@@ -18,6 +18,7 @@ export interface GarminMetrics {
   hrvRmssd: number | null
   hrvWeeklyAvg: number | null
   sleepScore: number | null
+  sleepDurationMinutes?: number | null
   deepSleepMinutes: number | null
   lightSleepMinutes: number | null
   remSleepMinutes: number | null

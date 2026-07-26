@@ -146,7 +146,11 @@ async function fetchGarminData(
     if (stats) {
       metrics.steps = stats.totalSteps ?? null
       metrics.activeCalories = stats.activeKilocalories ?? null
-      metrics.stressLevel = stats.averageStressLevel ?? null
+      // Garmin reports -1/-2 as "no stress data" — store null, not the sentinel
+      metrics.stressLevel =
+        stats.averageStressLevel != null && stats.averageStressLevel >= 0
+          ? stats.averageStressLevel
+          : null
     }
   } catch (e) {
     console.warn('Garmin daily stats fetch failed:', (e as Error).message)
