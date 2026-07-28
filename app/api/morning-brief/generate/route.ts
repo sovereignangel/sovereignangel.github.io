@@ -24,9 +24,9 @@ function generatePublicToken(): string {
 }
 
 function getBriefUrl(date: string, token: string): string {
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || process.env.VERCEL_URL
-    ? `https://${process.env.VERCEL_URL}`
-    : 'http://localhost:3000'
+  // Canonical domain, never VERCEL_URL — deployment URLs sit behind Vercel's
+  // deployment protection, so brief links sent to Telegram were unopenable.
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://www.loricorpuz.com'
   return `${baseUrl}/brief/${date}?token=${token}`
 }
 
@@ -63,7 +63,20 @@ async function generateAndSend(uid: string, chatId: string | number): Promise<{ 
     return { success: true }
   } catch (error) {
     console.error(`[morning-brief] Failed for uid=${uid}:`, error)
-    return { success: false, error: error instanceof Error ? error.message : String(error) }
+    const msg = error instanceof Error ? error.message : String(error)
+    // Surface the failure instead of dying silently — a missing brief must be
+    // visible the same morning, not discovered weeks later.
+    try {
+      await sendToInbox({
+        source: 'thesis',
+        kind: 'alert',
+        severity: 'warn',
+        title: 'Morning Brief generation FAILED',
+        body: msg.slice(0, 300),
+        dedupe_key: `morning-brief-failed:${new Date().toISOString().slice(0, 10)}`,
+      })
+    } catch { /* ignore alert failure */ }
+    return { success: false, error: msg }
   }
 }
 

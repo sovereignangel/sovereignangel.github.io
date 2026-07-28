@@ -5,9 +5,7 @@
  * to produce a Bridgewater-style weekly review delivered via Telegram every Sunday.
  */
 
-import { GoogleGenerativeAI } from '@google/generative-ai'
-
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '')
+import { callLLM } from './llm'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -485,8 +483,6 @@ async function generateAIAnalysis(
   topRelationshipMoves: string[]
   attentionCommentary: Record<string, string>
 }> {
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' })
-
   const todayKey = localDateString(new Date())
 
   const prompt = `You are a Bridgewater-style radical transparency advisor. Generate a weekly calibration report. Be direct, uncomfortable truths only, no flattery.
@@ -562,9 +558,8 @@ Return ONLY valid JSON (no markdown, no code blocks):
 }`
 
   try {
-    const result = await model.generateContent(prompt)
-    const response = await result.response
-    const text = response.text()
+    const raw = await callLLM(prompt, { temperature: 0.4 })
+    const text = raw
       .replace(/```json\n?/g, '')
       .replace(/```\n?/g, '')
       .trim()

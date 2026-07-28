@@ -45,7 +45,18 @@ async function generateAndSend(uid: string, chatId: string | number): Promise<{ 
     return { success: true }
   } catch (error) {
     console.error(`[weekly-calibration] Failed for uid=${uid}:`, error)
-    return { success: false, error: error instanceof Error ? error.message : String(error) }
+    const msg = error instanceof Error ? error.message : String(error)
+    try {
+      await sendToInbox({
+        source: 'thesis',
+        kind: 'alert',
+        severity: 'warn',
+        title: 'Weekly Calibration generation FAILED',
+        body: msg.slice(0, 300),
+        dedupe_key: `weekly-calibration-failed:${new Date().toISOString().slice(0, 10)}`,
+      })
+    } catch { /* ignore alert failure */ }
+    return { success: false, error: msg }
   }
 }
 

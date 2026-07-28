@@ -2923,7 +2923,7 @@ export async function POST(req: NextRequest) {
         const brief = await generateMorningBrief(uid)
 
         const publicToken = randomBytes(16).toString('hex')
-        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000')
+        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://www.loricorpuz.com'
         const briefUrl = `${baseUrl}/brief/${brief.date}?token=${publicToken}`
         const formatted = formatMorningBriefCompact(brief, briefUrl)
 

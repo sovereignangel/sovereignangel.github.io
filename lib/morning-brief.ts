@@ -6,9 +6,7 @@
  * and the Keynes philosophy: love, aesthetic experience, knowledge.
  */
 
-import { GoogleGenerativeAI } from '@google/generative-ai'
-
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '')
+import { callLLM } from './llm'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -144,7 +142,10 @@ async function fetchEnergyState(uid: string) {
   const logSnap = await db.collection('users').doc(uid).collection('daily_logs').doc(yesterdayKey).get()
   const log = logSnap.exists ? logSnap.data() as Record<string, unknown> : null
 
-  const sleepHours = (garmin?.sleepDurationHours as number) ?? (garmin?.sleepHours as number) ?? null
+  const sleepMinutes = garmin?.sleepDurationMinutes as number | null | undefined
+  const sleepHours = (garmin?.sleepDurationHours as number)
+    ?? (garmin?.sleepHours as number)
+    ?? (sleepMinutes != null ? Math.round((sleepMinutes / 60) * 10) / 10 : null)
   const hrv = (garmin?.hrvWeeklyAvg as number) ?? (garmin?.hrv as number) ?? null
   const bodyBattery = (garmin?.bodyBatteryCurrent as number) ?? (garmin?.bodyBattery as number) ?? null
   const stressLevel = (garmin?.avgStressLevel as number) ?? null
@@ -228,7 +229,9 @@ async function fetchPendingDecisions(uid: string) {
         domain: (data.domain as string) || '',
       }
     })
-    .filter(d => d.daysUntilReview <= 14)
+    // Only upcoming reviews. Long-overdue decisions belong in the weekly
+    // calibration's stale-decision review, not pinned to every morning.
+    .filter(d => d.daysUntilReview >= 0 && d.daysUntilReview <= 14)
     .sort((a, b) => a.daysUntilReview - b.daysUntilReview)
     .slice(0, 3)
 }
@@ -339,7 +342,6 @@ async function generateDailyIntention(
   keynesCheck: string
   aiSynthesis: string
 }> {
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' })
   const dayName = getDayName()
 
   const dayContext = dayOfWeek === 'saturday'
@@ -440,12 +442,11 @@ Return ONLY valid JSON (no markdown, no code blocks):
 }`
 
   try {
-    const result = await Promise.race([
-      model.generateContent(prompt),
-      new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Gemini timed out after 30s')), 30000)),
+    const raw = await Promise.race([
+      callLLM(prompt, { temperature: 0.6 }),
+      new Promise<never>((_, reject) => setTimeout(() => reject(new Error('LLM timed out after 45s')), 45000)),
     ])
-    const response = await result.response
-    const text = response.text()
+    const text = raw
       .replace(/```json\n?/g, '')
       .replace(/```\n?/g, '')
       .trim()
@@ -472,17 +473,10 @@ Return ONLY valid JSON (no markdown, no code blocks):
       aiSynthesis: String(parsed.aiSynthesis || ''),
     }
   } catch (error) {
+    // Do NOT fabricate a generic brief — a fake brief that looks real trained
+    // the user to ignore the message entirely. Throw so callers can alert.
     console.error('[morning-brief] AI generation failed:', error)
-    return {
-      dailyIntention: {
-        study: { headline: 'Pick up where you left off in your current textbook.', nuance: '' },
-        work: { headline: 'Review your themes and choose the one with most momentum.', nuance: '' },
-        evening: { headline: 'Be present with someone you love.', nuance: '' },
-        themeContext: 'AI generation failed — trust your instincts today.',
-      },
-      keynesCheck: 'Love comes a long way first.',
-      aiSynthesis: 'AI synthesis unavailable. Check your signals and journal, then choose your theme.',
-    }
+    throw new Error(`Morning brief AI generation failed: ${error instanceof Error ? error.message : String(error)}`)
   }
 }
 
