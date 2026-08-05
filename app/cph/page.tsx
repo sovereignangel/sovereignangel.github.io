@@ -7,8 +7,10 @@ import { useState, useEffect, useRef } from 'react'
 // FLIP USE_TEST_END TO true FOR TESTING THE LOCK SCREEN
 const USE_TEST_END = false
 const TEST_END = { hour: 12, minute: 5 }
-const GAME_START = { hour: 14, minute: 0 }  // 2:00 pm
-const REAL_END = { hour: 18, minute: 0 }    // 6:00 pm — four hours
+const GAME_START = { hour: 15, minute: 0 }  // 3:00 pm
+const REAL_END = { hour: 19, minute: 0 }    // 7:00 pm Copenhagen — screens freeze, winner declared
+
+const fmtHM = (t: { hour: number; minute: number }) => `${String(t.hour).padStart(2, '0')}:${String(t.minute).padStart(2, '0')}`
 
 function getCphTime() {
   const now = new Date()
@@ -104,17 +106,22 @@ const MODES: Record<Mode, { label: string; teams: Team[] }> = {
   },
 }
 
-const CHALLENGES = [
+interface Challenge { id: number; text: string; pts: number; proof: string; opt?: boolean }
+interface Category { category: string; icon: string; items: Challenge[] }
+
+// `opt: true` = tied to a specific location, so it's an OPTIONAL bonus —
+// extra points for teams that make the trip, never required to compete.
+const CHALLENGES: Category[] = [
   {
     category: 'Landmarks & Icons', icon: 'tower',
     items: [
-      { id: 1, text: 'Team photo recreating the Little Mermaid pose next to the statue', pts: 15, proof: 'photo' },
-      { id: 2, text: 'Climb the Round Tower (Rundetårn) — video walking briskly up the spiral ramp', pts: 15, proof: 'video' },
-      { id: 3, text: 'Photo with a Royal Guard at Amalienborg. Respectful distance — no touching, no mocking.', pts: 10, proof: 'photo' },
-      { id: 4, text: 'Team jump photo in front of the colored houses of Nyhavn — everyone mid-air', pts: 10, proof: 'photo' },
-      { id: 5, text: 'Climb the golden spiral stairs of the Church of Our Saviour — photo from the outside staircase', pts: 20, proof: 'photo' },
-      { id: 6, text: 'Photo at the Gefion Fountain with one teammate imitating the ox-driving pose', pts: 10, proof: 'photo' },
-      { id: 7, text: 'Find the windmill inside Kastellet', pts: 10, proof: 'photo' },
+      { id: 1, text: 'Team photo recreating the Little Mermaid pose next to the statue', pts: 15, proof: 'photo', opt: true },
+      { id: 2, text: 'Climb the Round Tower (Rundetårn) — video walking briskly up the spiral ramp', pts: 15, proof: 'video', opt: true },
+      { id: 3, text: 'Photo with a Royal Guard at Amalienborg. Respectful distance — no touching, no mocking.', pts: 10, proof: 'photo', opt: true },
+      { id: 4, text: 'Team jump photo in front of the colored houses of Nyhavn — everyone mid-air', pts: 10, proof: 'photo', opt: true },
+      { id: 5, text: 'Climb the golden spiral stairs of the Church of Our Saviour — photo from the outside staircase', pts: 20, proof: 'photo', opt: true },
+      { id: 6, text: 'Photo at the Gefion Fountain with one teammate imitating the ox-driving pose', pts: 10, proof: 'photo', opt: true },
+      { id: 7, text: 'Find the windmill inside Kastellet', pts: 10, proof: 'photo', opt: true },
     ],
   },
   {
@@ -132,10 +139,10 @@ const CHALLENGES = [
     items: [
       { id: 13, text: 'Run 3 km — any route, any teammate. Must show smartwatch tracking as proof.', pts: 20, proof: 'screenshot' },
       { id: 14, text: 'Whole team planks simultaneously for 60 seconds in a park or square', pts: 10, proof: 'video' },
-      { id: 15, text: 'Wheelbarrow race 20 meters in Kongens Have (King\'s Garden)', pts: 10, proof: 'video' },
+      { id: 15, text: 'Wheelbarrow race 20 meters in any park or square. +5 bonus in Kongens Have (King\'s Garden).', pts: 10, proof: 'video' },
       { id: 16, text: 'One teammate does 15 burpees in under 60 seconds in front of any landmark', pts: 10, proof: 'video' },
       { id: 17, text: 'Leapfrog all the way across a public square', pts: 10, proof: 'video' },
-      { id: 18, text: 'Shoulder-sit photo: one teammate on the other\'s shoulders in front of Christiansborg', pts: 15, proof: 'photo' },
+      { id: 18, text: 'Shoulder-sit photo: one teammate on the other\'s shoulders. +5 bonus in front of Christiansborg.', pts: 15, proof: 'photo' },
     ],
   },
   {
@@ -167,7 +174,7 @@ const CHALLENGES = [
       { id: 32, text: 'Photo of the whole team with bikes (rented, borrowed with permission, or city bikes)', pts: 10, proof: 'photo' },
       { id: 33, text: 'Photo of a cargo bike carrying kids, a dog, or groceries', pts: 10, proof: 'photo' },
       { id: 34, text: 'Photo of a bike rack holding 20+ bikes', pts: 5, proof: 'photo' },
-      { id: 35, text: 'Team photo mid-crossing on Inderhavnsbroen (the Kissing Bridge) or beside Cykelslangen', pts: 10, proof: 'photo' },
+      { id: 35, text: 'Team photo mid-crossing on any harbor bridge. +5 bonus on Inderhavnsbroen (the Kissing Bridge) or beside Cykelslangen.', pts: 10, proof: 'photo' },
       { id: 36, text: 'Find a street sign containing æ, ø, or å', pts: 10, proof: 'photo' },
     ],
   },
@@ -177,7 +184,7 @@ const CHALLENGES = [
       { id: 37, text: 'DANISH DANCE-OFF: Choreograph a 30-second team dance to a Danish act (Aqua counts) in a public square. Group votes at the end — winner gets +15 bonus.', pts: 20, proof: 'video' },
       { id: 38, text: 'Write and perform a 30-second team anthem. Must include every teammate\'s name.', pts: 15, proof: 'video' },
       { id: 39, text: 'Recreate a famous painting or movie scene using a Copenhagen backdrop', pts: 15, proof: 'video' },
-      { id: 40, text: 'Compose a haiku about Copenhagen and recite it dramatically at a fountain', pts: 10, proof: 'video' },
+      { id: 40, text: 'Compose a haiku about Copenhagen and recite it dramatically. +5 bonus at a fountain.', pts: 10, proof: 'video' },
       { id: 41, text: 'One teammate impersonates someone else on the trip. The group must guess who at the end.', pts: 10, proof: 'video' },
       { id: 42, text: 'Pose as a statue in a busy square for 2 minutes without breaking. Bonus +5 if a stranger takes a photo of you.', pts: 15, proof: 'video' },
     ],
@@ -187,8 +194,8 @@ const CHALLENGES = [
     items: [
       { id: 43, text: 'Long division by hand on paper, filmed, no calculator: 9,376 divided by 23 (to 2 decimal places)', pts: 15, proof: 'video' },
       { id: 44, text: 'Name 15 countries in 30 seconds — filmed, no repeats', pts: 10, proof: 'video' },
-      { id: 45, text: 'Count the colored facades on the sunny side of Nyhavn — submit your number with photo evidence. Closest team wins the points.', pts: 15, proof: 'photo + number' },
-      { id: 46, text: 'Find the year the Round Tower was completed — from a plaque or inscription on site, not Google', pts: 10, proof: 'photo of plaque' },
+      { id: 45, text: 'Count the colored facades on the sunny side of Nyhavn — submit your number with photo evidence. Closest team wins the points.', pts: 15, proof: 'photo + number', opt: true },
+      { id: 46, text: 'Find the year the Round Tower was completed — from a plaque or inscription on site, not Google', pts: 10, proof: 'photo of plaque', opt: true },
       { id: 47, text: 'Name 5 famous Danes in 20 seconds — filmed', pts: 10, proof: 'video' },
     ],
   },
@@ -204,11 +211,11 @@ const CHALLENGES = [
       { id: 49, text: 'A Dannebrog (Danish flag) flying from a building or mast', pts: 5, proof: 'photo' },
       { id: 50, text: 'Anything LEGO', pts: 10, proof: 'photo' },
       { id: 51, text: 'A crown symbol on a building, manhole cover, or lamppost', pts: 5, proof: 'photo' },
-      { id: 52, text: 'The Stork Fountain (Storkespringvandet) on Strøget', pts: 10, proof: 'photo' },
+      { id: 52, text: 'The Stork Fountain (Storkespringvandet) on Strøget', pts: 10, proof: 'photo', opt: true },
       { id: 53, text: 'The most beautiful doorway in the city — team must agree', pts: 5, proof: 'photo' },
       { id: 54, text: 'A living creature other than a human, dog, or bird', pts: 10, proof: 'photo' },
       { id: 55, text: 'Something red and something white — Danish flag colors, both found in the wild', pts: 5, proof: 'photo' },
-      { id: 56, text: 'A wooden ship moored in Nyhavn', pts: 5, proof: 'photo' },
+      { id: 56, text: 'A wooden ship moored in Nyhavn', pts: 5, proof: 'photo', opt: true },
       { id: 57, text: 'A busker mid-performance — leave a coin and get a photo', pts: 10, proof: 'photo' },
     ],
   },
@@ -289,7 +296,7 @@ function RulesPage({ teams, modeLabel, onChangeMode }: { teams: Team[]; modeLabe
     <div>
       <SectionHead>The Format</SectionHead>
       <P>4 hours. {totalCount} challenges. {modeLabel}. One winner. Total possible: <Mono>{totalPossible} pts</Mono></P>
-      <P>Game runs <Mono>{String(GAME_START.hour).padStart(2, '0')}:{String(GAME_START.minute).padStart(2, '0')}</Mono> to <Mono>{String(REAL_END.hour).padStart(2, '0')}:{String(REAL_END.minute).padStart(2, '0')}</Mono>. At the end, all teams return to the meeting point. Late arrivals lose <Mono>5 pts/min</Mono>. Scores tallied. Proof reviewed. Champions crowned.</P>
+      <P>Game runs <Mono>{fmtHM(GAME_START)}</Mono> to <Mono>{fmtHM(REAL_END)}</Mono>. At <Mono>{fmtHM(REAL_END)}</Mono> the screens freeze, the points are final, and the winner is declared on every phone. Late arrivals at the meeting point lose <Mono>5 pts/min</Mono>.</P>
       <Rule />
       <SectionHead>The Teams</SectionHead>
       {teams.map(t => (
@@ -310,6 +317,7 @@ function RulesPage({ teams, modeLabel, onChangeMode }: { teams: Team[]; modeLabe
       <SectionHead>Rules of Engagement</SectionHead>
       {[
         'Complete challenges in any order. Route strategy wins games — Copenhagen is bigger than it looks.',
+        'Challenges marked "optional · location bonus" are tied to a specific spot — pure extra points, never required. Everything else can be done anywhere in the city.',
         'Teammates can split up for independent challenges, but team photos need everyone (ask a stranger or use a timer).',
         'Proof required as marked — photo, video, screenshot, or written. No proof, no points.',
         'Running challenges require smartwatch tracking (Garmin, Apple Watch, etc.).',
@@ -387,6 +395,32 @@ function TeamCard({ team, allTeams }: { team: Team; allTeams: Team[] }) {
   const total = CHALLENGES.reduce((s, c) => s + c.items.length, 0)
   const behind = rivalBest === null ? null : Math.max(0, rivalBest - earned)
 
+  // At freeze time: pull every team's final score, declare the winner, and
+  // save the result to Firestore (checks are already persisted as they go).
+  const [standings, setStandings] = useState<{ name: string; score: number }[] | null>(null)
+  useEffect(() => {
+    if (!locked) return
+    Promise.all(allTeams.map(t =>
+      fetch(`/api/cph-hunt?team=${t.storageKey}`)
+        .then(r => r.json())
+        .then(d => ({ name: t.name, score: earnedFrom(d.checks || {}) }))
+        .catch(() => ({ name: t.name, score: 0 }))
+    )).then(rows => {
+      rows.sort((a, b) => b.score - a.score)
+      setStandings(rows)
+      fetch('/api/cph-hunt', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          teamKey: 'cph_config',
+          itemId: 'final',
+          timestamp: JSON.stringify({ decidedAt: new Date().toISOString(), standings: rows }),
+        }),
+      })
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [locked])
+
   const scrollToCat = (category: string) => {
     setOpen(p => ({ ...p, [category]: true }))
     setTimeout(() => {
@@ -394,12 +428,31 @@ function TeamCard({ team, allTeams }: { team: Team; allTeams: Team[] }) {
     }, 0)
   }
 
+  const winners = standings && standings.length ? standings.filter(s => s.score === standings[0].score) : []
+
   return (
     <div>
       {locked && (
-        <div style={{ background: '#8c2d2d', color: '#faf8f4', textAlign: 'center', padding: '10px 16px', marginBottom: 14, borderRadius: 2 }}>
+        <div style={{ background: '#8c2d2d', color: '#faf8f4', textAlign: 'center', padding: '12px 16px', marginBottom: 14, borderRadius: 2 }}>
           <div style={{ fontFamily: "'Crimson Pro', Georgia, serif", fontSize: 18, fontWeight: 700, letterSpacing: 1 }}>TIME&apos;S UP</div>
-          <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, opacity: 0.8, marginTop: 2 }}>Checkboxes are locked. Get to the meeting point.</div>
+          {standings === null && (
+            <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, opacity: 0.8, marginTop: 2 }}>Points are frozen. Tallying final scores…</div>
+          )}
+          {standings !== null && (
+            <>
+              <div style={{ fontFamily: "'Crimson Pro', Georgia, serif", fontSize: 14, fontWeight: 700, marginTop: 4 }}>
+                {winners.length > 1
+                  ? `Tie — ${winners.map(w => w.name).join(' & ')} at ${winners[0].score} pts`
+                  : `${winners[0]?.name} wins — ${winners[0]?.score} pts`}
+              </div>
+              <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 10, opacity: 0.85, marginTop: 4, lineHeight: 1.6 }}>
+                {standings.map((s, i) => (
+                  <div key={s.name}>{i + 1}. {s.name} · {s.score} pts</div>
+                ))}
+              </div>
+              <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 10, opacity: 0.7, marginTop: 4 }}>Scores are saved. Get to the meeting point.</div>
+            </>
+          )}
         </div>
       )}
 
@@ -483,6 +536,9 @@ function TeamCard({ team, allTeams }: { team: Team; allTeams: Team[] }) {
                   <div style={{ display: 'flex', gap: 6, marginTop: 1, fontFamily: "'IBM Plex Mono', monospace", fontSize: 9.5 }}>
                     <span style={{ fontWeight: 600, color: isDone ? team.accent : '#9a928a' }}>{item.pts} pts</span>
                     <span style={{ color: '#c8c0b8' }}>{item.proof}</span>
+                    {item.opt && (
+                      <span style={{ color: '#8a6d2f', fontWeight: 600 }}>optional · location bonus</span>
+                    )}
                     {isDone && ts && (
                       <span style={{ color: team.accent, fontWeight: 600 }}>✓ {formatCphTime(ts)}</span>
                     )}
@@ -578,7 +634,7 @@ export default function CphPage() {
             The Copenhagen Scavenger Hunt
           </h1>
           <div style={{ fontFamily: "'Crimson Pro', Georgia, serif", fontSize: 10, fontStyle: 'italic', color: '#9a928a', marginTop: 2, marginBottom: 6 }}>
-            København · {mode ? MODES[mode].label : 'Six Hunters'} · 14:00–18:00
+            København · {mode ? MODES[mode].label : 'Six Hunters'} · {fmtHM(GAME_START)}–{fmtHM(REAL_END)}
           </div>
         </div>
         {mode && (
