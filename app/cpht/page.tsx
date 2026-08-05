@@ -26,9 +26,16 @@ const value: React.CSSProperties = {
   fontFamily: "'IBM Plex Mono', monospace", fontSize: 12, fontWeight: 600, color: '#2a2522',
 }
 
-function Console({ testFrozen, setTestFrozen }: { testFrozen: boolean; setTestFrozen: (v: boolean) => void }) {
+function Console({
+  testFrozen, setTestFrozen, notify,
+}: {
+  testFrozen: boolean
+  setTestFrozen: (v: boolean) => void
+  notify: () => void
+}) {
   const [started, setStarted] = useState<string | null>(null)
   const [liveMode, setLiveMode] = useState<Mode | null>(null)
+  const [testStarted, setTestStarted] = useState<string | null>(null)
   const [scores, setScores] = useState<{ name: string; score: number }[]>([])
   const [busy, setBusy] = useState('')
   const [confirmWipe, setConfirmWipe] = useState(false)
@@ -39,6 +46,8 @@ function Console({ testFrozen, setTestFrozen }: { testFrozen: boolean; setTestFr
     setStarted(cfg.started || null)
     const m = cfg.mode
     setLiveMode(m === 'pairs' || m === 'trios' ? m : null)
+    const tcfg = await readConfig('test')
+    setTestStarted(tcfg.started || null)
 
     const teams = m === 'pairs' || m === 'trios' ? MODES[m].teams : []
     const rows = await Promise.all(teams.map(async t => {
@@ -59,15 +68,19 @@ function Console({ testFrozen, setTestFrozen }: { testFrozen: boolean; setTestFr
     setBusy(name)
     await fn()
     await refresh()
+    notify()
     setBusy('')
   }
 
   const unlock = () => run('unlock', () => writeConfig('live', 'started', new Date().toISOString()))
   const relock = () => run('relock', () => writeConfig('live', 'started', null))
   const setLiveFormat = (m: Mode | null) => run('format', () => writeConfig('live', 'mode', m))
+  const startTest = () => run('starttest', () => writeConfig('test', 'started', new Date().toISOString()))
   const resetTest = () => run('resettest', async () => {
     await Promise.all(ALL_TEAM_KEYS.map(k => resetTeam('test', k)))
     await writeConfig('test', 'mode', null)
+    await writeConfig('test', 'started', null)
+    setTestFrozen(false)
   })
   const wipeLive = () => run('wipelive', async () => {
     await Promise.all(ALL_TEAM_KEYS.map(k => resetTeam('live', k)))
@@ -152,13 +165,36 @@ function Console({ testFrozen, setTestFrozen }: { testFrozen: boolean; setTestFr
       )}
 
       <SectionHead>Sandbox · {'/cpht'}</SectionHead>
-      <P>The tabs beside this one are a full working copy of the hunt. Anything you check here writes to separate test records and never touches the live scores.</P>
-      <button style={btn('plain')} onClick={() => setTestFrozen(!testFrozen)}>
-        {testFrozen ? 'Un-freeze the sandbox' : 'Preview the TIME\'S UP freeze screen'}
-      </button>
+      <P>The tab beside this one is a full working copy of the hunt, writing to separate test records that never touch the live scores. Walk the whole game through here first.</P>
+      <div style={{ border: '1px solid #d8d0c8', borderRadius: 2, padding: '10px 12px', marginBottom: 10, background: '#faf8f4' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+          <span style={label}>Sandbox is</span>
+          <span style={{ ...value, color: testFrozen ? '#8c2d2d' : testStarted ? '#2d5f3f' : '#8a6d2f' }}>
+            {testFrozen ? 'FROZEN — endgame screen' : testStarted ? 'RUNNING — checklist live' : 'PREVIEW — pre-start screen'}
+          </span>
+        </div>
+      </div>
+
+      {!testStarted ? (
+        <>
+          <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, color: '#9a928a', lineHeight: 1.4, marginBottom: 8 }}>
+            The Preview tab is showing exactly what players see on /cph right now, before the start.
+          </div>
+          <button style={btn('primary', busy === 'starttest')} onClick={startTest} disabled={!!busy}>
+            {busy === 'starttest' ? 'Starting…' : 'START THE SANDBOX HUNT'}
+          </button>
+        </>
+      ) : (
+        <button style={btn('plain')} onClick={() => setTestFrozen(!testFrozen)}>
+          {testFrozen ? 'Un-freeze the sandbox' : 'Preview the TIME\'S UP freeze screen'}
+        </button>
+      )}
       <button style={btn('plain', busy === 'resettest')} onClick={resetTest} disabled={!!busy}>
-        {busy === 'resettest' ? 'Resetting…' : 'Reset sandbox scores & format'}
+        {busy === 'resettest' ? 'Resetting…' : 'Reset sandbox back to preview'}
       </button>
+      <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, color: '#9a928a', lineHeight: 1.4, marginBottom: 14 }}>
+        Reset wipes sandbox scores and format, un-freezes, and returns the Preview tab to the pre-start screen. The live game is untouched.
+      </div>
 
       <div style={{ borderTop: '2px solid #8c2d2d', marginTop: 18, paddingTop: 10 }}>
         <SectionHead>Danger zone</SectionHead>
@@ -182,11 +218,20 @@ function Console({ testFrozen, setTestFrozen }: { testFrozen: boolean; setTestFr
 
 export default function CphtPage() {
   const [testFrozen, setTestFrozen] = useState(false)
+  // Bumped after every console action so the game panel re-reads config at once
+  const [version, setVersion] = useState(0)
   return (
     <HuntGame
       env="test"
       testFrozen={testFrozen}
-      adminPanel={<Console testFrozen={testFrozen} setTestFrozen={setTestFrozen} />}
+      configVersion={version}
+      adminPanel={
+        <Console
+          testFrozen={testFrozen}
+          setTestFrozen={setTestFrozen}
+          notify={() => setVersion(v => v + 1)}
+        />
+      }
     />
   )
 }

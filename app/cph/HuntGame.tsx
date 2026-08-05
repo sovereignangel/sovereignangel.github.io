@@ -653,10 +653,13 @@ export default function HuntGame({
   env,
   adminPanel,
   testFrozen = false,
+  configVersion = 0,
 }: {
   env: Env
   adminPanel?: React.ReactNode
   testFrozen?: boolean
+  /** Bump to force an immediate config re-read (the console does this after every action) */
+  configVersion?: number
 }) {
   const [tab, setTab] = useState<string>(adminPanel ? 'admin' : 'rules')
   const [mode, setMode] = useState<Mode | null>(null)
@@ -679,7 +682,7 @@ export default function HuntGame({
     // Live players poll so the hunt opens on their phone without a refresh
     const id = setInterval(load, env === 'live' ? 15_000 : 30_000)
     return () => { alive = false; clearInterval(id) }
-  }, [env])
+  }, [env, configVersion])
 
   useEffect(() => {
     const id = setInterval(() => setClockFrozen(isFrozenNow()), 30_000)
@@ -694,15 +697,22 @@ export default function HuntGame({
 
   const teams = mode ? MODES[mode].teams : []
   const frozen = env === 'test' ? testFrozen : clockFrozen
-  const open = env === 'test' ? true : !!started
+  // Both environments sit on the waiting screen until they are opened — the
+  // sandbox so you can preview exactly what players see before the start.
+  const open = !!started
 
   const tabs = [
     ...(adminPanel ? [{ key: 'admin', label: 'Console', accent: '#7c2d2d' }] : []),
-    { key: 'rules', label: 'Rules', accent: '#7c2d2d' },
-    ...teams.map((t, i) => ({ key: `team${i}`, label: t.tab, accent: t.accent })),
+    { key: 'rules', label: open ? 'Rules' : 'Preview', accent: '#7c2d2d' },
+    ...(open ? teams.map((t, i) => ({ key: `team${i}`, label: t.tab, accent: t.accent })) : []),
   ]
 
   const showTabs = adminPanel ? true : open && mode !== null
+
+  // A reset back to preview can strand the view on a team tab that no longer exists
+  useEffect(() => {
+    if (!open && tab.startsWith('team')) setTab('rules')
+  }, [open, tab])
 
   return (
     <div style={{ maxWidth: 480, margin: '0 auto', fontFamily: "'Inter', -apple-system, sans-serif", minHeight: '100vh', background: '#f5f1ea', color: '#2a2522' }}>
