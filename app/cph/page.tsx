@@ -81,27 +81,25 @@ const icons: Record<string, (c?: string) => JSX.Element> = {
   ),
 }
 
-// EDIT HUNTER NAMES BEFORE THE GAME — six hunters, split by the chosen format.
-const HUNTERS = ['Hunter 1', 'Hunter 2', 'Hunter 3', 'Hunter 4', 'Hunter 5', 'Hunter 6']
-
 interface Team { name: string; accent: string; members: string[]; storageKey: string; tab: string }
 
 // Two starting formats — the group picks one on the start screen.
+// Rosters start empty on purpose — add hunter names to `members` once teams are chosen.
 type Mode = 'pairs' | 'trios'
 const MODES: Record<Mode, { label: string; teams: Team[] }> = {
   pairs: {
     label: '3 Teams of 2',
     teams: [
-      { name: 'NYHAVN NAVY', accent: '#2d4a6f', members: [HUNTERS[0], HUNTERS[1]], storageKey: 'cph_team_navy', tab: 'NN' },
-      { name: 'TIVOLI TWISTERS', accent: '#7c2d2d', members: [HUNTERS[2], HUNTERS[3]], storageKey: 'cph_team_tivoli', tab: 'TT' },
-      { name: 'SMØRREBRØD SQUAD', accent: '#8a6d2f', members: [HUNTERS[4], HUNTERS[5]], storageKey: 'cph_team_smor', tab: 'SS' },
+      { name: 'NYHAVN NAVY', accent: '#2d4a6f', members: [], storageKey: 'cph_team_navy', tab: 'NN' },
+      { name: 'TIVOLI TWISTERS', accent: '#7c2d2d', members: [], storageKey: 'cph_team_tivoli', tab: 'TT' },
+      { name: 'SMØRREBRØD SQUAD', accent: '#8a6d2f', members: [], storageKey: 'cph_team_smor', tab: 'SS' },
     ],
   },
   trios: {
     label: '2 Teams of 3',
     teams: [
-      { name: 'NYHAVN NAVY', accent: '#2d4a6f', members: [HUNTERS[0], HUNTERS[1], HUNTERS[2]], storageKey: 'cph_team_navy', tab: 'NN' },
-      { name: 'TIVOLI TWISTERS', accent: '#7c2d2d', members: [HUNTERS[3], HUNTERS[4], HUNTERS[5]], storageKey: 'cph_team_tivoli', tab: 'TT' },
+      { name: 'NYHAVN NAVY', accent: '#2d4a6f', members: [], storageKey: 'cph_team_navy', tab: 'NN' },
+      { name: 'TIVOLI TWISTERS', accent: '#7c2d2d', members: [], storageKey: 'cph_team_tivoli', tab: 'TT' },
     ],
   },
 }
@@ -294,7 +292,9 @@ function RulesPage({ teams, modeLabel, onChangeMode }: { teams: Team[]; modeLabe
       {teams.map(t => (
         <div key={t.name} style={{ borderLeft: `3px solid ${t.accent}`, padding: '5px 12px', marginBottom: 5, background: `${t.accent}08` }}>
           <div style={{ fontFamily: "'Crimson Pro', Georgia, serif", fontSize: 14, fontWeight: 700, color: t.accent }}>{t.name}</div>
-          <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, color: '#2a2522', fontWeight: 500 }}>{t.members.join(' & ')}</div>
+          <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, color: t.members.length ? '#2a2522' : '#9a928a', fontWeight: 500, fontStyle: t.members.length ? 'normal' : 'italic' }}>
+            {t.members.length ? t.members.join(' & ') : 'Roster to be chosen'}
+          </div>
         </div>
       ))}
       <button
@@ -386,7 +386,9 @@ function TeamCard({ team }: { team: Team }) {
 
       <div style={{ textAlign: 'center', marginBottom: 12 }}>
         <h2 style={{ fontFamily: "'Crimson Pro', Georgia, serif", fontSize: 22, fontWeight: 700, color: team.accent, margin: '0 0 2px', letterSpacing: 1 }}>{team.name}</h2>
-        <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, color: '#5c5550' }}>{team.members.join(' & ')}</div>
+        {team.members.length > 0 && (
+          <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, color: '#5c5550' }}>{team.members.join(' & ')}</div>
+        )}
       </div>
 
       <div style={{ display: 'flex', justifyContent: 'center', gap: 24, padding: '10px 0', borderTop: `2px solid ${team.accent}`, borderBottom: '1px solid #d8d0c8', marginBottom: 14 }}>
