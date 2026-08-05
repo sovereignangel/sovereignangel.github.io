@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
   title: 'The Copenhagen Scavenger Hunt',
-  description: 'Copenhagen · Four Hours · Eight Hunters · One Winner',
+  description: 'Copenhagen · Four Hours · Six Hunters · One Winner',
 }
 
 export default function CphLayout({ children }: { children: React.ReactNode }) {

@@ -81,13 +81,30 @@ const icons: Record<string, (c?: string) => JSX.Element> = {
   ),
 }
 
-// EDIT MEMBER NAMES BEFORE THE GAME — eight hunters, four teams of two.
-const TEAMS = [
-  { name: 'NYHAVN NAVY', accent: '#2d4a6f', members: ['Hunter 1', 'Hunter 2'], storageKey: 'cph_team_navy' },
-  { name: 'TIVOLI TWISTERS', accent: '#7c2d2d', members: ['Hunter 3', 'Hunter 4'], storageKey: 'cph_team_tivoli' },
-  { name: 'SMØRREBRØD SQUAD', accent: '#8a6d2f', members: ['Hunter 5', 'Hunter 6'], storageKey: 'cph_team_smor' },
-  { name: 'KANELSNEGLE CREW', accent: '#2d5f3f', members: ['Hunter 7', 'Hunter 8'], storageKey: 'cph_team_kanel' },
-]
+// EDIT HUNTER NAMES BEFORE THE GAME — six hunters, split by the chosen format.
+const HUNTERS = ['Hunter 1', 'Hunter 2', 'Hunter 3', 'Hunter 4', 'Hunter 5', 'Hunter 6']
+
+interface Team { name: string; accent: string; members: string[]; storageKey: string; tab: string }
+
+// Two starting formats — the group picks one on the start screen.
+type Mode = 'pairs' | 'trios'
+const MODES: Record<Mode, { label: string; teams: Team[] }> = {
+  pairs: {
+    label: '3 Teams of 2',
+    teams: [
+      { name: 'NYHAVN NAVY', accent: '#2d4a6f', members: [HUNTERS[0], HUNTERS[1]], storageKey: 'cph_team_navy', tab: 'NN' },
+      { name: 'TIVOLI TWISTERS', accent: '#7c2d2d', members: [HUNTERS[2], HUNTERS[3]], storageKey: 'cph_team_tivoli', tab: 'TT' },
+      { name: 'SMØRREBRØD SQUAD', accent: '#8a6d2f', members: [HUNTERS[4], HUNTERS[5]], storageKey: 'cph_team_smor', tab: 'SS' },
+    ],
+  },
+  trios: {
+    label: '2 Teams of 3',
+    teams: [
+      { name: 'NYHAVN NAVY', accent: '#2d4a6f', members: [HUNTERS[0], HUNTERS[1], HUNTERS[2]], storageKey: 'cph_team_navy', tab: 'NN' },
+      { name: 'TIVOLI TWISTERS', accent: '#7c2d2d', members: [HUNTERS[3], HUNTERS[4], HUNTERS[5]], storageKey: 'cph_team_tivoli', tab: 'TT' },
+    ],
+  },
+}
 
 const CHALLENGES = [
   {
@@ -116,7 +133,7 @@ const CHALLENGES = [
     category: 'Physical & Endurance', icon: 'run',
     items: [
       { id: 13, text: 'Run 3 km — any route, any teammate. Must show smartwatch tracking as proof.', pts: 20, proof: 'screenshot' },
-      { id: 14, text: 'Both teammates plank simultaneously for 60 seconds in a park or square', pts: 10, proof: 'video' },
+      { id: 14, text: 'Whole team planks simultaneously for 60 seconds in a park or square', pts: 10, proof: 'video' },
       { id: 15, text: 'Wheelbarrow race 20 meters in Kongens Have (King\'s Garden)', pts: 10, proof: 'video' },
       { id: 16, text: 'One teammate does 15 burpees in under 60 seconds in front of any landmark', pts: 10, proof: 'video' },
       { id: 17, text: 'Leapfrog all the way across a public square', pts: 10, proof: 'video' },
@@ -126,7 +143,7 @@ const CHALLENGES = [
   {
     category: 'Food & Drink', icon: 'glass',
     items: [
-      { id: 19, text: 'Both teammates eat a piece of salt licorice (salmiak) — reactions on camera', pts: 15, proof: 'video' },
+      { id: 19, text: 'Every teammate eats a piece of salt licorice (salmiak) — reactions on camera', pts: 15, proof: 'video' },
       { id: 20, text: 'Buy and split a kanelsnegl (cinnamon roll) — rate it out of 10 on camera', pts: 10, proof: 'video' },
       { id: 21, text: 'Eat a hot dog from a pølsevogn (street cart) — must have remoulade and crispy onions', pts: 10, proof: 'photo' },
       { id: 22, text: 'Share one smørrebrød. Most photogenic smørrebrød across all teams gets +5 bonus — group votes at the end.', pts: 15, proof: 'photo' },
@@ -149,7 +166,7 @@ const CHALLENGES = [
   {
     category: 'Bikes & Streets', icon: 'bike',
     items: [
-      { id: 32, text: 'Photo of both teammates with bikes (rented, borrowed with permission, or city bikes)', pts: 10, proof: 'photo' },
+      { id: 32, text: 'Photo of the whole team with bikes (rented, borrowed with permission, or city bikes)', pts: 10, proof: 'photo' },
       { id: 33, text: 'Photo of a cargo bike carrying kids, a dog, or groceries', pts: 10, proof: 'photo' },
       { id: 34, text: 'Photo of a bike rack holding 20+ bikes', pts: 5, proof: 'photo' },
       { id: 35, text: 'Team photo mid-crossing on Inderhavnsbroen (the Kissing Bridge) or beside Cykelslangen', pts: 10, proof: 'photo' },
@@ -160,7 +177,7 @@ const CHALLENGES = [
     category: 'Creative & Performance', icon: 'palette',
     items: [
       { id: 37, text: 'DANISH DANCE-OFF: Choreograph a 30-second team dance to a Danish act (Aqua counts) in a public square. Group votes at the end — winner gets +15 bonus.', pts: 20, proof: 'video' },
-      { id: 38, text: 'Write and perform a 30-second team anthem. Must include both teammates\' names.', pts: 15, proof: 'video' },
+      { id: 38, text: 'Write and perform a 30-second team anthem. Must include every teammate\'s name.', pts: 15, proof: 'video' },
       { id: 39, text: 'Recreate a famous painting or movie scene using a Copenhagen backdrop', pts: 15, proof: 'video' },
       { id: 40, text: 'Compose a haiku about Copenhagen and recite it dramatically at a fountain', pts: 10, proof: 'video' },
       { id: 41, text: 'One teammate impersonates someone else on the trip. The group must guess who at the end.', pts: 10, proof: 'video' },
@@ -266,25 +283,31 @@ function Mono({ children }: { children: React.ReactNode }) {
   return <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontWeight: 600, color: '#2a2522' }}>{children}</span>
 }
 
-function RulesPage() {
+function RulesPage({ teams, modeLabel, onChangeMode }: { teams: Team[]; modeLabel: string; onChangeMode: () => void }) {
   return (
     <div>
       <SectionHead>The Format</SectionHead>
-      <P>4 hours. {totalCount} challenges. 4 teams of 2. One winner. Total possible: <Mono>{totalPossible} pts</Mono></P>
+      <P>4 hours. {totalCount} challenges. {modeLabel}. One winner. Total possible: <Mono>{totalPossible} pts</Mono></P>
       <P>Game runs <Mono>{String(GAME_START.hour).padStart(2, '0')}:{String(GAME_START.minute).padStart(2, '0')}</Mono> to <Mono>{String(REAL_END.hour).padStart(2, '0')}:{String(REAL_END.minute).padStart(2, '0')}</Mono>. At the end, all teams return to the meeting point. Late arrivals lose <Mono>5 pts/min</Mono>. Scores tallied. Proof reviewed. Champions crowned.</P>
       <Rule />
       <SectionHead>The Teams</SectionHead>
-      {TEAMS.map(t => (
+      {teams.map(t => (
         <div key={t.name} style={{ borderLeft: `3px solid ${t.accent}`, padding: '5px 12px', marginBottom: 5, background: `${t.accent}08` }}>
           <div style={{ fontFamily: "'Crimson Pro', Georgia, serif", fontSize: 14, fontWeight: 700, color: t.accent }}>{t.name}</div>
           <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, color: '#2a2522', fontWeight: 500 }}>{t.members.join(' & ')}</div>
         </div>
       ))}
+      <button
+        onClick={onChangeMode}
+        style={{ fontFamily: "'Crimson Pro', Georgia, serif", fontSize: 11, fontStyle: 'italic', color: '#9a928a', background: 'none', border: '1px solid #d8d0c8', borderRadius: 2, padding: '4px 10px', cursor: 'pointer', WebkitTapHighlightColor: 'transparent' }}
+      >
+        Change team format
+      </button>
       <Rule />
       <SectionHead>Rules of Engagement</SectionHead>
       {[
         'Complete challenges in any order. Route strategy wins games — Copenhagen is bigger than it looks.',
-        'Teammates can split up for independent challenges, but team photos need both of you (ask a stranger or use a timer).',
+        'Teammates can split up for independent challenges, but team photos need everyone (ask a stranger or use a timer).',
         'Proof required as marked — photo, video, screenshot, or written. No proof, no points.',
         'Running challenges require smartwatch tracking (Garmin, Apple Watch, etc.).',
         'Walking, running, bikes, and metro are all allowed. No taxis or cars.',
@@ -322,7 +345,7 @@ function CategoryIcon({ name, color }: { name: string; color: string }) {
 
 const catId = (category: string) => 'cat-' + category.toLowerCase().replace(/[^a-z0-9]+/g, '-')
 
-function TeamCard({ team }: { team: typeof TEAMS[0] }) {
+function TeamCard({ team }: { team: Team }) {
   const [checks, toggle, loaded] = useTeamChecks(team.storageKey)
   const [locked, setLocked] = useState(isGameLocked())
   const [open, setOpen] = useState<Record<string, boolean>>(
@@ -450,15 +473,65 @@ function TeamCard({ team }: { team: typeof TEAMS[0] }) {
   )
 }
 
+function StartScreen({ onChoose }: { onChoose: (m: Mode) => void }) {
+  return (
+    <div style={{ padding: '28px 4px', textAlign: 'center' }}>
+      <SectionHead>Choose Your Format</SectionHead>
+      <P>Six hunters. Pick how you split before the clock starts — the choice syncs to every phone.</P>
+      {(Object.keys(MODES) as Mode[]).map(m => (
+        <button
+          key={m}
+          onClick={() => onChoose(m)}
+          style={{ display: 'block', width: '100%', margin: '12px 0', padding: '16px 12px', background: '#faf8f4', border: '1px solid #d8d0c8', borderRadius: 2, cursor: 'pointer', textAlign: 'center', WebkitTapHighlightColor: 'transparent' }}
+        >
+          <div style={{ fontFamily: "'Crimson Pro', Georgia, serif", fontSize: 18, fontWeight: 700, color: '#7c2d2d', letterSpacing: 1 }}>{MODES[m].label}</div>
+          <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, color: '#9a928a', marginTop: 4 }}>{MODES[m].teams.map(t => t.name).join(' · ')}</div>
+        </button>
+      ))}
+    </div>
+  )
+}
+
 export default function CphPage() {
   const [tab, setTab] = useState<string>('rules')
+  const [mode, setMode] = useState<Mode | null>(null)
+  const [modeLoaded, setModeLoaded] = useState(false)
 
+  // The chosen format is stored in Firestore under a pseudo-team doc
+  // (cph_config → checks.mode) so every phone sees the same team split.
+  useEffect(() => {
+    fetch('/api/cph-hunt?team=cph_config')
+      .then(r => r.json())
+      .then(data => {
+        const m = data.checks?.mode
+        if (m === 'pairs' || m === 'trios') setMode(m)
+        setModeLoaded(true)
+      })
+      .catch(() => setModeLoaded(true))
+  }, [])
+
+  const persistMode = (m: Mode | null) => {
+    fetch('/api/cph-hunt', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ teamKey: 'cph_config', itemId: 'mode', timestamp: m }),
+    })
+  }
+  const chooseMode = (m: Mode) => {
+    setMode(m)
+    setTab('rules')
+    persistMode(m)
+  }
+  const clearMode = () => {
+    setMode(null)
+    setTab('rules')
+    persistMode(null)
+  }
+
+  const teams = mode ? MODES[mode].teams : []
   const tabs = [
     { key: 'rules', label: 'Rules', accent: '#7c2d2d' },
-    { key: 'team0', label: 'NN', accent: TEAMS[0].accent },
-    { key: 'team1', label: 'TT', accent: TEAMS[1].accent },
-    { key: 'team2', label: 'SS', accent: TEAMS[2].accent },
-    { key: 'team3', label: 'KC', accent: TEAMS[3].accent },
+    ...teams.map((t, i) => ({ key: `team${i}`, label: t.tab, accent: t.accent })),
   ]
 
   return (
@@ -469,27 +542,36 @@ export default function CphPage() {
             The Copenhagen Scavenger Hunt
           </h1>
           <div style={{ fontFamily: "'Crimson Pro', Georgia, serif", fontSize: 10, fontStyle: 'italic', color: '#9a928a', marginTop: 2, marginBottom: 6 }}>
-            København · Eight Hunters · 14:00–18:00
+            København · {mode ? MODES[mode].label : 'Six Hunters'} · 14:00–18:00
           </div>
         </div>
-        <div style={{ display: 'flex', borderTop: '1px solid #e8e2da' }}>
-          {tabs.map(t => {
-            const active = tab === t.key
-            return (
-              <button key={t.key} onClick={() => setTab(t.key)} style={{ flex: 1, padding: '9px 4px', fontFamily: "'Crimson Pro', Georgia, serif", fontSize: 12, fontWeight: active ? 700 : 400, fontStyle: active ? 'normal' : 'italic', color: active ? t.accent : '#9a928a', background: active ? '#f5f1ea' : 'transparent', border: 'none', borderBottom: active ? `2px solid ${t.accent}` : '2px solid transparent', cursor: 'pointer', WebkitTapHighlightColor: 'transparent' }}>
-                {t.label}
-              </button>
-            )
-          })}
-        </div>
+        {mode && (
+          <div style={{ display: 'flex', borderTop: '1px solid #e8e2da' }}>
+            {tabs.map(t => {
+              const active = tab === t.key
+              return (
+                <button key={t.key} onClick={() => setTab(t.key)} style={{ flex: 1, padding: '9px 4px', fontFamily: "'Crimson Pro', Georgia, serif", fontSize: 12, fontWeight: active ? 700 : 400, fontStyle: active ? 'normal' : 'italic', color: active ? t.accent : '#9a928a', background: active ? '#f5f1ea' : 'transparent', border: 'none', borderBottom: active ? `2px solid ${t.accent}` : '2px solid transparent', cursor: 'pointer', WebkitTapHighlightColor: 'transparent' }}>
+                  {t.label}
+                </button>
+              )
+            })}
+          </div>
+        )}
       </div>
 
       <div style={{ padding: '14px 16px 80px' }}>
-        {tab === 'rules' && <RulesPage />}
-        {tab === 'team0' && <TeamCard team={TEAMS[0]} />}
-        {tab === 'team1' && <TeamCard team={TEAMS[1]} />}
-        {tab === 'team2' && <TeamCard team={TEAMS[2]} />}
-        {tab === 'team3' && <TeamCard team={TEAMS[3]} />}
+        {!modeLoaded && (
+          <div style={{ textAlign: 'center', padding: '24px 0', fontFamily: "'Crimson Pro', Georgia, serif", fontSize: 11, fontStyle: 'italic', color: '#9a928a' }}>
+            Loading…
+          </div>
+        )}
+        {modeLoaded && mode === null && <StartScreen onChoose={chooseMode} />}
+        {modeLoaded && mode !== null && tab === 'rules' && (
+          <RulesPage teams={teams} modeLabel={MODES[mode].label} onChangeMode={clearMode} />
+        )}
+        {modeLoaded && mode !== null && teams.map((t, i) => (
+          tab === `team${i}` ? <TeamCard key={`${mode}-${t.storageKey}`} team={t} /> : null
+        ))}
       </div>
     </div>
   )
