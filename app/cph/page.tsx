@@ -320,6 +320,8 @@ function CategoryIcon({ name, color }: { name: string; color: string }) {
   return fn ? fn(color) : null
 }
 
+const catId = (category: string) => 'cat-' + category.toLowerCase().replace(/[^a-z0-9]+/g, '-')
+
 function TeamCard({ team }: { team: typeof TEAMS[0] }) {
   const [checks, toggle, loaded] = useTeamChecks(team.storageKey)
   const [locked, setLocked] = useState(isGameLocked())
@@ -336,6 +338,13 @@ function TeamCard({ team }: { team: typeof TEAMS[0] }) {
   const earned = CHALLENGES.reduce((s, c) => s + c.items.reduce((a, i) => a + (checks[i.id] ? i.pts : 0), 0), 0)
   const done = Object.keys(checks).length
   const total = CHALLENGES.reduce((s, c) => s + c.items.length, 0)
+
+  const scrollToCat = (category: string) => {
+    setOpen(p => ({ ...p, [category]: true }))
+    setTimeout(() => {
+      document.getElementById(catId(category))?.scrollIntoView({ behavior: 'auto', block: 'start' })
+    }, 0)
+  }
 
   return (
     <div>
@@ -369,12 +378,29 @@ function TeamCard({ team }: { team: typeof TEAMS[0] }) {
         </div>
       </div>
 
+      <div style={{ position: 'sticky', top: 0, zIndex: 20, background: '#f5f1ea', borderBottom: `2px solid ${team.accent}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '5px 0', marginBottom: 8 }}>
+        {CHALLENGES.map(cat => {
+          const catAllDone = cat.items.every(i => !!checks[i.id])
+          return (
+            <button
+              key={cat.category}
+              onClick={() => scrollToCat(cat.category)}
+              aria-label={cat.category}
+              title={cat.category}
+              style={{ flex: 1, background: catAllDone ? `${team.accent}14` : 'none', border: 'none', borderRadius: 2, padding: '6px 0', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', WebkitTapHighlightColor: 'transparent' }}
+            >
+              <CategoryIcon name={cat.icon} color={team.accent} />
+            </button>
+          )
+        })}
+      </div>
+
       {CHALLENGES.map(cat => {
         const isOpen = open[cat.category]
         const catDone = cat.items.filter(i => !!checks[i.id]).length
         const catPts = cat.items.reduce((s, i) => s + (checks[i.id] ? i.pts : 0), 0)
         return (
-        <div key={cat.category} style={{ marginBottom: 6, border: '1px solid #e8e2da', borderRadius: 2, overflow: 'hidden' }}>
+        <div key={cat.category} id={catId(cat.category)} style={{ marginBottom: 6, border: '1px solid #e8e2da', borderRadius: 2, overflow: 'hidden', scrollMarginTop: 46 }}>
           <div
             onClick={() => setOpen(p => ({ ...p, [cat.category]: !p[cat.category] }))}
             style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 10px', background: '#faf8f4', cursor: 'pointer', WebkitTapHighlightColor: 'transparent', userSelect: 'none' }}
