@@ -220,6 +220,9 @@ const totalCount = CHALLENGES.reduce((s, c) => s + c.items.length, 0)
 // Checks map: { [itemId]: ISO timestamp string }
 type ChecksMap = Record<number, string>
 
+const earnedFrom = (checks: ChecksMap) =>
+  CHALLENGES.reduce((s, c) => s + c.items.reduce((a, i) => a + (checks[i.id] ? i.pts : 0), 0), 0)
+
 function useTeamChecks(teamKey: string): [ChecksMap, (id: number) => void, boolean] {
   const [checks, setChecks] = useState<ChecksMap>({})
   const [loaded, setLoaded] = useState(false)
@@ -345,9 +348,10 @@ function CategoryIcon({ name, color }: { name: string; color: string }) {
 
 const catId = (category: string) => 'cat-' + category.toLowerCase().replace(/[^a-z0-9]+/g, '-')
 
-function TeamCard({ team }: { team: Team }) {
+function TeamCard({ team, allTeams }: { team: Team; allTeams: Team[] }) {
   const [checks, toggle, loaded] = useTeamChecks(team.storageKey)
   const [locked, setLocked] = useState(isGameLocked())
+  const [rivalBest, setRivalBest] = useState<number | null>(null)
   const [open, setOpen] = useState<Record<string, boolean>>(
     Object.fromEntries(CHALLENGES.map(c => [c.category, true]))
   )
@@ -358,9 +362,30 @@ function TeamCard({ team }: { team: Team }) {
     return () => clearInterval(id)
   }, [])
 
-  const earned = CHALLENGES.reduce((s, c) => s + c.items.reduce((a, i) => a + (checks[i.id] ? i.pts : 0), 0), 0)
+  // Poll rival teams' scores so the "behind #1" gap stays live
+  useEffect(() => {
+    let alive = true
+    const rivals = allTeams.filter(t => t.storageKey !== team.storageKey)
+    const load = () => {
+      Promise.all(rivals.map(r =>
+        fetch(`/api/cph-hunt?team=${r.storageKey}`)
+          .then(res => res.json())
+          .then(d => earnedFrom(d.checks || {}))
+          .catch(() => 0)
+      )).then(scores => {
+        if (alive) setRivalBest(scores.length ? Math.max(...scores) : 0)
+      })
+    }
+    load()
+    const id = setInterval(load, 30_000)
+    return () => { alive = false; clearInterval(id) }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [team.storageKey])
+
+  const earned = earnedFrom(checks)
   const done = Object.keys(checks).length
   const total = CHALLENGES.reduce((s, c) => s + c.items.length, 0)
+  const behind = rivalBest === null ? null : Math.max(0, rivalBest - earned)
 
   const scrollToCat = (category: string) => {
     setOpen(p => ({ ...p, [category]: true }))
@@ -393,13 +418,17 @@ function TeamCard({ team }: { team: Team }) {
 
       <div style={{ display: 'flex', justifyContent: 'center', gap: 24, padding: '10px 0', borderTop: `2px solid ${team.accent}`, borderBottom: '1px solid #d8d0c8', marginBottom: 14 }}>
         <div style={{ textAlign: 'center' }}>
-          <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 26, fontWeight: 700, color: team.accent }}>{earned}</div>
-          <div style={{ fontFamily: "'Crimson Pro', Georgia, serif", fontSize: 9, fontStyle: 'italic', color: '#9a928a', textTransform: 'uppercase', letterSpacing: 2 }}>Points</div>
+          <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 10, fontWeight: 600, color: behind === null ? '#c8c0b8' : behind > 0 ? '#8c2d2d' : '#2d5f3f' }}>
+            {behind === null ? '· · ·' : behind > 0 ? `−${behind} behind #1` : 'top team'}
+          </div>
+          <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 26, fontWeight: 700, color: team.accent, lineHeight: 1.1 }}>{earned}</div>
+          <div style={{ fontFamily: "'Crimson Pro', Georgia, serif", fontSize: 9, fontStyle: 'italic', color: '#9a928a', textTransform: 'uppercase', letterSpacing: 2 }}>{earned} / {totalPossible} points</div>
         </div>
         <div style={{ width: 1, background: '#d8d0c8' }} />
         <div style={{ textAlign: 'center' }}>
-          <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 26, fontWeight: 700, color: '#2a2522' }}>{done}</div>
-          <div style={{ fontFamily: "'Crimson Pro', Georgia, serif", fontSize: 9, fontStyle: 'italic', color: '#9a928a', textTransform: 'uppercase', letterSpacing: 2 }}>of {total}</div>
+          <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 10, color: '#c8c0b8' }}>&nbsp;</div>
+          <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 26, fontWeight: 700, color: '#2a2522', lineHeight: 1.1 }}>{done}</div>
+          <div style={{ fontFamily: "'Crimson Pro', Georgia, serif", fontSize: 9, fontStyle: 'italic', color: '#9a928a', textTransform: 'uppercase', letterSpacing: 2 }}>of {total} tasks</div>
         </div>
       </div>
 
@@ -469,7 +498,12 @@ function TeamCard({ team }: { team: Team }) {
 
       <div style={{ position: 'sticky', bottom: 0, background: '#f5f1ea', borderTop: '2px solid #d8d0c8', padding: '8px 4px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <span style={{ fontFamily: "'Crimson Pro', Georgia, serif", fontSize: 11, fontStyle: 'italic', color: '#9a928a' }}>{done}/{total} complete</span>
-        <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 18, fontWeight: 700, color: team.accent }}>{earned} pts</span>
+        <span style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+          <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 10, fontWeight: 600, color: behind === null ? '#c8c0b8' : behind > 0 ? '#8c2d2d' : '#2d5f3f' }}>
+            {behind === null ? '' : behind > 0 ? `−${behind} vs #1` : '#1'}
+          </span>
+          <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 18, fontWeight: 700, color: team.accent }}>{earned} pts</span>
+        </span>
       </div>
     </div>
   )
@@ -572,7 +606,7 @@ export default function CphPage() {
           <RulesPage teams={teams} modeLabel={MODES[mode].label} onChangeMode={clearMode} />
         )}
         {modeLoaded && mode !== null && teams.map((t, i) => (
-          tab === `team${i}` ? <TeamCard key={`${mode}-${t.storageKey}`} team={t} /> : null
+          tab === `team${i}` ? <TeamCard key={`${mode}-${t.storageKey}`} team={t} allTeams={teams} /> : null
         ))}
       </div>
     </div>
