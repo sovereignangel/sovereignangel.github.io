@@ -116,8 +116,8 @@ export interface DayAnalysis {
   hours: HourForecast[] // daylight hours only, in order
   endHour: number // session cutoff (sunset-capped)
   note: string
-  /** Window per the GFS model (what Windguru shows) — a second opinion when models disagree */
-  gfsWindow?: KiteWindow | null
+  /** Window per the ICON-based EU blend — a second opinion when models disagree */
+  altWindow?: KiteWindow | null
 }
 
 export interface SpotForecast {
@@ -268,14 +268,15 @@ export async function fetchSpotForecast(spot: KiteSpot): Promise<SpotForecast> {
     `&hourly=wind_speed_10m,wind_gusts_10m,wind_direction_10m` +
     `&wind_speed_unit=kn&timezone=${encodeURIComponent(TIMEZONE)}&forecast_days=7`
 
-  // Primary: Open-Meteo best-match blend (ICON in Europe). Secondary: GFS —
-  // the model Windguru leads with — as a cross-check when the models disagree.
-  const [res, gfsRes] = await Promise.all([
-    fetch(`${base}&daily=sunset`, { next: { revalidate: 1800 } }),
-    fetch(`${base}&models=gfs_seamless`, { next: { revalidate: 1800 } }),
+  // Primary: GFS 13 km — the model Windguru's headline table runs on, so the
+  // dashboard tracks what local riders see there. Secondary: Open-Meteo's
+  // best-match EU blend (ICON) as a cross-check when the models disagree.
+  const [gfsRes, blendRes] = await Promise.all([
+    fetch(`${base}&daily=sunset&models=gfs_seamless`, { next: { revalidate: 1800 } }),
+    fetch(base, { next: { revalidate: 1800 } }),
   ])
-  if (!res.ok) throw new Error(`Open-Meteo request failed for ${spot.name}: ${res.status}`)
-  const data: OpenMeteoResponse = await res.json()
+  if (!gfsRes.ok) throw new Error(`Open-Meteo request failed for ${spot.name}: ${gfsRes.status}`)
+  const data: OpenMeteoResponse = await gfsRes.json()
 
   const hoursByDate = parseHours(data)
 
@@ -289,19 +290,19 @@ export async function fetchSpotForecast(spot: KiteSpot): Promise<SpotForecast> {
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([date, hours]) => analyzeDay(date, hours, spot, sunsetByDate.get(date) ?? null))
 
-  // Attach the GFS second opinion; the page surfaces it when the blend has no window
-  if (gfsRes.ok) {
+  // Attach the EU-blend second opinion; the page surfaces it when GFS has no window
+  if (blendRes.ok) {
     try {
-      const gfsData: OpenMeteoResponse = await gfsRes.json()
-      const gfsHoursByDate = parseHours(gfsData)
+      const blendData: OpenMeteoResponse = await blendRes.json()
+      const blendHoursByDate = parseHours(blendData)
       for (const day of days) {
-        const gfsHours = gfsHoursByDate.get(day.date)
-        day.gfsWindow = gfsHours
-          ? analyzeDay(day.date, gfsHours, spot, sunsetByDate.get(day.date) ?? null).window
+        const blendHours = blendHoursByDate.get(day.date)
+        day.altWindow = blendHours
+          ? analyzeDay(day.date, blendHours, spot, sunsetByDate.get(day.date) ?? null).window
           : null
       }
     } catch {
-      // GFS is a bonus signal — ignore failures
+      // The second model is a bonus signal — ignore failures
     }
   }
 
@@ -319,14 +320,14 @@ export interface SessionPick {
 }
 
 /**
- * Days where the primary blend shows no window but GFS (Windguru's model) does —
- * "possible" sessions worth re-checking as the day approaches.
+ * Days where GFS (the primary, Windguru's model) shows no window but the EU
+ * blend does — "possible" sessions worth re-checking as the day approaches.
  */
 export function weekPossibles(forecasts: SpotForecast[]): SessionPick[] {
   const picks: SessionPick[] = []
   for (const f of forecasts) {
     for (const day of f.days) {
-      if (!day.window && day.gfsWindow) picks.push({ date: day.date, spot: f.spot, window: day.gfsWindow })
+      if (!day.window && day.altWindow) picks.push({ date: day.date, spot: f.spot, window: day.altWindow })
     }
   }
   return picks.sort(bySessionPriority)

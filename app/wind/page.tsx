@@ -200,7 +200,7 @@ function WeekBand({ dates, sessions, possibles }: { dates: string[]; sessions: S
                       {possible.window.avgSpeedKn} kn &middot; {fmtWindow(possible.window.startHour, possible.window.endHour)}
                     </div>
                     <div className="text-[8px] md:text-[9px] text-surf-muted mt-0.5">
-                      possible &middot; GFS only, recheck
+                      possible &middot; EU model only, recheck
                     </div>
                   </>
                 ) : (
@@ -227,10 +227,10 @@ function MatrixCell({ day, spot }: { day: DayAnalysis; spot: KiteSpot }) {
     line = <span className="text-surf-navy">offshore</span>
   } else if (day.verdict === 'strong') {
     line = <span className="text-surf-coral">too strong</span>
-  } else if (day.gfsWindow) {
+  } else if (day.altWindow) {
     line = (
       <span className="text-surf-sun-ink">
-        poss {day.gfsWindow.avgSpeedKn} kn <span className="hidden md:inline">&middot; GFS</span>
+        poss {day.altWindow.avgSpeedKn} kn <span className="hidden md:inline">&middot; EU</span>
       </span>
     )
   } else if (day.verdict === 'light') {
@@ -238,11 +238,11 @@ function MatrixCell({ day, spot }: { day: DayAnalysis; spot: KiteSpot }) {
   } else {
     line = <span className="text-surf-faint">&mdash;</span>
   }
-  const gfsNote = !day.window && day.gfsWindow
-    ? ` GFS (Windguru) shows ${day.gfsWindow.avgSpeedKn} kn ${fmtWindow(day.gfsWindow.startHour, day.gfsWindow.endHour)} — recheck closer to the day.`
+  const altNote = !day.window && day.altWindow
+    ? ` The EU model shows ${day.altWindow.avgSpeedKn} kn ${fmtWindow(day.altWindow.startHour, day.altWindow.endHour)} — recheck closer to the day.`
     : ''
   return (
-    <div className="py-1 md:py-1.5 border-b border-surf-rule-light" title={`${fmtDay(day.date)} — ${spot.name}: ${day.note}.${gfsNote}`}>
+    <div className="py-1 md:py-1.5 border-b border-surf-rule-light" title={`${fmtDay(day.date)} — ${spot.name}: ${day.note}.${altNote}`}>
       <div className="font-mono text-[9px] md:text-[10px] leading-tight mb-0.5">{line}</div>
       <HourStrip day={day} spot={spot} />
     </div>
