@@ -1,3 +1,5 @@
+import Link from 'next/link'
+
 export default function AboutSection() {
   return (
     <section className="bg-[#faf8f4]/30 backdrop-blur-sm rounded-sm p-5 -mx-5 font-serif">
@@ -70,30 +72,36 @@ export default function AboutSection() {
           <path d="M3 15c1.5 0 2-1 3.5-1s2 1 3.5 1 2-1 3.5-1 2 1 3.5 1 2-1 3.5-1" />
           <path d="M3 19c1.5 0 2-1 3.5-1s2 1 3.5 1 2-1 3.5-1 2 1 3.5 1 2-1 3.5-1" />
         </svg>
-        <svg
-          width="28"
-          height="28"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.25"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          aria-label="Kiteboarding"
-          role="img"
+        <Link
+          href="/wind"
+          aria-label="Kiteboarding — wind forecast"
+          title="Wind — kite forecast for the Lithuanian coast"
+          className="text-[#333] hover:text-[#1a8a8f] transition-colors duration-200"
         >
-          <path d="M3 7 Q 12 1.5, 21 7" />
-          <path d="M3 7 Q 12 5.5, 21 7" />
-          <path d="M3.5 7.5 L 11 14.5" />
-          <path d="M20.5 7.5 L 13 14.5" />
-          <path d="M10.5 14.5 L 13.5 14.5" />
-          <circle cx="12" cy="16.5" r="1.1" />
-          <path d="M12 17.5 L 12 20" />
-          <path d="M11 14.5 L 12 17.2" />
-          <path d="M13 14.5 L 12 17.2" />
-          <ellipse cx="12" cy="20.8" rx="4.5" ry="0.7" />
-          <path d="M2.5 22.8 q 2.5 -1 5 0 t 5 0 t 5 0 t 5 0" />
-        </svg>
+          <svg
+            width="28"
+            height="28"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.25"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M3 7 Q 12 1.5, 21 7" />
+            <path d="M3 7 Q 12 5.5, 21 7" />
+            <path d="M3.5 7.5 L 11 14.5" />
+            <path d="M20.5 7.5 L 13 14.5" />
+            <path d="M10.5 14.5 L 13.5 14.5" />
+            <circle cx="12" cy="16.5" r="1.1" />
+            <path d="M12 17.5 L 12 20" />
+            <path d="M11 14.5 L 12 17.2" />
+            <path d="M13 14.5 L 12 17.2" />
+            <ellipse cx="12" cy="20.8" rx="4.5" ry="0.7" />
+            <path d="M2.5 22.8 q 2.5 -1 5 0 t 5 0 t 5 0 t 5 0" />
+          </svg>
+        </Link>
         <svg
           width="28"
           height="28"

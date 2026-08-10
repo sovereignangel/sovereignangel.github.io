@@ -1,22 +1,8 @@
 import Image from 'next/image'
-import Link from 'next/link'
 
 export default function Header() {
   return (
-    <header className="mb-12 relative">
-      <Link
-        href="/wind"
-        aria-label="Kite wind forecast"
-        title="Wind — kite forecast for the Lithuanian coast"
-        className="absolute top-0 right-0 text-[#c4c4c4] hover:text-[#1a8a8f] transition-colors duration-200"
-      >
-        <svg viewBox="0 0 24 24" className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-          <path d="M4 9.5 Q12 2 20 9.5 Q12 6.5 4 9.5 Z" fill="currentColor" stroke="none" />
-          <path d="M5.5 9.5 L11 20" />
-          <path d="M18.5 9.5 L13 20" />
-          <path d="M10 20.5 L14 20.5" />
-        </svg>
-      </Link>
+    <header className="mb-12">
       <Image
         src="/Main.jpeg"
         alt="Lori Corpuz"
