@@ -172,8 +172,20 @@ function WeekBand({ dates, sessions, possibles }: { dates: string[]; sessions: S
                       {best.window.directionLabel} &middot; {kiteSizeHint(best.window.avgSpeedKn)}
                     </div>
                     {alternates.length > 0 && (
-                      <div className="hidden md:block text-[8px] text-surf-muted mt-0.5">
-                        also {alternates.map(a => `${a.spot.name} ${a.window.avgSpeedKn} kn`).join(' · ')}
+                      <div className="flex items-center gap-1 mt-1">
+                        <span className="text-[8px] text-surf-muted">also</span>
+                        {alternates.map(a => (
+                          <span
+                            key={a.spot.slug}
+                            className="flex flex-col items-center rounded-md bg-surf-teal px-1 py-0.5 w-6"
+                            title={`${a.spot.name} · ${a.window.avgSpeedKn} kn · ${fmtWindow(a.window.startHour, a.window.endHour)} · ${a.window.directionLabel}`}
+                          >
+                            <SpotIcon slug={a.spot.slug} className="w-3 h-3 text-white" />
+                            <span className="font-mono text-[8px] font-semibold text-white leading-none mt-0.5">
+                              {a.window.avgSpeedKn}
+                            </span>
+                          </span>
+                        ))}
                       </div>
                     )}
                   </>
