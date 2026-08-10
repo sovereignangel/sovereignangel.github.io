@@ -38,11 +38,11 @@ function fmtWindow(startHour: number, endHour: number): string {
 }
 
 const HOUR_CELL_COLOR: Record<HourCategory, string> = {
-  ideal: '#2d5f3f',
-  light: 'rgba(138, 109, 47, 0.45)',
-  calm: '#e8e2da',
-  strong: '#8c2d2d',
-  offshore: '#2a2522',
+  ideal: '#1a8a8f',
+  light: 'rgba(217, 164, 65, 0.55)',
+  calm: '#eae3d2',
+  strong: '#c94f35',
+  offshore: '#1f3a45',
 }
 
 const VERDICT_LABEL: Record<DayVerdict, string> = {
@@ -54,25 +54,45 @@ const VERDICT_LABEL: Record<DayVerdict, string> = {
 }
 
 const VERDICT_CLASS: Record<DayVerdict, string> = {
-  good: 'text-green-ink border-green-ink/40 bg-green-bg',
-  light: 'text-amber-ink border-amber-ink/40 bg-amber-bg',
-  calm: 'text-ink-faint border-rule',
-  strong: 'text-red-ink border-red-ink/40 bg-red-bg',
-  offshore: 'text-ink border-ink/40',
+  good: 'text-surf-deep border-surf-teal/50 bg-surf-teal-bg',
+  light: 'text-surf-sun-ink border-surf-sun/60 bg-surf-sun-bg',
+  calm: 'text-surf-faint border-surf-rule',
+  strong: 'text-surf-coral border-surf-coral/50 bg-surf-coral-bg',
+  offshore: 'text-surf-navy border-surf-navy/40',
+}
+
+function WaveDivider() {
+  return (
+    <svg viewBox="0 0 120 8" className="w-24 h-2 text-surf-teal" aria-hidden="true">
+      <path
+        d="M0 4 Q 7.5 0, 15 4 T 30 4 T 45 4 T 60 4 T 75 4 T 90 4 T 105 4 T 120 4"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+      />
+    </svg>
+  )
 }
 
 function HourStrip({ day, spot }: { day: DayAnalysis; spot: KiteSpot }) {
   return (
-    <div className="flex gap-px h-3.5 rounded-sm overflow-hidden">
+    <div className="flex gap-px h-5 rounded-full overflow-hidden">
       {day.hours.map(h => {
         const cat = categorizeHour(h, spot)
         return (
           <div
             key={h.hour}
-            className="flex-1 min-w-[6px]"
+            className="flex-1 min-w-[10px] flex items-center justify-center"
             style={{ backgroundColor: HOUR_CELL_COLOR[cat] }}
             title={`${String(h.hour).padStart(2, '0')}:00 · ${Math.round(h.speedKn)} kn, gusts ${Math.round(h.gustKn)} kn · ${directionLabel(h.directionDeg, spot)}`}
-          />
+          >
+            {cat === 'ideal' && (
+              <span className="font-mono text-[8px] font-semibold text-white leading-none">
+                {Math.round(h.speedKn)}
+              </span>
+            )}
+          </div>
         )
       })}
     </div>
@@ -81,22 +101,22 @@ function HourStrip({ day, spot }: { day: DayAnalysis; spot: KiteSpot }) {
 
 function DayRow({ day, spot }: { day: DayAnalysis; spot: KiteSpot }) {
   return (
-    <div className="py-2 border-b border-rule-light last:border-b-0">
+    <div className="py-2 border-b border-surf-rule-light last:border-b-0">
       <div className="flex items-center justify-between mb-1.5">
-        <span className="font-mono text-[10px] font-medium text-ink">{fmtDay(day.date)}</span>
+        <span className="font-mono text-[10px] font-medium text-surf-ink">{fmtDay(day.date)}</span>
         <div className="flex items-center gap-1.5">
           {day.window && (
-            <span className="font-mono text-[10px] text-ink">
+            <span className="font-mono text-[10px] text-surf-ink">
               {fmtWindow(day.window.startHour, day.window.endHour)} · {day.window.avgSpeedKn} kn
             </span>
           )}
-          <span className={`font-mono text-[8px] uppercase px-1.5 py-0.5 rounded-sm border ${VERDICT_CLASS[day.verdict]}`}>
+          <span className={`font-mono text-[8px] uppercase tracking-wide px-1.5 py-0.5 rounded-full border ${VERDICT_CLASS[day.verdict]}`}>
             {VERDICT_LABEL[day.verdict]}
           </span>
         </div>
       </div>
       <HourStrip day={day} spot={spot} />
-      <div className="mt-1 text-[10px] text-ink-muted">{day.note}</div>
+      <div className="mt-1 text-[10px] text-surf-muted">{day.note}</div>
     </div>
   )
 }
@@ -105,25 +125,25 @@ function SpotCard({ forecast }: { forecast: SpotForecast }) {
   const { spot, days } = forecast
   const rideDays = days.filter(d => d.verdict === 'good').length
   return (
-    <div className="bg-white border border-rule rounded-sm p-3">
-      <div className="mb-2 pb-1.5 border-b-2 border-rule">
+    <div className="bg-surf-card border border-surf-rule rounded-xl p-4 shadow-[0_2px_12px_rgba(13,92,99,0.06)]">
+      <div className="mb-2 pb-2 border-b border-surf-rule">
         <div className="flex items-baseline justify-between">
-          <h2 className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy">
+          <h2 className="font-serif text-[18px] font-semibold text-surf-deep tracking-[0.3px]">
             {spot.name}
           </h2>
-          <span className="font-mono text-[10px] text-ink-muted">
+          <span className="font-mono text-[10px] text-surf-muted">
             {rideDays}/{days.length} days
           </span>
         </div>
-        <div className="text-[10px] text-ink-muted mt-0.5">{spot.area}</div>
+        <div className="text-[10px] text-surf-muted mt-0.5">{spot.area}</div>
       </div>
       <div className="flex items-center gap-1.5 mb-1.5">
-        <span className="font-mono text-[8px] uppercase px-1.5 py-0.5 rounded-sm border bg-burgundy-bg text-burgundy border-burgundy/20">
+        <span className="font-mono text-[8px] uppercase tracking-wide px-2 py-0.5 rounded-full border bg-surf-teal-bg text-surf-deep border-surf-teal/40">
           Ideal
         </span>
-        <span className="text-[10px] text-ink">{spot.idealWind}</span>
+        <span className="text-[10px] text-surf-ink">{spot.idealWind}</span>
       </div>
-      <div className="text-[10px] text-ink-muted mb-2">{spot.note}</div>
+      <div className="text-[10px] text-surf-muted mb-2">{spot.note}</div>
       {days.map(day => (
         <DayRow key={day.date} day={day} spot={spot} />
       ))}
@@ -131,53 +151,69 @@ function SpotCard({ forecast }: { forecast: SpotForecast }) {
   )
 }
 
-function WeekPlan({ sessions }: { sessions: SessionPick[] }) {
+function WeekBand({ dates, sessions }: { dates: string[]; sessions: SessionPick[] }) {
   const byDate = new Map<string, SessionPick[]>()
   for (const s of sessions) {
     const list = byDate.get(s.date) ?? []
     list.push(s)
     byDate.set(s.date, list)
   }
-  const dates = Array.from(byDate.keys()).sort()
 
   return (
-    <div className="bg-white border border-rule rounded-sm p-3 mb-3">
-      <h2 className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-2 pb-1.5 border-b-2 border-rule">
-        When to Kite This Week
-      </h2>
-      {dates.length === 0 ? (
-        <div className="text-[11px] text-ink-muted py-2">
-          No 12&ndash;20 kn windows in the next 7 days at any spot. Check back tomorrow &mdash; forecasts firm up 2&ndash;3 days out.
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-1">
-          {dates.map(date => {
-            const [best, ...alternates] = byDate.get(date)!
+    <div className="bg-surf-card border border-surf-rule rounded-xl p-4 mb-4 shadow-[0_2px_12px_rgba(13,92,99,0.06)]">
+      <div className="flex items-center gap-3 mb-3 pb-2 border-b border-surf-rule">
+        <h2 className="font-serif text-[16px] font-semibold text-surf-deep tracking-[0.3px]">
+          The Week
+        </h2>
+        <WaveDivider />
+        <span className="text-[10px] text-surf-muted ml-auto">
+          Svencele on 15+ kn days &middot; Sventoji on lighter days &middot; Nida only if it is the one
+        </span>
+      </div>
+      <div className="overflow-x-auto">
+        <div className="grid grid-cols-7 gap-2 min-w-[840px]">
+          {dates.map((date, i) => {
+            const picks = byDate.get(date) ?? []
+            const best = picks[0]
+            const alternates = picks.slice(1)
             return (
-              <div key={date} className="flex items-baseline gap-2 py-1.5 border-b border-rule-light">
-                <span className="font-mono text-[11px] font-semibold text-ink w-[72px] shrink-0">
-                  {fmtWeekday(date)}
-                </span>
-                <div className="min-w-0">
-                  <div className="text-[11px] text-ink">
-                    <span className="font-semibold text-green-ink">{best.spot.name}</span>
-                    {' '}&middot; {fmtWindow(best.window.startHour, best.window.endHour)}
-                    {' '}&middot; <span className="font-mono">{best.window.avgSpeedKn} kn</span> {best.window.directionLabel}
-                    {' '}&middot; kite {kiteSizeHint(best.window.avgSpeedKn)}
-                  </div>
-                  {alternates.length > 0 && (
-                    <div className="text-[10px] text-ink-muted">
-                      also: {alternates.map(a =>
-                        `${a.spot.name} ${fmtWindow(a.window.startHour, a.window.endHour)} (${a.window.avgSpeedKn} kn)`
-                      ).join(' · ')}
-                    </div>
-                  )}
+              <div
+                key={date}
+                className={`rounded-lg border p-2 ${
+                  best ? 'border-surf-teal/40 bg-surf-teal-bg' : 'border-surf-rule-light'
+                }`}
+              >
+                <div className="font-mono text-[9px] uppercase tracking-wide text-surf-muted">
+                  {i === 0 ? 'Today' : fmtWeekday(date).slice(0, 3)} &middot; {fmtDay(date).split(', ')[1]}
                 </div>
+                {best ? (
+                  <>
+                    <div className="font-serif text-[14px] font-semibold text-surf-deep mt-1">
+                      {best.spot.name}
+                    </div>
+                    <div className="font-mono text-[13px] font-semibold text-surf-ink mt-0.5">
+                      {best.window.avgSpeedKn} kn
+                    </div>
+                    <div className="font-mono text-[10px] text-surf-ink">
+                      {fmtWindow(best.window.startHour, best.window.endHour)}
+                    </div>
+                    <div className="text-[10px] text-surf-muted mt-0.5">
+                      {best.window.directionLabel} &middot; {kiteSizeHint(best.window.avgSpeedKn)}
+                    </div>
+                    {alternates.length > 0 && (
+                      <div className="text-[9px] text-surf-muted mt-1 pt-1 border-t border-surf-rule-light">
+                        also {alternates.map(a => `${a.spot.name} ${a.window.avgSpeedKn} kn`).join(' · ')}
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div className="text-[10px] text-surf-faint mt-1.5">no 12&ndash;20 kn window</div>
+                )}
               </div>
             )
           })}
         </div>
-      )}
+      </div>
     </div>
   )
 }
@@ -191,17 +227,17 @@ function Legend() {
     { label: 'offshore — never ride', color: HOUR_CELL_COLOR.offshore },
   ]
   return (
-    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mb-3">
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mb-4">
       {items.map(item => (
         <span key={item.label} className="flex items-center gap-1.5">
           <span
-            className={`inline-block w-3 h-3 rounded-sm ${item.border ? 'border border-rule' : ''}`}
+            className={`inline-block w-3 h-3 rounded-full ${item.border ? 'border border-surf-rule' : ''}`}
             style={{ backgroundColor: item.color }}
           />
-          <span className="text-[10px] text-ink-muted">{item.label}</span>
+          <span className="text-[10px] text-surf-muted">{item.label}</span>
         </span>
       ))}
-      <span className="text-[10px] text-ink-faint ml-auto">hour strips run 08:00 to sunset · hover for details</span>
+      <span className="text-[10px] text-surf-faint ml-auto">hour strips run 08:00 to sunset · hover for details</span>
     </div>
   )
 }
@@ -212,12 +248,12 @@ export default async function WindPage() {
     forecasts = await fetchAllSpots()
   } catch {
     return (
-      <main className="min-h-screen" style={{ backgroundColor: '#f5f1ea' }}>
-        <div className="max-w-5xl mx-auto px-4 py-8">
-          <h1 className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy">
+      <main className="min-h-screen" style={{ background: 'linear-gradient(180deg, #e7f0ea 0%, #f2ecdf 320px)' }}>
+        <div className="max-w-5xl mx-auto px-4 py-10">
+          <h1 className="font-serif text-[26px] font-semibold text-surf-deep">
             Wind &mdash; Lithuanian Coast
           </h1>
-          <p className="text-[11px] text-ink-muted mt-3">
+          <p className="text-[11px] text-surf-muted mt-3">
             Forecast service is unreachable right now. Refresh in a minute.
           </p>
         </div>
@@ -234,28 +270,31 @@ export default async function WindPage() {
   })
 
   return (
-    <main className="min-h-screen" style={{ backgroundColor: '#f5f1ea' }}>
-      <div className="max-w-5xl mx-auto px-4 py-8">
+    <main className="min-h-screen" style={{ background: 'linear-gradient(180deg, #e7f0ea 0%, #f2ecdf 320px)' }}>
+      <div className="max-w-5xl mx-auto px-4 py-10">
         <div className="flex items-baseline justify-between mb-1">
-          <h1 className="font-serif text-[20px] font-semibold uppercase tracking-[0.5px] text-burgundy">
-            Wind &mdash; Lithuanian Coast
+          <h1 className="font-serif text-[26px] font-semibold text-surf-deep">
+            Wind <span className="text-surf-teal">&mdash;</span> Lithuanian Coast
           </h1>
-          <span className="font-mono text-[10px] text-ink-muted">updated {generatedAt} LT</span>
+          <span className="font-mono text-[10px] text-surf-muted">updated {generatedAt} LT</span>
         </div>
-        <p className="text-[11px] text-ink-muted mb-4">
-          Svencele &middot; Nida &middot; Sventoji &mdash; sessions tuned to 12&ndash;20 kn, gusts under 26 kn, onshore or cross wind only.
-        </p>
+        <div className="flex items-center gap-3 mb-4">
+          <p className="text-[11px] text-surf-muted">
+            Svencele &middot; Nida &middot; Sventoji &mdash; sessions tuned to 12&ndash;20 kn, gusts under 26 kn, onshore or cross wind only.
+          </p>
+          <WaveDivider />
+        </div>
 
-        <WeekPlan sessions={sessions} />
+        <WeekBand dates={forecasts[0].days.map(d => d.date)} sessions={sessions} />
         <Legend />
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           {forecasts.map(f => (
             <SpotCard key={f.spot.slug} forecast={f} />
           ))}
         </div>
 
-        <p className="text-[10px] text-ink-faint mt-4">
+        <p className="text-[10px] text-surf-faint mt-5">
           Data: Open-Meteo, 10 m wind, refreshed every 30 min &middot; Times are Europe/Vilnius &middot; Verify on the beach before launching.
         </p>
       </div>

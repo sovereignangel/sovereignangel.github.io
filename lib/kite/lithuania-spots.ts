@@ -295,12 +295,18 @@ export function weekSessions(forecasts: SpotForecast[]): SessionPick[] {
   }
   return picks.sort((a, b) => {
     if (a.date !== b.date) return a.date.localeCompare(b.date)
-    // Within a day: strongly prefer the spot's ideal (onshore) wind direction,
-    // then the window nearest 16 kn; lagoon flat water breaks ties
-    const score = (p: SessionPick) =>
-      (inSector(p.window.directionDeg, p.spot.onshoreSector) ? 4 : 0) -
-      Math.abs(p.window.avgSpeedKn - 16) +
-      (p.spot.water === 'lagoon' ? 0.5 : 0)
+    // Within a day: prefer the spot's ideal (onshore) wind direction, then
+    // spot priority — Svencele on stronger days (15+ kn), Sventoji on lighter
+    // days (under 15 kn), Nida deprioritized (hardest to get to; wins only
+    // when it is the only rideable spot) — then wind nearest 16 kn.
+    const score = (p: SessionPick) => {
+      let s = -Math.abs(p.window.avgSpeedKn - 16)
+      if (inSector(p.window.directionDeg, p.spot.onshoreSector)) s += 4
+      if (p.spot.slug === 'svencele' && p.window.avgSpeedKn >= 15) s += 3
+      if (p.spot.slug === 'sventoji' && p.window.avgSpeedKn < 15) s += 3
+      if (p.spot.slug === 'nida') s -= 6
+      return s
+    }
     return score(b) - score(a)
   })
 }
