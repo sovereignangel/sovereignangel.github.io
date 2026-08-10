@@ -40,10 +40,25 @@ export interface KiteSpot {
   onshoreSector: [number, number]
   /** Display datapoint: the direction the wind should TRAVEL at this spot */
   idealWind: string
+  /** One-line character of the spot, shown under its name */
+  tagline: string
   note: string
 }
 
 export const LITHUANIA_SPOTS: KiteSpot[] = [
+  {
+    slug: 'sventoji',
+    name: 'Sventoji',
+    area: 'Baltic coast · open sea',
+    lat: 56.027,
+    lon: 21.074,
+    water: 'baltic',
+    offshoreSector: [40, 140],
+    onshoreSector: [200, 340],
+    idealWind: 'wind travels east (W/SW/NW westerlies)',
+    tagline: '15 min walk from home',
+    note: 'Open-sea beach with waves and chop. E wind is offshore into open sea.',
+  },
   {
     slug: 'svencele',
     name: 'Svencele',
@@ -54,6 +69,7 @@ export const LITHUANIA_SPOTS: KiteSpot[] = [
     offshoreSector: [20, 140],
     onshoreSector: [200, 320],
     idealWind: 'wind travels east (W/SW westerlies)',
+    tagline: 'pro school · sponsored',
     note: 'Waist-deep flat water — safest spot for progression.',
   },
   {
@@ -66,19 +82,8 @@ export const LITHUANIA_SPOTS: KiteSpot[] = [
     offshoreSector: [230, 340],
     onshoreSector: [50, 170],
     idealWind: 'wind travels west (E/SE easterlies)',
+    tagline: 'the Hamptons of Lithuania',
     note: 'Lagoon beach east of town. W wind blows off the spit — never ride it.',
-  },
-  {
-    slug: 'sventoji',
-    name: 'Sventoji',
-    area: 'Baltic coast · open sea',
-    lat: 56.027,
-    lon: 21.074,
-    water: 'baltic',
-    offshoreSector: [40, 140],
-    onshoreSector: [200, 340],
-    idealWind: 'wind travels east (W/SW/NW westerlies)',
-    note: 'Open-sea beach with waves and chop. E wind is offshore into open sea.',
   },
 ]
 
@@ -111,6 +116,8 @@ export interface DayAnalysis {
   hours: HourForecast[] // daylight hours only, in order
   endHour: number // session cutoff (sunset-capped)
   note: string
+  /** Window per the GFS model (what Windguru shows) — a second opinion when models disagree */
+  gfsWindow?: KiteWindow | null
 }
 
 export interface SpotForecast {
@@ -237,16 +244,7 @@ interface OpenMeteoResponse {
   }
 }
 
-export async function fetchSpotForecast(spot: KiteSpot): Promise<SpotForecast> {
-  const url =
-    `https://api.open-meteo.com/v1/forecast?latitude=${spot.lat}&longitude=${spot.lon}` +
-    `&hourly=wind_speed_10m,wind_gusts_10m,wind_direction_10m&daily=sunset` +
-    `&wind_speed_unit=kn&timezone=${encodeURIComponent(TIMEZONE)}&forecast_days=7`
-
-  const res = await fetch(url, { next: { revalidate: 1800 } })
-  if (!res.ok) throw new Error(`Open-Meteo request failed for ${spot.name}: ${res.status}`)
-  const data: OpenMeteoResponse = await res.json()
-
+function parseHours(data: OpenMeteoResponse): Map<string, HourForecast[]> {
   const hoursByDate = new Map<string, HourForecast[]>()
   data.hourly.time.forEach((time, i) => {
     const [date, clock] = time.split('T')
@@ -261,6 +259,25 @@ export async function fetchSpotForecast(spot: KiteSpot): Promise<SpotForecast> {
     list.push(entry)
     hoursByDate.set(date, list)
   })
+  return hoursByDate
+}
+
+export async function fetchSpotForecast(spot: KiteSpot): Promise<SpotForecast> {
+  const base =
+    `https://api.open-meteo.com/v1/forecast?latitude=${spot.lat}&longitude=${spot.lon}` +
+    `&hourly=wind_speed_10m,wind_gusts_10m,wind_direction_10m` +
+    `&wind_speed_unit=kn&timezone=${encodeURIComponent(TIMEZONE)}&forecast_days=7`
+
+  // Primary: Open-Meteo best-match blend (ICON in Europe). Secondary: GFS —
+  // the model Windguru leads with — as a cross-check when the models disagree.
+  const [res, gfsRes] = await Promise.all([
+    fetch(`${base}&daily=sunset`, { next: { revalidate: 1800 } }),
+    fetch(`${base}&models=gfs_seamless`, { next: { revalidate: 1800 } }),
+  ])
+  if (!res.ok) throw new Error(`Open-Meteo request failed for ${spot.name}: ${res.status}`)
+  const data: OpenMeteoResponse = await res.json()
+
+  const hoursByDate = parseHours(data)
 
   const sunsetByDate = new Map<string, string>()
   data.daily.time.forEach((date, i) => {
@@ -271,6 +288,22 @@ export async function fetchSpotForecast(spot: KiteSpot): Promise<SpotForecast> {
   const days = Array.from(hoursByDate.entries())
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([date, hours]) => analyzeDay(date, hours, spot, sunsetByDate.get(date) ?? null))
+
+  // Attach the GFS second opinion; the page surfaces it when the blend has no window
+  if (gfsRes.ok) {
+    try {
+      const gfsData: OpenMeteoResponse = await gfsRes.json()
+      const gfsHoursByDate = parseHours(gfsData)
+      for (const day of days) {
+        const gfsHours = gfsHoursByDate.get(day.date)
+        day.gfsWindow = gfsHours
+          ? analyzeDay(day.date, gfsHours, spot, sunsetByDate.get(day.date) ?? null).window
+          : null
+      }
+    } catch {
+      // GFS is a bonus signal — ignore failures
+    }
+  }
 
   return { spot, days }
 }
@@ -285,6 +318,20 @@ export interface SessionPick {
   window: KiteWindow
 }
 
+/**
+ * Days where the primary blend shows no window but GFS (Windguru's model) does —
+ * "possible" sessions worth re-checking as the day approaches.
+ */
+export function weekPossibles(forecasts: SpotForecast[]): SessionPick[] {
+  const picks: SessionPick[] = []
+  for (const f of forecasts) {
+    for (const day of f.days) {
+      if (!day.window && day.gfsWindow) picks.push({ date: day.date, spot: f.spot, window: day.gfsWindow })
+    }
+  }
+  return picks.sort(bySessionPriority)
+}
+
 /** All rideable sessions this week across spots, chronological, best spot first within a day. */
 export function weekSessions(forecasts: SpotForecast[]): SessionPick[] {
   const picks: SessionPick[] = []
@@ -293,20 +340,22 @@ export function weekSessions(forecasts: SpotForecast[]): SessionPick[] {
       if (day.window) picks.push({ date: day.date, spot: f.spot, window: day.window })
     }
   }
-  return picks.sort((a, b) => {
-    if (a.date !== b.date) return a.date.localeCompare(b.date)
-    // Within a day: prefer the spot's ideal (onshore) wind direction, then
-    // spot priority — Svencele on stronger days (15+ kn), Sventoji on lighter
-    // days (under 15 kn), Nida deprioritized (hardest to get to; wins only
-    // when it is the only rideable spot) — then wind nearest 16 kn.
-    const score = (p: SessionPick) => {
-      let s = -Math.abs(p.window.avgSpeedKn - 16)
-      if (inSector(p.window.directionDeg, p.spot.onshoreSector)) s += 4
-      if (p.spot.slug === 'svencele' && p.window.avgSpeedKn >= 15) s += 3
-      if (p.spot.slug === 'sventoji' && p.window.avgSpeedKn < 15) s += 3
-      if (p.spot.slug === 'nida') s -= 6
-      return s
-    }
-    return score(b) - score(a)
-  })
+  return picks.sort(bySessionPriority)
+}
+
+// Within a day: prefer the spot's ideal (onshore) wind direction, then spot
+// priority — Svencele on stronger days (15+ kn), Sventoji on lighter days
+// (under 15 kn), Nida deprioritized (hardest to get to; wins only when it is
+// the only rideable spot) — then wind nearest 16 kn.
+function bySessionPriority(a: SessionPick, b: SessionPick): number {
+  if (a.date !== b.date) return a.date.localeCompare(b.date)
+  const score = (p: SessionPick) => {
+    let s = -Math.abs(p.window.avgSpeedKn - 16)
+    if (inSector(p.window.directionDeg, p.spot.onshoreSector)) s += 4
+    if (p.spot.slug === 'svencele' && p.window.avgSpeedKn >= 15) s += 3
+    if (p.spot.slug === 'sventoji' && p.window.avgSpeedKn < 15) s += 3
+    if (p.spot.slug === 'nida') s -= 6
+    return s
+  }
+  return score(b) - score(a)
 }
