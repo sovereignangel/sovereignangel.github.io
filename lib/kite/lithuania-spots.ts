@@ -38,6 +38,8 @@ export interface KiteSpot {
   offshoreSector: [number, number]
   /** Wind FROM these bearings blows water-to-land (onshore / side-onshore) */
   onshoreSector: [number, number]
+  /** Display datapoint: the direction the wind should TRAVEL at this spot */
+  idealWind: string
   note: string
 }
 
@@ -51,7 +53,8 @@ export const LITHUANIA_SPOTS: KiteSpot[] = [
     water: 'lagoon',
     offshoreSector: [20, 140],
     onshoreSector: [200, 320],
-    note: 'Waist-deep flat water — safest spot for progression. Best in W/SW.',
+    idealWind: 'wind travels east (W/SW westerlies)',
+    note: 'Waist-deep flat water — safest spot for progression.',
   },
   {
     slug: 'nida',
@@ -62,7 +65,8 @@ export const LITHUANIA_SPOTS: KiteSpot[] = [
     water: 'lagoon',
     offshoreSector: [230, 340],
     onshoreSector: [50, 170],
-    note: 'Lagoon beach east of town. Works in E/SE; W blows off the spit.',
+    idealWind: 'wind travels west (E/SE easterlies)',
+    note: 'Lagoon beach east of town. W wind blows off the spit — never ride it.',
   },
   {
     slug: 'sventoji',
@@ -73,7 +77,8 @@ export const LITHUANIA_SPOTS: KiteSpot[] = [
     water: 'baltic',
     offshoreSector: [40, 140],
     onshoreSector: [200, 340],
-    note: 'Open-sea beach with waves and chop. Only ride onshore W/SW/NW.',
+    idealWind: 'wind travels east (W/SW/NW westerlies)',
+    note: 'Open-sea beach with waves and chop. E wind is offshore into open sea.',
   },
 ]
 
@@ -290,9 +295,12 @@ export function weekSessions(forecasts: SpotForecast[]): SessionPick[] {
   }
   return picks.sort((a, b) => {
     if (a.date !== b.date) return a.date.localeCompare(b.date)
-    // Within a day, prefer the window nearest 16 kn; lagoon flat water breaks ties
+    // Within a day: strongly prefer the spot's ideal (onshore) wind direction,
+    // then the window nearest 16 kn; lagoon flat water breaks ties
     const score = (p: SessionPick) =>
-      -Math.abs(p.window.avgSpeedKn - 16) + (p.spot.water === 'lagoon' ? 0.5 : 0)
+      (inSector(p.window.directionDeg, p.spot.onshoreSector) ? 4 : 0) -
+      Math.abs(p.window.avgSpeedKn - 16) +
+      (p.spot.water === 'lagoon' ? 0.5 : 0)
     return score(b) - score(a)
   })
 }

@@ -117,6 +117,12 @@ function SpotCard({ forecast }: { forecast: SpotForecast }) {
         </div>
         <div className="text-[10px] text-ink-muted mt-0.5">{spot.area}</div>
       </div>
+      <div className="flex items-center gap-1.5 mb-1.5">
+        <span className="font-mono text-[8px] uppercase px-1.5 py-0.5 rounded-sm border bg-burgundy-bg text-burgundy border-burgundy/20">
+          Ideal
+        </span>
+        <span className="text-[10px] text-ink">{spot.idealWind}</span>
+      </div>
       <div className="text-[10px] text-ink-muted mb-2">{spot.note}</div>
       {days.map(day => (
         <DayRow key={day.date} day={day} spot={spot} />
