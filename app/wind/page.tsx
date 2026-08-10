@@ -173,7 +173,6 @@ function WeekBand({ dates, sessions, possibles }: { dates: string[]; sessions: S
                     </div>
                     {alternates.length > 0 && (
                       <div className="flex items-center gap-1 mt-1">
-                        <span className="text-[8px] text-surf-muted">also</span>
                         {alternates.map(a => (
                           <span
                             key={a.spot.slug}
