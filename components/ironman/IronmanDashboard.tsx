@@ -1,10 +1,16 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useAuth } from '@/components/auth/AuthProvider'
-import { getAllGarminMetrics, getAllGarminActivities, getGarminRollups } from '@/lib/firestore'
-import type { GarminMetrics, GarminActivity } from '@/lib/types'
-import { PLAN, RACE, BASELINE, daysToRace, todayLocal, type PlanDay, type Sport } from '@/lib/ironman/plan'
+import {
+  getAllGarminMetrics,
+  getAllGarminActivities,
+  getGarminRollups,
+  getAllGoalConfidences,
+  saveGoalConfidence,
+} from '@/lib/firestore'
+import type { GarminMetrics, GarminActivity, IronmanGoalConfidence } from '@/lib/types'
+import { PLAN, RACE, GOALS, BASELINE, goalSplits, daysToRace, todayLocal, type PlanDay, type Sport } from '@/lib/ironman/plan'
 import {
   computeReadiness,
   matchDay,
@@ -66,6 +72,169 @@ const STATUS_STYLE: Record<string, { label: string; color: string }> = {
 function fmtDate(date: string): string {
   const d = new Date(date + 'T00:00:00')
   return d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })
+}
+
+function fmtClock(minutes: number): string {
+  const totalSec = Math.round(minutes * 60)
+  const h = Math.floor(totalSec / 3600)
+  const m = Math.floor((totalSec % 3600) / 60)
+  const s = totalSec % 60
+  return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
+}
+
+function fmtMinSec(minutes: number): string {
+  const totalSec = Math.round(minutes * 60)
+  return `${Math.floor(totalSec / 60)}:${String(totalSec % 60).padStart(2, '0')}`
+}
+
+// ── Race goals ────────────────────────────────────────────────────────────
+
+type ConfidenceKey = 'swimPct' | 'bikePct' | 'runPct'
+type Confidence = Record<ConfidenceKey, number>
+
+function GoalsPanel({ uid, today }: { uid: string | undefined; today: string }) {
+  const splits = useMemo(() => goalSplits(), [])
+  const [history, setHistory] = useState<IronmanGoalConfidence[]>([])
+  const [pcts, setPcts] = useState<Confidence | null>(null)
+  const dirty = useRef(false)
+
+  useEffect(() => {
+    if (!uid) return
+    getAllGoalConfidences(uid)
+      .then((all) => {
+        setHistory(all)
+        const latest = all.find((d) => d.date === today) ?? all[all.length - 1]
+        setPcts({
+          swimPct: latest?.swimPct ?? 50,
+          bikePct: latest?.bikePct ?? 50,
+          runPct: latest?.runPct ?? 50,
+        })
+      })
+      .catch(() => setPcts({ swimPct: 50, bikePct: 50, runPct: 50 }))
+  }, [uid, today])
+
+  useEffect(() => {
+    if (!uid || !pcts || !dirty.current) return
+    const t = setTimeout(() => saveGoalConfidence(uid, today, pcts).catch(() => {}), 600)
+    return () => clearTimeout(t)
+  }, [uid, today, pcts])
+
+  const setPct = (key: ConfidenceKey, value: number) => {
+    dirty.current = true
+    setPcts((p) => {
+      const next = { ...(p ?? { swimPct: 50, bikePct: 50, runPct: 50 }), [key]: value }
+      setHistory((h) => {
+        const rest = h.filter((d) => d.date !== today)
+        return [...rest, { date: today, ...next }].sort((a, b) => a.date.localeCompare(b.date))
+      })
+      return next
+    })
+  }
+
+  const rows: { sport: Sport; goal: string; pace: string; split: number; key: ConfidenceKey }[] = [
+    {
+      sport: 'swim',
+      goal: `${Math.round(RACE.swimKm * 1000)}m in ${fmtMinSec(GOALS.swimMinutes)}`,
+      pace: `${fmtMinSec(GOALS.swimMinutes / (RACE.swimKm * 10))} /100m`,
+      split: splits.swim,
+      key: 'swimPct',
+    },
+    {
+      sport: 'bike',
+      goal: `${RACE.bikeKm}km at ${GOALS.bikeMph.toFixed(1)} mph avg`,
+      pace: `${(GOALS.bikeMph * 1.609344).toFixed(1)} km/h`,
+      split: splits.bike,
+      key: 'bikePct',
+    },
+    {
+      sport: 'run',
+      goal: `${RACE.runKm}km at ${fmtMinSec(GOALS.runPaceMinPerMile)} /mile`,
+      pace: `${fmtMinSec(GOALS.runPaceMinPerMile / 1.609344)} /km`,
+      split: splits.run,
+      key: 'runPct',
+    },
+  ]
+
+  const allThree = pcts ? (pcts.swimPct / 100) * (pcts.bikePct / 100) * (pcts.runPct / 100) : null
+  const trend = history.slice(-14)
+
+  return (
+    <Card title={`Race Goals — ${fmtClock(splits.total)} Target`}>
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_240px] gap-x-6 gap-y-3">
+        <div>
+          <div className="space-y-2">
+            {rows.map((r) => (
+              <div key={r.key} className="flex items-center gap-3 flex-wrap">
+                <SportChip sport={r.sport} />
+                <span className="text-[11px] font-semibold text-ink w-[170px] shrink-0">{r.goal}</span>
+                <span className="font-mono text-[10px] text-ink-muted w-[80px] shrink-0 hidden sm:inline">{r.pace}</span>
+                <span className="font-mono text-[11px] font-semibold text-ink w-[64px] shrink-0">{fmtClock(r.split)}</span>
+                <div className="flex items-center gap-2 flex-1 min-w-[140px]">
+                  <input
+                    type="range"
+                    min={0}
+                    max={100}
+                    step={5}
+                    value={pcts?.[r.key] ?? 50}
+                    disabled={!pcts}
+                    onChange={(e) => setPct(r.key, Number(e.target.value))}
+                    className="flex-1 h-1 accent-[#7c2d2d]"
+                  />
+                  <span
+                    className="font-mono text-[11px] font-semibold w-[38px] text-right"
+                    style={{
+                      color:
+                        pcts && pcts[r.key] >= 70 ? '#2d5f3f' : pcts && pcts[r.key] >= 40 ? '#8a6d2f' : '#8c2d2d',
+                    }}
+                  >
+                    {pcts ? `${pcts[r.key]}%` : '—'}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="flex items-center gap-3 mt-2.5 pt-2 border-t border-rule-light">
+            <span className="text-[10px] text-ink-muted w-[194px] shrink-0">T1 + T2 transitions</span>
+            <span className="font-mono text-[11px] font-medium text-ink">{fmtClock(splits.transitions)}</span>
+            <span className="text-[10px] text-ink-muted ml-auto">Goal finish</span>
+            <span className="font-mono text-[14px] font-semibold text-burgundy">{fmtClock(splits.total)}</span>
+          </div>
+        </div>
+        <div className="lg:border-l lg:border-rule-light lg:pl-4">
+          <div className="text-[10px] text-ink-muted mb-1">Chance of hitting all three today</div>
+          <div className="font-mono text-[24px] font-semibold leading-none mb-2" style={{
+            color: allThree === null ? '#9a928a' : allThree >= 0.5 ? '#2d5f3f' : allThree >= 0.25 ? '#8a6d2f' : '#8c2d2d',
+          }}>
+            {allThree === null ? '—' : `${Math.round(allThree * 100)}%`}
+          </div>
+          {trend.length > 1 && (
+            <div>
+              <div className="text-[10px] text-ink-muted mb-1">Daily confidence trend</div>
+              <div className="flex items-end gap-[3px] h-8">
+                {trend.map((d) => {
+                  const p = (d.swimPct / 100) * (d.bikePct / 100) * (d.runPct / 100)
+                  return (
+                    <div
+                      key={d.date}
+                      title={`${d.date} — ${Math.round(p * 100)}%`}
+                      className="w-[7px] rounded-sm"
+                      style={{
+                        height: `${Math.max(6, p * 100)}%`,
+                        backgroundColor: d.date === today ? '#7c2d2d' : '#c8c0b8',
+                      }}
+                    />
+                  )
+                })}
+              </div>
+            </div>
+          )}
+          <div className="text-[10px] text-ink-muted mt-2 leading-relaxed">
+            Set each goal&apos;s likelihood daily — it saves automatically and builds the trend.
+          </div>
+        </div>
+      </div>
+    </Card>
+  )
 }
 
 // ── Readiness gauge ───────────────────────────────────────────────────────
@@ -388,6 +557,8 @@ export default function IronmanDashboard() {
           </div>
         </div>
       </div>
+
+      <GoalsPanel uid={user?.uid} today={today} />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
         <div className="lg:col-span-2">

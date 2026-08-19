@@ -396,7 +396,7 @@ export function WindMasteryDashboard({ uid }: Props) {
                     <div className="text-[10px] text-surf-muted leading-snug mt-0.5">
                       <GlossedText text={belt.skills} enabled={glossEnabled} />
                     </div>
-                    {belt.id === 'white' && !state.whiteEarned && (
+                    {belt.id === 'blue' && !state.whiteEarned && (
                       <div className="font-mono text-[9px] text-surf-teal mt-0.5">
                         {state.fundamentalsMet}/{state.fundamentalsTotal} fundamentals — checklist in Foundation below
                       </div>

@@ -464,32 +464,32 @@ export const MASTERY_BELTS: MasteryBelt[] = [
     name: 'White',
     color: '#efe9df',
     requirement: 'Where everyone starts',
-    skills: 'The whole apprenticeship: fundamentals, independence, then intermediate and advanced drilling on your first path.',
-    iko: 'IKO Levels 1-4',
+    skills: 'Day one — kite control, first water sessions, learning the wind window.',
+    iko: 'IKO Levels 1-2',
   },
   {
     id: 'blue',
     name: 'Blue',
     color: '#2f4f6f',
-    requirement: 'Master one path',
-    skills: 'One discipline mastered end to end — freeride, big air, freestyle or wave is genuinely yours.',
-    iko: 'IKO Level 5 (Evolution, one discipline)',
+    requirement: 'All five fundamentals complete',
+    skills: 'Waterstart, upwind on both tacks, relaunch, self-rescue — a fully independent rider, now drilling the paths.',
+    iko: 'IKO Levels 3-4 (Independent, Advanced)',
   },
   {
     id: 'purple',
     name: 'Purple',
     color: '#5c3a6e',
-    requirement: 'Master two paths',
-    skills: 'Two disciplines mastered — a rare rider on any beach.',
-    iko: 'beyond IKO — two Evolution disciplines',
+    requirement: 'Master one path',
+    skills: 'One discipline mastered end to end — freeride, big air, freestyle or wave is genuinely yours.',
+    iko: 'IKO Level 5 (Evolution, one discipline)',
   },
   {
     id: 'brown',
     name: 'Brown',
     color: '#6b4a2f',
-    requirement: 'Master three paths',
-    skills: 'Three disciplines mastered — the strongest rider on most beaches you visit.',
-    iko: 'beyond IKO — three Evolution disciplines',
+    requirement: 'Master two paths',
+    skills: 'Two disciplines mastered — a rare rider on any beach.',
+    iko: 'beyond IKO — two Evolution disciplines',
   },
   {
     id: 'black',
@@ -524,8 +524,8 @@ export const LIFE_UNLOCKS: LifeUnlock[] = [
     id: 'ul-independent',
     title: 'Ride anywhere on Earth',
     detail: 'Rent gear at any spot in the world and ride without a school — every coastal trip becomes a kite trip.',
-    requires: { kind: 'fundamentals' },
-    requiresLabel: 'Fundamentals',
+    requires: { kind: 'belt', belt: 'blue' },
+    requiresLabel: 'Blue belt',
     icon: 'globe',
   },
   {
@@ -644,16 +644,16 @@ export const LIFE_UNLOCKS: LifeUnlock[] = [
     id: 'ul-purple-crew',
     title: 'The one others follow',
     detail: 'You call the session: spot, kite size, safety plan. Friends launch when you launch.',
-    requires: { kind: 'belt', belt: 'blue' },
-    requiresLabel: 'Blue belt',
+    requires: { kind: 'belt', belt: 'purple' },
+    requiresLabel: 'Purple belt',
     icon: 'crew',
   },
   {
     id: 'ul-brown-season',
     title: 'A full season abroad',
     detail: 'A winter in Cape Town or Brazil riding at local level — not a tourist in the lineup.',
-    requires: { kind: 'belt', belt: 'purple' },
-    requiresLabel: 'Purple belt',
+    requires: { kind: 'belt', belt: 'brown' },
+    requiresLabel: 'Brown belt',
     icon: 'horizonsun',
   },
   {
@@ -823,12 +823,12 @@ export function computeMasteryState(
   const masters = pathStatuses.filter(p => p.rank >= 3).length
 
   // White is the starting belt — worn from day one, not earned.
-  // Every belt after it is a count of mastered paths: 1, 2, 3, all 4.
+  // Fundamentals earn blue; belts after that count mastered paths.
   const beltsEarned: Record<BeltId, boolean> = {
     white: true,
-    blue: whiteEarned && masters >= 1,
-    purple: whiteEarned && masters >= 2,
-    brown: whiteEarned && masters >= 3,
+    blue: whiteEarned,
+    purple: whiteEarned && masters >= 1,
+    brown: whiteEarned && masters >= 2,
     black: whiteEarned && masters >= MASTERY_PATHS.length,
   }
 
@@ -921,7 +921,7 @@ export const IKO_LEVELS: IkoLevel[] = [
 
 /** Rough current IKO position implied by the mastery state. */
 export function currentIkoLevel(state: MasteryState): number {
-  if (state.beltsEarned.blue) return 5 // a path mastered = Evolution territory
+  if (state.beltsEarned.purple) return 5 // a path mastered = Evolution territory
   if (state.pathStatuses.some(p => p.rank >= 1)) return 4 // intermediate skill = Advanced
   if (state.whiteEarned) return 3 // fundamentals = Independent
   return state.fundamentalsMet > 0 ? 2 : 1

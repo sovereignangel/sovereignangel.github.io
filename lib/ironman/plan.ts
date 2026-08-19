@@ -39,6 +39,25 @@ export const RACE = {
   location: 'TBC',
 }
 
+/** Race goal targets — the numbers the whole build is aimed at */
+export const GOALS = {
+  swimMinutes: 40, // full 1.9km swim
+  bikeMph: 18, // average over 90km
+  runPaceMinPerMile: 9, // average over 21.1km
+  transitionMinutes: 8, // T1 + T2 combined
+}
+
+const KM_PER_MILE = 1.609344
+
+/** Goal splits in minutes, derived from GOALS + RACE distances */
+export function goalSplits() {
+  const swim = GOALS.swimMinutes
+  const bike = (RACE.bikeKm / KM_PER_MILE / GOALS.bikeMph) * 60
+  const run = (RACE.runKm / KM_PER_MILE) * GOALS.runPaceMinPerMile
+  const transitions = GOALS.transitionMinutes
+  return { swim, bike, run, transitions, total: swim + bike + run + transitions }
+}
+
 /** Baselines observed before the plan started */
 export const BASELINE = {
   longestRideKm: 60, // 2026-08-18
