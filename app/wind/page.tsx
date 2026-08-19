@@ -13,13 +13,14 @@ import {
   type SessionPick,
   type SpotForecast,
 } from '@/lib/kite/lithuania-spots'
+import { fetchJuraspotLive, type JuraspotLive } from '@/lib/kite/juraspot'
 
 export const metadata: Metadata = {
   title: 'Wind — Lithuanian Coast',
   description: 'Kite wind planner for Sventoji, Svencele and Nida — 12-20 kn windows',
 }
 
-export const revalidate = 1800
+export const revalidate = 300
 
 const TIMEZONE = 'Europe/Vilnius'
 
@@ -249,7 +250,7 @@ function MatrixCell({ day, spot }: { day: DayAnalysis; spot: KiteSpot }) {
   )
 }
 
-function SpotMatrix({ forecasts }: { forecasts: SpotForecast[] }) {
+function SpotMatrix({ forecasts, live }: { forecasts: SpotForecast[]; live: JuraspotLive | null }) {
   const dates = forecasts[0].days.map(d => d.date)
   return (
     <div className="bg-surf-card border border-surf-rule rounded-xl p-2 md:p-3 shadow-[0_2px_12px_rgba(13,92,99,0.06)]">
@@ -263,7 +264,24 @@ function SpotMatrix({ forecasts }: { forecasts: SpotForecast[] }) {
                 {f.spot.name}
               </span>
             </div>
-            <div className="text-[8px] md:text-[9px] text-surf-muted mt-0.5">{f.spot.tagline}</div>
+            {f.spot.slug === 'sventoji' && live ? (
+              <a
+                href="https://juraspot.lt"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1 mt-0.5 group"
+                title={`JuraSpot station (Monciskes): 10-min avg ${live.avgMs} m/s, now ${live.instMs} m/s${live.directionDeg !== null ? `, from ${Math.round(live.directionDeg)} deg` : ''}`}
+              >
+                <span className="inline-block w-1.5 h-1.5 rounded-full bg-surf-teal shrink-0" />
+                <span className="font-mono text-[9px] font-semibold text-surf-deep group-hover:underline truncate">
+                  live {live.avgKn} kn
+                  <span className="hidden md:inline"> &middot; now {live.instKn}</span>
+                  {live.directionDeg !== null && <> &middot; {directionLabel(live.directionDeg, f.spot).split(' ')[0]}</>}
+                </span>
+              </a>
+            ) : (
+              <div className="text-[8px] md:text-[9px] text-surf-muted mt-0.5">{f.spot.tagline}</div>
+            )}
             <div className="hidden md:block text-[9px] text-surf-muted">{f.spot.idealWind}</div>
           </div>
         ))}
@@ -330,6 +348,7 @@ export default async function WindPage() {
     )
   }
 
+  const live = await fetchJuraspotLive()
   const sessions = weekSessions(forecasts)
   const generatedAt = new Date().toLocaleString('en-GB', {
     timeZone: TIMEZONE,
@@ -355,7 +374,7 @@ export default async function WindPage() {
         </div>
 
         <WeekBand dates={forecasts[0].days.map(d => d.date)} sessions={sessions} possibles={weekPossibles(forecasts)} />
-        <SpotMatrix forecasts={forecasts} />
+        <SpotMatrix forecasts={forecasts} live={live} />
         <div className="mt-1.5">
           <Legend />
         </div>
