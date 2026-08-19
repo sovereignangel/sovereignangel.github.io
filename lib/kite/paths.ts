@@ -463,33 +463,33 @@ export const MASTERY_BELTS: MasteryBelt[] = [
     id: 'white',
     name: 'White',
     color: '#efe9df',
-    requirement: 'All five fundamentals complete',
-    skills: 'Waterstart, upwind on both tacks, relaunch, self-rescue — a fully independent rider.',
-    iko: 'IKO Level 3 (Independent)',
+    requirement: 'Where everyone starts',
+    skills: 'Day one — kite control, first water sessions, learning the wind window.',
+    iko: 'IKO Levels 1-2 (Discovery, Intermediate)',
   },
   {
     id: 'blue',
     name: 'Blue',
     color: '#2f4f6f',
-    requirement: 'Intermediate in one path',
-    skills: 'You have picked a path and built real intermediate skill on it — transitions, pop, or first flights.',
-    iko: 'IKO Level 4 (Advanced)',
+    requirement: 'All five fundamentals complete',
+    skills: 'Waterstart, upwind on both tacks, relaunch, self-rescue — a fully independent rider.',
+    iko: 'IKO Level 3 (Independent)',
   },
   {
     id: 'purple',
     name: 'Purple',
     color: '#5c3a6e',
-    requirement: 'Master one path, intermediate in a second',
-    skills: 'One discipline is genuinely yours, and a second is opening up.',
-    iko: 'IKO Level 5 (Evolution, one discipline)',
+    requirement: 'Intermediate in one path',
+    skills: 'You have picked a path and built real intermediate skill on it — transitions, pop, or first flights.',
+    iko: 'IKO Level 4 (Advanced)',
   },
   {
     id: 'brown',
     name: 'Brown',
     color: '#6b4a2f',
-    requirement: 'Master two paths, intermediate in a third',
-    skills: 'Two disciplines mastered — you are the strongest rider on most beaches you visit.',
-    iko: 'beyond IKO — multi-discipline mastery',
+    requirement: 'Master one path, intermediate in a second',
+    skills: 'One discipline is genuinely yours, and a second is opening up.',
+    iko: 'IKO Level 5 (Evolution)',
   },
   {
     id: 'black',
@@ -522,16 +522,16 @@ export const LIFE_UNLOCKS: LifeUnlock[] = [
     id: 'ul-independent',
     title: 'Ride anywhere on Earth',
     detail: 'Rent gear at any spot in the world and ride without a school — every coastal trip becomes a kite trip.',
-    requires: { kind: 'belt', belt: 'white' },
-    requiresLabel: 'White belt',
+    requires: { kind: 'belt', belt: 'blue' },
+    requiresLabel: 'Blue belt',
     icon: 'globe',
   },
   {
     id: 'ul-blue-travel',
     title: 'Wind-first travel',
     detail: 'Trips get planned around forecasts now — a windy week anywhere beats a sunny week somewhere.',
-    requires: { kind: 'belt', belt: 'blue' },
-    requiresLabel: 'Blue belt',
+    requires: { kind: 'belt', belt: 'purple' },
+    requiresLabel: 'Purple belt',
     icon: 'plane',
   },
   {
@@ -642,8 +642,8 @@ export const LIFE_UNLOCKS: LifeUnlock[] = [
     id: 'ul-purple-crew',
     title: 'The one others follow',
     detail: 'You call the session: spot, kite size, safety plan. Friends launch when you launch.',
-    requires: { kind: 'belt', belt: 'purple' },
-    requiresLabel: 'Purple belt',
+    requires: { kind: 'belt', belt: 'brown' },
+    requiresLabel: 'Brown belt',
     icon: 'crew',
   },
   {
@@ -821,11 +821,13 @@ export function computeMasteryState(
   const masters = pathStatuses.filter(p => p.rank >= 3).length
   const intermediatePlus = pathStatuses.filter(p => p.rank >= 1).length
 
+  // White is the starting belt — worn from day one, not earned.
+  // Completing the five fundamentals promotes to blue.
   const beltsEarned: Record<BeltId, boolean> = {
-    white: whiteEarned,
-    blue: whiteEarned && intermediatePlus >= 1,
-    purple: whiteEarned && masters >= 1 && intermediatePlus >= 2,
-    brown: whiteEarned && masters >= 2 && intermediatePlus >= 3,
+    white: true,
+    blue: whiteEarned,
+    purple: whiteEarned && intermediatePlus >= 1,
+    brown: whiteEarned && masters >= 1 && intermediatePlus >= 2,
     black: whiteEarned && masters >= MASTERY_PATHS.length,
   }
 
@@ -845,6 +847,83 @@ export function computeMasteryState(
     currentBeltIndex,
     targetBeltIndex,
   }
+}
+
+// ─── Path gating ──────────────────────────────────────────────
+// The near-term focus is freeride + big air; freestyle and wave open up
+// once real intermediate skill exists on one of the first two paths.
+
+export const PATH_GATES: Partial<Record<PathId, { requiresAnyOf: PathId[]; level: LevelId; label: string }>> = {
+  freestyle: {
+    requiresAnyOf: ['freeride', 'bigair'],
+    level: 'intermediate',
+    label: 'Unlocks at Freeride or Big Air intermediate',
+  },
+  wave: {
+    requiresAnyOf: ['freeride', 'bigair'],
+    level: 'intermediate',
+    label: 'Unlocks at Freeride or Big Air intermediate',
+  },
+}
+
+/** Null if the path is open; otherwise the human-readable unlock condition. */
+export function lockedPathLabel(
+  pathId: PathId,
+  stats: KiteStats,
+  milestones: Record<string, boolean>
+): string | null {
+  const gate = PATH_GATES[pathId]
+  if (!gate) return null
+  const needed = LEVEL_ORDER.indexOf(gate.level) + 1
+  const met = gate.requiresAnyOf.some(pid => {
+    const path = MASTERY_PATHS.find(p => p.id === pid)
+    return path ? computePathStatus(path, stats, milestones).rank >= needed : false
+  })
+  return met ? null : gate.label
+}
+
+// ─── Official IKO ladder (for side-by-side reference) ─────────
+
+export interface IkoLevel {
+  level: number
+  name: string
+  desc: string
+}
+
+export const IKO_LEVELS: IkoLevel[] = [
+  {
+    level: 1,
+    name: 'Discovery',
+    desc: 'On land: wind window, gear setup, kite control, safety systems.',
+  },
+  {
+    level: 2,
+    name: 'Intermediate',
+    desc: 'In the water: body drags, water relaunch, first waterstarts.',
+  },
+  {
+    level: 3,
+    name: 'Independent',
+    desc: 'Ride both tacks, hold ground upwind, self-rescue — certified to rent gear worldwide.',
+  },
+  {
+    level: 4,
+    name: 'Advanced',
+    desc: 'Transitions, toeside, first jumps, riding in varied conditions.',
+  },
+  {
+    level: 5,
+    name: 'Evolution',
+    desc: 'Discipline specialization: freeride, freestyle, hydrofoil or wave.',
+  },
+]
+
+/** Rough current IKO position implied by the mastery state. */
+export function currentIkoLevel(state: MasteryState): number {
+  if (state.beltsEarned.brown) return 5
+  if (state.beltsEarned.purple) return 4
+  if (state.beltsEarned.blue) return 3
+  return state.fundamentalsMet > 0 ? 2 : 1
 }
 
 export interface NextMilestone {
@@ -867,6 +946,7 @@ export function nextMilestones(
   const fund = FUNDAMENTALS.find(m => !isMilestoneMet(m, stats, milestones))
   if (fund) out.push({ source: 'Foundation', pathId: 'foundation', milestone: fund })
   for (const path of MASTERY_PATHS) {
+    if (lockedPathLabel(path.id, stats, milestones)) continue
     const status = computePathStatus(path, stats, milestones)
     if (status.nextMilestone) {
       out.push({ source: path.name, pathId: path.id, milestone: status.nextMilestone })

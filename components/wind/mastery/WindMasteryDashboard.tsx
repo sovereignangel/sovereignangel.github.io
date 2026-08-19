@@ -21,6 +21,9 @@ import {
   type MasteryPath,
   computeMasteryState,
   computePathStatus,
+  lockedPathLabel,
+  IKO_LEVELS,
+  currentIkoLevel,
   nextMilestones,
   isMilestoneMet,
   isUnlockMet,
@@ -175,6 +178,28 @@ function PathRow({
 }) {
   const [open, setOpen] = useState(false)
   const status = computePathStatus(path, stats, milestones)
+  const lockedLabel = lockedPathLabel(path.id, stats, milestones)
+
+  if (lockedLabel) {
+    return (
+      <div className="border-b border-surf-rule-light last:border-b-0">
+        <div className="w-full flex items-center gap-2 py-2 opacity-55">
+          <span className="font-serif text-[13px] font-semibold text-surf-deep w-[72px] shrink-0">{path.name}</span>
+          <span className="font-mono text-[9px] font-semibold uppercase px-1.5 py-0.5 rounded-sm border shrink-0 bg-transparent text-surf-faint border-dashed border-surf-rule">
+            locked
+          </span>
+          <span className="hidden lg:inline text-[9px] text-surf-muted truncate min-w-0 flex-1">{path.tagline}</span>
+          <span className="ml-auto flex items-center gap-1.5 shrink-0 text-surf-muted">
+            <svg viewBox="0 0 24 24" className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <rect x="5" y="11" width="14" height="9" rx="1.5" />
+              <path d="M8 11V8a4 4 0 0 1 8 0v3" />
+            </svg>
+            <span className="text-[9px]">{lockedLabel.toLowerCase()}</span>
+          </span>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="border-b border-surf-rule-light last:border-b-0">
@@ -278,6 +303,7 @@ export function WindMasteryDashboard({ uid }: Props) {
 
   const currentBelt = state.currentBeltIndex >= 0 ? MASTERY_BELTS[state.currentBeltIndex] : null
   const targetBelt = MASTERY_BELTS[state.targetBeltIndex]
+  const ikoNow = currentIkoLevel(state)
   const hours = stats.totalHours % 1 === 0 ? `${stats.totalHours}` : stats.totalHours.toFixed(1)
   // Gloss beach vocabulary until brown belt (index 3)
   const glossEnabled = state.currentBeltIndex < 3
@@ -369,7 +395,7 @@ export function WindMasteryDashboard({ uid }: Props) {
                     <div className="text-[10px] text-surf-muted leading-snug mt-0.5">
                       <GlossedText text={belt.skills} enabled={glossEnabled} />
                     </div>
-                    {belt.id === 'white' && !state.whiteEarned && (
+                    {belt.id === 'blue' && !state.whiteEarned && (
                       <div className="font-mono text-[9px] text-surf-teal mt-0.5">
                         {state.fundamentalsMet}/{state.fundamentalsTotal} fundamentals — checklist in Foundation below
                       </div>
@@ -420,12 +446,13 @@ export function WindMasteryDashboard({ uid }: Props) {
         </div>
       </section>
 
-      {/* Foundation + paths */}
+      {/* Progression: paths (left) + official IKO ladder (right) */}
       <section>
         <h2 className="font-serif text-[13px] font-semibold text-surf-deep mb-1.5">
-          Paths <span className="text-[10px] font-sans font-normal text-surf-muted">— four disciplines, each with intermediate, advanced and master rungs</span>
+          Progression <span className="text-[10px] font-sans font-normal text-surf-muted">— the paths you climb, next to the official IKO ladder they map onto</span>
         </h2>
-        <div className="bg-surf-card border border-surf-rule rounded-xl px-3 py-1 shadow-[0_2px_12px_rgba(13,92,99,0.06)]">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-2 items-start">
+        <div className="lg:col-span-2 bg-surf-card border border-surf-rule rounded-xl px-3 py-1 shadow-[0_2px_12px_rgba(13,92,99,0.06)]">
           {/* Foundation row (white belt checklist) */}
           <div className="border-b border-surf-rule-light">
             <button
@@ -480,6 +507,49 @@ export function WindMasteryDashboard({ uid }: Props) {
               onToggle={handleToggle}
             />
           ))}
+        </div>
+
+        {/* Official IKO ladder */}
+        <div className="bg-surf-card border border-surf-rule rounded-xl px-3 py-2 shadow-[0_2px_12px_rgba(13,92,99,0.06)]">
+          <div className="font-mono text-[9px] font-semibold uppercase tracking-wide text-surf-teal mb-1">
+            IKO official levels
+          </div>
+          {IKO_LEVELS.map(l => {
+            const here = l.level === ikoNow
+            const passed = l.level < ikoNow
+            return (
+              <div
+                key={l.level}
+                className={`flex items-start gap-2 py-1.5 border-b border-surf-rule-light last:border-b-0 ${
+                  passed || here ? '' : 'opacity-60'
+                }`}
+              >
+                <span
+                  className={`flex items-center justify-center w-5 h-5 rounded-full font-mono text-[10px] font-semibold shrink-0 mt-0.5 ${
+                    here
+                      ? 'bg-surf-teal text-white'
+                      : passed
+                        ? 'bg-surf-teal-bg text-surf-teal border border-surf-teal/30'
+                        : 'bg-transparent text-surf-faint border border-surf-rule'
+                  }`}
+                >
+                  {l.level}
+                </span>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className={`text-[11px] font-semibold ${here ? 'text-surf-deep' : 'text-surf-ink'}`}>{l.name}</span>
+                    {here && (
+                      <span className="font-mono text-[8px] font-semibold uppercase px-1 py-px rounded-sm bg-surf-sun-bg text-surf-sun-ink border border-surf-sun/40">
+                        you are here
+                      </span>
+                    )}
+                  </div>
+                  <div className="text-[9px] text-surf-muted leading-snug mt-0.5">{l.desc}</div>
+                </div>
+              </div>
+            )
+          })}
+        </div>
         </div>
       </section>
 
