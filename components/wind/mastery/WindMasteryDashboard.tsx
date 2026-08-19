@@ -90,7 +90,38 @@ function MilestoneRow({
   )
 }
 
-function PathCard({
+function Chevron({ open }: { open: boolean }) {
+  return (
+    <svg
+      viewBox="0 0 10 10"
+      className={`w-2.5 h-2.5 text-surf-faint shrink-0 transition-transform ${open ? 'rotate-180' : ''}`}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M2 3.5 L5 6.5 L8 3.5" />
+    </svg>
+  )
+}
+
+function LevelMeter({ label, met, total, complete }: { label: string; met: number; total: number; complete: boolean }) {
+  return (
+    <div className="flex items-center gap-1" title={`${label} ${met}/${total}`}>
+      <span className="font-mono text-[8px] uppercase text-surf-muted">{label}</span>
+      <div className="w-6 md:w-8 h-1 rounded-full bg-surf-rule-light overflow-hidden">
+        <div
+          className={`h-full rounded-full ${complete ? 'bg-surf-teal' : 'bg-surf-sun'}`}
+          style={{ width: `${(met / total) * 100}%` }}
+        />
+      </div>
+    </div>
+  )
+}
+
+function PathRow({
   path,
   stats,
   milestones,
@@ -103,48 +134,33 @@ function PathCard({
 }) {
   const [open, setOpen] = useState(false)
   const status = computePathStatus(path, stats, milestones)
-  const totalMet = status.levels.reduce((s, l) => s + l.met, 0)
-  const total = status.levels.reduce((s, l) => s + l.total, 0)
 
   return (
-    <div className="bg-surf-card border border-surf-rule rounded-xl p-3 shadow-[0_2px_12px_rgba(13,92,99,0.06)]">
-      <button onClick={() => setOpen(o => !o)} className="w-full text-left cursor-pointer">
-        <div className="flex items-center justify-between gap-2">
-          <span className="font-serif text-[14px] font-semibold text-surf-deep">{path.name}</span>
-          <span
-            className={`font-mono text-[9px] font-semibold uppercase px-1.5 py-0.5 rounded-sm border ${
-              status.rank === 3
-                ? 'bg-surf-navy text-white border-surf-navy'
-                : status.rank > 0
-                  ? 'bg-surf-teal-bg text-surf-teal border-surf-teal/30'
-                  : 'bg-transparent text-surf-faint border-surf-rule'
-            }`}
-          >
-            {status.rank === 0 ? 'open' : LEVEL_SHORT[status.levelName as keyof typeof LEVEL_SHORT]}
-          </span>
-        </div>
-        <div className="text-[10px] text-surf-muted mt-0.5">{path.tagline}</div>
-        <div className="flex items-center gap-1.5 mt-2">
+    <div className="border-b border-surf-rule-light last:border-b-0">
+      <button onClick={() => setOpen(o => !o)} className="w-full flex items-center gap-2 py-2 text-left cursor-pointer">
+        <span className="font-serif text-[13px] font-semibold text-surf-deep w-[72px] shrink-0">{path.name}</span>
+        <span
+          className={`font-mono text-[9px] font-semibold uppercase px-1.5 py-0.5 rounded-sm border shrink-0 ${
+            status.rank === 3
+              ? 'bg-surf-navy text-white border-surf-navy'
+              : status.rank > 0
+                ? 'bg-surf-teal-bg text-surf-teal border-surf-teal/30'
+                : 'bg-transparent text-surf-faint border-surf-rule'
+          }`}
+        >
+          {status.rank === 0 ? 'open' : LEVEL_SHORT[status.levelName as keyof typeof LEVEL_SHORT]}
+        </span>
+        <span className="hidden lg:inline text-[9px] text-surf-muted truncate min-w-0 flex-1">{path.tagline}</span>
+        <span className="ml-auto flex items-center gap-2 shrink-0">
           {status.levels.map(l => (
-            <div key={l.level} className="flex-1">
-              <div className="h-1.5 rounded-full bg-surf-rule-light overflow-hidden">
-                <div
-                  className={`h-full rounded-full ${l.complete ? 'bg-surf-teal' : 'bg-surf-sun'}`}
-                  style={{ width: `${(l.met / l.total) * 100}%` }}
-                />
-              </div>
-              <div className="font-mono text-[8px] text-surf-muted mt-0.5 text-center uppercase">
-                {LEVEL_SHORT[l.level]} {l.met}/{l.total}
-              </div>
-            </div>
+            <LevelMeter key={l.level} label={LEVEL_SHORT[l.level]} met={l.met} total={l.total} complete={l.complete} />
           ))}
-        </div>
-        <div className="font-mono text-[9px] text-surf-faint mt-1">
-          {totalMet}/{total} milestones · {open ? 'hide' : 'show'} checklist
-        </div>
+          <Chevron open={open} />
+        </span>
       </button>
       {open && (
-        <div className="mt-2 pt-1 border-t border-surf-rule">
+        <div className="pb-2">
+          <div className="lg:hidden text-[10px] text-surf-muted mb-1">{path.tagline}</div>
           {path.levels.map(level => (
             <div key={level.level} className="mt-1.5 first:mt-0">
               <div className="font-mono text-[9px] font-semibold uppercase tracking-wide text-surf-teal">
@@ -172,6 +188,7 @@ export function WindMasteryDashboard({ uid }: Props) {
   const [milestones, setMilestones] = useState<Record<string, boolean>>({})
   const [loading, setLoading] = useState(true)
   const [modalOpen, setModalOpen] = useState(false)
+  const [foundationOpen, setFoundationOpen] = useState(false)
 
   const load = useCallback(async () => {
     const [s, p] = await Promise.all([getKiteSessions(uid), getKiteProgress(uid)])
@@ -336,30 +353,52 @@ export function WindMasteryDashboard({ uid }: Props) {
         <h2 className="font-serif text-[13px] font-semibold text-surf-deep mb-1.5">
           Paths <span className="text-[10px] font-sans font-normal text-surf-muted">— four disciplines, each with intermediate, advanced and master rungs</span>
         </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-          {/* Foundation card (white belt checklist) */}
-          <div className="bg-surf-card border border-surf-rule rounded-xl p-3 shadow-[0_2px_12px_rgba(13,92,99,0.06)]">
-            <div className="flex items-center justify-between gap-2">
-              <span className="font-serif text-[14px] font-semibold text-surf-deep">Foundation</span>
-              <span className="font-mono text-[9px] font-semibold uppercase px-1.5 py-0.5 rounded-sm border bg-surf-teal-bg text-surf-teal border-surf-teal/30">
-                {state.fundamentalsMet}/{state.fundamentalsTotal}
+        <div className="bg-surf-card border border-surf-rule rounded-xl px-3 py-1 shadow-[0_2px_12px_rgba(13,92,99,0.06)]">
+          {/* Foundation row (white belt checklist) */}
+          <div className="border-b border-surf-rule-light">
+            <button
+              onClick={() => setFoundationOpen(o => !o)}
+              className="w-full flex items-center gap-2 py-2 text-left cursor-pointer"
+            >
+              <span className="font-serif text-[13px] font-semibold text-surf-deep w-[72px] shrink-0">Foundation</span>
+              <span
+                className={`font-mono text-[9px] font-semibold uppercase px-1.5 py-0.5 rounded-sm border shrink-0 ${
+                  state.whiteEarned
+                    ? 'bg-surf-teal-bg text-surf-teal border-surf-teal/30'
+                    : 'bg-transparent text-surf-faint border-surf-rule'
+                }`}
+              >
+                {state.whiteEarned ? 'done' : `${state.fundamentalsMet}/${state.fundamentalsTotal}`}
               </span>
-            </div>
-            <div className="text-[10px] text-surf-muted mt-0.5">The white belt — everything else stands on this</div>
-            <div className="mt-2 pt-1 border-t border-surf-rule">
-              {FUNDAMENTALS.map(m => (
-                <MilestoneRow
-                  key={m.id}
-                  milestone={m}
-                  met={isMilestoneMet(m, stats, milestones)}
-                  progress={autoProgressLabel(m, stats)}
-                  onToggle={checked => handleToggle(m.id, checked)}
+              <span className="hidden lg:inline text-[9px] text-surf-muted truncate min-w-0 flex-1">
+                The white belt — everything else stands on this
+              </span>
+              <span className="ml-auto flex items-center gap-2 shrink-0">
+                <LevelMeter
+                  label="fund"
+                  met={state.fundamentalsMet}
+                  total={state.fundamentalsTotal}
+                  complete={state.whiteEarned}
                 />
-              ))}
-            </div>
+                <Chevron open={foundationOpen} />
+              </span>
+            </button>
+            {foundationOpen && (
+              <div className="pb-2">
+                {FUNDAMENTALS.map(m => (
+                  <MilestoneRow
+                    key={m.id}
+                    milestone={m}
+                    met={isMilestoneMet(m, stats, milestones)}
+                    progress={autoProgressLabel(m, stats)}
+                    onToggle={checked => handleToggle(m.id, checked)}
+                  />
+                ))}
+              </div>
+            )}
           </div>
           {MASTERY_PATHS.map(path => (
-            <PathCard key={path.id} path={path} stats={stats} milestones={milestones} onToggle={handleToggle} />
+            <PathRow key={path.id} path={path} stats={stats} milestones={milestones} onToggle={handleToggle} />
           ))}
         </div>
       </section>
