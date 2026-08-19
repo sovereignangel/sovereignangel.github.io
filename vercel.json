@@ -33,6 +33,10 @@
       "schedule": "30 4 * * *"
     },
     {
+      "path": "/api/cron/ironman-brief",
+      "schedule": "45 4 * * *"
+    },
+    {
       "path": "/api/weekly-calibration/generate",
       "schedule": "0 22 * * 0"
     }
