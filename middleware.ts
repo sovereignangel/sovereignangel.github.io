@@ -105,6 +105,13 @@ export function middleware(request: NextRequest) {
     return NextResponse.rewrite(url)
   }
 
+  // mahamudra.loricorpuz.com → rewrite to /mahamudra
+  if (host === 'mahamudra.loricorpuz.com') {
+    const url = request.nextUrl.clone()
+    url.pathname = `/mahamudra${url.pathname === '/' ? '' : url.pathname}`
+    return NextResponse.rewrite(url)
+  }
+
   // latentspace.loricorpuz.com — hidden from public
   if (host.startsWith('latentspace.')) {
     return new NextResponse('Not Found', { status: 404 })
