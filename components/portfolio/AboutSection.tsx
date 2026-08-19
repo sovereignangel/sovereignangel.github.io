@@ -22,8 +22,11 @@ export default function AboutSection() {
           title="Ironman build — adaptive training plan"
           className="group relative flex items-center gap-5 border border-[#33333355] rounded-sm px-3 py-2 mt-1 text-[#333] hover:text-[#7c2d2d] hover:border-[#7c2d2d] transition-colors duration-200"
         >
-          <span className="absolute -top-[7px] left-2.5 px-1 bg-[#faf8f4] font-serif text-[9px] uppercase tracking-[1.5px] leading-none text-[#333] group-hover:text-[#7c2d2d] transition-colors duration-200">
-            Ironman
+          <span className="absolute -top-[9px] left-2.5 px-1 bg-[#faf8f4] leading-none" aria-hidden="true">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="#c8102e">
+              <circle cx="12" cy="5" r="2.6" />
+              <path d="M3 21v-11h4.6L12 16.4 16.4 10H21v11h-3.8v-5.6L13.6 21h-3.2L6.8 15.4V21H3z" />
+            </svg>
           </span>
           <svg
             width="28"
