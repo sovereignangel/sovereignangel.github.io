@@ -400,7 +400,7 @@ export const MASTERY_PATHS: MasteryPath[] = [
           {
             id: 'wv-adv-tack',
             label: 'Strapless tack 8 of 10',
-            drill: 'Through the eye of the wind, front foot around the mast-point step — the elegant one.',
+            drill: 'The tack is the upwind turn: carve the nose through the wind and step your feet around before the board stalls — the elegant one.',
             kind: 'manual',
           },
           {
@@ -462,7 +462,7 @@ export const MASTERY_BELTS: MasteryBelt[] = [
     name: 'White',
     color: '#efe9df',
     requirement: 'All five fundamentals complete',
-    skills: 'Waterstart, upwind on both tacks, relaunch, self-rescue — a fully independent rider.',
+    skills: 'Waterstart, upwind in both directions, relaunch, self-rescue — a fully independent rider.',
   },
   {
     id: 'blue',
@@ -568,7 +568,7 @@ export const LIFE_UNLOCKS: LifeUnlock[] = [
   {
     id: 'ul-fs-comp',
     title: 'Judged freestyle heat',
-    detail: 'An amateur freestyle comp run — three tricks, two tacks, one horn.',
+    detail: 'An amateur freestyle comp heat — three tricks back to back, one horn.',
     requires: { kind: 'path', path: 'freestyle', level: 'advanced' },
     requiresLabel: 'Freestyle ADV',
   },
