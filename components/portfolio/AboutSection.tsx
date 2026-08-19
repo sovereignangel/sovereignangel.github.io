@@ -16,62 +16,80 @@ export default function AboutSection() {
         I practice Mahamudra & Kadampa Buddhism.
       </p>
       <div className="flex items-center gap-5 text-[#333]" aria-label="Sports">
-        <svg
-          width="28"
-          height="28"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.25"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          aria-label="Running"
-          role="img"
+        <Link
+          href="/ironman"
+          aria-label="Running — Ironman training plan"
+          title="Ironman build — adaptive training plan"
+          className="text-[#333] hover:text-[#7c2d2d] transition-colors duration-200"
         >
-          <circle cx="15" cy="3.5" r="1.5" />
-          <path d="M14.5 5L13 11" />
-          <path d="M14 6.5L17.5 8L16 5" />
-          <path d="M13.5 7L10 10L11.5 12.5" />
-          <path d="M13 11L16.5 13L14.5 17.5" />
-          <path d="M13 11L9.5 14L6.5 12" />
-          <path d="M14.5 17.5L17 20" />
-        </svg>
-        <svg
-          width="28"
-          height="28"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.25"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          aria-label="Cycling"
-          role="img"
+          <svg
+            width="28"
+            height="28"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.25"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <circle cx="15" cy="3.5" r="1.5" />
+            <path d="M14.5 5L13 11" />
+            <path d="M14 6.5L17.5 8L16 5" />
+            <path d="M13.5 7L10 10L11.5 12.5" />
+            <path d="M13 11L16.5 13L14.5 17.5" />
+            <path d="M13 11L9.5 14L6.5 12" />
+            <path d="M14.5 17.5L17 20" />
+          </svg>
+        </Link>
+        <Link
+          href="/ironman"
+          aria-label="Cycling — Ironman training plan"
+          title="Ironman build — adaptive training plan"
+          className="text-[#333] hover:text-[#7c2d2d] transition-colors duration-200"
         >
-          <circle cx="5.5" cy="16.5" r="4" />
-          <circle cx="18.5" cy="16.5" r="4" />
-          <path d="M5.5 16.5l4-7h5l4 7" />
-          <path d="M9.5 9.5h2.5" />
-          <path d="M14.5 9.5l-2 7" />
-          <circle cx="16" cy="5.5" r="1.2" />
-        </svg>
-        <svg
-          width="28"
-          height="28"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.25"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          aria-label="Swimming"
-          role="img"
+          <svg
+            width="28"
+            height="28"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.25"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <circle cx="5.5" cy="16.5" r="4" />
+            <circle cx="18.5" cy="16.5" r="4" />
+            <path d="M5.5 16.5l4-7h5l4 7" />
+            <path d="M9.5 9.5h2.5" />
+            <path d="M14.5 9.5l-2 7" />
+            <circle cx="16" cy="5.5" r="1.2" />
+          </svg>
+        </Link>
+        <Link
+          href="/ironman"
+          aria-label="Swimming — Ironman training plan"
+          title="Ironman build — adaptive training plan"
+          className="text-[#333] hover:text-[#7c2d2d] transition-colors duration-200"
         >
-          <circle cx="17" cy="6.5" r="1.3" />
-          <path d="M3 11c1.5 0 2-1 3.5-1S8 11 9.5 11s2-1 3.5-1l3.5-2 3.5 2" />
-          <path d="M3 15c1.5 0 2-1 3.5-1s2 1 3.5 1 2-1 3.5-1 2 1 3.5 1 2-1 3.5-1" />
-          <path d="M3 19c1.5 0 2-1 3.5-1s2 1 3.5 1 2-1 3.5-1 2 1 3.5 1 2-1 3.5-1" />
-        </svg>
+          <svg
+            width="28"
+            height="28"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.25"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <circle cx="17" cy="6.5" r="1.3" />
+            <path d="M3 11c1.5 0 2-1 3.5-1S8 11 9.5 11s2-1 3.5-1l3.5-2 3.5 2" />
+            <path d="M3 15c1.5 0 2-1 3.5-1s2 1 3.5 1 2-1 3.5-1 2 1 3.5 1 2-1 3.5-1" />
+            <path d="M3 19c1.5 0 2-1 3.5-1s2 1 3.5 1 2-1 3.5-1 2 1 3.5 1 2-1 3.5-1" />
+          </svg>
+        </Link>
         <Link
           href="/wind"
           aria-label="Kiteboarding — wind forecast"
