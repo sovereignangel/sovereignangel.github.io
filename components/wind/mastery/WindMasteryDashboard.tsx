@@ -6,6 +6,7 @@ import {
   getKiteSessions,
   addKiteSession,
   deleteKiteSession,
+  getGarminKiteSessions,
   getKiteProgress,
   setKiteMilestone,
 } from '@/lib/firestore'
@@ -24,11 +25,44 @@ import {
   isMilestoneMet,
   isUnlockMet,
   autoProgressLabel,
+  KITE_GLOSSARY,
 } from '@/lib/kite/paths'
 import { SessionModal } from '@/components/mastery/kite/SessionModal'
 
 interface Props {
   uid: string
+}
+
+// ─── Inline glossing (active until brown belt) ────────────────
+
+const VARIANT_DEFS = new Map<string, string>()
+for (const g of KITE_GLOSSARY) {
+  for (const v of g.variants ?? []) VARIANT_DEFS.set(v.toLowerCase(), g.def)
+}
+const GLOSS_RE = new RegExp(
+  `\\b(${Array.from(VARIANT_DEFS.keys())
+    .sort((a, b) => b.length - a.length)
+    .join('|')
+    .replace(/ /g, '\\s')})\\b`,
+  'gi'
+)
+
+function GlossedText({ text, enabled }: { text: string; enabled: boolean }) {
+  if (!enabled) return <>{text}</>
+  return (
+    <>
+      {text.split(GLOSS_RE).map((part, i) => {
+        const def = part ? VARIANT_DEFS.get(part.toLowerCase()) : undefined
+        return def ? (
+          <span key={i} title={def} className="border-b border-dotted border-surf-muted/70 cursor-help">
+            {part}
+          </span>
+        ) : (
+          <span key={i}>{part}</span>
+        )
+      })}
+    </>
+  )
 }
 
 function CheckMark({ met }: { met: boolean }) {
@@ -52,11 +86,13 @@ function MilestoneRow({
   milestone,
   met,
   progress,
+  gloss,
   onToggle,
 }: {
   milestone: PathMilestone
   met: boolean
   progress: string | null
+  gloss: boolean
   onToggle: (checked: boolean) => void
 }) {
   const auto = milestone.kind === 'auto'
@@ -84,7 +120,9 @@ function MilestoneRow({
             </span>
           )}
         </div>
-        <div className="text-[10px] text-surf-muted leading-snug mt-0.5">{milestone.drill}</div>
+        <div className="text-[10px] text-surf-muted leading-snug mt-0.5">
+          <GlossedText text={milestone.drill} enabled={gloss} />
+        </div>
       </div>
     </div>
   )
@@ -125,11 +163,13 @@ function PathRow({
   path,
   stats,
   milestones,
+  gloss,
   onToggle,
 }: {
   path: MasteryPath
   stats: ReturnType<typeof computeKiteStats>
   milestones: Record<string, boolean>
+  gloss: boolean
   onToggle: (id: string, checked: boolean) => void
 }) {
   const [open, setOpen] = useState(false)
@@ -172,6 +212,7 @@ function PathRow({
                   milestone={m}
                   met={isMilestoneMet(m, stats, milestones)}
                   progress={autoProgressLabel(m, stats)}
+                  gloss={gloss}
                   onToggle={checked => onToggle(m.id, checked)}
                 />
               ))}
@@ -185,14 +226,20 @@ function PathRow({
 
 export function WindMasteryDashboard({ uid }: Props) {
   const [sessions, setSessions] = useState<KiteSession[]>([])
+  const [garminSessions, setGarminSessions] = useState<KiteSession[]>([])
   const [milestones, setMilestones] = useState<Record<string, boolean>>({})
   const [loading, setLoading] = useState(true)
   const [modalOpen, setModalOpen] = useState(false)
   const [foundationOpen, setFoundationOpen] = useState(false)
 
   const load = useCallback(async () => {
-    const [s, p] = await Promise.all([getKiteSessions(uid), getKiteProgress(uid)])
+    const [s, g, p] = await Promise.all([
+      getKiteSessions(uid),
+      getGarminKiteSessions(uid).catch(() => [] as KiteSession[]),
+      getKiteProgress(uid),
+    ])
     setSessions(s)
+    setGarminSessions(g)
     setMilestones(p.milestones || {})
     setLoading(false)
   }, [uid])
@@ -201,7 +248,14 @@ export function WindMasteryDashboard({ uid }: Props) {
     load()
   }, [load])
 
-  const stats = useMemo(() => computeKiteStats(sessions), [sessions])
+  // Garmin kite activities merge in automatically; a manual log on the same
+  // date wins (it carries the Surfr numbers), so hours never double-count.
+  const combined = useMemo(() => {
+    const manualDates = new Set(sessions.map(s => s.date))
+    return [...sessions, ...garminSessions.filter(g => !manualDates.has(g.date))]
+  }, [sessions, garminSessions])
+
+  const stats = useMemo(() => computeKiteStats(combined), [combined])
   const state = useMemo(() => computeMasteryState(stats, milestones), [stats, milestones])
   const nextThree = useMemo(() => nextMilestones(stats, milestones, 3), [stats, milestones])
 
@@ -223,6 +277,8 @@ export function WindMasteryDashboard({ uid }: Props) {
   const currentBelt = state.currentBeltIndex >= 0 ? MASTERY_BELTS[state.currentBeltIndex] : null
   const targetBelt = MASTERY_BELTS[state.targetBeltIndex]
   const hours = stats.totalHours % 1 === 0 ? `${stats.totalHours}` : stats.totalHours.toFixed(1)
+  // Gloss beach vocabulary until brown belt (index 3)
+  const glossEnabled = state.currentBeltIndex < 3
 
   if (loading) {
     return (
@@ -272,6 +328,12 @@ export function WindMasteryDashboard({ uid }: Props) {
             Log Session
           </button>
         </div>
+        <div className="mt-2 pt-1.5 border-t border-surf-rule-light text-[9px] text-surf-muted">
+          Garmin autosync: {garminSessions.length === 0
+            ? 'no kite activities yet — record kiting on the watch and they land here after the daily sync'
+            : `${garminSessions.length} kite ${garminSessions.length === 1 ? 'activity' : 'activities'} counted`}
+          {' '}&middot; a manual log on the same date wins &middot; Surfr bests (height, airtime) go in via Log Session
+        </div>
       </div>
 
       {/* Next three */}
@@ -297,7 +359,9 @@ export function WindMasteryDashboard({ uid }: Props) {
                   )}
                 </div>
                 <div className="text-[12px] font-semibold text-surf-ink leading-snug mt-1">{n.milestone.label}</div>
-                <div className="text-[10px] text-surf-muted leading-snug mt-1">{n.milestone.drill}</div>
+                <div className="text-[10px] text-surf-muted leading-snug mt-1">
+                  <GlossedText text={n.milestone.drill} enabled={glossEnabled} />
+                </div>
               </div>
             )
           })}
@@ -335,7 +399,9 @@ export function WindMasteryDashboard({ uid }: Props) {
                       </span>
                     )}
                   </div>
-                  <div className="text-[10px] text-surf-muted leading-snug mt-0.5">{belt.skills}</div>
+                  <div className="text-[10px] text-surf-muted leading-snug mt-0.5">
+                    <GlossedText text={belt.skills} enabled={glossEnabled} />
+                  </div>
                   {belt.id === 'white' && !state.whiteEarned && (
                     <div className="font-mono text-[9px] text-surf-teal mt-0.5">
                       {state.fundamentalsMet}/{state.fundamentalsTotal} fundamentals — checklist in Foundation below
@@ -391,6 +457,7 @@ export function WindMasteryDashboard({ uid }: Props) {
                     milestone={m}
                     met={isMilestoneMet(m, stats, milestones)}
                     progress={autoProgressLabel(m, stats)}
+                    gloss={glossEnabled}
                     onToggle={checked => handleToggle(m.id, checked)}
                   />
                 ))}
@@ -398,7 +465,14 @@ export function WindMasteryDashboard({ uid }: Props) {
             )}
           </div>
           {MASTERY_PATHS.map(path => (
-            <PathRow key={path.id} path={path} stats={stats} milestones={milestones} onToggle={handleToggle} />
+            <PathRow
+              key={path.id}
+              path={path}
+              stats={stats}
+              milestones={milestones}
+              gloss={glossEnabled}
+              onToggle={handleToggle}
+            />
           ))}
         </div>
       </section>
@@ -435,13 +509,30 @@ export function WindMasteryDashboard({ uid }: Props) {
                   </span>
                 </div>
                 <div className={`text-[10px] leading-snug mt-1 ${unlocked ? 'text-surf-ink' : 'text-surf-muted'}`}>
-                  {u.detail}
+                  <GlossedText text={u.detail} enabled={glossEnabled} />
                 </div>
               </div>
             )
           })}
         </div>
       </section>
+
+      {/* Glossary — retires itself at brown belt */}
+      {glossEnabled && (
+        <section>
+          <h2 className="font-serif text-[13px] font-semibold text-surf-deep mb-1.5">
+            Glossary <span className="text-[10px] font-sans font-normal text-surf-muted">— the words on the beach; this card retires itself at brown belt</span>
+          </h2>
+          <div className="bg-surf-card border border-surf-rule rounded-xl px-3 py-1.5 shadow-[0_2px_12px_rgba(13,92,99,0.06)] grid grid-cols-1 md:grid-cols-2 gap-x-6">
+            {KITE_GLOSSARY.map(g => (
+              <div key={g.term} className="flex gap-2 py-1.5 border-b border-surf-rule-light md:last:border-b-0 [&:last-child]:border-b-0">
+                <span className="font-mono text-[10px] font-semibold text-surf-deep w-[88px] shrink-0">{g.term}</span>
+                <span className="text-[10px] text-surf-muted leading-snug">{g.def}</span>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       <SessionModal
         open={modalOpen}

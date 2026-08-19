@@ -8,6 +8,7 @@ import {
   setDoc,
   query,
   orderBy,
+  where,
   serverTimestamp,
 } from 'firebase/firestore'
 import { db } from '../firebase'
@@ -33,6 +34,39 @@ export async function addKiteSession(
 
 export async function deleteKiteSession(uid: string, sessionId: string): Promise<void> {
   await deleteDoc(doc(db, 'users', uid, 'kite_sessions', sessionId))
+}
+
+// ─── Garmin autosync: users/{uid}/garmin_activities ───────────
+// The daily Garmin cron upserts recent activities; kiteboarding-type
+// activities become read-only sessions so hours aggregate automatically.
+
+const GARMIN_KITE_TYPES = ['kiteboarding', 'kiteboarding_v2', 'kite_surfing', 'wind_kite_surfing']
+
+export async function getGarminKiteSessions(uid: string): Promise<KiteSession[]> {
+  const ref = collection(db, 'users', uid, 'garmin_activities')
+  const q = query(ref, where('type', 'in', GARMIN_KITE_TYPES))
+  const snap = await getDocs(q)
+  return snap.docs
+    .map(d => {
+      const a = d.data() as Record<string, unknown>
+      const durationSeconds = typeof a.durationSeconds === 'number' ? a.durationSeconds : 0
+      return {
+        id: `garmin-${d.id}`,
+        date: typeof a.date === 'string' ? a.date : '',
+        hours: Math.round((durationSeconds / 3600) * 10) / 10,
+        windKn: null,
+        kiteSize: null,
+        focus: 'garmin',
+        notes: [a.name, a.locationName].filter(v => typeof v === 'string' && v).join(' — '),
+        bestAirtimeSec: null,
+        bestHeightM: null,
+        bestDistanceM: null,
+        jumps: null,
+        landed: null,
+      } as KiteSession
+    })
+    .filter(s => s.date && s.hours > 0)
+    .sort((a, b) => a.date.localeCompare(b.date))
 }
 
 // ─── Belt progress: users/{uid}/kite_progress/milestones ──────

@@ -60,7 +60,7 @@ export const FUNDAMENTALS: PathMilestone[] = [
   },
   {
     id: 'fund-upwind',
-    label: 'Hold ground upwind in both directions',
+    label: 'Hold ground upwind on both tacks',
     drill: 'Park the kite at 10-11, push the back leg, look at an upwind target — end every run where it began.',
     kind: 'manual',
     aliases: ['yellow-tacks', 'white-ride'],
@@ -102,7 +102,7 @@ export const MASTERY_PATHS: MasteryPath[] = [
           {
             id: 'fr-int-transitions',
             label: 'Sliding transitions, 8 of 10 landed',
-            drill: '20 per session: slow down, raise the kite overhead, let the back of the board sink, then dive the kite the other way and ride off in the new direction.',
+            drill: '20 per session: slow down, kite to 12, sink the tail, redirect, power away on the new tack.',
             kind: 'manual',
             aliases: ['orange-transitions'],
           },
@@ -202,7 +202,7 @@ export const MASTERY_PATHS: MasteryPath[] = [
           {
             id: 'ba-int-five',
             label: '5 sent jumps landed in one session',
-            drill: 'Small sends: steer the kite from 11 up past 12, hold your edge, then let go — and steer it back down to 11 before you land. Start underpowered.',
+            drill: 'Small sends: kite 11 to 12:30, edge, release, redirect back to 11 before landing. Start underpowered.',
             kind: 'manual',
             aliases: ['green-firstjump'],
           },
@@ -359,7 +359,7 @@ export const MASTERY_PATHS: MasteryPath[] = [
           {
             id: 'fs-mst-run',
             label: 'Three-trick unhooked run, no crash',
-            drill: 'A competition-legal sequence back to back without changing direction — consistency is the mastery.',
+            drill: 'A competition-legal sequence back to back on one tack — consistency is the mastery.',
             kind: 'manual',
           },
         ],
@@ -376,7 +376,7 @@ export const MASTERY_PATHS: MasteryPath[] = [
         milestones: [
           {
             id: 'wv-int-strapless',
-            label: 'Strapless upwind in both directions',
+            label: 'Strapless upwind both tacks',
             drill: 'Borrow or rent a directional; light-wind flat days are perfect for the first sessions.',
             kind: 'manual',
           },
@@ -400,7 +400,7 @@ export const MASTERY_PATHS: MasteryPath[] = [
           {
             id: 'wv-adv-tack',
             label: 'Strapless tack 8 of 10',
-            drill: 'The tack is the upwind turn: carve the nose through the wind and step your feet around before the board stalls — the elegant one.',
+            drill: 'Through the eye of the wind, front foot around before the board stalls — the elegant one.',
             kind: 'manual',
           },
           {
@@ -462,7 +462,7 @@ export const MASTERY_BELTS: MasteryBelt[] = [
     name: 'White',
     color: '#efe9df',
     requirement: 'All five fundamentals complete',
-    skills: 'Waterstart, upwind in both directions, relaunch, self-rescue — a fully independent rider.',
+    skills: 'Waterstart, upwind on both tacks, relaunch, self-rescue — a fully independent rider.',
   },
   {
     id: 'blue',
@@ -568,7 +568,7 @@ export const LIFE_UNLOCKS: LifeUnlock[] = [
   {
     id: 'ul-fs-comp',
     title: 'Judged freestyle heat',
-    detail: 'An amateur freestyle comp heat — three tricks back to back, one horn.',
+    detail: 'An amateur freestyle comp run — three tricks, two tacks, one horn.',
     requires: { kind: 'path', path: 'freestyle', level: 'advanced' },
     requiresLabel: 'Freestyle ADV',
   },
@@ -586,6 +586,79 @@ export const LIFE_UNLOCKS: LifeUnlock[] = [
     requires: { kind: 'path', path: 'wave', level: 'advanced' },
     requiresLabel: 'Wave ADV',
   },
+]
+
+// ─── Glossary ─────────────────────────────────────────────────
+// Beach vocabulary, shown with dotted underlines and a glossary card
+// until the rider reaches brown belt — then the training wheels come off.
+
+export interface GlossaryEntry {
+  term: string
+  def: string
+  /** Word forms glossed inline in drill text; entries without variants appear only in the glossary card. */
+  variants?: string[]
+}
+
+export const KITE_GLOSSARY: GlossaryEntry[] = [
+  {
+    term: 'tack',
+    def: 'Your direction of travel across the wind (riding left or right); also the upwind turn where the board nose passes through the wind.',
+    variants: ['tack', 'tacks'],
+  },
+  { term: 'tail', def: 'The back end of the board.', variants: ['tail'] },
+  {
+    term: 'edge',
+    def: 'Digging the upwind edge of the board into the water to resist the kite — the core of upwind riding and jumping.',
+    variants: ['edge', 'edging'],
+  },
+  {
+    term: 'kite clock',
+    def: 'Kite positions read as clock hours: 12 is straight overhead, 9 and 3 sit at the water; you ride with the kite around 10-11 (or 1-2).',
+  },
+  {
+    term: 'park',
+    def: 'Hold the kite still at one clock position instead of working it up and down.',
+    variants: ['park', 'parked'],
+  },
+  {
+    term: 'send',
+    def: 'Steer the kite quickly toward 12 so it lifts you — the start of every jump.',
+    variants: ['send', 'sends', 'sent'],
+  },
+  {
+    term: 'pop',
+    def: 'Spring off the water using board and line tension alone, without sending the kite.',
+    variants: ['pop', 'pops'],
+  },
+  { term: 'heelside', def: 'Normal stance: weight on your heels, leaning back against the kite.', variants: ['heelside'] },
+  {
+    term: 'toeside',
+    def: 'The other edge: weight on your toes, chest turned toward the nose of the board.',
+    variants: ['toeside'],
+  },
+  { term: 'carve', def: 'Turn in one smooth arc on the board edge, like a snowboard turn.', variants: ['carve', 'carving'] },
+  {
+    term: 'unhooked',
+    def: 'Riding with the chicken loop off the harness hook, taking the kite power in your arms.',
+    variants: ['unhooked', 'unhook'],
+  },
+  { term: 'blind', def: 'Riding backwards — back facing the direction of travel.', variants: ['blind'] },
+  {
+    term: 'downwinder',
+    def: 'A one-way trip down the coast, ending downwind of where you started, with a shuttle back.',
+    variants: ['downwinder', 'downwinders'],
+  },
+  {
+    term: 'strapless',
+    def: 'Riding a surfboard with no foot straps — held on by wind pressure and footwork.',
+    variants: ['strapless'],
+  },
+  {
+    term: 'underpowered',
+    def: 'Rigged with less kite power than ideal — the safe setting for learning new moves.',
+    variants: ['underpowered'],
+  },
+  { term: 'eye of the wind', def: 'Pointing straight into the wind — the one direction you cannot ride.', variants: ['eye of the wind'] },
 ]
 
 // ─── Computation ──────────────────────────────────────────────
