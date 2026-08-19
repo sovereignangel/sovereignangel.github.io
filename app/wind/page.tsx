@@ -14,6 +14,7 @@ import {
   type SpotForecast,
 } from '@/lib/kite/lithuania-spots'
 import { fetchJuraspotLive, type JuraspotLive } from '@/lib/kite/juraspot'
+import { WindTabs } from '@/components/wind/WindTabs'
 
 export const metadata: Metadata = {
   title: 'Wind — Lithuanian Coast',
@@ -412,12 +413,17 @@ export default async function WindPage() {
           <h1 className="font-serif text-[17px] md:text-[20px] font-semibold text-surf-deep whitespace-nowrap">
             Wind <span className="text-surf-teal">&mdash;</span> Lithuanian Coast
           </h1>
-          <WaveDivider />
-          <span className="hidden md:inline text-[10px] text-surf-muted">
+          <span className="hidden md:block">
+            <WaveDivider />
+          </span>
+          <span className="hidden lg:inline text-[10px] text-surf-muted">
             12&ndash;20 kn &middot; gusts under 26 &middot; onshore or cross only
           </span>
-          <span className="font-mono text-[9px] md:text-[10px] text-surf-muted ml-auto whitespace-nowrap">
-            {generatedAt} LT
+          <span className="ml-auto flex items-center gap-2">
+            <WindTabs active="forecast" />
+            <span className="hidden md:inline font-mono text-[9px] md:text-[10px] text-surf-muted whitespace-nowrap">
+              {generatedAt} LT
+            </span>
           </span>
         </div>
 
