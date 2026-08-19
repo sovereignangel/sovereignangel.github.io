@@ -28,6 +28,7 @@ import {
   KITE_GLOSSARY,
 } from '@/lib/kite/paths'
 import { SessionModal } from '@/components/mastery/kite/SessionModal'
+import { UnlockIcon } from './UnlockIcons'
 
 interface Props {
   uid: string
@@ -231,6 +232,7 @@ export function WindMasteryDashboard({ uid }: Props) {
   const [loading, setLoading] = useState(true)
   const [modalOpen, setModalOpen] = useState(false)
   const [foundationOpen, setFoundationOpen] = useState(false)
+  const [beltOpen, setBeltOpen] = useState(false)
 
   const load = useCallback(async () => {
     const [s, g, p] = await Promise.all([
@@ -295,21 +297,27 @@ export function WindMasteryDashboard({ uid }: Props) {
       {/* Stats strip — hours aggregate automatically from logged sessions */}
       <div className="bg-surf-card border border-surf-rule rounded-xl p-3 shadow-[0_2px_12px_rgba(13,92,99,0.06)]">
         <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
-          <div className="flex items-center gap-2">
+          <button
+            onClick={() => setBeltOpen(o => !o)}
+            className="flex items-center gap-2 text-left cursor-pointer"
+            aria-expanded={beltOpen}
+            aria-label="Show the belt ladder"
+          >
             <span
               className="inline-block w-7 h-3.5 rounded-sm border border-surf-rule"
               style={{ backgroundColor: currentBelt?.color ?? '#f7f4ec' }}
               title={currentBelt ? `${currentBelt.name} belt` : 'Unranked'}
             />
             <div>
-              <div className="font-serif text-[15px] font-semibold text-surf-deep leading-none">
+              <div className="font-serif text-[15px] font-semibold text-surf-deep leading-none flex items-center gap-1.5">
                 {currentBelt ? `${currentBelt.name} Belt` : 'Unranked'}
+                <Chevron open={beltOpen} />
               </div>
               <div className="text-[9px] text-surf-muted mt-0.5">
                 next: {targetBelt.name} — {targetBelt.requirement.toLowerCase()}
               </div>
             </div>
-          </div>
+          </button>
           {[
             { label: 'hours on water', value: hours },
             { label: 'sessions', value: `${stats.sessionCount}` },
@@ -328,6 +336,50 @@ export function WindMasteryDashboard({ uid }: Props) {
             Log Session
           </button>
         </div>
+        {beltOpen && (
+          <div className="mt-2 pt-1 border-t border-surf-rule-light">
+            {MASTERY_BELTS.map((belt, i) => {
+              const earned = state.beltsEarned[belt.id]
+              const isTarget = !earned && i === state.targetBeltIndex
+              return (
+                <div
+                  key={belt.id}
+                  className={`flex items-start gap-2.5 py-2 border-b border-surf-rule-light last:border-b-0 ${
+                    earned ? '' : isTarget ? '' : 'opacity-60'
+                  }`}
+                >
+                  <span
+                    className="inline-block w-8 h-4 rounded-sm border border-surf-rule mt-0.5 shrink-0"
+                    style={{ backgroundColor: belt.color }}
+                  />
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-serif text-[13px] font-semibold text-surf-deep">{belt.name}</span>
+                      <span className="font-mono text-[9px] text-surf-muted uppercase tracking-wide">{belt.requirement}</span>
+                      <span className="font-mono text-[9px] text-surf-faint">&asymp; {belt.iko}</span>
+                      {earned && (
+                        <span className="font-mono text-[9px] font-semibold px-1.5 py-px rounded-sm bg-surf-teal text-white">earned</span>
+                      )}
+                      {isTarget && (
+                        <span className="font-mono text-[9px] font-semibold px-1.5 py-px rounded-sm bg-surf-sun-bg text-surf-sun-ink border border-surf-sun/40">
+                          current target
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-[10px] text-surf-muted leading-snug mt-0.5">
+                      <GlossedText text={belt.skills} enabled={glossEnabled} />
+                    </div>
+                    {belt.id === 'white' && !state.whiteEarned && (
+                      <div className="font-mono text-[9px] text-surf-teal mt-0.5">
+                        {state.fundamentalsMet}/{state.fundamentalsTotal} fundamentals — checklist in Foundation below
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
         <div className="mt-2 pt-1.5 border-t border-surf-rule-light text-[9px] text-surf-muted">
           Garmin autosync: {garminSessions.length === 0
             ? 'no kite activities yet — record kiting on the watch and they land here after the daily sync'
@@ -361,52 +413,6 @@ export function WindMasteryDashboard({ uid }: Props) {
                 <div className="text-[12px] font-semibold text-surf-ink leading-snug mt-1">{n.milestone.label}</div>
                 <div className="text-[10px] text-surf-muted leading-snug mt-1">
                   <GlossedText text={n.milestone.drill} enabled={glossEnabled} />
-                </div>
-              </div>
-            )
-          })}
-        </div>
-      </section>
-
-      {/* Belt ladder */}
-      <section>
-        <h2 className="font-serif text-[13px] font-semibold text-surf-deep mb-1.5">Belt Ladder</h2>
-        <div className="bg-surf-card border border-surf-rule rounded-xl p-2.5 shadow-[0_2px_12px_rgba(13,92,99,0.06)]">
-          {MASTERY_BELTS.map((belt, i) => {
-            const earned = state.beltsEarned[belt.id]
-            const isTarget = !earned && i === state.targetBeltIndex
-            return (
-              <div
-                key={belt.id}
-                className={`flex items-start gap-2.5 py-2 border-b border-surf-rule-light last:border-b-0 ${
-                  earned ? '' : isTarget ? '' : 'opacity-60'
-                }`}
-              >
-                <span
-                  className="inline-block w-8 h-4 rounded-sm border border-surf-rule mt-0.5 shrink-0"
-                  style={{ backgroundColor: belt.color }}
-                />
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-serif text-[13px] font-semibold text-surf-deep">{belt.name}</span>
-                    <span className="font-mono text-[9px] text-surf-muted uppercase tracking-wide">{belt.requirement}</span>
-                    {earned && (
-                      <span className="font-mono text-[9px] font-semibold px-1.5 py-px rounded-sm bg-surf-teal text-white">earned</span>
-                    )}
-                    {isTarget && (
-                      <span className="font-mono text-[9px] font-semibold px-1.5 py-px rounded-sm bg-surf-sun-bg text-surf-sun-ink border border-surf-sun/40">
-                        current target
-                      </span>
-                    )}
-                  </div>
-                  <div className="text-[10px] text-surf-muted leading-snug mt-0.5">
-                    <GlossedText text={belt.skills} enabled={glossEnabled} />
-                  </div>
-                  {belt.id === 'white' && !state.whiteEarned && (
-                    <div className="font-mono text-[9px] text-surf-teal mt-0.5">
-                      {state.fundamentalsMet}/{state.fundamentalsTotal} fundamentals — checklist in Foundation below
-                    </div>
-                  )}
                 </div>
               </div>
             )
@@ -482,34 +488,45 @@ export function WindMasteryDashboard({ uid }: Props) {
         <h2 className="font-serif text-[13px] font-semibold text-surf-deep mb-1.5">
           Life Unlocks <span className="text-[10px] font-sans font-normal text-surf-muted">— the carrots: what each level of skill buys in the real world</span>
         </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
           {LIFE_UNLOCKS.map(u => {
             const unlocked = isUnlockMet(u, state)
             return (
               <div
                 key={u.id}
-                className={`rounded-xl border p-2.5 ${
+                className={`rounded-xl border p-2.5 flex items-start gap-2.5 ${
                   unlocked
                     ? 'bg-surf-teal-bg border-surf-teal/40'
                     : 'bg-surf-card border-surf-rule'
                 }`}
               >
-                <div className="flex items-center justify-between gap-2">
-                  <span className={`text-[12px] font-semibold leading-snug ${unlocked ? 'text-surf-deep' : 'text-surf-ink'}`}>
-                    {u.title}
-                  </span>
-                  <span
-                    className={`font-mono text-[9px] font-semibold uppercase px-1.5 py-0.5 rounded-sm border shrink-0 ${
-                      unlocked
-                        ? 'bg-surf-teal text-white border-surf-teal'
-                        : 'bg-transparent text-surf-muted border-surf-rule'
-                    }`}
-                  >
-                    {unlocked ? 'unlocked' : u.requiresLabel}
-                  </span>
-                </div>
-                <div className={`text-[10px] leading-snug mt-1 ${unlocked ? 'text-surf-ink' : 'text-surf-muted'}`}>
-                  <GlossedText text={u.detail} enabled={glossEnabled} />
+                <span
+                  className={`flex items-center justify-center w-10 h-10 rounded-full shrink-0 mt-0.5 ${
+                    unlocked
+                      ? 'bg-surf-teal text-white border border-surf-teal'
+                      : 'bg-transparent text-surf-faint border border-dashed border-surf-rule'
+                  }`}
+                >
+                  <UnlockIcon id={u.icon} />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className={`text-[12px] font-semibold leading-snug ${unlocked ? 'text-surf-deep' : 'text-surf-ink'}`}>
+                      {u.title}
+                    </span>
+                    <span
+                      className={`font-mono text-[9px] font-semibold uppercase px-1.5 py-0.5 rounded-sm border shrink-0 ${
+                        unlocked
+                          ? 'bg-surf-teal text-white border-surf-teal'
+                          : 'bg-transparent text-surf-muted border-surf-rule'
+                      }`}
+                    >
+                      {unlocked ? 'unlocked' : u.requiresLabel}
+                    </span>
+                  </div>
+                  <div className={`text-[10px] leading-snug mt-1 ${unlocked ? 'text-surf-ink' : 'text-surf-muted'}`}>
+                    <GlossedText text={u.detail} enabled={glossEnabled} />
+                  </div>
                 </div>
               </div>
             )

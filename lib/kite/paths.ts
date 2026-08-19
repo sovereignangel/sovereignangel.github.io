@@ -454,6 +454,8 @@ export interface MasteryBelt {
   color: string
   requirement: string
   skills: string
+  /** Rough equivalence to the official IKO kiteboarder certification ladder */
+  iko: string
 }
 
 export const MASTERY_BELTS: MasteryBelt[] = [
@@ -463,6 +465,7 @@ export const MASTERY_BELTS: MasteryBelt[] = [
     color: '#efe9df',
     requirement: 'All five fundamentals complete',
     skills: 'Waterstart, upwind on both tacks, relaunch, self-rescue — a fully independent rider.',
+    iko: 'IKO Level 3 (Independent)',
   },
   {
     id: 'blue',
@@ -470,6 +473,7 @@ export const MASTERY_BELTS: MasteryBelt[] = [
     color: '#2f4f6f',
     requirement: 'Intermediate in one path',
     skills: 'You have picked a path and built real intermediate skill on it — transitions, pop, or first flights.',
+    iko: 'IKO Level 4 (Advanced)',
   },
   {
     id: 'purple',
@@ -477,6 +481,7 @@ export const MASTERY_BELTS: MasteryBelt[] = [
     color: '#5c3a6e',
     requirement: 'Master one path, intermediate in a second',
     skills: 'One discipline is genuinely yours, and a second is opening up.',
+    iko: 'IKO Level 5 (Evolution, one discipline)',
   },
   {
     id: 'brown',
@@ -484,6 +489,7 @@ export const MASTERY_BELTS: MasteryBelt[] = [
     color: '#6b4a2f',
     requirement: 'Master two paths, intermediate in a third',
     skills: 'Two disciplines mastered — you are the strongest rider on most beaches you visit.',
+    iko: 'beyond IKO — multi-discipline mastery',
   },
   {
     id: 'black',
@@ -491,6 +497,7 @@ export const MASTERY_BELTS: MasteryBelt[] = [
     color: '#22262b',
     requirement: 'Master all four paths',
     skills: 'Freeride, big air, freestyle and wave — the complete kiteboarder. A lifetime project.',
+    iko: 'beyond IKO — all four Evolution disciplines',
   },
 ]
 
@@ -506,6 +513,8 @@ export interface LifeUnlock {
   detail: string
   requires: UnlockRequirement
   requiresLabel: string
+  /** Badge icon id — rendered by components/wind/mastery/UnlockIcons.tsx */
+  icon: string
 }
 
 export const LIFE_UNLOCKS: LifeUnlock[] = [
@@ -515,6 +524,15 @@ export const LIFE_UNLOCKS: LifeUnlock[] = [
     detail: 'Rent gear at any spot in the world and ride without a school — every coastal trip becomes a kite trip.',
     requires: { kind: 'belt', belt: 'white' },
     requiresLabel: 'White belt',
+    icon: 'globe',
+  },
+  {
+    id: 'ul-blue-travel',
+    title: 'Wind-first travel',
+    detail: 'Trips get planned around forecasts now — a windy week anywhere beats a sunny week somewhere.',
+    requires: { kind: 'belt', belt: 'blue' },
+    requiresLabel: 'Blue belt',
+    icon: 'plane',
   },
   {
     id: 'ul-curonian',
@@ -522,6 +540,7 @@ export const LIFE_UNLOCKS: LifeUnlock[] = [
     detail: 'Nida to Juodkrante along the dunes — the home-water classic, one shuttle car and a long afternoon.',
     requires: { kind: 'path', path: 'freeride', level: 'intermediate' },
     requiresLabel: 'Freeride INT',
+    icon: 'dunes',
   },
   {
     id: 'ul-world-dw',
@@ -529,6 +548,15 @@ export const LIFE_UNLOCKS: LifeUnlock[] = [
     detail: 'Cumbuco to Jericoacoara in Brazil (3 days, 200 km), Langebaan lagoon in South Africa, Dakhla in Morocco.',
     requires: { kind: 'path', path: 'freeride', level: 'advanced' },
     requiresLabel: 'Freeride ADV',
+    icon: 'route',
+  },
+  {
+    id: 'ul-winter-baltic',
+    title: 'Baltic winter sessions',
+    detail: 'Drysuit season: empty beaches, steady winter fronts, riding twelve months a year on home water.',
+    requires: { kind: 'path', path: 'freeride', level: 'advanced' },
+    requiresLabel: 'Freeride ADV',
+    icon: 'snowflake',
   },
   {
     id: 'ul-expedition',
@@ -536,6 +564,7 @@ export const LIFE_UNLOCKS: LifeUnlock[] = [
     detail: 'Madagascar, Zanzibar outer reefs, unmapped coastline — you are the one others trust to read the spot.',
     requires: { kind: 'path', path: 'freeride', level: 'master' },
     requiresLabel: 'Freeride MST',
+    icon: 'summit',
   },
   {
     id: 'ul-capetown',
@@ -543,6 +572,7 @@ export const LIFE_UNLOCKS: LifeUnlock[] = [
     detail: 'Kite Beach in King of the Air season (Jan-Feb) — ride the same water as the best big air riders alive.',
     requires: { kind: 'path', path: 'bigair', level: 'intermediate' },
     requiresLabel: 'Big Air INT',
+    icon: 'tablemountain',
   },
   {
     id: 'ul-comp',
@@ -550,6 +580,7 @@ export const LIFE_UNLOCKS: LifeUnlock[] = [
     detail: 'Enter a Baltic amateur big air event — a bib, a heat, a scoreboard with your name on it.',
     requires: { kind: 'path', path: 'bigair', level: 'advanced' },
     requiresLabel: 'Big Air ADV',
+    icon: 'podium',
   },
   {
     id: 'ul-kota',
@@ -557,6 +588,7 @@ export const LIFE_UNLOCKS: LifeUnlock[] = [
     detail: 'Film and submit a KOTA qualifier entry — whatever happens, you are in the conversation.',
     requires: { kind: 'path', path: 'bigair', level: 'master' },
     requiresLabel: 'Big Air MST',
+    icon: 'camera',
   },
   {
     id: 'ul-lagoons',
@@ -564,6 +596,7 @@ export const LIFE_UNLOCKS: LifeUnlock[] = [
     detail: 'Lo Stagnone in Sicily, the Dakhla lagoon — butter-flat freestyle water with a trick list in your pocket.',
     requires: { kind: 'path', path: 'freestyle', level: 'intermediate' },
     requiresLabel: 'Freestyle INT',
+    icon: 'lagoon',
   },
   {
     id: 'ul-fs-comp',
@@ -571,6 +604,15 @@ export const LIFE_UNLOCKS: LifeUnlock[] = [
     detail: 'An amateur freestyle comp run — three tricks, two tacks, one horn.',
     requires: { kind: 'path', path: 'freestyle', level: 'advanced' },
     requiresLabel: 'Freestyle ADV',
+    icon: 'scorecard',
+  },
+  {
+    id: 'ul-video-part',
+    title: 'A video part worth publishing',
+    detail: 'Film a full unhooked edit — three minutes of riding that prove the trick list is real.',
+    requires: { kind: 'path', path: 'freestyle', level: 'master' },
+    requiresLabel: 'Freestyle MST',
+    icon: 'clapper',
   },
   {
     id: 'ul-essaouira',
@@ -578,6 +620,7 @@ export const LIFE_UNLOCKS: LifeUnlock[] = [
     detail: 'Essaouira, Morocco — waves, tagine and a directional board strapped to the roof.',
     requires: { kind: 'path', path: 'wave', level: 'intermediate' },
     requiresLabel: 'Wave INT',
+    icon: 'wavesun',
   },
   {
     id: 'ul-onEye',
@@ -585,6 +628,39 @@ export const LIFE_UNLOCKS: LifeUnlock[] = [
     detail: 'Le Morne and one of the best kite waves on the planet — the wall every wave rider dreams about.',
     requires: { kind: 'path', path: 'wave', level: 'advanced' },
     requiresLabel: 'Wave ADV',
+    icon: 'barrel',
+  },
+  {
+    id: 'ul-capeverde',
+    title: 'Ponta Preta, Cape Verde',
+    detail: 'One of the heaviest kite waves anywhere — the wave you earn, not book.',
+    requires: { kind: 'path', path: 'wave', level: 'master' },
+    requiresLabel: 'Wave MST',
+    icon: 'reefpeak',
+  },
+  {
+    id: 'ul-purple-crew',
+    title: 'The one others follow',
+    detail: 'You call the session: spot, kite size, safety plan. Friends launch when you launch.',
+    requires: { kind: 'belt', belt: 'purple' },
+    requiresLabel: 'Purple belt',
+    icon: 'crew',
+  },
+  {
+    id: 'ul-brown-season',
+    title: 'A full season abroad',
+    detail: 'A winter in Cape Town or Brazil riding at local level — not a tourist in the lineup.',
+    requires: { kind: 'belt', belt: 'brown' },
+    requiresLabel: 'Brown belt',
+    icon: 'horizonsun',
+  },
+  {
+    id: 'ul-black-yes',
+    title: 'Any invitation, yes',
+    detail: 'Crossings, filming projects, expedition invites — nothing on the table is out of reach.',
+    requires: { kind: 'belt', belt: 'black' },
+    requiresLabel: 'Black belt',
+    icon: 'compass',
   },
 ]
 
