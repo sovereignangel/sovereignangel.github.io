@@ -60,7 +60,7 @@ export const FUNDAMENTALS: PathMilestone[] = [
   },
   {
     id: 'fund-upwind',
-    label: 'Hold ground upwind on both tacks',
+    label: 'Hold ground upwind in both directions',
     drill: 'Park the kite at 10-11, push the back leg, look at an upwind target — end every run where it began.',
     kind: 'manual',
     aliases: ['yellow-tacks', 'white-ride'],
@@ -102,14 +102,14 @@ export const MASTERY_PATHS: MasteryPath[] = [
           {
             id: 'fr-int-transitions',
             label: 'Sliding transitions, 8 of 10 landed',
-            drill: '20 per session: slow down, kite to 12, sink the tail, redirect, power away on the new tack.',
+            drill: '20 per session: slow down, raise the kite overhead, let the back of the board sink, then dive the kite the other way and ride off in the new direction.',
             kind: 'manual',
             aliases: ['orange-transitions'],
           },
           {
             id: 'fr-int-toeside',
             label: 'Toeside 50m+ both directions',
-            drill: 'Weight over the front foot, hips open to the kite, eyes on where you are going — 10 legs a session.',
+            drill: 'Weight over the front foot, hips open to the kite, eyes on where you are going — 10 runs a session.',
             kind: 'manual',
             aliases: ['orange-toeside'],
           },
@@ -202,7 +202,7 @@ export const MASTERY_PATHS: MasteryPath[] = [
           {
             id: 'ba-int-five',
             label: '5 sent jumps landed in one session',
-            drill: 'Small sends: kite 11 to 12:30, edge, release, redirect back to 11 before landing. Start underpowered.',
+            drill: 'Small sends: steer the kite from 11 up past 12, hold your edge, then let go — and steer it back down to 11 before you land. Start underpowered.',
             kind: 'manual',
             aliases: ['green-firstjump'],
           },
@@ -359,7 +359,7 @@ export const MASTERY_PATHS: MasteryPath[] = [
           {
             id: 'fs-mst-run',
             label: 'Three-trick unhooked run, no crash',
-            drill: 'A competition-legal sequence back to back on one tack — consistency is the mastery.',
+            drill: 'A competition-legal sequence back to back without changing direction — consistency is the mastery.',
             kind: 'manual',
           },
         ],
@@ -376,7 +376,7 @@ export const MASTERY_PATHS: MasteryPath[] = [
         milestones: [
           {
             id: 'wv-int-strapless',
-            label: 'Strapless upwind both tacks',
+            label: 'Strapless upwind in both directions',
             drill: 'Borrow or rent a directional; light-wind flat days are perfect for the first sessions.',
             kind: 'manual',
           },
