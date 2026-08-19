@@ -473,13 +473,18 @@ See [.env.local](.env.local) (not in repo) for:
 - **Primary domain**: `loricorpuz.com`
 - **Production branch**: `main`
 
-### Wildcard Subdomain Setup (ALREADY CONFIGURED)
+### Wildcard Subdomain Setup (DNS ONLY — Vercel step still required)
 
-DNS and Vercel are set up with **wildcard routing**:
-- **DNS**: `*.loricorpuz.com` → `cname.vercel-dns.com` (CNAME)
-- **Vercel**: Wildcard domain `*.loricorpuz.com` is added to the project
+DNS is set up with **wildcard routing**:
+- **DNS**: `*.loricorpuz.com` → `cname.vercel-dns.com` (CNAME) — no DNS work ever needed for new subdomains
 
-This means **any new subdomain works automatically** — no manual DNS or Vercel config needed.
+**BUT Vercel does NOT auto-serve new subdomains.** Certs are issued per-subdomain (Let's Encrypt, `CN=<subdomain>.loricorpuz.com`), and TLS handshakes fail (curl exit 35, `SSL_ERROR_SYSCALL`) until the exact subdomain is added to the project. Verified 2026-08-20 during the mahamudra launch: the deploy was live via `www.loricorpuz.com/<route>` while the subdomain failed SSL for 20+ minutes, and was fixed instantly by:
+
+```bash
+vercel domains add <subdomain>.loricorpuz.com   # run from repo root (project is linked)
+```
+
+Cert lands within ~1 minute of adding the domain.
 
 ### Adding a New Subdomain Site — Launch Checklist
 
@@ -507,24 +512,26 @@ if (host === '<subdomain>.loricorpuz.com') {
 - [ ] **Build passes** — run `npm run build` and confirm the new route appears in the output (e.g., `○ /lordas  6.56 kB  94.7 kB`)
 - [ ] **API routes use correct path** — client-side fetches from subdomain pages should use relative paths like `/api/<project-name>/...`. The middleware matcher excludes `/api/` paths, so these pass through directly without rewriting.
 
-#### Step 4: Push to master
+#### Step 4: Push to master and add the domain to Vercel
 
 ```bash
 git push origin master
+vercel domains add <subdomain>.loricorpuz.com   # REQUIRED — from repo root (project is linked)
 ```
+
+Without the `vercel domains add`, the subdomain fails TLS forever (curl exit 35) even though the deploy is live. The wildcard DNS record only handles DNS, not certs.
 
 #### Step 5: Post-launch verification
 
-- **Wait 2-3 minutes** for Vercel deployment + SSL certificate provisioning (new subdomains need fresh TLS certs)
+- **Wait 1-3 minutes** for Vercel deployment + SSL certificate provisioning (cert lands ~1 min after `vercel domains add`)
 - **Verify with curl**: `curl -s -o /dev/null -w "%{http_code}" https://<subdomain>.loricorpuz.com/`
   - `200` = live and working
-  - SSL error / connection refused = cert still provisioning, wait and retry
+  - SSL error / connection refused = cert still provisioning (or domain not added — see Step 4), wait and retry
   - `404` = middleware rewrite not working, check steps 2-3
+- Sanity-check the route itself via `https://www.loricorpuz.com/<project-name>` — if that 200s while the subdomain fails, it's a domain/cert issue, not a code issue
 
 **No need to**:
 - Add DNS records (wildcard `*.loricorpuz.com` covers it)
-- Add domains in Vercel dashboard (wildcard covers it)
-- Set up SSL certificates (Vercel auto-provisions, takes 1-3 min for new subdomains)
 
 > ⚠️ **CRITICAL**: `middleware.ts` is the source of truth for subdomain routing — NOT `next.config.js`. Adding a rewrite only to `next.config.js` will result in 404s. Always add the rule to `middleware.ts`.
 
