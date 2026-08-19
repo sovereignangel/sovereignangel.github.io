@@ -141,6 +141,8 @@ export interface SessionStatus {
 export interface DayStatus {
   day: PlanDay
   sessions: SessionStatus[]
+  /** Activities logged this day that matched no planned session — still counted, shown as logged extras */
+  extras: Array<{ sport: Sport | null; type: string; distanceKm: number | null; durationMin: number }>
 }
 
 export function matchDay(day: PlanDay, activities: GarminActivity[], today: string): DayStatus {
@@ -175,7 +177,16 @@ export function matchDay(day: PlanDay, activities: GarminActivity[], today: stri
     return { session, status: day.date < today ? 'missed' : 'upcoming' }
   })
 
-  return { day, sessions }
+  const extras = dayActs
+    .filter((a) => !used.has(String(a.activityId)) && (a.durationSeconds ?? 0) >= 600)
+    .map((a) => ({
+      sport: sportOfActivity(a.type),
+      type: a.type,
+      distanceKm: a.distanceMeters != null ? Math.round(a.distanceMeters / 100) / 10 : null,
+      durationMin: Math.round((a.durationSeconds ?? 0) / 60),
+    }))
+
+  return { day, sessions, extras }
 }
 
 // ── Daily adaptation ──────────────────────────────────────────────────────

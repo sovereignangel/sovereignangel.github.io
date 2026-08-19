@@ -276,6 +276,20 @@ function PlanCalendar({ days, today }: { days: DayStatus[]; today: string }) {
                             </span>
                           )
                         })}
+                        {ds.extras.map((x, i) => (
+                          <span key={`extra-${i}`} className="flex items-center gap-1">
+                            {x.sport ? (
+                              <SportChip sport={x.sport} />
+                            ) : (
+                              <span className="font-mono text-[8px] uppercase px-1.5 py-0.5 rounded-sm border border-rule text-ink-muted">
+                                {x.type.replace(/_/g, ' ').slice(0, 12)}
+                              </span>
+                            )}
+                            <span className="font-mono text-[8px] uppercase" style={{ color: '#2d5f3f' }}>
+                              +{x.distanceKm != null ? `${x.distanceKm}km` : `${x.durationMin}min`} logged
+                            </span>
+                          </span>
+                        ))}
                       </div>
                     </div>
                   </div>
@@ -295,24 +309,35 @@ export default function IronmanDashboard() {
   const { user } = useAuth()
   const [metrics, setMetrics] = useState<GarminMetrics[] | null>(null)
   const [activities, setActivities] = useState<GarminActivity[]>([])
+  const [lastSync, setLastSync] = useState<Date | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     if (!user) return
+    const loadFull = () => {
+      getAllGarminMetrics(user.uid)
+        .then((m) => {
+          setMetrics(m)
+          const latest = m
+            .map((x) => (x.syncedAt as unknown as { toDate?: () => Date })?.toDate?.())
+            .filter((d): d is Date => d instanceof Date)
+            .sort((a, b) => b.getTime() - a.getTime())[0]
+          if (latest) setLastSync(latest)
+        })
+        .catch((e) => setError((e as Error).message))
+      getAllGarminActivities(user.uid).then(setActivities).catch(() => setActivities([]))
+    }
     getGarminRollups(user.uid)
       .then((rollup) => {
         if (rollup && rollup.metrics.length > 0) {
           setMetrics(rollup.metrics)
           setActivities(rollup.activities)
+          setLastSync(rollup.updatedAt)
           return
         }
-        getAllGarminMetrics(user.uid).then(setMetrics).catch((e) => setError((e as Error).message))
-        getAllGarminActivities(user.uid).then(setActivities).catch(() => setActivities([]))
+        loadFull()
       })
-      .catch(() => {
-        getAllGarminMetrics(user.uid).then(setMetrics).catch((e) => setError((e as Error).message))
-        getAllGarminActivities(user.uid).then(setActivities).catch(() => setActivities([]))
-      })
+      .catch(loadFull)
   }, [user])
 
   const today = todayLocal()
@@ -347,8 +372,20 @@ export default function IronmanDashboard() {
           <span className="text-ink-muted"> · {fmtDate(RACE.date)} · </span>
           <span className="font-mono">{RACE.swimKm}km swim / {RACE.bikeKm}km bike / {RACE.runKm}km run</span>
         </div>
-        <div className="text-[10px] text-ink-muted ml-auto">
-          Plan re-adapts on every Garmin sync (3x daily)
+        <div className="text-[10px] text-ink-muted ml-auto text-right">
+          <div>Plan re-adapts on every Garmin sync (3x daily)</div>
+          <div className="font-mono">
+            Last sync:{' '}
+            {lastSync
+              ? lastSync.toLocaleString('en-GB', {
+                  timeZone: 'Europe/Vilnius',
+                  day: 'numeric',
+                  month: 'short',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                }) + ' Palanga time'
+              : 'not yet synced'}
+          </div>
         </div>
       </div>
 

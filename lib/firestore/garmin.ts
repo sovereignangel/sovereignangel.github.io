@@ -7,12 +7,14 @@ import { localDateString } from '../date-utils'
 // per dashboard load instead of ~4,500. Returns null if not yet built.
 export async function getGarminRollups(
   uid: string
-): Promise<{ metrics: GarminMetrics[]; activities: GarminActivity[] } | null> {
+): Promise<{ metrics: GarminMetrics[]; activities: GarminActivity[]; updatedAt: Date | null } | null> {
   const [mSnap, aSnap] = await Promise.all([
     getDoc(doc(db, 'users', uid, 'garmin_rollups', 'metrics')),
     getDoc(doc(db, 'users', uid, 'garmin_rollups', 'activities')),
   ])
   if (!mSnap.exists() || !aSnap.exists()) return null
+
+  const updatedAt = aSnap.data().updatedAt?.toDate?.() ?? mSnap.data().updatedAt?.toDate?.() ?? null
 
   const mCols = JSON.parse(mSnap.data().json)
   const metrics: GarminMetrics[] = mCols.date.map((date: string, i: number) => {
@@ -33,7 +35,7 @@ export async function getGarminRollups(
     return row as unknown as GarminActivity
   })
 
-  return { metrics, activities }
+  return { metrics, activities, updatedAt }
 }
 
 export async function getAllGarminActivities(uid: string): Promise<GarminActivity[]> {
