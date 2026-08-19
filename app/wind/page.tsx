@@ -52,6 +52,10 @@ const HOUR_CELL_COLOR: Record<HourCategory, string> = {
   offshore: '#1f3a45',
 }
 
+// Fixed strip range so every day row lines up under one hour axis
+const STRIP_START = 8
+const STRIP_END = 21 // exclusive
+
 function SpotIcon({ slug, className }: { slug: string; className?: string }) {
   if (slug === 'sventoji') {
     // Home spot — house above a wave
@@ -85,20 +89,50 @@ function SpotIcon({ slug, className }: { slug: string; className?: string }) {
   )
 }
 
+function HourAxis() {
+  return (
+    <div className="flex gap-px">
+      {Array.from({ length: STRIP_END - STRIP_START }, (_, i) => {
+        const hour = STRIP_START + i
+        return (
+          <div key={hour} className="flex-1 min-w-[4px] text-center font-mono text-[8px] text-surf-muted leading-none">
+            {hour % 2 === 0 ? hour : ''}
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
 function HourStrip({ day, spot }: { day: DayAnalysis; spot: KiteSpot }) {
+  const byHour = new Map(day.hours.map(h => [h.hour, h]))
   return (
     <div className="flex gap-px h-2.5 md:h-4 rounded-full overflow-hidden">
-      {day.hours.map(h => {
+      {Array.from({ length: STRIP_END - STRIP_START }, (_, i) => {
+        const hour = STRIP_START + i
+        const h = byHour.get(hour)
+        if (!h || hour >= day.endHour) {
+          return (
+            <div
+              key={hour}
+              className="flex-1 min-w-[4px]"
+              style={{ backgroundColor: 'rgba(31, 58, 69, 0.05)' }}
+              title={`${String(hour).padStart(2, '0')}:00 · after sunset`}
+            />
+          )
+        }
         const cat = categorizeHour(h, spot)
         return (
           <div
-            key={h.hour}
+            key={hour}
             className="flex-1 min-w-[4px] flex items-center justify-center"
             style={{ backgroundColor: HOUR_CELL_COLOR[cat] }}
-            title={`${String(h.hour).padStart(2, '0')}:00 · ${Math.round(h.speedKn)} kn, gusts ${Math.round(h.gustKn)} kn · ${directionLabel(h.directionDeg, spot)}`}
+            title={`${String(hour).padStart(2, '0')}:00 · ${Math.round(h.speedKn)} kn, gusts ${Math.round(h.gustKn)} kn · ${directionLabel(h.directionDeg, spot)}`}
           >
-            {cat === 'ideal' && (
-              <span className="hidden md:inline font-mono text-[8px] font-semibold text-white leading-none">
+            {(cat === 'ideal' || cat === 'light' || cat === 'calm') && (
+              <span className={`hidden md:inline font-mono text-[8px] font-semibold leading-none ${
+                cat === 'ideal' ? 'text-white' : 'text-surf-ink/60'
+              }`}>
                 {Math.round(h.speedKn)}
               </span>
             )}
@@ -283,6 +317,12 @@ function SpotMatrix({ forecasts, live }: { forecasts: SpotForecast[]; live: Jura
               <div className="text-[8px] md:text-[9px] text-surf-muted mt-0.5">{f.spot.tagline}</div>
             )}
             <div className="hidden md:block text-[9px] text-surf-muted">{f.spot.idealWind}</div>
+          </div>
+        ))}
+        <div className="pt-1 pr-1 text-right font-mono text-[8px] text-surf-muted self-end">h</div>
+        {forecasts.map(f => (
+          <div key={`axis-${f.spot.slug}`} className="pt-1 self-end">
+            <HourAxis />
           </div>
         ))}
         {dates.map((date, i) => (
