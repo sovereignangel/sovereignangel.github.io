@@ -104,19 +104,20 @@ function HourAxis() {
   )
 }
 
-function HourStrip({ day, spot }: { day: DayAnalysis; spot: KiteSpot }) {
+function HourStrip({ day, spot, nowHour }: { day: DayAnalysis; spot: KiteSpot; nowHour?: number }) {
   const byHour = new Map(day.hours.map(h => [h.hour, h]))
   return (
     <div className="flex gap-px h-2.5 md:h-4 rounded-full overflow-hidden">
       {Array.from({ length: STRIP_END - STRIP_START }, (_, i) => {
         const hour = STRIP_START + i
         const h = byHour.get(hour)
+        const nowRing = hour === nowHour ? { boxShadow: 'inset 0 0 0 1.5px #2b3a3f' } : undefined
         if (!h || hour >= day.endHour) {
           return (
             <div
               key={hour}
               className="flex-1 min-w-[4px]"
-              style={{ backgroundColor: 'rgba(31, 58, 69, 0.05)' }}
+              style={{ backgroundColor: 'rgba(31, 58, 69, 0.05)', ...nowRing }}
               title={`${String(hour).padStart(2, '0')}:00 · after sunset`}
             />
           )
@@ -126,16 +127,14 @@ function HourStrip({ day, spot }: { day: DayAnalysis; spot: KiteSpot }) {
           <div
             key={hour}
             className="flex-1 min-w-[4px] flex items-center justify-center"
-            style={{ backgroundColor: HOUR_CELL_COLOR[cat] }}
-            title={`${String(hour).padStart(2, '0')}:00 · ${Math.round(h.speedKn)} kn, gusts ${Math.round(h.gustKn)} kn · ${directionLabel(h.directionDeg, spot)}`}
+            style={{ backgroundColor: HOUR_CELL_COLOR[cat], ...nowRing }}
+            title={`${String(hour).padStart(2, '0')}:00${hour === nowHour ? ' (now)' : ''} · ${Math.round(h.speedKn)} kn, gusts ${Math.round(h.gustKn)} kn · ${directionLabel(h.directionDeg, spot)}`}
           >
-            {(cat === 'ideal' || cat === 'light' || cat === 'calm') && (
-              <span className={`hidden md:inline font-mono text-[8px] font-semibold leading-none ${
-                cat === 'ideal' ? 'text-white' : 'text-surf-ink/60'
-              }`}>
-                {Math.round(h.speedKn)}
-              </span>
-            )}
+            <span className={`hidden md:inline font-mono text-[8px] font-semibold leading-none ${
+              cat === 'light' || cat === 'calm' ? 'text-surf-ink/60' : 'text-white'
+            }`}>
+              {Math.round(h.speedKn)}
+            </span>
           </div>
         )
       })}
@@ -250,7 +249,7 @@ function WeekBand({ dates, sessions, possibles }: { dates: string[]; sessions: S
   )
 }
 
-function MatrixCell({ day, spot }: { day: DayAnalysis; spot: KiteSpot }) {
+function MatrixCell({ day, spot, nowHour }: { day: DayAnalysis; spot: KiteSpot; nowHour?: number }) {
   let line: JSX.Element
   if (day.window) {
     line = (
@@ -279,12 +278,12 @@ function MatrixCell({ day, spot }: { day: DayAnalysis; spot: KiteSpot }) {
   return (
     <div className="py-1 md:py-1.5 border-b border-surf-rule-light" title={`${fmtDay(day.date)} — ${spot.name}: ${day.note}.${altNote}`}>
       <div className="font-mono text-[9px] md:text-[10px] leading-tight mb-0.5">{line}</div>
-      <HourStrip day={day} spot={spot} />
+      <HourStrip day={day} spot={spot} nowHour={nowHour} />
     </div>
   )
 }
 
-function SpotMatrix({ forecasts, live }: { forecasts: SpotForecast[]; live: JuraspotLive | null }) {
+function SpotMatrix({ forecasts, live, nowHour }: { forecasts: SpotForecast[]; live: JuraspotLive | null; nowHour: number }) {
   const dates = forecasts[0].days.map(d => d.date)
   return (
     <div className="bg-surf-card border border-surf-rule rounded-xl p-2 md:p-3 shadow-[0_2px_12px_rgba(13,92,99,0.06)]">
@@ -298,22 +297,27 @@ function SpotMatrix({ forecasts, live }: { forecasts: SpotForecast[]; live: Jura
                 {f.spot.name}
               </span>
             </div>
-            {f.spot.slug === 'sventoji' && live ? (
-              <a
-                href="https://juraspot.lt"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1 mt-0.5 group"
-                title={`JuraSpot station (Monciskes): 10-min avg ${live.avgMs} m/s, now ${live.instMs} m/s${live.directionDeg !== null ? `, from ${Math.round(live.directionDeg)} deg` : ''}`}
-              >
-                <span className="inline-block w-1.5 h-1.5 rounded-full bg-surf-teal shrink-0" />
-                <span className="font-mono text-[9px] font-semibold text-surf-deep group-hover:underline truncate">
-                  live {live.avgKn} kn
-                  <span className="hidden md:inline"> &middot; now {live.instKn}</span>
-                  {live.directionDeg !== null && <> &middot; {directionLabel(live.directionDeg, f.spot).split(' ')[0]}</>}
-                </span>
-              </a>
-            ) : (
+            {f.spot.slug === 'sventoji' && live ? (() => {
+              const nowFc = f.days[0]?.hours.find(h => h.hour === nowHour)
+              const fcstKn = nowFc ? Math.round(nowFc.speedKn) : null
+              const disagree = fcstKn !== null && Math.abs(live.avgKn - fcstKn) >= 3
+              return (
+                <a
+                  href="https://juraspot.lt"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1 mt-0.5 group"
+                  title={`JuraSpot station (Monciskes), measured wind: 10-min avg ${live.avgMs} m/s, instantaneous ${live.instMs} m/s${live.directionDeg !== null ? `, from ${Math.round(live.directionDeg)} deg` : ''}.${fcstKn !== null ? ` GFS forecast for this hour: ${fcstKn} kn.` : ''} The station is real measured wind — trust it over the forecast for right now.`}
+                >
+                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-surf-teal shrink-0" />
+                  <span className="font-mono text-[9px] font-semibold text-surf-deep group-hover:underline truncate">
+                    station {live.avgKn} kn
+                    {disagree && <span className="text-surf-sun-ink"> &middot; fcst {fcstKn}</span>}
+                    {live.directionDeg !== null && <> &middot; {directionLabel(live.directionDeg, f.spot).split(' ')[0]}</>}
+                  </span>
+                </a>
+              )
+            })() : (
               <div className="text-[8px] md:text-[9px] text-surf-muted mt-0.5">{f.spot.tagline}</div>
             )}
             <div className="hidden md:block text-[9px] text-surf-muted">{f.spot.idealWind}</div>
@@ -333,7 +337,7 @@ function SpotMatrix({ forecasts, live }: { forecasts: SpotForecast[]; live: Jura
             {forecasts.map(f => {
               const day = f.days.find(d => d.date === date)
               return day ? (
-                <MatrixCell key={f.spot.slug} day={day} spot={f.spot} />
+                <MatrixCell key={f.spot.slug} day={day} spot={f.spot} nowHour={i === 0 ? nowHour : undefined} />
               ) : (
                 <div key={f.spot.slug} className="border-b border-surf-rule-light" />
               )
@@ -389,6 +393,10 @@ export default async function WindPage() {
   }
 
   const live = await fetchJuraspotLive()
+  const nowHour = parseInt(
+    new Date().toLocaleString('en-GB', { timeZone: TIMEZONE, hour: '2-digit', hour12: false }),
+    10
+  )
   const sessions = weekSessions(forecasts)
   const generatedAt = new Date().toLocaleString('en-GB', {
     timeZone: TIMEZONE,
@@ -414,7 +422,7 @@ export default async function WindPage() {
         </div>
 
         <WeekBand dates={forecasts[0].days.map(d => d.date)} sessions={sessions} possibles={weekPossibles(forecasts)} />
-        <SpotMatrix forecasts={forecasts} live={live} />
+        <SpotMatrix forecasts={forecasts} live={live} nowHour={nowHour} />
         <div className="mt-1.5">
           <Legend />
         </div>

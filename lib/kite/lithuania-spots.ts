@@ -198,8 +198,9 @@ export function analyzeDay(
   spot: KiteSpot,
   sunset: string | null
 ): DayAnalysis {
+  // Include the sunset hour itself: sunset 20:59 means the 20:00-21:00 hour is ridable
   const sunsetHour = sunset ? parseInt(sunset.slice(0, 2), 10) : null
-  const endHour = sunsetHour ? Math.min(MAX_END_HOUR, sunsetHour) : FALLBACK_END_HOUR
+  const endHour = sunsetHour ? Math.min(MAX_END_HOUR, sunsetHour + 1) : FALLBACK_END_HOUR
   const daylight = allHours.filter(h => h.hour >= DAY_START_HOUR && h.hour < endHour)
   const peakSpeedKn = Math.round(Math.max(0, ...daylight.map(h => h.speedKn)))
   const window = findBestWindow(daylight, spot)
