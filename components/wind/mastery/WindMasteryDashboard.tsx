@@ -363,7 +363,8 @@ export function WindMasteryDashboard({ uid }: Props) {
           </button>
         </div>
         {beltOpen && (
-          <div className="mt-2 pt-1 border-t border-surf-rule-light">
+          <div className="mt-2 pt-1 border-t border-surf-rule-light grid grid-cols-1 md:grid-cols-2 gap-x-5">
+            <div>
             {MASTERY_BELTS.map((belt, i) => {
               const earned = state.beltsEarned[belt.id]
               const isTarget = !earned && i === state.targetBeltIndex
@@ -395,7 +396,7 @@ export function WindMasteryDashboard({ uid }: Props) {
                     <div className="text-[10px] text-surf-muted leading-snug mt-0.5">
                       <GlossedText text={belt.skills} enabled={glossEnabled} />
                     </div>
-                    {belt.id === 'blue' && !state.whiteEarned && (
+                    {belt.id === 'white' && !state.whiteEarned && (
                       <div className="font-mono text-[9px] text-surf-teal mt-0.5">
                         {state.fundamentalsMet}/{state.fundamentalsTotal} fundamentals — checklist in Foundation below
                       </div>
@@ -404,6 +405,47 @@ export function WindMasteryDashboard({ uid }: Props) {
                 </div>
               )
             })}
+            </div>
+            <div className="md:border-l md:border-surf-rule-light md:pl-5">
+              <div className="font-mono text-[9px] font-semibold uppercase tracking-wide text-surf-teal pt-2 mb-0.5">
+                IKO official levels
+              </div>
+              {IKO_LEVELS.map(l => {
+                const here = l.level === ikoNow
+                const passed = l.level < ikoNow
+                return (
+                  <div
+                    key={l.level}
+                    className={`flex items-start gap-2 py-1.5 border-b border-surf-rule-light last:border-b-0 ${
+                      passed || here ? '' : 'opacity-60'
+                    }`}
+                  >
+                    <span
+                      className={`flex items-center justify-center w-5 h-5 rounded-full font-mono text-[10px] font-semibold shrink-0 mt-0.5 ${
+                        here
+                          ? 'bg-surf-teal text-white'
+                          : passed
+                            ? 'bg-surf-teal-bg text-surf-teal border border-surf-teal/30'
+                            : 'bg-transparent text-surf-faint border border-surf-rule'
+                      }`}
+                    >
+                      {l.level}
+                    </span>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className={`text-[11px] font-semibold ${here ? 'text-surf-deep' : 'text-surf-ink'}`}>{l.name}</span>
+                        {here && (
+                          <span className="font-mono text-[8px] font-semibold uppercase px-1 py-px rounded-sm bg-surf-sun-bg text-surf-sun-ink border border-surf-sun/40">
+                            you are here
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-[9px] text-surf-muted leading-snug mt-0.5">{l.desc}</div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
           </div>
         )}
         <div className="mt-2 pt-1.5 border-t border-surf-rule-light text-[9px] text-surf-muted">
@@ -414,20 +456,28 @@ export function WindMasteryDashboard({ uid }: Props) {
         </div>
       </div>
 
-      {/* Next three */}
+      {/* Next up */}
       <section>
         <h2 className="font-serif text-[13px] font-semibold text-surf-deep mb-1.5">
-          Next Three <span className="text-[10px] font-sans font-normal text-surf-muted">— pick one per session, drill it to boredom</span>
+          Next Up <span className="text-[10px] font-sans font-normal text-surf-muted">— pick one per session, drill it to boredom; the queued card is what follows</span>
         </h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2">
           {nextThree.map(n => {
             const met = isMilestoneMet(n.milestone, stats, milestones)
             const auto = n.milestone.kind === 'auto'
             const progress = autoProgressLabel(n.milestone, stats)
             return (
-              <div key={n.milestone.id} className="bg-surf-card border border-surf-teal/30 rounded-xl p-2.5 shadow-[0_2px_12px_rgba(13,92,99,0.06)]">
+              <div
+                key={n.milestone.id}
+                className={`bg-surf-card border rounded-xl p-2.5 shadow-[0_2px_12px_rgba(13,92,99,0.06)] ${
+                  n.queued ? 'border-surf-rule border-dashed' : 'border-surf-teal/30'
+                }`}
+              >
                 <div className="flex items-center justify-between gap-2">
-                  <span className="font-mono text-[9px] font-semibold uppercase tracking-wide text-surf-teal">{n.source}</span>
+                  <span className={`font-mono text-[9px] font-semibold uppercase tracking-wide ${n.queued ? 'text-surf-muted' : 'text-surf-teal'}`}>
+                    {n.source}
+                    {n.queued ? ' · queued' : ''}
+                  </span>
                   {auto ? (
                     <span className="font-mono text-[9px] px-1 py-px rounded-sm bg-surf-sun-bg text-surf-sun-ink">{progress}</span>
                   ) : (
@@ -446,13 +496,12 @@ export function WindMasteryDashboard({ uid }: Props) {
         </div>
       </section>
 
-      {/* Progression: paths (left) + official IKO ladder (right) */}
+      {/* Paths */}
       <section>
         <h2 className="font-serif text-[13px] font-semibold text-surf-deep mb-1.5">
-          Progression <span className="text-[10px] font-sans font-normal text-surf-muted">— the paths you climb, next to the official IKO ladder they map onto</span>
+          Paths <span className="text-[10px] font-sans font-normal text-surf-muted">— freeride and big air first; freestyle and wave unlock with intermediate skill</span>
         </h2>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-2 items-start">
-        <div className="lg:col-span-2 bg-surf-card border border-surf-rule rounded-xl px-3 py-1 shadow-[0_2px_12px_rgba(13,92,99,0.06)]">
+        <div className="bg-surf-card border border-surf-rule rounded-xl px-3 py-1 shadow-[0_2px_12px_rgba(13,92,99,0.06)]">
           {/* Foundation row (white belt checklist) */}
           <div className="border-b border-surf-rule-light">
             <button
@@ -507,49 +556,6 @@ export function WindMasteryDashboard({ uid }: Props) {
               onToggle={handleToggle}
             />
           ))}
-        </div>
-
-        {/* Official IKO ladder */}
-        <div className="bg-surf-card border border-surf-rule rounded-xl px-3 py-2 shadow-[0_2px_12px_rgba(13,92,99,0.06)]">
-          <div className="font-mono text-[9px] font-semibold uppercase tracking-wide text-surf-teal mb-1">
-            IKO official levels
-          </div>
-          {IKO_LEVELS.map(l => {
-            const here = l.level === ikoNow
-            const passed = l.level < ikoNow
-            return (
-              <div
-                key={l.level}
-                className={`flex items-start gap-2 py-1.5 border-b border-surf-rule-light last:border-b-0 ${
-                  passed || here ? '' : 'opacity-60'
-                }`}
-              >
-                <span
-                  className={`flex items-center justify-center w-5 h-5 rounded-full font-mono text-[10px] font-semibold shrink-0 mt-0.5 ${
-                    here
-                      ? 'bg-surf-teal text-white'
-                      : passed
-                        ? 'bg-surf-teal-bg text-surf-teal border border-surf-teal/30'
-                        : 'bg-transparent text-surf-faint border border-surf-rule'
-                  }`}
-                >
-                  {l.level}
-                </span>
-                <div className="min-w-0">
-                  <div className="flex items-center gap-1.5 flex-wrap">
-                    <span className={`text-[11px] font-semibold ${here ? 'text-surf-deep' : 'text-surf-ink'}`}>{l.name}</span>
-                    {here && (
-                      <span className="font-mono text-[8px] font-semibold uppercase px-1 py-px rounded-sm bg-surf-sun-bg text-surf-sun-ink border border-surf-sun/40">
-                        you are here
-                      </span>
-                    )}
-                  </div>
-                  <div className="text-[9px] text-surf-muted leading-snug mt-0.5">{l.desc}</div>
-                </div>
-              </div>
-            )
-          })}
-        </div>
         </div>
       </section>
 

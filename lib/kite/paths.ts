@@ -464,32 +464,32 @@ export const MASTERY_BELTS: MasteryBelt[] = [
     name: 'White',
     color: '#efe9df',
     requirement: 'Where everyone starts',
-    skills: 'Day one — kite control, first water sessions, learning the wind window.',
-    iko: 'IKO Levels 1-2 (Discovery, Intermediate)',
+    skills: 'The whole apprenticeship: fundamentals, independence, then intermediate and advanced drilling on your first path.',
+    iko: 'IKO Levels 1-4',
   },
   {
     id: 'blue',
     name: 'Blue',
     color: '#2f4f6f',
-    requirement: 'All five fundamentals complete',
-    skills: 'Waterstart, upwind on both tacks, relaunch, self-rescue — a fully independent rider.',
-    iko: 'IKO Level 3 (Independent)',
+    requirement: 'Master one path',
+    skills: 'One discipline mastered end to end — freeride, big air, freestyle or wave is genuinely yours.',
+    iko: 'IKO Level 5 (Evolution, one discipline)',
   },
   {
     id: 'purple',
     name: 'Purple',
     color: '#5c3a6e',
-    requirement: 'Intermediate in one path',
-    skills: 'You have picked a path and built real intermediate skill on it — transitions, pop, or first flights.',
-    iko: 'IKO Level 4 (Advanced)',
+    requirement: 'Master two paths',
+    skills: 'Two disciplines mastered — a rare rider on any beach.',
+    iko: 'beyond IKO — two Evolution disciplines',
   },
   {
     id: 'brown',
     name: 'Brown',
     color: '#6b4a2f',
-    requirement: 'Master one path, intermediate in a second',
-    skills: 'One discipline is genuinely yours, and a second is opening up.',
-    iko: 'IKO Level 5 (Evolution)',
+    requirement: 'Master three paths',
+    skills: 'Three disciplines mastered — the strongest rider on most beaches you visit.',
+    iko: 'beyond IKO — three Evolution disciplines',
   },
   {
     id: 'black',
@@ -506,6 +506,8 @@ export const MASTERY_BELTS: MasteryBelt[] = [
 export type UnlockRequirement =
   | { kind: 'belt'; belt: BeltId }
   | { kind: 'path'; path: PathId; level: LevelId }
+  | { kind: 'fundamentals' }
+  | { kind: 'anyPath'; level: LevelId }
 
 export interface LifeUnlock {
   id: string
@@ -522,16 +524,16 @@ export const LIFE_UNLOCKS: LifeUnlock[] = [
     id: 'ul-independent',
     title: 'Ride anywhere on Earth',
     detail: 'Rent gear at any spot in the world and ride without a school — every coastal trip becomes a kite trip.',
-    requires: { kind: 'belt', belt: 'blue' },
-    requiresLabel: 'Blue belt',
+    requires: { kind: 'fundamentals' },
+    requiresLabel: 'Fundamentals',
     icon: 'globe',
   },
   {
     id: 'ul-blue-travel',
     title: 'Wind-first travel',
     detail: 'Trips get planned around forecasts now — a windy week anywhere beats a sunny week somewhere.',
-    requires: { kind: 'belt', belt: 'purple' },
-    requiresLabel: 'Purple belt',
+    requires: { kind: 'anyPath', level: 'intermediate' },
+    requiresLabel: 'Any path INT',
     icon: 'plane',
   },
   {
@@ -642,16 +644,16 @@ export const LIFE_UNLOCKS: LifeUnlock[] = [
     id: 'ul-purple-crew',
     title: 'The one others follow',
     detail: 'You call the session: spot, kite size, safety plan. Friends launch when you launch.',
-    requires: { kind: 'belt', belt: 'brown' },
-    requiresLabel: 'Brown belt',
+    requires: { kind: 'belt', belt: 'blue' },
+    requiresLabel: 'Blue belt',
     icon: 'crew',
   },
   {
     id: 'ul-brown-season',
     title: 'A full season abroad',
     detail: 'A winter in Cape Town or Brazil riding at local level — not a tourist in the lineup.',
-    requires: { kind: 'belt', belt: 'brown' },
-    requiresLabel: 'Brown belt',
+    requires: { kind: 'belt', belt: 'purple' },
+    requiresLabel: 'Purple belt',
     icon: 'horizonsun',
   },
   {
@@ -819,15 +821,14 @@ export function computeMasteryState(
   const pathStatuses = MASTERY_PATHS.map(p => computePathStatus(p, stats, milestones))
 
   const masters = pathStatuses.filter(p => p.rank >= 3).length
-  const intermediatePlus = pathStatuses.filter(p => p.rank >= 1).length
 
   // White is the starting belt — worn from day one, not earned.
-  // Completing the five fundamentals promotes to blue.
+  // Every belt after it is a count of mastered paths: 1, 2, 3, all 4.
   const beltsEarned: Record<BeltId, boolean> = {
     white: true,
-    blue: whiteEarned,
-    purple: whiteEarned && intermediatePlus >= 1,
-    brown: whiteEarned && masters >= 1 && intermediatePlus >= 2,
+    blue: whiteEarned && masters >= 1,
+    purple: whiteEarned && masters >= 2,
+    brown: whiteEarned && masters >= 3,
     black: whiteEarned && masters >= MASTERY_PATHS.length,
   }
 
@@ -920,9 +921,9 @@ export const IKO_LEVELS: IkoLevel[] = [
 
 /** Rough current IKO position implied by the mastery state. */
 export function currentIkoLevel(state: MasteryState): number {
-  if (state.beltsEarned.brown) return 5
-  if (state.beltsEarned.purple) return 4
-  if (state.beltsEarned.blue) return 3
+  if (state.beltsEarned.blue) return 5 // a path mastered = Evolution territory
+  if (state.pathStatuses.some(p => p.rank >= 1)) return 4 // intermediate skill = Advanced
+  if (state.whiteEarned) return 3 // fundamentals = Independent
   return state.fundamentalsMet > 0 ? 2 : 1
 }
 
@@ -930,6 +931,8 @@ export interface NextMilestone {
   source: string // 'Foundation' or path name
   pathId: PathId | 'foundation'
   milestone: PathMilestone
+  /** Not yet the current drill — shown as what comes after it */
+  queued?: boolean
 }
 
 /**
@@ -940,7 +943,7 @@ export interface NextMilestone {
 export function nextMilestones(
   stats: KiteStats,
   milestones: Record<string, boolean>,
-  n = 3
+  n = 4
 ): NextMilestone[] {
   const out: NextMilestone[] = []
   const fund = FUNDAMENTALS.find(m => !isMilestoneMet(m, stats, milestones))
@@ -952,12 +955,28 @@ export function nextMilestones(
       out.push({ source: path.name, pathId: path.id, milestone: status.nextMilestone })
     }
   }
+  // Variety: queue up the freeride drill that follows the current one, so
+  // there is always a second freeride option to rotate onto mid-session.
+  const freeride = MASTERY_PATHS.find(p => p.id === 'freeride')
+  if (freeride && !lockedPathLabel('freeride', stats, milestones)) {
+    const unmet = freeride.levels
+      .flatMap(l => l.milestones)
+      .filter(m => !isMilestoneMet(m, stats, milestones))
+    if (unmet.length > 1) {
+      out.push({ source: 'Freeride', pathId: 'freeride', milestone: unmet[1], queued: true })
+    }
+  }
   return out.slice(0, n)
 }
 
 export function isUnlockMet(u: LifeUnlock, state: MasteryState): boolean {
-  if (u.requires.kind === 'belt') return state.beltsEarned[u.requires.belt]
   const req = u.requires
+  if (req.kind === 'belt') return state.beltsEarned[req.belt]
+  if (req.kind === 'fundamentals') return state.whiteEarned
+  if (req.kind === 'anyPath') {
+    const needed = LEVEL_ORDER.indexOf(req.level) + 1
+    return state.pathStatuses.some(p => p.rank >= needed)
+  }
   const status = state.pathStatuses.find(p => p.path.id === req.path)
   if (!status) return false
   const needed = LEVEL_ORDER.indexOf(req.level) + 1
