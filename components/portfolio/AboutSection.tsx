@@ -18,10 +18,13 @@ export default function AboutSection() {
       <div className="flex items-center gap-5 text-[#333]" aria-label="Sports">
         <Link
           href="/ironman"
-          aria-label="Running — Ironman training plan"
+          aria-label="Ironman training plan — swim, bike, run"
           title="Ironman build — adaptive training plan"
-          className="text-[#333] hover:text-[#7c2d2d] transition-colors duration-200"
+          className="group relative flex items-center gap-5 border border-[#33333355] rounded-sm px-3 py-2 mt-1 text-[#333] hover:text-[#7c2d2d] hover:border-[#7c2d2d] transition-colors duration-200"
         >
+          <span className="absolute -top-[7px] left-2.5 px-1 bg-[#faf8f4] font-serif text-[9px] uppercase tracking-[1.5px] leading-none text-[#333] group-hover:text-[#7c2d2d] transition-colors duration-200">
+            Ironman
+          </span>
           <svg
             width="28"
             height="28"
@@ -41,13 +44,6 @@ export default function AboutSection() {
             <path d="M13 11L9.5 14L6.5 12" />
             <path d="M14.5 17.5L17 20" />
           </svg>
-        </Link>
-        <Link
-          href="/ironman"
-          aria-label="Cycling — Ironman training plan"
-          title="Ironman build — adaptive training plan"
-          className="text-[#333] hover:text-[#7c2d2d] transition-colors duration-200"
-        >
           <svg
             width="28"
             height="28"
@@ -66,13 +62,6 @@ export default function AboutSection() {
             <path d="M14.5 9.5l-2 7" />
             <circle cx="16" cy="5.5" r="1.2" />
           </svg>
-        </Link>
-        <Link
-          href="/ironman"
-          aria-label="Swimming — Ironman training plan"
-          title="Ironman build — adaptive training plan"
-          className="text-[#333] hover:text-[#7c2d2d] transition-colors duration-200"
-        >
           <svg
             width="28"
             height="28"
