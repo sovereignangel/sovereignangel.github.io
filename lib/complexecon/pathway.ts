@@ -32,6 +32,14 @@ export interface PathwayStage {
 
 export type BookTier = 'spine' | 'foundation' | 'reference'
 
+export type SourceKind = 'pdf' | 'borrow' | 'web' | 'buy'
+
+export interface BookSource {
+  label: string
+  url: string
+  kind: SourceKind
+}
+
 export interface LibraryItem {
   id: string
   title: string
@@ -40,6 +48,9 @@ export interface LibraryItem {
   kind: 'book' | 'paper'
   tier: BookTier
   note: string
+  /** Direct PDF that opens in the in-site reader (highlights + notes stored per user). */
+  readerUrl?: string
+  sources: BookSource[]
 }
 
 export interface LibraryTopic {
@@ -268,6 +279,19 @@ export const LIBRARY: LibraryTopic[] = [
         kind: 'book',
         tier: 'foundation',
         note: 'The founding statement: increasing returns, non-equilibrium, the El Farol problem. Arthur is SFI royalty — his framing is the house dialect.',
+        readerUrl: 'https://sites.santafe.edu/~wbarthur/Papers/Comp.Econ.SFI.pdf',
+        sources: [
+          {
+            label: 'Framework chapter, author-hosted',
+            url: 'https://sites.santafe.edu/~wbarthur/Papers/Comp.Econ.SFI.pdf',
+            kind: 'pdf',
+          },
+          {
+            label: 'Oxford UP',
+            url: 'https://global.oup.com/academic/product/complexity-and-the-economy-9780199334292',
+            kind: 'buy',
+          },
+        ],
       },
       {
         id: 'lib-farmer',
@@ -277,6 +301,13 @@ export const LIBRARY: LibraryTopic[] = [
         kind: 'book',
         tier: 'foundation',
         note: 'The current statement of complexity economics as a predictive program. Farmer is the bridge to the Oxford work and the CEcon collaboration.',
+        sources: [
+          {
+            label: 'Yale UP',
+            url: 'https://yalebooks.yale.edu/book/9780300273771/making-sense-of-chaos/',
+            kind: 'buy',
+          },
+        ],
       },
       {
         id: 'lib-beinhocker',
@@ -286,6 +317,13 @@ export const LIBRARY: LibraryTopic[] = [
         kind: 'book',
         tier: 'reference',
         note: 'The accessible synthesis. Skim for the map of the field; the primary sources above carry the weight.',
+        sources: [
+          {
+            label: 'Borrow on archive.org',
+            url: 'https://archive.org/details/originofwealthra0000bein',
+            kind: 'borrow',
+          },
+        ],
       },
       {
         id: 'lib-epstein-axtell',
@@ -295,6 +333,18 @@ export const LIBRARY: LibraryTopic[] = [
         kind: 'book',
         tier: 'spine',
         note: 'Sugarscape: emergent wealth distributions from identical agents. The replication in Stage I comes from chapter II.',
+        sources: [
+          {
+            label: 'Borrow on archive.org',
+            url: 'https://archive.org/details/growingartificia00epst',
+            kind: 'borrow',
+          },
+          {
+            label: 'MIT Press',
+            url: 'https://mitpress.mit.edu/9780262550253/growing-artificial-societies/',
+            kind: 'buy',
+          },
+        ],
       },
       {
         id: 'lib-mitchell',
@@ -304,6 +354,13 @@ export const LIBRARY: LibraryTopic[] = [
         kind: 'book',
         tier: 'reference',
         note: 'General complexity-science grounding — information, computation, evolution. Read where the SFI coursework feels thin.',
+        sources: [
+          {
+            label: 'Borrow on archive.org',
+            url: 'https://archive.org/details/complexityguided0000mitc',
+            kind: 'borrow',
+          },
+        ],
       },
     ],
   },
@@ -321,6 +378,15 @@ export const LIBRARY: LibraryTopic[] = [
         kind: 'book',
         tier: 'spine',
         note: 'Embeddedness — the shared vocabulary of the entire workshop. Markets as instituted processes, not natural facts.',
+        readerUrl:
+          'https://archive.org/download/the-great-transformation_202605/The%20great%20transformation.pdf',
+        sources: [
+          {
+            label: 'Full PDF on archive.org',
+            url: 'https://archive.org/details/the-great-transformation_202605',
+            kind: 'pdf',
+          },
+        ],
       },
       {
         id: 'lib-mauss',
@@ -330,6 +396,14 @@ export const LIBRARY: LibraryTopic[] = [
         kind: 'book',
         tier: 'spine',
         note: 'Short, foundational. Exchange as social obligation — the deep background to every claim about what a transaction is.',
+        readerUrl: 'https://archive.org/download/the-gift-marcel-mauss/The%20Gift%20-%20Marcel%20Mauss.pdf',
+        sources: [
+          {
+            label: 'Full PDF on archive.org',
+            url: 'https://archive.org/details/the-gift-marcel-mauss',
+            kind: 'pdf',
+          },
+        ],
       },
       {
         id: 'lib-graeber',
@@ -339,6 +413,15 @@ export const LIBRARY: LibraryTopic[] = [
         kind: 'book',
         tier: 'spine',
         note: 'Contested by economists, but the lingua franca. A position on it will be expected — agreement optional, engagement mandatory.',
+        readerUrl:
+          'https://archive.org/download/debt-the-first-5000-years/Debt-The_First_5000_Years.pdf',
+        sources: [
+          {
+            label: 'Full PDF on archive.org',
+            url: 'https://archive.org/details/debt-the-first-5000-years',
+            kind: 'pdf',
+          },
+        ],
       },
       {
         id: 'lib-ho',
@@ -348,6 +431,18 @@ export const LIBRARY: LibraryTopic[] = [
         kind: 'book',
         tier: 'spine',
         note: 'Shareholder value enacted rather than discovered. The closest existing work to the lane — the one to critique in detail.',
+        sources: [
+          {
+            label: 'Borrow on archive.org',
+            url: 'https://archive.org/details/liquidatedethnog0000hoka',
+            kind: 'borrow',
+          },
+          {
+            label: 'Duke UP',
+            url: 'https://www.dukeupress.edu/liquidated',
+            kind: 'buy',
+          },
+        ],
       },
     ],
   },
@@ -365,6 +460,18 @@ export const LIBRARY: LibraryTopic[] = [
         kind: 'book',
         tier: 'spine',
         note: 'How Black-Scholes made the world it described. The load-bearing text of the lane.',
+        sources: [
+          {
+            label: 'Borrow on archive.org',
+            url: 'https://archive.org/details/enginenotcamerah00mack_0',
+            kind: 'borrow',
+          },
+          {
+            label: 'MIT Press',
+            url: 'https://mitpress.mit.edu/9780262633673/an-engine-not-a-camera/',
+            kind: 'buy',
+          },
+        ],
       },
       {
         id: 'lib-callon',
@@ -374,6 +481,13 @@ export const LIBRARY: LibraryTopic[] = [
         kind: 'paper',
         tier: 'spine',
         note: 'The theoretical statement of performativity — economics performs the economy.',
+        sources: [
+          {
+            label: 'Borrow on archive.org',
+            url: 'https://archive.org/details/lawsofmarkets0000unse',
+            kind: 'borrow',
+          },
+        ],
       },
       {
         id: 'lib-beunza-stark',
@@ -383,6 +497,13 @@ export const LIBRARY: LibraryTopic[] = [
         kind: 'paper',
         tier: 'spine',
         note: 'Reflexive modeling inside a trading room. The micro-mechanism, observed ethnographically.',
+        sources: [
+          {
+            label: 'Industrial & Corporate Change, DOI',
+            url: 'https://doi.org/10.1093/icc/dth015',
+            kind: 'web',
+          },
+        ],
       },
       {
         id: 'lib-muniesa',
@@ -392,6 +513,13 @@ export const LIBRARY: LibraryTopic[] = [
         kind: 'book',
         tier: 'reference',
         note: 'Valuation as performance across settings — a second pass at the lane once the spine is absorbed.',
+        sources: [
+          {
+            label: 'Routledge',
+            url: 'https://www.routledge.com/The-Provoked-Economy-Economic-Reality-and-the-Performative-Turn/Muniesa/p/book/9780415855280',
+            kind: 'buy',
+          },
+        ],
       },
     ],
   },
@@ -409,6 +537,18 @@ export const LIBRARY: LibraryTopic[] = [
         kind: 'paper',
         tier: 'spine',
         note: 'Nature Physics. Time averages diverge from ensemble averages under multiplicative dynamics — inequality without psychology. The highest-leverage single tool in the lane.',
+        sources: [
+          {
+            label: 'Nature Physics, free to read',
+            url: 'https://www.nature.com/articles/s41567-019-0732-0',
+            kind: 'web',
+          },
+          {
+            label: 'Ergodicity economics lecture notes',
+            url: 'https://ergodicityeconomics.com/lecture-notes/',
+            kind: 'web',
+          },
+        ],
       },
       {
         id: 'lib-axtell-zipf',
@@ -418,6 +558,19 @@ export const LIBRARY: LibraryTopic[] = [
         kind: 'paper',
         tier: 'spine',
         note: 'Science. The canonical firm-level distribution fact, plus the ABM program that generates it. Assumed knowledge in the room.',
+        readerUrl: 'https://www.brookings.edu/wp-content/uploads/2016/06/firms.pdf',
+        sources: [
+          {
+            label: 'Companion working paper, Brookings',
+            url: 'https://www.brookings.edu/wp-content/uploads/2016/06/firms.pdf',
+            kind: 'pdf',
+          },
+          {
+            label: 'Science 2001, DOI',
+            url: 'https://doi.org/10.1126/science.1062081',
+            kind: 'web',
+          },
+        ],
       },
       {
         id: 'lib-piketty',
@@ -427,6 +580,13 @@ export const LIBRARY: LibraryTopic[] = [
         kind: 'book',
         tier: 'reference',
         note: 'The empirical backdrop every inequality conversation assumes. Know r > g, the data, and the standard critiques.',
+        sources: [
+          {
+            label: 'Borrow on archive.org',
+            url: 'https://archive.org/details/capitalintwentyf0000pike',
+            kind: 'borrow',
+          },
+        ],
       },
       {
         id: 'lib-scheidel',
@@ -436,6 +596,13 @@ export const LIBRARY: LibraryTopic[] = [
         kind: 'book',
         tier: 'reference',
         note: 'The long-run history: what has actually compressed inequality. Useful counterweight to purely generative accounts.',
+        sources: [
+          {
+            label: 'Borrow on archive.org',
+            url: 'https://archive.org/details/greatlevelerviol0000sche',
+            kind: 'borrow',
+          },
+        ],
       },
     ],
   },
@@ -453,6 +620,13 @@ export const LIBRARY: LibraryTopic[] = [
         kind: 'book',
         tier: 'foundation',
         note: 'The French conventions school, directly on point: value is not measured by markets but constituted by them.',
+        sources: [
+          {
+            label: 'MIT Press',
+            url: 'https://mitpress.mit.edu/9780262026970/the-empire-of-value/',
+            kind: 'buy',
+          },
+        ],
       },
       {
         id: 'lib-beckert',
@@ -462,6 +636,13 @@ export const LIBRARY: LibraryTopic[] = [
         kind: 'book',
         tier: 'foundation',
         note: 'Fictional expectations as the engine of capitalist dynamics — DCF as an instrument of imagination. Very close to the lane.',
+        sources: [
+          {
+            label: 'Harvard UP',
+            url: 'https://www.hup.harvard.edu/books/9780674088825',
+            kind: 'buy',
+          },
+        ],
       },
       {
         id: 'lib-boltanski',
@@ -471,6 +652,13 @@ export const LIBRARY: LibraryTopic[] = [
         kind: 'book',
         tier: 'reference',
         note: 'Orders of worth — the theoretical deep end of conventions theory. Enter only if the room pulls the conversation there.',
+        sources: [
+          {
+            label: 'Borrow on archive.org',
+            url: 'https://archive.org/details/onjustificatione0000bolt',
+            kind: 'borrow',
+          },
+        ],
       },
     ],
   },
