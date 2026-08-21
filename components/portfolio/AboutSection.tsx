@@ -24,7 +24,7 @@ export default function AboutSection() {
         >
           Complexity economics
         </Link>{' '}
-        and deep reinforcement learning are the frameworks I bring to markets.
+        is the framework I bring to markets.
       </p>
       <p className="text-[#333] mb-4">
         I practice{' '}
