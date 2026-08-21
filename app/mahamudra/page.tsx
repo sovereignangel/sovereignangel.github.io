@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import Link from 'next/link'
 import { C, display, text, Diamond, Label, MMark, StageGlyph } from './brand'
 
 const STAGES: { glyph: 1 | 2 | 3 | 4; label: string; title: string; body: string }[] = [
@@ -127,9 +126,6 @@ export default function MahamudraPage() {
               {n.label}
             </a>
           ))}
-          <Link href="/mahamudra/recordings" className="transition-colors hover:opacity-70">
-            Recordings
-          </Link>
           <a href="#join" style={{ color: C.indigo }}>
             Join
           </a>
@@ -199,7 +195,9 @@ export default function MahamudraPage() {
               className="uppercase"
               style={{ fontFamily: display, fontSize: 'clamp(15px, 1.7vw, 21px)', letterSpacing: '0.30em', color: C.inkSoft, margin: 0 }}
             >
-              A theory &amp; practice community for meditation and awareness
+              A theory &amp; practice community
+              <br />
+              <span className="whitespace-nowrap">for meditation &amp; awareness</span>
             </p>
 
             <p
@@ -563,8 +561,6 @@ export default function MahamudraPage() {
         </div>
         <div style={{ fontSize: 15, color: C.inkMuted }}>
           <a href="#top" className="hover:opacity-70">New York City</a>
-          {' · '}
-          <Link href="/mahamudra/recordings" className="hover:opacity-70">Recordings</Link>
         </div>
       </footer>
     </div>
