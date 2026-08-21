@@ -120,7 +120,7 @@ export default function MahamudraPage() {
         </a>
         <nav
           className="flex flex-wrap items-center uppercase"
-          style={{ gap: 'clamp(14px, 3vw, 40px)', fontFamily: display, fontSize: 14, letterSpacing: '0.24em', color: C.inkSoft }}
+          style={{ gap: 'clamp(10px, 1.8vw, 22px)', fontFamily: display, fontSize: 12, letterSpacing: '0.16em', color: C.inkSoft }}
         >
           {NAV.map((n) => (
             <a key={n.href} href={n.href} className="transition-colors hover:opacity-70">
@@ -140,7 +140,7 @@ export default function MahamudraPage() {
       <section
         id="top"
         className="relative z-[4]"
-        style={{ padding: 'clamp(46px, 7vw, 104px) clamp(20px, 5vw, 80px) clamp(60px, 8vw, 120px)' }}
+        style={{ padding: 'clamp(32px, 5vw, 72px) clamp(20px, 5vw, 80px) clamp(42px, 5.5vw, 84px)' }}
       >
         {/* etched mountain artwork, pressed into the paper */}
         <div
@@ -164,9 +164,9 @@ export default function MahamudraPage() {
         >
           <div
             className="text-center"
-            style={{ border: `1px solid ${C.borderSoft}`, padding: 'clamp(26px, 5vw, 70px) clamp(20px, 4vw, 56px)' }}
+            style={{ border: `1px solid ${C.borderSoft}`, padding: 'clamp(20px, 3.5vw, 48px) clamp(20px, 4vw, 56px)' }}
           >
-            <div style={{ marginBottom: 'clamp(24px, 4vw, 42px)' }}>
+            <div style={{ marginBottom: 'clamp(18px, 3vw, 30px)' }}>
               <Diamond />
             </div>
 
