@@ -1,0 +1,5 @@
+# The chatgpt-image PNGs are byte-identical duplicates of ../mountainmahamudra.png,
+# and uploads/ duplicates assets already committed under public/mahamudra/.
+*.png
+uploads/
+.thumbnail

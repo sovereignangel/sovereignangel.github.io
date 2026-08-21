@@ -1,68 +1,148 @@
-// Shared brand primitives for the Mahāmudrā site.
-// Palette and rules: see MAHAMUDRA_BRAND_STRATEGY.md at repo root.
+// Shared brand primitives for the Mahāmudrā New York site.
+// Source of truth: "Mahamudra NYC Brand Design" folder (Claude design export)
+// and MAHAMUDRA_BRAND_STRATEGY.md at repo root.
 
 export const C = {
-  parchment: '#ede1c1',
-  parchmentLight: '#f6efdd',
-  parchmentDeep: '#e3d3a9',
-  aubergine: '#3d2b56',
-  aubergineDeep: '#2e2043',
-  sepia: '#5b4c36',
-  sepiaMuted: '#8a7757',
-  bronze: '#9c7f4e',
-  gold: '#d3b06a',
+  // Deep Indigo — display type, frames, seals
+  indigo: '#33245c',
+  indigoDeep: '#291d4b',
+  // Leaf Gold family — accents, text on indigo
+  gold: '#b9973f',
+  goldLight: '#e6cf90',
+  goldSoft: '#d8b969',
+  goldMuted: '#a99a76',
+  // Parchment grounds
+  parchment: '#f7ecd4',
+  parchmentMid: '#efe0bc',
+  agedEdge: '#e4d1a6',
+  ground: '#e3d0a4',
+  // Sepia Ink text
+  ink: '#4a3d29',
+  inkSoft: '#5a4a2c',
+  inkMuted: '#6a5a3c',
+  bronze: '#8a6a24',
+  // Hairlines
+  border: 'rgba(120,95,45,0.55)',
+  borderSoft: 'rgba(150,122,58,0.40)',
+  // On-indigo panel text
+  panelTitle: '#f4e7c6',
+  panelText: '#ecdfc0',
+  panelMuted: '#cbb98f',
+  cream: '#f2e5c4',
 }
 
-export const display = 'var(--font-cinzel), Georgia, serif'
-export const text = 'var(--font-cormorant), Georgia, serif'
+export const display = 'var(--font-mah-display), Georgia, serif'
+export const text = 'var(--font-mah-text), Georgia, serif'
 
-// —— ◆ —— section divider
-export function Diamond({ color = C.aubergine, width = 180 }: { color?: string; width?: number }) {
+// Gradient hairlines flanking a turned square — the section ornament.
+export function Diamond({
+  color = C.indigo,
+  size = 9,
+  line = 150,
+}: {
+  color?: string
+  size?: number
+  line?: number
+}) {
   return (
     <div className="flex items-center justify-center gap-3 select-none" aria-hidden>
-      <span style={{ width: width / 2, height: 1, backgroundColor: color, opacity: 0.5 }} />
-      <svg width="9" height="9" viewBox="0 0 10 10">
-        <rect x="1.8" y="1.8" width="6.4" height="6.4" transform="rotate(45 5 5)" fill={color} />
-      </svg>
-      <span style={{ width: width / 2, height: 1, backgroundColor: color, opacity: 0.5 }} />
+      <span
+        style={{
+          display: 'block',
+          width: `clamp(40px, 12vw, ${line}px)`,
+          height: 1,
+          background: `linear-gradient(90deg, transparent, ${color})`,
+        }}
+      />
+      <span
+        style={{
+          display: 'block',
+          width: size,
+          height: size,
+          background: color,
+          transform: 'rotate(45deg)',
+        }}
+      />
+      <span
+        style={{
+          display: 'block',
+          width: `clamp(40px, 12vw, ${line}px)`,
+          height: 1,
+          background: `linear-gradient(90deg, ${color}, transparent)`,
+        }}
+      />
     </div>
   )
 }
 
-// Etched ridgeline backdrop, low opacity — hero only.
-export function Ridgeline({ opacity = 0.14 }: { opacity?: number }) {
-  const s = { fill: 'none', stroke: C.sepia, strokeWidth: 1 }
-  return (
-    <svg
-      viewBox="0 0 800 220"
-      preserveAspectRatio="xMidYMax slice"
-      className="absolute inset-x-0 bottom-0 w-full h-full pointer-events-none"
-      style={{ opacity }}
-      aria-hidden
-    >
-      <path {...s} d="M-10 200 L80 120 L130 160 L210 70 L270 140 L330 100 L400 180 L460 90 L530 150 L610 60 L680 140 L740 110 L810 200" />
-      <path {...s} strokeWidth={0.7} d="M-10 215 L60 165 L140 195 L230 130 L310 185 L390 150 L470 200 L560 140 L640 190 L720 160 L810 215" />
-      <path {...s} strokeWidth={0.5} opacity={0.7} d="M-10 185 L100 145 L180 175 L260 115 L340 165 L430 125 L520 175 L600 115 L690 170 L810 150" />
-    </svg>
-  )
-}
-
-// Small-caps label line, the poster's "FACILITATED BY" voice.
+// Small-caps letterspaced line.
 export function Label({
   children,
-  color = C.sepiaMuted,
-  size = 11,
+  color = C.bronze,
+  size = 13,
+  tracking = '0.34em',
 }: {
   children: React.ReactNode
   color?: string
   size?: number
+  tracking?: string
 }) {
   return (
     <div
-      className="text-center uppercase"
-      style={{ fontFamily: display, fontSize: size, letterSpacing: '0.28em', color }}
+      className="uppercase"
+      style={{ fontFamily: display, fontSize: size, letterSpacing: tracking, color }}
     >
       {children}
     </div>
+  )
+}
+
+// Seal / app mark — indigo square, gold M, gold ring.
+export function MMark({ size = 34 }: { size?: number }) {
+  return (
+    <div
+      style={{
+        width: size,
+        height: size,
+        background: C.indigo,
+        display: 'grid',
+        placeItems: 'center',
+        boxShadow: `0 0 0 1px ${C.gold}, 0 0 0 4px rgba(255,255,255,0.25)`,
+      }}
+    >
+      <span
+        style={{
+          fontFamily: display,
+          fontWeight: 600,
+          fontSize: size * 0.58,
+          color: C.goldLight,
+          lineHeight: 1,
+        }}
+      >
+        M
+      </span>
+    </div>
+  )
+}
+
+// The four stage glyphs from the Stage Assets sheet:
+// Attention = open circle · Stability = square · One-pointedness = single point · Flow = turned square
+export function StageGlyph({ stage, size = 44 }: { stage: 1 | 2 | 3 | 4; size?: number }) {
+  const s = size
+  const stroke = C.indigo
+  return (
+    <svg width={s} height={s} viewBox="0 0 44 44" aria-hidden>
+      {stage === 1 && <circle cx="22" cy="22" r="14" fill="none" stroke={stroke} strokeWidth="1.3" />}
+      {stage === 2 && <rect x="9" y="9" width="26" height="26" fill="none" stroke={stroke} strokeWidth="1.3" />}
+      {stage === 3 && (
+        <>
+          <circle cx="22" cy="22" r="14" fill="none" stroke={stroke} strokeWidth="0.8" opacity="0.45" />
+          <circle cx="22" cy="22" r="3.2" fill={stroke} />
+        </>
+      )}
+      {stage === 4 && (
+        <rect x="12" y="12" width="20" height="20" fill="none" stroke={stroke} strokeWidth="1.3" transform="rotate(45 22 22)" />
+      )}
+    </svg>
   )
 }

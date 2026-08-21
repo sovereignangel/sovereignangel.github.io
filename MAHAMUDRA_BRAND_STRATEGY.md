@@ -25,19 +25,26 @@ Source material: the two Peak State II posters (Frederiksværk, Denmark · Augus
 
 Diacritics: use **Mahāmudrā** (with macrons) in display and body text; plain "mahamudra" in URLs, slugs, and code.
 
-## 3. Palette (extracted from the posters)
+## 3. Palette (canonical — from the "Mahamudra NYC Brand Design" export in `app/mahamudra/`)
+
+Named in the brand-identity sheet: **Deep Indigo · Leaf Gold · Parchment · Aged Edge · Sepia Ink.**
 
 | Token | Hex | Role |
 |---|---|---|
-| `parchment` | `#ede1c1` | Page ground — aged paper |
-| `parchment-light` | `#f6efdd` | Cards, raised panels |
-| `parchment-deep` | `#e3d3a9` | Vignette edges, pressed areas |
-| `aubergine` | `#3d2b56` | Display type, frames, ornaments — the ink |
-| `aubergine-deep` | `#2e2043` | Inverted panels (the purple blocks on poster 2) |
-| `sepia` | `#5b4c36` | Body text — warm brown-black |
-| `sepia-muted` | `#8a7757` | Secondary text, captions |
-| `bronze` | `#9c7f4e` | Accent rules, small ornaments |
-| `gold` | `#d3b06a` | Text on aubergine panels only |
+| `indigo` | `#33245c` | Deep Indigo — display type, frames, seals, buttons |
+| `indigo-deep` | `#291d4b` | Gradient partner for indigo panels |
+| `gold` | `#b9973f` | Leaf Gold — seal rings, inset button borders |
+| `gold-light` | `#e6cf90` | Gold CTA fills, the M in the seal |
+| `gold-soft` | `#d8b969` | Eyebrow labels on indigo panels |
+| `parchment` | `#f7ecd4` | Parchment — page ground (radial from 25% 0%) |
+| `parchment-mid` | `#efe0bc` | Mid ground of the radial |
+| `aged-edge` | `#e4d1a6` | Aged Edge — outer ground, vignette zone |
+| `ink` | `#4a3d29` | Sepia Ink — body text |
+| `ink-soft` `#5a4a2c` / `ink-muted` `#6a5a3c` | | Secondary text, captions |
+| `bronze` | `#8a6a24` | Eyebrow labels, link hovers, small ornaments |
+| hairlines | `rgba(120,95,45,0.55)` / `rgba(150,122,58,0.40)` | Borders, rules |
+
+Page atmosphere: aged-edge vignette (`inset 0 0 260px 60px rgba(122,96,48,0.30)`) plus a faint paper-speckle dot pattern. The seal/app mark is an indigo square with a gold "M" and gold ring.
 
 Rules:
 - Aubergine is the only "loud" color; it never appears as a background except in the inverted panel pattern (aubergine-deep field, gold text) used sparingly — one or two panels per page, for the things that involve *people gathering* (Sunday Sits, retreat evenings), exactly as the posters reserve purple for the cycling day and the evening together.
@@ -46,10 +53,10 @@ Rules:
 
 ## 4. Typography
 
-Two faces, strictly divided:
+Two faces, strictly divided (canonical, from the design export):
 
-- **Display: Cinzel** (Trajan-class inscriptional capitals) — the poster's "PEAK STATE II" voice. All-caps only, generous letterspacing (`0.06em`–`0.28em`, wider as size shrinks). Used for the masthead, section titles, and labels like FACILITATED BY.
-- **Text: Cormorant Garamond** — old-style serif for body copy, italics for scripture-adjacent or reflective lines. Body sizes 15–18px, line-height ≥ 1.6.
+- **Display: Cormorant Garamond** — masthead, headings, all small-caps labels. Caps with generous letterspacing (`0.10em`–`0.44em`, wider as size shrinks); headings at weight 500–600 with tight `0.92–1.06` line-height.
+- **Text: EB Garamond** — old-style serif for body copy, italics for reflective or provisional lines. Body sizes 16–21px, line-height ≥ 1.6.
 
 Hierarchy pattern (from the posters): a stack of centered, letterspaced lines that step down —
 `small caps label → large display line → small caps subline`. Reuse this stack for every section head.

@@ -57,125 +57,145 @@ export default function RecordingsPage() {
   }
 
   return (
-    <main
-      className="min-h-screen py-6 px-4 sm:py-10 sm:px-8"
+    <div
+      className="min-h-screen relative overflow-hidden"
       style={{
-        backgroundColor: C.parchment,
-        backgroundImage: `radial-gradient(ellipse at center, ${C.parchmentLight} 0%, ${C.parchment} 55%, ${C.parchmentDeep} 100%)`,
-        color: C.sepia,
         fontFamily: text,
+        color: C.ink,
+        background: `radial-gradient(130% 100% at 25% 0%, ${C.parchment} 0%, ${C.parchmentMid} 40%, ${C.agedEdge} 100%)`,
       }}
     >
-      <div className="max-w-[720px] mx-auto p-[3px]" style={{ border: `1px solid ${C.aubergine}` }}>
-        <div className="px-5 py-12 sm:px-10 sm:py-14" style={{ border: `1px solid ${C.aubergine}55` }}>
+      <div
+        className="absolute inset-0 pointer-events-none z-[3]"
+        style={{ boxShadow: 'inset 0 0 260px 60px rgba(122,96,48,0.30), inset 0 0 60px rgba(122,96,48,0.18)' }}
+        aria-hidden
+      />
 
-          <header className="text-center mb-12">
+      <main className="relative z-[4]" style={{ padding: 'clamp(40px, 7vw, 90px) clamp(20px, 5vw, 80px)' }}>
+        <div
+          className="mx-auto"
+          style={{ maxWidth: 760, border: `1px solid ${C.border}`, padding: 'clamp(20px, 3vw, 40px)' }}
+        >
+          <div
+            className="text-center"
+            style={{ border: `1px solid ${C.borderSoft}`, padding: 'clamp(30px, 5vw, 56px) clamp(18px, 4vw, 48px)' }}
+          >
             <Diamond />
             <h1
-              className="mt-6 mb-3 uppercase"
+              className="uppercase mt-7 mb-3"
               style={{
                 fontFamily: display,
-                fontSize: 'clamp(26px, 5vw, 36px)',
-                letterSpacing: '0.1em',
-                color: C.aubergine,
-                fontWeight: 500,
+                fontWeight: 600,
+                fontSize: 'clamp(30px, 5vw, 44px)',
+                letterSpacing: '0.06em',
+                color: C.indigo,
+                lineHeight: 1,
               }}
             >
               Recordings
             </h1>
-            <Label size={11}>The First Series · August 2026</Label>
-          </header>
+            <div className="flex justify-center">
+              <Label size={13} tracking="0.28em">The First Series · August 2026</Label>
+            </div>
 
-          {!sessions ? (
-            <section className="max-w-[400px] mx-auto text-center">
-              <p className="text-[15px] leading-[1.7] mb-8" style={{ color: C.sepiaMuted }}>
-                These teachings are shared with participants of the series.
-                Enter the access word you were given.
-              </p>
-              <form onSubmit={handleSubmit}>
-                <input
-                  type="password"
-                  value={code}
-                  onChange={(e) => setCode(e.target.value)}
-                  placeholder="Access word"
-                  autoFocus
-                  className="w-full px-4 py-3 text-center text-[16px] outline-none bg-transparent"
-                  style={{
-                    fontFamily: text,
-                    border: `1px solid ${C.aubergine}88`,
-                    color: C.sepia,
-                  }}
-                />
-                {error && (
-                  <p className="mt-3 text-[13px]" style={{ color: '#7c2d2d' }}>
-                    {error}
-                  </p>
-                )}
-                <button
-                  type="submit"
-                  disabled={checking}
-                  className="mt-5 px-8 py-2.5 uppercase transition-opacity hover:opacity-85 disabled:opacity-50"
-                  style={{
-                    fontFamily: display,
-                    fontSize: 11,
-                    letterSpacing: '0.22em',
-                    color: C.parchmentLight,
-                    backgroundColor: C.aubergine,
-                    border: `1px solid ${C.aubergine}`,
-                  }}
-                >
-                  {checking ? 'Verifying' : 'Enter'}
-                </button>
-              </form>
-            </section>
-          ) : (
-            <section className="max-w-[520px] mx-auto">
-              <p className="text-center text-[15px] leading-[1.7] mb-10" style={{ color: C.sepiaMuted }}>
-                Three sessions from the foundations series. Listen in order;
-                each builds on the last. Please keep these within the community.
-              </p>
-              <div className="space-y-6">
-                {sessions.map((s, i) => (
-                  <div
-                    key={s.id}
-                    className="px-5 py-6"
-                    style={{ border: `1px solid ${C.bronze}66`, backgroundColor: `${C.parchmentLight}99` }}
+            {!sessions ? (
+              <div className="mx-auto mt-10" style={{ maxWidth: 400 }}>
+                <p style={{ fontSize: 16, lineHeight: 1.7, color: C.inkSoft, marginBottom: 30 }}>
+                  These teachings are shared with participants of the series.
+                  Enter the access word you were given.
+                </p>
+                <form onSubmit={handleSubmit}>
+                  <input
+                    type="password"
+                    value={code}
+                    onChange={(e) => setCode(e.target.value)}
+                    placeholder="Access word"
+                    autoFocus
+                    className="w-full text-center outline-none"
+                    style={{
+                      fontFamily: text,
+                      fontSize: 17,
+                      padding: '14px 18px',
+                      background: 'rgba(255,250,234,0.7)',
+                      border: `1px solid ${C.border}`,
+                      color: C.ink,
+                    }}
+                  />
+                  {error && (
+                    <p style={{ marginTop: 12, fontSize: 14, color: '#7c2d2d' }}>{error}</p>
+                  )}
+                  <button
+                    type="submit"
+                    disabled={checking}
+                    className="uppercase mt-5 cursor-pointer transition-opacity hover:opacity-85 disabled:opacity-50"
+                    style={{
+                      fontFamily: display,
+                      fontSize: 14,
+                      letterSpacing: '0.26em',
+                      color: C.cream,
+                      background: C.indigo,
+                      border: 'none',
+                      padding: '15px 34px',
+                      boxShadow: `0 0 0 1px ${C.gold} inset`,
+                    }}
                   >
-                    <div className="text-center mb-4">
-                      <div style={{ fontFamily: display, fontSize: 10, letterSpacing: '0.24em', color: C.sepiaMuted }}>
-                        {`SESSION ${['ONE', 'TWO', 'THREE'][i] ?? i + 1}`}
-                      </div>
-                      <div
-                        className="mt-1.5 uppercase"
-                        style={{ fontFamily: display, fontSize: 15, letterSpacing: '0.1em', color: C.aubergine }}
-                      >
-                        {s.title}
-                      </div>
-                      <div className="mt-1 italic text-[14px]" style={{ color: C.sepiaMuted }}>
-                        {s.subtitle}
-                      </div>
-                    </div>
-                    <audio controls preload="none" src={s.src} className="w-full" style={{ height: 40 }}>
-                      Your browser does not support audio playback.
-                    </audio>
-                  </div>
-                ))}
+                    {checking ? 'Verifying' : 'Enter'}
+                  </button>
+                </form>
               </div>
-            </section>
-          )}
+            ) : (
+              <div className="mx-auto mt-10 text-left" style={{ maxWidth: 540 }}>
+                <p className="text-center" style={{ fontSize: 16, lineHeight: 1.7, color: C.inkSoft, marginBottom: 36 }}>
+                  Three sessions from the foundations series. Listen in order;
+                  each builds on the last. Please keep these within the
+                  community.
+                </p>
+                <div className="grid" style={{ gap: 22 }}>
+                  {sessions.map((s, i) => (
+                    <div
+                      key={s.id}
+                      style={{
+                        border: `1px solid ${C.border}`,
+                        background: 'rgba(255,248,228,0.42)',
+                        padding: '22px 22px 18px',
+                        boxShadow: '0 0 0 1px rgba(255,255,255,0.35) inset',
+                      }}
+                    >
+                      <div className="text-center mb-4">
+                        <div className="flex justify-center">
+                          <Label size={12} tracking="0.30em" color={C.bronze}>
+                            {`Session ${['One', 'Two', 'Three'][i] ?? i + 1}`}
+                          </Label>
+                        </div>
+                        <div style={{ fontFamily: display, fontSize: 24, color: C.indigo, marginTop: 4 }}>
+                          {s.title}
+                        </div>
+                        <div style={{ fontSize: 15, fontStyle: 'italic', color: C.inkMuted, marginTop: 2 }}>
+                          {s.subtitle}
+                        </div>
+                      </div>
+                      <audio controls preload="none" src={s.src} className="w-full" style={{ height: 40 }}>
+                        Your browser does not support audio playback.
+                      </audio>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
-          <footer className="text-center mt-14">
-            <Diamond color={C.bronze} width={100} />
-            <Link
-              href="/mahamudra"
-              className="inline-block mt-6 uppercase transition-opacity hover:opacity-70"
-              style={{ fontFamily: display, fontSize: 10, letterSpacing: '0.24em', color: C.sepiaMuted }}
-            >
-              Return to Mahāmudrā
-            </Link>
-          </footer>
+            <div className="mt-12">
+              <Diamond color={C.bronze} size={6} line={60} />
+              <Link
+                href="/mahamudra"
+                className="inline-block uppercase mt-6 transition-opacity hover:opacity-70"
+                style={{ fontFamily: display, fontSize: 12, letterSpacing: '0.26em', color: C.inkMuted }}
+              >
+                Return to Mahāmudrā NYC
+              </Link>
+            </div>
+          </div>
         </div>
-      </div>
-    </main>
+      </main>
+    </div>
   )
 }

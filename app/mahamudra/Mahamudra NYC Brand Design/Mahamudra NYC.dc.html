@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet" />
+<script src="./image-slot.js"></script>
+<style>
+  html, body { margin: 0; padding: 0; }
+  *, *::before, *::after { box-sizing: border-box; }
+  body { background: #e3d0a4; }
+  a { color: #3a2a63; text-decoration: none; }
+  a:hover { color: #8a6a24; }
+  ::selection { background: rgba(58,42,99,0.18); }
+</style>
+</helmet>
+
+<div style="font-family: 'EB Garamond', Georgia, serif; color: #4a3d29; background: radial-gradient(130% 100% at 25% 0%, #f7ecd4 0%, #efe0bc 40%, #e4d1a6 100%); position: relative; overflow: hidden;">
+
+  <div style="position: absolute; inset: 0; pointer-events: none; box-shadow: inset 0 0 260px 60px rgba(122,96,48,0.30), inset 0 0 60px rgba(122,96,48,0.18); z-index: 3;"></div>
+  <div style="position: absolute; inset: 0; pointer-events: none; opacity: 0.35; z-index: 2; background-image: radial-gradient(circle at 18% 22%, rgba(150,120,60,0.16) 0 1.5px, transparent 2px), radial-gradient(circle at 62% 71%, rgba(150,120,60,0.13) 0 2px, transparent 2.5px), radial-gradient(circle at 84% 34%, rgba(120,95,45,0.10) 0 1px, transparent 1.6px); background-size: 140px 160px, 210px 190px, 90px 110px;"></div>
+
+  <header style="position: relative; z-index: 5; display: flex; align-items: center; justify-content: space-between; gap: 32px; padding: 26px clamp(24px, 6vw, 92px); border-bottom: 1px solid rgba(150,122,58,0.45);">
+    <a href="#top" style="display: flex; align-items: center; gap: 14px;">
+      <div style="width: 34px; height: 34px; background: #33245c; display: grid; place-items: center; box-shadow: 0 0 0 1px #b9973f, 0 0 0 4px rgba(255,255,255,0.25);">
+        <span style="font-family: 'Cormorant Garamond', serif; font-weight: 600; font-size: 20px; color: #e6cf90; line-height: 1;">M</span>
+      </div>
+      <span style="font-family: 'Cormorant Garamond', serif; font-size: 19px; letter-spacing: 0.30em; text-transform: uppercase; color: #33245c;">Mahāmudrā NYC</span>
+    </a>
+    <nav style="display: flex; gap: clamp(18px, 3vw, 40px); font-family: 'Cormorant Garamond', serif; font-size: 14px; letter-spacing: 0.24em; text-transform: uppercase; color: #5a4a2c;">
+      <a href="#practice">Practice</a>
+      <a href="#path">The Path</a>
+      <a href="#retreat">Retreat</a>
+      <a href="#teachers">Teachers</a>
+      <a href="#join" style="color: #33245c;">Join</a>
+    </nav>
+  </header>
+
+  <section id="top" style="position: relative; z-index: 4; padding: clamp(46px, 7vw, 104px) clamp(20px, 5vw, 80px) clamp(60px, 8vw, 120px);">
+    <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 34%; z-index: 0; opacity: 0.5; mix-blend-mode: multiply;">
+      <image-slot id="hero-ridge" shape="rect" fit="cover" placeholder="Drop mountain artwork (ink-wash ridgeline)"></image-slot>
+    </div>
+    <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 62%; z-index: 1; pointer-events: none; opacity: 0.30; filter: blur(1.5px);">
+      <svg viewBox="0 0 1200 400" preserveAspectRatio="none" style="width: 100%; height: 100%; display: block;">
+        <polygon points="0,400 190,150 330,400" fill="#8d7440" opacity="0.45"></polygon>
+        <polygon points="150,400 420,90 660,400" fill="#7c663a" opacity="0.38"></polygon>
+        <polygon points="520,400 780,120 1010,400" fill="#8d7440" opacity="0.40"></polygon>
+        <polygon points="890,400 1090,170 1200,400" fill="#7c663a" opacity="0.34"></polygon>
+      </svg>
+    </div>
+
+    <div style="position: relative; z-index: 2; max-width: 1100px; margin: 0 auto; border: 1px solid rgba(120,95,45,0.55); padding: clamp(28px, 4vw, 58px);">
+      <div style="border: 1px solid rgba(150,122,58,0.40); padding: clamp(26px, 5vw, 70px) clamp(20px, 4vw, 56px); text-align: center;">
+        <div style="display: flex; align-items: center; justify-content: center; gap: 14px; margin-bottom: clamp(24px, 4vw, 42px);">
+          <span style="display: block; width: clamp(40px, 12vw, 150px); height: 1px; background: linear-gradient(90deg, transparent, #33245c);"></span>
+          <span style="display: block; width: 9px; height: 9px; background: #33245c; transform: rotate(45deg);"></span>
+          <span style="display: block; width: clamp(40px, 12vw, 150px); height: 1px; background: linear-gradient(90deg, #33245c, transparent);"></span>
+        </div>
+
+        <h1 style="font-family: 'Cormorant Garamond', serif; font-weight: 600; color: #33245c; font-size: clamp(46px, 9vw, 124px); line-height: 0.92; letter-spacing: 0.02em; margin: 0; text-transform: uppercase;">Mahāmudrā</h1>
+        <div style="font-family: 'Cormorant Garamond', serif; font-size: clamp(20px, 3.2vw, 40px); letter-spacing: 0.44em; text-transform: uppercase; color: #33245c; margin-top: 10px;">New York</div>
+
+        <div style="display: flex; align-items: center; justify-content: center; gap: 12px; margin: clamp(22px, 3.4vw, 38px) 0;">
+          <span style="display: block; width: 54px; height: 1px; background: rgba(120,95,45,0.6);"></span>
+          <span style="display: block; width: 6px; height: 6px; background: #8a6a24; transform: rotate(45deg);"></span>
+          <span style="display: block; width: 54px; height: 1px; background: rgba(120,95,45,0.6);"></span>
+        </div>
+
+        <p style="font-family: 'Cormorant Garamond', serif; font-size: clamp(15px, 1.7vw, 21px); letter-spacing: 0.30em; text-transform: uppercase; color: #5a4a2c; margin: 0;">A practice community for meditation &amp; awareness</p>
+
+        <p style="max-width: 620px; margin: clamp(26px, 4vw, 42px) auto 0; font-size: clamp(17px, 1.7vw, 22px); line-height: 1.62; text-wrap: pretty; color: #4a3d29;">We study the foundations of Mahāmudrā and the path of awareness — from attention to open presence, and from practice to peak experience. Weekly sittings in Manhattan, seasonal intensives, and one long retreat each summer.</p>
+
+        <div style="display: flex; flex-wrap: wrap; gap: 16px; justify-content: center; margin-top: clamp(28px, 4vw, 44px);">
+          <a href="#join" style="font-family: 'Cormorant Garamond', serif; font-size: 14px; letter-spacing: 0.26em; text-transform: uppercase; color: #f2e5c4; background: #33245c; padding: 15px 30px; box-shadow: 0 0 0 1px #b9973f inset;">Begin practicing</a>
+          <a href="#retreat" style="font-family: 'Cormorant Garamond', serif; font-size: 14px; letter-spacing: 0.26em; text-transform: uppercase; color: #33245c; padding: 15px 30px; box-shadow: 0 0 0 1px rgba(120,95,45,0.65) inset;">Peak State II →</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="practice" style="position: relative; z-index: 4; padding: clamp(48px, 7vw, 100px) clamp(24px, 6vw, 92px); border-top: 1px solid rgba(150,122,58,0.4);">
+    <div style="max-width: 1100px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: clamp(30px, 5vw, 72px); align-items: start;">
+      <div>
+        <div style="font-family: 'Cormorant Garamond', serif; font-size: 13px; letter-spacing: 0.34em; text-transform: uppercase; color: #8a6a24; margin-bottom: 16px;">Weekly in the city</div>
+        <h2 style="font-family: 'Cormorant Garamond', serif; font-weight: 500; color: #33245c; font-size: clamp(30px, 4vw, 52px); line-height: 1.06; margin: 0 0 20px; letter-spacing: 0.01em;">Practice held in one place, at one hour, together.</h2>
+        <p style="font-size: clamp(16px, 1.5vw, 19px); line-height: 1.65; text-wrap: pretty; margin: 0;">Sessions run thirty minutes: a ten-minute teaching, ten to twenty minutes of meditation, then reflection and discussion. No experience is required, and no one is asked to believe anything.</p>
+      </div>
+      <div style="display: grid; gap: 0;">
+        <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 20px; padding: 18px 0; border-top: 1px solid rgba(120,95,45,0.35);">
+          <div>
+            <div style="font-family: 'Cormorant Garamond', serif; font-size: 15px; letter-spacing: 0.28em; text-transform: uppercase; color: #33245c;">Monday</div>
+            <div style="font-size: 17px; color: #5a4a2c;">Evening sitting &amp; teaching</div>
+          </div>
+          <div style="font-family: 'Cormorant Garamond', serif; font-size: 17px; letter-spacing: 0.14em; color: #8a6a24; white-space: nowrap;">7:00 PM</div>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 20px; padding: 18px 0; border-top: 1px solid rgba(120,95,45,0.35);">
+          <div>
+            <div style="font-family: 'Cormorant Garamond', serif; font-size: 15px; letter-spacing: 0.28em; text-transform: uppercase; color: #33245c;">Wednesday</div>
+            <div style="font-size: 17px; color: #5a4a2c;">Morning practice, online</div>
+          </div>
+          <div style="font-family: 'Cormorant Garamond', serif; font-size: 17px; letter-spacing: 0.14em; color: #8a6a24; white-space: nowrap;">7:30 AM</div>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 20px; padding: 18px 0; border-top: 1px solid rgba(120,95,45,0.35); border-bottom: 1px solid rgba(120,95,45,0.35);">
+          <div>
+            <div style="font-family: 'Cormorant Garamond', serif; font-size: 15px; letter-spacing: 0.28em; text-transform: uppercase; color: #33245c;">Saturday</div>
+            <div style="font-size: 17px; color: #5a4a2c;">Half-day sit, Lower East Side</div>
+          </div>
+          <div style="font-family: 'Cormorant Garamond', serif; font-size: 17px; letter-spacing: 0.14em; color: #8a6a24; white-space: nowrap;">9:00 AM</div>
+        </div>
+        <p style="font-size: 15px; color: #6a5a3c; font-style: italic; margin: 16px 0 0;">Placeholder times — send me the real schedule and I will set it.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="path" style="position: relative; z-index: 4; padding: clamp(48px, 7vw, 100px) clamp(24px, 6vw, 92px); border-top: 1px solid rgba(150,122,58,0.4);">
+    <div style="max-width: 1240px; margin: 0 auto;">
+      <div style="text-align: center; margin-bottom: clamp(34px, 5vw, 62px);">
+        <div style="font-family: 'Cormorant Garamond', serif; font-size: 13px; letter-spacing: 0.34em; text-transform: uppercase; color: #8a6a24; margin-bottom: 14px;">The path of awareness</div>
+        <h2 style="font-family: 'Cormorant Garamond', serif; font-weight: 500; color: #33245c; font-size: clamp(30px, 4.4vw, 58px); line-height: 1.04; margin: 0; letter-spacing: 0.01em;">Four stages, one continuous practice</h2>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: clamp(16px, 2vw, 26px);">
+        <article style="border: 1px solid rgba(120,95,45,0.55); background: rgba(255,248,228,0.42); padding: 26px 22px; text-align: center; display: grid; gap: 16px; align-content: start; box-shadow: 0 0 0 1px rgba(255,255,255,0.35) inset;">
+          <div style="font-family: 'Cormorant Garamond', serif; font-size: 15px; letter-spacing: 0.30em; text-transform: uppercase; color: #33245c;">Stage One</div>
+          <div style="font-family: 'Cormorant Garamond', serif; font-size: 23px; line-height: 1.2; color: #33245c;">Attention &amp; Settling the Mind</div>
+          <div style="height: 116px; border: 1px solid rgba(120,95,45,0.3); position: relative;">
+            <image-slot id="stage-1" shape="rect" fit="cover" placeholder="stage artwork"></image-slot>
+          </div>
+          <p style="margin: 0; font-size: 16px; line-height: 1.55; color: #5a4a2c;">Strengthening focus and awareness.</p>
+        </article>
+        <article style="border: 1px solid rgba(120,95,45,0.55); background: rgba(255,248,228,0.42); padding: 26px 22px; text-align: center; display: grid; gap: 16px; align-content: start; box-shadow: 0 0 0 1px rgba(255,255,255,0.35) inset;">
+          <div style="font-family: 'Cormorant Garamond', serif; font-size: 15px; letter-spacing: 0.30em; text-transform: uppercase; color: #33245c;">Stage Two</div>
+          <div style="font-family: 'Cormorant Garamond', serif; font-size: 23px; line-height: 1.2; color: #33245c;">Stability &amp; Taming the Mind</div>
+          <div style="height: 116px; border: 1px solid rgba(120,95,45,0.3); position: relative;">
+            <image-slot id="stage-2" shape="rect" fit="cover" placeholder="stage artwork"></image-slot>
+          </div>
+          <p style="margin: 0; font-size: 16px; line-height: 1.55; color: #5a4a2c;">Building steadiness and inner resilience.</p>
+        </article>
+        <article style="border: 1px solid rgba(120,95,45,0.55); background: rgba(255,248,228,0.42); padding: 26px 22px; text-align: center; display: grid; gap: 16px; align-content: start; box-shadow: 0 0 0 1px rgba(255,255,255,0.35) inset;">
+          <div style="font-family: 'Cormorant Garamond', serif; font-size: 15px; letter-spacing: 0.30em; text-transform: uppercase; color: #33245c;">Stage Three</div>
+          <div style="font-family: 'Cormorant Garamond', serif; font-size: 23px; line-height: 1.2; color: #33245c;">One-Pointedness &amp; Equanimity</div>
+          <div style="height: 116px; border: 1px solid rgba(120,95,45,0.3); position: relative;">
+            <image-slot id="stage-3" shape="rect" fit="cover" placeholder="stage artwork"></image-slot>
+          </div>
+          <p style="margin: 0; font-size: 16px; line-height: 1.55; color: #5a4a2c;">Deepening awareness. Resting as awareness itself.</p>
+        </article>
+        <article style="border: 1px solid rgba(120,95,45,0.55); background: rgba(255,248,228,0.42); padding: 26px 22px; text-align: center; display: grid; gap: 16px; align-content: start; box-shadow: 0 0 0 1px rgba(255,255,255,0.35) inset;">
+          <div style="font-family: 'Cormorant Garamond', serif; font-size: 15px; letter-spacing: 0.30em; text-transform: uppercase; color: #33245c;">Stage Four</div>
+          <div style="font-family: 'Cormorant Garamond', serif; font-size: 23px; line-height: 1.2; color: #33245c;">Flow &amp; Peak Performance</div>
+          <div style="height: 116px; border: 1px solid rgba(120,95,45,0.3); position: relative;">
+            <image-slot id="stage-4" shape="rect" fit="cover" placeholder="stage artwork"></image-slot>
+          </div>
+          <p style="margin: 0; font-size: 16px; line-height: 1.55; color: #5a4a2c;">Bringing practice into life and performing at your highest.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section id="retreat" style="position: relative; z-index: 4; padding: clamp(48px, 7vw, 100px) clamp(24px, 6vw, 92px); border-top: 1px solid rgba(150,122,58,0.4);">
+    <div style="max-width: 1140px; margin: 0 auto; background: linear-gradient(165deg, #33245c 0%, #291d4b 100%); color: #efe0bc; padding: clamp(28px, 4vw, 56px); box-shadow: 0 0 0 1px #b9973f inset, 0 26px 60px -30px rgba(40,28,74,0.7);">
+      <div style="border: 1px solid rgba(198,166,90,0.45); padding: clamp(26px, 4vw, 54px); display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: clamp(30px, 5vw, 64px); align-items: start;">
+        <div>
+          <div style="font-family: 'Cormorant Garamond', serif; font-size: 13px; letter-spacing: 0.34em; text-transform: uppercase; color: #d8b969; margin-bottom: 18px;">Summer retreat</div>
+          <h2 style="font-family: 'Cormorant Garamond', serif; font-weight: 600; font-size: clamp(38px, 6vw, 74px); line-height: 0.95; margin: 0 0 14px; text-transform: uppercase; letter-spacing: 0.02em; color: #f4e7c6;">Peak State II</h2>
+          <p style="font-family: 'Cormorant Garamond', serif; font-size: clamp(15px, 1.6vw, 20px); letter-spacing: 0.26em; text-transform: uppercase; margin: 0 0 26px; color: #d8b969;">A week of meditation &amp; exploration</p>
+          <div style="display: grid; gap: 4px; margin-bottom: 26px;">
+            <div style="font-family: 'Cormorant Garamond', serif; font-size: clamp(20px, 2.4vw, 30px); letter-spacing: 0.16em;">August 3 – 7, 2026</div>
+            <div style="font-family: 'Cormorant Garamond', serif; font-size: 15px; letter-spacing: 0.26em; text-transform: uppercase; color: #cbb98f;">Frederiksværk, Denmark</div>
+          </div>
+          <p style="font-size: clamp(17px, 1.6vw, 21px); line-height: 1.6; text-wrap: pretty; margin: 0 0 30px; color: #ecdfc0;">Four days examining the foundations of Mahāmudrā and the path of awareness — from attention to open presence, and from practice to peak experience.</p>
+          <div style="display: flex; flex-wrap: wrap; gap: 28px;">
+            <div>
+              <div style="font-family: 'Cormorant Garamond', serif; font-size: 12px; letter-spacing: 0.30em; text-transform: uppercase; color: #a99a76;">Facilitated by</div>
+              <div style="font-family: 'Cormorant Garamond', serif; font-size: 24px; letter-spacing: 0.10em; text-transform: uppercase; color: #f4e7c6;">Lev Brie</div>
+            </div>
+            <div>
+              <div style="font-family: 'Cormorant Garamond', serif; font-size: 12px; letter-spacing: 0.30em; text-transform: uppercase; color: #a99a76;">Authorized by</div>
+              <div style="font-family: 'Cormorant Garamond', serif; font-size: 24px; letter-spacing: 0.10em; text-transform: uppercase; color: #f4e7c6;">Dustin DiPerna</div>
+            </div>
+          </div>
+        </div>
+        <div style="display: grid; gap: 26px;">
+          <div style="border: 1px solid rgba(198,166,90,0.4); padding: 22px 24px;">
+            <div style="font-family: 'Cormorant Garamond', serif; font-size: 14px; letter-spacing: 0.28em; text-transform: uppercase; color: #d8b969; margin-bottom: 12px;">Daily practice</div>
+            <div style="font-size: 17px; line-height: 1.7; color: #ecdfc0;">30 minutes in total</div>
+            <div style="display: grid; gap: 6px; margin-top: 10px; font-size: 16px; color: #cbb98f;">
+              <div>10 minute teaching</div>
+              <div>10–20 minute meditation</div>
+              <div>Reflection &amp; discussion</div>
+            </div>
+          </div>
+          <sc-if value="{{ showDeepDive }}" hint-placeholder-val="{{ true }}">
+            <div style="border: 1px solid rgba(198,166,90,0.4); padding: 22px 24px;">
+              <div style="font-family: 'Cormorant Garamond', serif; font-size: 14px; letter-spacing: 0.28em; text-transform: uppercase; color: #d8b969; margin-bottom: 12px;">Deep dive (optional)</div>
+              <p style="margin: 0; font-size: 16px; line-height: 1.65; color: #cbb98f;">30 minutes for those exploring Mahāmudrā in greater depth.</p>
+            </div>
+          </sc-if>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+            <div style="height: 130px; border: 1px solid rgba(198,166,90,0.4); position: relative;">
+              <image-slot id="retreat-1" shape="rect" fit="cover" placeholder="retreat photo"></image-slot>
+            </div>
+            <div style="height: 130px; border: 1px solid rgba(198,166,90,0.4); position: relative;">
+              <image-slot id="retreat-2" shape="rect" fit="cover" placeholder="retreat photo"></image-slot>
+            </div>
+          </div>
+          <a href="#join" style="font-family: 'Cormorant Garamond', serif; font-size: 14px; letter-spacing: 0.26em; text-transform: uppercase; color: #33245c; background: #e6cf90; padding: 16px 28px; text-align: center;">Request a place</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <sc-if value="{{ showTeachers }}" hint-placeholder-val="{{ true }}">
+    <section id="teachers" style="position: relative; z-index: 4; padding: clamp(48px, 7vw, 100px) clamp(24px, 6vw, 92px); border-top: 1px solid rgba(150,122,58,0.4);">
+      <div style="max-width: 1000px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: clamp(30px, 5vw, 64px);">
+        <div style="display: grid; gap: 18px;">
+          <div style="height: 260px; border: 1px solid rgba(120,95,45,0.5); position: relative;">
+            <image-slot id="teacher-1" shape="rect" fit="cover" placeholder="portrait — Lev Brie"></image-slot>
+          </div>
+          <div>
+            <div style="font-family: 'Cormorant Garamond', serif; font-size: 28px; letter-spacing: 0.10em; text-transform: uppercase; color: #33245c;">Lev Brie</div>
+            <div style="font-family: 'Cormorant Garamond', serif; font-size: 13px; letter-spacing: 0.28em; text-transform: uppercase; color: #8a6a24; margin: 6px 0 12px;">Facilitator</div>
+            <p style="margin: 0; font-size: 17px; line-height: 1.6; color: #5a4a2c;">Leads the weekly practice in New York and the summer retreat. Authorized to teach by Dustin DiPerna.</p>
+          </div>
+        </div>
+        <div style="display: grid; gap: 18px;">
+          <div style="height: 260px; border: 1px solid rgba(120,95,45,0.5); position: relative;">
+            <image-slot id="teacher-2" shape="rect" fit="cover" placeholder="portrait — Dustin DiPerna"></image-slot>
+          </div>
+          <div>
+            <div style="font-family: 'Cormorant Garamond', serif; font-size: 28px; letter-spacing: 0.10em; text-transform: uppercase; color: #33245c;">Dustin DiPerna</div>
+            <div style="font-family: 'Cormorant Garamond', serif; font-size: 13px; letter-spacing: 0.28em; text-transform: uppercase; color: #8a6a24; margin: 6px 0 12px;">Lineage &amp; authorization</div>
+            <p style="margin: 0; font-size: 17px; line-height: 1.6; color: #5a4a2c;">Placeholder biography — send copy and I will set it in the same voice.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </sc-if>
+
+  <section id="join" style="position: relative; z-index: 4; padding: clamp(52px, 8vw, 110px) clamp(24px, 6vw, 92px); border-top: 1px solid rgba(150,122,58,0.4); text-align: center;">
+    <div style="max-width: 620px; margin: 0 auto;">
+      <div style="display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 28px;">
+        <span style="display: block; width: 60px; height: 1px; background: rgba(120,95,45,0.6);"></span>
+        <span style="display: block; width: 8px; height: 8px; background: #33245c; transform: rotate(45deg);"></span>
+        <span style="display: block; width: 60px; height: 1px; background: rgba(120,95,45,0.6);"></span>
+      </div>
+      <h2 style="font-family: 'Cormorant Garamond', serif; font-weight: 500; color: #33245c; font-size: clamp(30px, 4.4vw, 56px); line-height: 1.05; margin: 0 0 18px;">Sit with us</h2>
+      <p style="font-size: clamp(17px, 1.6vw, 21px); line-height: 1.6; margin: 0 0 30px; text-wrap: pretty;">One note a month: practice times, retreat news, nothing else.</p>
+      <form onSubmit="{{ onSubmit }}" style="display: flex; flex-wrap: wrap; gap: 12px; justify-content: center;">
+        <input type="email" required="" placeholder="you@email.com" style="font-family: 'EB Garamond', serif; font-size: 17px; padding: 15px 18px; min-width: 260px; flex: 1 1 260px; background: rgba(255,250,234,0.7); border: 1px solid rgba(120,95,45,0.55); color: #4a3d29; outline: none;" />
+        <button type="submit" style="font-family: 'Cormorant Garamond', serif; font-size: 14px; letter-spacing: 0.26em; text-transform: uppercase; color: #f2e5c4; background: #33245c; border: none; padding: 16px 30px; cursor: pointer;">{{ submitLabel }}</button>
+      </form>
+    </div>
+  </section>
+
+  <footer style="position: relative; z-index: 4; padding: clamp(34px, 5vw, 56px) clamp(24px, 6vw, 92px); border-top: 1px solid rgba(150,122,58,0.4); display: flex; flex-wrap: wrap; gap: 22px; align-items: center; justify-content: space-between;">
+    <div style="display: flex; align-items: center; gap: 14px;">
+      <div style="width: 30px; height: 30px; background: #33245c; display: grid; place-items: center; box-shadow: 0 0 0 1px #b9973f;">
+        <span style="font-family: 'Cormorant Garamond', serif; font-weight: 600; font-size: 17px; color: #e6cf90; line-height: 1;">M</span>
+      </div>
+      <span style="font-family: 'Cormorant Garamond', serif; font-size: 14px; letter-spacing: 0.28em; text-transform: uppercase; color: #33245c;">Mahāmudrā NYC</span>
+    </div>
+    <div style="font-family: 'Cormorant Garamond', serif; font-size: 14px; letter-spacing: 0.34em; text-transform: uppercase; color: #8a6a24;">Practice deeply. Live clearly.</div>
+    <div style="font-size: 15px; color: #6a5a3c;"><a href="#top">New York City</a> · <a href="#retreat">Denmark</a></div>
+  </footer>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;showDeepDive&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Retreat&quot;},&quot;showTeachers&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Sections&quot;}}">
+class Component extends DCLogic {
+  state = { sent: false };
+  renderVals() {
+    return {
+      showDeepDive: this.props.showDeepDive ?? true,
+      showTeachers: this.props.showTeachers ?? true,
+      submitLabel: this.state.sent ? "Received" : "Join",
+      onSubmit: (e) => { e.preventDefault(); this.setState({ sent: true }); }
+    };
+  }
+}
+
+</script>
+</body>
+</html>

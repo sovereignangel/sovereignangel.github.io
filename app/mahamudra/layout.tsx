@@ -1,31 +1,32 @@
 import type { Metadata } from 'next'
-import { Cinzel, Cormorant_Garamond } from 'next/font/google'
-
-const cinzel = Cinzel({
-  subsets: ['latin'],
-  weight: ['400', '500', '600'],
-  variable: '--font-cinzel',
-  display: 'swap',
-})
+import { Cormorant_Garamond, EB_Garamond } from 'next/font/google'
 
 const cormorant = Cormorant_Garamond({
   subsets: ['latin'],
+  weight: ['400', '500', '600', '700'],
+  style: ['normal', 'italic'],
+  variable: '--font-mah-display',
+  display: 'swap',
+})
+
+const ebGaramond = EB_Garamond({
+  subsets: ['latin'],
   weight: ['400', '500', '600'],
   style: ['normal', 'italic'],
-  variable: '--font-cormorant',
+  variable: '--font-mah-text',
   display: 'swap',
 })
 
 export const metadata: Metadata = {
-  title: 'Mahāmudrā NYC',
+  title: 'Mahāmudrā New York',
   description:
-    'A community of Mahāmudrā practice in Brooklyn, New York. Foundations taught by Lev Brie, authorized by Dustin DiPerna. Practice deeply. Live clearly.',
+    'A practice community for meditation & awareness in New York. Foundations of Mahāmudrā taught by Lev Brie, authorized by Dustin DiPerna. Practice deeply. Live clearly.',
   openGraph: {
-    title: 'Mahāmudrā NYC',
+    title: 'Mahāmudrā New York',
     description:
-      'A community of Mahāmudrā practice in Brooklyn, New York. Practice deeply. Live clearly.',
+      'A practice community for meditation & awareness in New York. Practice deeply. Live clearly.',
     url: 'https://mahamudra.loricorpuz.com',
-    siteName: 'Mahāmudrā NYC',
+    siteName: 'Mahāmudrā New York',
     type: 'website',
   },
 }
@@ -36,6 +37,8 @@ export default function MahamudraLayout({
   children: React.ReactNode
 }) {
   return (
-    <div className={`${cinzel.variable} ${cormorant.variable}`}>{children}</div>
+    <div className={`${cormorant.variable} ${ebGaramond.variable}`}>
+      {children}
+    </div>
   )
 }
