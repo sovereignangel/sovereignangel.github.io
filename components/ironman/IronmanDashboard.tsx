@@ -358,6 +358,7 @@ function ProgressPanel({ activities, today }: { activities: GarminActivity[]; to
 // ── Plan calendar ─────────────────────────────────────────────────────────
 
 function PlanCalendar({ days, today }: { days: DayStatus[]; today: string }) {
+  const [expanded, setExpanded] = useState<string | null>(null)
   const phases = useMemo(() => {
     const order: string[] = []
     const map = new Map<string, DayStatus[]>()
@@ -386,12 +387,14 @@ function PlanCalendar({ days, today }: { days: DayStatus[]; today: string }) {
               {phaseDays.map((ds) => {
                 const isToday = ds.day.date === today
                 const isPast = ds.day.date < today
+                const isOpen = expanded === ds.day.date
                 return (
                   <div
                     key={ds.day.date}
-                    className={`border rounded-sm px-2.5 py-1.5 ${
-                      isToday ? 'border-burgundy bg-burgundy-bg' : 'border-rule-light'
-                    } ${isPast ? 'opacity-80' : ''}`}
+                    onClick={() => setExpanded(isOpen ? null : ds.day.date)}
+                    className={`border rounded-sm px-2.5 py-1.5 cursor-pointer transition-colors ${
+                      isToday ? 'border-burgundy bg-burgundy-bg' : isOpen ? 'border-ink-faint' : 'border-rule-light hover:border-ink-faint'
+                    } ${isPast && !isOpen ? 'opacity-80' : ''}`}
                   >
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className={`font-mono text-[10px] font-medium w-[86px] shrink-0 ${isToday ? 'text-burgundy' : 'text-ink'}`}>
@@ -437,7 +440,36 @@ function PlanCalendar({ days, today }: { days: DayStatus[]; today: string }) {
                           </span>
                         ))}
                       </div>
+                      <svg
+                        className={`ml-auto shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+                        width="10"
+                        height="10"
+                        viewBox="0 0 10 10"
+                        aria-hidden="true"
+                      >
+                        <path d="M2 3.5L5 6.5L8 3.5" stroke="#9a928a" strokeWidth="1.2" fill="none" strokeLinecap="round" />
+                      </svg>
                     </div>
+                    {isOpen && (
+                      <div className="mt-2 pt-2 border-t border-rule-light space-y-2">
+                        {ds.day.sessions.map((x, i) => (
+                          <div key={i}>
+                            <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+                              <SportChip sport={x.sport} />
+                              <span className="text-[11px] font-semibold text-ink">{x.title}</span>
+                              {x.durationMin > 0 && (
+                                <span className="font-mono text-[10px] text-ink-muted ml-auto shrink-0">
+                                  {x.durationMin}min
+                                  {x.distanceKm ? ` · ${x.distanceKm}km` : ''}
+                                  {x.zone !== '-' ? ` · ${x.zone}` : ''}
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-[10px] text-ink-muted leading-relaxed">{x.detail}</p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 )
               })}
