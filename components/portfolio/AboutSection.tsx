@@ -34,7 +34,7 @@ export default function AboutSection() {
         >
           Mahamudra
         </Link>{' '}
-        &amp; Kadampa Buddhism.
+        Buddhism.
       </p>
       <div className="flex items-center gap-5 text-[#333]" aria-label="Sports">
         <Link
