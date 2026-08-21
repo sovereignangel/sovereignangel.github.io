@@ -31,12 +31,12 @@ export interface PlanDay {
 }
 
 export const RACE = {
-  name: 'Ironman 70.3',
+  name: 'Ironman 70.3 Belgrade',
   date: '2026-09-13',
   swimKm: 1.9,
   bikeKm: 90,
   runKm: 21.1,
-  location: 'TBC',
+  location: 'Belgrade',
 }
 
 /**

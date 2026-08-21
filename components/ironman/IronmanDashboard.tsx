@@ -511,7 +511,7 @@ export default function IronmanDashboard() {
         {countdown1 >= 0 && (
           <div>
             <span className="font-mono text-[32px] font-semibold text-ink leading-none">{countdown1}</span>
-            <span className="text-[11px] text-ink-muted ml-2">days to race 1</span>
+            <span className="text-[11px] text-ink-muted ml-2">days to Belgrade</span>
           </div>
         )}
         <div>
