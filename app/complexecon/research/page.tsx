@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import type { Metadata } from 'next'
 import {
+  INEQUALITY_BRIDGE,
   ITERATION_LOG,
   LANES,
   MARKETS,
@@ -211,6 +212,27 @@ export default function ComplexEconResearchPage() {
                     {lane.firstProbe}
                   </p>
                 </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* ─── Inequality bridge ─── */}
+        <section className="mb-12">
+          <SectionHeader numeral="≡" title="The Inequality Bridge" />
+          <div className="mb-4 border-y border-rule py-6 text-center">
+            <p className="font-serif text-[19px] italic leading-snug text-ink md:text-[21px]">
+              &ldquo;{INEQUALITY_BRIDGE.oneLiner}&rdquo;
+            </p>
+          </div>
+          <p className="mb-5 font-serif text-[13px] leading-relaxed text-ink">{INEQUALITY_BRIDGE.statement}</p>
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+            {INEQUALITY_BRIDGE.cards.map(card => (
+              <div key={card.title} className="rounded-sm border border-rule bg-white p-3">
+                <div className="mb-1.5 font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-burgundy">
+                  {card.title}
+                </div>
+                <p className="text-[11px] leading-relaxed text-ink-light">{card.body}</p>
               </div>
             ))}
           </div>

@@ -121,12 +121,19 @@ export const LANES: ResearchLane[] = [
           'The Baltic offshore buildout will raise, not lower, price volatility for years — capacity is arriving faster than the transmission and storage that would absorb it, so cannibalization and negative-price hours lead the smoothing.',
         test: 'Cross-sectional check against zones further along the same curve (Denmark, northern Germany): volatility and negative-price frequency vs wind penetration, controlling for interconnection ratio.',
       },
+      {
+        id: 'LT-4',
+        claim:
+          'In hours when gas sets the uniform clearing price, wind owners collect inframarginal rents financed through the bills of households in some of the EU’s most energy-poor member states — and the post-BRELL security premium is likewise socialized onto ratepayers by convention. The rent transfer is calculable, and it lands on the inequality frame directly.',
+        test: 'Reconstruct hourly inframarginal rents for LT wind from ENTSO-E prices and a merit-order proxy; join spike frequency to EU-SILC energy-poverty indicators across the Baltics; headline number is euros transferred per household per year under the clearing convention.',
+      },
     ],
     data: [
       { name: 'ENTSO-E Transparency', url: 'https://transparency.entsoe.eu', note: 'free API — prices, load, generation, balancing; the workhorse' },
       { name: 'Nord Pool', url: 'https://data.nordpoolgroup.com', note: 'day-ahead and intraday for LT zone' },
       { name: 'Litgrid', url: 'https://www.litgrid.eu', note: 'TSO data — balancing, interconnectors, desync documentation' },
       { name: 'Open-Meteo', url: 'https://open-meteo.com', note: 'free GFS / ECMWF / ICON ensembles + historical forecast archive — same stack as the kite brief' },
+      { name: 'Eurostat EU-SILC', url: 'https://ec.europa.eu/eurostat/web/income-and-living-conditions', note: 'energy-poverty indicators by country and year — the inequality join for LT-4' },
     ],
     armstrongAngle:
       'A paper-traded day-ahead vs intraday spread signal conditioned on forecast dispersion. Even without market access, a timestamped forecast-and-outcome log is a track-record artifact — the Armstrong pattern of a live book as empirical evidence, applied to power.',
@@ -167,12 +174,20 @@ export const LANES: ResearchLane[] = [
           'PLD deviates from a physically grounded shadow price in systematic, directional ways attributable to the model’s own conventions — and each convention change (the 2013 CVaR introduction, the 2021 move to hourly PLD) measurably redistributed money between market segments.',
         test: 'Reconstruct a simple physical benchmark price from reservoir and load data; regress the PLD-benchmark gap on convention-change dates; the redistribution estimate is the paper’s headline number.',
       },
+      {
+        id: 'BR-4',
+        claim:
+          'The 2021 drought’s costs were distributed by convention, not by weather: tariff flags — including the special water-scarcity flag — moved scarcity costs onto household bills, regressively, since electricity is a far larger budget share for poor households, while the CVaR convention cushioned generator margins. The incidence of ENSO is an institutional choice.',
+        test: 'ANEEL tariff-flag history joined to IBGE POF electricity budget shares by income decile; compute the 2021-22 scarcity burden as a share of income per decile against a counterfactual where generators bear the hydrological risk.',
+      },
     ],
     data: [
       { name: 'ONS open data', url: 'https://dados.ons.org.br', note: 'reservoir levels, inflows, generation by source — free and deep' },
       { name: 'CCEE', url: 'https://www.ccee.org.br', note: 'PLD history, market rules, settlement' },
       { name: 'NOAA ONI', url: 'https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/ensostuff/ONI_v5.php', note: 'canonical ENSO index, 1950-present' },
       { name: 'B3 / ADRs', url: 'https://www.b3.com.br', note: 'equity expressions; ADRs trade in New York' },
+      { name: 'ANEEL', url: 'https://www.gov.br/aneel', note: 'tariff-flag history and rate structures — the distributive instrument for BR-4' },
+      { name: 'IBGE POF', url: 'https://www.ibge.gov.br/estatisticas/sociais/populacao/24786-pesquisa-de-orcamentos-familiares-2.html', note: 'household budget survey — electricity spend by income decile' },
     ],
     armstrongAngle:
       'The most directly tradable lane: US-listed ADRs mean the hydro-conditioned long-short runs in an ordinary brokerage account inside the Armstrong book. Sabesp adds a pure water-scarcity leg beyond electricity.',
@@ -267,6 +282,26 @@ export const LANES: ResearchLane[] = [
   },
 ]
 
+export const INEQUALITY_BRIDGE = {
+  oneLiner: 'Weather is random; who pays for weather is a convention.',
+  statement:
+    'The SFI winter school’s focal application is inequality, and the established lane there is valuation conventions as distributive institutions. The climate lanes are not a separate program — they are the same claim at a new empirical site. A drought or a wind lull does not distribute its own costs; the market design does, and every link is a convention someone chose: the uniform clearing price, the tariff flag, the CVaR parameter, the zonal boundary. Where the valuation lane studies analyst price targets distributing wealth, this bridge studies grid pricing rules distributing drought. The join is always the same three-step chain: physical state variable → pricing convention → household incidence.',
+  cards: [
+    {
+      title: 'Brazil · The Tariff Flag',
+      body: 'The 2021 drought’s costs were routed to households through an explicit instrument — tariff flags, including a special water-scarcity flag — while the model’s risk-aversion convention cushioned generators. ENSO → reservoirs → model → flag → incidence by income decile, every step in public data. This is BR-4, and it is the Abu Dhabi paper candidate.',
+    },
+    {
+      title: 'Lithuania · The Marginal Price',
+      body: 'The Baltics rank among the EU’s most energy-poor member states. Every hour gas sets the uniform clearing price, wind owners collect inframarginal rents financed through those households’ bills — and the post-BRELL security premium is socialized the same way. LT-4 computes the transfer.',
+    },
+    {
+      title: 'The Join',
+      body: 'Wind and water metrics overlap with inequality metrics through the price channel: ENTSO-E and ONS supply the physical and price states; EU-SILC energy-poverty indicators and IBGE POF budget shares supply the incidence. The convention in the middle is the object of study — an engine, not a camera, deciding who pays.',
+    },
+  ],
+}
+
 export const SCORECARD_LANES = ['I · Wind LT', 'II · Water BR', 'III · Heat US', 'IV · Ledger']
 
 export const SCORECARD: ScorecardRow[] = [
@@ -338,6 +373,11 @@ export const PROPOSED_PATH: PathStep[] = [
 ]
 
 export const ITERATION_LOG: LogEntry[] = [
+  {
+    date: '2026-08-21',
+    version: 'v2',
+    note: 'Inequality bridge added after the SFI-frame question: distributive incidence of climate volatility as the unifying claim — "weather is random; who pays for weather is a convention." New hypotheses LT-4 (inframarginal rents vs Baltic energy poverty via EU-SILC) and BR-4 (2021 drought tariff-flag incidence by income decile via ANEEL + IBGE POF). BR-4 flagged as the Abu Dhabi paper candidate; the climate lanes and the valuation-conventions lane are now one program, not two.',
+  },
   {
     date: '2026-08-21',
     version: 'v1',
