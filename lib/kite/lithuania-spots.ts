@@ -1,5 +1,5 @@
 /**
- * Lithuanian coast kite wind forecast — Svencele, Nida, Sventoji.
+ * Baltic coast kite wind forecast — Svencele, Nida, Sventoji, Liepaja (LV).
  *
  * Fetches hourly wind from Open-Meteo (free, no API key) for each spot,
  * classifies every daylight hour against a progressing rider's target band
@@ -84,6 +84,19 @@ export const LITHUANIA_SPOTS: KiteSpot[] = [
     idealWind: 'wind travels west (E/SE easterlies)',
     tagline: 'the Hamptons of Lithuania',
     note: 'Lagoon beach east of town. W wind blows off the spit — never ride it.',
+  },
+  {
+    slug: 'liepaja',
+    name: 'Liepaja',
+    area: 'Latvia · open Baltic',
+    lat: 56.5099,
+    lon: 20.9986,
+    water: 'baltic',
+    offshoreSector: [40, 140],
+    onshoreSector: [200, 340],
+    idealWind: 'wind travels east (W/SW/NW westerlies)',
+    tagline: 'where the wind is born',
+    note: 'Wide west-facing city beach an hour north, in Latvia. Waves and chop; E wind is offshore into open sea.',
   },
 ]
 
@@ -365,7 +378,8 @@ export function weekSessions(forecasts: SpotForecast[]): SessionPick[] {
 
 // Within a day: prefer the spot's ideal (onshore) wind direction, then spot
 // priority — Svencele on stronger days (15+ kn), Sventoji on lighter days
-// (under 15 kn), Nida deprioritized (hardest to get to; wins only when it is
+// (under 15 kn), Liepaja mildly deprioritized (1h drive; wins when clearly
+// better), Nida most deprioritized (hardest to get to; wins only when it is
 // the only rideable spot) — then wind nearest 16 kn.
 function bySessionPriority(a: SessionPick, b: SessionPick): number {
   if (a.date !== b.date) return a.date.localeCompare(b.date)
@@ -374,6 +388,7 @@ function bySessionPriority(a: SessionPick, b: SessionPick): number {
     if (inSector(p.window.directionDeg, p.spot.onshoreSector)) s += 4
     if (p.spot.slug === 'svencele' && p.window.avgSpeedKn >= 15) s += 3
     if (p.spot.slug === 'sventoji' && p.window.avgSpeedKn < 15) s += 3
+    if (p.spot.slug === 'liepaja') s -= 4
     if (p.spot.slug === 'nida') s -= 6
     return s
   }

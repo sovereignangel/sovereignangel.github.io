@@ -19,8 +19,8 @@ import { WindTabs } from '@/components/wind/WindTabs'
 import { HourStrip } from '@/components/wind/HourStrip'
 
 export const metadata: Metadata = {
-  title: 'Wind — Lithuanian Coast',
-  description: 'Kite wind planner for Sventoji, Svencele and Nida — 12-30 kn windows',
+  title: 'Wind — Baltic Coast',
+  description: 'Kite wind planner for Sventoji, Svencele, Nida and Liepaja — 12-30 kn windows',
 }
 
 export const revalidate = 300
@@ -66,6 +66,18 @@ function SpotIcon({ slug, className }: { slug: string; className?: string }) {
         <path d="M5.5 9.5 L11 20" />
         <path d="M18.5 9.5 L13 20" />
         <path d="M10 20.5 L14 20.5" />
+      </svg>
+    )
+  }
+  if (slug === 'liepaja') {
+    // Liepaja — lighthouse for the city where the wind is born
+    return (
+      <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M10 20 L10.8 7 H13.2 L14 20" />
+        <path d="M9.5 9.5 H14.5" />
+        <path d="M10.5 7 V4.5 H13.5 V7" />
+        <path d="M7 5.5 L8.8 6.2 M17 5.5 L15.2 6.2" />
+        <path d="M7 20 H17" />
       </svg>
     )
   }
@@ -239,8 +251,8 @@ function MatrixCell({ day, spot, nowHour }: { day: DayAnalysis; spot: KiteSpot; 
 function SpotMatrix({ forecasts, live, nowHour }: { forecasts: SpotForecast[]; live: JuraspotLive | null; nowHour: number }) {
   const dates = forecasts[0].days.map(d => d.date)
   return (
-    <div className="bg-surf-card border border-surf-rule rounded-xl p-2 md:p-3 shadow-[0_2px_12px_rgba(13,92,99,0.06)]">
-      <div className="grid gap-x-2 md:gap-x-4" style={{ gridTemplateColumns: 'auto repeat(3, minmax(0, 1fr))' }}>
+    <div className="bg-surf-card border border-surf-rule rounded-xl p-2 md:p-3 shadow-[0_2px_12px_rgba(13,92,99,0.06)] overflow-x-auto">
+      <div className="grid gap-x-2 md:gap-x-4 min-w-[560px]" style={{ gridTemplateColumns: `auto repeat(${forecasts.length}, minmax(0, 1fr))` }}>
         <div className="border-b-2 border-surf-rule" />
         {forecasts.map(f => (
           <div key={f.spot.slug} className="pb-1 md:pb-1.5 border-b-2 border-surf-rule" title={`${f.spot.area} — ${f.spot.idealWind}. ${f.spot.note}`}>
@@ -335,7 +347,7 @@ export default async function WindPage() {
       <main className="min-h-screen" style={{ background: 'linear-gradient(180deg, #e7f0ea 0%, #f2ecdf 320px)' }}>
         <div className="max-w-5xl mx-auto px-3 py-6">
           <h1 className="font-serif text-[20px] font-semibold text-surf-deep">
-            Wind &mdash; Lithuanian Coast
+            Wind &mdash; Baltic Coast
           </h1>
           <p className="text-[11px] text-surf-muted mt-3">
             Forecast service is unreachable right now. Refresh in a minute.
@@ -363,7 +375,7 @@ export default async function WindPage() {
       <div className="max-w-5xl mx-auto px-3 md:px-4 py-3 md:py-5">
         <div className="flex items-center gap-2 md:gap-3 mb-2">
           <h1 className="font-serif text-[17px] md:text-[20px] font-semibold text-surf-deep whitespace-nowrap">
-            Wind <span className="text-surf-teal">&mdash;</span> Lithuanian Coast
+            Wind <span className="text-surf-teal">&mdash;</span> Baltic Coast
           </h1>
           <span className="hidden md:block">
             <WaveDivider />
