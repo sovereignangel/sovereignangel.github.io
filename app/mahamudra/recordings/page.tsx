@@ -146,9 +146,9 @@ export default function RecordingsPage() {
             ) : (
               <div className="mx-auto mt-10 text-left" style={{ maxWidth: 540 }}>
                 <p className="text-center" style={{ fontSize: 16, lineHeight: 1.7, color: C.inkSoft, marginBottom: 36 }}>
-                  Three sessions from the foundations series. Listen in order;
-                  each builds on the last. Please keep these within the
-                  community.
+                  The three days of the foundations series. Listen in order;
+                  each builds on the last. These play here only — please keep
+                  them within the community.
                 </p>
                 <div className="grid" style={{ gap: 22 }}>
                   {sessions.map((s, i) => (
@@ -174,7 +174,15 @@ export default function RecordingsPage() {
                           {s.subtitle}
                         </div>
                       </div>
-                      <audio controls preload="none" src={s.src} className="w-full" style={{ height: 40 }}>
+                      <audio
+                        controls
+                        preload="none"
+                        src={s.src}
+                        className="w-full"
+                        style={{ height: 40 }}
+                        controlsList="nodownload"
+                        onContextMenu={(e) => e.preventDefault()}
+                      >
                         Your browser does not support audio playback.
                       </audio>
                     </div>

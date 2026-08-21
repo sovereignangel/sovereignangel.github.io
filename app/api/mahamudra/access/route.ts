@@ -1,28 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { list } from '@vercel/blob'
 
-// Soft gate for the First Series recordings. The access word is shared with
-// participants; set MAHAMUDRA_ACCESS_CODE in Vercel env to rotate it.
-// Draft fallback: 'clear-light'. Real enforcement (signed URLs) comes later —
-// see MAHAMUDRA_BRAND_STRATEGY.md section 7.
+// Gate for the Mahamudra Foundations recordings. The access word is shared
+// with participants; MAHAMUDRA_ACCESS_CODE in Vercel env overrides the
+// fallback. Audio lives in the mahamudra-media Vercel Blob store (not the
+// repo / public dir) under unguessable random-suffix URLs that are returned
+// only after the word is verified — the private page plays them inline with
+// downloads disabled.
 const SESSIONS = [
-  {
-    id: 'first-series-1',
-    title: 'Attention',
-    subtitle: 'Settling the Mind',
-    src: '/mahamudra/audio/session-1.mp3',
-  },
-  {
-    id: 'first-series-2',
-    title: 'Stability',
-    subtitle: 'Taming the Mind',
-    src: '/mahamudra/audio/session-2.mp3',
-  },
-  {
-    id: 'first-series-3',
-    title: 'Open Presence',
-    subtitle: 'Resting as Awareness',
-    src: '/mahamudra/audio/session-3.mp3',
-  },
+  { id: 'foundations-day-1', title: 'Day One', subtitle: 'Mahāmudrā Foundations', prefix: 'mahamudra/foundations-day-1' },
+  { id: 'foundations-day-2', title: 'Day Two', subtitle: 'Mahāmudrā Foundations', prefix: 'mahamudra/foundations-day-2' },
+  { id: 'foundations-day-3', title: 'Day Three', subtitle: 'Mahāmudrā Foundations', prefix: 'mahamudra/foundations-day-3' },
 ]
 
 export async function POST(request: NextRequest) {
@@ -34,10 +22,28 @@ export async function POST(request: NextRequest) {
     // fall through to rejection
   }
 
-  const expected = process.env.MAHAMUDRA_ACCESS_CODE || 'clear-light'
+  const expected = process.env.MAHAMUDRA_ACCESS_CODE || 'peakstate2'
   if (!code || code.trim().toLowerCase() !== expected.toLowerCase()) {
     return NextResponse.json({ ok: false }, { status: 401 })
   }
 
-  return NextResponse.json({ ok: true, sessions: SESSIONS })
+  const token = process.env.MAHAMUDRA_BLOB_READ_WRITE_TOKEN
+  if (!token) {
+    return NextResponse.json({ ok: false, error: 'storage unavailable' }, { status: 503 })
+  }
+
+  try {
+    const { blobs } = await list({ prefix: 'mahamudra/', token })
+    const sessions = SESSIONS.map((s) => {
+      const blob = blobs.find((b) => b.pathname.startsWith(s.prefix))
+      return blob ? { id: s.id, title: s.title, subtitle: s.subtitle, src: blob.url } : null
+    }).filter(Boolean)
+    if (sessions.length === 0) {
+      return NextResponse.json({ ok: false, error: 'no recordings' }, { status: 503 })
+    }
+    return NextResponse.json({ ok: true, sessions })
+  } catch (err) {
+    console.error('[mahamudra/access] blob list failed', err)
+    return NextResponse.json({ ok: false, error: 'storage unavailable' }, { status: 503 })
+  }
 }

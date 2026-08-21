@@ -24,3 +24,6 @@ Becoming_Her_Daily_Practice.docx
 # Log files
 scripts/sync.log
 scripts/garmin_sync.log
+
+# Mahamudra recordings — served from Firebase Storage, never committed
+app/mahamudra/recordings/*.m4a

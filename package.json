@@ -16,6 +16,7 @@
     "@octokit/rest": "^22.0.1",
     "@supabase/supabase-js": "^2.95.3",
     "@types/mapbox-gl": "^3.4.1",
+    "@vercel/blob": "^2.8.0",
     "@vercel/functions": "^3.4.3",
     "date-fns": "^3.6.0",
     "dropbox": "^10.34.0",
