@@ -46,32 +46,32 @@ const SCORE_MARK: Record<'high' | 'med' | 'low', string> = {
 function SectionHeader({ numeral, title }: { numeral: string; title: string }) {
   return (
     <div className="mb-4 flex items-baseline gap-3 border-b-2 border-rule pb-2">
-      <span className="font-serif text-[13px] text-ink-faint">{numeral}</span>
-      <h2 className="font-serif text-[15px] font-semibold uppercase tracking-[1.5px] text-burgundy">{title}</h2>
+      <span className="font-serif text-[21px] text-ink-faint">{numeral}</span>
+      <h2 className="font-serif text-[24px] font-semibold uppercase tracking-[1.5px] text-burgundy">{title}</h2>
     </div>
   )
 }
 
 function FieldLabel({ children }: { children: React.ReactNode }) {
   return (
-    <span className="font-mono text-[9px] uppercase tracking-[1px] text-amber-ink">{children}</span>
+    <span className="font-mono text-[15px] uppercase tracking-[1px] text-amber-ink">{children}</span>
   )
 }
 
 export default function ComplexEconResearchPage() {
   return (
     <main className="min-h-screen text-ink" style={{ background: '#f5f1ea' }}>
-      <div className="mx-auto max-w-3xl px-4 py-10 md:px-6 md:py-14">
+      <div className="mx-auto max-w-4xl px-4 py-10 md:px-6 md:py-14">
         {/* ─── Masthead ─── */}
         <header className="mb-8 text-center">
-          <div className="mb-3 font-mono text-[10px] uppercase tracking-[3px] text-ink-muted">
+          <div className="mb-3 font-mono text-[16px] uppercase tracking-[3px] text-ink-muted">
             Lori Corpuz · A Working Document
           </div>
-          <h1 className="font-serif text-[34px] font-semibold leading-tight text-ink md:text-[42px]">
+          <h1 className="font-serif text-[48px] font-semibold leading-tight text-ink md:text-[56px]">
             {RESEARCH_FRAMING.title}
           </h1>
           <div className="mx-auto mt-3 mb-3 h-[2px] w-16 bg-burgundy" />
-          <p className="font-serif text-[14px] italic text-ink-light">
+          <p className="font-serif text-[22px] italic text-ink-light">
             Research lanes toward a climate-to-markets program
           </p>
         </header>
@@ -80,18 +80,18 @@ export default function ComplexEconResearchPage() {
         <nav className="mb-10 flex justify-center gap-4 border-b border-rule pb-2">
           <Link
             href="/complexecon"
-            className="py-1 font-serif text-[16px] text-ink-muted transition-colors hover:text-ink"
+            className="py-1 font-serif text-[26px] text-ink-muted transition-colors hover:text-ink"
           >
             Pathway
           </Link>
-          <span className="border-b-2 border-burgundy py-1 font-serif text-[16px] font-semibold text-burgundy">
+          <span className="border-b-2 border-burgundy py-1 font-serif text-[26px] font-semibold text-burgundy">
             Research
           </span>
         </nav>
 
         {/* ─── The question ─── */}
         <section className="mb-10 border-y border-rule py-8 text-center">
-          <p className="font-serif text-[20px] italic leading-snug text-ink md:text-[23px]">
+          <p className="font-serif text-[30px] italic leading-snug text-ink md:text-[32px]">
             &ldquo;{RESEARCH_FRAMING.question}&rdquo;
           </p>
         </section>
@@ -99,7 +99,7 @@ export default function ComplexEconResearchPage() {
         {/* ─── Framing ─── */}
         <section className="mb-12">
           <SectionHeader numeral="—" title="The Premise" />
-          <p className="font-serif text-[14px] leading-relaxed text-ink">{RESEARCH_FRAMING.statement}</p>
+          <p className="font-serif text-[22px] leading-relaxed text-ink">{RESEARCH_FRAMING.statement}</p>
         </section>
 
         {/* ─── Markets ─── */}
@@ -109,12 +109,12 @@ export default function ComplexEconResearchPage() {
             {MARKETS.map(m => (
               <div key={m.id} className="rounded-sm border border-rule bg-white p-3">
                 <div className="mb-1 flex items-baseline justify-between gap-2">
-                  <span className="font-serif text-[12px] font-semibold text-ink">{m.name}</span>
-                  <span className="rounded-sm border border-burgundy/20 bg-burgundy-bg px-1.5 py-0.5 font-mono text-[8px] uppercase tracking-[0.5px] text-burgundy">
+                  <span className="font-serif text-[20px] font-semibold text-ink">{m.name}</span>
+                  <span className="rounded-sm border border-burgundy/20 bg-burgundy-bg px-1.5 py-0.5 font-mono text-[14px] uppercase tracking-[0.5px] text-burgundy">
                     {m.driver}
                   </span>
                 </div>
-                <p className="text-[11px] leading-relaxed text-ink-muted">{m.gap}</p>
+                <p className="text-[18px] leading-relaxed text-ink-muted">{m.gap}</p>
               </div>
             ))}
           </div>
@@ -128,43 +128,43 @@ export default function ComplexEconResearchPage() {
               <div key={lane.id} className="rounded-sm border border-rule bg-white p-4">
                 <div className="mb-1 flex flex-wrap items-baseline justify-between gap-2">
                   <div className="flex items-baseline gap-2.5">
-                    <span className="font-serif text-[15px] font-semibold text-ink-faint">{lane.numeral}</span>
-                    <h3 className="font-serif text-[15px] font-semibold text-ink">{lane.name}</h3>
+                    <span className="font-serif text-[24px] font-semibold text-ink-faint">{lane.numeral}</span>
+                    <h3 className="font-serif text-[24px] font-semibold text-ink">{lane.name}</h3>
                   </div>
                   <span
-                    className={`rounded-sm border px-1.5 py-0.5 font-mono text-[8px] uppercase tracking-[0.5px] ${STATUS_CLASS[lane.status]}`}
+                    className={`rounded-sm border px-1.5 py-0.5 font-mono text-[14px] uppercase tracking-[0.5px] ${STATUS_CLASS[lane.status]}`}
                   >
                     {STATUS_LABEL[lane.status]}
                   </span>
                 </div>
-                <div className="mb-3 font-mono text-[9px] uppercase tracking-[1px] text-ink-muted">
+                <div className="mb-3 font-mono text-[15px] uppercase tracking-[1px] text-ink-muted">
                   {lane.vector} · {lane.market}
                 </div>
 
-                <p className="mb-3 text-[12px] leading-relaxed text-ink">{lane.thesis}</p>
+                <p className="mb-3 text-[20px] leading-relaxed text-ink">{lane.thesis}</p>
 
                 <div className="mb-3 space-y-2">
-                  <p className="text-[11px] leading-relaxed text-ink-muted">
+                  <p className="text-[18px] leading-relaxed text-ink-muted">
                     <FieldLabel>Why the seat is empty · </FieldLabel>
                     {lane.whyOpen}
                   </p>
-                  <p className="text-[11px] leading-relaxed text-ink-muted">
+                  <p className="text-[18px] leading-relaxed text-ink-muted">
                     <FieldLabel>Complexity mechanism · </FieldLabel>
                     {lane.mechanism}
                   </p>
                 </div>
 
                 <div className="mb-3 border-t border-rule-light pt-2.5">
-                  <div className="mb-1.5 font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-burgundy">
+                  <div className="mb-1.5 font-serif text-[18px] font-semibold uppercase tracking-[0.5px] text-burgundy">
                     Hypotheses
                   </div>
                   <ul className="space-y-2.5">
                     {lane.hypotheses.map(h => (
                       <li key={h.id} className="flex gap-3">
-                        <span className="shrink-0 font-mono text-[11px] font-semibold text-burgundy">{h.id}</span>
+                        <span className="shrink-0 font-mono text-[18px] font-semibold text-burgundy">{h.id}</span>
                         <div>
-                          <p className="text-[11px] font-semibold leading-relaxed text-ink">{h.claim}</p>
-                          <p className="mt-0.5 text-[11px] leading-relaxed text-ink-muted">
+                          <p className="text-[18px] font-semibold leading-relaxed text-ink">{h.claim}</p>
+                          <p className="mt-0.5 text-[18px] leading-relaxed text-ink-muted">
                             <FieldLabel>Test · </FieldLabel>
                             {h.test}
                           </p>
@@ -175,39 +175,39 @@ export default function ComplexEconResearchPage() {
                 </div>
 
                 <div className="mb-3 border-t border-rule-light pt-2.5">
-                  <div className="mb-1 font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-burgundy">
+                  <div className="mb-1 font-serif text-[18px] font-semibold uppercase tracking-[0.5px] text-burgundy">
                     Data
                   </div>
                   <ul className="space-y-1">
                     {lane.data.map(d => (
-                      <li key={d.url} className="flex flex-wrap items-baseline gap-x-2 text-[11px] leading-relaxed">
+                      <li key={d.url} className="flex flex-wrap items-baseline gap-x-2 text-[18px] leading-relaxed">
                         <a
                           href={d.url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="font-mono text-[10px] uppercase tracking-[0.5px] text-ink underline decoration-rule underline-offset-2 transition-colors hover:text-burgundy hover:decoration-burgundy/40"
+                          className="font-mono text-[16px] uppercase tracking-[0.5px] text-ink underline decoration-rule underline-offset-2 transition-colors hover:text-burgundy hover:decoration-burgundy/40"
                         >
                           {d.name} →
                         </a>
-                        <span className="text-[10px] text-ink-muted">{d.note}</span>
+                        <span className="text-[16px] text-ink-muted">{d.note}</span>
                       </li>
                     ))}
                   </ul>
                 </div>
 
                 <div className="grid grid-cols-1 gap-2.5 border-t border-rule-light pt-2.5 md:grid-cols-2">
-                  <p className="text-[11px] leading-relaxed text-ink-muted">
+                  <p className="text-[18px] leading-relaxed text-ink-muted">
                     <FieldLabel>Armstrong · </FieldLabel>
                     {lane.armstrongAngle}
                   </p>
-                  <p className="text-[11px] leading-relaxed text-ink-muted">
+                  <p className="text-[18px] leading-relaxed text-ink-muted">
                     <FieldLabel>Quant intelligence · </FieldLabel>
                     {lane.quantSkill}
                   </p>
                 </div>
 
                 <div className="mt-2.5 rounded-sm border border-rule bg-paper p-2.5">
-                  <p className="text-[11px] leading-relaxed text-ink">
+                  <p className="text-[18px] leading-relaxed text-ink">
                     <FieldLabel>First probe · </FieldLabel>
                     {lane.firstProbe}
                   </p>
@@ -221,18 +221,18 @@ export default function ComplexEconResearchPage() {
         <section className="mb-12">
           <SectionHeader numeral="≡" title="The Inequality Bridge" />
           <div className="mb-4 border-y border-rule py-6 text-center">
-            <p className="font-serif text-[19px] italic leading-snug text-ink md:text-[21px]">
+            <p className="font-serif text-[28px] italic leading-snug text-ink md:text-[30px]">
               &ldquo;{INEQUALITY_BRIDGE.oneLiner}&rdquo;
             </p>
           </div>
-          <p className="mb-5 font-serif text-[13px] leading-relaxed text-ink">{INEQUALITY_BRIDGE.statement}</p>
+          <p className="mb-5 font-serif text-[21px] leading-relaxed text-ink">{INEQUALITY_BRIDGE.statement}</p>
           <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
             {INEQUALITY_BRIDGE.cards.map(card => (
               <div key={card.title} className="rounded-sm border border-rule bg-white p-3">
-                <div className="mb-1.5 font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-burgundy">
+                <div className="mb-1.5 font-serif text-[18px] font-semibold uppercase tracking-[0.5px] text-burgundy">
                   {card.title}
                 </div>
-                <p className="text-[11px] leading-relaxed text-ink-light">{card.body}</p>
+                <p className="text-[18px] leading-relaxed text-ink-light">{card.body}</p>
               </div>
             ))}
           </div>
@@ -241,7 +241,7 @@ export default function ComplexEconResearchPage() {
         {/* ─── Scorecard ─── */}
         <section className="mb-12">
           <SectionHeader numeral="×" title="The Scorecard" />
-          <p className="mb-3 text-[11px] leading-relaxed text-ink-light">
+          <p className="mb-3 text-[18px] leading-relaxed text-ink-light">
             Lane selection is a decision, not a mood. Criteria fixed before probes run; ratings revised only in the
             iteration log.
           </p>
@@ -249,13 +249,13 @@ export default function ComplexEconResearchPage() {
             <table className="w-full min-w-[520px] border-collapse">
               <thead>
                 <tr className="border-b-2 border-rule">
-                  <th className="p-2.5 text-left font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-burgundy">
+                  <th className="p-2.5 text-left font-serif text-[18px] font-semibold uppercase tracking-[0.5px] text-burgundy">
                     Criterion
                   </th>
                   {SCORECARD_LANES.map(l => (
                     <th
                       key={l}
-                      className="p-2.5 text-center font-mono text-[9px] uppercase tracking-[0.5px] text-ink-muted"
+                      className="p-2.5 text-center font-mono text-[15px] uppercase tracking-[0.5px] text-ink-muted"
                     >
                       {l}
                     </th>
@@ -266,12 +266,12 @@ export default function ComplexEconResearchPage() {
                 {SCORECARD.map(row => (
                   <tr key={row.criterion} className="border-b border-rule-light last:border-b-0">
                     <td className="p-2.5">
-                      <div className="text-[11px] font-semibold text-ink">{row.criterion}</div>
-                      <div className="text-[10px] text-ink-muted">{row.note}</div>
+                      <div className="text-[18px] font-semibold text-ink">{row.criterion}</div>
+                      <div className="text-[16px] text-ink-muted">{row.note}</div>
                     </td>
                     {SCORECARD_LANES.map(l => (
                       <td key={l} className="p-2.5 text-center">
-                        <span className={`font-mono text-[10px] tracking-[1px] ${SCORE_CLASS[row.scores[l]]}`}>
+                        <span className={`font-mono text-[16px] tracking-[1px] ${SCORE_CLASS[row.scores[l]]}`}>
                           {SCORE_MARK[row.scores[l]]}
                         </span>
                       </td>
@@ -290,11 +290,11 @@ export default function ComplexEconResearchPage() {
             {PROPOSED_PATH.map(step => (
               <div key={step.label} className="rounded-sm border border-rule bg-white p-3">
                 <div className="mb-1 flex flex-wrap items-baseline justify-between gap-2">
-                  <span className="font-serif text-[13px] font-semibold text-ink">{step.label}</span>
-                  <span className="font-mono text-[9px] uppercase tracking-[1px] text-ink-muted">{step.window}</span>
+                  <span className="font-serif text-[21px] font-semibold text-ink">{step.label}</span>
+                  <span className="font-mono text-[15px] uppercase tracking-[1px] text-ink-muted">{step.window}</span>
                 </div>
-                <p className="mb-1.5 text-[11px] leading-relaxed text-ink-light">{step.detail}</p>
-                <p className="text-[11px] leading-relaxed text-ink-muted">
+                <p className="mb-1.5 text-[18px] leading-relaxed text-ink-light">{step.detail}</p>
+                <p className="text-[18px] leading-relaxed text-ink-muted">
                   <FieldLabel>Gate · </FieldLabel>
                   {step.gate}
                 </p>
@@ -310,10 +310,10 @@ export default function ComplexEconResearchPage() {
             {ITERATION_LOG.map(entry => (
               <li key={entry.version} className="flex gap-3 rounded-sm border border-rule-light bg-white p-2.5">
                 <div className="shrink-0 text-right">
-                  <div className="font-mono text-[11px] font-semibold text-burgundy">{entry.version}</div>
-                  <div className="font-mono text-[8px] uppercase tracking-[0.5px] text-ink-faint">{entry.date}</div>
+                  <div className="font-mono text-[18px] font-semibold text-burgundy">{entry.version}</div>
+                  <div className="font-mono text-[14px] uppercase tracking-[0.5px] text-ink-faint">{entry.date}</div>
                 </div>
-                <p className="text-[11px] leading-relaxed text-ink-muted">{entry.note}</p>
+                <p className="text-[18px] leading-relaxed text-ink-muted">{entry.note}</p>
               </li>
             ))}
           </ul>
@@ -321,10 +321,10 @@ export default function ComplexEconResearchPage() {
 
         {/* ─── Footer ─── */}
         <footer className="border-t border-rule pt-4 text-center">
-          <p className="font-serif text-[12px] italic text-ink-muted">
+          <p className="font-serif text-[20px] italic text-ink-muted">
             A lane is committed when it holds a position and a paragraph — one in the book, one in the paper.
           </p>
-          <p className="mt-1.5 font-mono text-[9px] uppercase tracking-[2px] text-ink-faint">
+          <p className="mt-1.5 font-mono text-[15px] uppercase tracking-[2px] text-ink-faint">
             loricorpuz.com/complexecon/research · working document
           </p>
         </footer>
