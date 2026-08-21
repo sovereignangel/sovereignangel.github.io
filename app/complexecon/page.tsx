@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import dynamic from 'next/dynamic'
+import Link from 'next/link'
 import { AuthProvider, useAuth } from '@/components/auth/AuthProvider'
 import { getComplexEconNotes, saveComplexEconNote } from '@/lib/firestore/complexecon-notes'
 import type { ReaderSource } from '@/components/thesis/reader/ReaderOverlay'
@@ -309,6 +310,19 @@ function ComplexEconInner() {
             {WORKSHOP.host} · {WORKSHOP.place} · {WORKSHOP.dates}
           </p>
         </header>
+
+        {/* ─── Tabs ─── */}
+        <nav className="mb-10 flex justify-center gap-4 border-b border-rule pb-2">
+          <span className="border-b-2 border-burgundy py-1 font-serif text-[16px] font-semibold text-burgundy">
+            Pathway
+          </span>
+          <Link
+            href="/complexecon/research"
+            className="py-1 font-serif text-[16px] text-ink-muted transition-colors hover:text-ink"
+          >
+            Research
+          </Link>
+        </nav>
 
         {/* ─── The question ─── */}
         <section className="mb-12 border-y border-rule py-8 text-center">
