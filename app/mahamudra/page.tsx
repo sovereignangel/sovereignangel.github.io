@@ -201,7 +201,7 @@ export default function MahamudraPage() {
             <div className="px-5 py-6 text-center" style={{ border: `1px solid ${C.bronze}66` }}>
               <Label color={C.aubergine} size={12}>Retreats</Label>
               <p className="mt-3 text-[14px] leading-[1.6]" style={{ color: C.sepiaMuted }}>
-                Peak State — days of meditation and exploration. The second
+                Peak State — days of meditation and exploration. The first
                 gathering met in Frederiksværk, Denmark, August 2026.
               </p>
             </div>
