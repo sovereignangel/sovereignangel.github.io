@@ -121,7 +121,7 @@ function WaveDivider() {
   )
 }
 
-function WeekBand({ dates, sessions, possibles }: { dates: string[]; sessions: SessionPick[]; possibles: SessionPick[] }) {
+function WeekBand({ dates, sessions, possibles, rainDates }: { dates: string[]; sessions: SessionPick[]; possibles: SessionPick[]; rainDates: Set<string> }) {
   const byDate = new Map<string, SessionPick[]>()
   for (const s of sessions) {
     const list = byDate.get(s.date) ?? []
@@ -203,7 +203,9 @@ function WeekBand({ dates, sessions, possibles }: { dates: string[]; sessions: S
                     </div>
                   </>
                 ) : (
-                  <div className="text-[9px] text-surf-faint mt-1">no window</div>
+                  <div className={`text-[9px] mt-1 ${rainDates.has(date) ? 'text-surf-navy' : 'text-surf-faint'}`}>
+                    {rainDates.has(date) ? 'rain all day' : 'no window'}
+                  </div>
                 )}
               </div>
             )
@@ -224,6 +226,8 @@ function MatrixCell({ day, spot, nowHour }: { day: DayAnalysis; spot: KiteSpot; 
     )
   } else if (day.verdict === 'offshore') {
     line = <span className="text-surf-navy">offshore</span>
+  } else if (day.verdict === 'rain') {
+    line = <span className="text-surf-navy">rain all day</span>
   } else if (day.verdict === 'strong') {
     line = <span className="text-surf-coral">too strong</span>
   } else if (day.altWindow) {
@@ -315,12 +319,15 @@ function SpotMatrix({ forecasts, live, nowHour }: { forecasts: SpotForecast[]; l
 }
 
 function Legend() {
-  const items: { label: string; color: string; border?: boolean }[] = [
+  const rainSwatch =
+    'repeating-linear-gradient(135deg, rgba(255,255,255,0.55) 0px, rgba(255,255,255,0.55) 1.5px, transparent 1.5px, transparent 4.5px)'
+  const items: { label: string; color: string; border?: boolean; stripes?: boolean }[] = [
     { label: '12–30 kn', color: HOUR_CELL_COLOR.ideal },
     { label: 'light', color: HOUR_CELL_COLOR.light },
     { label: 'calm', color: HOUR_CELL_COLOR.calm, border: true },
     { label: 'too strong', color: HOUR_CELL_COLOR.strong },
     { label: 'offshore', color: HOUR_CELL_COLOR.offshore },
+    { label: 'rain', color: HOUR_CELL_COLOR.ideal, stripes: true },
   ]
   return (
     <div className="flex flex-wrap items-center gap-x-2.5 gap-y-0.5">
@@ -328,7 +335,7 @@ function Legend() {
         <span key={item.label} className="flex items-center gap-1">
           <span
             className={`inline-block w-2.5 h-2.5 rounded-full ${item.border ? 'border border-surf-rule' : ''}`}
-            style={{ backgroundColor: item.color }}
+            style={{ backgroundColor: item.color, ...(item.stripes ? { backgroundImage: rainSwatch } : {}) }}
           />
           <span className="text-[9px] md:text-[10px] text-surf-muted">{item.label}</span>
         </span>
@@ -391,7 +398,22 @@ export default async function WindPage() {
           </span>
         </div>
 
-        <WeekBand dates={forecasts[0].days.map(d => d.date)} sessions={sessions} possibles={weekPossibles(forecasts)} />
+        <WeekBand
+          dates={forecasts[0].days.map(d => d.date)}
+          sessions={sessions}
+          possibles={weekPossibles(forecasts)}
+          rainDates={
+            new Set(
+              forecasts[0].days
+                .map(d => d.date)
+                .filter(
+                  date =>
+                    forecasts.filter(f => f.days.find(x => x.date === date)?.verdict === 'rain').length >=
+                    Math.ceil(forecasts.length / 2)
+                )
+            )
+          }
+        />
         <SpotMatrix forecasts={forecasts} live={live} nowHour={nowHour} />
         <div className="mt-1.5">
           <Legend />

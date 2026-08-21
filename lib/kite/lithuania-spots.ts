@@ -106,6 +106,8 @@ export interface HourForecast {
   speedKn: number
   gustKn: number
   directionDeg: number
+  precipMm: number
+  precipProb: number | null
 }
 
 export type HourCategory = 'ideal' | 'light' | 'calm' | 'strong' | 'offshore'
@@ -130,7 +132,7 @@ export interface KiteWindow {
   directionLabel: string
 }
 
-export type DayVerdict = 'good' | 'light' | 'calm' | 'strong' | 'offshore'
+export type DayVerdict = 'good' | 'light' | 'calm' | 'strong' | 'offshore' | 'rain'
 
 export interface DayAnalysis {
   date: string // YYYY-MM-DD
@@ -179,6 +181,12 @@ export function categorizeHour(h: HourForecast, spot: KiteSpot): HourCategory {
   return 'calm'
 }
 
+/** Meaningful rain: enough to call the session off, not a passing drizzle. */
+export function isRainyHour(h: HourForecast): boolean {
+  if (h.precipMm >= 1) return true
+  return h.precipMm >= 0.2 && (h.precipProb ?? 100) >= 60
+}
+
 /** Best contiguous run of >= 2 'ideal' hours; best = mean wind closest to 16 kn. */
 function findBestWindow(daylight: HourForecast[], spot: KiteSpot): KiteWindow | null {
   const SWEET_SPOT_KN = 16
@@ -211,7 +219,7 @@ function findBestWindow(daylight: HourForecast[], spot: KiteSpot): KiteWindow | 
   }
 
   for (const h of daylight) {
-    if (categorizeHour(h, spot) === 'ideal') run.push(h)
+    if (categorizeHour(h, spot) === 'ideal' && !isRainyHour(h)) run.push(h)
     else flush()
   }
   flush()
@@ -257,6 +265,10 @@ export function analyzeDay(
         : `gusts above your ${MAX_GUST_KN} kn cap (wind ${peakSpeedKn} kn, gusts to ${peakGustKn})`
     return { date, verdict: 'strong', window: null, peakSpeedKn, hours: daylight, endHour, note }
   }
+  const rainyCount = daylight.filter(isRainyHour).length
+  if (rainyCount >= Math.max(3, Math.floor(daylight.length / 2))) {
+    return { date, verdict: 'rain', window: null, peakSpeedKn, hours: daylight, endHour, note: `rain most of the day (peak wind ${peakSpeedKn} kn) — no kiting` }
+  }
   if (count('light') >= 2 || count('ideal') === 1) {
     return { date, verdict: 'light', window: null, peakSpeedKn, hours: daylight, endHour, note: `no 2h window in your 12-30 kn range (peak ${peakSpeedKn} kn) — big-kite drills only` }
   }
@@ -269,6 +281,8 @@ interface OpenMeteoResponse {
     wind_speed_10m: number[]
     wind_gusts_10m: number[]
     wind_direction_10m: number[]
+    precipitation?: (number | null)[]
+    precipitation_probability?: (number | null)[]
   }
   daily: {
     time: string[]
@@ -286,6 +300,8 @@ function parseHours(data: OpenMeteoResponse): Map<string, HourForecast[]> {
       speedKn: data.hourly.wind_speed_10m[i],
       gustKn: data.hourly.wind_gusts_10m[i],
       directionDeg: data.hourly.wind_direction_10m[i],
+      precipMm: data.hourly.precipitation?.[i] ?? 0,
+      precipProb: data.hourly.precipitation_probability?.[i] ?? null,
     }
     const list = hoursByDate.get(date) ?? []
     list.push(entry)
@@ -297,7 +313,7 @@ function parseHours(data: OpenMeteoResponse): Map<string, HourForecast[]> {
 export async function fetchSpotForecast(spot: KiteSpot): Promise<SpotForecast> {
   const base =
     `https://api.open-meteo.com/v1/forecast?latitude=${spot.lat}&longitude=${spot.lon}` +
-    `&hourly=wind_speed_10m,wind_gusts_10m,wind_direction_10m` +
+    `&hourly=wind_speed_10m,wind_gusts_10m,wind_direction_10m,precipitation,precipitation_probability` +
     `&wind_speed_unit=kn&timezone=${encodeURIComponent(TIMEZONE)}&forecast_days=7`
 
   // Primary: GFS 13 km — the model Windguru's headline table runs on, so the

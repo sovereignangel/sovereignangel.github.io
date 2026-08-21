@@ -5,12 +5,19 @@ import {
   categorizeHour,
   directionLabel,
   kiteSizeHint,
+  isRainyHour,
   HOUR_CELL_COLOR,
   STRIP_START,
   STRIP_END,
   type DayAnalysis,
   type KiteSpot,
 } from '@/lib/kite/lithuania-spots'
+
+// Diagonal rain stripes layered over the category color; dark on light cells
+export function rainStripes(light: boolean): string {
+  const c = light ? 'rgba(31, 58, 69, 0.3)' : 'rgba(255, 255, 255, 0.55)'
+  return `repeating-linear-gradient(135deg, ${c} 0px, ${c} 1.5px, transparent 1.5px, transparent 4.5px)`
+}
 
 const N = STRIP_END - STRIP_START
 
@@ -58,6 +65,12 @@ export function HourStrip({ day, spot, nowHour }: { day: DayAnalysis; spot: Kite
               <div className="font-mono text-[9px] text-white/80">
                 {directionLabel(sel.directionDeg, spot)} &middot; kite {kiteSizeHint(sel.speedKn)}
               </div>
+              {sel.precipMm >= 0.1 && (
+                <div className="font-mono text-[9px] text-white/80">
+                  rain {sel.precipMm.toFixed(1)}mm{sel.precipProb !== null ? ` · ${Math.round(sel.precipProb)}%` : ''}
+                  {isRainyHour(sel) ? ' · no kiting' : ''}
+                </div>
+              )}
             </>
           ) : null}
         </div>
@@ -84,12 +97,17 @@ export function HourStrip({ day, spot, nowHour }: { day: DayAnalysis; spot: Kite
             )
           }
           const cat = categorizeHour(h, spot)
+          const rainy = isRainyHour(h)
           return (
             <button
               key={hour}
               onClick={() => setSelected(s => (s === hour ? null : hour))}
               className="flex-1 min-w-[4px] flex items-center justify-center cursor-pointer"
-              style={{ backgroundColor: HOUR_CELL_COLOR[cat], ...ring }}
+              style={{
+                backgroundColor: HOUR_CELL_COLOR[cat],
+                ...(rainy ? { backgroundImage: rainStripes(cat === 'light' || cat === 'calm') } : {}),
+                ...ring,
+              }}
               aria-label={`${String(hour).padStart(2, '0')}:00, ${Math.round(h.speedKn)} knots, gusts ${Math.round(h.gustKn)}, ${directionLabel(h.directionDeg, spot)}`}
             >
               <span className={`hidden md:inline font-mono text-[8px] font-semibold leading-none ${
