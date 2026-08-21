@@ -12,7 +12,7 @@ export default function AboutSection() {
         </a>
       </p>
       <p className="text-[#333] mb-4">
-        I build end-to-end portfolio management tooling for emerging hedge fund managers.
+        I build end-to-end portfolio management tooling for emerging hedge fund investors.
       </p>
       <p className="text-[#333] mb-4">
         Built a portfolio management product from scratch that drove a $16.4B revenue line at JP Morgan Asset Management. Raised $220M+ across early-stage companies, venture funds, and investment banks.
