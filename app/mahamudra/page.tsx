@@ -28,15 +28,28 @@ const TEACHERS = [
 
 const NAV = [
   { href: '#practice', label: 'Practice' },
+  { href: '#study', label: 'Study' },
   { href: '#path', label: 'The Path' },
-  { href: '#retreat', label: 'Retreat' },
   { href: '#teachers', label: 'Teachers' },
+]
+
+const INTERESTS: { key: string; label: string }[] = [
+  { key: 'sundays', label: 'Sunday teachings · Brooklyn' },
+  { key: 'text-study', label: 'Text study circle' },
+  { key: 'retreat-2027', label: '2027 retreat' },
 ]
 
 export default function MahamudraPage() {
   const [email, setEmail] = useState('')
+  const [interests, setInterests] = useState<string[]>(['sundays'])
   const [sent, setSent] = useState(false)
   const [sending, setSending] = useState(false)
+
+  function toggleInterest(key: string) {
+    setInterests((prev) =>
+      prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]
+    )
+  }
 
   async function handleJoin(e: React.FormEvent) {
     e.preventDefault()
@@ -46,7 +59,7 @@ export default function MahamudraPage() {
       await fetch('/api/mahamudra/join', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email.trim() }),
+        body: JSON.stringify({ email: email.trim(), interests }),
       })
       setSent(true)
     } catch {
@@ -65,7 +78,6 @@ export default function MahamudraPage() {
         color: C.ink,
         background: `radial-gradient(130% 100% at 25% 0%, ${C.parchment} 0%, ${C.parchmentMid} 40%, ${C.agedEdge} 100%)`,
         position: 'relative',
-        overflow: 'hidden',
       }}
     >
       {/* aged-edge vignette */}
@@ -86,10 +98,16 @@ export default function MahamudraPage() {
         aria-hidden
       />
 
-      {/* Header */}
+      {/* Header — stays in view on scroll */}
       <header
-        className="relative z-[5] flex items-center justify-between gap-8 flex-wrap"
-        style={{ padding: '26px clamp(24px, 6vw, 92px)', borderBottom: `1px solid ${C.borderSoft}` }}
+        className="sticky top-0 z-20 flex items-center justify-between gap-x-8 gap-y-3 flex-wrap"
+        style={{
+          padding: '18px clamp(24px, 6vw, 92px)',
+          borderBottom: `1px solid ${C.borderSoft}`,
+          background: 'rgba(247,236,212,0.92)',
+          backdropFilter: 'blur(6px)',
+          WebkitBackdropFilter: 'blur(6px)',
+        }}
       >
         <a href="#top" className="flex items-center gap-3.5">
           <MMark />
@@ -181,7 +199,7 @@ export default function MahamudraPage() {
               className="uppercase"
               style={{ fontFamily: display, fontSize: 'clamp(15px, 1.7vw, 21px)', letterSpacing: '0.30em', color: C.inkSoft, margin: 0 }}
             >
-              A practice community for meditation &amp; awareness
+              A theory &amp; practice community for meditation and awareness
             </p>
 
             <p
@@ -189,8 +207,7 @@ export default function MahamudraPage() {
             >
               We study the foundations of Mahāmudrā and the path of awareness —
               from attention to open presence, and from practice to peak
-              experience. Sunday sittings in Brooklyn, and one long retreat each
-              summer.
+              experience. Sunday sittings in Brooklyn.
             </p>
 
             <div className="flex flex-wrap gap-4 justify-center" style={{ marginTop: 'clamp(28px, 4vw, 44px)' }}>
@@ -208,20 +225,6 @@ export default function MahamudraPage() {
                 }}
               >
                 Begin practicing
-              </a>
-              <a
-                href="#retreat"
-                className="uppercase transition-opacity hover:opacity-70"
-                style={{
-                  fontFamily: display,
-                  fontSize: 14,
-                  letterSpacing: '0.26em',
-                  color: C.indigo,
-                  padding: '15px 30px',
-                  boxShadow: `0 0 0 1px ${C.border} inset`,
-                }}
-              >
-                Peak State II →
               </a>
             </div>
           </div>
@@ -275,6 +278,75 @@ export default function MahamudraPage() {
         </div>
       </section>
 
+      {/* Foundations Study Circle */}
+      <section
+        id="study"
+        className="relative z-[4]"
+        style={{ padding: 'clamp(48px, 7vw, 100px) clamp(24px, 6vw, 92px)', ...hairline }}
+      >
+        <div
+          className="mx-auto grid items-start"
+          style={{ maxWidth: 1100, gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 'clamp(30px, 5vw, 72px)' }}
+        >
+          <div>
+            <div style={{ marginBottom: 16 }}>
+              <Label>Foundations study circle</Label>
+            </div>
+            <h2
+              style={{ fontFamily: display, fontWeight: 500, color: C.indigo, fontSize: 'clamp(30px, 4vw, 52px)', lineHeight: 1.06, margin: '0 0 20px', letterSpacing: '0.01em' }}
+            >
+              Read the texts. Test them against life.
+            </h2>
+            <p style={{ fontSize: 'clamp(16px, 1.5vw, 19px)', lineHeight: 1.65, margin: 0 }}>
+              A commitment-based study circle for those who want to go deeper
+              than a weekly sit. Each week we take one chapter of a core
+              Mahāmudrā text as a case study — close reading, interpretation,
+              and honest discussion of how it lands in lived experience.
+            </p>
+          </div>
+          <div>
+            <div
+              className="flex justify-between items-baseline gap-5"
+              style={{ padding: '18px 0', borderTop: `1px solid ${C.border}` }}
+            >
+              <div>
+                <div className="uppercase" style={{ fontFamily: display, fontSize: 15, letterSpacing: '0.28em', color: C.indigo }}>
+                  Rhythm
+                </div>
+                <div style={{ fontSize: 17, color: C.inkSoft }}>Weekly — one chapter per session</div>
+              </div>
+            </div>
+            <div
+              className="flex justify-between items-baseline gap-5"
+              style={{ padding: '18px 0', borderTop: `1px solid ${C.border}` }}
+            >
+              <div>
+                <div className="uppercase" style={{ fontFamily: display, fontSize: 15, letterSpacing: '0.28em', color: C.indigo }}>
+                  Method
+                </div>
+                <div style={{ fontSize: 17, color: C.inkSoft }}>Meaning, interpretation &amp; lived experience</div>
+              </div>
+            </div>
+            <div
+              className="flex justify-between items-baseline gap-5"
+              style={{ padding: '18px 0', borderTop: `1px solid ${C.border}`, borderBottom: `1px solid ${C.border}` }}
+            >
+              <div>
+                <div className="uppercase" style={{ fontFamily: display, fontSize: 15, letterSpacing: '0.28em', color: C.indigo }}>
+                  Convened by
+                </div>
+                <div style={{ fontSize: 17, color: C.inkSoft }}>Lori Corpuz — scholar &amp; practitioner</div>
+              </div>
+            </div>
+            <p style={{ fontSize: 15, color: C.inkMuted, fontStyle: 'italic', margin: '16px 0 0', lineHeight: 1.6 }}>
+              A note on authority: this circle is convened by a fellow student,
+              not an authorized teacher. We read as peers; formal instruction in
+              the lineage rests with Lev and his teachers.
+            </p>
+          </div>
+        </div>
+      </section>
+
       {/* The Path */}
       <section
         id="path"
@@ -319,120 +391,33 @@ export default function MahamudraPage() {
         </div>
       </section>
 
-      {/* Retreat */}
+      {/* The First Gathering */}
       <section
-        id="retreat"
+        id="first-gathering"
         className="relative z-[4]"
         style={{ padding: 'clamp(48px, 7vw, 100px) clamp(24px, 6vw, 92px)', ...hairline }}
       >
-        <div
-          className="mx-auto"
-          style={{
-            maxWidth: 1140,
-            background: `linear-gradient(165deg, ${C.indigo} 0%, ${C.indigoDeep} 100%)`,
-            color: C.parchmentMid,
-            padding: 'clamp(28px, 4vw, 56px)',
-            boxShadow: `0 0 0 1px ${C.gold} inset, 0 26px 60px -30px rgba(40,28,74,0.7)`,
-          }}
-        >
-          <div
-            className="grid items-start"
-            style={{
-              border: '1px solid rgba(198,166,90,0.45)',
-              padding: 'clamp(26px, 4vw, 54px)',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-              gap: 'clamp(30px, 5vw, 64px)',
-            }}
-          >
-            <div>
-              <div style={{ marginBottom: 18 }}>
-                <Label color={C.goldSoft} size={13} tracking="0.34em">Summer retreat</Label>
-              </div>
-              <h2
-                className="uppercase"
-                style={{ fontFamily: display, fontWeight: 600, fontSize: 'clamp(38px, 6vw, 74px)', lineHeight: 0.95, margin: '0 0 14px', letterSpacing: '0.02em', color: C.panelTitle }}
-              >
-                Peak State II
-              </h2>
-              <p
-                className="uppercase"
-                style={{ fontFamily: display, fontSize: 'clamp(15px, 1.6vw, 20px)', letterSpacing: '0.26em', margin: '0 0 26px', color: C.goldSoft }}
-              >
-                A week of meditation &amp; exploration
-              </p>
-              <div className="grid" style={{ gap: 4, marginBottom: 26 }}>
-                <div style={{ fontFamily: display, fontSize: 'clamp(20px, 2.4vw, 30px)', letterSpacing: '0.16em' }}>
-                  August 3 – 7, 2026
-                </div>
-                <div className="uppercase" style={{ fontFamily: display, fontSize: 15, letterSpacing: '0.26em', color: C.panelMuted }}>
-                  Frederiksværk, Denmark
-                </div>
-              </div>
-              <p style={{ fontSize: 'clamp(17px, 1.6vw, 21px)', lineHeight: 1.6, margin: '0 0 18px', color: C.panelText }}>
-                Four days examining the foundations of Mahāmudrā and the path of
-                awareness — from attention to open presence, and from practice
-                to peak experience.
-              </p>
-              <p style={{ fontSize: 16, lineHeight: 1.6, margin: '0 0 30px', color: C.panelMuted, fontStyle: 'italic' }}>
-                The first gathering met in Frederiksværk in August 2026. The
-                next is announced to the list first.
-              </p>
-              <div className="flex flex-wrap" style={{ gap: 28 }}>
-                <div>
-                  <Label color={C.goldMuted} size={12} tracking="0.30em">Facilitated by</Label>
-                  <div className="uppercase" style={{ fontFamily: display, fontSize: 24, letterSpacing: '0.10em', color: C.panelTitle }}>
-                    Lev Brie
-                  </div>
-                </div>
-                <div>
-                  <Label color={C.goldMuted} size={12} tracking="0.30em">Authorized by</Label>
-                  <div className="uppercase" style={{ fontFamily: display, fontSize: 24, letterSpacing: '0.10em', color: C.panelTitle }}>
-                    Dustin DiPerna
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div className="grid" style={{ gap: 26 }}>
-              <div style={{ border: '1px solid rgba(198,166,90,0.4)', padding: '22px 24px' }}>
-                <div style={{ marginBottom: 12 }}>
-                  <Label color={C.goldSoft} size={14} tracking="0.28em">Daily practice</Label>
-                </div>
-                <div style={{ fontSize: 17, lineHeight: 1.7, color: C.panelText }}>30 minutes in total</div>
-                <div className="grid" style={{ gap: 6, marginTop: 10, fontSize: 16, color: C.panelMuted }}>
-                  <div>10 minute teaching</div>
-                  <div>10–20 minute meditation</div>
-                  <div>Reflection &amp; discussion</div>
-                </div>
-              </div>
-              <div style={{ border: '1px solid rgba(198,166,90,0.4)', padding: '22px 24px' }}>
-                <div style={{ marginBottom: 12 }}>
-                  <Label color={C.goldSoft} size={14} tracking="0.28em">Deep dive (optional)</Label>
-                </div>
-                <p style={{ margin: 0, fontSize: 16, lineHeight: 1.65, color: C.panelMuted }}>
-                  30 minutes for those exploring Mahāmudrā in greater depth.
-                </p>
-              </div>
-              <div className="grid grid-cols-2" style={{ gap: 14 }}>
-                {['/mahamudra/poster-i.jpg', '/mahamudra/poster-ii.jpg'].map((src) => (
-                  <div key={src} style={{ height: 190, border: '1px solid rgba(198,166,90,0.4)', overflow: 'hidden' }}>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={src}
-                      alt="Peak State II poster"
-                      className="w-full h-full object-cover object-top"
-                    />
-                  </div>
-                ))}
-              </div>
-              <a
-                href="#join"
-                className="uppercase text-center transition-opacity hover:opacity-85"
-                style={{ fontFamily: display, fontSize: 14, letterSpacing: '0.26em', color: C.indigo, background: C.goldLight, padding: '16px 28px' }}
-              >
-                Request a place
-              </a>
-            </div>
+        <div className="mx-auto text-center" style={{ maxWidth: 860 }}>
+          <div style={{ marginBottom: 14 }}>
+            <Label>The first gathering</Label>
           </div>
+          <h2
+            style={{ fontFamily: display, fontWeight: 500, color: C.indigo, fontSize: 'clamp(28px, 4vw, 50px)', lineHeight: 1.06, margin: '0 0 28px', letterSpacing: '0.01em' }}
+          >
+            Peak State · Frederiksværk, Denmark · 2026
+          </h2>
+          <div className="mx-auto" style={{ maxWidth: 780, border: `1px solid ${C.border}`, padding: 8, background: 'rgba(255,248,228,0.42)' }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/mahamudra/first-class.jpg"
+              alt="The first class, gathered at Peak State in Frederiksværk, Denmark, 2026"
+              className="w-full block"
+              style={{ border: `1px solid ${C.borderSoft}` }}
+            />
+          </div>
+          <p style={{ fontSize: 16, fontStyle: 'italic', color: C.inkMuted, margin: '18px 0 0' }}>
+            The first class, gathered for four days of practice in August 2026.
+          </p>
         </div>
       </section>
 
@@ -484,8 +469,9 @@ export default function MahamudraPage() {
           <h2 style={{ fontFamily: display, fontWeight: 500, color: C.indigo, fontSize: 'clamp(30px, 4.4vw, 56px)', lineHeight: 1.05, margin: '0 0 18px' }}>
             Sit with us
           </h2>
-          <p style={{ fontSize: 'clamp(17px, 1.6vw, 21px)', lineHeight: 1.6, margin: '0 0 30px' }}>
-            One note a month: practice times, retreat news, nothing else.
+          <p style={{ fontSize: 'clamp(17px, 1.6vw, 21px)', lineHeight: 1.6, margin: '0 0 26px' }}>
+            One note a month: practice times, retreat news, nothing else. Tell
+            us what calls you.
           </p>
           {sent ? (
             <p
@@ -496,6 +482,32 @@ export default function MahamudraPage() {
             </p>
           ) : (
             <form onSubmit={handleJoin} className="flex flex-wrap gap-3 justify-center">
+              <div className="w-full flex flex-wrap gap-3 justify-center" style={{ marginBottom: 6 }}>
+                {INTERESTS.map((it) => {
+                  const active = interests.includes(it.key)
+                  return (
+                    <button
+                      key={it.key}
+                      type="button"
+                      onClick={() => toggleInterest(it.key)}
+                      className="uppercase cursor-pointer transition-opacity hover:opacity-85"
+                      style={{
+                        fontFamily: display,
+                        fontSize: 13,
+                        letterSpacing: '0.22em',
+                        padding: '11px 20px',
+                        color: active ? C.cream : C.inkSoft,
+                        background: active ? C.indigo : 'transparent',
+                        border: 'none',
+                        boxShadow: active ? `0 0 0 1px ${C.gold} inset` : `0 0 0 1px ${C.border} inset`,
+                      }}
+                    >
+                      {active ? '◆ ' : ''}
+                      {it.label}
+                    </button>
+                  )
+                })}
+              </div>
               <input
                 type="email"
                 required
@@ -551,8 +563,6 @@ export default function MahamudraPage() {
         </div>
         <div style={{ fontSize: 15, color: C.inkMuted }}>
           <a href="#top" className="hover:opacity-70">New York City</a>
-          {' · '}
-          <a href="#retreat" className="hover:opacity-70">Denmark</a>
           {' · '}
           <Link href="/mahamudra/recordings" className="hover:opacity-70">Recordings</Link>
         </div>

@@ -20,11 +20,11 @@ const ebGaramond = EB_Garamond({
 export const metadata: Metadata = {
   title: 'Mahāmudrā New York',
   description:
-    'A practice community for meditation & awareness in New York. Foundations of Mahāmudrā taught by Lev Brie, authorized by Dustin DiPerna. Practice deeply. Live clearly.',
+    'A theory & practice community for meditation and awareness in New York. Foundations of Mahāmudrā taught by Lev Brie, authorized by Dustin DiPerna. Practice deeply. Live clearly.',
   openGraph: {
     title: 'Mahāmudrā New York',
     description:
-      'A practice community for meditation & awareness in New York. Practice deeply. Live clearly.',
+      'A theory & practice community for meditation and awareness in New York. Practice deeply. Live clearly.',
     url: 'https://mahamudra.loricorpuz.com',
     siteName: 'Mahāmudrā New York',
     type: 'website',
