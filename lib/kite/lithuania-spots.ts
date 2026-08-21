@@ -226,7 +226,12 @@ export function analyzeDay(
     return { date, verdict: 'offshore', window: null, peakSpeedKn, hours: daylight, endHour, note: 'offshore wind — do not ride here' }
   }
   if (count('strong') >= 2) {
-    return { date, verdict: 'strong', window: null, peakSpeedKn, hours: daylight, endHour, note: `above your 30 kn cap (peak ${peakSpeedKn} kn)` }
+    const peakGustKn = Math.round(Math.max(0, ...daylight.map(h => h.gustKn)))
+    const note =
+      peakSpeedKn > MAX_WIND_KN
+        ? `above your ${MAX_WIND_KN} kn cap (peak ${peakSpeedKn} kn, gusts ${peakGustKn})`
+        : `gusts above your ${MAX_GUST_KN} kn cap (wind ${peakSpeedKn} kn, gusts to ${peakGustKn})`
+    return { date, verdict: 'strong', window: null, peakSpeedKn, hours: daylight, endHour, note }
   }
   if (count('light') >= 2 || count('ideal') === 1) {
     return { date, verdict: 'light', window: null, peakSpeedKn, hours: daylight, endHour, note: `no 2h window in your 12-30 kn range (peak ${peakSpeedKn} kn) — big-kite drills only` }
