@@ -3,7 +3,7 @@
  *
  * Fetches hourly wind from Open-Meteo (free, no API key) for each spot,
  * classifies every daylight hour against a progressing rider's target band
- * (12-20 kn, not yet independent), and finds the best contiguous session
+ * (12-30 kn, independent rider), and finds the best contiguous session
  * window per spot per day.
  *
  * Spot geography:
@@ -16,10 +16,10 @@
  *     W/SW/NW onshore. E winds are offshore into open sea — never ride.
  */
 
-// Rider profile: still building independence — target 12-20 kn, cap gusts
+// Rider profile: independent rider — target 12-30 kn, cap gusts
 const MIN_WIND_KN = 12
-const MAX_WIND_KN = 20
-const MAX_GUST_KN = 26
+const MAX_WIND_KN = 30
+const MAX_GUST_KN = 36
 const LIGHT_WIND_KN = 9 // below this the hour is dead calm for kiting
 
 const TIMEZONE = 'Europe/Vilnius'
@@ -141,7 +141,9 @@ export function directionLabel(deg: number, spot: KiteSpot): string {
 export function kiteSizeHint(avgSpeedKn: number): string {
   if (avgSpeedKn < 14) return '12m'
   if (avgSpeedKn < 17) return '10-12m'
-  return '9-10m'
+  if (avgSpeedKn < 21) return '9-10m'
+  if (avgSpeedKn < 26) return '7-9m'
+  return '6-7m'
 }
 
 export function categorizeHour(h: HourForecast, spot: KiteSpot): HourCategory {
@@ -224,10 +226,10 @@ export function analyzeDay(
     return { date, verdict: 'offshore', window: null, peakSpeedKn, hours: daylight, endHour, note: 'offshore wind — do not ride here' }
   }
   if (count('strong') >= 2) {
-    return { date, verdict: 'strong', window: null, peakSpeedKn, hours: daylight, endHour, note: `above your 20 kn cap (peak ${peakSpeedKn} kn)` }
+    return { date, verdict: 'strong', window: null, peakSpeedKn, hours: daylight, endHour, note: `above your 30 kn cap (peak ${peakSpeedKn} kn)` }
   }
   if (count('light') >= 2 || count('ideal') === 1) {
-    return { date, verdict: 'light', window: null, peakSpeedKn, hours: daylight, endHour, note: `no 2h window in your 12-20 kn range (peak ${peakSpeedKn} kn) — big-kite drills only` }
+    return { date, verdict: 'light', window: null, peakSpeedKn, hours: daylight, endHour, note: `no 2h window in your 12-30 kn range (peak ${peakSpeedKn} kn) — big-kite drills only` }
   }
   return { date, verdict: 'calm', window: null, peakSpeedKn, hours: daylight, endHour, note: `no wind (peak ${peakSpeedKn} kn)` }
 }

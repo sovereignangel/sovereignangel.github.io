@@ -18,7 +18,7 @@ import { WindTabs } from '@/components/wind/WindTabs'
 
 export const metadata: Metadata = {
   title: 'Wind — Lithuanian Coast',
-  description: 'Kite wind planner for Sventoji, Svencele and Nida — 12-20 kn windows',
+  description: 'Kite wind planner for Sventoji, Svencele and Nida — 12-30 kn windows',
 }
 
 export const revalidate = 300
@@ -352,7 +352,7 @@ function SpotMatrix({ forecasts, live, nowHour }: { forecasts: SpotForecast[]; l
 
 function Legend() {
   const items: { label: string; color: string; border?: boolean }[] = [
-    { label: '12–20 kn', color: HOUR_CELL_COLOR.ideal },
+    { label: '12–30 kn', color: HOUR_CELL_COLOR.ideal },
     { label: 'light', color: HOUR_CELL_COLOR.light },
     { label: 'calm', color: HOUR_CELL_COLOR.calm, border: true },
     { label: 'too strong', color: HOUR_CELL_COLOR.strong },
@@ -417,7 +417,7 @@ export default async function WindPage() {
             <WaveDivider />
           </span>
           <span className="hidden lg:inline text-[10px] text-surf-muted">
-            12&ndash;20 kn &middot; gusts under 26 &middot; onshore or cross only
+            12&ndash;30 kn &middot; gusts under 36 &middot; onshore or cross only
           </span>
           <span className="ml-auto flex items-center gap-2">
             <WindTabs active="forecast" />
