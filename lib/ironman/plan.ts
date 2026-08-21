@@ -25,7 +25,7 @@ export interface PlannedSession {
 
 export interface PlanDay {
   date: string // YYYY-MM-DD
-  phase: 'Build 1' | 'Build 2' | 'Peak' | 'Taper' | 'Race'
+  phase: 'Build 1' | 'Build 2' | 'Peak' | 'Taper' | 'Race 1' | 'Recover' | 'Sharpen' | 'Taper 2' | 'Race 2'
   focus: string
   sessions: PlannedSession[]
 }
@@ -39,7 +39,28 @@ export const RACE = {
   location: 'TBC',
 }
 
-/** Race goal targets — the numbers the whole build is aimed at */
+/**
+ * Race 2 — the A-race. Race 1 is the hard dress rehearsal; the block between
+ * them recovers, sharpens, and tapers again so peak performance lands in
+ * New York. Goals and the forecast model target this date.
+ */
+export const RACE_NYC = {
+  name: 'Ironman 70.3 New York',
+  date: '2026-09-26',
+  swimKm: 1.9,
+  bikeKm: 90,
+  runKm: 21.1,
+  location: 'New York City',
+}
+
+export const RACES = [RACE, RACE_NYC] as const
+
+/** The next race still ahead of `today` (falls back to the last one) */
+export function nextRace(today: string) {
+  return RACES.find((r) => r.date >= today) ?? RACES[RACES.length - 1]
+}
+
+/** Race goal targets — the numbers the whole build is aimed at, peaking at NYC (race 2) */
 export const GOALS = {
   swimMinutes: 40, // full 1.9km swim
   bikeMph: 18, // average over 90km
@@ -285,14 +306,127 @@ export const PLAN: PlanDay[] = [
     ],
   },
 
-  // ── Race day ────────────────────────────────────────────────────────────
+  // ── Race 1 — the hard dress rehearsal ───────────────────────────────────
   {
     date: '2026-09-13',
-    phase: 'Race',
-    focus: 'Race day',
+    phase: 'Race 1',
+    focus: 'Race day 1',
     sessions: [
-      s('brick', 'RACE: 1.9km swim / 90km bike / 21.1km run',
-        'Swim: settle in 200m, then steady — your race starts at the buoy line, not the gun. Bike: cap effort the first 20km, eat 70g carbs/hour from minute 15. Run: first 5km deliberately conservative, then hold; the race starts at km 14.',
+      s('brick', 'RACE 1: 1.9km swim / 90km bike / 21.1km run',
+        'Swim: settle in 200m, then steady — your race starts at the buoy line, not the gun. Bike: cap effort the first 20km, eat 70g carbs/hour from minute 15. Run: first 5km deliberately conservative, then hold; the race starts at km 14. NYC is 13 days out — race hard, but this is the rehearsal, not the peak.',
+        330, 'race', 113, true),
+    ],
+  },
+
+  // ── Recover: Sep 14–17 — absorb race 1, nothing earns fitness now ──────
+  {
+    date: '2026-09-14',
+    phase: 'Recover',
+    focus: 'Full rest',
+    sessions: [s('rest', 'Full rest', 'No training. Eat, sleep, walk. The next 4 days decide how good NYC can be — recovery is the workout.', 0, '-')],
+  },
+  {
+    date: '2026-09-15',
+    phase: 'Recover',
+    focus: 'Flush the legs',
+    sessions: [
+      s('bike', 'Recovery spin 30min', 'High cadence, zero pressure on the pedals. Mobility and stretching after.', 30, 'Z1', 10),
+    ],
+  },
+  {
+    date: '2026-09-16',
+    phase: 'Recover',
+    focus: 'Easy water',
+    sessions: [
+      s('swim', 'Recovery swim 1200m', 'All easy with drills: catch-up, fingertip drag. Feel for the water, no clock.', 30, 'Z1', 1.2),
+    ],
+  },
+  {
+    date: '2026-09-17',
+    phase: 'Recover',
+    focus: 'Test the legs',
+    sessions: [
+      s('run', 'Easy run 30min + strides', 'Z1 conversational. If legs respond well, 4x20s relaxed strides. If not, jog only — honesty here protects NYC.', 30, 'Z1', 5),
+    ],
+  },
+
+  // ── Sharpen: Sep 18–21 — brief race-pace touches, then travel ──────────
+  {
+    date: '2026-09-18',
+    phase: 'Sharpen',
+    focus: 'Bike sharpener',
+    sessions: [
+      s('bike', 'Bike 60min: 3x8min race effort', 'Warm-up 15min. 3x8min at NYC race effort, 4min easy between. Crisp, not heroic — fitness is banked, this keeps it awake.', 60, 'race', 25, true),
+    ],
+  },
+  {
+    date: '2026-09-19',
+    phase: 'Sharpen',
+    focus: 'Run sharpener',
+    sessions: [
+      s('run', 'Run 45min: 2x10min race effort', 'Warm-up 15min. 2x10min at race-run effort, 3min jog between. Should feel controlled and smooth.', 45, 'race', 8, true),
+    ],
+  },
+  {
+    date: '2026-09-20',
+    phase: 'Sharpen',
+    focus: 'Swim rhythm + spin',
+    sessions: [
+      s('swim', 'Swim 1800m: race-pace 100s', 'Warm-up 400m. 8x100m at race pace with 20s rest. Cool 400m. Lock the NYC rhythm in.', 50, 'race', 1.8, true),
+      s('bike', 'Easy spin 30min', 'Flush ride, high cadence.', 30, 'Z1', 10),
+    ],
+  },
+  {
+    date: '2026-09-21',
+    phase: 'Sharpen',
+    focus: 'Travel to New York',
+    sessions: [
+      s('rest', 'Rest + fly to NYC', 'Travel day. Hydrate hard, compression on the flight, walk every hour. On arrival: light, daylight, early sleep — start beating jet lag immediately.', 0, '-'),
+    ],
+  },
+
+  // ── Taper 2: Sep 22–25 — reset the clock, stay sharp ──────────────────
+  {
+    date: '2026-09-22',
+    phase: 'Taper 2',
+    focus: 'Jet-lag reset',
+    sessions: [
+      s('run', 'Shake-out run 25min + strides', 'Morning run in daylight — it resets the body clock. Easy pace, 4x20s strides. Then stay on NYC time ruthlessly.', 25, 'Z1', 4),
+    ],
+  },
+  {
+    date: '2026-09-23',
+    phase: 'Taper 2',
+    focus: 'Bike opener + recon',
+    sessions: [
+      s('bike', 'Bike 45min: 3x4min race effort', 'Short and crisp on the race bike after reassembly — confirms everything works. Ride part of the course if possible.', 45, 'race', 18),
+    ],
+  },
+  {
+    date: '2026-09-24',
+    phase: 'Taper 2',
+    focus: 'Feel for the water',
+    sessions: [
+      s('swim', 'Swim 1000m easy + race-pace 50s', 'Easy 800m, then 4x50m at race pace. If a practice swim at the venue is offered, take it.', 25, 'Z1', 1.0),
+    ],
+  },
+  {
+    date: '2026-09-25',
+    phase: 'Taper 2',
+    focus: 'Rest + logistics',
+    sessions: [
+      s('rest', 'Rest + race prep', 'Bike check-in, numbers, nutrition packed. Off your feet. Tonight-minus-one was the sleep that mattered — tonight just relax.', 0, '-'),
+    ],
+  },
+
+  // ── Race 2 — the A-race ─────────────────────────────────────────────────
+  {
+    date: '2026-09-26',
+    phase: 'Race 2',
+    focus: 'Race day 2 — the one you peaked for',
+    sessions: [
+      s('brick', 'RACE 2 (NYC): 1.9km swim / 90km bike / 21.1km run',
+        'You did the full rehearsal 13 days ago — trust it. Same script, executed better: settle the swim in 200m, cap the first 20km of the bike, 70g carbs/hour, conservative first 5km of the run, then race from km 14. This is the peak.',
         330, 'race', 113, true),
     ],
   },
@@ -302,8 +436,10 @@ export function getPlanDay(date: string): PlanDay | undefined {
   return PLAN.find((d) => d.date === date)
 }
 
-export function daysToRace(today: string): number {
-  const ms = new Date(RACE.date + 'T00:00:00').getTime() - new Date(today + 'T00:00:00').getTime()
+/** Days from `today` to a race date — defaults to the next race still ahead */
+export function daysToRace(today: string, raceDate?: string): number {
+  const target = raceDate ?? nextRace(today).date
+  const ms = new Date(target + 'T00:00:00').getTime() - new Date(today + 'T00:00:00').getTime()
   return Math.round(ms / 86400000)
 }
 

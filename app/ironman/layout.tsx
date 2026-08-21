@@ -34,7 +34,7 @@ function IronmanLayoutInner({ children }: { children: React.ReactNode }) {
               Ironman Build
             </h1>
             <span className="font-serif text-[12px] italic text-ink-muted hidden sm:inline">
-              September 13 — the plan adapts to your Garmin every day
+              Sep 13, then peak in New York Sep 26 — the plan adapts to your Garmin every day
             </span>
           </div>
           <span className="font-serif text-[11px] uppercase tracking-[0.5px] text-burgundy font-semibold">

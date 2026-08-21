@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useAuth } from '@/components/auth/AuthProvider'
 import { getAllGarminMetrics, getAllGarminActivities, getGarminRollups } from '@/lib/firestore'
 import type { GarminMetrics, GarminActivity } from '@/lib/types'
-import { PLAN, RACE, GOALS, BASELINE, goalSplits, daysToRace, todayLocal, type PlanDay, type Sport } from '@/lib/ironman/plan'
+import { PLAN, RACE, RACE_NYC, GOALS, BASELINE, goalSplits, daysToRace, todayLocal, type PlanDay, type Sport } from '@/lib/ironman/plan'
 import { computeRaceForecast, type DisciplineForecast } from '@/lib/ironman/forecast'
 import {
   computeReadiness,
@@ -123,7 +123,7 @@ function GoalsPanel({ activities, metrics, today }: { activities: GarminActivity
   const rows: DisciplineForecast[] = forecast.disciplines
 
   return (
-    <Card title={`Race Goals — ${fmtClock(splits.total)} Target`}>
+    <Card title={`Race Goals — ${fmtClock(splits.total)} at NYC`}>
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_240px] gap-x-6 gap-y-3">
         <div>
           <div className="space-y-2">
@@ -178,7 +178,7 @@ function GoalsPanel({ activities, metrics, today }: { activities: GarminActivity
           </div>
         </div>
         <div className="lg:border-l lg:border-rule-light lg:pl-4">
-          <div className="text-[10px] text-ink-muted mb-1">Chance of hitting all three</div>
+          <div className="text-[10px] text-ink-muted mb-1">Chance of hitting all three in NYC</div>
           <div className="font-mono text-[24px] font-semibold leading-none mb-2" style={{ color: probColor(forecast.allThree) }}>
             {forecast.allThree == null ? '—' : `${Math.round(forecast.allThree * 100)}%`}
           </div>
@@ -197,8 +197,9 @@ function GoalsPanel({ activities, metrics, today }: { activities: GarminActivity
             ))}
           </div>
           <div className="text-[10px] text-ink-muted leading-relaxed">
-            Recomputed on every Garmin sync: recent sessions are pace-adjusted to race distance, trend-projected to race
-            day, and scored against each goal. The last 7 days of sleep and HRV nudge the odds
+            Recomputed on every Garmin sync: recent sessions are pace-adjusted to race distance, trend-projected to the
+            NYC start line ({fmtDate(RACE_NYC.date)}), and scored against each goal — race 1 feeds the model as data.
+            The last 7 days of sleep and HRV nudge the odds
             {forecast.recoveryAdj !== 0 && (
               <>
                 {' '}(currently <span className="font-mono" style={{ color: forecast.recoveryAdj > 0 ? '#2d5f3f' : '#8c2d2d' }}>
@@ -258,11 +259,11 @@ function TodayPanel({ today, readiness, dayStatus }: { today: string; readiness:
   const adaptation = useMemo(() => (day ? adaptDay(day, readiness) : null), [day, readiness])
 
   if (!day || !adaptation) {
-    const past = today > RACE.date
+    const past = today > RACE_NYC.date
     return (
       <Card title="Today">
         <div className="text-[11px] text-ink-muted py-4">
-          {past ? 'The race is behind you. Recover well.' : 'No session planned for today.'}
+          {past ? 'Both races are behind you. Recover well.' : 'No session planned for today.'}
         </div>
       </Card>
     )
@@ -371,7 +372,7 @@ function PlanCalendar({ days, today }: { days: DayStatus[]; today: string }) {
   }, [days])
 
   return (
-    <Card title="The Plan — 26 Days to the Start Line">
+    <Card title="The Plan — Two Start Lines">
       <div className="space-y-4">
         {phases.map(({ phase, days: phaseDays }) => (
           <div key={phase}>
@@ -486,7 +487,8 @@ export default function IronmanDashboard() {
   }, [user])
 
   const today = todayLocal()
-  const countdown = daysToRace(today)
+  const countdown1 = daysToRace(today, RACE.date)
+  const countdown2 = daysToRace(today, RACE_NYC.date)
 
   const readiness = useMemo(
     () => computeReadiness(metrics ?? [], activities, today),
@@ -506,16 +508,25 @@ export default function IronmanDashboard() {
     <div className="space-y-3">
       {/* Countdown strip */}
       <div className="bg-white border border-rule rounded-sm p-3 flex flex-wrap items-baseline gap-x-6 gap-y-2">
+        {countdown1 >= 0 && (
+          <div>
+            <span className="font-mono text-[32px] font-semibold text-ink leading-none">{countdown1}</span>
+            <span className="text-[11px] text-ink-muted ml-2">days to race 1</span>
+          </div>
+        )}
         <div>
           <span className="font-mono text-[32px] font-semibold text-burgundy leading-none">
-            {countdown >= 0 ? countdown : 0}
+            {countdown2 >= 0 ? countdown2 : 0}
           </span>
-          <span className="text-[11px] text-ink-muted ml-2">days to race</span>
+          <span className="text-[11px] text-ink-muted ml-2">days to NYC · A-race</span>
         </div>
         <div className="text-[11px] text-ink">
           <span className="font-semibold">{RACE.name}</span>
-          <span className="text-ink-muted"> · {fmtDate(RACE.date)} · </span>
-          <span className="font-mono">{RACE.swimKm}km swim / {RACE.bikeKm}km bike / {RACE.runKm}km run</span>
+          <span className="text-ink-muted"> · {fmtDate(RACE.date)}</span>
+          <span className="text-ink-muted"> → </span>
+          <span className="font-semibold">{RACE_NYC.name}</span>
+          <span className="text-ink-muted"> · {fmtDate(RACE_NYC.date)} · </span>
+          <span className="font-mono">{RACE.swimKm}km / {RACE.bikeKm}km / {RACE.runKm}km each</span>
         </div>
         <div className="text-[10px] text-ink-muted ml-auto text-right">
           <div>Plan re-adapts on every Garmin sync (3x daily)</div>

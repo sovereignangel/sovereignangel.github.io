@@ -13,7 +13,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { adminDb } from '@/lib/firebase-admin'
 import { sendToInbox } from '@/lib/inbox/client'
-import { getPlanDay, daysToRace, todayLocal, RACE } from '@/lib/ironman/plan'
+import { getPlanDay, daysToRace, todayLocal, nextRace } from '@/lib/ironman/plan'
 import { computeReadiness, adaptDay, matchDay } from '@/lib/ironman/adapt'
 import type { GarminMetrics, GarminActivity } from '@/lib/types'
 
@@ -52,7 +52,7 @@ export async function GET(request: NextRequest) {
     const day = getPlanDay(today)
 
     const lines: string[] = []
-    lines.push(`IRONMAN — ${countdown} day${countdown === 1 ? '' : 's'} to ${RACE.name}`)
+    lines.push(`IRONMAN — ${countdown} day${countdown === 1 ? '' : 's'} to ${nextRace(today).name}`)
     lines.push('')
 
     if (readiness.score !== null) {

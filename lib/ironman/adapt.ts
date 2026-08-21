@@ -199,7 +199,7 @@ export interface Adaptation {
 }
 
 export function adaptDay(day: PlanDay, readiness: Readiness): Adaptation {
-  const isRaceDay = day.phase === 'Race'
+  const isRaceDay = day.phase === 'Race 1' || day.phase === 'Race 2'
   const isRest = day.sessions.every((x) => x.sport === 'rest')
 
   if (isRaceDay) {

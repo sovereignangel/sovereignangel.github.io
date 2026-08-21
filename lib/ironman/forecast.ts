@@ -21,8 +21,12 @@
  */
 
 import type { GarminActivity, GarminMetrics } from '@/lib/types'
-import { RACE, GOALS, BASELINE } from './plan'
+import { RACE, RACE_NYC, GOALS, BASELINE } from './plan'
 import { sportOfActivity } from './adapt'
+
+// The forecast projects fitness to the A-race in New York — race 1 on
+// Sep 13 is the rehearsal and simply feeds the model as training data.
+const TARGET_DATE = RACE_NYC.date
 
 type Sport3 = 'swim' | 'bike' | 'run'
 
@@ -117,7 +121,7 @@ function forecastDiscipline(activities: GarminActivity[], sport: Sport3, asOf: s
   const wMean = samples.reduce((s, x) => s + x.pace * x.weight, 0) / wSum
 
   // Weighted linear trend of pace vs time (x = -ageDays, so slope < 0 = improving)
-  const daysToRace = Math.max(0, daysBetween(asOf, RACE.date))
+  const daysToRace = Math.max(0, daysBetween(asOf, TARGET_DATE))
   const dateSpread = Math.max(...samples.map((x) => x.ageDays)) - Math.min(...samples.map((x) => x.ageDays))
   let projected = wMean
   if (n >= 4 && dateSpread >= 7) {
