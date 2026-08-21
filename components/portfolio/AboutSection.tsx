@@ -3,17 +3,38 @@ import Link from 'next/link'
 export default function AboutSection() {
   return (
     <section className="bg-[#faf8f4]/30 backdrop-blur-sm rounded-sm p-5 -mx-5 font-serif">
-      <p className="text-[19px] font-medium text-[#1a1a1a] tracking-tight mb-4">
-        Quantamental research and AI infrastructure.
+      <p className="text-[19px] font-medium text-[#1a1a1a] tracking-tight mb-1">
+        <a
+          href="https://aretetec.com"
+          className="underline decoration-[#33333340] underline-offset-4 hover:text-[#7c2d2d] hover:decoration-[#7c2d2d] transition-colors duration-200"
+        >
+          Quantamental research and AI infrastructure.
+        </a>
+      </p>
+      <p className="text-[#333] mb-4">
+        I build end-to-end portfolio management tooling for emerging hedge fund managers.
       </p>
       <p className="text-[#333] mb-4">
         Built a portfolio management product from scratch that drove a $16.4B revenue line at JP Morgan Asset Management. Raised $220M+ across early-stage companies, venture funds, and investment banks.
       </p>
       <p className="text-[#333] mb-4">
-        Complexity economics and deep reinforcement learning are the frameworks I bring to markets.
+        <Link
+          href="/complexecon"
+          className="underline decoration-[#33333340] underline-offset-4 hover:text-[#7c2d2d] hover:decoration-[#7c2d2d] transition-colors duration-200"
+        >
+          Complexity economics
+        </Link>{' '}
+        and deep reinforcement learning are the frameworks I bring to markets.
       </p>
       <p className="text-[#333] mb-4">
-        I practice Mahamudra & Kadampa Buddhism.
+        I practice{' '}
+        <Link
+          href="/mahamudra"
+          className="underline decoration-[#33333340] underline-offset-4 hover:text-[#7c2d2d] hover:decoration-[#7c2d2d] transition-colors duration-200"
+        >
+          Mahamudra
+        </Link>{' '}
+        &amp; Kadampa Buddhism.
       </p>
       <div className="flex items-center gap-5 text-[#333]" aria-label="Sports">
         <Link
