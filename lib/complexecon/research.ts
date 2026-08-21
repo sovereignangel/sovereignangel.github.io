@@ -1,0 +1,346 @@
+// Research lanes for the /complexecon/research working document.
+// This file is the single source of truth for the climate → grid → balance sheet
+// research program. The main pathway page (pathway.ts) is untouched by design —
+// this document iterates independently until a lane is committed.
+
+export type LaneStatus = 'candidate' | 'probing' | 'committed' | 'parked'
+
+export interface ResearchHypothesis {
+  id: string
+  claim: string
+  test: string
+}
+
+export interface DataSource {
+  name: string
+  url: string
+  note: string
+}
+
+export interface ResearchLane {
+  id: string
+  numeral: string
+  vector: string
+  market: string
+  name: string
+  status: LaneStatus
+  thesis: string
+  whyOpen: string
+  mechanism: string
+  hypotheses: ResearchHypothesis[]
+  data: DataSource[]
+  armstrongAngle: string
+  quantSkill: string
+  firstProbe: string
+}
+
+export interface ScorecardRow {
+  criterion: string
+  note: string
+  scores: Record<string, 'high' | 'med' | 'low'>
+}
+
+export interface PathStep {
+  window: string
+  label: string
+  detail: string
+  gate: string
+}
+
+export interface LogEntry {
+  date: string
+  version: string
+  note: string
+}
+
+export const RESEARCH_FRAMING = {
+  title: 'Climate, Grids, Balance Sheets',
+  question:
+    'How do climate signals — wind, water, heat, sea — propagate through electricity markets into the cash flows and valuations of listed companies, and where along that chain is the propagation mispriced?',
+  statement:
+    'Neel Somani wrote the primer on US power in the age of AI; that seat is taken. The open seat is the researcher who traces climate physics through under-covered grids into equity prices, with complexity economics as the method. Four markets, chosen for their coverage gaps in English and their distinct climate drivers: Lithuania (wind, and a once-in-history topology change), Brazil (water, and a spot price that is literally the output of a government model), and New York and California (heat and sea, where the equity expressions actually trade). Each regional lane produces a physical state variable; a fourth lane turns those state variables into Armstrong signals.',
+}
+
+export const MARKETS = [
+  {
+    id: 'lt',
+    name: 'Lithuania · Nord Pool LT',
+    driver: 'Wind',
+    gap: 'Near-zero independent English-language research; Feb 2025 BRELL desynchronization unwritten-up',
+  },
+  {
+    id: 'br',
+    name: 'Brazil · ONS / CCEE',
+    driver: 'Water',
+    gap: 'Serious work is in Portuguese; the performativity framing of PLD is untouched anywhere',
+  },
+  {
+    id: 'nyc',
+    name: 'New York · NYISO Zone J',
+    driver: 'Heat · Sea',
+    gap: 'Well-covered market, thin seam: the ocean-atmosphere channel behind load and price tails',
+  },
+  {
+    id: 'ca',
+    name: 'California · CAISO',
+    driver: 'Heat · Sea',
+    gap: 'Most-studied grid in the world; marine-layer solar error and correlated heat domes still under-modeled',
+  },
+]
+
+export const LANES: ResearchLane[] = [
+  {
+    id: 'lane-wind-lt',
+    numeral: 'I',
+    vector: 'Wind',
+    market: 'Lithuania · Baltics',
+    name: 'Forecast Error as the Price of Wind',
+    status: 'probing',
+    thesis:
+      'In a small, wind-heavy, newly resynchronized bidding zone, wind forecast error is the dominant driver of intraday and imbalance price spikes — and forecast disagreement between models (GFS vs ECMWF ensemble spread) is a measurable early-warning state variable for tail events. The kite wind brief already computes the front half of this signal.',
+    whyOpen:
+      'Baltic power has essentially no independent English-language researcher. In February 2025 the three Baltic states desynchronized from the Russian-controlled BRELL ring and joined the Continental European grid — a once-in-history change in network topology whose market consequences (balancing costs, price coupling, frequency-reserve procurement) remain largely unwritten. Physical presence in Palanga through late September is a live edge: the wind being forecast is observable out the window.',
+    mechanism:
+      'A grid topology change is literal network rewiring — the cleanest natural experiment in network economics available anywhere right now. Imbalance prices are an emergent property of correlated forecast errors across a small zone: when every producer misses in the same direction, the system state jumps rather than averages out. Fat tails from synchronized error, not from any single actor.',
+    hypotheses: [
+      {
+        id: 'LT-1',
+        claim:
+          'Days with high GFS-ECMWF ensemble disagreement over the Baltic coast show significantly fatter intraday-minus-day-ahead spread tails in the LT zone. Forecast dispersion, not the forecast itself, is the tradable state variable.',
+        test: 'Eighteen months of ENTSO-E LT day-ahead and imbalance prices against archived Open-Meteo multi-model wind forecasts; quantile regression of spread tails on dispersion; fix the spike threshold before looking.',
+      },
+      {
+        id: 'LT-2',
+        claim:
+          'The February 2025 synchronization to Continental Europe produced a structural break in LT balancing costs and in LT price coupling with SE4 and Poland — detectable, datable, and attributable.',
+        test: 'Regime-switching model and event study across the desync date on coupling coefficients and balancing-energy volumes; falsified if no break survives controls for fuel prices and interconnector outages.',
+      },
+      {
+        id: 'LT-3',
+        claim:
+          'The Baltic offshore buildout will raise, not lower, price volatility for years — capacity is arriving faster than the transmission and storage that would absorb it, so cannibalization and negative-price hours lead the smoothing.',
+        test: 'Cross-sectional check against zones further along the same curve (Denmark, northern Germany): volatility and negative-price frequency vs wind penetration, controlling for interconnection ratio.',
+      },
+    ],
+    data: [
+      { name: 'ENTSO-E Transparency', url: 'https://transparency.entsoe.eu', note: 'free API — prices, load, generation, balancing; the workhorse' },
+      { name: 'Nord Pool', url: 'https://data.nordpoolgroup.com', note: 'day-ahead and intraday for LT zone' },
+      { name: 'Litgrid', url: 'https://www.litgrid.eu', note: 'TSO data — balancing, interconnectors, desync documentation' },
+      { name: 'Open-Meteo', url: 'https://open-meteo.com', note: 'free GFS / ECMWF / ICON ensembles + historical forecast archive — same stack as the kite brief' },
+    ],
+    armstrongAngle:
+      'A paper-traded day-ahead vs intraday spread signal conditioned on forecast dispersion. Even without market access, a timestamped forecast-and-outcome log is a track-record artifact — the Armstrong pattern of a live book as empirical evidence, applied to power.',
+    quantSkill:
+      'Extreme value theory, ensemble meteorology, regime-switching and structural-break econometrics — the tail-risk toolkit, learned on data with genuinely fat tails.',
+    firstProbe:
+      'Two weeks: pull 18 months of ENTSO-E LT prices plus the Open-Meteo forecast archive into macro-signals; one notebook answering "does model disagreement predict spike days?"; publish as the first post of a Baltic power series — "The Grid After BRELL."',
+  },
+  {
+    id: 'lane-water-br',
+    numeral: 'II',
+    vector: 'Water',
+    market: 'Brazil · ONS / CCEE',
+    name: 'The Price That a Model Writes',
+    status: 'candidate',
+    thesis:
+      'Brazil’s spot price (PLD) is not discovered by an auction — it is computed by a government-run stochastic optimization model (NEWAVE / DECOMP / DESSEM) fed by reservoir levels and inflow forecasts. It is the purest performativity case in world electricity: the model does not estimate the price, it is the price. The climate chain is long and legible: ENSO state, rainfall over the Southeast and Center-West basins, reservoir inflows, model output, contract settlement, utility earnings.',
+    whyOpen:
+      'Nearly all serious research lives in Portuguese; English coverage of the world’s largest hydro-dominated market is remarkably thin. And nobody anywhere has written the MacKenzie-style study of PLD as a performative convention — an engine, not a camera, in the most literal sense available. This is the lane that fuses the new climate program with the existing valuation-conventions lane rather than competing with it.',
+    mechanism:
+      'A slow state variable (stored water) coupled to a fast one (price) through an explicit model whose conventions — the CVaR risk-aversion parameter, price caps and floors, inflow scenario trees — redistribute billions between generators and consumers. Model assumptions as distributive institutions: the exact claim of the Abu Dhabi lane, with a balance sheet attached.',
+    hypotheses: [
+      {
+        id: 'BR-1',
+        claim:
+          'ENSO indices lead PLD regime shifts by one to two quarters through the inflow channel; a parsimonious reservoir-state model beats naive persistence in forecasting PLD regime, and the lead is long enough to act on.',
+        test: 'NOAA ONI vs ONS reservoir levels vs monthly PLD, 2001-2026; Markov regime model with ENSO as exogenous driver; falsified if ENSO adds nothing beyond current reservoir level.',
+      },
+      {
+        id: 'BR-2',
+        claim:
+          'Listed Brazilian generators and utilities underreact to reservoir-state changes — the physical state variable leads earnings revisions and returns, because the hydrological balance sheet updates faster than the analyst one.',
+        test: 'Event study on ADRs (Eletrobras EBR, Cemig CIG, Copel ELP, Sabesp SBS) around large reservoir-state moves; long-short conditioned on hydrology vs sector benchmark; pre-registered horizon.',
+      },
+      {
+        id: 'BR-3',
+        claim:
+          'PLD deviates from a physically grounded shadow price in systematic, directional ways attributable to the model’s own conventions — and each convention change (the 2013 CVaR introduction, the 2021 move to hourly PLD) measurably redistributed money between market segments.',
+        test: 'Reconstruct a simple physical benchmark price from reservoir and load data; regress the PLD-benchmark gap on convention-change dates; the redistribution estimate is the paper’s headline number.',
+      },
+    ],
+    data: [
+      { name: 'ONS open data', url: 'https://dados.ons.org.br', note: 'reservoir levels, inflows, generation by source — free and deep' },
+      { name: 'CCEE', url: 'https://www.ccee.org.br', note: 'PLD history, market rules, settlement' },
+      { name: 'NOAA ONI', url: 'https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/ensostuff/ONI_v5.php', note: 'canonical ENSO index, 1950-present' },
+      { name: 'B3 / ADRs', url: 'https://www.b3.com.br', note: 'equity expressions; ADRs trade in New York' },
+    ],
+    armstrongAngle:
+      'The most directly tradable lane: US-listed ADRs mean the hydro-conditioned long-short runs in an ordinary brokerage account inside the Armstrong book. Sabesp adds a pure water-scarcity leg beyond electricity.',
+    quantSkill:
+      'Stochastic dynamic programming intuition, climate teleconnections, cross-asset event studies — plus the discipline of working a market in a second language, which is itself the moat.',
+    firstProbe:
+      'Two weeks: one chart worth a thousand words — 25 years of Southeast reservoir level, ONI, and PLD on a shared timeline; a memo titled "The Price That a Model Writes" framing BR-3 for the CEcon paper with Michael.',
+  },
+  {
+    id: 'lane-heat-us',
+    numeral: 'III',
+    vector: 'Heat · Sea',
+    market: 'New York · California',
+    name: 'The Sea Sets the Tail',
+    status: 'candidate',
+    thesis:
+      'In coastal load centers the ocean, not the thermometer, sets the tail. California’s marine layer decides whether ten gigawatts of solar show up; New York’s sea breeze decides whether Zone J peaks or coasts. Multi-day heat domes are correlated events that capacity constructs price as roughly independent — the Dunkelflaute error, translated into heat.',
+    whyOpen:
+      'These are the most-studied grids on earth, so the gap is a seam, not a field: quant desks overwhelmingly proxy weather with raw temperature, and the specific ocean-atmosphere mechanisms — coastal inversion strength, sea-breeze onset timing — sit in meteorology journals, not market models. Narrower edge than Lanes I-II, but this is where the tradable US equity expressions live.',
+    mechanism:
+      'Correlation structure as the mispriced object. Scarcity pricing and resource adequacy treat event-days as draws; heat domes are regimes — persistent, spatially correlated, demand-and-supply-coupled (heat lifts load while derating plants and lines). The same class of error as CDO correlation in 2007: right marginals, wrong copula.',
+    hypotheses: [
+      {
+        id: 'US-1',
+        claim:
+          'CAISO solar and net-load forecast error is conditionally predictable from marine-layer indicators, and spike-day probability with it — the grid inherits the forecast skill ceiling of coastal stratus.',
+        test: 'CAISO forecast-vs-actual archives against coastal inversion and cloud-cover data; does a marine-layer index improve spike-day classification over temperature alone?',
+      },
+      {
+        id: 'US-2',
+        claim:
+          'Scarcity events cluster in multi-day heat-dome regimes; capacity and RA constructs underprice that clustering, so the realized distribution of consecutive-day scarcity beats the independence assumption by a measurable factor.',
+        test: 'Historical CAISO / NYISO scarcity hours fitted as a regime process vs independent draws; the likelihood ratio is the underpricing estimate.',
+      },
+      {
+        id: 'US-3',
+        claim:
+          'NYISO Zone J price separation is predictable on sea-breeze-failure days — when the marine cooling that the load forecast implicitly assumes does not arrive.',
+        test: 'Zone J vs rest-of-state spreads conditioned on sea-breeze onset from coastal station data; effect must survive controlling for raw temperature.',
+      },
+    ],
+    data: [
+      { name: 'gridstatus', url: 'https://github.com/gridstatus/gridstatus', note: 'open-source Python access to CAISO / NYISO / ERCOT — prices, load, forecasts' },
+      { name: 'CAISO OASIS', url: 'http://oasis.caiso.com', note: 'the raw source — LMPs, forecasts, outages' },
+      { name: 'NOAA / HRRR', url: 'https://rapidrefresh.noaa.gov/hrrr/', note: 'high-resolution mesoscale model; marine layer and sea breeze live here' },
+      { name: 'EIA API', url: 'https://www.eia.gov/opendata/', note: 'generation, capacity, fuel — free' },
+    ],
+    armstrongAngle:
+      'Expression through listed merchants and utilities — Vistra, Constellation, NRG on scarcity states; and the standing insurance screen: PG&E’s wildfire liabilities were the actual MBIA trade of 2018-19, and California utility wildfire exposure remains the template for finding the next one.',
+    quantSkill:
+      'Mesoscale meteorology, spatial statistics, scarcity-pricing mechanics — and fluency in the two markets every US interviewer knows, which makes the whole program legible to Bridgewater and to desks.',
+    firstProbe:
+      'Two weeks, after Lanes I-II probes: gridstatus pipeline for CAISO forecast error; one test of US-1 on summer 2020-2025; short memo on whether the seam is real or already arbitraged.',
+  },
+  {
+    id: 'lane-transmission',
+    numeral: 'IV',
+    vector: 'All vectors',
+    market: 'Cross-market · equities',
+    name: 'The Climate-to-Balance-Sheet Ledger',
+    status: 'candidate',
+    thesis:
+      'Physical climate anomalies transmit to listed-company cash flows through power prices with lags and nonlinearities the equity market misprices — because merchant generators, regulated utilities, insurers, and power-hungry data centers sit on different clocks between anomaly and earnings. This is the integrating lane: each regional lane produces a physical state variable; this one turns state variables into Armstrong positions.',
+    whyOpen:
+      'Climate-equity work mostly means ESG scores and disclosure studies — slow, annual, narrative. Almost nobody maps high-frequency physical grid states to the earnings mechanics of specific balance sheets. The regional lanes supply exactly the state variables that make this tractable.',
+    mechanism:
+      'Heterogeneous agents on heterogeneous clocks: a merchant generator reprices with the spot market in hours, a regulated utility through rate cases in years, an insurer at renewal, a data center through PPA renegotiation. The lag structure between the same shock hitting different balance sheets is the alpha — and a genuinely complexity-economic object: one signal, many response functions.',
+    hypotheses: [
+      {
+        id: 'TX-1',
+        claim:
+          'A portfolio long merchant generators, short regulated utilities, conditioned on regional scarcity state, outperforms — the market prices the sector, not the clock-speed difference within it.',
+        test: 'Backtest on US names with CAISO / ERCOT scarcity states; then out-of-sample structurally in Brazil with the hydro state; pre-registered rules, walk-forward only.',
+      },
+      {
+        id: 'TX-2',
+        claim:
+          'Insurers and utilities with concentrated exposure to correlated climate tails — wildfire, drought, heat-dome outage clusters — systematically underprice them until an event forces repricing. There is a screenable "next MBIA" in the intersection of Lane II’s drought states and Lane III’s correlation error.',
+        test: 'Build the exposure screen from regulatory filings and physical state data; the falsifiable form is that screened names show asymmetric drawdown behavior around climate events versus unscreened peers.',
+      },
+    ],
+    data: [
+      { name: 'SEC EDGAR', url: 'https://www.sec.gov/cgi-bin/browse-edgar', note: 'utility and insurer exposure from 10-Ks — segment data, wildfire and weather disclosures' },
+      { name: 'yfinance / broker data', url: 'https://github.com/ranaroussi/yfinance', note: 'equity prices for event studies and backtests' },
+    ],
+    armstrongAngle:
+      'This lane is Armstrong: it is the strategy layer that consumes the other three lanes’ research. Every regional probe that survives its gate feeds a signal here; the 12-month track record is built from these positions.',
+    quantSkill:
+      'Event-study methodology, factor construction, fundamental data pipelines, portfolio construction — the complete quant-equity toolkit, assembled around an original signal family instead of a textbook one.',
+    firstProbe:
+      'Runs continuously rather than as a sprint: as each regional probe closes, write the one-page transmission memo — which listed balance sheets feel this state variable, on what clock, and what is the cleanest expression.',
+  },
+]
+
+export const SCORECARD_LANES = ['I · Wind LT', 'II · Water BR', 'III · Heat US', 'IV · Ledger']
+
+export const SCORECARD: ScorecardRow[] = [
+  {
+    criterion: 'Coverage gap in English',
+    note: 'Is the seat actually empty?',
+    scores: { 'I · Wind LT': 'high', 'II · Water BR': 'high', 'III · Heat US': 'low', 'IV · Ledger': 'med' },
+  },
+  {
+    criterion: 'Data openness',
+    note: 'Free, deep, machine-readable',
+    scores: { 'I · Wind LT': 'high', 'II · Water BR': 'high', 'III · Heat US': 'high', 'IV · Ledger': 'med' },
+  },
+  {
+    criterion: 'Climate signal strength',
+    note: 'How tightly physics drives price',
+    scores: { 'I · Wind LT': 'high', 'II · Water BR': 'high', 'III · Heat US': 'med', 'IV · Ledger': 'med' },
+  },
+  {
+    criterion: 'Armstrong tradability',
+    note: 'Can it become a position?',
+    scores: { 'I · Wind LT': 'low', 'II · Water BR': 'high', 'III · Heat US': 'high', 'IV · Ledger': 'high' },
+  },
+  {
+    criterion: 'SFI / Farmer legibility',
+    note: 'Publishable as complexity econ',
+    scores: { 'I · Wind LT': 'high', 'II · Water BR': 'high', 'III · Heat US': 'med', 'IV · Ledger': 'med' },
+  },
+  {
+    criterion: 'Personal edge today',
+    note: 'Location, tooling, existing lanes',
+    scores: { 'I · Wind LT': 'high', 'II · Water BR': 'med', 'III · Heat US': 'low', 'IV · Ledger': 'med' },
+  },
+  {
+    criterion: 'Skill compounding',
+    note: 'Builds quant intelligence that transfers',
+    scores: { 'I · Wind LT': 'high', 'II · Water BR': 'high', 'III · Heat US': 'high', 'IV · Ledger': 'high' },
+  },
+]
+
+export const PROPOSED_PATH: PathStep[] = [
+  {
+    window: 'Weeks 1-3',
+    label: 'Lane I probe — while still in Palanga',
+    detail:
+      'ENTSO-E + Open-Meteo pipeline into macro-signals; test LT-1; publish "The Grid After BRELL" as the first Baltic power post. The location edge expires around September 23 — this goes first.',
+    gate: 'Commit if forecast dispersion measurably predicts spike days; park if the LT zone is too coupled to neighbors for a local signal to exist.',
+  },
+  {
+    window: 'Weeks 4-7',
+    label: 'Lane II probe — the performativity fusion',
+    detail:
+      'ONS + ONI + PLD on one timeline; test BR-1; write "The Price That a Model Writes" and put BR-3 in front of Michael as a candidate section of the CEcon paper.',
+    gate: 'Commit if ENSO leads PLD beyond current reservoir level; the performativity study (BR-3) proceeds on its own merits regardless — it is a paper, not a trade.',
+  },
+  {
+    window: 'Weeks 8-10',
+    label: 'Lane III probe — the crowded seam',
+    detail: 'gridstatus pipeline; test US-1 on CAISO summers. Deliberately last: smallest coverage gap, and Lanes I-II teach the meteorology it needs.',
+    gate: 'Commit only if the marine-layer index beats temperature-only baselines; otherwise park and keep Lane III as market-fluency reading, not research.',
+  },
+  {
+    window: 'Weeks 11-12',
+    label: 'Synthesis — choose the flagship',
+    detail:
+      'Write the framing paper: "Climate, Grids, Balance Sheets — the transmission of physical states through under-covered electricity markets into equity prices." One flagship lane, one supporting lane, the rest parked. This is the document Oxford in December and Abu Dhabi in January get pointed at.',
+    gate: 'The path exists when one lane has a committed signal in the Armstrong book and one lane has a paper section Michael co-signs. Both by mid-November, before the Oxford trip.',
+  },
+]
+
+export const ITERATION_LOG: LogEntry[] = [
+  {
+    date: '2026-08-21',
+    version: 'v1',
+    note: 'Initial four lanes drafted from the Power 2026 conversation: wind/Lithuania, water/Brazil, heat-and-sea/NYC+California, and the cross-market transmission ledger. Lane I set to probing on location edge; scorecard and 12-week path proposed. Open question: whether Lane III earns research status or stays market-fluency reading.',
+  },
+]
