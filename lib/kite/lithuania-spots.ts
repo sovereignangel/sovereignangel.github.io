@@ -97,6 +97,17 @@ export interface HourForecast {
 
 export type HourCategory = 'ideal' | 'light' | 'calm' | 'strong' | 'offshore'
 
+// Display constants shared by the strip, axis and legend
+export const HOUR_CELL_COLOR: Record<HourCategory, string> = {
+  ideal: '#1a8a8f',
+  light: 'rgba(217, 164, 65, 0.55)',
+  calm: '#eae3d2',
+  strong: '#c94f35',
+  offshore: '#1f3a45',
+}
+export const STRIP_START = 8
+export const STRIP_END = 21 // exclusive
+
 export interface KiteWindow {
   startHour: number
   endHour: number // exclusive

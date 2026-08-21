@@ -4,17 +4,19 @@ import {
   fetchAllSpots,
   weekSessions,
   weekPossibles,
-  categorizeHour,
   directionLabel,
   kiteSizeHint,
+  HOUR_CELL_COLOR,
+  STRIP_START,
+  STRIP_END,
   type DayAnalysis,
-  type HourCategory,
   type KiteSpot,
   type SessionPick,
   type SpotForecast,
 } from '@/lib/kite/lithuania-spots'
 import { fetchJuraspotLive, type JuraspotLive } from '@/lib/kite/juraspot'
 import { WindTabs } from '@/components/wind/WindTabs'
+import { HourStrip } from '@/components/wind/HourStrip'
 
 export const metadata: Metadata = {
   title: 'Wind — Lithuanian Coast',
@@ -44,18 +46,6 @@ function fmtWindow(startHour: number, endHour: number): string {
   const pad = (n: number) => String(n).padStart(2, '0')
   return `${pad(startHour)}–${pad(endHour)}h`
 }
-
-const HOUR_CELL_COLOR: Record<HourCategory, string> = {
-  ideal: '#1a8a8f',
-  light: 'rgba(217, 164, 65, 0.55)',
-  calm: '#eae3d2',
-  strong: '#c94f35',
-  offshore: '#1f3a45',
-}
-
-// Fixed strip range so every day row lines up under one hour axis
-const STRIP_START = 8
-const STRIP_END = 21 // exclusive
 
 function SpotIcon({ slug, className }: { slug: string; className?: string }) {
   if (slug === 'sventoji') {
@@ -98,44 +88,6 @@ function HourAxis() {
         return (
           <div key={hour} className="flex-1 min-w-[4px] text-center font-mono text-[8px] text-surf-muted leading-none">
             {hour % 2 === 0 ? hour : ''}
-          </div>
-        )
-      })}
-    </div>
-  )
-}
-
-function HourStrip({ day, spot, nowHour }: { day: DayAnalysis; spot: KiteSpot; nowHour?: number }) {
-  const byHour = new Map(day.hours.map(h => [h.hour, h]))
-  return (
-    <div className="flex gap-px h-2.5 md:h-4 rounded-full overflow-hidden">
-      {Array.from({ length: STRIP_END - STRIP_START }, (_, i) => {
-        const hour = STRIP_START + i
-        const h = byHour.get(hour)
-        const nowRing = hour === nowHour ? { boxShadow: 'inset 0 0 0 1.5px #2b3a3f' } : undefined
-        if (!h || hour >= day.endHour) {
-          return (
-            <div
-              key={hour}
-              className="flex-1 min-w-[4px]"
-              style={{ backgroundColor: 'rgba(31, 58, 69, 0.05)', ...nowRing }}
-              title={`${String(hour).padStart(2, '0')}:00 · after sunset`}
-            />
-          )
-        }
-        const cat = categorizeHour(h, spot)
-        return (
-          <div
-            key={hour}
-            className="flex-1 min-w-[4px] flex items-center justify-center"
-            style={{ backgroundColor: HOUR_CELL_COLOR[cat], ...nowRing }}
-            title={`${String(hour).padStart(2, '0')}:00${hour === nowHour ? ' (now)' : ''} · ${Math.round(h.speedKn)} kn, gusts ${Math.round(h.gustKn)} kn · ${directionLabel(h.directionDeg, spot)}`}
-          >
-            <span className={`hidden md:inline font-mono text-[8px] font-semibold leading-none ${
-              cat === 'light' || cat === 'calm' ? 'text-surf-ink/60' : 'text-white'
-            }`}>
-              {Math.round(h.speedKn)}
-            </span>
           </div>
         )
       })}
