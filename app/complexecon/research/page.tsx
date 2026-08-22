@@ -87,6 +87,12 @@ export default function ComplexEconResearchPage() {
           <span className="border-b-2 border-burgundy py-1 font-serif text-[25px] font-semibold text-burgundy">
             Research
           </span>
+          <Link
+            href="/complexecon/strategy"
+            className="py-1 font-serif text-[25px] text-ink-muted transition-colors hover:text-ink"
+          >
+            Strategy
+          </Link>
         </nav>
 
         {/* ─── The question ─── */}

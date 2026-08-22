@@ -374,6 +374,11 @@ export const PROPOSED_PATH: PathStep[] = [
 
 export const ITERATION_LOG: LogEntry[] = [
   {
+    date: '2026-08-22',
+    version: 'v3',
+    note: 'Strategy tab added at /complexecon/strategy: the competitive map — eight schools plus the ADIA hub, the ten practitioner seats and their moats, six gaps with nearest occupants, and the four-quadrant read (runs-a-book × physical-systems is the open seat). Editorial layer over the CEcon landscape at complexity-economics.org (76 researchers, 5,300+ papers). Each gap names which research lane claims it; ergodicity gap deliberately parked.',
+  },
+  {
     date: '2026-08-21',
     version: 'v2',
     note: 'Inequality bridge added after the SFI-frame question: distributive incidence of climate volatility as the unifying claim — "weather is random; who pays for weather is a convention." New hypotheses LT-4 (inframarginal rents vs Baltic energy poverty via EU-SILC) and BR-4 (2021 drought tariff-flag incidence by income decile via ANEEL + IBGE POF). BR-4 flagged as the Abu Dhabi paper candidate; the climate lanes and the valuation-conventions lane are now one program, not two.',
