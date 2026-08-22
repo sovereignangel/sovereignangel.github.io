@@ -271,7 +271,7 @@ export default async function ExecPage() {
   return (
     <AuthProvider>
       <main className="min-h-screen bg-cream">
-        <div className="max-w-[900px] mx-auto px-4 sm:px-6 py-5">
+        <div className="max-w-[1100px] mx-auto px-4 sm:px-6 py-5">
           <header className="flex items-baseline justify-between border-b-2 border-ink pb-2 mb-3">
             <div className="flex items-baseline gap-3">
               <h1 className="font-serif text-[20px] font-bold text-ink tracking-tight">Exec</h1>
@@ -282,12 +282,12 @@ export default async function ExecPage() {
             <span className="font-mono text-[9px] text-ink-muted">{generatedAt} LT</span>
           </header>
 
-          <div className="space-y-3">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 items-start">
             <Card title="Kite — Wind Windows" right={<DetailLink href="/wind" />}>
               {windError && (
                 <div className="text-[10px] text-red-ink mb-2">Forecast service unreachable — refresh in a minute.</div>
               )}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mb-2.5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-2.5 mb-2.5">
                 <KiteDay label="Today" day={windToday} />
                 <KiteDay label="Tomorrow" day={windTomorrow} />
               </div>
@@ -300,7 +300,7 @@ export default async function ExecPage() {
             </Card>
 
             <Card title="Ironman — Training" right={<DetailLink href="/ironman" />}>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mb-2.5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-2.5 mb-2.5">
                 <IronmanDay label="Today" day={planToday} slot={slotToday} />
                 <IronmanDay label="Tomorrow" day={planTomorrow} slot={slotTomorrow} />
               </div>
