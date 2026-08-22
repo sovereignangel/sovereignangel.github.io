@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import SiteFooter from '@/components/SiteFooter'
 
 export const metadata: Metadata = {
   title: 'Latent Space — Frontier AI Research Dinner Series',
@@ -18,6 +19,7 @@ export default function LatentSpaceLayout({
   return (
     <div className="min-h-screen bg-[#F5EDD6]">
       {children}
+      <SiteFooter />
     </div>
   )
 }

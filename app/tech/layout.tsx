@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { Crimson_Pro, IBM_Plex_Mono, Inter } from 'next/font/google'
+import SiteFooter from '@/components/SiteFooter'
 
 const display = Crimson_Pro({
   subsets: ['latin'],
@@ -39,6 +40,7 @@ export default function TechLayout({ children }: { children: React.ReactNode }) 
   return (
     <div className={`${display.variable} ${mono.variable} ${body.variable}`}>
       {children}
+      <SiteFooter />
     </div>
   )
 }

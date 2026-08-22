@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { Cormorant, IBM_Plex_Mono } from 'next/font/google'
+import SiteFooter from '@/components/SiteFooter'
 
 const cormorant = Cormorant({
   subsets: ['latin'],
@@ -32,6 +33,6 @@ export default function Lourdes60thLayout({
   children: React.ReactNode
 }) {
   return (
-    <div className={`${cormorant.variable} ${plexMono.variable}`}>{children}</div>
+    <div className={`${cormorant.variable} ${plexMono.variable}`}>{children}<SiteFooter /></div>
   )
 }

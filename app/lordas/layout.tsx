@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import SiteFooter from '@/components/SiteFooter'
 
 export const metadata: Metadata = {
   title: 'Lordas',
@@ -10,6 +11,7 @@ export default function LordasLayout({ children }: { children: React.ReactNode }
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#f5f0e8' }}>
       {children}
+      <SiteFooter />
     </div>
   )
 }

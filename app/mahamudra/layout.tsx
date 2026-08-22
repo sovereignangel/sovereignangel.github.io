@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { Cormorant_Garamond, EB_Garamond } from 'next/font/google'
+import SiteFooter from '@/components/SiteFooter'
 
 const cormorant = Cormorant_Garamond({
   subsets: ['latin'],
@@ -39,6 +40,7 @@ export default function MahamudraLayout({
   return (
     <div className={`${cormorant.variable} ${ebGaramond.variable}`}>
       {children}
+      <SiteFooter />
     </div>
   )
 }

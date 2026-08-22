@@ -2,6 +2,7 @@
 
 import { AuthProvider, useAuth } from '@/components/auth/AuthProvider'
 import AuthGate from '@/components/auth/AuthGate'
+import SiteFooter from '@/components/SiteFooter'
 
 function IronmanLayoutInner({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth()
@@ -43,6 +44,7 @@ function IronmanLayoutInner({ children }: { children: React.ReactNode }) {
         </div>
       </header>
       <main className="max-w-[1200px] mx-auto px-4 sm:px-6 pb-6">{children}</main>
+      <SiteFooter />
     </div>
   )
 }

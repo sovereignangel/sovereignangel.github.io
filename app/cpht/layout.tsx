@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import SiteFooter from '@/components/SiteFooter'
 
 export const metadata: Metadata = {
   title: 'CPH Hunt · Test Console',
@@ -14,6 +15,7 @@ export default function CphtLayout({ children }: { children: React.ReactNode }) 
         rel="stylesheet"
       />
       {children}
+      <SiteFooter />
     </>
   )
 }

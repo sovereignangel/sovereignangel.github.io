@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import SiteFooter from '@/components/SiteFooter'
 
 export const metadata: Metadata = {
   title: 'Still Point',
@@ -10,6 +11,7 @@ export default function StillPointLayout({ children }: { children: React.ReactNo
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#f2efe8' }}>
       {children}
+      <SiteFooter />
     </div>
   )
 }

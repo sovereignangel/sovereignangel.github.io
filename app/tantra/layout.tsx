@@ -2,6 +2,7 @@
 
 import { AuthProvider, useAuth } from '@/components/auth/AuthProvider'
 import AuthGate from '@/components/auth/AuthGate'
+import SiteFooter from '@/components/SiteFooter'
 
 function TantraInner({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth()
@@ -18,7 +19,7 @@ function TantraInner({ children }: { children: React.ReactNode }) {
 
   if (!user) return <AuthGate />
 
-  return <div className="min-h-screen bg-[#f5f1ea]">{children}</div>
+  return <div className="min-h-screen bg-[#f5f1ea]">{children}<SiteFooter /></div>
 }
 
 export default function TantraLayout({ children }: { children: React.ReactNode }) {

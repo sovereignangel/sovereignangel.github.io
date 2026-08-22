@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import SiteFooter from '@/components/SiteFooter'
 
 export const metadata: Metadata = {
   title: 'Atune — the crowd composes the night',
@@ -13,5 +14,10 @@ export const metadata: Metadata = {
 }
 
 export default function AtuneLayout({ children }: { children: React.ReactNode }) {
-  return children
+  return (
+    <>
+      {children}
+      <SiteFooter />
+    </>
+  )
 }

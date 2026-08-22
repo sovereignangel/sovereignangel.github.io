@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { AuthProvider } from '@/components/auth/AuthProvider'
+import SiteFooter from '@/components/SiteFooter'
 
 export const metadata: Metadata = {
   title: 'Read',
@@ -12,6 +13,7 @@ export default function ReadLayout({ children }: { children: React.ReactNode }) 
     <AuthProvider>
       <div className="min-h-screen bg-cream">
         {children}
+        <SiteFooter />
       </div>
     </AuthProvider>
   )

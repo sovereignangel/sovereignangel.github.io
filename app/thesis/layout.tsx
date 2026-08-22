@@ -61,6 +61,9 @@ function ThesisLayoutInner({ children }: { children: React.ReactNode }) {
         <main className="flex-1 min-h-0 max-w-[1600px] w-full mx-auto px-4 sm:px-6 pt-0.5 pb-1">
           {children}
         </main>
+        <footer className="shrink-0 text-center text-[9px] tracking-wide text-ink-faint py-0.5">
+          © 2026 Loribel Corpuz. All rights reserved.
+        </footer>
       </div>
     </DailyLogProvider>
   )

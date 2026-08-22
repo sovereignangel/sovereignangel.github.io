@@ -25,6 +25,9 @@ export default function Footer() {
           </a>
         ))}
       </div>
+      <div className="mt-8 text-[11px] text-[#999]">
+        © 2026 Loribel Corpuz. All rights reserved.
+      </div>
     </footer>
   )
 }

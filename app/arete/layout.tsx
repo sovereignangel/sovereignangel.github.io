@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from 'next'
+import SiteFooter from '@/components/SiteFooter'
 
 export const metadata: Metadata = {
   title: 'Arete Technologies — The long practice.',
@@ -27,6 +28,7 @@ export default function AreteLayout({ children }: { children: React.ReactNode })
         rel="stylesheet"
       />
       {children}
+      <SiteFooter />
     </>
   )
 }

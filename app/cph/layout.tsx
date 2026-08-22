@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import SiteFooter from '@/components/SiteFooter'
 
 export const metadata: Metadata = {
   title: 'The Copenhagen Scavenger Hunt',
@@ -13,6 +14,7 @@ export default function CphLayout({ children }: { children: React.ReactNode }) {
         rel="stylesheet"
       />
       {children}
+      <SiteFooter />
     </>
   )
 }
