@@ -174,7 +174,7 @@ export default function ComplexEconStrategyPage() {
 
           {/* Table view — the same data, readable without the chart */}
           <div className="mt-4 overflow-x-auto rounded-sm border border-rule bg-white">
-            <table className="w-full min-w-[640px] border-collapse">
+            <table className="w-full min-w-[840px] border-collapse">
               <thead>
                 <tr className="border-b-2 border-rule">
                   <th className="p-2.5 text-left font-serif text-[17px] font-semibold uppercase tracking-[0.5px] text-burgundy">
@@ -185,6 +185,9 @@ export default function ComplexEconStrategyPage() {
                   </th>
                   <th className="p-2.5 text-center font-mono text-[14px] uppercase tracking-[0.5px] text-ink-muted">
                     Mined
+                  </th>
+                  <th className="p-2.5 text-left font-mono text-[14px] uppercase tracking-[0.5px] text-ink-muted">
+                    Why it matters to investing &amp; trading
                   </th>
                   <th className="p-2.5 text-left font-mono text-[14px] uppercase tracking-[0.5px] text-ink-muted">
                     Where
@@ -203,6 +206,7 @@ export default function ComplexEconStrategyPage() {
                       </td>
                       <td className="p-2.5 text-center font-mono text-[15px] text-ink">{d.y}</td>
                       <td className="p-2.5 text-center font-mono text-[15px] text-ink-muted">{d.x}</td>
+                      <td className="p-2.5 text-[15px] leading-snug text-ink">{d.valueNote}</td>
                       <td className="p-2.5 text-[15px] leading-snug text-ink-muted">{d.where}</td>
                     </tr>
                   ))}
