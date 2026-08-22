@@ -6,8 +6,9 @@ import FinancesLedger from '@/components/thesis/finances/FinancesLedger'
 import FinancesImport from '@/components/thesis/finances/FinancesImport'
 import CollateralView from '@/components/thesis/finances/CollateralView'
 import TaxesView from '@/components/thesis/finances/TaxesView'
+import LifeArbitrageView from '@/components/thesis/finances/LifeArbitrageView'
 
-type FinancesTab = 'overview' | 'ledger' | 'import' | 'collateral' | 'taxes'
+type FinancesTab = 'overview' | 'ledger' | 'import' | 'collateral' | 'taxes' | 'arbitrage'
 
 const TABS: { key: FinancesTab; label: string }[] = [
   { key: 'overview', label: 'Overview' },
@@ -15,6 +16,7 @@ const TABS: { key: FinancesTab; label: string }[] = [
   { key: 'import', label: 'Import' },
   { key: 'collateral', label: 'Collateral' },
   { key: 'taxes', label: 'Taxes' },
+  { key: 'arbitrage', label: 'Life Arbitrage' },
 ]
 
 export default function FinancesPage() {
@@ -45,6 +47,7 @@ export default function FinancesPage() {
         {activeTab === 'import' && <FinancesImport onImported={() => setRefreshKey(k => k + 1)} />}
         {activeTab === 'collateral' && <CollateralView />}
         {activeTab === 'taxes' && <TaxesView />}
+        {activeTab === 'arbitrage' && <LifeArbitrageView />}
       </div>
     </div>
   )

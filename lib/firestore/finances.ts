@@ -3,7 +3,7 @@ import {
   query, orderBy, limit as fsLimit, writeBatch, serverTimestamp,
 } from 'firebase/firestore'
 import { db } from '../firebase'
-import type { FinanceTransaction, FinanceImportBatch, CollateralLoan, TaxPlan } from '../types'
+import type { FinanceTransaction, FinanceImportBatch, CollateralLoan, TaxPlan, LifeArbitrageEntry } from '../types'
 
 // ─── TRANSACTIONS ───────────────────────────────────────────────────
 // Doc ids are deterministic (hash of date|amount|description|account|n)
@@ -87,6 +87,32 @@ export async function saveCollateralLoan(uid: string, data: Partial<CollateralLo
 
 export async function deleteCollateralLoan(uid: string, loanId: string): Promise<void> {
   await deleteDoc(doc(db, 'users', uid, 'collateral_loans', loanId))
+}
+
+// ─── LIFE ARBITRAGE ─────────────────────────────────────────────────
+
+export async function getLifeArbitrageEntries(uid: string): Promise<LifeArbitrageEntry[]> {
+  const ref = collection(db, 'users', uid, 'life_arbitrage')
+  const q = query(ref, orderBy('date', 'desc'))
+  const snap = await getDocs(q)
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }) as LifeArbitrageEntry)
+}
+
+export async function saveLifeArbitrageEntry(uid: string, data: Partial<LifeArbitrageEntry>, entryId?: string): Promise<string> {
+  if (entryId) {
+    await updateDoc(doc(db, 'users', uid, 'life_arbitrage', entryId), {
+      ...data,
+      updatedAt: serverTimestamp(),
+    })
+    return entryId
+  }
+  const ref = doc(collection(db, 'users', uid, 'life_arbitrage'))
+  await setDoc(ref, { ...data, createdAt: serverTimestamp(), updatedAt: serverTimestamp() })
+  return ref.id
+}
+
+export async function deleteLifeArbitrageEntry(uid: string, entryId: string): Promise<void> {
+  await deleteDoc(doc(db, 'users', uid, 'life_arbitrage', entryId))
 }
 
 // ─── TAX PLANS ──────────────────────────────────────────────────────

@@ -96,6 +96,42 @@ export interface CollateralMetrics {
 
 export type LtvBand = 'ok' | 'elevated' | 'high' | 'critical'
 
+// ─── LIFE ARBITRAGE ─────────────────────────────────────────────────
+// Money-saving plays scored on $/hr and whether the hassle compounds
+// (skill learned, artifact built, loophole found) vs one-off admin.
+// Forecast fields feed the calibration muscle: predict time + compounding
+// up front, grade the prediction after.
+
+export type ArbitrageKind = 'skill' | 'artifact' | 'loophole' | 'admin'
+
+export const ARBITRAGE_KINDS: { key: ArbitrageKind; label: string; compounds: boolean }[] = [
+  { key: 'skill', label: 'Skill learned', compounds: true },
+  { key: 'artifact', label: 'Reusable artifact', compounds: true },
+  { key: 'loophole', label: 'Loophole / alpha', compounds: true },
+  { key: 'admin', label: 'One-off admin', compounds: false },
+]
+
+export type ArbitrageVerdict = 'pending' | 'hit' | 'miss'
+
+export interface LifeArbitrageEntry {
+  id?: string
+  date: string // YYYY-MM-DD
+  title: string
+  notes?: string
+  currency: 'USD' | 'EUR'
+  savedMin: number // low end of savings estimate
+  savedMax: number // equal to savedMin when exact
+  hoursSpent: number
+  kind: ArbitrageKind
+  compounded: boolean
+  compoundNote?: string // what exactly is reusable next time
+  forecastHours?: number | null // predicted before starting
+  forecastCompound?: boolean | null
+  verdict?: ArbitrageVerdict // did the forecast hit
+  createdAt?: Timestamp
+  updatedAt?: Timestamp
+}
+
 // ─── TAX PLAN ───────────────────────────────────────────────────────
 
 export interface TaxPayment {
