@@ -6,7 +6,7 @@ import { DISCIPLINES, type Discipline } from '@/lib/complexecon/strategy'
 // Chart geometry (viewBox units)
 const W = 960
 const H = 600
-const M = { top: 36, right: 36, bottom: 64, left: 70 }
+const M = { top: 36, right: 36, bottom: 64, left: 92 }
 const PW = W - M.left - M.right
 const PH = H - M.top - M.bottom
 
@@ -75,10 +75,10 @@ export default function DisciplineMap() {
       </div>
 
       {/* Chart */}
-      <div className="overflow-x-auto rounded-sm border border-rule bg-white">
+      <div className="rounded-sm border border-rule bg-white">
         <svg
           viewBox={`0 0 ${W} ${H}`}
-          className="block min-w-[860px]"
+          className="block h-auto w-full"
           role="img"
           aria-label="Landscape map of complexity economics disciplines: value to investing and trading against practitioner occupancy"
         >
@@ -115,8 +115,8 @@ export default function DisciplineMap() {
             PRACTITIONER OCCUPANCY — HOW MINED THE GROUND IS →
           </text>
           <text
-            x={24} y={M.top + PH / 2} fontSize="15" fill="#9a928a" fontFamily="monospace" textAnchor="middle" letterSpacing="1"
-            transform={`rotate(-90 24 ${M.top + PH / 2})`}
+            x={34} y={M.top + PH / 2} fontSize="15" fill="#9a928a" fontFamily="monospace" textAnchor="middle" letterSpacing="1"
+            transform={`rotate(-90 34 ${M.top + PH / 2})`}
           >
             VALUE TO INVESTING &amp; TRADING →
           </text>
