@@ -375,6 +375,11 @@ export const PROPOSED_PATH: PathStep[] = [
 export const ITERATION_LOG: LogEntry[] = [
   {
     date: '2026-08-22',
+    version: 'v4',
+    note: 'Strategy tab upgraded with the interactive discipline landscape: seventeen sub-disciplines scored on value-to-trading vs practitioner occupancy, hover/tap for schools and institutions, table view beneath. Four burgundy dots mark the claimed white space (climate transmission, market ecology, performativity, distributive incidence); the coarse four-quadrant read retained below the map.',
+  },
+  {
+    date: '2026-08-22',
     version: 'v3',
     note: 'Strategy tab added at /complexecon/strategy: the competitive map — eight schools plus the ADIA hub, the ten practitioner seats and their moats, six gaps with nearest occupants, and the four-quadrant read (runs-a-book × physical-systems is the open seat). Editorial layer over the CEcon landscape at complexity-economics.org (76 researchers, 5,300+ papers). Each gap names which research lane claims it; ergodicity gap deliberately parked.',
   },

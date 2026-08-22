@@ -267,6 +267,203 @@ export const QUADRANTS: Quadrant[] = [
   },
 ]
 
+// ─── The discipline landscape map ───
+// Positions are editorial scores (0-10), not measurements: x = how thoroughly
+// practitioners have already mined the ground, y = value to investing/trading
+// today. Label offsets are hand-tuned to avoid collisions at viewBox scale.
+
+export interface Discipline {
+  id: string
+  name: string
+  x: number // practitioner occupancy, 0-10
+  y: number // value to investing/trading, 0-10
+  open: boolean // true = white space claimed by the research lanes
+  where: string
+  people: string
+  valueNote: string
+  minedNote: string
+  claim?: string
+  labelAnchor: 'start' | 'end'
+  labelDy: number
+}
+
+export const DISCIPLINES: Discipline[] = [
+  {
+    id: 'microstructure',
+    name: 'Market microstructure & impact',
+    x: 9.3, y: 9.2, open: false,
+    where: 'CFM & École Polytechnique · Oxford Mathematical Institute · Boston University · Palermo',
+    people: 'Bouchaud, Cont, Stanley, Mantegna',
+    valueNote: 'Directly monetized for three decades — impact laws and order-flow dynamics are live inputs to execution and alpha at every systematic desk.',
+    minedNote: 'The most thoroughly mined ground in the field; entry requires proprietary tick data measured in decades.',
+    labelAnchor: 'end', labelDy: 5,
+  },
+  {
+    id: 'causal-ml',
+    name: 'Causal financial ML',
+    x: 7.3, y: 8.8, open: false,
+    where: 'Khalifa University · ADIA Lab · Cornell ORIE',
+    people: 'López de Prado',
+    valueNote: 'Backtest-overfitting discipline and causal identification — the current standard for whether quant research is believable at all.',
+    minedNote: 'Adjacent to complexity proper; heavily developed on method, still young on applications with real causal instruments.',
+    labelAnchor: 'end', labelDy: 30,
+  },
+  {
+    id: 'tails',
+    name: 'Tail risk & extreme value',
+    x: 8.3, y: 8.3, open: false,
+    where: 'NYU Tandon · Universa · EVT groups',
+    people: 'Taleb, Spitznagel',
+    valueNote: 'Tail hedging is a productized category with a public convexity track record.',
+    minedNote: 'The intellectual ground is fully claimed; the persona moat is absolute.',
+    labelAnchor: 'end', labelDy: 22,
+  },
+  {
+    id: 'leverage',
+    name: 'Leverage cycles & credit',
+    x: 5.4, y: 7.3, open: false,
+    where: 'Yale · Ellington Management · US Office of Financial Research',
+    people: 'Geanakoplos',
+    valueNote: 'Collateral rates as the hidden state variable of booms and busts — learned on an MBS desk, still underused outside credit.',
+    minedNote: 'Theory public, trading application private; occupied at the top, thin beneath.',
+    labelAnchor: 'start', labelDy: 24,
+  },
+  {
+    id: 'bubbles',
+    name: 'Bubble & crash diagnostics',
+    x: 6.3, y: 6.2, open: false,
+    where: 'ETH Zurich · SUSTech · Financial Crisis Observatory',
+    people: 'Sornette',
+    valueNote: 'LPPLS survives as one input among many on vol desks; contested empirical record caps its standalone value.',
+    minedNote: 'One brand owns the claim so completely that few will stand next to it.',
+    labelAnchor: 'start', labelDy: -12,
+  },
+  {
+    id: 'adaptive',
+    name: 'Adaptive markets',
+    x: 5.7, y: 5.4, open: false,
+    where: 'MIT Laboratory for Financial Engineering · AlphaSimplex',
+    people: 'Lo',
+    valueNote: 'Evolution replacing efficiency — an influential frame with mixed fund results.',
+    minedNote: 'The academic-legitimacy franchise is held; little room for a second occupant.',
+    labelAnchor: 'start', labelDy: -14,
+  },
+  {
+    id: 'networks',
+    name: 'Financial networks & systemic risk',
+    x: 3.9, y: 5.0, open: false,
+    where: 'CSH Vienna · University of Zurich · Bank of England · ECB · OFR',
+    people: 'Thurner, Battiston, Haldane, Bookstaber',
+    valueNote: 'Risk-management value more than alpha — contagion topology tells you what breaks, not what to buy.',
+    minedNote: 'Moated by supervisory data access; outsiders cannot reproduce the core results.',
+    labelAnchor: 'start', labelDy: 24,
+  },
+  {
+    id: 'supply-chains',
+    name: 'Production & supply-chain networks',
+    x: 3.2, y: 6.0, open: false,
+    where: 'MIT · Oxford INET · Paris 1',
+    people: 'Acemoglu, Pichler, Mandel',
+    valueNote: 'Shock propagation through input-output networks — proven relevant by COVID, tradable in single names, rarely traded systematically.',
+    minedNote: 'Academically active since 2020; practitioner adoption still shallow.',
+    labelAnchor: 'start', labelDy: -12,
+  },
+  {
+    id: 'tech-forecasting',
+    name: 'Technology forecasting',
+    x: 2.3, y: 6.9, open: false,
+    where: 'Oxford INET · Santa Fe Institute',
+    people: 'Farmer, Lafond, Way, McNerney',
+    valueNote: 'Wright’s-law cost curves called the solar and battery declines that consensus missed — directly relevant to thematic and energy-transition books.',
+    minedNote: 'Policy-facing by choice; almost nobody has converted it into positions.',
+    labelAnchor: 'start', labelDy: -12,
+  },
+  {
+    id: 'ergodicity',
+    name: 'Ergodicity economics',
+    x: 1.6, y: 5.5, open: false,
+    where: 'London Mathematical Laboratory · SFI orbit',
+    people: 'Peters',
+    valueNote: 'Time-average reasoning bears directly on position sizing and leverage — Kelly logic with a physics pedigree.',
+    minedNote: 'Huge practitioner resonance, almost no empirical asset-market tests. Open, but off the climate lane — deliberately parked.',
+    labelAnchor: 'start', labelDy: 22,
+  },
+  {
+    id: 'eci',
+    name: 'Economic complexity (ECI)',
+    x: 1.9, y: 4.3, open: false,
+    where: 'Harvard Growth Lab · Toulouse · Rome',
+    people: 'Hausmann, Hidalgo, Pietronero, Tacchella',
+    valueNote: 'Capability-based growth prediction — relevant to EM sovereign macro on multi-year horizons, too slow for most books.',
+    minedNote: 'Mature as development economics; never seriously joined to asset prices.',
+    labelAnchor: 'start', labelDy: 24,
+  },
+  {
+    id: 'het-agents',
+    name: 'Heterogeneous-agent finance',
+    x: 3.5, y: 4.6, open: false,
+    where: 'Amsterdam CeNDEF · Brandeis',
+    people: 'Hommes, LeBaron',
+    valueNote: 'Switching and herding models reproduce the stylized facts — explanatory value high, predictive value modest.',
+    minedNote: 'A settled literature; the low-hanging results are catalogued.',
+    labelAnchor: 'start', labelDy: 26,
+  },
+  {
+    id: 'abm-macro',
+    name: 'Agent-based macro',
+    x: 1.0, y: 2.6, open: false,
+    where: 'Sant’Anna Pisa · Milan Cattolica · Bielefeld · Kiel · Genoa',
+    people: 'Dosi, Roventini, Delli Gatti, Dawid, Lux',
+    valueNote: 'Policy experiments, not signals — the furthest school from prices.',
+    minedNote: 'Deep academic ecosystem, near-zero practitioner presence, and little reason for one.',
+    labelAnchor: 'start', labelDy: 24,
+  },
+  {
+    id: 'market-ecology',
+    name: 'Market ecology',
+    x: 1.0, y: 7.5, open: true,
+    where: 'Oxford INET — theory only, no empirical site',
+    people: 'Farmer',
+    valueNote: 'Strategies as species, markets as ecosystems — if made empirical, it predicts crowding and regime shifts, which is directly monetizable.',
+    minedNote: 'No public empirical implementation exists, because liquid markets never reveal who holds what.',
+    claim: 'Future lane: a small transparent power market (Nord Pool LT publishes near-complete data) is the fruit-fly organism this theory is waiting for.',
+    labelAnchor: 'start', labelDy: -12,
+  },
+  {
+    id: 'climate-transmission',
+    name: 'Climate & physical transmission',
+    x: 0.7, y: 8.7, open: true,
+    where: 'Iowa State (electricity ABM) · Oxford INET energy group · Zurich climate-finance — none price-facing; desks do it privately',
+    people: 'Tesfatsion, Farmer’s energy group, Battiston',
+    valueNote: 'Physical state variables are genuinely exogenous causal instruments — the identification quality causal financial ML demands and almost never gets.',
+    minedNote: 'Publicly near-empty: academics stop at policy, desks publish nothing.',
+    claim: 'Research Lanes I–III — the core of the climate-grids-balance-sheets program.',
+    labelAnchor: 'start', labelDy: -12,
+  },
+  {
+    id: 'performativity',
+    name: 'Performativity & conventions',
+    x: 0.6, y: 6.5, open: true,
+    where: 'Edinburgh · Sciences Po / Mines Paris · LSE',
+    people: 'MacKenzie, Callon, Muniesa',
+    valueNote: 'Knowing which conventions constitute prices is meta-alpha — it tells you which anomalies are structural and which will be arbitraged.',
+    minedNote: 'Written entirely by sociologists without books, about traders who do not write.',
+    claim: 'BR-3 and the valuation-conventions lane — one program, two empirical sites.',
+    labelAnchor: 'start', labelDy: 34,
+  },
+  {
+    id: 'incidence',
+    name: 'Distributive incidence',
+    x: 0.4, y: 3.7, open: true,
+    where: 'SFI · Columbia/Barnard · energy-poverty groups · the Abu Dhabi winter school itself',
+    people: 'Bowles, Sethi',
+    valueNote: 'Low direct trading value — its currency is research capital: the inequality frame SFI and ADIA fund, with market data nobody else brings.',
+    minedNote: 'Inequality and market design studied separately; never joined through live market data.',
+    claim: 'LT-4 and BR-4 — the Inequality Bridge and the Abu Dhabi paper.',
+    labelAnchor: 'start', labelDy: 24,
+  },
+]
+
 export const POSITION_STATEMENT =
   'Everyone who trades studies liquid-market microstructure; everyone who studies physical systems does not trade. The strategy is the unoccupied intersection: physically driven, fully observable small markets — traded in the Armstrong book, published through CEcon, framed by conventions and incidence for SFI and Abu Dhabi. Not a new method; the field’s existing methods, pointed somewhere they have never been pointed, by someone holding both the book and the pen.'
 

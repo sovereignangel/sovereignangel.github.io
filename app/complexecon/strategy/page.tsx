@@ -1,6 +1,8 @@
 import Link from 'next/link'
 import type { Metadata } from 'next'
+import DisciplineMap from '@/components/complexecon/DisciplineMap'
 import {
+  DISCIPLINES,
   GAPS,
   PRACTITIONERS,
   POSITION_STATEMENT,
@@ -159,12 +161,62 @@ export default function ComplexEconStrategyPage() {
           </div>
         </section>
 
+        {/* ─── The landscape map ─── */}
+        <section className="mb-12">
+          <SectionHeader numeral="×" title="The Landscape" />
+          <p className="mb-4 text-[17px] leading-relaxed text-ink-light">
+            Every sub-discipline of complexity economics placed by its value to investing and trading against how
+            thoroughly practitioners have already mined it. Filled burgundy dots are the white space the research
+            lanes claim; hollow dots are occupied ground. Hover or tap any dot for the schools and institutions
+            behind it. Scores are editorial judgments, stated so they can be argued with.
+          </p>
+          <DisciplineMap />
+
+          {/* Table view — the same data, readable without the chart */}
+          <div className="mt-4 overflow-x-auto rounded-sm border border-rule bg-white">
+            <table className="w-full min-w-[640px] border-collapse">
+              <thead>
+                <tr className="border-b-2 border-rule">
+                  <th className="p-2.5 text-left font-serif text-[17px] font-semibold uppercase tracking-[0.5px] text-burgundy">
+                    Discipline
+                  </th>
+                  <th className="p-2.5 text-center font-mono text-[14px] uppercase tracking-[0.5px] text-ink-muted">
+                    Value
+                  </th>
+                  <th className="p-2.5 text-center font-mono text-[14px] uppercase tracking-[0.5px] text-ink-muted">
+                    Mined
+                  </th>
+                  <th className="p-2.5 text-left font-mono text-[14px] uppercase tracking-[0.5px] text-ink-muted">
+                    Where
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {[...DISCIPLINES]
+                  .sort((a, b) => b.y - a.y)
+                  .map(d => (
+                    <tr key={d.id} className={`border-b border-rule-light last:border-b-0 ${d.open ? 'bg-burgundy-bg' : ''}`}>
+                      <td className="p-2.5">
+                        <span className={`text-[16px] font-semibold ${d.open ? 'text-burgundy' : 'text-ink'}`}>
+                          {d.name}
+                        </span>
+                      </td>
+                      <td className="p-2.5 text-center font-mono text-[15px] text-ink">{d.y}</td>
+                      <td className="p-2.5 text-center font-mono text-[15px] text-ink-muted">{d.x}</td>
+                      <td className="p-2.5 text-[15px] leading-snug text-ink-muted">{d.where}</td>
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
         {/* ─── The quadrants ─── */}
         <section className="mb-12">
-          <SectionHeader numeral="×" title="The Map in Four Quadrants" />
+          <SectionHeader numeral="◱" title="The Coarse Read" />
           <p className="mb-4 text-[17px] leading-relaxed text-ink-light">
-            Two axes: whether the work runs money, and whether it studies financial microstructure or physical-economic
-            systems.
+            The same map collapsed to two axes: whether the work runs money, and whether it studies financial
+            microstructure or physical-economic systems.
           </p>
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
             {QUADRANTS.map(q => (
