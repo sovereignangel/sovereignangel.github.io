@@ -6,6 +6,7 @@ import {
   directionLabel,
   kiteSizeHint,
   isRainyHour,
+  precipLabel,
   HOUR_CELL_COLOR,
   STRIP_START,
   STRIP_END,
@@ -67,8 +68,9 @@ export function HourStrip({ day, spot, nowHour }: { day: DayAnalysis; spot: Kite
               </div>
               {sel.precipMm >= 0.1 && (
                 <div className="font-mono text-[9px] text-white/80">
-                  rain {sel.precipMm.toFixed(1)}mm{sel.precipProb !== null ? ` · ${Math.round(sel.precipProb)}%` : ''}
-                  {isRainyHour(sel) ? ' · no kiting' : ''}
+                  {isRainyHour(sel) ? 'rain' : precipLabel(sel.precipMm)} {sel.precipMm.toFixed(1)}mm
+                  {sel.precipProb !== null ? ` · ${Math.round(sel.precipProb)}%` : ''}
+                  {isRainyHour(sel) ? ' · no kiting' : ' · kiteable'}
                 </div>
               )}
             </>

@@ -130,6 +130,8 @@ export interface KiteWindow {
   maxGustKn: number
   directionDeg: number
   directionLabel: string
+  /** Peak precip (mm/h) inside the window when it's drizzle-level — kiteable, just wet */
+  drizzleMm?: number
 }
 
 export type DayVerdict = 'good' | 'light' | 'calm' | 'strong' | 'offshore' | 'rain'
@@ -181,10 +183,18 @@ export function categorizeHour(h: HourForecast, spot: KiteSpot): HourCategory {
   return 'calm'
 }
 
-/** Meaningful rain: enough to call the session off, not a passing drizzle. */
+/**
+ * Meaningful rain: enough to call the session off. Drizzle stays kiteable —
+ * anything under 0.5 mm/h is never flagged, whatever the probability.
+ */
 export function isRainyHour(h: HourForecast): boolean {
   if (h.precipMm >= 1) return true
-  return h.precipMm >= 0.2 && (h.precipProb ?? 100) >= 60
+  return h.precipMm >= 0.5 && (h.precipProb ?? 100) >= 60
+}
+
+/** Precip light enough to ride through: drizzle under 0.5 mm/h, light rain above it. */
+export function precipLabel(mm: number): string {
+  return mm < 0.5 ? 'drizzle' : 'light rain'
 }
 
 /** Best contiguous run of >= 2 'ideal' hours; best = mean wind closest to 16 kn. */
@@ -204,6 +214,7 @@ function findBestWindow(daylight: HourForecast[], spot: KiteSpot): KiteWindow | 
         if (score > bestScore) {
           bestScore = score
           const mid = slice[Math.floor(slice.length / 2)]
+          const peakPrecip = Math.max(...slice.map(h => h.precipMm))
           best = {
             startHour: slice[0].hour,
             endHour: slice[slice.length - 1].hour + 1,
@@ -211,6 +222,7 @@ function findBestWindow(daylight: HourForecast[], spot: KiteSpot): KiteWindow | 
             maxGustKn: Math.round(Math.max(...slice.map(h => h.gustKn))),
             directionDeg: mid.directionDeg,
             directionLabel: directionLabel(mid.directionDeg, spot),
+            drizzleMm: peakPrecip >= 0.1 ? Math.round(peakPrecip * 10) / 10 : undefined,
           }
         }
       }
@@ -247,7 +259,7 @@ export function analyzeDay(
       peakSpeedKn,
       hours: daylight,
       endHour,
-      note: `${window.avgSpeedKn} kn ${window.directionLabel} — kite ${kiteSizeHint(window.avgSpeedKn)}`,
+      note: `${window.avgSpeedKn} kn ${window.directionLabel} — kite ${kiteSizeHint(window.avgSpeedKn)}${window.drizzleMm ? ` · ${precipLabel(window.drizzleMm)} ${window.drizzleMm}mm/h, still kiteable` : ''}`,
     }
   }
 

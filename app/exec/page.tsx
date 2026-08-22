@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { AuthProvider } from '@/components/auth/AuthProvider'
-import { fetchAllSpots, weekSessions, weekPossibles, type SpotForecast } from '@/lib/kite/lithuania-spots'
+import { fetchAllSpots, weekSessions, weekPossibles, precipLabel, type SpotForecast } from '@/lib/kite/lithuania-spots'
 import { getPlanDay, todayLocal, type PlanDay, type Sport } from '@/lib/ironman/plan'
 import {
   addDaysISO,
@@ -114,7 +114,7 @@ function kiteEventUrl(day: ExecWindDay, block: { startHour: number; endHour: num
     date: day.date,
     startMin: block.startHour * 60,
     endMin: block.endHour * 60,
-    details: `${p.avgKn} kn avg, gusts ${p.gustKn} kn, ${p.dirLabel}. Kite: ${p.kiteSize}. Full window ${fmtWindow(p.startHour, p.endHour)}.${p.possible ? ' EU model only — recheck the forecast before going.' : ''} loricorpuz.com/wind`,
+    details: `${p.avgKn} kn avg, gusts ${p.gustKn} kn, ${p.dirLabel}. Kite: ${p.kiteSize}. Full window ${fmtWindow(p.startHour, p.endHour)}.${p.drizzleMm !== undefined ? ` Expect ${precipLabel(p.drizzleMm)} ~${p.drizzleMm}mm/h — still kiteable.` : ''}${p.possible ? ' EU model only — recheck the forecast before going.' : ''} loricorpuz.com/wind`,
     location: `${block.spotName}, ${p.area}`,
   })
 }
@@ -143,6 +143,11 @@ function KiteDay({ label, day }: { label: string; day: ExecWindDay }) {
           </div>
           {day.pick.possible && (
             <div className="text-[9px] text-amber-ink mb-1">possible — EU model only, recheck closer to the hour</div>
+          )}
+          {day.pick.drizzleMm !== undefined && (
+            <div className="text-[10px] text-ink-muted mb-1">
+              {precipLabel(day.pick.drizzleMm)} in the window (~{day.pick.drizzleMm}mm/h) — still kiteable, ride through it
+            </div>
           )}
           {day.note && <div className="text-[10px] text-ink-muted mb-1.5">{day.note}</div>}
           <div className="flex flex-wrap gap-1.5 mt-1.5">

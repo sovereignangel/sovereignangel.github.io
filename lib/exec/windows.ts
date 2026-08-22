@@ -43,6 +43,8 @@ export interface ExecWindDay {
     dirLabel: string
     kiteSize: string
     possible: boolean
+    /** Peak drizzle (mm/h) in the window — light enough to ride through */
+    drizzleMm?: number
   } | null
   blocks: KiteBlock[]
   alternates: { spotName: string; startHour: number; endHour: number; avgKn: number }[]
@@ -124,6 +126,7 @@ export function buildExecWindDay(
       dirLabel: best.window.directionLabel,
       kiteSize: kiteSizeHint(best.window.avgSpeedKn),
       possible: usingPossible,
+      drizzleMm: best.window.drizzleMm,
     },
     blocks,
     alternates: picks.slice(1, 3).map((p) => ({
