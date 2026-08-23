@@ -37,12 +37,24 @@
       "schedule": "45 4 * * *"
     },
     {
+      "path": "/api/cron/exec-orders",
+      "schedule": "50 4 * * *"
+    },
+    {
+      "path": "/api/cron/exec-orders",
+      "schedule": "0 17 * * *"
+    },
+    {
       "path": "/api/weekly-calibration/generate",
       "schedule": "0 22 * * 0"
     },
     {
       "path": "/api/cron/finance-weekly",
       "schedule": "0 14 * * 0"
+    },
+    {
+      "path": "/api/cron/wind-observe",
+      "schedule": "0 * * * *"
     }
   ]
 }
