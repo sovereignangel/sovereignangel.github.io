@@ -12,7 +12,7 @@
  *   the workout moves to right after the last kite block.
  */
 
-import type { SessionPick } from '@/lib/kite/lithuania-spots'
+import type { SessionPick, SpotForecast } from '@/lib/kite/lithuania-spots'
 import { kiteSizeHint } from '@/lib/kite/lithuania-spots'
 import type { PlanDay } from '@/lib/ironman/plan'
 
@@ -137,6 +137,47 @@ export function buildExecWindDay(
     })),
     note,
   }
+}
+
+// ── Spot reconciliation ───────────────────────────────────────────────────
+
+export type SpotState = 'rideable' | 'possible' | 'hazard' | 'flat'
+
+export interface SpotStatus {
+  spotName: string
+  spotSlug: string
+  state: SpotState
+  /** Short phrase using the same vocabulary as the /wind forecast grid */
+  label: string
+}
+
+/**
+ * Every spot's standing for one day, in the same words the /wind grid uses.
+ * /exec issues a single order, so without this the page looks like it is
+ * contradicting the forecast grid whenever the grid is shouting "offshore"
+ * about a spot that /exec simply did not pick.
+ */
+export function spotStatuses(date: string, forecasts: SpotForecast[]): SpotStatus[] {
+  return forecasts.map((f) => {
+    const base = { spotName: f.spot.name, spotSlug: f.spot.slug }
+    const day = f.days.find((d) => d.date === date)
+    if (!day) return { ...base, state: 'flat' as const, label: 'no forecast' }
+    if (day.window) {
+      return {
+        ...base,
+        state: 'rideable' as const,
+        label: `${fmtWindow(day.window.startHour, day.window.endHour)} · ${day.window.avgSpeedKn} kn`,
+      }
+    }
+    if (day.verdict === 'offshore') return { ...base, state: 'hazard' as const, label: 'offshore — do not ride' }
+    if (day.verdict === 'strong') return { ...base, state: 'hazard' as const, label: `too strong · peak ${day.peakSpeedKn} kn` }
+    if (day.verdict === 'rain') return { ...base, state: 'hazard' as const, label: 'rain all day' }
+    if (day.altWindow) {
+      return { ...base, state: 'possible' as const, label: `possible ${day.altWindow.avgSpeedKn} kn — EU model only` }
+    }
+    if (day.verdict === 'light') return { ...base, state: 'flat' as const, label: `light · peak ${day.peakSpeedKn} kn` }
+    return { ...base, state: 'flat' as const, label: `no wind · peak ${day.peakSpeedKn} kn` }
+  })
 }
 
 // ── Ironman slot ──────────────────────────────────────────────────────────

@@ -118,6 +118,28 @@ const config: Config = {
         'surf-coral': '#c94f35',
         'surf-coral-bg': 'rgba(201, 79, 53, 0.10)',
         'surf-navy': '#1f3a45',
+        // Ironman — same structure as the surf palette, burgundy where surf is teal.
+        // Alerts stay coral, never burgundy, so the brand accent and the warning
+        // colour can never be confused for one another.
+        'iron-deep': '#5e1f24',
+        'iron-burgundy': '#8f2d33',
+        'iron-burgundy-bg': 'rgba(143, 45, 51, 0.10)',
+        'iron-blush': '#f2dede',
+        'iron-sand': '#f2ecdf',
+        'iron-card': '#fffdf7',
+        'iron-ink': '#3b2f2f',
+        'iron-muted': '#8a7c7c',
+        'iron-faint': '#c3b8b8',
+        'iron-rule': '#dfd3c4',
+        'iron-rule-light': '#ece3d4',
+        'iron-gold': '#d9a441',
+        'iron-gold-ink': '#8a6420',
+        'iron-gold-bg': 'rgba(217, 164, 65, 0.12)',
+        'iron-green': '#2d6b4a',
+        'iron-green-bg': 'rgba(45, 107, 74, 0.10)',
+        'iron-coral': '#c94f35',
+        'iron-coral-bg': 'rgba(201, 79, 53, 0.10)',
+        'iron-night': '#3d1f22',
       },
       fontFamily: {
         serif: ['var(--font-crimson)', 'Georgia', 'serif'],

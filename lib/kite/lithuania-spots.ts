@@ -380,14 +380,26 @@ export interface SessionPick {
 }
 
 /**
+ * Verdicts where the primary model is calling the day unsafe or unrideable
+ * rather than merely light. A second model finding a window on such a day is
+ * a disagreement about direction or gust strength, not about wind volume —
+ * never enough to turn it into a recommendation.
+ */
+const HAZARD_VERDICTS: readonly DayVerdict[] = ['offshore', 'strong', 'rain']
+
+/**
  * Days where GFS (the primary, Windguru's model) shows no window but the EU
  * blend does — "possible" sessions worth re-checking as the day approaches.
+ * Hazard days are excluded so /exec can never recommend a spot that the
+ * forecast grid is simultaneously marking "do not ride here".
  */
 export function weekPossibles(forecasts: SpotForecast[]): SessionPick[] {
   const picks: SessionPick[] = []
   for (const f of forecasts) {
     for (const day of f.days) {
-      if (!day.window && day.altWindow) picks.push({ date: day.date, spot: f.spot, window: day.altWindow })
+      if (!day.window && day.altWindow && !HAZARD_VERDICTS.includes(day.verdict)) {
+        picks.push({ date: day.date, spot: f.spot, window: day.altWindow })
+      }
     }
   }
   return picks.sort(bySessionPriority)

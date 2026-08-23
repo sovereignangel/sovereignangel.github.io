@@ -15,21 +15,44 @@ import { useAuth } from '@/components/auth/AuthProvider'
 import { getAllGarminMetrics, getAllGarminActivities, getGarminRollups } from '@/lib/firestore'
 import { getKiteSessions, getGarminKiteSessions, getKiteProgress } from '@/lib/firestore/kite-sessions'
 import type { GarminMetrics, GarminActivity } from '@/lib/types'
-import { getPlanDay } from '@/lib/ironman/plan'
+import { getPlanDay, type Sport } from '@/lib/ironman/plan'
+import { SportIcon } from '@/components/ironman/IronmanIcons'
 import { computeRaceForecast, paceForProbability, type DisciplineForecast } from '@/lib/ironman/forecast'
 import { computeReadiness, adaptDay } from '@/lib/ironman/adapt'
 import { computeKiteStats } from '@/lib/kite/belts'
 import { nextMilestones, type NextMilestone } from '@/lib/kite/paths'
 
-function SignInInline({ label }: { label: string }) {
+type Tone = 'surf' | 'iron'
+
+const TONE = {
+  surf: {
+    muted: 'text-surf-muted',
+    ink: 'text-surf-ink',
+    accent: 'text-surf-teal',
+    rule: 'border-surf-rule-light',
+    pulse: 'bg-surf-rule-light',
+    button: 'text-surf-deep border-surf-teal/40 hover:border-surf-teal',
+  },
+  iron: {
+    muted: 'text-iron-muted',
+    ink: 'text-iron-ink',
+    accent: 'text-iron-burgundy',
+    rule: 'border-iron-rule-light',
+    pulse: 'bg-iron-rule-light',
+    button: 'text-iron-deep border-iron-burgundy/40 hover:border-iron-burgundy',
+  },
+} as const
+
+function SignInInline({ label, tone }: { label: string; tone: Tone }) {
   const { signIn, loading } = useAuth()
+  const t = TONE[tone]
   return (
     <div className="flex items-center gap-2 py-1">
-      <span className="text-[10px] text-ink-muted">{label}</span>
+      <span className={`text-[10px] ${t.muted}`}>{label}</span>
       <button
         onClick={signIn}
         disabled={loading}
-        className="font-serif text-[10px] font-medium px-2 py-1 rounded-sm border bg-transparent text-burgundy border-burgundy/40 hover:border-burgundy transition-colors disabled:opacity-50"
+        className={`font-serif text-[10px] font-medium px-2 py-1 rounded-md border bg-transparent transition-colors disabled:opacity-50 ${t.button}`}
       >
         Sign in
       </button>
@@ -37,8 +60,8 @@ function SignInInline({ label }: { label: string }) {
   )
 }
 
-function Pulse({ h = 'h-16' }: { h?: string }) {
-  return <div className={`${h} bg-rule-light rounded-sm animate-pulse`} />
+function Pulse({ h = 'h-16', tone }: { h?: string; tone: Tone }) {
+  return <div className={`${h} ${TONE[tone].pulse} rounded-lg animate-pulse`} />
 }
 
 // ── Garmin data hook (rollups first, full scan fallback — same as /ironman) ─
@@ -84,12 +107,12 @@ function fmtPace(sport: string, paceMinKm: number | null): string {
 }
 
 function probColor(p: number | null): string {
-  if (p == null) return '#9a928a'
-  return p >= 0.5 ? '#2d5f3f' : p >= 0.25 ? '#8a6d2f' : '#8c2d2d'
+  if (p == null) return '#8a7c7c'
+  return p >= 0.5 ? '#2d6b4a' : p >= 0.25 ? '#8a6d2f' : '#c94f35'
 }
 
 const SPORT_LABEL: Record<string, string> = { swim: 'SWIM', bike: 'BIKE', run: 'RUN' }
-const SPORT_COLOR: Record<string, string> = { swim: '#2d4a5f', bike: '#7c2d2d', run: '#2d5f3f' }
+const SPORT_COLOR: Record<string, string> = { swim: '#2d5f6b', bike: '#8f2d33', run: '#2d6b4a' }
 
 export function ExecIronmanLive({ today }: { today: string }) {
   const { user, metrics, activities } = useGarminData()
@@ -105,30 +128,30 @@ export function ExecIronmanLive({ today }: { today: string }) {
     return adaptDay(day, computeReadiness(metrics, activities, today))
   }, [metrics, activities, today])
 
-  if (!user) return <SignInInline label="Goal odds and readiness need your Garmin data." />
-  if (!forecast) return <Pulse h="h-24" />
+  if (!user) return <SignInInline tone="iron" label="Goal odds and readiness need your Garmin data." />
+  if (!forecast) return <Pulse h="h-24" tone="iron" />
 
   const rows: DisciplineForecast[] = forecast.disciplines
 
   return (
     <div>
       {adaptation && (
-        <div className="mb-2 pb-2 border-b border-rule-light">
+        <div className="mb-2 pb-2 border-b border-iron-rule-light">
           <span
-            className="font-mono text-[9px] uppercase px-1.5 py-0.5 rounded-sm border"
+            className="font-mono text-[9px] uppercase px-1.5 py-0.5 rounded-md border"
             style={{
               color:
-                adaptation.level === 'as-planned' ? '#2d5f3f'
+                adaptation.level === 'as-planned' ? '#2d6b4a'
                 : adaptation.level === 'ease-intensity' ? '#8a6d2f'
-                : adaptation.level === 'no-data' ? '#9a928a'
-                : '#8c2d2d',
-              borderColor: '#d8d0c833',
-              backgroundColor: '#faf8f4',
+                : adaptation.level === 'no-data' ? '#8a7c7c'
+                : '#c94f35',
+              borderColor: '#dfd3c433',
+              backgroundColor: '#fffdf7',
             }}
           >
             {adaptation.headline}
           </span>
-          <span className="text-[10px] text-ink-muted ml-2">{adaptation.note}</span>
+          <span className="text-[10px] text-iron-muted ml-2">{adaptation.note}</span>
         </div>
       )}
       <div className="space-y-1.5">
@@ -139,23 +162,24 @@ export function ExecIronmanLive({ today }: { today: string }) {
           return (
             <div key={d.sport} className="flex items-baseline gap-2 flex-wrap">
               <span
-                className="font-mono text-[8px] uppercase px-1.5 py-0.5 rounded-sm border shrink-0"
+                className="inline-flex items-center gap-1 font-mono text-[9px] uppercase tracking-[0.3px] px-1.5 py-0.5 rounded-md border shrink-0"
                 style={{ color: SPORT_COLOR[d.sport], borderColor: SPORT_COLOR[d.sport] + '33', backgroundColor: SPORT_COLOR[d.sport] + '0d' }}
               >
+                <SportIcon sport={d.sport as Sport} className="w-3 h-3 shrink-0" />
                 {SPORT_LABEL[d.sport]}
               </span>
               <span className="font-mono text-[13px] font-semibold w-[40px]" style={{ color: probColor(d.probability) }}>
                 {d.probability == null ? '—' : `${Math.round(d.probability * 100)}%`}
               </span>
-              <span className="text-[10px] text-ink-muted">
+              <span className="text-[10px] text-iron-muted">
                 {d.probability == null ? (
                   'no sessions yet'
                 ) : (
                   <>
-                    on track for <span className="font-mono text-ink">{fmtPace(d.sport, d.projectedPaceMinKm)}</span>
+                    on track for <span className="font-mono text-iron-ink">{fmtPace(d.sport, d.projectedPaceMinKm)}</span>
                     {needed != null && !alreadyThere && (
                       <>
-                        {' '}· hold <span className="font-mono font-medium text-burgundy">{fmtPace(d.sport, needed)}</span> in
+                        {' '}· hold <span className="font-mono font-medium text-iron-burgundy">{fmtPace(d.sport, needed)}</span> in
                         sessions to reach {Math.round(target * 100)}%
                       </>
                     )}
@@ -167,13 +191,13 @@ export function ExecIronmanLive({ today }: { today: string }) {
           )
         })}
       </div>
-      <div className="flex items-baseline gap-2 mt-2 pt-2 border-t border-rule-light">
-        <span className="text-[10px] text-ink-muted">All three goals at NYC</span>
+      <div className="flex items-baseline gap-2 mt-2 pt-2 border-t border-iron-rule-light">
+        <span className="text-[10px] text-iron-muted">All three goals at NYC</span>
         <span className="font-mono text-[16px] font-semibold" style={{ color: probColor(forecast.allThree) }}>
           {forecast.allThree == null ? '—' : `${Math.round(forecast.allThree * 100)}%`}
         </span>
         {forecast.recoveryAdj !== 0 && (
-          <span className="text-[9px] text-ink-muted">
+          <span className="text-[10px] text-iron-muted">
             recovery {forecast.recoveryAdj > 0 ? '+' : ''}
             {Math.round(forecast.recoveryAdj * 100)}pts
           </span>
@@ -199,24 +223,24 @@ export function ExecDrills() {
       .catch(() => setDrills([]))
   }, [user])
 
-  if (!user) return <SignInInline label="Drills come from your mastery ladder." />
-  if (drills === null) return <Pulse h="h-20" />
-  if (drills.length === 0) return <div className="text-[10px] text-ink-muted py-1">Ladder complete — free ride.</div>
+  if (!user) return <SignInInline tone="surf" label="Drills come from your mastery ladder." />
+  if (drills === null) return <Pulse h="h-20" tone="surf" />
+  if (drills.length === 0) return <div className="text-[10px] text-surf-muted py-1">Ladder complete — free ride.</div>
 
   return (
     <div className="space-y-1.5">
       {drills.map((d, i) => (
         <div key={d.milestone.id} className="flex gap-2">
-          <span className="font-mono text-[10px] font-semibold text-burgundy shrink-0 w-3">{i + 1}</span>
+          <span className="font-mono text-[10px] font-semibold text-surf-teal shrink-0 w-3">{i + 1}</span>
           <div className="min-w-0">
             <div className="flex items-baseline gap-1.5 flex-wrap">
-              <span className="text-[11px] font-semibold text-ink">{d.milestone.label}</span>
-              <span className="font-mono text-[8px] uppercase text-ink-muted">
+              <span className="text-[11px] font-semibold text-surf-ink">{d.milestone.label}</span>
+              <span className="font-mono text-[9px] uppercase text-surf-muted">
                 {d.source}
                 {d.queued ? ' · next up' : ''}
               </span>
             </div>
-            <p className="text-[10px] text-ink-muted leading-relaxed">{d.milestone.drill}</p>
+            <p className="text-[10px] text-surf-muted leading-relaxed">{d.milestone.drill}</p>
           </div>
         </div>
       ))}
