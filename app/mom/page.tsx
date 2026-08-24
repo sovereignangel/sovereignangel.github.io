@@ -25,7 +25,7 @@ const TERMS: Record<string, TermDef> = {
   },
   prednisone: {
     title: 'Prednisone',
-    def: 'A strong pill that calms inflammation down. It works. But taking it for many years quietly costs you something in your bones, blood sugar, blood pressure, sleep and mood — and those costs are supposed to be measured.',
+    def: 'A strong pill that reduces inflammation. It is effective. Long-term use has documented effects on bone density, blood sugar, blood pressure, sleep and mood, and those are supposed to be monitored.',
     es: 'Prednisona — un corticoide',
   },
   tinnitus: {
@@ -40,7 +40,7 @@ const TERMS: Record<string, TermDef> = {
   },
   bppv: {
     title: 'The crystal kind of vertigo',
-    def: 'The most common cause of spinning. Tiny crystals inside the ear come loose and float where they should not. This is the good-news kind: a doctor can often fix it in one visit by moving your head in a set pattern.',
+    def: 'The most common cause of spinning. Tiny crystals inside the ear come loose and float where they should not. It is the most treatable kind: a doctor can often correct it in one visit by moving your head in a set pattern.',
     es: 'VPPB — vértigo posicional paroxístico benigno',
   },
   dixhallpike: {
@@ -120,7 +120,7 @@ const TERMS: Record<string, TermDef> = {
   },
   ototoxic: {
     title: 'Ear-harming medicines',
-    def: 'Some ordinary, widely used medicines can affect the inner ear and cause ringing or spinning. Nobody is doing anything wrong — it is just a known side effect that has to be checked against your list.',
+    def: 'Some ordinary, widely used medicines can affect the inner ear and cause ringing or spinning. It is a known side effect, and it has to be checked against your medicine list.',
     es: 'Medicamentos ototóxicos',
   },
   b12: {
@@ -269,44 +269,38 @@ const RECORD_PCT = Math.round(
    to in a text message: "answered Q1 and Q4".
    ============================================================ */
 
-type Q = { id: string; q: string; why: string; pri: 'now' | 'next' | 'later' }
+type Q = { id: string; q: string; why: string }
 
 const Q_RINGING: Q[] = [
   {
     id: 'q1',
     q: 'Does the ringing beat in time with your heart? Put two fingers on your wrist, feel your pulse, and listen.',
     why: 'This is the single highest-value answer on the page. If it beats with your pulse, the ringing is about blood flow — and you already have a blood-vessel condition. That is a different doctor and a different test. If it does not, it is about hearing.',
-    pri: 'now',
   },
   {
     id: 'q2',
     q: 'Is it in one ear, or both?',
     why: 'One ear only gets taken more seriously and usually gets scanned. Both ears points somewhere else.',
-    pri: 'now',
   },
   {
     id: 'q3',
     q: 'Roughly what year did it start? What else changed around then — especially a new pill?',
     why: 'Several common medicines can start a ringing. If yours began within a few months of a new prescription, that is the very first thing to check.',
-    pri: 'now',
   },
   {
     id: 'q4',
     q: 'Has anyone ever tested your hearing with headphones in a quiet booth?',
     why: 'If not, then nobody has ever actually measured the thing that has been bothering you every day.',
-    pri: 'now',
   },
   {
     id: 'q5',
     q: 'Is it worse at certain times of day, or after certain things — salty food, coffee, stress, a bad night of sleep?',
-    why: 'A pattern is a clue. No pattern is also a clue.',
-    pri: 'next',
+    why: 'Triggers narrow the cause. No triggers narrows it too — both results are useful.',
   },
   {
     id: 'q6',
     q: 'Does your hearing feel muffled or worse in the ringing ear?',
     why: 'Ringing plus changed hearing plus spinning is a specific picture that has its own name and its own treatment.',
-    pri: 'next',
   },
 ]
 
@@ -315,31 +309,26 @@ const Q_DIZZY: Q[] = [
     id: 'q7',
     q: 'When it hits, does the room spin — or do you feel faint, like you might pass out?',
     why: 'Spinning points to the ear. Faint points to the heart or blood pressure. Two different departments, and you have reasons to consider both.',
-    pri: 'now',
   },
   {
     id: 'q8',
     q: 'Does it start when you roll over in bed, lie down, or tip your head back?',
     why: 'If yes, it is probably the most common and most fixable kind — often solved in a single visit.',
-    pri: 'now',
   },
   {
     id: 'q9',
     q: 'How long does one episode last — seconds, minutes, or hours?',
     why: 'Seconds points one way. Twenty minutes to a few hours points another. All day points to a third. The clock is the diagnosis.',
-    pri: 'now',
   },
   {
     id: 'q10',
     q: 'Have you ever fallen, or nearly fallen, because of it?',
     why: 'A fall changes the urgency of everything on this page. It is also the fastest way to lose independent years.',
-    pri: 'now',
   },
   {
     id: 'q11',
     q: 'Does it come with nausea, headache, or changes in your vision?',
     why: 'It separates an ear problem from a migraine problem, which is more common than people expect.',
-    pri: 'next',
   },
 ]
 
@@ -348,37 +337,31 @@ const Q_PILLS: Q[] = [
     id: 'q12',
     q: 'What is every pill you take right now — the name, the dose, and how many times a day?',
     why: 'Nothing else on this page can move forward without this. Photograph every bottle, front label and pharmacy sticker.',
-    pri: 'now',
   },
   {
     id: 'q13',
     q: 'What year did you start prednisone? “Around when we moved” is a good enough answer.',
     why: 'The number of years on prednisone decides which checks you are owed. Right now nobody knows the number.',
-    pri: 'now',
   },
   {
     id: 'q14',
     q: 'What dose are you on today? Has it ever been lowered? What happened when it was?',
     why: 'Lowered and held is one story. Lowered and put straight back up is a completely different one, and it changes the next conversation.',
-    pri: 'now',
   },
   {
     id: 'q15',
     q: 'Which pharmacy do you use, and have you used it for years?',
     why: 'A pharmacy can print your entire fill history in one visit. That single printout could fill most of the empty bars in section 01.',
-    pri: 'now',
   },
   {
     id: 'q16',
     q: 'Were you ever given a second medicine so the prednisone could come down?',
     why: 'If the answer is no after all these years, that is a fair and specific question to put to your specialist.',
-    pri: 'next',
   },
   {
     id: 'q17',
     q: 'Is there any pill you stopped taking? Which one, and why?',
     why: 'What was stopped, and what happened after, is often more informative than what you are still on.',
-    pri: 'next',
   },
 ]
 
@@ -387,44 +370,37 @@ const Q_HISTORY: Q[] = [
     id: 'q18',
     q: 'What year were you told you had myositis? Which doctor, which city?',
     why: 'Everything you have taken since then rests on that one appointment.',
-    pri: 'now',
   },
   {
     id: 'q19',
     q: 'Was a small piece of muscle ever taken and looked at under a microscope? What year?',
     why: 'It is the difference between a confirmed diagnosis and one that was assumed and then carried forward for decades.',
-    pri: 'now',
   },
   {
     id: 'q20',
     q: 'Do you have a login to any patient portal or online health account?',
     why: 'Most systems let you download years of results in one click. This is the single fastest way to fill this page.',
-    pri: 'now',
   },
   {
     id: 'q21',
     q: 'What year were you told about your arteries, and what were you told to do about it?',
     why: 'It dates the second condition and tells us which medicines should have started around then.',
-    pri: 'next',
   },
   {
     id: 'q22',
     q: 'Which hospitals and clinics have you been to, roughly which years — in Panama, in Arkansas, and since?',
     why: 'Records still exist in those buildings. They can be requested, but only if we know where to write.',
-    pri: 'next',
   },
   {
     id: 'q23',
     q: 'Your parents and your brothers and sisters — heart trouble, muscle trouble, hearing loss, diabetes? At what ages?',
     why: 'It is free information that changes how seriously a doctor treats a borderline number.',
-    pri: 'later',
   },
 ]
 
 const Q_TOTAL = Q_RINGING.length + Q_DIZZY.length + Q_PILLS.length + Q_HISTORY.length
 
 function QTable({ rows }: { rows: Q[] }) {
-  const chip = { now: 'Start here', next: 'Next', later: 'When you can' }
   return (
     <div className="tbl-wrap">
       <table>
@@ -442,8 +418,6 @@ function QTable({ rows }: { rows: Q[] }) {
                 <a className="refid" href={`#${r.id}`}>
                   {r.id.toUpperCase()}
                 </a>
-                <br />
-                <span className={`chip ${r.pri}`}>{chip[r.pri]}</span>
               </td>
               <td className="q">{r.q}</td>
               <td className="why">{r.why}</td>
@@ -544,15 +518,15 @@ const HYPOTHESES: { id: string; letter: string; title: string; body: JSX.Element
   {
     id: 'h-e',
     letter: 'Idea E',
-    title: 'The original diagnosis deserves one honest re-check',
+    title: 'The original diagnosis has never been re-confirmed',
     body: (
       <p>
         If you are treated for your arteries you are likely on a <T k="statin">statin</T>, and
         statins can cause muscle aching
         and weakness that looks a lot like <T k="myositis">myositis</T>. If both have been running
         for years, it is possible nobody has ever separated the two. It is also possible the
-        original diagnosis is exactly right — but after this many years on{' '}
-        <T k="prednisone">prednisone</T>, it is a fair thing to confirm rather than assume.
+        original diagnosis is correct. After this many years on{' '}
+        <T k="prednisone">prednisone</T>, it should be confirmed rather than assumed.
       </p>
     ),
     test: (
@@ -566,13 +540,14 @@ const HYPOTHESES: { id: string; letter: string; title: string; body: JSX.Element
   {
     id: 'h-f',
     letter: 'Idea F',
-    title: 'Decades of prednisone have a bill, and nobody has opened it',
+    title: 'Decades of prednisone, with none of the standard monitoring done',
     body: (
       <p>
-        Prednisone is a good drug that saves function and sometimes lives. It also has a known
-        long-term price: bones, blood sugar, blood pressure, eyes, mood, sleep. The standard of care
-        is to measure those things regularly. As far as we know, none of them have been measured.
-        That is not a reason to stop the medicine — it is a reason to check the bill.
+        Prednisone is effective and often necessary. It also has documented long-term effects:
+        bone density, blood sugar, blood pressure, eyes, mood, sleep. The standard of care is to
+        monitor those regularly. As far as we know, none have been measured. This is not a reason
+        to stop the medicine — stopping long-term steroids suddenly is dangerous. It is a reason to
+        measure.
       </p>
     ),
     test: (
@@ -586,13 +561,13 @@ const HYPOTHESES: { id: string; letter: string; title: string; body: JSX.Element
   {
     id: 'h-g',
     letter: 'Idea G',
-    title: 'The irritability has three possible sources, treated three different ways',
+    title: 'The irritability has three candidate causes, each treated differently',
     body: (
       <p>
-        Irritability every day is a symptom, not a personality. It has candidates: prednisone
-        itself is well known for it; sleep destroyed nightly by a ringing ear
-        will do it to anyone; and decades of being unwell wears down mood on its own. Those three
-        are treated completely differently, so guessing is expensive.
+        Daily irritability has three candidate causes. Prednisone is a documented cause of mood
+        change. Chronic sleep disruption from tinnitus is a second. Decades of chronic illness is a
+        third. Each has a different treatment, so the cause has to be identified before anything is
+        prescribed.
       </p>
     ),
     test: (
@@ -764,8 +739,8 @@ export default function MomPage() {
               Your <em>Healthspan</em> Hub
             </h1>
             <p className="standfirst">
-              Every medicine, date, test result and number in one place — so we can find what is
-              actually making you feel bad, test it, and add good years.
+              Every medicine, date, test result and number in one place — to identify what is
+              causing your symptoms, test it, and add functional years.
             </p>
             <p className="hint">
               Any word with a dotted underline — like <T k="healthspan">healthspan</T> — has a plain
@@ -787,8 +762,8 @@ export default function MomPage() {
             </p>
             <p>
               This page is the fix. Everything in one place — the medicines, the dates, the
-              results, the numbers as they move. Then we look for patterns, write down what we
-              think is going on, and test it one idea at a time. <b>Right now it is {RECORD_PCT}%
+              results, the numbers as they move. Then we look for patterns, record the likely
+              cause, and test one hypothesis at a time. <b>Right now it is {RECORD_PCT}%
               built,</b> and the rest is waiting on you: photographs, printouts, and remembering.
             </p>
           </div>
@@ -1066,8 +1041,8 @@ export default function MomPage() {
             >
               <p className="lede">
                 A running list that grows as answers come in. None of these need a doctor — they
-                need you, twenty minutes at a time. The ones marked “start here” are the ones that
-                change what happens next.
+                need you, twenty minutes at a time. They are ordered within each group by how
+                much the answer changes.
               </p>
 
               <Fold id="q-ringing" num="Q1–Q6" title="About the ringing" sub="6 questions" nested>
@@ -1613,12 +1588,11 @@ export default function MomPage() {
               deciding instead of reconstructing.
             </p>
             <p>
-              The goal is not to live longer. The goal is more good years — walking, travelling,
-              hearing quiet, sleeping through the night, and not being irritable at people you love
-              because of a sound nobody has ever measured.
+              The objective is not more years. It is more functional years — mobility, hearing,
+              uninterrupted sleep, stable mood. Every item on this page maps to one of those four.
             </p>
             <p style={{ fontFamily: '"Petrona", Georgia, serif', fontSize: '24px', fontWeight: 600 }}>
-              Let’s have this page full by October 26.
+              Target: this record complete by October 26.
             </p>
             <p className="signoff">
               A preparation sheet, not medical advice · Sections 01–04 are real · Section 05 is an

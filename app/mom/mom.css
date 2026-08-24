@@ -306,21 +306,6 @@
 .mom-root .ok{color:var(--green)}
 .mom-root .muted{color:var(--ink-soft)}
 
-/* priority chips */
-.mom-root .chip{
-  font-family:"IBM Plex Mono",ui-monospace,monospace;
-  font-size:10px;
-  letter-spacing:.1em;
-  text-transform:uppercase;
-  padding:3px 7px;
-  border:1px solid currentColor;
-  white-space:nowrap;
-  display:inline-block;
-}
-.mom-root .chip.now{color:var(--flag)}
-.mom-root .chip.next{color:var(--pen)}
-.mom-root .chip.later{color:var(--ink-soft)}
-
 /* ---------- hypothesis blocks ---------- */
 .mom-root .gap{
   border-left:3px solid var(--flag);
@@ -819,7 +804,7 @@
 }
 
 /* reference chips sit above the priority chip in the question tables */
-.mom-root td .refid{display:inline-block;margin-bottom:7px}
+.mom-root td .refid{display:inline-block}
 
 /* the example stamp now lives inside a fold rather than a full-bleed band */
 .mom-root .stamp{
