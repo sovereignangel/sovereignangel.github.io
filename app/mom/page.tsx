@@ -1588,8 +1588,8 @@ export default function MomPage() {
               deciding instead of reconstructing.
             </p>
             <p>
-              The objective is not more years. It is more functional years — mobility, hearing,
-              uninterrupted sleep, stable mood. Every item on this page maps to one of those four.
+              The objective is functional years — mobility, hearing, uninterrupted sleep, stable
+              mood. Every item on this page maps to one of those four.
             </p>
             <p style={{ fontFamily: '"Petrona", Georgia, serif', fontSize: '24px', fontWeight: 600 }}>
               Target: this record complete by October 26.
