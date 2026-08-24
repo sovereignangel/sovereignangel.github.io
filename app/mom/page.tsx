@@ -700,7 +700,7 @@ export default function MomPage() {
 
   useEffect(() => {
     const now = new Date()
-    const bday = new Date(2026, 9, 24) // October 24, 2026
+    const bday = new Date(2026, 9, 26) // October 26, 2026
     const ms = bday.getTime() - new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime()
     setDaysToBirthday(Math.max(0, Math.round(ms / 86400000)))
   }, [])
@@ -909,7 +909,7 @@ export default function MomPage() {
               </div>
 
               <p>
-                You also turn <b>60 on October 24, 2026</b>
+                You also turn <b>60 on October 26, 2026</b>
                 {daysToBirthday !== null && <> — {daysToBirthday} days from today</>}. That is the
                 one date on this entire page we are sure about. Sixty is exactly the age when the
                 tests nobody has done yet start to matter most.
@@ -1016,7 +1016,7 @@ export default function MomPage() {
                       fontWeight="600"
                       textAnchor="end"
                     >
-                      October 24, 2026 — you turn 60
+                      October 26, 2026 — you turn 60
                     </text>
                   </svg>
                 </div>
@@ -1623,7 +1623,7 @@ export default function MomPage() {
               because of a sound nobody has ever measured.
             </p>
             <p style={{ fontFamily: '"Petrona", Georgia, serif', fontSize: '24px', fontWeight: 600 }}>
-              Let’s have this page full by October 24.
+              Let’s have this page full by October 26.
             </p>
             <p className="signoff">
               A preparation sheet, not medical advice · Sections 01–04 are real · Section 05 is an
