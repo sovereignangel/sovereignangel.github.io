@@ -45,7 +45,8 @@ export async function GET(request: NextRequest) {
 
   // Dry runs may probe a specific hour so the pairing can be exercised
   // outside daylight. Never available on a write path.
-  const probe = dry ? Number(request.nextUrl.searchParams.get('hour')) : NaN
+  const hourParam = dry ? request.nextUrl.searchParams.get('hour') : null
+  const probe = hourParam === null ? NaN : Number(hourParam)
   const hour = Number.isInteger(probe) && probe >= 0 && probe <= 23 ? probe : nowHour
 
   if (hour < OBS_START_HOUR || hour > OBS_END_HOUR) {
@@ -60,7 +61,7 @@ export async function GET(request: NextRequest) {
   try {
     // Independent sources: one failing should not cost us the other half
     const [station, forecast] = await Promise.all([
-      fetchJuraspotLive().catch(() => null),
+      fetchJuraspotLive(true).catch(() => null),
       fetchSpotForecast(spot).catch(() => null),
     ])
 

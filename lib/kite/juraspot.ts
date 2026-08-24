@@ -41,9 +41,12 @@ export interface JuraspotLive {
   directionDeg: number | null
 }
 
-async function fetchGaugeRgba(name: string): Promise<Uint8Array | null> {
+async function fetchGaugeRgba(name: string, fresh = false): Promise<Uint8Array | null> {
   try {
-    const res = await fetch(`${BASE}/${name}.php`, { next: { revalidate: 300 } })
+    const res = await fetch(
+      `${BASE}/${name}.php`,
+      fresh ? { cache: 'no-store' } : { next: { revalidate: 300 } }
+    )
     if (!res.ok) return null
     const buf = new Uint8Array(await res.arrayBuffer())
     const gif = new GifReader(buf)
@@ -122,11 +125,16 @@ function needleBearing(px: Uint8Array): number | null {
   return bestDist > 25 ? bearing : null
 }
 
-export async function fetchJuraspotLive(): Promise<JuraspotLive | null> {
+/**
+ * @param fresh bypass the page-level 5-minute cache. The archive samples
+ * hourly, so a cached gauge would record the wrong hour's wind; pages should
+ * leave this off and keep the cache.
+ */
+export async function fetchJuraspotLive(fresh = false): Promise<JuraspotLive | null> {
   const [inst, avg, dir] = await Promise.all([
-    fetchGaugeRgba('WindSpeed'),
-    fetchGaugeRgba('10MinAvgWindSpeed'),
-    fetchGaugeRgba('WindDirection'),
+    fetchGaugeRgba('WindSpeed', fresh),
+    fetchGaugeRgba('10MinAvgWindSpeed', fresh),
+    fetchGaugeRgba('WindDirection', fresh),
   ])
   const instMs = inst ? wedgeValueMs(inst) : null
   const avgMs = avg ? wedgeValueMs(avg) : null
