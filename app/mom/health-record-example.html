@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>What Your Health Record Could Look Like — An Example</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Petrona:ital,wght@0,400;0,600;0,700;1,400&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#E9EDE5;
+    --paper-2:#F3F6EF;
+    --ink:#1B2A36;
+    --ink-soft:#4A5A63;
+    --pen:#2D5C8F;
+    --flag:#A8611A;
+    --rule:#B7C2B0;
+    --rule-soft:#D2DACD;
+    --green:#3E6B4A;
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:"Source Serif 4",Georgia,serif;
+    font-size:18px;
+    line-height:1.65;
+  }
+  .sheet{
+    max-width:860px;
+    margin:0 auto;
+    padding:0 22px 90px;
+  }
+
+  /* ---------- banner ---------- */
+  .banner{
+    background:var(--flag);
+    color:#FFF6EA;
+    font-family:"IBM Plex Mono",monospace;
+    font-size:12px;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    text-align:center;
+    padding:11px 18px;
+    line-height:1.5;
+  }
+
+  /* ---------- masthead ---------- */
+  header.mast{
+    padding:56px 0 34px;
+    border-bottom:2px solid var(--ink);
+  }
+  .eyebrow{
+    font-family:"IBM Plex Mono",monospace;
+    font-size:11.5px;
+    letter-spacing:.2em;
+    text-transform:uppercase;
+    color:var(--pen);
+    margin-bottom:20px;
+  }
+  h1{
+    font-family:"Petrona",Georgia,serif;
+    font-weight:600;
+    font-size:clamp(34px,7vw,58px);
+    line-height:1.06;
+    letter-spacing:-.015em;
+    margin:0 0 20px;
+  }
+  h1 em{font-style:italic;font-weight:400;color:var(--pen)}
+  .standfirst{
+    font-size:clamp(18px,2.4vw,21px);
+    max-width:46ch;
+    color:var(--ink-soft);
+    margin:0;
+  }
+
+  /* ---------- the pitch card ---------- */
+  .pitch{
+    background:var(--ink);
+    color:var(--paper-2);
+    padding:34px 30px;
+    margin:44px 0 0;
+  }
+  .pitch p{margin:0 0 16px;font-size:19px}
+  .pitch p:last-child{margin-bottom:0}
+  .pitch strong{color:#F0C98A;font-weight:600}
+
+  /* ---------- sections ---------- */
+  section{padding:56px 0 0}
+  .sec-head{
+    display:flex;
+    align-items:baseline;
+    gap:14px;
+    border-bottom:1px solid var(--ink);
+    padding-bottom:10px;
+    margin-bottom:28px;
+  }
+  .sec-num{
+    font-family:"IBM Plex Mono",monospace;
+    font-size:12px;
+    font-weight:600;
+    color:var(--pen);
+    letter-spacing:.1em;
+    flex:none;
+  }
+  h2{
+    font-family:"Petrona",Georgia,serif;
+    font-weight:600;
+    font-size:clamp(24px,4vw,33px);
+    line-height:1.15;
+    margin:0;
+    letter-spacing:-.01em;
+  }
+  .lede{
+    font-size:19px;
+    max-width:60ch;
+    margin:0 0 26px;
+  }
+  p{margin:0 0 18px}
+
+  /* ---------- chart frame ---------- */
+  .figure{
+    background:var(--paper-2);
+    border:1px solid var(--rule);
+    padding:22px 20px 18px;
+    margin:0 0 22px;
+  }
+  .scroller{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .scroller svg{display:block;min-width:660px;width:100%;height:auto}
+  .fig-cap{
+    font-family:"IBM Plex Mono",monospace;
+    font-size:12px;
+    line-height:1.6;
+    color:var(--ink-soft);
+    margin:16px 0 0;
+    padding-top:12px;
+    border-top:1px solid var(--rule-soft);
+  }
+  .fig-cap b{color:var(--flag);font-weight:600}
+  .swipe{
+    display:none;
+    font-family:"IBM Plex Mono",monospace;
+    font-size:11px;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    color:var(--pen);
+    margin:0 0 10px;
+  }
+
+  /* ---------- tables ---------- */
+  .tbl-wrap{overflow-x:auto;margin:0 0 22px;border:1px solid var(--rule)}
+  table{border-collapse:collapse;width:100%;min-width:560px;background:var(--paper-2)}
+  th{
+    font-family:"IBM Plex Mono",monospace;
+    font-size:10.5px;
+    letter-spacing:.12em;
+    text-transform:uppercase;
+    text-align:left;
+    color:var(--paper-2);
+    background:var(--ink);
+    padding:11px 14px;
+    font-weight:500;
+    white-space:nowrap;
+  }
+  td{
+    padding:13px 14px;
+    border-bottom:1px solid var(--rule-soft);
+    font-size:16.5px;
+    vertical-align:top;
+  }
+  tr:last-child td{border-bottom:0}
+  td.mono,th.mono{font-family:"IBM Plex Mono",monospace;font-size:14px;white-space:nowrap}
+  .flag{color:var(--flag);font-weight:600}
+  .ok{color:var(--green)}
+
+  /* ---------- gap list ---------- */
+  .gap{
+    border-left:3px solid var(--flag);
+    padding:4px 0 4px 20px;
+    margin:0 0 26px;
+  }
+  .gap h3{
+    font-family:"Petrona",serif;
+    font-size:21px;
+    font-weight:600;
+    margin:0 0 8px;
+    line-height:1.25;
+  }
+  .gap .hyp{
+    font-family:"IBM Plex Mono",monospace;
+    font-size:12px;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    color:var(--pen);
+    display:block;
+    margin-bottom:6px;
+  }
+  .gap p{margin:0;font-size:17px;color:var(--ink-soft)}
+
+  /* ---------- checklist ---------- */
+  ol.check{
+    list-style:none;
+    counter-reset:c;
+    padding:0;
+    margin:0;
+  }
+  ol.check li{
+    counter-increment:c;
+    position:relative;
+    padding:0 0 20px 46px;
+    font-size:18px;
+  }
+  ol.check li::before{
+    content:counter(c,decimal-leading-zero);
+    position:absolute;
+    left:0;top:2px;
+    font-family:"IBM Plex Mono",monospace;
+    font-size:12px;
+    font-weight:600;
+    color:var(--paper-2);
+    background:var(--pen);
+    width:28px;height:28px;
+    display:flex;align-items:center;justify-content:center;
+  }
+  ol.check b{font-weight:600}
+
+  /* ---------- closing ---------- */
+  .closing{
+    margin-top:56px;
+    border-top:2px solid var(--ink);
+    padding-top:32px;
+  }
+  .closing p{font-size:20px;max-width:52ch}
+  .signoff{
+    font-family:"IBM Plex Mono",monospace;
+    font-size:12px;
+    letter-spacing:.12em;
+    text-transform:uppercase;
+    color:var(--ink-soft);
+    margin-top:34px;
+    line-height:1.8;
+  }
+
+  @media(max-width:640px){
+    body{font-size:17px}
+    .swipe{display:block}
+    .pitch{padding:26px 22px}
+    .figure{padding:16px 14px 14px}
+  }
+  @media(prefers-reduced-motion:no-preference){
+    .reveal{opacity:0;transform:translateY(10px);transition:opacity .6s ease,transform .6s ease}
+    .reveal.in{opacity:1;transform:none}
+  }
+</style>
+</head>
+<body>
+
+<div class="banner">Example only · Every name, date, dose and number below is invented to show the format</div>
+
+<div class="sheet">
+
+<header class="mast">
+  <div class="eyebrow">A demonstration for Mum</div>
+  <h1>Thirty-six years of your health, <em>on four pages</em></h1>
+  <p class="standfirst">This is not your record. It's a made-up one, built to show what yours could look like — and what a doctor would be able to see in it that nobody can see today.</p>
+</header>
+
+<div class="pitch">
+  <p>Right now, your history lives in about nine different places: three hospitals, two clinics, a shoebox of printouts, and your memory. No single doctor has ever seen all of it at once.</p>
+  <p>So every appointment starts from zero. You get twelve minutes. You spend eight of them explaining. The doctor makes a decision on a fraction of the picture.</p>
+  <p><strong>Gathered in one place, patterns appear that are invisible one appointment at a time.</strong> The example below shows one: a ringing in the ear that started six weeks after a new prescription — a connection no one could make, because no one was looking at both facts on the same page.</p>
+</div>
+
+<!-- ============ 01 TIMELINE ============ -->
+<section class="reveal">
+  <div class="sec-head"><span class="sec-num">01</span><h2>Every prescription, on one line</h2></div>
+  <p class="lede">Each bar is a medication. Each pin below is a symptom. Put them on the same axis and the eye does the work that memory can't.</p>
+
+  <div class="figure">
+    <p class="swipe">← Swipe to see all years →</p>
+    <div class="scroller">
+    <svg viewBox="0 0 900 470" role="img" aria-label="Timeline showing six medications from 1990 to 2026 with symptom onset markers below">
+      <!-- year grid -->
+      <g stroke="#D2DACD" stroke-width="1">
+        <line x1="90" y1="60" x2="90" y2="360"/>
+        <line x1="197" y1="60" x2="197" y2="360"/>
+        <line x1="304" y1="60" x2="304" y2="360"/>
+        <line x1="411" y1="60" x2="411" y2="360"/>
+        <line x1="518" y1="60" x2="518" y2="360"/>
+        <line x1="625" y1="60" x2="625" y2="360"/>
+        <line x1="732" y1="60" x2="732" y2="360"/>
+        <line x1="860" y1="60" x2="860" y2="360"/>
+      </g>
+      <g font-family="IBM Plex Mono, monospace" font-size="12" fill="#4A5A63" text-anchor="middle">
+        <text x="90" y="48">1990</text>
+        <text x="197" y="48">1995</text>
+        <text x="304" y="48">2000</text>
+        <text x="411" y="48">2005</text>
+        <text x="518" y="48">2010</text>
+        <text x="625" y="48">2015</text>
+        <text x="732" y="48">2020</text>
+        <text x="860" y="48">2026</text>
+      </g>
+
+      <!-- row labels -->
+      <g font-family="IBM Plex Mono, monospace" font-size="12.5" fill="#1B2A36" text-anchor="end">
+        <text x="80" y="90">Prednisone</text>
+        <text x="80" y="130">Methotrexate</text>
+        <text x="80" y="170">Atorvastatin</text>
+        <text x="80" y="210">Amlodipine</text>
+        <text x="80" y="250" fill="#A8611A" font-weight="600">Furosemide</text>
+        <text x="80" y="290">Aspirin 300mg</text>
+      </g>
+
+      <!-- bars -->
+      <rect x="90" y="76" width="770" height="20" fill="#2D5C8F" opacity=".85"/>
+      <text x="470" y="91" font-family="IBM Plex Mono, monospace" font-size="11" fill="#F3F6EF" text-anchor="middle">continuous — 36 years</text>
+
+      <rect x="304" y="116" width="150" height="20" fill="#2D5C8F" opacity=".5"/>
+      <rect x="561" y="116" width="120" height="20" fill="#2D5C8F" opacity=".5"/>
+
+      <rect x="475" y="156" width="385" height="20" fill="#2D5C8F" opacity=".5"/>
+      <rect x="561" y="196" width="299" height="20" fill="#2D5C8F" opacity=".5"/>
+
+      <rect x="710" y="236" width="150" height="20" fill="#A8611A"/>
+      <rect x="646" y="276" width="214" height="20" fill="#A8611A" opacity=".55"/>
+
+      <!-- connector: furosemide start -> tinnitus pin -->
+      <line x1="710" y1="256" x2="710" y2="392" stroke="#A8611A" stroke-width="1.5" stroke-dasharray="4 4"/>
+      <line x1="753" y1="216" x2="753" y2="418" stroke="#4A5A63" stroke-width="1" stroke-dasharray="3 5"/>
+
+      <!-- symptom band -->
+      <line x1="90" y1="360" x2="860" y2="360" stroke="#1B2A36" stroke-width="1.5"/>
+      <text x="90" y="382" font-family="IBM Plex Mono, monospace" font-size="11" fill="#4A5A63" letter-spacing="1.5">SYMPTOMS REPORTED</text>
+
+      <circle cx="710" cy="392" r="5" fill="#A8611A"/>
+      <text x="722" y="397" font-family="Source Serif 4, serif" font-size="14.5" fill="#A8611A" font-weight="600">Ringing in ear begins</text>
+      <text x="722" y="413" font-family="IBM Plex Mono, monospace" font-size="11" fill="#A8611A">6 weeks after new diuretic</text>
+
+      <circle cx="753" cy="436" r="5" fill="#1B2A36"/>
+      <text x="765" y="441" font-family="Source Serif 4, serif" font-size="14.5" fill="#1B2A36">First vertigo episode</text>
+
+      <circle cx="817" cy="460" r="5" fill="#1B2A36"/>
+      <text x="829" y="465" font-family="Source Serif 4, serif" font-size="14.5" fill="#1B2A36">Sleep disrupted nightly</text>
+    </svg>
+    </div>
+    <p class="fig-cap"><b>What this reveals:</b> the ringing did not arrive out of nowhere. It began weeks after a diuretic was added — a drug class known to affect the inner ear. Nobody spotted it, because the kidney doctor who prescribed it and the ear doctor who heard the complaint have never seen each other's notes.</p>
+  </div>
+</section>
+
+<!-- ============ 02 DOSE ============ -->
+<section class="reveal">
+  <div class="sec-head"><span class="sec-num">02</span><h2>The dose story, in one curve</h2></div>
+  <p class="lede">Thirty-six years of prednisone is not one fact. It's a shape — and the shape is what tells a specialist whether the dose was ever safely lowered.</p>
+
+  <div class="figure">
+    <p class="swipe">← Swipe to see all years →</p>
+    <div class="scroller">
+    <svg viewBox="0 0 900 340" role="img" aria-label="Line chart of daily prednisone dose from 1990 to 2026 with two failed tapering attempts">
+      <g stroke="#D2DACD" stroke-width="1">
+        <line x1="90" y1="60" x2="860" y2="60"/>
+        <line x1="90" y1="120" x2="860" y2="120"/>
+        <line x1="90" y1="180" x2="860" y2="180"/>
+        <line x1="90" y1="240" x2="860" y2="240"/>
+      </g>
+      <line x1="90" y1="280" x2="860" y2="280" stroke="#1B2A36" stroke-width="1.5"/>
+      <g font-family="IBM Plex Mono, monospace" font-size="11.5" fill="#4A5A63" text-anchor="end">
+        <text x="80" y="64">40mg</text>
+        <text x="80" y="124">30mg</text>
+        <text x="80" y="184">20mg</text>
+        <text x="80" y="244">10mg</text>
+        <text x="80" y="284">0</text>
+      </g>
+      <g font-family="IBM Plex Mono, monospace" font-size="12" fill="#4A5A63" text-anchor="middle">
+        <text x="90" y="304">1990</text>
+        <text x="304" y="304">2000</text>
+        <text x="518" y="304">2010</text>
+        <text x="732" y="304">2020</text>
+        <text x="860" y="304">2026</text>
+      </g>
+
+      <polyline fill="none" stroke="#2D5C8F" stroke-width="2.5"
+        points="90,60 133,72 197,150 261,168 304,162 368,175 411,150 454,228 496,240 518,150 561,168 625,180 668,192 710,240 753,252 796,204 838,216 860,216"/>
+
+      <circle cx="454" cy="228" r="5.5" fill="#F3F6EF" stroke="#A8611A" stroke-width="2.5"/>
+      <text x="454" y="256" font-family="IBM Plex Mono, monospace" font-size="11" fill="#A8611A" text-anchor="middle">taper attempt 1</text>
+      <circle cx="753" cy="252" r="5.5" fill="#F3F6EF" stroke="#A8611A" stroke-width="2.5"/>
+      <text x="753" y="278" font-family="IBM Plex Mono, monospace" font-size="11" fill="#A8611A" text-anchor="middle">taper attempt 2</text>
+
+      <text x="500" y="140" font-family="IBM Plex Mono, monospace" font-size="11" fill="#4A5A63">both tapers reversed within 4 months</text>
+    </svg>
+    </div>
+    <p class="fig-cap"><b>What this reveals:</b> the dose was lowered twice and went back up both times, quickly. That's a specific clinical question — was a steroid-sparing drug ever tried alongside the taper, or was the dose simply raised again? Two very different answers, and the chart is what makes anyone ask.</p>
+  </div>
+</section>
+
+<!-- ============ 03 DOCTORS ============ -->
+<section class="reveal">
+  <div class="sec-head"><span class="sec-num">03</span><h2>Who said what, and when</h2></div>
+  <p class="lede">Diagnoses get revised. Without the sequence, a doctor can't tell which label is current and which was superseded fifteen years ago.</p>
+
+  <div class="tbl-wrap">
+    <table>
+      <thead>
+        <tr><th class="mono">Year</th><th>Seen by</th><th>Said</th><th>Still current?</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="mono">1990</td><td>Rheumatology, City Hospital</td><td>Polymyositis. Started high-dose steroids.</td><td class="flag">Never re-tested</td></tr>
+        <tr><td class="mono">2004</td><td>Rheumatology, second opinion</td><td>Confirmed on symptoms alone. No new biopsy.</td><td class="flag">Assumption carried forward</td></tr>
+        <tr><td class="mono">2008</td><td>Cardiology</td><td>Atherosclerosis. Statin started.</td><td class="ok">Active</td></tr>
+        <tr><td class="mono">2019</td><td>GP</td><td>Fluid retention. Diuretic added.</td><td class="ok">Active</td></tr>
+        <tr><td class="mono">2021</td><td>ENT, walk-in clinic</td><td>"Age-related tinnitus." No hearing test.</td><td class="flag">Unexamined</td></tr>
+        <tr><td class="mono">2024</td><td>GP</td><td>Vertigo, likely inner ear. No manoeuvre tested.</td><td class="flag">Unexamined</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Two of the six entries close a question that was never actually opened. Written out like this, they stop being background and become the next appointment's agenda.</p>
+</section>
+
+<!-- ============ 04 TESTS ============ -->
+<section class="reveal">
+  <div class="sec-head"><span class="sec-num">04</span><h2>Tests done — and the ones never done</h2></div>
+  <p class="lede">The blank rows matter more than the filled ones. This is the list a specialist scans first.</p>
+
+  <div class="tbl-wrap">
+    <table>
+      <thead>
+        <tr><th>Test</th><th class="mono">Last done</th><th>Result</th><th>Why it matters here</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Muscle biopsy</td><td class="mono">1990</td><td>Inflammatory changes</td><td class="flag">36 years old. Diagnosis rests entirely on it.</td></tr>
+        <tr><td>Bone density (DEXA)</td><td class="mono">—</td><td class="flag">Never done</td><td class="flag">Standard after long-term steroids</td></tr>
+        <tr><td>Hearing test (audiogram)</td><td class="mono">—</td><td class="flag">Never done</td><td class="flag">Five years of ringing, never measured</td></tr>
+        <tr><td>Carotid ultrasound</td><td class="mono">—</td><td class="flag">Never done</td><td class="flag">Relevant if ringing pulses with heartbeat</td></tr>
+        <tr><td>Vitamin B12</td><td class="mono">2017</td><td>Low-normal</td><td>Affects balance. Not rechecked in 9 years.</td></tr>
+        <tr><td>HbA1c</td><td class="mono">2023</td><td>Borderline</td><td>Steroids push this up. Worth watching.</td></tr>
+        <tr><td>Cholesterol panel</td><td class="mono">2025</td><td class="ok">Improved on statin</td><td class="ok">Working. Keep going.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Four blanks. Each one is a cheap, quick test that could explain a symptom you've lived with for years.</p>
+</section>
+
+<!-- ============ 05 METRICS ============ -->
+<section class="reveal">
+  <div class="sec-head"><span class="sec-num">05</span><h2>The numbers, moving</h2></div>
+  <p class="lede">A single reading tells a doctor almost nothing. The same reading over twenty years tells them where things are heading.</p>
+
+  <div class="figure">
+    <p class="swipe">← Swipe to see all years →</p>
+    <div class="scroller">
+    <svg viewBox="0 0 900 330" role="img" aria-label="Blood pressure and cholesterol trends from 2005 to 2026">
+      <g stroke="#D2DACD" stroke-width="1">
+        <line x1="90" y1="60" x2="860" y2="60"/>
+        <line x1="90" y1="120" x2="860" y2="120"/>
+        <line x1="90" y1="180" x2="860" y2="180"/>
+      </g>
+      <line x1="90" y1="240" x2="860" y2="240" stroke="#1B2A36" stroke-width="1.5"/>
+      <g font-family="IBM Plex Mono, monospace" font-size="12" fill="#4A5A63" text-anchor="middle">
+        <text x="90" y="264">2005</text>
+        <text x="282" y="264">2010</text>
+        <text x="475" y="264">2015</text>
+        <text x="668" y="264">2020</text>
+        <text x="860" y="264">2026</text>
+      </g>
+
+      <polyline fill="none" stroke="#A8611A" stroke-width="2.5"
+        points="90,150 186,132 282,108 379,96 475,84 571,102 668,126 764,138 860,144"/>
+      <polyline fill="none" stroke="#2D5C8F" stroke-width="2.5" stroke-dasharray="6 4"
+        points="90,96 186,90 282,84 379,102 475,138 571,156 668,168 764,174 860,180"/>
+
+      <text x="475" y="72" font-family="IBM Plex Mono, monospace" font-size="12" fill="#A8611A">Blood pressure (systolic)</text>
+      <text x="620" y="196" font-family="IBM Plex Mono, monospace" font-size="12" fill="#2D5C8F">LDL cholesterol</text>
+
+      <line x1="379" y1="60" x2="379" y2="240" stroke="#4A5A63" stroke-width="1" stroke-dasharray="3 5"/>
+      <text x="386" y="222" font-family="IBM Plex Mono, monospace" font-size="11" fill="#4A5A63">statin dose increased</text>
+
+      <text x="90" y="300" font-family="Source Serif 4, serif" font-size="15" fill="#4A5A63" font-style="italic">Cholesterol responded well. Blood pressure has been drifting up again since 2016 — visible only across two decades.</text>
+    </svg>
+    </div>
+    <p class="fig-cap"><b>What this reveals:</b> the statin is doing its job. Blood pressure quietly reversed direction ten years ago and no single appointment would have caught it, because each reading on its own looked acceptable.</p>
+  </div>
+</section>
+
+<!-- ============ 06 GAPS ============ -->
+<section class="reveal">
+  <div class="sec-head"><span class="sec-num">06</span><h2>What we don't know, and what we suspect</h2></div>
+  <p class="lede">Honest gaps, written down. These become the questions to bring to the next appointment instead of leaving with none.</p>
+
+  <div class="gap">
+    <span class="hyp">Hypothesis A</span>
+    <h3>The ringing is a side effect, not ageing</h3>
+    <p>It started six weeks after the diuretic. That drug class is known to affect the inner ear. Nobody has ever tested the hearing to check. <b>Test:</b> an audiogram, and ask whether an alternative diuretic exists.</p>
+  </div>
+
+  <div class="gap">
+    <span class="hyp">Hypothesis B</span>
+    <h3>The vertigo may be the simplest kind</h3>
+    <p>If it hits on rolling over in bed and lasts under a minute, it's the most common and most fixable form — often resolved in a single visit with a positioning manoeuvre. It has never been tested for. <b>Test:</b> ask for a Dix-Hallpike.</p>
+  </div>
+
+  <div class="gap">
+    <span class="hyp">Hypothesis C</span>
+    <h3>The original diagnosis may deserve a second look</h3>
+    <p>One biopsy in 1990, never repeated, and two tapers that failed. There are muscle conditions that look similar early on but don't respond to steroids at all. <b>Test:</b> ask the rheumatologist directly whether the diagnosis has ever been formally revisited.</p>
+  </div>
+
+  <div class="gap">
+    <span class="hyp">Hypothesis D</span>
+    <h3>The irritability has three possible sources</h3>
+    <p>Steroids themselves, sleep destroyed by the ringing, or low mood from decades of illness. They're treated completely differently. <b>Test:</b> two weeks of a simple sleep and mood log to tell them apart.</p>
+  </div>
+</section>
+
+<!-- ============ 07 COLLECT ============ -->
+<section class="reveal">
+  <div class="sec-head"><span class="sec-num">07</span><h2>What we'd need from you</h2></div>
+  <p class="lede">Nothing medical. Just paper, and a little remembering. Everything above was built from these seven things.</p>
+
+  <ol class="check">
+    <li><b>Every pill bottle in the house.</b> Photograph the labels — name, dose, and the date on the pharmacy sticker.</li>
+    <li><b>Any printouts, letters or discharge notes</b> in drawers, folders or boxes. Even old ones. Especially old ones.</li>
+    <li><b>The names of doctors and hospitals</b> you've been to, roughly when, and what they told you.</li>
+    <li><b>Your online patient portals</b> — most systems let you download years of results in one click. We can do this together.</li>
+    <li><b>Your memory of when symptoms started.</b> Not exact dates. "The summer we moved" is enough to place it on the timeline.</li>
+    <li><b>Two weeks of notes from here on:</b> when the ringing is worse, when the dizziness hits, how you slept.</li>
+    <li><b>One question:</b> does the ringing pulse in time with your heartbeat? That single answer changes which specialist you should see.</li>
+  </ol>
+</section>
+
+<div class="closing">
+  <p>None of this replaces your doctors. It makes the twelve minutes you get with them count — so you arrive with a page instead of a story, and they spend the time deciding rather than reconstructing.</p>
+  <p class="signoff">
+    Illustrative example · Invented data throughout<br>
+    Prepared to show the format, not to diagnose
+  </p>
+</div>
+
+</div>
+
+<script>
+(function(){
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    document.querySelectorAll('.reveal').forEach(function(el){el.classList.add('in')});
+    return;
+  }
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target);} });
+  },{threshold:.12});
+  document.querySelectorAll('.reveal').forEach(function(el){io.observe(el)});
+})();
+</script>
+</body>
+</html>
