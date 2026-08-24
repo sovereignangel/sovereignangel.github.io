@@ -524,3 +524,313 @@
   .mom-root .reveal{opacity:0;transform:translateY(10px);transition:opacity .6s ease,transform .6s ease}
   .mom-root .reveal.in{opacity:1;transform:none}
 }
+
+/* ============================================================
+   NAVIGATION · SUMMARY · MAP · FOLDS
+   Added so the page reads as a short summary plus a map,
+   with everything else closed until it is asked for.
+   ============================================================ */
+
+/* ---------- sticky nav ---------- */
+.mom-root .navbar{
+  position:sticky;
+  top:0;
+  z-index:30;
+  background:var(--paper-2);
+  border-bottom:1px solid var(--rule);
+}
+.mom-root .navbar-inner{
+  max-width:880px;
+  margin:0 auto;
+  padding:0 22px;
+  display:flex;
+  align-items:center;
+  gap:2px;
+  overflow-x:auto;
+  -webkit-overflow-scrolling:touch;
+  scrollbar-width:none;
+}
+.mom-root .navbar-inner::-webkit-scrollbar{display:none}
+.mom-root .navlink{
+  font-family:"IBM Plex Mono",ui-monospace,monospace;
+  font-size:11.5px;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+  color:var(--ink-soft);
+  background:none;
+  border:0;
+  border-bottom:2px solid transparent;
+  padding:13px 9px;
+  cursor:pointer;
+  white-space:nowrap;
+  flex:none;
+}
+.mom-root .navlink:hover{color:var(--ink)}
+.mom-root .navlink.is-open{color:var(--pen);border-bottom-color:var(--pen)}
+.mom-root .navlink.all{
+  margin-left:auto;
+  padding-left:16px;
+  color:var(--flag);
+  position:sticky;
+  right:0;
+  background:var(--paper-2);
+  box-shadow:-12px 0 12px var(--paper-2);
+}
+
+/* ---------- the short version ---------- */
+.mom-root .summary{
+  border-bottom:2px solid var(--ink);
+  padding:34px 0 30px;
+  margin:0;
+}
+.mom-root .summary .kicker{
+  font-family:"IBM Plex Mono",ui-monospace,monospace;
+  font-size:11.5px;
+  letter-spacing:.2em;
+  text-transform:uppercase;
+  color:var(--pen);
+  margin-bottom:18px;
+}
+.mom-root .summary p{font-size:20px;max-width:56ch}
+.mom-root .summary p:last-child{margin-bottom:0}
+.mom-root .summary b{font-weight:600}
+
+/* ---------- the one thing ---------- */
+.mom-root .onething{
+  border:2px solid var(--flag);
+  background:var(--paper-2);
+  padding:26px 26px 22px;
+  margin:30px 0 0;
+}
+.mom-root .onething .t{
+  font-family:"IBM Plex Mono",ui-monospace,monospace;
+  font-size:11.5px;
+  letter-spacing:.16em;
+  text-transform:uppercase;
+  color:var(--flag);
+  font-weight:600;
+  margin-bottom:14px;
+}
+.mom-root .onething .big{
+  font-family:"Petrona",Georgia,serif;
+  font-size:clamp(22px,4vw,29px);
+  font-weight:600;
+  line-height:1.25;
+  margin:0 0 14px;
+}
+.mom-root .onething p{font-size:17px;color:var(--ink-soft);margin:0}
+
+/* ---------- stat strip ---------- */
+.mom-root .stats{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  border:1px solid var(--rule);
+  background:var(--paper-2);
+  margin:22px 0 0;
+}
+.mom-root .stat{padding:16px 18px;border-right:1px solid var(--rule-soft)}
+.mom-root .stat:last-child{border-right:0}
+.mom-root .stat .n{
+  font-family:"Petrona",Georgia,serif;
+  font-size:32px;
+  font-weight:600;
+  line-height:1.1;
+  color:var(--flag);
+}
+.mom-root .stat .l{
+  font-family:"IBM Plex Mono",ui-monospace,monospace;
+  font-size:10.5px;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+  color:var(--ink-soft);
+  margin-top:2px;
+  line-height:1.5;
+}
+
+/* ---------- the map ---------- */
+.mom-root .map{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(252px,1fr));
+  gap:12px;
+  margin:0 0 10px;
+}
+.mom-root .map-card{
+  background:var(--paper-2);
+  border:1px solid var(--rule);
+  border-top:3px solid var(--pen);
+  padding:16px 18px 14px;
+  text-align:left;
+  font:inherit;
+  color:inherit;
+  cursor:pointer;
+  display:flex;
+  flex-direction:column;
+  width:100%;
+}
+.mom-root .map-card:hover{border-color:var(--pen);background:#EDF1E8}
+.mom-root .map-card .n{
+  font-family:"IBM Plex Mono",ui-monospace,monospace;
+  font-size:11px;
+  letter-spacing:.12em;
+  color:var(--pen);
+  margin-bottom:6px;
+}
+.mom-root .map-card .t{
+  font-family:"Petrona",Georgia,serif;
+  font-size:21px;
+  font-weight:600;
+  line-height:1.2;
+  margin-bottom:8px;
+}
+.mom-root .map-card .d{font-size:16px;color:var(--ink-soft);line-height:1.5;margin-bottom:12px;flex:1}
+.mom-root .map-card .m{
+  font-family:"IBM Plex Mono",ui-monospace,monospace;
+  font-size:11.5px;
+  color:var(--flag);
+  line-height:1.6;
+  border-top:1px solid var(--rule-soft);
+  padding-top:9px;
+}
+.mom-root .map-card .m .go{color:var(--pen);display:block;margin-top:3px}
+
+/* ---------- folds ---------- */
+.mom-root .fold{
+  border:1px solid var(--rule);
+  margin:0 0 10px;
+  scroll-margin-top:56px;
+}
+.mom-root .fold-head{
+  width:100%;
+  display:flex;
+  align-items:baseline;
+  gap:14px;
+  padding:17px 18px;
+  background:var(--paper-2);
+  border:0;
+  text-align:left;
+  font:inherit;
+  color:inherit;
+  cursor:pointer;
+}
+.mom-root .fold-head:hover{background:#EDF1E8}
+.mom-root .fold-num{
+  font-family:"IBM Plex Mono",ui-monospace,monospace;
+  font-size:12px;
+  font-weight:600;
+  color:var(--pen);
+  letter-spacing:.1em;
+  flex:none;
+}
+.mom-root .fold-title{
+  font-family:"Petrona",Georgia,serif;
+  font-size:clamp(20px,3.4vw,26px);
+  font-weight:600;
+  line-height:1.2;
+  flex:1;
+}
+.mom-root .fold-sub{
+  display:block;
+  font-family:"IBM Plex Mono",ui-monospace,monospace;
+  font-size:11.5px;
+  font-weight:400;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+  color:var(--ink-soft);
+  margin-top:6px;
+}
+.mom-root .fold-sign{
+  font-family:"IBM Plex Mono",ui-monospace,monospace;
+  font-size:20px;
+  color:var(--pen);
+  flex:none;
+  line-height:1;
+}
+.mom-root .fold.open > .fold-head{background:var(--ink);color:var(--paper-2)}
+.mom-root .fold.open > .fold-head .fold-num{color:#F0C98A}
+.mom-root .fold.open > .fold-head .fold-sub{color:var(--rule)}
+.mom-root .fold.open > .fold-head .fold-sign{color:#F0C98A}
+.mom-root .fold.open > .fold-head:hover{background:#22333F}
+.mom-root .fold-body{display:none;padding:26px 20px 24px}
+.mom-root .fold.open > .fold-body{display:block}
+.mom-root .fold-body > :last-child{margin-bottom:0}
+
+/* nested folds — lighter, no box */
+.mom-root .subfold{border:0;border-top:1px solid var(--rule);margin:0}
+.mom-root .subfold:first-of-type{border-top:0}
+.mom-root .subfold > .fold-head{background:transparent;padding:15px 0}
+.mom-root .subfold > .fold-head:hover{background:transparent}
+.mom-root .subfold > .fold-head .fold-title{font-size:19px}
+.mom-root .subfold.open > .fold-head{background:transparent;color:var(--ink)}
+.mom-root .subfold.open > .fold-head .fold-num{color:var(--pen)}
+.mom-root .subfold.open > .fold-head .fold-sub{color:var(--ink-soft)}
+.mom-root .subfold.open > .fold-head .fold-sign{color:var(--pen)}
+.mom-root .subfold > .fold-body{padding:0 0 22px}
+
+/* ---------- reference ids ---------- */
+.mom-root .refid{
+  font-family:"IBM Plex Mono",ui-monospace,monospace;
+  font-size:11px;
+  font-weight:600;
+  letter-spacing:.06em;
+  color:var(--pen);
+  text-decoration:none;
+  border:1px solid var(--rule);
+  background:var(--paper);
+  padding:2px 6px;
+  white-space:nowrap;
+}
+.mom-root .refid:hover{border-color:var(--pen);background:#E3E9DD}
+.mom-root tr[id]{scroll-margin-top:64px}
+.mom-root li[id]{scroll-margin-top:64px}
+.mom-root .ref-inline{
+  font-family:"IBM Plex Mono",ui-monospace,monospace;
+  font-size:12px;
+  color:var(--pen);
+  text-decoration:none;
+  border-bottom:1px solid var(--pen);
+}
+
+/* ---------- back to top ---------- */
+.mom-root .totop{
+  font-family:"IBM Plex Mono",ui-monospace,monospace;
+  font-size:11px;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+  color:var(--ink-soft);
+  background:none;
+  border:0;
+  padding:8px 0;
+  cursor:pointer;
+}
+.mom-root .totop:hover{color:var(--pen)}
+
+@media(max-width:640px){
+  .mom-root .summary p{font-size:18px}
+  .mom-root .onething{padding:20px 18px 18px}
+  .mom-root .fold-body{padding:20px 14px 20px}
+  .mom-root .stat .n{font-size:27px}
+}
+
+/* everything opens for printing */
+@media print{
+  .mom-root .navbar{display:none}
+  .mom-root .fold-body{display:block !important}
+  .mom-root .fold-sign{display:none}
+}
+
+/* reference chips sit above the priority chip in the question tables */
+.mom-root td .refid{display:inline-block;margin-bottom:7px}
+
+/* the example stamp now lives inside a fold rather than a full-bleed band */
+.mom-root .stamp{
+  background:var(--flag);
+  color:#FFF6EA;
+  font-family:"IBM Plex Mono",ui-monospace,monospace;
+  font-size:11.5px;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  padding:12px 16px;
+  text-align:center;
+  line-height:1.6;
+  margin:0 0 24px;
+}
