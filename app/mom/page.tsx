@@ -547,8 +547,8 @@ const HYPOTHESES: { id: string; letter: string; title: string; body: JSX.Element
     title: 'The original diagnosis deserves one honest re-check',
     body: (
       <p>
-        This one is delicate, and it is not an accusation of anybody. If you are treated for your
-        arteries you are likely on a <T k="statin">statin</T>, and statins can cause muscle aching
+        If you are treated for your arteries you are likely on a <T k="statin">statin</T>, and
+        statins can cause muscle aching
         and weakness that looks a lot like <T k="myositis">myositis</T>. If both have been running
         for years, it is possible nobody has ever separated the two. It is also possible the
         original diagnosis is exactly right — but after this many years on{' '}
@@ -589,8 +589,8 @@ const HYPOTHESES: { id: string; letter: string; title: string; body: JSX.Element
     title: 'The irritability has three possible sources, treated three different ways',
     body: (
       <p>
-        Being irritable every day is not a character flaw and it is not just how you are. It has
-        candidates: prednisone itself is well known for it; sleep destroyed nightly by a ringing ear
+        Irritability every day is a symptom, not a personality. It has candidates: prednisone
+        itself is well known for it; sleep destroyed nightly by a ringing ear
         will do it to anyone; and decades of being unwell wears down mood on its own. Those three
         are treated completely differently, so guessing is expensive.
       </p>
@@ -731,7 +731,7 @@ export default function MomPage() {
     <FoldCtx.Provider value={{ open, toggle, go }}>
       <div className="mom-root">
         <div className="banner">
-          A working page · Built for Mom · Everything here is a question, <b>not a diagnosis</b>
+          Healthspan Hub · Built for Mom · A preparation tool, <b>not medical advice</b>
         </div>
 
         {/* ============ STICKY NAV ============ */}
@@ -759,13 +759,13 @@ export default function MomPage() {
         <div className="sheet">
           {/* ============ MASTHEAD ============ */}
           <header className="mast">
-            <div className="eyebrow">For Mom · Started August 2026</div>
+            <div className="eyebrow">For Mom · Since August 2026</div>
             <h1>
-              We are going to write your health down, <em>in one place</em>
+              Your <em>Healthspan</em> Hub
             </h1>
             <p className="standfirst">
-              Nothing on this page is urgent and nothing on it is bad news. Read the short version
-              below, then open only the part you want.
+              Every medicine, date, test result and number in one place — so we can find what is
+              actually making you feel bad, test it, and add good years.
             </p>
             <p className="hint">
               Any word with a dotted underline — like <T k="healthspan">healthspan</T> — has a plain
@@ -786,10 +786,10 @@ export default function MomPage() {
               of them explaining, and then a decision gets made on a small piece of the picture.
             </p>
             <p>
-              We are going to put all of it on one page. Not to worry you — to get you better
-              answers in less time, and to give you more good years. <b>Right now that page is{' '}
-              {RECORD_PCT}% built,</b> and the rest of it is waiting on you. None of what we need is
-              medical. It is photographs, printouts, and remembering.
+              This page is the fix. Everything in one place — the medicines, the dates, the
+              results, the numbers as they move. Then we look for patterns, write down what we
+              think is going on, and test it one idea at a time. <b>Right now it is {RECORD_PCT}%
+              built,</b> and the rest is waiting on you: photographs, printouts, and remembering.
             </p>
           </div>
 
@@ -800,8 +800,8 @@ export default function MomPage() {
               ear. Does the ringing beat in time with your heart?
             </p>
             <p>
-              Yes or no — that is the whole answer, and it changes which doctor you should see. Text
-              it to me. It is <a className="ref-inline" href="#q1">Q1</a> on the list.
+              Yes or no. That one answer changes which doctor you should see. Text it to me — it
+              is <a className="ref-inline" href="#q1">Q1</a> on the list.
             </p>
           </div>
 
@@ -831,8 +831,7 @@ export default function MomPage() {
               <h2>Where everything is</h2>
             </div>
             <p className="lede">
-              The page has six parts. They are all closed until you open them, so nothing is in your
-              way. Click any card to open that part.
+              Six parts, all closed until you open them. Click any card.
             </p>
             <div className="map">
               {MAP.map((m) => (
@@ -863,8 +862,7 @@ export default function MomPage() {
               sub={`Six facts · none of them dated · record ${RECORD_PCT}% built`}
             >
               <p className="lede">
-                This is the honest starting point. Six facts, and not one of them has a date
-                attached. Read it and you will see the problem immediately.
+                The starting point. Six facts, and not one of them has a date attached.
               </p>
 
               <div className="facts">
@@ -1033,8 +1031,8 @@ export default function MomPage() {
                 <div className="meter-top">
                   <div className="meter-big">{RECORD_PCT}%</div>
                   <div className="meter-cap">
-                    built so far. Not a judgment — nobody ever asked you for this. It is just the
-                    starting line, and it only moves in one direction from here.
+                    of your record exists. Every row below is something a doctor would want and
+                    nobody currently has. It only moves one way from here.
                   </div>
                 </div>
                 {RECORD_SECTIONS.map((r) => (
@@ -1067,10 +1065,9 @@ export default function MomPage() {
               sub={`${Q_TOTAL} questions · numbered Q1 to Q${Q_TOTAL} · four groups`}
             >
               <p className="lede">
-                A running list, and it will keep growing as answers come in. None of these need a
-                doctor. They need you, and about twenty minutes at a time. Start with the ones
-                marked “start here” — they are the ones that change what happens next. Open one
-                group at a time.
+                A running list that grows as answers come in. None of these need a doctor — they
+                need you, twenty minutes at a time. The ones marked “start here” are the ones that
+                change what happens next.
               </p>
 
               <Fold id="q-ringing" num="Q1–Q6" title="About the ringing" sub="6 questions" nested>
@@ -1098,10 +1095,8 @@ export default function MomPage() {
               sub={`${HYPOTHESES.length} ideas · all untested · A to G`}
             >
               <p className="lede">
-                These are not answers. They are honest guesses written down so they can be tested
-                and then crossed off — or confirmed. Every one ends with something small and
-                specific to ask a real doctor. Nothing here replaces your doctors; it gives them a
-                better starting page.
+                Not answers — hypotheses. Each one is written down so it can be tested, then
+                confirmed or crossed off. Each ends with one specific thing to ask a doctor.
               </p>
 
               {HYPOTHESES.map((h) => (
@@ -1136,8 +1131,8 @@ export default function MomPage() {
               sub="8 things · none of them medical · this is the real work"
             >
               <p className="lede">
-                Nothing medical. Nothing difficult. Paper, photographs, and a little remembering. Do
-                one item a week and this page is full before your birthday.
+                Nothing medical. Paper, photographs, and remembering. One item a week fills this
+                page before your birthday.
               </p>
 
               <ol className="check">
@@ -1203,8 +1198,8 @@ export default function MomPage() {
                   <li>You have chest pain, or you fall and hit your head.</li>
                 </ul>
                 <p style={{ fontSize: '16px', color: '#4A5A63' }}>
-                  Those are emergency-room situations, not build-the-record situations. Everything
-                  else on this page can be done calmly, one week at a time.
+                  Those are emergency-room situations. Everything else here can wait for a normal
+                  appointment.
                 </p>
               </div>
               <BackToMap />
@@ -1583,8 +1578,8 @@ export default function MomPage() {
               sub={`${Object.keys(TERMS).length} medical words · plain language · with Spanish`}
             >
               <p className="lede">
-                Nothing here is worth knowing if it is not understandable. If a doctor uses a word
-                that is not on this list, write it down and we will add it.
+                If a doctor uses a word that is not on this list, write it down and we will add
+                it.
               </p>
               <div className="tbl-wrap">
                 <table className="gloss">

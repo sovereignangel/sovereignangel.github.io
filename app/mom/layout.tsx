@@ -2,9 +2,9 @@ import type { Metadata } from 'next'
 import './mom.css'
 
 export const metadata: Metadata = {
-  title: 'Mom · The Health Page',
+  title: 'Healthspan Hub',
   description:
-    'A working page for Mom: what we know, what we still need, the questions to ask, and the ideas we want tested.',
+    'Mom’s health data, analysis and hypotheses in one place — collected, tracked and tested to add good years.',
   robots: { index: false, follow: false },
 }
 
