@@ -13,7 +13,11 @@
  * hour. The map makes each write an idempotent merge (re-running the cron for
  * an hour overwrites that hour rather than appending a duplicate) and needs no
  * read-before-write. Field names are kept short because Firestore stores the
- * key on every sample; a full year is roughly 1-2 MB.
+ * key on every sample; 24 samples a day is roughly 2 MB a year.
+ *
+ * Every hour is recorded, night included. Kiting only cares about daylight,
+ * but this is a public record of the wind at Monciskes and a gap-free series
+ * is worth more than the bytes it saves.
  *
  * The station is a live gauge scrape with no history behind it, so this
  * archive necessarily starts the day it is switched on. Model data can always
@@ -25,10 +29,6 @@ import { adminDb } from '@/lib/firebase-admin'
 
 export const WIND_OBS_COLLECTION = 'wind_observations'
 export const OBS_SPOT = 'sventoji'
-
-/** Hours we bother recording — the daylight band the forecast grid covers. */
-export const OBS_START_HOUR = 8
-export const OBS_END_HOUR = 21 // inclusive
 
 export interface WindSample {
   /** Station 10-minute average, knots */

@@ -322,11 +322,31 @@ function parseHours(data: OpenMeteoResponse): Map<string, HourForecast[]> {
   return hoursByDate
 }
 
-export async function fetchSpotForecast(spot: KiteSpot): Promise<SpotForecast> {
-  const base =
+function spotForecastUrl(spot: KiteSpot): string {
+  return (
     `https://api.open-meteo.com/v1/forecast?latitude=${spot.lat}&longitude=${spot.lon}` +
     `&hourly=wind_speed_10m,wind_gusts_10m,wind_direction_10m,precipitation,precipitation_probability` +
     `&wind_speed_unit=kn&timezone=${encodeURIComponent(TIMEZONE)}&forecast_days=7`
+  )
+}
+
+/**
+ * Raw GFS hourly rows keyed by local date — every hour of the day, with no
+ * daylight filter and no session analysis applied.
+ *
+ * `fetchSpotForecast` exposes only the daylight hours it analyses, which is
+ * right for the planner but leaves the archive with nothing to pair a night
+ * reading against. This also skips the EU blend, which the archive has no use
+ * for, so it costs a single request.
+ */
+export async function fetchSpotHourly(spot: KiteSpot): Promise<Map<string, HourForecast[]>> {
+  const res = await fetch(`${spotForecastUrl(spot)}&models=gfs_seamless`, { cache: 'no-store' })
+  if (!res.ok) throw new Error(`Open-Meteo request failed for ${spot.name}: ${res.status}`)
+  return parseHours((await res.json()) as OpenMeteoResponse)
+}
+
+export async function fetchSpotForecast(spot: KiteSpot): Promise<SpotForecast> {
+  const base = spotForecastUrl(spot)
 
   // Primary: GFS 13 km — the model Windguru's headline table runs on, so the
   // dashboard tracks what local riders see there. Secondary: Open-Meteo's
