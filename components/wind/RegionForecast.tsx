@@ -223,21 +223,24 @@ function SpotMatrix({
   live,
   nowHour,
   tz,
+  wide,
 }: {
   forecasts: SpotForecast[]
   live: JuraspotLive | null
   nowHour: number
   tz: string
+  wide: boolean
 }) {
   const dates = forecasts[0].days.map(d => d.date)
-  // Eleven spots do not fit a phone. Give every column a usable floor and let
-  // the grid scroll sideways under a day column that stays pinned.
-  const minWidth = Math.max(560, forecasts.length * 104 + 48)
+  // Eleven spots do not fit a phone whatever the page does. Give every column
+  // a usable floor and let the grid scroll sideways under a day column that
+  // stays pinned; on a desktop the wide shell swallows the whole thing.
+  const minWidth = Math.max(560, forecasts.length * 118 + 48)
   const stick = 'sticky left-0 z-10 bg-surf-card'
   return (
     <div className="bg-surf-card border border-surf-rule rounded-xl p-2 md:p-3 shadow-[0_2px_12px_rgba(13,92,99,0.06)] overflow-x-auto">
       <div
-        className="grid gap-x-2 md:gap-x-4"
+        className={`grid gap-x-2 ${wide ? 'md:gap-x-3' : 'md:gap-x-4'}`}
         style={{ gridTemplateColumns: `auto repeat(${forecasts.length}, minmax(0, 1fr))`, minWidth }}
       >
         <div className={`border-b-2 border-surf-rule ${stick}`} />
@@ -328,23 +331,33 @@ function Legend() {
   )
 }
 
-function Shell({ children }: { children: React.ReactNode }) {
+/**
+ * Four Baltic spots sit comfortably in the usual column. Eleven Brazilian
+ * ones do not, so a spot-heavy coast gets the whole monitor rather than
+ * being posted through a 1024px letterbox and scrolled.
+ */
+const WIDE_SPOT_COUNT = 6
+
+function Shell({ children, wide = false }: { children: React.ReactNode; wide?: boolean }) {
   return (
     <main className="min-h-screen" style={{ background: 'linear-gradient(180deg, #e7f0ea 0%, #f2ecdf 320px)' }}>
-      <div className="max-w-5xl mx-auto px-3 md:px-4 py-3 md:py-5">{children}</div>
+      <div className={`${wide ? 'max-w-[1700px]' : 'max-w-5xl'} mx-auto px-3 md:px-4 py-3 md:py-5`}>
+        {children}
+      </div>
     </main>
   )
 }
 
 export async function RegionForecast({ regionId }: { regionId: RegionId }) {
   const region = getRegion(regionId)
+  const wide = region.spots.length > WIDE_SPOT_COUNT
 
   let forecasts: SpotForecast[]
   try {
     forecasts = await fetchRegionForecast(region)
   } catch {
     return (
-      <Shell>
+      <Shell wide={wide}>
         <div className="flex items-center gap-2 md:gap-3 mb-2">
           <h1 className="font-serif text-[17px] md:text-[20px] font-semibold text-surf-deep whitespace-nowrap">
             Wind <span className="text-surf-teal">&mdash;</span> {region.name}
@@ -374,7 +387,7 @@ export async function RegionForecast({ regionId }: { regionId: RegionId }) {
   })
 
   return (
-    <Shell>
+    <Shell wide={wide}>
       <div className="flex items-center gap-2 md:gap-3 mb-2 flex-wrap">
         <h1 className="font-serif text-[17px] md:text-[20px] font-semibold text-surf-deep whitespace-nowrap">
           Wind <span className="text-surf-teal">&mdash;</span> {region.name}
@@ -415,7 +428,7 @@ export async function RegionForecast({ regionId }: { regionId: RegionId }) {
         }
         tz={region.timezone}
       />
-      <SpotMatrix forecasts={forecasts} live={live} nowHour={nowHour} tz={region.timezone} />
+      <SpotMatrix forecasts={forecasts} live={live} nowHour={nowHour} tz={region.timezone} wide={wide} />
       <div className="mt-1.5">
         <Legend />
       </div>
