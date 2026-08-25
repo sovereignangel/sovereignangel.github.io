@@ -20,6 +20,12 @@ export interface KiteSession {
 /** Manual belt-milestone checkmarks, keyed by criterion id. */
 export interface KiteProgress {
   milestones: Record<string, boolean>
+  /**
+   * Elite skill currently being chased. When set, the Next Up drills come
+   * from that ladder instead of from normal path progression. Null or absent
+   * means normal progression.
+   */
+  targetSkill?: string | null
   updatedAt?: Timestamp
 }
 

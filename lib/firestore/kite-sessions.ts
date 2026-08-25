@@ -82,3 +82,12 @@ export async function setKiteMilestone(uid: string, criterionId: string, checked
   const ref = doc(db, 'users', uid, 'kite_progress', 'milestones')
   await setDoc(ref, { milestones: { [criterionId]: checked }, updatedAt: serverTimestamp() }, { merge: true })
 }
+
+/**
+ * Point the Next Up drills at one elite skill's ladder. Null hands the drills
+ * back to normal path progression.
+ */
+export async function setKiteTargetSkill(uid: string, skillId: string | null): Promise<void> {
+  const ref = doc(db, 'users', uid, 'kite_progress', 'milestones')
+  await setDoc(ref, { targetSkill: skillId, updatedAt: serverTimestamp() }, { merge: true })
+}

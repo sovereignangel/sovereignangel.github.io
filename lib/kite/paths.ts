@@ -508,6 +508,9 @@ export type UnlockRequirement =
   | { kind: 'path'; path: PathId; level: LevelId }
   | { kind: 'fundamentals' }
   | { kind: 'anyPath'; level: LevelId }
+  // Elite ladders live in `elite.ts`, which imports this module — so the
+  // earned map is handed in by the caller rather than imported back.
+  | { kind: 'elite'; skill: string }
 
 export interface LifeUnlock {
   id: string
@@ -588,9 +591,17 @@ export const LIFE_UNLOCKS: LifeUnlock[] = [
     id: 'ul-kota',
     title: 'King of the Air video entry',
     detail: 'Film and submit a KOTA qualifier entry — whatever happens, you are in the conversation.',
-    requires: { kind: 'path', path: 'bigair', level: 'master' },
-    requiresLabel: 'Big Air MST',
+    requires: { kind: 'elite', skill: 'megaloop' },
+    requiresLabel: 'Megaloop',
     icon: 'camera',
+  },
+  {
+    id: 'ul-lightdays',
+    title: 'Half the calendar back',
+    detail: 'Foiling turns 8-12 kn from a written-off day into a session — roughly half the days the planner currently greys out become rideable.',
+    requires: { kind: 'elite', skill: 'foil-eight' },
+    requiresLabel: 'Foiling in 8 kn',
+    icon: 'foil',
   },
   {
     id: 'ul-lagoons',
@@ -737,6 +748,71 @@ export const KITE_GLOSSARY: GlossaryEntry[] = [
     variants: ['underpowered'],
   },
   { term: 'eye of the wind', def: 'Pointing straight into the wind — the one direction you cannot ride.', variants: ['eye of the wind'] },
+  {
+    term: 'wind window',
+    def: 'The quarter-dome of sky downwind of you that the kite can fly in. 12 is overhead at the top of it, 9 and 3 sit at the water on either side.',
+    variants: ['wind window'],
+  },
+  {
+    term: 'power zone',
+    def: 'The bottom-centre of the wind window, straight downwind of you at water level. The kite moves fastest there and pulls hardest, and the pull points forward rather than up.',
+    variants: ['power zone'],
+  },
+  {
+    term: 'downloop',
+    def: 'Steering the kite DOWN and all the way around in a full circle, so it dives through the power zone before coming back up. An uploop lifts you; a downloop tows you forward.',
+    variants: ['downloop', 'downloops', 'downlooping', 'downlooped'],
+  },
+  {
+    term: 'uploop',
+    def: 'Turning the kite back over the top of the window instead of down through the power zone — the ordinary, low-power way to move it across.',
+    variants: ['uploop', 'uploops'],
+  },
+  {
+    term: 'kiteloop',
+    def: 'A downloop performed during a jump: the kite completes a full circle in the air and catches you as it comes round.',
+    variants: ['kiteloop', 'kiteloops'],
+  },
+  {
+    term: 'megaloop',
+    def: 'A kiteloop off a full send, with the loop pulled late from the top of the jump so the kite drives through the power zone and slingshots you downwind.',
+    variants: ['megaloop', 'megaloops'],
+  },
+  {
+    term: 'apex',
+    def: 'The highest point of a jump — the moment everything in the air gets timed from.',
+    variants: ['apex'],
+  },
+  {
+    term: 'depower',
+    def: 'The trim that changes how much the kite pulls: sheeting in adds power, letting the bar out takes it away.',
+    variants: ['depower'],
+  },
+  {
+    term: 'quick release',
+    def: 'The red handle on the chicken loop that dumps the kite off your harness. The last line of defence, and the one thing worth practising while nothing is wrong.',
+    variants: ['quick release'],
+  },
+  {
+    term: 'board leash',
+    def: 'A cord tying the board to you. Convenient for learning, dangerous for jumping — a released board on a leash comes back at your head.',
+    variants: ['board leash'],
+  },
+  {
+    term: 'hydrofoil',
+    def: 'A wing on a mast under the board. Past a certain speed the board lifts clear of the water and you fly on the wing alone, in roughly half the wind.',
+    variants: ['hydrofoil', 'foil', 'foiling'],
+  },
+  {
+    term: 'raley',
+    def: 'An unhooked trick where the board is thrown out behind you and the body goes flat, then swings back under for the landing.',
+    variants: ['raley'],
+  },
+  {
+    term: 'down-the-line',
+    def: 'Riding along the face of a wave in the direction it is breaking, letting the wave drive rather than the kite.',
+    variants: ['down-the-line'],
+  },
 ]
 
 // ─── Computation ──────────────────────────────────────────────
@@ -929,7 +1005,7 @@ export function currentIkoLevel(state: MasteryState): number {
 
 export interface NextMilestone {
   source: string // 'Foundation' or path name
-  pathId: PathId | 'foundation'
+  pathId: PathId | 'foundation' | 'elite'
   milestone: PathMilestone
   /** Not yet the current drill — shown as what comes after it */
   queued?: boolean
@@ -969,8 +1045,13 @@ export function nextMilestones(
   return out.slice(0, n)
 }
 
-export function isUnlockMet(u: LifeUnlock, state: MasteryState): boolean {
+export function isUnlockMet(
+  u: LifeUnlock,
+  state: MasteryState,
+  eliteEarned: Record<string, boolean> = {}
+): boolean {
   const req = u.requires
+  if (req.kind === 'elite') return eliteEarned[req.skill] === true
   if (req.kind === 'belt') return state.beltsEarned[req.belt]
   if (req.kind === 'fundamentals') return state.whiteEarned
   if (req.kind === 'anyPath') {

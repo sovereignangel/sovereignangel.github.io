@@ -121,6 +121,52 @@ const PATHS: Record<string, React.ReactNode> = {
       <path d="M15.5 8.5l-2 5.5-5.5 2 2-5.5 5.5-2z" />
     </>
   ),
+
+  // ─── Elite skill badges ─────────────────────────────────────
+  // Megaloop — the kite driven all the way round the window
+  loop: (
+    <>
+      <path d="M12 4.5a6.5 6.5 0 1 1-6.2 8.4" />
+      <path d="M4.4 9.6l1.4 3.6 3.6-1.3" />
+      <path d="M2.5 20.5h19" />
+    </>
+  ),
+  // Handle pass — the bar going behind the back, hand to hand
+  pass: (
+    <>
+      <path d="M5 9h14" />
+      <path d="M5 7v4M19 7v4" />
+      <path d="M7.5 13.5c1.5 4 7.5 4 9 0" strokeDasharray="2.5 2" />
+      <circle cx="7.5" cy="15" r="1.4" />
+      <circle cx="16.5" cy="15" r="1.4" />
+    </>
+  ),
+  // Down-the-line — the line drawn across a breaking wave face
+  dtl: (
+    <>
+      <path d="M2 18C6 18 8 6 13 6c3 0 5 3.5 9 6.5" />
+      <path d="M5 15.5c3.5-1 6-4.5 8.5-6.5" strokeDasharray="2.5 2" />
+      <path d="M2 21h20" />
+    </>
+  ),
+  // Hydrofoil — board above, mast and wings below
+  foil: (
+    <>
+      <path d="M4 7h16" />
+      <path d="M12 7v8" />
+      <path d="M7 15h10" />
+      <path d="M9.5 19.5h5" />
+    </>
+  ),
+  // Expedition — a long route with a flag at the far end
+  expedition: (
+    <>
+      <path d="M2 19c4.5 0 4-6 8.5-6s4-6 8.5-6" strokeDasharray="2.5 2.5" />
+      <path d="M19 7V4" />
+      <path d="M19 4.3l4 1.2-4 1.4" />
+      <circle cx="2.5" cy="19" r="1.4" />
+    </>
+  ),
 }
 
 export function UnlockIcon({ id, className = 'w-5 h-5' }: { id: string; className?: string }) {
