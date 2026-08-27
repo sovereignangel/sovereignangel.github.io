@@ -11,8 +11,8 @@
  *
  * Both athletes run identical code on the same window, so the two sides
  * compare honestly — but they are not chasing the same finish. Each has their
- * own goal splits, and the forecast discounts sessions ridden alongside the
- * other, because a partner ride measures the slower rider's tempo.
+ * own goal splits, scored off their own sessions. They train at the same time
+ * and at their own speeds, so neither column is evidence about the other.
  */
 
 import { PinGate } from '@/components/lordas/PinGate'

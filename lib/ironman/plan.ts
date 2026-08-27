@@ -127,44 +127,6 @@ export function goalPaceMinKm(sport: Sport3, goals: RaceGoals = GOALS): number {
 }
 
 /**
- * Where an athlete's logged evidence cannot be read as capability, and what
- * they say the real number is.
- *
- * Aidas rides 30-34km/h when he is on his own, and a block spent riding next
- * to Lori will never show it: a partner ride measures whoever set the tempo.
- * Declaring 32km/h gives the model something to fall back on. It is a fallback
- * and not an override — forecast.ts only reaches for it once most of the
- * window is partner-limited, so as long as unshared rides exist they win. That
- * guard is doing real work today: his solo rides currently sit at 24-27km/h
- * over distance, so the logged number stands and the declaration waits.
- *
- * Lori needs no declaration. She sets the shared pace, so her rides already
- * are her own.
- */
-export interface DeclaredCapability {
-  bikeKmh?: number
-  runMinPerKm?: number
-  swimSecPer100m?: number
-  note?: string
-}
-
-export const DECLARED_CAPABILITY: Record<AthleteId, DeclaredCapability> = {
-  lori: {},
-  aidas: {
-    bikeKmh: 32,
-    note: 'Rides 30-34km/h solo — every ride logged in this block was a partner ride.',
-  },
-}
-
-/** Declared capability as a pace in min/km, or null where nothing is declared */
-export function declaredPaceMinKm(sport: Sport3, declared: DeclaredCapability | undefined): number | null {
-  if (!declared) return null
-  if (sport === 'bike') return declared.bikeKmh ? 60 / declared.bikeKmh : null
-  if (sport === 'run') return declared.runMinPerKm ?? null
-  return declared.swimSecPer100m ? (declared.swimSecPer100m * 10) / 60 : null
-}
-
-/**
  * Relative standing per discipline. This sets no targets — the goals do that.
  * It decides what a gap *means*: a weakness with minutes still on the table is
  * where a block is won, while a strength already at goal only needs keeping

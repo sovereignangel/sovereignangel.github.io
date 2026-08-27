@@ -8,8 +8,8 @@
  * so the two columns are computed identically and can be compared honestly.
  *
  * The two athletes do not share a finish time. Each column is scored against
- * that person's own goals, and each capability estimate discounts the sessions
- * they only rode alongside the other.
+ * that person's own goals, off that person's own sessions — they train at the
+ * same time and at their own speeds, so neither column needs the other.
  */
 
 import {
@@ -20,12 +20,12 @@ import { computeRaceForecast, type RaceForecast } from '@/lib/ironman/forecast'
 import { computeRebalance, type Rebalance } from '@/lib/ironman/rebalance'
 import { raceTargets, type RaceTarget } from '@/lib/ironman/pace'
 import {
-  PLAN, RACE, RACE_NYC, DECLARED_CAPABILITY, STRENGTHS,
+  PLAN, RACE, RACE_NYC, STRENGTHS,
   daysToRace, goalsFor, goalSplits, goalDisplay, todayLocal,
   type AthleteId, type RaceGoals, type Sport3, type Standing,
 } from '@/lib/ironman/plan'
 import { loadBothAthletes, type AthleteData } from './athletes'
-import { buildPairDay, paceProfile, partnerPacesOf, type PairDay, type PaceProfile } from './pair-training'
+import { buildPairDay, paceProfile, type PairDay, type PaceProfile } from './pair-training'
 import type { LordasPerson } from '@/lib/types'
 
 export interface ComplianceWeek {
@@ -105,11 +105,7 @@ function detailFor(data: AthleteData, today: string, partner?: AthleteData): Ath
   const readiness = computeReadiness(data.metrics, activities, today)
   const profile = paceProfile(activities, today)
   const progress = computeProgress(activities, today)
-  const opts = {
-    goals,
-    declared: DECLARED_CAPABILITY[person],
-    partnerPaces: partnerPacesOf(partner),
-  }
+  const opts = { goals }
   const forecast = computeRaceForecast(activities, data.metrics, today, opts)
   const targets = raceTargets(forecast, goals)
   const rebalance = computeRebalance(activities, data.metrics, today, person, opts)

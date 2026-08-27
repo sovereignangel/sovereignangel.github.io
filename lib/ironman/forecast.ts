@@ -19,21 +19,19 @@
  *    probabilities by at most +/-4 points — chronic under-recovery lowers
  *    the forecast even when paces look good.
  *
- * Two corrections sit on top of that, both about *whose* fitness a session
- * actually measures. Sessions logged side by side with the training partner
- * are weighted down, because a ride held at the slower athlete's tempo is
- * evidence about them and not about the person drafting. And where a
- * discipline has no unshared evidence left, the athlete's declared solo
- * capability stands in — a self-reported number is a weaker source than a
- * measured one, so it carries extra uncertainty, but it beats projecting a
- * race off someone else's legs.
+ * Every logged session counts as evidence about the person who logged it, at
+ * full weight. An earlier version discounted sessions the two athletes trained
+ * on the same day, on the theory that riding together means riding at the
+ * slower one's tempo. It does not: these two start together and ride their own
+ * speeds, which is why one 26 August ride reads 96.8km at 23.5km/h and the
+ * other 183.2km at 30.2km/h. Nothing here now cares who else was out.
  */
 
 import type { GarminActivity, GarminMetrics } from '@/lib/types'
 import {
   RACE, RACE_NYC, GOALS, BASELINE,
-  goalPaceMinKm, declaredPaceMinKm,
-  type RaceGoals, type DeclaredCapability, type Sport3,
+  goalPaceMinKm,
+  type RaceGoals, type Sport3,
 } from './plan'
 import { sportOfActivity, dedupeActivities } from './adapt'
 
@@ -41,14 +39,15 @@ import { sportOfActivity, dedupeActivities } from './adapt'
 // Sep 13 is the rehearsal and simply feeds the model as training data.
 const TARGET_DATE = RACE_NYC.date
 
-/** Where the capability number the projection is built on actually came from */
-export type PaceSource = 'logged' | 'shared-only' | 'declared' | 'benchmark'
+/**
+ * Where the capability number came from: real sessions, or the pre-block swim
+ * benchmark standing in until some are logged.
+ */
+export type PaceSource = 'logged' | 'benchmark'
 
 export interface DisciplineForecast {
   sport: Sport3
   n: number // activities the model saw
-  /** How many of those were logged side by side with the training partner */
-  sharedN: number
   paceSource: PaceSource | null
   goalPaceMinKm: number
   currentPaceMinKm: number | null // recency-weighted, race-distance adjusted
@@ -58,29 +57,10 @@ export interface DisciplineForecast {
   sigma: number | null // pace spread (min/km) the probability is scored against
 }
 
-/**
- * Everything the model needs that is not an activity: whose goals to score
- * against, which days were partner sessions, and what this athlete says they
- * can do alone.
- */
+/** Whose goals to score the projection against. */
 export interface ForecastOptions {
   goals?: RaceGoals
-  /**
-   * The partner's own pace (min/km) for each sport on each date they trained
-   * it. A same-day session is only partner-*limited* when the two paces nearly
-   * match — that is what riding together looks like. Two rides on one day at
-   * wildly different speeds are two people who trained separately.
-   */
-  partnerPaces?: Partial<Record<Sport3, Map<string, number>>>
-  declared?: DeclaredCapability
 }
-
-/** How close two same-day paces must be before the session counts as ridden together */
-const TOGETHER_TOLERANCE = 0.12
-/** Weight a partner-limited session keeps, once there is reason to think it understates the athlete */
-const SHARED_WEIGHT = 0.3
-/** Share of the window that must be partner-limited before a declaration takes over */
-const DECLARATION_TAKEOVER = 0.5
 
 export interface RaceForecast {
   asOf: string
@@ -117,17 +97,9 @@ interface Sample {
   ageDays: number // days before asOf
   pace: number // race-distance-adjusted min/km
   weight: number
-  shared: boolean // logged alongside the training partner
 }
 
-function collectSamples(
-  activities: GarminActivity[],
-  sport: Sport3,
-  asOf: string,
-  opts: ForecastOptions
-): Sample[] {
-  const partner = opts.partnerPaces?.[sport]
-  const declared = declaredPaceMinKm(sport, opts.declared)
+function collectSamples(activities: GarminActivity[], sport: Sport3, asOf: string): Sample[] {
   const samples: Sample[] = []
   for (const a of dedupeActivities(activities)) {
     if (a.date == null || a.date > asOf || sportOfActivity(a.type) !== sport) continue
@@ -140,19 +112,7 @@ function collectSamples(
     const ageDays = daysBetween(a.date, asOf)
     if (ageDays > LOOKBACK_DAYS) continue
     const adjPace = pace * Math.pow(RACE_KM[sport] / km, RIEGEL_EXP[sport] - 1)
-    const theirs = partner?.get(a.date)
-    const isShared =
-      theirs != null && Math.abs(theirs - pace) / Math.min(theirs, pace) <= TOGETHER_TOLERANCE
-    // Being ridden together is not on its own a reason to discount a session —
-    // for whoever set the tempo it is a perfectly good measurement. The weight
-    // only drops where the athlete has said they are faster alone.
-    const understated = isShared && declared != null && declared < adjPace
-    samples.push({
-      ageDays,
-      pace: adjPace,
-      weight: Math.pow(0.5, ageDays / HALF_LIFE_DAYS) * (understated ? SHARED_WEIGHT : 1),
-      shared: isShared,
-    })
+    samples.push({ ageDays, pace: adjPace, weight: Math.pow(0.5, ageDays / HALF_LIFE_DAYS) })
   }
   // No swims logged yet: seed with the pre-block benchmark so the forecast
   // is honest rather than empty
@@ -164,7 +124,6 @@ function collectSamples(
       ageDays: LOOKBACK_DAYS,
       pace: benchPace,
       weight: Math.pow(0.5, LOOKBACK_DAYS / HALF_LIFE_DAYS),
-      shared: false,
     })
   }
   return samples
@@ -178,29 +137,13 @@ function forecastDiscipline(
 ): DisciplineForecast {
   const goals = opts.goals ?? GOALS
   const goal = goalPaceMinKm(sport, goals)
-  const samples = collectSamples(activities, sport, asOf, opts)
+  const samples = collectSamples(activities, sport, asOf)
   const n = samples.length
-  const sharedN = samples.filter((x) => x.shared).length
-  const declared = declaredPaceMinKm(sport, opts.declared)
-  const empty: DisciplineForecast = {
-    sport, n, sharedN, paceSource: null, goalPaceMinKm: goal,
-    currentPaceMinKm: null, projectedPaceMinKm: null, projectedSplitMin: null,
-    probability: null, sigma: null,
-  }
-
-  // Nothing logged at all: a declared number is still a forecastable one, it
-  // just carries the uncertainty of being self-reported rather than measured.
   if (n === 0) {
-    if (declared == null) return empty
-    const sigma = declared * 0.06 * (1 + Math.max(0, daysBetween(asOf, TARGET_DATE)) / 90)
     return {
-      ...empty,
-      paceSource: 'declared',
-      currentPaceMinKm: declared,
-      projectedPaceMinKm: declared,
-      projectedSplitMin: declared * RACE_KM[sport],
-      probability: clamp(normCdf((goal - declared) / sigma), 0.01, 0.99),
-      sigma,
+      sport, n, paceSource: null, goalPaceMinKm: goal,
+      currentPaceMinKm: null, projectedPaceMinKm: null, projectedSplitMin: null,
+      probability: null, sigma: null,
     }
   }
 
@@ -235,24 +178,15 @@ function forecastDiscipline(
   sigma = Math.max(sigma, projected * (n < 3 ? 0.06 : 0.025))
   sigma *= 1 + daysToRace / 90
 
-  // Most of the window was ridden at someone else's tempo and the athlete says
-  // they are faster alone. Believe them: those sessions measure the partner.
-  // The declared number replaces the projection and keeps a wider band,
-  // because self-reported is weaker evidence than logged.
-  let paceSource: PaceSource = sharedN >= n * DECLARATION_TAKEOVER && sharedN > 0 ? 'shared-only' : 'logged'
-  if (sport === 'swim' && samples.length === 1 && samples[0].ageDays === LOOKBACK_DAYS) paceSource = 'benchmark'
-  if (declared != null && declared < projected && sharedN >= n * DECLARATION_TAKEOVER) {
-    projected = declared
-    sigma = Math.max(sigma, declared * 0.06 * (1 + daysToRace / 90))
-    paceSource = 'declared'
-  }
+  // The one case where the number is not a logged session: the swim seed.
+  const paceSource: PaceSource =
+    sport === 'swim' && n === 1 && samples[0].ageDays === LOOKBACK_DAYS ? 'benchmark' : 'logged'
 
   const probability = clamp(normCdf((goal - projected) / sigma), 0.01, 0.99)
 
   return {
     sport,
     n,
-    sharedN,
     paceSource,
     goalPaceMinKm: goal,
     currentPaceMinKm: wMean,

@@ -81,9 +81,8 @@ export interface SportGap {
   need: SportNeed
   priority: number
   target: RaceTarget
-  /** Where the capability number came from, and how much of it was partner work */
+  /** Whether the capability number came from logged sessions or the swim seed */
   paceSource: DisciplineForecast['paceSource']
-  sharedN: number
   why: string
 }
 
@@ -217,14 +216,13 @@ function gapFor(
   else if (balanceMin <= -45) bits.push(`${Math.abs(balanceMin)}min under plan this week`)
   if (standing === 'weak' && need !== 'holding') bits.push('weakest discipline, so the minutes here are the cheapest to buy')
   if (standing === 'strong' && need === 'holding') bits.push('strongest discipline and already there — keep it awake, do not chase it')
-  if (d && d.paceSource === 'declared') bits.push('capability taken from the declared solo number, not from partner sessions')
+  if (d && d.paceSource === 'benchmark') bits.push('no swims logged in the window — standing on the pre-block benchmark')
 
   return {
     sport, standing, goalSplitMin, projectedSplitMin, minutesOverGoal,
     longestKm, coverKm, raceKm, enduranceCovered,
     recentMin, plannedMin, balanceMin, need, priority, target,
     paceSource: d?.paceSource ?? null,
-    sharedN: d?.sharedN ?? 0,
     why: bits.join(' · '),
   }
 }

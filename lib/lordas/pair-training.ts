@@ -9,6 +9,10 @@
  * The output is one workout with two prescriptions plus an explicit "how much
  * of it you do side by side" number, so a shared session never turns into one
  * person quietly training alone at the wrong intensity.
+ *
+ * The two prescriptions are computed independently. They go out the door at
+ * the same time and each rides their own speed, so neither one's session is
+ * evidence about the other and there is nothing to correct for.
  */
 
 import { computeReadiness, adaptDay, sportOfActivity, dedupeActivities, type Readiness } from '@/lib/ironman/adapt'
@@ -16,7 +20,7 @@ import { computeRaceForecast } from '@/lib/ironman/forecast'
 import { computeRebalance, planDayWith, type Rebalance } from '@/lib/ironman/rebalance'
 import { fmtPace, raceTargets, zonePaceMinKm, type RaceTarget } from '@/lib/ironman/pace'
 import {
-  DECLARED_CAPABILITY, STRENGTHS, getPlanDay,
+  STRENGTHS, getPlanDay,
   goalsFor,
   type AthleteId, type PlanDay, type PlannedSession, type RaceGoals,
   type Sport, type Sport3, type Zone,
@@ -93,36 +97,6 @@ function habitualMinKm(sport: Sport3, p: PaceProfile): number | null {
   return p.swimSecPer100m ? (p.swimSecPer100m * 10) / 60 : null
 }
 
-/**
- * The partner's own pace for every sport they trained, by date. The forecast
- * uses it to tell a session ridden *together* from two sessions that merely
- * happened on the same day — the first measures whoever set the tempo, the
- * second measures each of them.
- */
-export function partnerPacesOf(partner: AthleteData | undefined): Partial<Record<Sport3, Map<string, number>>> {
-  const out: Partial<Record<Sport3, Map<string, number>>> = {}
-  if (!partner) return out
-  // Their longest session of a sport that day is the one that could have been
-  // shared, so it is the pace worth remembering.
-  const longest: Partial<Record<Sport3, Map<string, { min: number; pace: number }>>> = {}
-  for (const a of dedupeActivities(partner.activities)) {
-    const sport = a.date ? sportOfActivity(a.type) : null
-    if (sport !== 'swim' && sport !== 'bike' && sport !== 'run') continue
-    const km = (a.distanceMeters ?? 0) / 1000
-    const min = (a.durationSeconds ?? 0) / 60
-    if (km <= 0 || min < MIN_DURATION_S / 60) continue
-    const map = (longest[sport] ??= new Map())
-    const prev = map.get(a.date as string)
-    if (!prev || min > prev.min) map.set(a.date as string, { min, pace: min / km })
-  }
-  for (const sport of ['swim', 'bike', 'run'] as const) {
-    const map = longest[sport]
-    if (!map) continue
-    out[sport] = new Map([...map].map(([date, v]) => [date, v.pace]))
-  }
-  return out
-}
-
 // ── Zone → pace ───────────────────────────────────────────────────────────
 
 /** The pace this athlete should hold for this session, or null when unknown. */
@@ -172,14 +146,14 @@ export interface AthletePrescription {
   noData: boolean
 }
 
-function prescribe(data: AthleteData, date: string, partner?: AthleteData): AthletePrescription {
+function prescribe(data: AthleteData, date: string): AthletePrescription {
   const person = data.athlete.id as AthleteId
   const goals = goalsFor(person)
   const activities = dedupeActivities(data.activities)
   const readiness = computeReadiness(data.metrics, activities, date)
   const profile = paceProfile(activities, date)
 
-  const opts = { goals, declared: DECLARED_CAPABILITY[person], partnerPaces: partnerPacesOf(partner) }
+  const opts = { goals }
   const forecast = computeRaceForecast(activities, data.metrics, date, opts)
   const targets = raceTargets(forecast, goals)
   const rebalance = computeRebalance(activities, data.metrics, date, person, opts)
@@ -305,7 +279,7 @@ function paceDivergence(
 }
 
 export function buildPairDay(date: string, athletes: AthleteData[]): PairDay {
-  const prescriptions = athletes.map((a, i) => prescribe(a, date, athletes[1 - i]))
+  const prescriptions = athletes.map((a) => prescribe(a, date))
   // The printed plan is the shared backbone. Each athlete's card may have been
   // recalibrated away from it in a different direction, so the pair view shows
   // what was printed and names the divergence rather than picking a winner.
@@ -376,18 +350,6 @@ export function buildPairDay(date: string, athletes: AthleteData[]): PairDay {
       if (!onCard.has(sport)) continue
       const line = paceDivergence(sport, a, b, THRESHOLD[sport])
       if (line) divergence.push(line)
-    }
-
-    // A capability taken from a declaration rather than from logged work is a
-    // claim, and the page should say so rather than quietly present it as data.
-    for (const p of prescriptions) {
-      for (const g of p.rebalance.sports) {
-        if (!onCard.has(g.sport) || g.paceSource !== 'declared') continue
-        divergence.push(
-          `${p.name}'s ${g.sport} number is declared, not measured — ${g.sharedN} of the logged sessions were done together, ` +
-            `so the model is using the stated solo figure. A solo effort would replace it with evidence.`
-        )
-      }
     }
   }
 
