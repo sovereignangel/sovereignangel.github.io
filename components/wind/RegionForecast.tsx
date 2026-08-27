@@ -17,9 +17,9 @@ import {
   kiteSizeHint,
   HOUR_CELL_COLOR,
   type SessionPick,
-  type SpotForecast,
 } from '@/lib/kite/forecast'
-import { fetchRegionForecast, getRegion, type RegionId } from '@/lib/kite/regions'
+import { getRegion, type RegionId } from '@/lib/kite/regions'
+import { resolveRegionForecast } from '@/lib/kite/forecast-store'
 import { fetchJuraspotLive } from '@/lib/kite/juraspot'
 import { WindTabs } from './WindTabs'
 import { SpotBoard, VISIBLE_SPOTS } from './SpotBoard'
@@ -178,16 +178,96 @@ function Legend({ hasRail }: { hasRail: boolean }) {
 }
 
 /**
- * A region that fits on the board keeps the usual reading column. One that
- * needs a rail gets the whole monitor, so five columns stay wide.
+ * One width for every region, deliberately. The page frame used to widen for
+ * Brazil and snap back for New York, which moved the nav bar every time you
+ * changed coast. The board absorbs the difference instead: it caps its own
+ * columns and benches the spots that do not fit.
  */
-function Shell({ children, wide = false }: { children: React.ReactNode; wide?: boolean }) {
+function Shell({ children }: { children: React.ReactNode }) {
   return (
     <main className="min-h-screen" style={{ background: 'linear-gradient(180deg, #e7f0ea 0%, #f2ecdf 320px)' }}>
-      <div className={`${wide ? 'max-w-[1700px]' : 'max-w-5xl'} mx-auto px-3 md:px-4 py-3 md:py-5`}>
-        {children}
-      </div>
+      <div className="max-w-[1400px] mx-auto px-3 md:px-4 py-3 md:py-5">{children}</div>
     </main>
+  )
+}
+
+/**
+ * The masthead is one row that never wraps, so the tabs sit in exactly the
+ * same place on every coast. Everything on the left may shrink or drop out
+ * under pressure; the tab group never does.
+ */
+function Masthead({
+  region,
+  generatedAt,
+}: {
+  region: ReturnType<typeof getRegion>
+  generatedAt?: string
+}) {
+  return (
+    <div className="flex items-center gap-2 md:gap-3 mb-2">
+      <div className="flex items-center gap-2 md:gap-3 min-w-0">
+        <h1 className="font-serif text-[17px] md:text-[20px] font-semibold text-surf-deep whitespace-nowrap truncate">
+          Wind <span className="text-surf-teal">&mdash;</span> {region.name}
+        </h1>
+        <span
+          className="hidden sm:flex items-center gap-1 font-mono text-[9px] uppercase tracking-wide text-surf-teal bg-surf-teal-bg border border-surf-teal/25 rounded-full px-1.5 py-0.5 shrink-0"
+          title={`${region.seasonLabel} leg of the rotation · ${region.months}`}
+        >
+          <SeasonIcon season={region.season} className="w-3 h-3" />
+          {region.seasonLabel}
+        </span>
+        <span className="hidden lg:block shrink-0">
+          <WaveDivider />
+        </span>
+        <span className="hidden xl:inline text-[10px] text-surf-muted truncate">{region.tagline}</span>
+      </div>
+      <div className="ml-auto flex items-center gap-2 shrink-0">
+        <WindTabs active={region.id} />
+        {generatedAt && (
+          <span className="hidden md:inline font-mono text-[9px] md:text-[10px] text-surf-muted whitespace-nowrap">
+            {generatedAt} {region.clockLabel}
+          </span>
+        )}
+      </div>
+    </div>
+  )
+}
+
+/** Says which spots are showing a remembered reading, and how old it is. */
+function StaleNote({
+  staleSlugs,
+  staleSince,
+  region,
+}: {
+  staleSlugs: string[]
+  staleSince: string | null
+  region: ReturnType<typeof getRegion>
+}) {
+  if (staleSlugs.length === 0) return null
+  const names = region.spots
+    .filter(sp => staleSlugs.includes(sp.slug))
+    .map(sp => sp.name)
+  const since = staleSince
+    ? new Date(staleSince).toLocaleString('en-GB', {
+        timeZone: region.timezone,
+        weekday: 'short',
+        hour: '2-digit',
+        minute: '2-digit',
+      })
+    : null
+  return (
+    <div className="flex items-start gap-1.5 bg-surf-sun-bg border border-surf-sun/40 rounded-lg px-2 py-1.5 mb-2">
+      <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 text-surf-sun-ink shrink-0 mt-px" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
+        <circle cx="12" cy="12" r="9" />
+        <path d="M12 7v5.5l3.5 2" />
+      </svg>
+      <span className="text-[10px] text-surf-sun-ink leading-snug">
+        {names.length === 1 ? `${names[0]} is` : `${names.join(', ')} are`} showing the last
+        reading we took{since ? `, from ${since} ${region.clockLabel}` : ''} &mdash; the forecast
+        service did not answer for {names.length === 1 ? 'it' : 'them'} this time. Every other spot
+        is live.
+      </span>
+    </div>
   )
 }
 
@@ -195,22 +275,18 @@ export async function RegionForecast({ regionId }: { regionId: RegionId }) {
   const region = getRegion(regionId)
   const hasRail = region.spots.length > VISIBLE_SPOTS
 
-  let forecasts: SpotForecast[]
-  try {
-    forecasts = await fetchRegionForecast(region)
-  } catch {
+  // Per-spot, with the last good reading standing in for anything that fails.
+  // Only a region where every spot failed AND nothing was ever stored can
+  // land on the empty state below.
+  const { forecasts, staleSlugs, staleSince } = await resolveRegionForecast(region)
+
+  if (forecasts.length === 0) {
     return (
-      <Shell wide={hasRail}>
-        <div className="flex items-center gap-2 md:gap-3 mb-2">
-          <h1 className="font-serif text-[17px] md:text-[20px] font-semibold text-surf-deep whitespace-nowrap">
-            Wind <span className="text-surf-teal">&mdash;</span> {region.name}
-          </h1>
-          <span className="ml-auto">
-            <WindTabs active={region.id} />
-          </span>
-        </div>
+      <Shell>
+        <Masthead region={region} />
         <p className="text-[11px] text-surf-muted mt-3">
-          Forecast service is unreachable right now. Refresh in a minute.
+          No forecast for this coast yet &mdash; the service did not answer and there is no stored
+          reading to fall back on. Refresh in a minute.
         </p>
       </Shell>
     )
@@ -230,29 +306,9 @@ export async function RegionForecast({ regionId }: { regionId: RegionId }) {
   })
 
   return (
-    <Shell wide={hasRail}>
-      <div className="flex items-center gap-2 md:gap-3 mb-2 flex-wrap">
-        <h1 className="font-serif text-[17px] md:text-[20px] font-semibold text-surf-deep whitespace-nowrap">
-          Wind <span className="text-surf-teal">&mdash;</span> {region.name}
-        </h1>
-        <span
-          className="flex items-center gap-1 font-mono text-[9px] uppercase tracking-wide text-surf-teal bg-surf-teal-bg border border-surf-teal/25 rounded-full px-1.5 py-0.5 shrink-0"
-          title={`${region.seasonLabel} leg of the rotation · ${region.months}`}
-        >
-          <SeasonIcon season={region.season} className="w-3 h-3" />
-          {region.seasonLabel}
-        </span>
-        <span className="hidden md:block">
-          <WaveDivider />
-        </span>
-        <span className="hidden lg:inline text-[10px] text-surf-muted">{region.tagline}</span>
-        <span className="ml-auto flex items-center gap-2">
-          <WindTabs active={region.id} />
-          <span className="hidden md:inline font-mono text-[9px] md:text-[10px] text-surf-muted whitespace-nowrap">
-            {generatedAt} {region.clockLabel}
-          </span>
-        </span>
-      </div>
+    <Shell>
+      <Masthead region={region} generatedAt={generatedAt} />
+      <StaleNote staleSlugs={staleSlugs} staleSince={staleSince} region={region} />
 
       <WeekBand
         dates={forecasts[0].days.map(d => d.date)}

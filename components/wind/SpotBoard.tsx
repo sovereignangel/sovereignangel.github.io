@@ -29,7 +29,10 @@ import { SpotIcon } from './WindIcons'
 import { fmtDay, fmtWeekday, fmtWindow } from './wind-format'
 
 /** How many columns stay on the board. Past this, spots go to the rail. */
-export const VISIBLE_SPOTS = 5
+export const VISIBLE_SPOTS = 4
+
+/** A column past this is not more readable, just wider. */
+const MAX_COLUMN_PX = 400
 
 function HourAxis() {
   return (
@@ -93,15 +96,16 @@ function SpotMatrix({
   tz: string
 }) {
   const dates = forecasts[0].days.map(d => d.date)
-  // A floor per column, not a target — the grid stretches to whatever the
-  // board gives it, and only scrolls sideways on a narrow screen.
+  // A floor per column so the grid scrolls rather than crushes on a narrow
+  // screen, and a ceiling so a two-spot region centres instead of stretching.
   const minWidth = Math.max(480, forecasts.length * 132 + 48)
+  const maxWidth = forecasts.length * MAX_COLUMN_PX + 48
   const stick = 'sticky left-0 z-10 bg-surf-card'
   return (
     <div className="bg-surf-card border border-surf-rule rounded-xl p-2 md:p-3 shadow-[0_2px_12px_rgba(13,92,99,0.06)] overflow-x-auto">
       <div
-        className="grid gap-x-2 md:gap-x-4"
-        style={{ gridTemplateColumns: `auto repeat(${forecasts.length}, minmax(0, 1fr))`, minWidth }}
+        className="grid gap-x-2 md:gap-x-4 mx-auto"
+        style={{ gridTemplateColumns: `auto repeat(${forecasts.length}, minmax(0, 1fr))`, minWidth, maxWidth }}
       >
         <div className={`border-b-2 border-surf-rule ${stick}`} />
         {forecasts.map(f => (

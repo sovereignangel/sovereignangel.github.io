@@ -10,7 +10,7 @@
  * onshore or cross only, a two-hour window minimum. Only the geography moves.
  */
 
-import { fetchSpots, type KiteSpot, type SpotForecast } from './forecast'
+import type { KiteSpot } from './forecast'
 
 export type RegionId = 'lithuania' | 'nyc' | 'brazil'
 export type SeasonId = 'summer' | 'shoulder' | 'winter'
@@ -332,10 +332,6 @@ export function getRegion(id: RegionId): KiteRegion {
   const region = KITE_REGIONS.find(r => r.id === id)
   if (!region) throw new Error(`Unknown kite region: ${id}`)
   return region
-}
-
-export function fetchRegionForecast(region: KiteRegion): Promise<SpotForecast[]> {
-  return fetchSpots(region.spots, region.timezone)
 }
 
 export { LITHUANIA_SPOT_LIST, NYC_SPOT_LIST, BRAZIL_SPOT_LIST }
