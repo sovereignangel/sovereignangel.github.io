@@ -16,7 +16,7 @@ import { computeRaceForecast } from '@/lib/ironman/forecast'
 import { computeRebalance, planDayWith, type Rebalance } from '@/lib/ironman/rebalance'
 import { fmtPace, raceTargets, zonePaceMinKm, type RaceTarget } from '@/lib/ironman/pace'
 import {
-  DECLARED_CAPABILITY, STRENGTHS,
+  DECLARED_CAPABILITY, STRENGTHS, getPlanDay,
   goalsFor,
   type AthleteId, type PlanDay, type PlannedSession, type RaceGoals,
   type Sport, type Sport3, type Zone,
@@ -235,7 +235,7 @@ export interface PairDay {
   date: string
   phase: string | null
   focus: string | null
-  /** The plan as it now stands for this date, before either body had a say */
+  /** The printed plan for this date — the shared backbone, before either body or the recalibration had a say */
   planned: PlannedSession[]
   athletes: AthletePrescription[]
   /** Minutes both of them can do side by side — the shorter adapted session */
@@ -249,13 +249,6 @@ export interface PairDay {
 
 const SPORT_WORD: Record<Sport, string> = {
   swim: 'Swim', bike: 'Bike', run: 'Run', brick: 'Brick', strength: 'Core', rest: 'Rest',
-}
-
-function sharedTitle(day: PlanDay | undefined): string {
-  if (!day) return 'No session on the plan'
-  const active = day.sessions.filter((s) => s.sport !== 'rest')
-  if (active.length === 0) return 'Rest day — both of you'
-  return active.map((s) => s.title).join(' + ')
 }
 
 /**
@@ -283,36 +276,39 @@ function paceDivergence(
   const weakFor = STRENGTHS[slower.person as AthleteId]?.[sport]
   const framing =
     strongFor === 'strong' && weakFor === 'weak'
-      ? ` It is ${faster.name}'s strongest discipline and ${slower.name}'s weakest, so this is the gap that will not close by race day —`
+      ? ` The strongest discipline for ${faster.name} is the weakest for ${slower.name}, so this gap does not close by race day.`
       : ''
+  const head =
+    `Race-pace ${sport} targets are ${Math.round(gap * 100)}% apart — ` +
+    `${faster.name} ${fmtPace(sport, fs.prescribedPaceMinKm)}, ${slower.name} ${fmtPace(sport, ss.prescribedPaceMinKm)}.` +
+    framing
 
   if (sport === 'bike') {
     return (
-      `Race-pace bike targets are ${Math.round(gap * 100)}% apart — ${faster.name} ${fmtPace('bike', fs.prescribedPaceMinKm)}, ` +
-      `${slower.name} ${fmtPace('bike', ss.prescribedPaceMinKm)}.${framing} ` +
-      `ride it as one: ${faster.name} on the front the whole way at ${slower.name}'s number, drafting is the point. ` +
-      `${faster.name}'s own race-effort work has to happen alone.`
+      `${head} Ride it as one anyway: ${faster.name} on the front the whole way holding ${slower.name}'s number, ` +
+      `because drafting is the point. Race-effort bike work for ${faster.name} has to happen alone.`
     )
   }
   if (sport === 'run') {
     return (
-      `Race-pace run targets are ${Math.round(gap * 100)}% apart — ${faster.name} ${fmtPace('run', fs.prescribedPaceMinKm)}, ` +
-      `${slower.name} ${fmtPace('run', ss.prescribedPaceMinKm)}.${framing} ` +
-      `run the same loop out-and-back rather than side by side, or ${faster.name} runs ${slower.name}'s number and calls it Z2.`
+      `${head} Run the same loop out and back rather than side by side, or ${faster.name} runs ` +
+      `${slower.name}'s number and calls it Z2.`
     )
   }
-  return (
-    `Race-pace swim targets are ${Math.round(gap * 100)}% apart — ${faster.name} ${fmtPace('swim', fs.prescribedPaceMinKm)}, ` +
-    `${slower.name} ${fmtPace('swim', ss.prescribedPaceMinKm)}.${framing} ` +
-    `same lane, same set, different send-offs — nobody should be sitting on the wall waiting.`
-  )
+  return `${head} Same lane and same set, different send-offs — nobody should be waiting on the wall.`
 }
 
 export function buildPairDay(date: string, athletes: AthleteData[]): PairDay {
   const prescriptions = athletes.map((a, i) => prescribe(a, date, athletes[1 - i]))
-  const day = planDayWith(date, prescriptions[0]?.rebalance.moves ?? [])
+  // The printed plan is the shared backbone. Each athlete's card may have been
+  // recalibrated away from it in a different direction, so the pair view shows
+  // what was printed and names the divergence rather than picking a winner.
+  const printed = getPlanDay(date)
   const working = prescriptions.filter((p) => p.totalMin > 0)
-  const restDay = !day || day.sessions.every((s) => s.sport === 'rest')
+  const restDay =
+    prescriptions.length > 0
+      ? prescriptions.every((p) => p.sessions.every((s) => s.sport === 'rest'))
+      : !printed || printed.sessions.every((s) => s.sport === 'rest')
 
   // Side-by-side time is the shorter of the two cards. If either of them is on
   // recovery there is no shared session at all, and saying "0min together" is
@@ -322,10 +318,22 @@ export function buildPairDay(date: string, athletes: AthleteData[]): PairDay {
       ? Math.min(...working.map((p) => p.totalMin))
       : 0
 
+  const cardOf = (p: AthletePrescription) =>
+    p.sessions.filter((s) => s.sport !== 'rest').map((s) => s.title).join(' + ')
+  const sameCard = prescriptions.length === 2 && cardOf(prescriptions[0]) === cardOf(prescriptions[1])
+
   const divergence: string[] = []
 
   if (!restDay && prescriptions.length === 2) {
     const [a, b] = prescriptions
+
+    if (!sameCard) {
+      divergence.push(
+        `Different cards today — ${a.name}: ${cardOf(a) || 'recovery'}. ${b.name}: ${cardOf(b) || 'recovery'}. ` +
+          'The recalibration moved each of you off the printed session for different reasons.'
+      )
+    }
+
     const ahead = a.totalMin >= b.totalMin ? a : b
     const behind = ahead === a ? b : a
     const gap = ahead.totalMin - behind.totalMin
@@ -336,7 +344,7 @@ export function buildPairDay(date: string, athletes: AthleteData[]): PairDay {
       )
     } else if (gap > 0) {
       divergence.push(`Sessions are within ${gap}min of each other — do the whole thing together.`)
-    } else {
+    } else if (sameCard) {
       divergence.push('Identical session for both of you — start and finish together.')
     }
 
@@ -344,10 +352,13 @@ export function buildPairDay(date: string, athletes: AthleteData[]): PairDay {
       divergence.push(`${behind.name}'s readiness pulled the session to recovery — going anyway costs more than it buys.`)
     }
 
-    // Only speak about the disciplines actually on today's card.
+    // Only speak about disciplines that are actually being trained today, and
+    // only where the effort is high enough for a pace gap to matter. Two people
+    // spinning easy side by side do not need a lecture about race pace.
     const onCard = new Set<Sport3>()
     for (const p of prescriptions) {
       for (const s of p.sessions) {
+        if (s.zone === 'Z1' || s.zone === '-') continue
         if (s.sport === 'brick') onCard.add('bike')
         else if (s.sport === 'run' || s.sport === 'bike' || s.sport === 'swim') onCard.add(s.sport)
       }
@@ -368,7 +379,7 @@ export function buildPairDay(date: string, athletes: AthleteData[]): PairDay {
         if (!onCard.has(g.sport) || g.paceSource !== 'declared') continue
         divergence.push(
           `${p.name}'s ${g.sport} number is declared, not measured — ${g.sharedN} of the logged sessions were done together, ` +
-            `so the model is using ${DECLARED_CAPABILITY[p.person as AthleteId]?.note ?? 'the stated solo figure'} A solo effort would replace it with evidence.`
+            `so the model is using the stated solo figure. A solo effort would replace it with evidence.`
         )
       }
     }
@@ -376,13 +387,15 @@ export function buildPairDay(date: string, athletes: AthleteData[]): PairDay {
 
   const headline = restDay
     ? 'Rest day — both of you'
-    : `${sharedTitle(day)}${togetherMin > 0 ? ` · ${togetherMin}min together` : ''}`
+    : sameCard || prescriptions.length !== 2
+      ? `${cardOf(prescriptions[0]) || 'No session on the plan'}${togetherMin > 0 ? ` · ${togetherMin}min together` : ''}`
+      : `${printed ? printed.sessions.filter((x) => x.sport !== 'rest').map((x) => x.title).join(' + ') : 'No session on the plan'} — recalibrated separately`
 
   return {
     date,
-    phase: day?.phase ?? null,
-    focus: day?.focus ?? null,
-    planned: day?.sessions ?? [],
+    phase: printed?.phase ?? null,
+    focus: printed?.focus ?? null,
+    planned: printed?.sessions ?? [],
     athletes: prescriptions,
     togetherMin,
     headline,
