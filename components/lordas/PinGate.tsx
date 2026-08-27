@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { C } from './design/tokens'
+import { C, LORDAS_MOTTO } from './design/tokens'
 import { LordasMark } from './design/assets'
 
 /**
@@ -18,15 +18,18 @@ export function PinGate({ onSubmit, error }: { onSubmit: (pin: string) => void; 
         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 18 }}>
           <LordasMark size={72} />
         </div>
+        {/* The mark already draws the motto — a source, aimed through a lens
+            — so the gate says it in words directly beneath rather than
+            repeating the wordmark. */}
         <h1 style={{
-          margin: 0, fontFamily: 'var(--lordas-display)', fontSize: 26,
-          fontWeight: 600, letterSpacing: '-.02em',
+          margin: 0, fontFamily: 'var(--lordas-display)', fontSize: 25,
+          fontWeight: 600, letterSpacing: '-.02em', lineHeight: 1.1,
         }}>
-          Lordas
+          {LORDAS_MOTTO}
         </h1>
         <p style={{
-          margin: '6px 0 22px', fontFamily: 'var(--lordas-mono)', fontSize: 9.5,
-          letterSpacing: '.15em', textTransform: 'uppercase', color: C.faint,
+          margin: '7px 0 22px', fontFamily: 'var(--lordas-mono)', fontSize: 9.5,
+          letterSpacing: '.18em', textTransform: 'uppercase', color: C.faint,
         }}>
           Lori &amp; Aidas
         </p>

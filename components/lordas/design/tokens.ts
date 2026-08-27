@@ -113,4 +113,4 @@ export const FONT = {
 
 /** The wordmark line. Lives here so the primitive library never has to
  *  import from a lordas-specific module to render a ticker. */
-export const LORDAS_MOTTO = 'Source then aim.'
+export const LORDAS_MOTTO = 'Source then Aim.'
