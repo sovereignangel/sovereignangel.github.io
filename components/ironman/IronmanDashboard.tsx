@@ -25,6 +25,12 @@ import { raceTargets, paceBoth } from '@/lib/ironman/pace'
 // Pure function, no lordas state — imported rather than re-implemented so both
 // pages compute the six-week average from exactly the same rule.
 import { paceProfile } from '@/lib/lordas/pair-training'
+// The primitive stylesheet defines every .lordas-* class the field cards,
+// tearsheet, hover and disclosure rely on. It was previously pulled in only by
+// the lordas layout, so hosting those components here without it produced
+// unstyled markup — hover panels rendered inline, tables lost their rules.
+// Every rule in it is prefixed, so nothing leaks into the rest of this page.
+import '@/components/lordas/design/console.css'
 import './ironsheet.css'
 
 // ── Shared UI ─────────────────────────────────────────────────────────────
