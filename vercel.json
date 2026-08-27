@@ -1,18 +1,6 @@
 {
   "crons": [
     {
-      "path": "/api/cron/sync-daily",
-      "schedule": "0 5 * * *"
-    },
-    {
-      "path": "/api/cron/sync-daily",
-      "schedule": "0 14 * * *"
-    },
-    {
-      "path": "/api/cron/sync-daily",
-      "schedule": "0 22 * * *"
-    },
-    {
       "path": "/api/cron/overnight",
       "schedule": "0 12 * * *"
     },
@@ -33,18 +21,6 @@
       "schedule": "30 4 * * *"
     },
     {
-      "path": "/api/cron/ironman-brief",
-      "schedule": "45 4 * * *"
-    },
-    {
-      "path": "/api/cron/exec-orders",
-      "schedule": "50 4 * * *"
-    },
-    {
-      "path": "/api/cron/exec-orders",
-      "schedule": "0 17 * * *"
-    },
-    {
       "path": "/api/weekly-calibration/generate",
       "schedule": "0 22 * * 0"
     },
@@ -57,12 +33,52 @@
       "schedule": "0 * * * *"
     },
     {
+      "path": "/api/cron/sync-daily",
+      "schedule": "0 5 * * *"
+    },
+    {
       "path": "/api/cron/lordas-garmin",
-      "schedule": "20 4 * * *"
+      "schedule": "5 5 * * *"
+    },
+    {
+      "path": "/api/cron/sync-daily",
+      "schedule": "0 9 * * *"
+    },
+    {
+      "path": "/api/cron/lordas-garmin",
+      "schedule": "5 9 * * *"
+    },
+    {
+      "path": "/api/cron/sync-daily",
+      "schedule": "0 17 * * *"
+    },
+    {
+      "path": "/api/cron/lordas-garmin",
+      "schedule": "5 17 * * *"
+    },
+    {
+      "path": "/api/cron/ironman-brief",
+      "schedule": "15 5 * * *"
+    },
+    {
+      "path": "/api/cron/exec-orders",
+      "schedule": "20 5 * * *"
     },
     {
       "path": "/api/cron/lordas-orders",
-      "schedule": "55 4 * * *"
+      "schedule": "25 5 * * *"
+    },
+    {
+      "path": "/api/cron/exec-orders",
+      "schedule": "15 9 * * *"
+    },
+    {
+      "path": "/api/cron/exec-orders",
+      "schedule": "15 17 * * *"
+    },
+    {
+      "path": "/api/cron/lordas-orders",
+      "schedule": "20 17 * * *"
     }
   ]
 }
