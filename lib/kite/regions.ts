@@ -198,6 +198,7 @@ const BRAZIL_SPOT_LIST: KiteSpot[] = [
     water: 'lagoon',
     tagline: 'standing-depth flat',
     note: 'Fishing-village lagoon a few km east of Guajiru — waist-deep, butter flat, almost nobody on it. The single best water on the coast for drilling a new move.',
+    priority: 1,
     favorWhen: { maxKn: 18, bonus: 3 },
   }),
   brazilSpot({

@@ -4,62 +4,27 @@
  * Same rules everywhere — 12-30 kn, gusts under 36, onshore or cross only,
  * a two-hour window minimum. Only the spot list, the timezone and the local
  * notes change between Lithuania, New York and Brazil.
+ *
+ * The week band on top always reads across every spot in the region, whether
+ * or not it currently has a column: it answers "where should I go", which is
+ * the wrong question to answer from a subset. The board below it is the one
+ * that pages through spots.
  */
 
-import { Fragment } from 'react'
 import {
   weekSessions,
   weekPossibles,
-  directionLabel,
   kiteSizeHint,
   HOUR_CELL_COLOR,
-  STRIP_START,
-  STRIP_END,
-  type DayAnalysis,
-  type KiteSpot,
   type SessionPick,
   type SpotForecast,
 } from '@/lib/kite/forecast'
 import { fetchRegionForecast, getRegion, type RegionId } from '@/lib/kite/regions'
-import { fetchJuraspotLive, type JuraspotLive } from '@/lib/kite/juraspot'
+import { fetchJuraspotLive } from '@/lib/kite/juraspot'
 import { WindTabs } from './WindTabs'
-import { HourStrip } from './HourStrip'
+import { SpotBoard, VISIBLE_SPOTS } from './SpotBoard'
 import { SpotIcon, SeasonIcon, WaveDivider } from './WindIcons'
-
-function fmtDay(date: string, tz: string): string {
-  const d = new Date(`${date}T12:00:00`)
-  return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', timeZone: tz })
-}
-
-function fmtWeekday(date: string, tz: string): string {
-  const d = new Date(`${date}T12:00:00`)
-  return d.toLocaleDateString('en-US', { weekday: 'short', timeZone: tz })
-}
-
-function fmtMonthDay(date: string, tz: string): string {
-  const d = new Date(`${date}T12:00:00`)
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: tz })
-}
-
-function fmtWindow(startHour: number, endHour: number): string {
-  const pad = (n: number) => String(n).padStart(2, '0')
-  return `${pad(startHour)}–${pad(endHour)}h`
-}
-
-function HourAxis() {
-  return (
-    <div className="flex gap-px">
-      {Array.from({ length: STRIP_END - STRIP_START }, (_, i) => {
-        const hour = STRIP_START + i
-        return (
-          <div key={hour} className="flex-1 min-w-[4px] text-center font-mono text-[8px] text-surf-muted leading-none">
-            {hour % 2 === 0 ? hour : ''}
-          </div>
-        )
-      })}
-    </div>
-  )
-}
+import { fmtMonthDay, fmtWeekday, fmtWindow } from './wind-format'
 
 const MAX_ALTERNATES = 3
 
@@ -182,129 +147,7 @@ function WeekBand({
   )
 }
 
-function MatrixCell({ day, spot, nowHour, tz }: { day: DayAnalysis; spot: KiteSpot; nowHour?: number; tz: string }) {
-  let line: JSX.Element
-  if (day.window) {
-    line = (
-      <span className="font-semibold text-surf-deep">
-        {fmtWindow(day.window.startHour, day.window.endHour)} &middot; {day.window.avgSpeedKn} kn
-      </span>
-    )
-  } else if (day.verdict === 'offshore') {
-    line = <span className="text-surf-navy">offshore</span>
-  } else if (day.verdict === 'rain') {
-    line = <span className="text-surf-navy">rain all day</span>
-  } else if (day.verdict === 'strong') {
-    line = <span className="text-surf-coral">too strong</span>
-  } else if (day.altWindow) {
-    line = (
-      <span className="text-surf-sun-ink">
-        poss {day.altWindow.avgSpeedKn} kn
-      </span>
-    )
-  } else if (day.verdict === 'light') {
-    line = <span className="text-surf-sun-ink">light</span>
-  } else {
-    line = <span className="text-surf-faint">&mdash;</span>
-  }
-  const altNote = !day.window && day.altWindow
-    ? ` The second model shows ${day.altWindow.avgSpeedKn} kn ${fmtWindow(day.altWindow.startHour, day.altWindow.endHour)} — recheck closer to the day.`
-    : ''
-  return (
-    <div className="py-1 md:py-1.5 border-b border-surf-rule-light" title={`${fmtDay(day.date, tz)} — ${spot.name}: ${day.note}.${altNote}`}>
-      <div className="font-mono text-[9px] md:text-[10px] leading-tight mb-0.5">{line}</div>
-      <HourStrip day={day} spot={spot} nowHour={nowHour} />
-    </div>
-  )
-}
-
-function SpotMatrix({
-  forecasts,
-  live,
-  nowHour,
-  tz,
-  wide,
-}: {
-  forecasts: SpotForecast[]
-  live: JuraspotLive | null
-  nowHour: number
-  tz: string
-  wide: boolean
-}) {
-  const dates = forecasts[0].days.map(d => d.date)
-  // Eleven spots do not fit a phone whatever the page does. Give every column
-  // a usable floor and let the grid scroll sideways under a day column that
-  // stays pinned; on a desktop the wide shell swallows the whole thing.
-  const minWidth = Math.max(560, forecasts.length * 118 + 48)
-  const stick = 'sticky left-0 z-10 bg-surf-card'
-  return (
-    <div className="bg-surf-card border border-surf-rule rounded-xl p-2 md:p-3 shadow-[0_2px_12px_rgba(13,92,99,0.06)] overflow-x-auto">
-      <div
-        className={`grid gap-x-2 ${wide ? 'md:gap-x-3' : 'md:gap-x-4'}`}
-        style={{ gridTemplateColumns: `auto repeat(${forecasts.length}, minmax(0, 1fr))`, minWidth }}
-      >
-        <div className={`border-b-2 border-surf-rule ${stick}`} />
-        {forecasts.map(f => (
-          <div key={f.spot.slug} className="pb-1 md:pb-1.5 border-b-2 border-surf-rule" title={`${f.spot.area} — ${f.spot.idealWind}. ${f.spot.note}`}>
-            <div className="flex items-center gap-1.5">
-              <SpotIcon slug={f.spot.slug} className="w-4 h-4 md:w-5 md:h-5 text-surf-teal shrink-0" />
-              <span className="font-serif text-[13px] md:text-[15px] font-semibold text-surf-deep truncate">
-                {f.spot.name}
-              </span>
-            </div>
-            {f.spot.slug === 'sventoji' && live ? (() => {
-              const nowFc = f.days[0]?.hours.find(h => h.hour === nowHour)
-              const fcstKn = nowFc ? Math.round(nowFc.speedKn) : null
-              const disagree = fcstKn !== null && Math.abs(live.avgKn - fcstKn) >= 3
-              return (
-                <a
-                  href="https://juraspot.lt"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-1 mt-0.5 group"
-                  title={`JuraSpot station (Monciskes), measured wind: 10-min avg ${live.avgMs} m/s, instantaneous ${live.instMs} m/s${live.directionDeg !== null ? `, from ${Math.round(live.directionDeg)} deg` : ''}.${fcstKn !== null ? ` GFS forecast for this hour: ${fcstKn} kn.` : ''} The station is real measured wind — trust it over the forecast for right now.`}
-                >
-                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-surf-teal shrink-0" />
-                  <span className="font-mono text-[9px] font-semibold text-surf-deep group-hover:underline truncate">
-                    station {live.avgKn} kn
-                    {disagree && <span className="text-surf-sun-ink"> &middot; fcst {fcstKn}</span>}
-                    {live.directionDeg !== null && <> &middot; {directionLabel(live.directionDeg, f.spot).split(' ')[0]}</>}
-                  </span>
-                </a>
-              )
-            })() : (
-              <div className="text-[8px] md:text-[9px] text-surf-muted mt-0.5 truncate">{f.spot.tagline}</div>
-            )}
-            <div className="hidden md:block text-[9px] text-surf-muted truncate">{f.spot.idealWind}</div>
-          </div>
-        ))}
-        <div className={`pt-1 pr-1 text-right font-mono text-[8px] text-surf-muted self-end ${stick}`}>h</div>
-        {forecasts.map(f => (
-          <div key={`axis-${f.spot.slug}`} className="pt-1 self-end">
-            <HourAxis />
-          </div>
-        ))}
-        {dates.map((date, i) => (
-          <Fragment key={date}>
-            <div className={`font-mono text-[9px] md:text-[10px] uppercase text-surf-muted self-center pr-1 border-b border-surf-rule-light py-1 ${stick}`}>
-              {i === 0 ? 'Today' : fmtWeekday(date, tz)}
-            </div>
-            {forecasts.map(f => {
-              const day = f.days.find(d => d.date === date)
-              return day ? (
-                <MatrixCell key={f.spot.slug} day={day} spot={f.spot} nowHour={i === 0 ? nowHour : undefined} tz={tz} />
-              ) : (
-                <div key={f.spot.slug} className="border-b border-surf-rule-light" />
-              )
-            })}
-          </Fragment>
-        ))}
-      </div>
-    </div>
-  )
-}
-
-function Legend() {
+function Legend({ hasRail }: { hasRail: boolean }) {
   const rainSwatch =
     'repeating-linear-gradient(135deg, rgba(255,255,255,0.55) 0px, rgba(255,255,255,0.55) 1.5px, transparent 1.5px, transparent 4.5px)'
   const items: { label: string; color: string; border?: boolean; stripes?: boolean }[] = [
@@ -326,18 +169,18 @@ function Legend() {
           <span className="text-[9px] md:text-[10px] text-surf-muted">{item.label}</span>
         </span>
       ))}
-      <span className="hidden md:inline text-[9px] text-surf-faint">strips run 08:00 to sunset · hover for details</span>
+      <span className="hidden md:inline text-[9px] text-surf-faint">
+        strips run 08:00 to sunset · hover for details
+        {hasRail && ' · the week band above reads across every spot, shown or benched'}
+      </span>
     </div>
   )
 }
 
 /**
- * Four Baltic spots sit comfortably in the usual column. Eleven Brazilian
- * ones do not, so a spot-heavy coast gets the whole monitor rather than
- * being posted through a 1024px letterbox and scrolled.
+ * A region that fits on the board keeps the usual reading column. One that
+ * needs a rail gets the whole monitor, so five columns stay wide.
  */
-const WIDE_SPOT_COUNT = 6
-
 function Shell({ children, wide = false }: { children: React.ReactNode; wide?: boolean }) {
   return (
     <main className="min-h-screen" style={{ background: 'linear-gradient(180deg, #e7f0ea 0%, #f2ecdf 320px)' }}>
@@ -350,14 +193,14 @@ function Shell({ children, wide = false }: { children: React.ReactNode; wide?: b
 
 export async function RegionForecast({ regionId }: { regionId: RegionId }) {
   const region = getRegion(regionId)
-  const wide = region.spots.length > WIDE_SPOT_COUNT
+  const hasRail = region.spots.length > VISIBLE_SPOTS
 
   let forecasts: SpotForecast[]
   try {
     forecasts = await fetchRegionForecast(region)
   } catch {
     return (
-      <Shell wide={wide}>
+      <Shell wide={hasRail}>
         <div className="flex items-center gap-2 md:gap-3 mb-2">
           <h1 className="font-serif text-[17px] md:text-[20px] font-semibold text-surf-deep whitespace-nowrap">
             Wind <span className="text-surf-teal">&mdash;</span> {region.name}
@@ -387,7 +230,7 @@ export async function RegionForecast({ regionId }: { regionId: RegionId }) {
   })
 
   return (
-    <Shell wide={wide}>
+    <Shell wide={hasRail}>
       <div className="flex items-center gap-2 md:gap-3 mb-2 flex-wrap">
         <h1 className="font-serif text-[17px] md:text-[20px] font-semibold text-surf-deep whitespace-nowrap">
           Wind <span className="text-surf-teal">&mdash;</span> {region.name}
@@ -428,9 +271,9 @@ export async function RegionForecast({ regionId }: { regionId: RegionId }) {
         }
         tz={region.timezone}
       />
-      <SpotMatrix forecasts={forecasts} live={live} nowHour={nowHour} tz={region.timezone} wide={wide} />
+      <SpotBoard forecasts={forecasts} live={live} nowHour={nowHour} tz={region.timezone} />
       <div className="mt-1.5">
-        <Legend />
+        <Legend hasRail={hasRail} />
       </div>
     </Shell>
   )
