@@ -56,8 +56,15 @@
 @media (max-width: 780px) {
   .lordas-seam-3, .lordas-seam-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+/* On a phone, only the grids holding long-form cards collapse to one column.
+   Stat rows stay two-up: a 4-tile row stacked flat is 2,400px of scrolling for
+   what is meant to be read in one glance before a session, and the standard's
+   own rule is to add columns rather than padding. */
 @media (max-width: 470px) {
-  .lordas-seam-2, .lordas-seam-3, .lordas-seam-4 { grid-template-columns: 1fr; }
+  .lordas-seam-2 { grid-template-columns: 1fr; }
+}
+@media (max-width: 360px) {
+  .lordas-seam-3, .lordas-seam-4 { grid-template-columns: 1fr; }
 }
 
 /* ── Field card ─────────────────────────────────────────────────────── */

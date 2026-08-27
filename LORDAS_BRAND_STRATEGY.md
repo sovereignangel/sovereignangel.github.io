@@ -128,6 +128,11 @@ overflow: hidden;
 Use `<Seam cols={2|3|4}>`. This is what removes the whitespace and it is not
 optional. **If a screen looks empty, add columns, not padding.**
 
+Breakpoints follow the same rule. Three- and four-column grids drop to two at
+780px and only collapse at 360px; two-column grids — which hold the long-form
+cards — collapse at 470px. A stat row stacked flat on a phone is several
+screens of scrolling for something meant to be read in one glance.
+
 Spacing scale: `4 · 6 · 8 · 10 · 12 · 16 · 22`. Card padding 10/12. Row rhythm 6.
 Section separation 22px with a 1px rule — never a blank band.
 
