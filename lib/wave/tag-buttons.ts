@@ -1,13 +1,13 @@
 /**
- * Phase 2B Wave fanout — 7-tag inline keyboard.
+ * Phase 2B Wave fanout — 8-tag inline keyboard.
  *
  * When a Wave session.completed event arrives, the bot sends Lori an inline
- * keyboard with 7 options. She taps one; the callback handler in the Telegram
+ * keyboard with 8 options. She taps one; the callback handler in the Telegram
  * webhook dispatches the transcript to the chosen destination.
  *
  * Callback data shape: `wave:<sessionId>:<tag>` where:
  *   - sessionId is the Wave session ID
- *   - tag ∈ {fundraising, research, management, investing, lordas, alamobernal, defer}
+ *   - tag ∈ {fundraising, research, management, investing, lordas, alamobernal, journal, defer}
  *
  * Wave session IDs are typically UUIDs (~36 chars), tags ≤ 12 chars, prefix 5
  * chars. Total ~55 chars — well under Telegram's 64-byte callback_data limit.
@@ -22,6 +22,7 @@ export type WaveTag =
   | 'investing'
   | 'lordas'
   | 'alamobernal'
+  | 'journal'
   | 'defer'
 
 export const WAVE_TAGS: readonly WaveTag[] = [
@@ -31,6 +32,7 @@ export const WAVE_TAGS: readonly WaveTag[] = [
   'investing',
   'lordas',
   'alamobernal',
+  'journal',
   'defer',
 ] as const
 
@@ -41,6 +43,7 @@ const TAG_LABEL: Record<WaveTag, string> = {
   investing: 'Investing',
   lordas: 'Lordas',
   alamobernal: 'Alamo Bernal',
+  journal: 'Journal',
   defer: 'Defer',
 }
 
@@ -54,11 +57,11 @@ interface KeyboardButton {
 }
 
 /**
- * Build the 7-tag inline keyboard for a Wave session prompt.
- * Layout: 4 in row 1 (fundraising/research/management/investing), 2 in row 2
- * (lordas/alamobernal), 1 in row 3 (defer). Visual hierarchy: the 4 DeepOps
- * surfaces are the most common; lordas + alamobernal are mid-frequency;
- * defer is the escape hatch.
+ * Build the 8-tag inline keyboard for a Wave session prompt.
+ * Layout: 4 in row 1 (fundraising/research/management/investing), 3 in row 2
+ * (lordas/alamobernal/journal), 1 in row 3 (defer). Visual hierarchy: the 4
+ * DeepOps surfaces are the most common; lordas + alamobernal + journal are
+ * mid-frequency; defer is the escape hatch.
  */
 export function buildWaveKeyboard(sessionId: string): KeyboardButton[][] {
   return [
@@ -71,6 +74,7 @@ export function buildWaveKeyboard(sessionId: string): KeyboardButton[][] {
     [
       { text: 'Lordas', callback_data: `wave:${sessionId}:lordas` },
       { text: 'Alamo Bernal', callback_data: `wave:${sessionId}:alamobernal` },
+      { text: 'Journal', callback_data: `wave:${sessionId}:journal` },
     ],
     [
       { text: 'Defer', callback_data: `wave:${sessionId}:defer` },

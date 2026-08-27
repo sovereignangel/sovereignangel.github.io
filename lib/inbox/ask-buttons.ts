@@ -2,13 +2,15 @@
  * Phase 2 inbound router — free-form ask-button flow.
  *
  * When the user sends text without a routing prefix, the bot replies with a
- * 5-button inline keyboard ([Armstrong] [Alamo Bernal] [Thesis] [Lordas]
- * [Cancel]). The user taps; the bot dispatches the original text to the
- * chosen project's inbox. Zero misrouting — explicit confirmation always.
+ * 6-button inline keyboard ([Armstrong] [Alamo Bernal] [Thesis] [Lordas]
+ * [Journal] [Cancel]). The user taps; the bot dispatches the original text to
+ * the chosen project's inbox — or, for Journal, appends it to today's
+ * daily_logs.journalEntry via the /journal pipeline. Zero misrouting —
+ * explicit confirmation always.
  *
  * Callback data shape: `ask:<draft_id>:<source>` where:
  *   - `draft_id` is the Firestore doc ID under users/{uid}/inbox_drafts/
- *   - `source` is "armstrong" | "alamo-bernal" | "thesis" | "lordas" | "cancel"
+ *   - `source` is "armstrong" | "alamo-bernal" | "thesis" | "lordas" | "journal" | "cancel"
  *
  * Telegram caps callback_data at 64 bytes. Firestore auto-IDs are 20 chars,
  * so a typical callback is ~35 bytes — well under the limit.
@@ -18,7 +20,7 @@
 
 import type { InboxSource } from './types'
 
-export type AskCallbackSource = InboxSource | 'cancel'
+export type AskCallbackSource = InboxSource | 'journal' | 'cancel'
 
 export interface AskCallbackData {
   draftId: string
@@ -43,6 +45,7 @@ export function buildAskKeyboard(draftId: string): KeyboardButton[][] {
     [
       { text: 'Thesis', callback_data: `ask:${draftId}:thesis` },
       { text: 'Lordas', callback_data: `ask:${draftId}:lordas` },
+      { text: 'Journal', callback_data: `ask:${draftId}:journal` },
     ],
     [
       { text: 'Cancel', callback_data: `ask:${draftId}:cancel` },
@@ -60,7 +63,7 @@ export function parseAskCallback(data: string): AskCallbackData | null {
   if (parts.length !== 3) return null
   const draftId = parts[1]
   const source = parts[2] as AskCallbackSource
-  const validSources: AskCallbackSource[] = ['armstrong', 'alamo-bernal', 'thesis', 'lordas', 'cancel']
+  const validSources: AskCallbackSource[] = ['armstrong', 'alamo-bernal', 'thesis', 'lordas', 'journal', 'cancel']
   if (!validSources.includes(source)) return null
   if (!draftId || draftId.length === 0) return null
   return { draftId, source }

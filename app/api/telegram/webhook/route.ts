@@ -2435,6 +2435,15 @@ async function handleAskCallback(
     return
   }
 
+  // Journal — append to today's daily_logs.journalEntry via the /journal
+  // pipeline (AI parse, beliefs/decisions/contacts, embed, reward).
+  if (parsed.source === 'journal') {
+    await editTelegramMessage(chatId, messageId, `Routed to [Journal].\n\n_"${draft.text.slice(0, 80)}${draft.text.length > 80 ? '…' : ''}"_`)
+    await handleJournal(uid, draft.text, draft.sender_chat_id)
+    await draftRef.delete()
+    return
+  }
+
   // Dispatch via the same prefix-route helper (single source of truth for routing logic).
   await handlePrefixRoute(uid, draft.sender_chat_id, parsed.source, draft.text)
   await draftRef.delete()
@@ -2455,13 +2464,14 @@ const MEETINGS_INGEST_URL: Record<'deepops' | 'alamobernal', string> = {
 }
 
 // Map each tag to its destination + surface label for downstream
-const TAG_DESTINATION: Record<WaveTag, { kind: 'deepops'; surface: string } | { kind: 'alamobernal' } | { kind: 'lordas' } | { kind: 'defer' }> = {
+const TAG_DESTINATION: Record<WaveTag, { kind: 'deepops'; surface: string } | { kind: 'alamobernal' } | { kind: 'lordas' } | { kind: 'journal' } | { kind: 'defer' }> = {
   fundraising: { kind: 'deepops', surface: 'fundraising' },
   research: { kind: 'deepops', surface: 'research' },
   management: { kind: 'deepops', surface: 'management' },
   investing: { kind: 'deepops', surface: 'investing' },
   lordas: { kind: 'lordas' },
   alamobernal: { kind: 'alamobernal' },
+  journal: { kind: 'journal' },
   defer: { kind: 'defer' },
 }
 
@@ -2533,6 +2543,29 @@ async function handleWaveCallback(
     })
     await pendingRef.delete()
     await editTelegramMessage(chatId, messageId, `Deferred. (Wave will not re-prompt for this session.)`)
+    return
+  }
+
+  // Journal — append the transcript to today's daily_logs.journalEntry via the
+  // same pipeline as /journal (AI parse, beliefs/decisions/contacts, embed,
+  // reward). handleJournal sends its own progress + summary messages.
+  if (tag === 'journal') {
+    try {
+      await editTelegramMessage(chatId, messageId, `Routed to [Journal].`)
+      // handleJournal catches parse failures internally (raw text still saved);
+      // it only throws if the write itself fails — keep pending in that case.
+      await handleJournal(pending.uid, pending.transcript, chatId)
+      await decisionsRef.set({
+        wave_session_id: sessionId,
+        decision: 'journal',
+        decided_at: new Date(),
+        decided_by_chat_id: cbq.from.id,
+      })
+      await pendingRef.delete()
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err)
+      await editTelegramMessage(chatId, messageId, `Journal routing failed: ${msg.slice(0, 200)}\n\n(Session kept pending — re-prompt via wave-backfill to retry.)`)
+    }
     return
   }
 
