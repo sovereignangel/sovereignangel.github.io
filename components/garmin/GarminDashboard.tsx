@@ -91,14 +91,12 @@ export default function GarminDashboard() {
           .then(setActivities)
           .catch(() => setActivities([]))
       })
-      .catch(() => {
-        getAllGarminMetrics(user.uid)
-          .then(setMetrics)
-          .catch(e => setError((e as Error).message))
-        getAllGarminActivities(user.uid)
-          .then(setActivities)
-          .catch(() => setActivities([]))
-      })
+      // A thrown rollup read is a quota or a rules problem. This dashboard
+      // genuinely wants the whole history, so its fallback stays unbounded —
+      // but only for a rollup that is absent, never for one that failed to
+      // read. Scanning two full collections in answer to "you are out of
+      // reads" guarantees the next page load fails the same way.
+      .catch(e => setError((e as Error).message))
   }, [user])
 
   const ranged = useMemo(() => {

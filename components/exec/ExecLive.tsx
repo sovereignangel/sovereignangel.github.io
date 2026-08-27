@@ -12,7 +12,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { useAuth } from '@/components/auth/AuthProvider'
-import { getAllGarminMetrics, getAllGarminActivities, getGarminRollups } from '@/lib/firestore'
+import { getGarminWindow, getGarminRollups } from '@/lib/firestore'
 import { getKiteSessions, getGarminKiteSessions, getKiteProgress } from '@/lib/firestore/kite-sessions'
 import type { GarminMetrics, GarminActivity } from '@/lib/types'
 import { getPlanDay, type Sport } from '@/lib/ironman/plan'
@@ -73,9 +73,13 @@ function useGarminData() {
 
   useEffect(() => {
     if (!user) return
+    // Windowed, and only when the rollup is missing rather than unreadable —
+    // scanning whole collections in response to a failed read is what keeps an
+    // exhausted quota exhausted.
     const loadFull = () => {
-      getAllGarminMetrics(user.uid).then(setMetrics).catch(() => setMetrics([]))
-      getAllGarminActivities(user.uid).then(setActivities).catch(() => setActivities([]))
+      getGarminWindow(user.uid)
+        .then(({ metrics: m, activities: a }) => { setMetrics(m); setActivities(a) })
+        .catch(() => { setMetrics([]); setActivities([]) })
     }
     getGarminRollups(user.uid)
       .then((rollup) => {
@@ -86,7 +90,7 @@ function useGarminData() {
         }
         loadFull()
       })
-      .catch(loadFull)
+      .catch(() => { setMetrics([]); setActivities([]) })
   }, [user])
 
   return { user, metrics, activities }

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { useAuth } from '@/components/auth/AuthProvider'
-import { getAllGarminMetrics, getAllGarminActivities, getGarminRollups } from '@/lib/firestore'
+import { getGarminWindow, getGarminRollups } from '@/lib/firestore'
 import type { GarminMetrics, GarminActivity } from '@/lib/types'
 import { PLAN, RACE, RACE_NYC, GOALS, BASELINE, goalSplits, goalDisplay, daysToRace, todayLocal,
   priorRaceAtDistance, priorRaceDisplay, priorRaceVsGoal, KM_PER_MILE,
@@ -665,18 +665,24 @@ export default function IronmanDashboard() {
 
   useEffect(() => {
     if (!user) return
-    const loadFull = () => {
-      getAllGarminMetrics(user.uid)
-        .then((m) => {
+    // The rollup is two document reads. The fallback is a windowed query, and
+    // it runs only when the rollup is genuinely absent — never when reading it
+    // threw. A failed read means the quota is gone or the rules said no, and
+    // answering that by scanning whole collections is how a bad minute becomes
+    // a bad day: every page load digs the hole deeper and nothing recovers
+    // until the daily reset.
+    const loadWindow = () => {
+      getGarminWindow(user.uid)
+        .then(({ metrics: m, activities: a }) => {
           setMetrics(m)
+          setActivities(a)
           const latest = m
             .map((x) => (x.syncedAt as unknown as { toDate?: () => Date })?.toDate?.())
             .filter((d): d is Date => d instanceof Date)
-            .sort((a, b) => b.getTime() - a.getTime())[0]
+            .sort((x, y) => y.getTime() - x.getTime())[0]
           if (latest) setLastSync(latest)
         })
         .catch((e) => setError((e as Error).message))
-      getAllGarminActivities(user.uid).then(setActivities).catch(() => setActivities([]))
     }
     getGarminRollups(user.uid)
       .then((rollup) => {
@@ -686,9 +692,9 @@ export default function IronmanDashboard() {
           setLastSync(rollup.updatedAt)
           return
         }
-        loadFull()
+        loadWindow()
       })
-      .catch(loadFull)
+      .catch((e) => setError((e as Error).message))
   }, [user])
 
   const today = todayLocal()

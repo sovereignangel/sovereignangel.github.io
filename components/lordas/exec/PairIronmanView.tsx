@@ -113,7 +113,7 @@ const probColor = (p: number | null | undefined) =>
 // ── Recovery, in full, beside the session ─────────────────────────────────
 
 function RecoveryCard({ a }: { a: AthleteDetail }) {
-  const feed = freshnessOf(a.lastRefresh)
+  const feed = freshnessOf(a.lastRefresh, undefined, a.loadError)
   const band = bandColor(a.readiness.band)
   return (
     <FieldCard

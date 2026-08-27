@@ -144,6 +144,8 @@ export interface AthletePrescription {
   totalMin: number
   /** True when this athlete has no Garmin data at all */
   noData: boolean
+  /** Set when the feed could not be read at all — not the same as having none */
+  loadError: string | null
 }
 
 function prescribe(data: AthleteData, date: string): AthletePrescription {
@@ -175,6 +177,7 @@ function prescribe(data: AthleteData, date: string): AthletePrescription {
     targets,
     rebalance,
     noData: data.empty,
+    loadError: data.loadError,
   }
 
   if (!day) {

@@ -30,7 +30,7 @@ import { freshnessOf, stampOf } from '@/lib/lordas/freshness'
 const TZ = 'Europe/Vilnius'
 
 /** A feed that stopped uploading looks exactly like a rest day unless said. */
-const FEED_TONE = { fresh: 'none', aging: 'warn', stale: 'crit', never: 'crit' } as const
+const FEED_TONE = { fresh: 'none', aging: 'warn', stale: 'crit', never: 'crit', unreadable: 'crit' } as const
 const PACED = new Set(['swim', 'bike', 'run', 'brick'])
 
 function fmtDate(date: string): string {
@@ -125,7 +125,7 @@ function AthleteCard({ a }: { a: AthletePrescription }) {
   const color = OWNER[a.person] ?? C.muted
   const active = a.sessions.filter((s) => s.sport !== 'rest')
   const band = a.readiness.band
-  const feed = freshnessOf(a.lastRefresh)
+  const feed = freshnessOf(a.lastRefresh, undefined, a.loadError)
 
   return (
     <FieldCard

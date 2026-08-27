@@ -45,6 +45,33 @@ export async function getAllGarminActivities(uid: string): Promise<GarminActivit
   return snap.docs.map(d => ({ id: d.id, ...d.data() }) as GarminActivity)
 }
 
+/**
+ * The recent slice, for pages that only ever look at recent work.
+ *
+ * `getAllGarmin*` reads every document a user has ever synced — years of it —
+ * which is the right shape for the history dashboard and wildly wrong as a
+ * fallback for a training page whose model looks back eight weeks. A hundred
+ * and twenty days covers the block and the forecast lookback with room over,
+ * for a fraction of the reads.
+ */
+export async function getGarminWindow(
+  uid: string,
+  days = 120
+): Promise<{ metrics: GarminMetrics[]; activities: GarminActivity[] }> {
+  const start = new Date()
+  start.setDate(start.getDate() - days)
+  const startStr = localDateString(start)
+
+  const [mSnap, aSnap] = await Promise.all([
+    getDocs(query(collection(db, 'users', uid, 'garmin_metrics'), where('date', '>=', startStr), orderBy('date', 'asc'))),
+    getDocs(query(collection(db, 'users', uid, 'garmin_activities'), where('date', '>=', startStr), orderBy('date', 'asc'))),
+  ])
+  return {
+    metrics: mSnap.docs.map((d) => ({ id: d.id, ...d.data() }) as GarminMetrics),
+    activities: aSnap.docs.map((d) => ({ id: d.id, ...d.data() }) as GarminActivity),
+  }
+}
+
 export async function getGarminMetrics(uid: string, date: string): Promise<GarminMetrics | null> {
   const ref = doc(db, 'users', uid, 'garmin_metrics', date)
   const snap = await getDoc(ref)

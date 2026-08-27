@@ -95,6 +95,13 @@ export interface AthleteData {
   lastRefresh: string | null
   /** Newest date any reading covers, which is a different question */
   latestReading: string | null
+  /**
+   * Set when the read itself failed — quota, rules, network. Distinct from
+   * `empty`, which means the account really has nothing. Collapsing the two
+   * makes an outage read as "never synced", which sends the reader off to
+   * debug a sync that worked perfectly.
+   */
+  loadError: string | null
 }
 
 /** Firestore Timestamp, a raw {seconds}, or an ISO string — all end up ISO. */
@@ -145,10 +152,15 @@ export async function loadAthleteData(id: LordasPerson): Promise<AthleteData> {
       empty: metrics.length === 0 && activities.length === 0,
       lastRefresh: syncs.length ? syncs.sort().slice(-1)[0] : null,
       latestReading: dates.length ? dates[dates.length - 1] : null,
+      loadError: null,
     }
   } catch (e) {
     console.error(`[lordas/athletes] load failed for ${id}:`, e)
-    return { athlete: a, metrics: [], activities: [], empty: true, lastRefresh: null, latestReading: null }
+    return {
+      athlete: a, metrics: [], activities: [], empty: true,
+      lastRefresh: null, latestReading: null,
+      loadError: e instanceof Error ? e.message : String(e),
+    }
   }
 }
 

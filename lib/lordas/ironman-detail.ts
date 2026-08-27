@@ -60,6 +60,8 @@ export interface AthleteDetail {
   /** Sessions logged in the block that matched no planned session */
   extras: number
   noData: boolean
+  /** Set when the feed could not be read at all — not the same as having none */
+  loadError: string | null
   /** Newest date any reading covers */
   lastSync: string | null
   /** When the sync itself last ran, ISO */
@@ -152,6 +154,7 @@ function detailFor(data: AthleteData, today: string, partner?: AthleteData): Ath
     compliance: { ...totals, weeks: [...weekMap.values()].sort((a, b) => (a.start < b.start ? -1 : 1)) },
     extras,
     noData: data.empty,
+    loadError: data.loadError,
     lastSync,
     lastRefresh: data.lastRefresh,
   }

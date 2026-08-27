@@ -7,7 +7,7 @@
  * indistinguishable from two rest days unless the page says so.
  */
 
-export type FreshnessLevel = 'fresh' | 'aging' | 'stale' | 'never'
+export type FreshnessLevel = 'fresh' | 'aging' | 'stale' | 'never' | 'unreadable'
 
 export interface Freshness {
   level: FreshnessLevel
@@ -20,7 +20,14 @@ export interface Freshness {
 const AGING_AFTER_H = 12
 const STALE_AFTER_H = 24
 
-export function freshnessOf(iso: string | null | undefined, now: Date = new Date()): Freshness {
+export function freshnessOf(
+  iso: string | null | undefined,
+  now: Date = new Date(),
+  loadError?: string | null
+): Freshness {
+  // A feed that could not be read says nothing about whether it synced. The
+  // watch may be perfectly up to date on the other side of a failed query.
+  if (loadError) return { level: 'unreadable', label: 'feed unreadable', ageMinutes: null, iso: null }
   if (!iso) return { level: 'never', label: 'never synced', ageMinutes: null, iso: null }
 
   const then = new Date(iso)
