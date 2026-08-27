@@ -256,3 +256,71 @@ button.lordas-chip:focus-visible { outline: 2px solid var(--lordas-accent); outl
   padding: 9px 0 4px; margin-top: 3px; border-top: 1px solid var(--lordas-rule);
 }
 .lordas-fc > .lordas-group:first-of-type { border-top: 0; margin-top: 0; padding-top: 2px; }
+
+/* ── Disclosure ───────────────────────────────────────────────────────
+   The page answers its question without scrolling, so evidence starts
+   closed. Native <details> keeps keyboard and screen-reader behaviour and
+   prints open. */
+.lordas-disc { border-top: 1px solid var(--lordas-rule); margin-top: 6px; }
+.lordas-disc > summary {
+  display: flex; align-items: center; gap: 7px;
+  padding: 7px 0 6px; cursor: pointer; list-style: none;
+  font-family: var(--lordas-mono); font-size: 9px; letter-spacing: .15em;
+  text-transform: uppercase; color: var(--lordas-faint);
+}
+.lordas-disc > summary::-webkit-details-marker { display: none; }
+.lordas-disc > summary:hover { color: var(--lordas-muted); }
+.lordas-disc > summary:focus-visible { outline: 2px solid var(--lordas-accent); outline-offset: 2px; }
+.lordas-disc-mark {
+  width: 0; height: 0; flex-shrink: 0;
+  border-left: 4px solid currentColor;
+  border-top: 3.5px solid transparent; border-bottom: 3.5px solid transparent;
+  transition: transform .14s ease;
+}
+.lordas-disc[open] > summary .lordas-disc-mark { transform: rotate(90deg); }
+.lordas-disc-m { margin-left: auto; color: var(--lordas-faint); }
+.lordas-disc-body { padding-bottom: 8px; }
+
+/* ── Tearsheet ────────────────────────────────────────────────────────
+   Disciplines across, metrics down: a row compares the three sports on one
+   measure, a column is one sport's whole case. */
+.lordas-sheet { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.lordas-sheet th, .lordas-sheet td { text-align: right; padding: 5px 0 5px 10px; white-space: nowrap; }
+.lordas-sheet thead th {
+  font-family: var(--lordas-mono); font-size: 8.5px; letter-spacing: .14em;
+  text-transform: uppercase; color: var(--lordas-faint); font-weight: 400;
+  padding-bottom: 6px; border-bottom: 1px solid var(--lordas-rule);
+}
+.lordas-sheet tbody th {
+  text-align: left; padding-left: 0; font-weight: 400; font-size: 11.5px;
+  color: var(--lordas-muted); white-space: normal;
+}
+.lordas-sheet tbody td {
+  font-family: var(--lordas-mono); font-size: 11.5px; color: var(--lordas-ink);
+}
+.lordas-sheet tbody tr { border-bottom: 1px solid var(--lordas-rule-soft); }
+.lordas-sheet tbody tr:last-child { border-bottom: 0; }
+.lordas-sheet tbody tr.em th { color: var(--lordas-ink); font-weight: 600; }
+.lordas-sheet tbody tr.em td { font-weight: 600; }
+.lordas-sheet tbody tr.em { border-top: 1px solid var(--lordas-rule); }
+
+/* The wordmark rides the ticker row instead of costing the header a line. */
+.lordas-ticker.has-motto { justify-content: space-between; align-items: stretch; }
+.lordas-ticker-motto {
+  display: flex; align-items: center; padding: 5px 0;
+  font-family: var(--lordas-mono); font-size: 9px; letter-spacing: .28em;
+  text-transform: uppercase; color: var(--lordas-faint); white-space: nowrap;
+}
+.lordas-ticker-band { display: flex; flex-wrap: wrap; justify-content: flex-end; }
+@media (max-width: 700px) {
+  .lordas-ticker.has-motto { flex-direction: column; }
+  .lordas-ticker-motto { padding-bottom: 2px; }
+  .lordas-ticker-band { justify-content: flex-start; }
+  .lordas-ticker-band .lordas-ticker-item:first-child { border-left: 0; padding-left: 0; }
+}
+
+/* A page that has to answer without scrolling buys the room by tightening
+   the shell, not by shrinking the type. */
+.lordas-wrap.lordas-tight { padding-top: 12px; padding-bottom: 20px; }
+.lordas-tight .lordas-sechd { margin-top: 12px; }
+.lordas-mt { margin-top: 10px; }

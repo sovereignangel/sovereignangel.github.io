@@ -10,6 +10,7 @@
  */
 
 import { C, TONE, wash, edge, type Tone } from './tokens'
+import { LORDAS_MOTTO } from './Nav'
 
 // ── Seam grid ─────────────────────────────────────────────────────────────
 
@@ -221,16 +222,108 @@ export function Hover({
 
 // ── Ticker lane ───────────────────────────────────────────────────────────
 
-/** Standing facts that never change within a session — dates, targets, counts. */
-export function Ticker({ items }: { items: { label: string; value: React.ReactNode; color?: string }[] }) {
+/**
+ * Standing facts that never change within a session — dates, targets, counts.
+ * With `motto`, the wordmark line rides the same row rather than costing the
+ * header a line of its own.
+ */
+export function Ticker({
+  items,
+  motto,
+}: {
+  items: { label: string; value: React.ReactNode; color?: string }[]
+  motto?: boolean
+}) {
   return (
-    <div className="lordas-ticker">
+    <div className={`lordas-ticker${motto ? ' has-motto' : ''}`}>
+      {motto && <span className="lordas-ticker-motto">{LORDAS_MOTTO}</span>}
+      <span className="lordas-ticker-band">
       {items.map((it, i) => (
         <span key={i} className="lordas-ticker-item">
           <span className="l">{it.label}</span>
           <span className="v" style={it.color ? { color: it.color } : undefined}>{it.value}</span>
         </span>
       ))}
+      </span>
     </div>
+  )
+}
+
+
+// ── Disclosure ────────────────────────────────────────────────────────────
+
+/**
+ * Detail that earns its place only once you ask for it.
+ *
+ * The page has to answer its question without scrolling, which means most of
+ * the evidence starts closed. Native `<details>` so it works without
+ * JavaScript, keeps keyboard and screen-reader behaviour for free, and
+ * survives the page being printed with everything open.
+ */
+export function Disclosure({
+  summary,
+  meta,
+  children,
+  open,
+}: {
+  summary: React.ReactNode
+  meta?: React.ReactNode
+  children: React.ReactNode
+  open?: boolean
+}) {
+  return (
+    <details className="lordas-disc" open={open}>
+      <summary>
+        <span className="lordas-disc-mark" aria-hidden="true" />
+        <span className="lordas-disc-t">{summary}</span>
+        {meta ? <span className="lordas-disc-m">{meta}</span> : null}
+      </summary>
+      <div className="lordas-disc-body">{children}</div>
+    </details>
+  )
+}
+
+// ── Tearsheet ─────────────────────────────────────────────────────────────
+
+export interface SheetRow {
+  label: React.ReactNode
+  /** One cell per discipline, in swim / bike / run order */
+  cells: React.ReactNode[]
+  /** Sets the row apart as a conclusion rather than an input */
+  emphasis?: boolean
+  colors?: (string | undefined)[]
+}
+
+/**
+ * The institutional layout: disciplines across, metrics down. Reading a row
+ * compares the three sports on one measure; reading a column is one sport's
+ * whole case. A stack of per-sport cards can do neither.
+ */
+export function Tearsheet({
+  columns,
+  rows,
+}: {
+  columns: { key: string; label: React.ReactNode }[]
+  rows: SheetRow[]
+}) {
+  return (
+    <table className="lordas-sheet">
+      <thead>
+        <tr>
+          <th />
+          {columns.map((c) => <th key={c.key}>{c.label}</th>)}
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map((r, i) => (
+          <tr key={i} className={r.emphasis ? 'em' : undefined}>
+            <th scope="row">{r.label}</th>
+            {r.cells.map((cell, j) => (
+              <td key={j} style={r.colors?.[j] ? { color: r.colors[j] } : undefined}>{cell}</td>
+            ))}
+          </tr>
+        ))}
+      </tbody>
+    </table>
   )
 }

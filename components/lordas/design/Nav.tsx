@@ -132,12 +132,15 @@ export function LordasHeader({
   current,
   onSelect,
   right,
+  motto = true,
 }: {
   title: string
   subtitle?: React.ReactNode
   current: LordasModule
   onSelect?: (m: LordasModule) => void
   right?: React.ReactNode
+  /** Set false where the ticker below is already carrying the wordmark line */
+  motto?: boolean
 }) {
   return (
     <header
@@ -187,7 +190,9 @@ export function LordasHeader({
         {/* Wider tracking than the subtitle above it, so it reads as a
             wordmark line and not as another description of this screen.
             Indented past the mark so it hangs off the title rather than
-            falling to the page edge when the header wraps. */}
+            falling to the page edge when the header wraps. Stood down where
+            the ticker below is already carrying it. */}
+        {motto && (
         <div
           style={{
             fontFamily: 'var(--lordas-mono)',
@@ -202,6 +207,7 @@ export function LordasHeader({
         >
           {LORDAS_MOTTO}
         </div>
+        )}
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
         {right}
