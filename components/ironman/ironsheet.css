@@ -1,0 +1,40 @@
+/*
+ * The solo Ironman page hosting the shared field-card and tearsheet
+ * primitives.
+ *
+ * Those components are palette-agnostic: they read a set of CSS custom
+ * properties and never hard-code a colour. Lordas defines that set in
+ * espresso and navy; this defines the same set in the warm blush and
+ * burgundy this page has always used, so one component library serves two
+ * brands without either borrowing the other's look.
+ *
+ * The property names still carry the `--lordas-` prefix because that is
+ * where they were first written. Renaming them is a mechanical sweep, not a
+ * behaviour change, and is not worth doing mid-flight.
+ */
+
+.iron-sheet {
+  --lordas-ground: #f2ecdf;
+  --lordas-panel: #fffdf7;
+  --lordas-panel-quiet: #faf5ea;
+  --lordas-panel-raise: #fffdf7;
+  --lordas-rule: #dfd3c4;
+  --lordas-rule-soft: #ece3d4;
+  --lordas-ink: #3b2f2f;
+  --lordas-muted: #8a7c7c;
+  --lordas-faint: #b3a5a5;
+  --lordas-accent: #8f2d33;
+  --lordas-ok: #2d6b4a;
+  --lordas-warn: #8a6420;
+  --lordas-crit: #c94f35;
+
+  --lordas-display: var(--font-iron-display, Georgia, 'Times New Roman', serif);
+  --lordas-body: inherit;
+  --lordas-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+/* On paper a card needs an edge of its own; on espresso the seam did that
+   work by itself. */
+.iron-sheet .lordas-seam { box-shadow: 0 1px 2px rgba(94, 31, 36, .05); }
+.iron-sheet .lordas-fc-lede { color: #5e1f24; }
+.iron-sheet .lordas-hover-panel { box-shadow: 0 6px 18px rgba(94, 31, 36, .16); }

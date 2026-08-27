@@ -324,3 +324,32 @@ button.lordas-chip:focus-visible { outline: 2px solid var(--lordas-accent); outl
 .lordas-wrap.lordas-tight { padding-top: 12px; padding-bottom: 20px; }
 .lordas-tight .lordas-sechd { margin-top: 12px; }
 .lordas-mt { margin-top: 10px; }
+
+/* ── The printed block, day by day ────────────────────────────────────
+   Scrolls inside its own disclosure rather than pushing the page past one
+   screen. Today's row is marked so the eye lands on it when it opens. */
+.lordas-plan { width: 100%; border-collapse: collapse; font-size: 11px; }
+.lordas-plan thead th {
+  position: sticky; top: 0; z-index: 1; background: var(--lordas-panel);
+  text-align: left; font-family: var(--lordas-mono); font-size: 8.5px;
+  letter-spacing: .14em; text-transform: uppercase; color: var(--lordas-faint);
+  font-weight: 400; padding: 0 6px 5px 0; border-bottom: 1px solid var(--lordas-rule);
+}
+.lordas-plan tbody td { padding: 5px 6px 5px 0; border-bottom: 1px solid var(--lordas-rule-soft); vertical-align: top; }
+.lordas-plan tbody tr:last-child td { border-bottom: 0; }
+.lordas-plan tr.now td { background: color-mix(in srgb, var(--lordas-accent) 10%, transparent); }
+.lordas-plan .dt {
+  font-family: var(--lordas-mono); font-size: 10px; white-space: nowrap;
+  color: var(--lordas-muted); width: 1%;
+}
+.lordas-plan .dt .ph {
+  display: block; font-size: 8.5px; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--lordas-faint);
+}
+.lordas-plan .ss .one { display: flex; align-items: baseline; gap: 5px; padding: 1px 0; flex-wrap: wrap; }
+.lordas-plan .ss .one svg { align-self: center; }
+.lordas-plan .ss em {
+  font-style: normal; font-family: var(--lordas-mono); font-size: 9.5px;
+  color: var(--lordas-faint);
+}
+.lordas-plan .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; }

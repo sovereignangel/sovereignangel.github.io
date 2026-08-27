@@ -14,7 +14,7 @@
  * and putting 'scheming' back in LordasModule.
  */
 
-import { C } from './tokens'
+import { C, LORDAS_MOTTO } from './tokens'
 import {
   LordasMark, CompassIcon, LightbulbIcon,
   TrifectaIcon, SummitIcon, KiteIcon,
@@ -32,7 +32,7 @@ export const WIND_URL = 'https://www.loricorpuz.com/wind'
  * why it is "then" and not "and". Widen first, aim second — reverse it and you
  * get precision about the wrong thing, which is the expensive failure.
  */
-export const LORDAS_MOTTO = 'Source then aim.'
+export { LORDAS_MOTTO } from './tokens'
 
 /** Routes are served both from lordas.loricorpuz.com and from /lordas. */
 export function lordasHref(path: string): string {

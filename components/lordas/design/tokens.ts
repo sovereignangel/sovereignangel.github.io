@@ -85,8 +85,32 @@ export function bandColor(band: string | null | undefined): string {
   return C.faint
 }
 
+/**
+ * The same tokens as CSS variables. Components that may render inside a
+ * second palette — the solo Ironman page hosts these primitives in burgundy
+ * and blush — must read these rather than the literals above.
+ */
+export const V = {
+  ground: 'var(--lordas-ground)',
+  panel: 'var(--lordas-panel)',
+  panelQuiet: 'var(--lordas-panel-quiet)',
+  rule: 'var(--lordas-rule)',
+  ruleSoft: 'var(--lordas-rule-soft)',
+  ink: 'var(--lordas-ink)',
+  muted: 'var(--lordas-muted)',
+  faint: 'var(--lordas-faint)',
+  accent: 'var(--lordas-accent)',
+  ok: 'var(--lordas-ok)',
+  warn: 'var(--lordas-warn)',
+  crit: 'var(--lordas-crit)',
+} as const
+
 export const FONT = {
   display: 'var(--lordas-display)',
   body: 'var(--lordas-body)',
   mono: 'var(--lordas-mono)',
 } as const
+
+/** The wordmark line. Lives here so the primitive library never has to
+ *  import from a lordas-specific module to render a ticker. */
+export const LORDAS_MOTTO = 'Source then aim.'

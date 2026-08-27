@@ -66,8 +66,24 @@ export interface AthleteDetail {
   lastRefresh: string | null
 }
 
+/**
+ * One printed day, with each athlete's standing against it. The block is the
+ * backbone the whole page argues about, so it ships whole rather than as the
+ * weekly aggregate the compliance grid shows.
+ */
+export interface PlanDayRow {
+  date: string
+  phase: string
+  focus: string
+  sessions: { sport: string; title: string; durationMin: number; distanceKm?: number; zone: string; key?: boolean }[]
+  /** done | partial | missed | upcoming, per athlete */
+  status: Record<string, string>
+}
+
 export interface PairIronmanDetail {
   date: string
+  /** The full block, day by day */
+  plan: PlanDayRow[]
   /** Oldest of the two athletes' refreshes — the page is only as fresh as that */
   feedRefreshedAt: string | null
   races: { name: string; date: string; days: number; location: string }[]
@@ -148,8 +164,52 @@ function detailFor(data: AthleteData, today: string, partner?: AthleteData): Ath
 export async function buildPairIronmanDetail(date: string = todayLocal()): Promise<PairIronmanDetail> {
   const athletes = await loadBothAthletes()
   const refreshes = athletes.map((a) => a.lastRefresh).filter(Boolean) as string[]
+
+  // Statuses are matched per athlete against the same printed day, so a row
+  // shows who did it and who did not without re-deriving the plan twice.
+  const matched = athletes.map((a) => ({
+    person: a.athlete.id as string,
+    days: new Map(
+      PLAN.map((d) => [
+        d.date,
+        matchDay(d, dedupeActivities(a.activities), date),
+      ])
+    ),
+  }))
+
+  const plan: PlanDayRow[] = PLAN.map((d) => ({
+    date: d.date,
+    phase: d.phase,
+    focus: d.focus,
+    sessions: d.sessions.map((x) => ({
+      sport: x.sport,
+      title: x.title,
+      durationMin: x.durationMin,
+      distanceKm: x.distanceKm,
+      zone: x.zone,
+      key: x.key,
+    })),
+    status: Object.fromEntries(
+      matched.map((m) => {
+        const st = m.days.get(d.date)
+        const active = st?.sessions.filter((x) => x.session.sport !== 'rest') ?? []
+        if (!active.length) return [m.person, d.date <= date ? 'done' : 'upcoming']
+        const done = active.filter((x) => x.status === 'done').length
+        const partial = active.filter((x) => x.status === 'partial').length
+        const missed = active.filter((x) => x.status === 'missed').length
+        const label =
+          done === active.length ? 'done'
+            : done + partial > 0 ? 'partial'
+            : missed > 0 ? 'missed'
+            : 'upcoming'
+        return [m.person, label]
+      })
+    ),
+  }))
+
   return {
     date,
+    plan,
     // A pair page is only as current as its staler half.
     feedRefreshedAt: refreshes.length === athletes.length ? refreshes.sort()[0] : null,
     races: [RACE, RACE_NYC]

@@ -26,6 +26,7 @@ import {
 import { Track } from '@/components/lordas/design/charts'
 import { PersonSigil, SportGlyph, TrifectaIcon } from '@/components/lordas/design/assets'
 import { fmtRunPace, fmtSwimPace, fmtBikeSpeed, fmtPace } from '@/lib/lordas/pair-training'
+import { paceBoth } from '@/lib/ironman/pace'
 import type { PairIronmanDetail, AthleteDetail } from '@/lib/lordas/ironman-detail'
 import { freshnessOf, stampOf } from '@/lib/lordas/freshness'
 import type { SportNeed } from '@/lib/ironman/rebalance'
@@ -49,21 +50,59 @@ function hm(min: number | null | undefined): string {
 const pct = (p: number | null | undefined) => (p == null ? '—' : `${Math.round(p * 100)}%`)
 const km = (v: number | null | undefined) => (v == null ? '—' : `${Math.round(v)}km`)
 
-/** Habitual pace, said in the unit each discipline is actually spoken about. */
-function habitual(a: AthleteDetail, sport: Sport3): string | null {
-  if (sport === 'swim') return a.profile.swimSecPer100m != null ? fmtSwimPace(a.profile.swimSecPer100m) : null
-  if (sport === 'bike') return a.profile.bikeKmh != null ? fmtBikeSpeed(a.profile.bikeKmh) : null
-  return a.profile.runMinPerKm != null ? fmtRunPace(a.profile.runMinPerKm) : null
+/** Habitual pace as min/km — the unit everything converts out of. */
+function habitualMinKm(a: AthleteDetail, sport: Sport3): number | null {
+  if (sport === 'swim') return a.profile.swimSecPer100m != null ? (a.profile.swimSecPer100m * 10) / 60 : null
+  if (sport === 'bike') return a.profile.bikeKmh != null ? 60 / a.profile.bikeKmh : null
+  return a.profile.runMinPerKm
+}
+
+/** Goal pace as min/km */
+function goalPaceMinKm(a: AthleteDetail, sport: Sport3): number {
+  if (sport === 'swim') return (a.display.swimSecPer100m * 10) / 60
+  if (sport === 'bike') return 60 / a.display.bikeKmh
+  return a.display.runMinPerKm
+}
+
+/**
+ * A pace in US units, with the metric reading and anything else worth
+ * knowing behind a hover. The races are scored in mph and min/mile and that
+ * is how they are read here; every distance underneath is still metric, so
+ * the other reading stays one hover away rather than being thrown out.
+ */
+function PaceCell({
+  sport,
+  minKm,
+  extra,
+  color,
+  title,
+}: {
+  sport: Sport3
+  minKm: number | null
+  extra?: React.ReactNode
+  color?: string
+  title: string
+}) {
+  const both = paceBoth(sport, minKm)
+  if (!both) return <span style={{ color: C.faint }}>—</span>
+  return (
+    <Hover
+      panel={
+        <>
+          <div className="hd">{SPORT_LABEL[sport]} · {title}</div>
+          <div className="k"><span>US</span><b>{both.primary}</b></div>
+          <div className="k"><span>Metric</span><b>{both.secondary}</b></div>
+          {extra}
+        </>
+      }
+    >
+      <span style={color ? { color } : undefined}>{both.primary}</span>
+    </Hover>
+  )
 }
 
 function goalSplit(a: AthleteDetail, sport: Sport3): number {
   return sport === 'swim' ? a.goals.swimMinutes : sport === 'bike' ? a.goals.bikeMinutes : a.goals.runMinutes
-}
-
-function goalPace(a: AthleteDetail, sport: Sport3): string {
-  if (sport === 'swim') return fmtSwimPace(a.display.swimSecPer100m)
-  if (sport === 'bike') return `${a.display.bikeKmh.toFixed(1)} km/h`
-  return fmtRunPace(a.display.runMinPerKm)
 }
 
 const probColor = (p: number | null | undefined) =>
@@ -118,36 +157,35 @@ function AthleteSheet({ a }: { a: AthleteDetail }) {
     },
     {
       label: 'Goal Pace',
-      cells: SPORTS.map((s) => goalPace(a, s)),
+      cells: SPORTS.map((s) => (
+        <PaceCell key={s} sport={s} minKm={goalPaceMinKm(a, s)} title="goal pace" />
+      )),
     },
     {
       label: 'Current Pace',
-      cells: cols.map((c, i) =>
-        c.d?.currentPaceMinKm != null
-          ? <Hover
-              key={i}
-              panel={
-                <>
-                  <div className="hd">{SPORT_LABEL[SPORTS[i]]} · where the pace stands</div>
-                  <div className="k"><span>Current</span><b>{fmtPace(SPORTS[i], c.d!.currentPaceMinKm)}</b></div>
-                  <div className="k"><span>Goal</span><b>{goalPace(a, SPORTS[i])}</b></div>
-                  {c.t?.prescribedPaceMinKm != null && (
-                    <div className="k"><span>Hold today</span><b>{fmtPace(SPORTS[i], c.t.prescribedPaceMinKm)}</b></div>
-                  )}
-                  {c.t?.capped && <div className="k"><span>Note</span><b>goal out of reach</b></div>}
-                </>
-              }
-            >
-              {fmtPace(SPORTS[i], c.d.currentPaceMinKm)}
-            </Hover>
-          : '—'
-      ),
-      colors: cols.map((c) => (c.d?.currentPaceMinKm == null ? C.faint : undefined)),
+      cells: cols.map((c, i) => (
+        <PaceCell
+          key={i}
+          sport={SPORTS[i]}
+          minKm={c.d?.currentPaceMinKm ?? null}
+          title="where the pace stands"
+          extra={
+            <>
+              <div className="k"><span>Goal</span><b>{paceBoth(SPORTS[i], goalPaceMinKm(a, SPORTS[i]))?.primary}</b></div>
+              {c.t?.prescribedPaceMinKm != null && (
+                <div className="k"><span>Hold today</span><b>{paceBoth(SPORTS[i], c.t.prescribedPaceMinKm)?.primary}</b></div>
+              )}
+              {c.t?.capped && <div className="k"><span>Note</span><b>goal out of reach</b></div>}
+            </>
+          }
+        />
+      )),
     },
     {
       label: '6w avg Pace',
-      cells: SPORTS.map((s) => habitual(a, s) ?? '—'),
-      colors: SPORTS.map((s) => (habitual(a, s) ? undefined : C.faint)),
+      cells: SPORTS.map((s2) => (
+        <PaceCell key={s2} sport={s2} minKm={habitualMinKm(a, s2)} title="six-week average" />
+      )),
     },
     {
       label: 'Projected Total',
@@ -162,7 +200,7 @@ function AthleteSheet({ a }: { a: AthleteDetail }) {
             <>
               <div className="hd">{SPORT_LABEL[SPORTS[i]]} target · {a.name}</div>
               <div className="k"><span>Goal split</span><b>{hm(goalSplit(a, SPORTS[i]))}</b></div>
-              <div className="k"><span>Goal pace</span><b>{goalPace(a, SPORTS[i])}</b></div>
+              <div className="k"><span>Goal pace</span><b>{paceBoth(SPORTS[i], goalPaceMinKm(a, SPORTS[i]))?.primary}</b></div>
               <div className="k"><span>Projected</span><b>{hm(c.d?.projectedSplitMin)}</b></div>
               <div className="k"><span>Evidence</span><b>{c.d?.n ?? 0} sessions</b></div>
             </>
@@ -288,6 +326,71 @@ function AthleteSheet({ a }: { a: AthleteDetail }) {
   )
 }
 
+const STATUS_COLOR: Record<string, string> = {
+  done: C.ok, partial: C.warn, missed: C.crit, upcoming: C.faint,
+}
+
+/** The printed block in full, with who has actually done each day. */
+function FullPlan({ data }: { data: PairIronmanDetail }) {
+  const people = data.athletes.map((a) => a.person)
+  return (
+    <div style={{ maxHeight: 320, overflowY: 'auto', margin: '0 -2px' }}>
+      <table className="lordas-plan">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Session</th>
+            {people.map((p) => (
+              <th key={p} style={{ textAlign: 'center' }}>
+                <PersonSigil person={p} size={11} />
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {data.plan.map((d) => {
+            const active = d.sessions.filter((x) => x.sport !== 'rest')
+            const isToday = d.date === data.date
+            return (
+              <tr key={d.date} className={isToday ? 'now' : undefined}>
+                <td className="dt">
+                  {new Date(`${d.date}T12:00:00`).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })}
+                  <span className="ph">{d.phase}</span>
+                </td>
+                <td className="ss">
+                  {active.length === 0 ? (
+                    <span style={{ color: C.faint }}>Rest</span>
+                  ) : (
+                    active.map((x, i) => (
+                      <span key={i} className="one">
+                        <SportGlyph sport={x.sport} size={11} color={SPORT_COLOR[x.sport] ?? C.muted} />
+                        {x.title}
+                        <em>
+                          {x.durationMin}min{x.distanceKm ? ` · ${x.distanceKm}km` : ''}
+                          {x.zone !== '-' ? ` · ${x.zone}` : ''}
+                        </em>
+                      </span>
+                    ))
+                  )}
+                </td>
+                {people.map((p) => (
+                  <td key={p} style={{ textAlign: 'center' }}>
+                    <span
+                      className="dot"
+                      style={{ background: STATUS_COLOR[d.status[p]] ?? C.faint }}
+                      title={`${p}: ${d.status[p]}`}
+                    />
+                  </td>
+                ))}
+              </tr>
+            )
+          })}
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
 // ── Page ──────────────────────────────────────────────────────────────────
 
 export default function PairIronmanView() {
@@ -374,6 +477,9 @@ export default function PairIronmanView() {
               {today.divergence.slice(2).map((line, i) => <Sub key={`d${i}`}>{line}</Sub>)}
             </Disclosure>
           )}
+          <Disclosure summary="Full plan" meta={`${data.plan.length} days · Belgrade to New York`}>
+            <FullPlan data={data} />
+          </Disclosure>
         </FieldCard>
         {data.athletes.map((a) => <RecoveryCard key={a.person} a={a} />)}
       </Seam>

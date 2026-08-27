@@ -9,8 +9,16 @@
  * LORDAS_BRAND_STRATEGY.md §4.
  */
 
-import { C, TONE, wash, edge, type Tone } from './tokens'
-import { LORDAS_MOTTO } from './Nav'
+import { C, TONE, V, wash, edge, LORDAS_MOTTO, type Tone } from './tokens'
+
+/**
+ * Tones as CSS variables rather than literals. A primitive rendered inside a
+ * second palette — the solo Ironman page hosts these in burgundy and blush —
+ * must resolve its colours from the host, not from the espresso constants.
+ */
+const TONE_V: Record<Tone, string> = {
+  ok: V.ok, warn: V.warn, crit: V.crit, accent: V.accent, none: 'transparent',
+}
 
 // ── Seam grid ─────────────────────────────────────────────────────────────
 
@@ -58,8 +66,8 @@ export function FieldCard({
     <div
       className={`lordas-fc ${className}`}
       style={{
-        background: quiet ? C.panelQuiet : C.panel,
-        boxShadow: tone === 'none' ? undefined : `inset 2px 0 0 ${TONE[tone]}`,
+        background: quiet ? V.panelQuiet : V.panel,
+        boxShadow: tone === 'none' ? undefined : `inset 2px 0 0 ${TONE_V[tone]}`,
         gridColumn: span === true ? '1 / -1' : typeof span === 'number' ? `span ${span}` : undefined,
         ...style,
       }}
@@ -144,12 +152,16 @@ export function Chip({
   active?: boolean
   title?: string
 }) {
-  const color = tone === 'none' ? C.muted : TONE[tone]
+  const color = tone === 'none' ? V.muted : TONE_V[tone]
+  const literal = tone === 'none' ? C.muted : TONE[tone]
   const style: React.CSSProperties = active
-    ? { color: C.ground, background: C.accent, borderColor: C.accent }
+    ? { color: V.ground, background: V.accent, borderColor: V.accent }
     : tone === 'none'
-      ? { color, borderColor: C.rule }
-      : { color, borderColor: edge(color), background: wash(color) }
+      ? { color, borderColor: V.rule }
+      // colour-mix would be cleaner, but the wash and edge helpers need a
+      // literal, so semantic chips fall back to the espresso value for those
+      // two derived shades only.
+      : { color, borderColor: edge(literal), background: wash(literal) }
   const Tag = onClick ? 'button' : 'span'
   return (
     <Tag className="lordas-chip" style={style} onClick={onClick} title={title} type={onClick ? 'button' : undefined}>
@@ -181,7 +193,7 @@ export function SectionHead({
 /** Reasoning that belongs to the block above it, not to any one card. */
 export function Callout({ tone = 'accent', children }: { tone?: Tone; children: React.ReactNode }) {
   return (
-    <div className="lordas-callout" style={{ borderColor: TONE[tone] }}>
+    <div className="lordas-callout" style={{ borderColor: TONE_V[tone] }}>
       {children}
     </div>
   )

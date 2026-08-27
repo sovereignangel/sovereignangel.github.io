@@ -118,6 +118,53 @@ export function fmtPace(sport: Sport3, paceMinKm: number | null): string | null 
   return fmtRunPace(paceMinKm)
 }
 
+// ── US units ──────────────────────────────────────────────────────────────
+//
+// The races are scored in miles per hour and minutes per mile, and that is
+// how the athlete thinks about the bike and the run. Metric stays available
+// on hover rather than being thrown away, because every plan distance and
+// every Garmin field underneath is still metric.
+
+const M_PER_MILE = 1.609344
+const M_PER_YARD = 0.9144
+
+export function fmtRunPaceMile(minPerKm: number): string {
+  const total = Math.round(minPerKm * M_PER_MILE * 60)
+  return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, '0')}/mi`
+}
+
+export function fmtBikeMph(kmh: number): string {
+  return `${(kmh / M_PER_MILE).toFixed(1)} mph`
+}
+
+/** Swim is spoken in metres worldwide; yards is the second reading, not the first. */
+export function fmtSwimPaceYd(secPer100m: number): string {
+  const total = Math.round(secPer100m * M_PER_YARD)
+  return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, '0')}/100yd`
+}
+
+/** The same pace in US units — mph on the bike, min/mile on the run. */
+export function fmtPaceUS(sport: Sport3, paceMinKm: number | null): string | null {
+  if (paceMinKm == null || !isFinite(paceMinKm) || paceMinKm <= 0) return null
+  if (sport === 'bike') return fmtBikeMph(60 / paceMinKm)
+  if (sport === 'swim') return fmtSwimPace((paceMinKm * 60) / 10)
+  return fmtRunPaceMile(paceMinKm)
+}
+
+/**
+ * Both readings of one pace. `primary` is what the page shows; `secondary`
+ * is what the hover reveals. Swim reads the same either way on the primary,
+ * so its secondary is yards.
+ */
+export function paceBoth(sport: Sport3, paceMinKm: number | null): { primary: string; secondary: string } | null {
+  const us = fmtPaceUS(sport, paceMinKm)
+  if (!us) return null
+  const metric = sport === 'swim'
+    ? fmtSwimPaceYd((paceMinKm as number) * 60 / 10)
+    : fmtPace(sport, paceMinKm)
+  return { primary: us, secondary: metric ?? '' }
+}
+
 export function fmtSplit(minutes: number | null): string {
   if (minutes == null) return '--'
   const total = Math.round(minutes)
