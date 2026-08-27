@@ -1,264 +1,329 @@
 'use client'
 
 /**
- * /lordas/ironman — both athletes, one block.
+ * Ironman — are we actually getting fitter.
  *
- * The exec page answers "what do we do this morning". This page is the
- * evidence behind it: how each body is recovering, how fast each is actually
- * moving, how much of the printed plan each has completed, and what the model
- * thinks that means for New York. Everything is computed identically for both
- * columns, so the comparison is fair rather than flattering.
+ * The evidence behind Exec's call. Both athletes run through identical code on
+ * the same window, so the two columns compare honestly — but they are not
+ * chasing the same finish time. Each has their own goal splits, and the
+ * forecast discounts sessions ridden alongside the other, because a partner
+ * ride measures the slower rider's tempo rather than the faster one's ceiling.
  */
 
 import { PinGate } from '@/components/lordas/PinGate'
-import { LordasSubHeader } from './LordasSubNav'
+import { LordasHeader } from '@/components/lordas/design/Nav'
 import { useLordasData } from './useLordasData'
-import { SportIcon } from '@/components/ironman/IronmanIcons'
-import { fmtRunPace, fmtSwimPace, fmtBikeSpeed } from '@/lib/lordas/pair-training'
-import type { PairIronmanDetail, AthleteDetail } from '@/lib/lordas/ironman-detail'
-import type { Sport } from '@/lib/ironman/plan'
-import { lordasHref } from '@/lib/lordas/links'
+import { C, OWNER, SPORT_COLOR, bandColor } from '@/components/lordas/design/tokens'
 import {
-  BAND_COLOR, CREAM, FAINT, INK, MUTED, PAPER, RULE, RULE_LIGHT,
-  SPORT_COLOR, TERRACOTTA,
-} from './theme'
+  Seam, FieldCard, Lede, Stat, Sub, Row, Rows, Foot, Chip, SectionHead, Callout,
+} from '@/components/lordas/design/primitives'
+import { Track } from '@/components/lordas/design/charts'
+import { PersonSigil, SportGlyph, TrifectaIcon } from '@/components/lordas/design/assets'
+import { fmtRunPace, fmtSwimPace, fmtBikeSpeed, fmtPace } from '@/lib/lordas/pair-training'
+import type { PairIronmanDetail, AthleteDetail } from '@/lib/lordas/ironman-detail'
+import type { SportNeed } from '@/lib/ironman/rebalance'
 
 const SPORT_LABEL: Record<string, string> = { swim: 'Swim', bike: 'Bike', run: 'Run' }
 
-function fmtMinutes(min: number | null): string {
+function hm(min: number | null | undefined): string {
   if (min == null) return '--'
   const h = Math.floor(min / 60)
   const m = Math.round(min % 60)
-  return h > 0 ? `${h}h ${String(m).padStart(2, '0')}m` : `${m}m`
+  return h > 0 ? `${h}h ${String(m).padStart(2, '0')}` : `${m}m`
+}
+const pct = (p: number | null | undefined) => (p == null ? '--' : `${Math.round(p * 100)}%`)
+
+const STANDING_TONE: Record<string, string> = { strong: C.ok, even: C.muted, weak: C.warn }
+
+const NEED_LABEL: Record<SportNeed, string> = {
+  volume: 'needs distance',
+  intensity: 'needs speed',
+  both: 'needs distance and speed',
+  holding: 'holding',
+  unknown: 'needs evidence',
+}
+const NEED_TONE: Record<SportNeed, 'ok' | 'warn' | 'crit' | 'none'> = {
+  volume: 'warn', intensity: 'warn', both: 'crit', holding: 'ok', unknown: 'none',
 }
 
-function pct(p: number | null): string {
-  return p == null ? '--' : `${Math.round(p * 100)}%`
-}
+// ── Per-athlete cards ─────────────────────────────────────────────────────
 
-// ── Primitives ────────────────────────────────────────────────────────────
-
-function Card({ title, right, children, accent = TERRACOTTA }: {
-  title: string; right?: React.ReactNode; children: React.ReactNode; accent?: string
-}) {
+function ReadinessCard({ a }: { a: AthleteDetail }) {
+  const color = OWNER[a.person] ?? C.muted
   return (
-    <div className="border rounded-sm p-3" style={{ backgroundColor: PAPER, borderColor: RULE }}>
-      <div className="flex items-center justify-between gap-2 mb-2.5 pb-1.5 border-b" style={{ borderColor: RULE_LIGHT }}>
-        <span className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px]" style={{ color: accent }}>{title}</span>
-        {right}
-      </div>
-      {children}
-    </div>
-  )
-}
-
-function Bar({ value, max, color }: { value: number; max: number; color: string }) {
-  const w = max > 0 ? Math.min(100, (value / max) * 100) : 0
-  return (
-    <div className="h-1.5 w-full rounded-sm overflow-hidden" style={{ backgroundColor: RULE_LIGHT }}>
-      <div className="h-full rounded-sm" style={{ width: `${w}%`, backgroundColor: color }} />
-    </div>
-  )
-}
-
-function StatRow({ label, value, color }: { label: string; value: string; color?: string }) {
-  return (
-    <div className="flex items-baseline justify-between gap-2">
-      <span className="text-[10px]" style={{ color: MUTED }}>{label}</span>
-      <span className="font-mono text-[10px] font-medium" style={{ color: color ?? INK }}>{value}</span>
-    </div>
-  )
-}
-
-// ── Athlete panel ─────────────────────────────────────────────────────────
-
-function ReadinessBlock({ a }: { a: AthleteDetail }) {
-  const color = BAND_COLOR[a.readiness.band] ?? FAINT
-  return (
-    <div>
-      <div className="flex items-baseline gap-2 mb-1">
-        <span className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px]" style={{ color: MUTED }}>Readiness</span>
-        <span className="font-mono text-[15px] font-semibold" style={{ color }}>{a.readiness.score ?? '--'}</span>
-        <span className="font-mono text-[10px] uppercase" style={{ color }}>{a.readiness.band}</span>
-      </div>
-      <div className="space-y-0.5">
+    <FieldCard
+      label={<><PersonSigil person={a.person} size={13} />{a.name}</>}
+      meta={a.lastSync ? `synced ${a.lastSync.slice(5)}` : 'never synced'}
+      tone={a.readiness.band === 'green' ? 'ok' : a.readiness.band === 'amber' ? 'warn' : a.readiness.band === 'red' ? 'crit' : 'none'}
+    >
+      <Stat value={a.readiness.score ?? '--'} unit={`/100 ${a.readiness.band}`} color={bandColor(a.readiness.band)} />
+      {a.readiness.score !== null && <Track value={a.readiness.score} color={bandColor(a.readiness.band)} />}
+      <Rows>
         {a.readiness.factors.map((f) => (
-          <StatRow key={f.label} label={f.label} value={f.value} />
+          <Row key={f.label} label={f.label} value={f.value} valueColor={f.score === null ? C.faint : undefined} />
         ))}
-      </div>
-    </div>
+      </Rows>
+      {a.noData && <Sub>No Garmin data has synced for this account yet.</Sub>}
+      <Foot><Chip>{color === OWNER.lori ? 'sun' : 'lens'}</Chip></Foot>
+    </FieldCard>
   )
 }
 
-function PaceBlock({ a }: { a: AthleteDetail }) {
-  const rows: { label: string; value: string; n: number }[] = [
-    {
-      label: 'Run',
-      value: a.profile.runMinPerKm != null ? fmtRunPace(a.profile.runMinPerKm) : 'no history',
-      n: a.profile.samples.run,
-    },
-    {
-      label: 'Bike',
-      value: a.profile.bikeKmh != null ? fmtBikeSpeed(a.profile.bikeKmh) : 'no history',
-      n: a.profile.samples.bike,
-    },
-    {
-      label: 'Swim',
-      value: a.profile.swimSecPer100m != null ? fmtSwimPace(a.profile.swimSecPer100m) : 'no history',
-      n: a.profile.samples.swim,
-    },
+function PaceCard({ a }: { a: AthleteDetail }) {
+  const color = OWNER[a.person] ?? C.muted
+  const rows = [
+    { k: 'swim' as const, label: 'Swim', v: a.profile.swimSecPer100m != null ? fmtSwimPace(a.profile.swimSecPer100m) : null, n: a.profile.samples.swim },
+    { k: 'bike' as const, label: 'Bike', v: a.profile.bikeKmh != null ? fmtBikeSpeed(a.profile.bikeKmh) : null, n: a.profile.samples.bike },
+    { k: 'run' as const, label: 'Run', v: a.profile.runMinPerKm != null ? fmtRunPace(a.profile.runMinPerKm) : null, n: a.profile.samples.run },
   ]
   return (
-    <div>
-      <div className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] mb-1" style={{ color: MUTED }}>
-        Habitual pace · last 6 weeks
-      </div>
-      <div className="space-y-0.5">
+    <FieldCard label={<><PersonSigil person={a.person} size={13} />Pace</>} meta="last 6 weeks">
+      <Rows>
         {rows.map((r) => (
-          <StatRow key={r.label} label={`${r.label}${r.n ? ` (${r.n})` : ''}`} value={r.value} />
+          <Row
+            key={r.k}
+            icon={<SportGlyph sport={r.k} size={13} color={SPORT_COLOR[r.k]} />}
+            label={r.label}
+            detail={`${r.n} logged · ${a.strengths[r.k]}`}
+            value={r.v ?? 'no history'}
+            valueColor={r.v ? color : C.faint}
+          />
         ))}
-      </div>
-      <p className="text-[10px] leading-relaxed mt-1" style={{ color: FAINT }}>
-        Distance-weighted across logged sessions. Zone targets on the orders page are offsets from these numbers.
-      </p>
-    </div>
+      </Rows>
+      <Sub>Distance-weighted habitual pace — what the last six weeks actually were. The zone targets on Exec are anchored to race pace, not to this.</Sub>
+    </FieldCard>
   )
 }
 
-function ForecastBlock({ a }: { a: AthleteDetail }) {
+function OddsCard({ a }: { a: AthleteDetail }) {
+  const color = OWNER[a.person] ?? C.muted
   return (
-    <div>
-      <div className="flex items-baseline justify-between gap-2 mb-1">
-        <span className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px]" style={{ color: MUTED }}>
-          Goal odds · New York
-        </span>
-        <span className="font-mono text-[10px]" style={{ color: a.color }}>
-          all three {pct(a.forecast.allThree)}
-        </span>
-      </div>
-      <div className="space-y-1">
+    <FieldCard label={<><PersonSigil person={a.person} size={13} />Odds · NYC</>} meta={`all three ${pct(a.forecast.allThree)}`}>
+      <Stat value={hm(a.forecast.forecastTotalMin)} color={color} />
+      <Sub>Projected finish against a {hm(a.splits.total)} target</Sub>
+      <Rows>
         {a.forecast.disciplines.map((d) => (
-          <div key={d.sport}>
-            <div className="flex items-baseline justify-between gap-2">
-              <span className="inline-flex items-center gap-1 text-[10px]" style={{ color: INK }}>
-                <SportIcon sport={d.sport as Sport} className="w-3 h-3 shrink-0" />
-                {SPORT_LABEL[d.sport]}
-                <span style={{ color: FAINT }}>({d.n})</span>
-              </span>
-              <span className="font-mono text-[10px] font-medium" style={{ color: SPORT_COLOR[d.sport] }}>
-                {pct(d.probability)} · {fmtMinutes(d.projectedSplitMin)}
-              </span>
-            </div>
-            <Bar value={d.probability ?? 0} max={1} color={SPORT_COLOR[d.sport]} />
-          </div>
+          <Row
+            key={d.sport}
+            icon={<SportGlyph sport={d.sport} size={13} color={SPORT_COLOR[d.sport]} />}
+            label={SPORT_LABEL[d.sport]}
+            detail={`${d.n} sessions · goal ${hm(
+              d.sport === 'swim' ? a.goals.swimMinutes : d.sport === 'bike' ? a.goals.bikeMinutes : a.goals.runMinutes
+            )}`}
+            value={`${pct(d.probability)} · ${hm(d.projectedSplitMin)}`}
+            valueColor={
+              d.probability == null ? C.faint : d.probability >= 0.5 ? C.ok : d.probability >= 0.25 ? C.warn : C.crit
+            }
+          />
         ))}
-      </div>
-      <div className="mt-1 pt-1 border-t" style={{ borderColor: RULE_LIGHT }}>
-        <StatRow label="Projected finish" value={fmtMinutes(a.forecast.forecastTotalMin)} color={a.color} />
-      </div>
-    </div>
+      </Rows>
+    </FieldCard>
   )
 }
 
-function ProgressBlock({ a }: { a: AthleteDetail }) {
+function ProgressCard({ a }: { a: AthleteDetail }) {
   return (
-    <div>
-      <div className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] mb-1" style={{ color: MUTED }}>
-        Block volume vs race distance
-      </div>
-      <div className="space-y-1">
+    <FieldCard label={<><PersonSigil person={a.person} size={13} />Volume</>} meta="block to date" quiet>
+      <Rows>
         {a.progress.map((p) => (
-          <div key={p.sport}>
-            <div className="flex items-baseline justify-between gap-2">
-              <span className="text-[10px]" style={{ color: INK }}>{SPORT_LABEL[p.sport]}</span>
-              <span className="font-mono text-[10px]" style={{ color: MUTED }}>
-                {p.actualKm}km logged · longest {p.longestKm}km / {p.raceKm}km race
-              </span>
-            </div>
-            <Bar value={p.longestKm} max={p.raceKm} color={SPORT_COLOR[p.sport]} />
-          </div>
+          <Row
+            key={p.sport}
+            icon={<SportGlyph sport={p.sport} size={13} color={SPORT_COLOR[p.sport]} />}
+            label={SPORT_LABEL[p.sport]}
+            detail={`longest ${p.longestKm}km of ${p.raceKm}km race`}
+            value={`${p.actualKm}km`}
+          />
         ))}
-      </div>
-    </div>
+      </Rows>
+    </FieldCard>
   )
 }
 
-function ComplianceBlock({ a }: { a: AthleteDetail }) {
+function ComplianceCard({ a }: { a: AthleteDetail }) {
   const c = a.compliance
-  // Score against what has actually come due — counting today's unstarted
-  // sessions as failures would make every morning look like a bad week.
   const due = c.planned - c.upcoming
   const rate = due > 0 ? (c.done + c.partial * 0.5) / due : null
   return (
-    <div>
-      <div className="flex items-baseline justify-between gap-2 mb-1">
-        <span className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px]" style={{ color: MUTED }}>
-          Plan completed
-        </span>
-        <span className="font-mono text-[10px] font-medium" style={{ color: a.color }}>
-          {rate == null ? '--' : `${Math.round(rate * 100)}%`}
-        </span>
-      </div>
-      <div className="flex flex-wrap gap-x-3 gap-y-0.5">
-        <span className="font-mono text-[10px]" style={{ color: BAND_COLOR.green }}>{c.done} done</span>
-        <span className="font-mono text-[10px]" style={{ color: BAND_COLOR.amber }}>{c.partial} partial</span>
-        <span className="font-mono text-[10px]" style={{ color: BAND_COLOR.red }}>{c.missed} missed</span>
-        <span className="font-mono text-[10px]" style={{ color: MUTED }}>{a.extras} extra logged</span>
-        {c.upcoming > 0 && (
-          <span className="font-mono text-[10px]" style={{ color: FAINT }}>{c.upcoming} still to come</span>
-        )}
-      </div>
-      <div className="mt-1.5 space-y-0.5">
+    <FieldCard
+      label={<><PersonSigil person={a.person} size={13} />Plan</>}
+      meta={rate === null ? '--' : `${Math.round(rate * 100)}% of what came due`}
+      tone={rate !== null && rate < 0.5 ? 'warn' : 'none'}
+    >
+      <Foot>
+        <Chip tone="ok">{c.done} done</Chip>
+        <Chip tone="warn">{c.partial} partial</Chip>
+        <Chip tone="crit">{c.missed} missed</Chip>
+        {c.upcoming > 0 && <Chip>{c.upcoming} to come</Chip>}
+        {a.extras > 0 && <Chip>{a.extras} extra</Chip>}
+      </Foot>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 3, marginTop: 4 }}>
         {c.weeks.map((w) => (
-          <div key={w.start} className="flex items-center gap-2">
-            <span className="font-mono text-[10px] w-[52px] shrink-0" style={{ color: FAINT }}>
+          <div key={w.start} style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+            <span className="lordas-mono" style={{ fontSize: 9.5, color: C.faint, width: 34, flexShrink: 0 }}>
               {w.start.slice(5)}
             </span>
-            <div className="flex-1 flex gap-[2px]">
+            <span style={{ flex: 1, display: 'flex', gap: 2 }}>
               {Array.from({ length: w.planned }).map((_, i) => {
                 const color =
-                  i < w.done ? BAND_COLOR.green
-                  : i < w.done + w.partial ? BAND_COLOR.amber
-                  : i < w.done + w.partial + w.missed ? RULE
-                  : RULE_LIGHT // still to come — lighter than a missed session
-                return <span key={i} className="h-2 flex-1 rounded-sm" style={{ backgroundColor: color }} />
+                  i < w.done ? C.ok
+                  : i < w.done + w.partial ? C.warn
+                  : i < w.done + w.partial + w.missed ? C.rule
+                  : C.ruleSoft
+                return <span key={i} style={{ height: 7, flex: 1, background: color, borderRadius: 1 }} />
               })}
-            </div>
-            <span className="font-mono text-[10px] shrink-0" style={{ color: MUTED }}>
+            </span>
+            <span className="lordas-mono" style={{ fontSize: 9.5, color: C.muted, flexShrink: 0 }}>
               {w.done}/{w.planned - w.upcoming}
             </span>
           </div>
         ))}
       </div>
-    </div>
+    </FieldCard>
   )
 }
 
-function AthletePanel({ a }: { a: AthleteDetail }) {
+function TargetCard({ a }: { a: AthleteDetail }) {
+  const color = OWNER[a.person] ?? C.muted
+  const d = a.display
   return (
-    <div className="border rounded-sm p-3" style={{ backgroundColor: PAPER, borderColor: a.color + '44' }}>
-      <div className="flex items-baseline justify-between gap-2 mb-2.5 pb-1.5 border-b-2" style={{ borderColor: a.color + '33' }}>
-        <span className="font-serif text-[15px] font-semibold" style={{ color: a.color }}>{a.name}</span>
-        <span className="font-mono text-[10px]" style={{ color: MUTED }}>
-          {a.lastSync ? `synced ${a.lastSync}` : 'never synced'}
-        </span>
-      </div>
+    <FieldCard label={<><PersonSigil person={a.person} size={13} />Target</>} meta="New York" quiet>
+      <Rows>
+        <Row icon={<SportGlyph sport="swim" size={13} color={SPORT_COLOR.swim} />} label="Swim 1.9km"
+          detail={fmtSwimPace(d.swimSecPer100m)} value={hm(a.goals.swimMinutes)} />
+        <Row icon={<SportGlyph sport="bike" size={13} color={SPORT_COLOR.bike} />} label="Bike 90km"
+          detail={`${d.bikeKmh.toFixed(1)} km/h`} value={hm(a.goals.bikeMinutes)} />
+        <Row icon={<SportGlyph sport="run" size={13} color={SPORT_COLOR.run} />} label="Run 21.1km"
+          detail={fmtRunPace(d.runMinPerKm)} value={hm(a.goals.runMinutes)} />
+        <Row label="Transitions" value={hm(a.goals.transitionMinutes)} />
+      </Rows>
+      <Foot><Chip><span style={{ color }}>{hm(a.splits.total)}</span> finish</Chip></Foot>
+    </FieldCard>
+  )
+}
 
-      {a.noData && (
-        <div className="text-[10px] mb-2 leading-relaxed" style={{ color: '#8c3d3d' }}>
-          No Garmin data has synced for this account yet. Readiness, paces and odds below are empty until it does —
-          the orders page falls back to the printed plan in the meantime.
+/**
+ * Where the remaining weeks belong, ranked by minutes rather than by feel.
+ *
+ * The number that orders this list is minutes over goal split — a discipline
+ * 24% off pace but worth forty minutes of race outranks one 30% off and worth
+ * ten. Underneath it, whether the distance is covered decides what kind of
+ * session those minutes want, and the trailing week decides whether it should
+ * be this week.
+ */
+function LeverageCard({ a }: { a: AthleteDetail }) {
+  const color = OWNER[a.person] ?? C.muted
+  const r = a.rebalance
+  return (
+    <FieldCard
+      label={<><PersonSigil person={a.person} size={13} />Where the race is</>}
+      meta={r.lead ? SPORT_LABEL[r.lead] : undefined}
+      tone={r.staleNote ? 'warn' : 'none'}
+    >
+      <Lede>{r.headline}</Lede>
+      <Rows>
+        {r.sports.map((g) => (
+          <Row
+            key={g.sport}
+            icon={<SportGlyph sport={g.sport} size={13} color={SPORT_COLOR[g.sport]} />}
+            label={SPORT_LABEL[g.sport]}
+            detail={`${NEED_LABEL[g.need]} · ${g.standing}`}
+            value={g.minutesOverGoal == null ? '--' : `+${Math.round(g.minutesOverGoal)}min`}
+            valueColor={
+              g.minutesOverGoal == null ? C.faint
+              : g.minutesOverGoal > 30 ? C.crit
+              : g.minutesOverGoal > 5 ? C.warn
+              : C.ok
+            }
+          />
+        ))}
+      </Rows>
+      <div style={{ marginTop: 4 }}>
+        {r.sports.map((g) => (
+          <Sub key={g.sport}>
+            {SPORT_LABEL[g.sport]} — {g.why}
+          </Sub>
+        ))}
+      </div>
+      {r.staleNote && <Sub>{r.staleNote}</Sub>}
+      <Foot>
+        <Chip tone={NEED_TONE[r.sports[0]?.need ?? 'unknown']}>
+          <span style={{ color }}>{r.sports[0] ? SPORT_LABEL[r.sports[0].sport] : '--'}</span> first
+        </Chip>
+        {r.dataThrough && <Chip>data through {r.dataThrough.slice(5)}</Chip>}
+      </Foot>
+    </FieldCard>
+  )
+}
+
+/**
+ * The number to actually hold when a session says "race effort".
+ *
+ * It is the goal, unless the goal is further off than the projection can be
+ * stretched to — in which case it is the stretch, and the shortfall is printed
+ * rather than quietly absorbed. A prescription nobody can hold trains nothing.
+ */
+function AnchorCard({ a }: { a: AthleteDetail }) {
+  const color = OWNER[a.person] ?? C.muted
+  const capped = (['swim', 'bike', 'run'] as const).filter((s) => a.targets[s]?.capped)
+  return (
+    <FieldCard label={<><PersonSigil person={a.person} size={13} />Race pace</>} meta="what to hold today">
+      <Rows>
+        {(['swim', 'bike', 'run'] as const).map((s) => {
+          const t = a.targets[s]
+          const prescribed = fmtPace(s, t?.prescribedPaceMinKm ?? null)
+          const goal = fmtPace(s, t?.goalPaceMinKm ?? null)
+          return (
+            <Row
+              key={s}
+              icon={<SportGlyph sport={s} size={13} color={SPORT_COLOR[s]} />}
+              label={SPORT_LABEL[s]}
+              detail={t?.capped ? `goal ${goal} · ${Math.round((t.gapPct ?? 0) * 100)}% off` : `goal ${goal} · in reach`}
+              value={prescribed ?? '--'}
+              valueColor={t?.capped ? C.warn : color}
+            />
+          )
+        })}
+      </Rows>
+      <Sub>
+        {capped.length === 0
+          ? 'Every anchor is the goal itself — the targets are inside what the projection can reach.'
+          : `${capped.map((s) => SPORT_LABEL[s]).join(', ')} ${capped.length === 1 ? 'is' : 'are'} further off than one block closes. The prescription is the projection stretched by 8%, which is what a well-executed race adds over training pace; the rest of the gap is the honest shortfall.`}
+      </Sub>
+    </FieldCard>
+  )
+}
+
+/** Concrete edits the recalibration made to days that have not happened yet. */
+function MovesCard({ a }: { a: AthleteDetail }) {
+  const r = a.rebalance
+  if (r.moves.length === 0 && r.displaced.length === 0) return null
+  return (
+    <FieldCard
+      label={<><PersonSigil person={a.person} size={13} />Recalibrated</>}
+      meta={r.moves.length ? `${r.moves.length} day${r.moves.length === 1 ? '' : 's'} rewritten` : 'nothing rewritten'}
+      quiet
+    >
+      {r.moves.map((m) => (
+        <div key={m.date} style={{ marginBottom: 8 }}>
+          <Row label={m.date.slice(5)} value={m.kind} valueColor={C.warn} />
+          {m.after.map((after, i) =>
+            after === m.before[i] ? null : (
+              <div key={i} style={{ marginTop: 2 }}>
+                <Sub>was — {m.before[i].title} · {m.before[i].durationMin}min {m.before[i].zone}</Sub>
+                <Sub>now — {after.title} · {after.durationMin}min {after.zone}</Sub>
+                <Sub>{after.detail}</Sub>
+              </div>
+            )
+          )}
+        </div>
+      ))}
+      {r.displaced.length > 0 && (
+        <div>
+          {r.displaced.map((d, i) => <Sub key={i}>{d}</Sub>)}
+          <Sub>{r.displacedNote}</Sub>
         </div>
       )}
-
-      <div className="space-y-3">
-        <ReadinessBlock a={a} />
-        <div className="pt-2 border-t" style={{ borderColor: RULE_LIGHT }}><PaceBlock a={a} /></div>
-        <div className="pt-2 border-t" style={{ borderColor: RULE_LIGHT }}><ForecastBlock a={a} /></div>
-        <div className="pt-2 border-t" style={{ borderColor: RULE_LIGHT }}><ProgressBlock a={a} /></div>
-        <div className="pt-2 border-t" style={{ borderColor: RULE_LIGHT }}><ComplianceBlock a={a} /></div>
-      </div>
-    </div>
+    </FieldCard>
   )
 }
 
@@ -268,104 +333,98 @@ export default function PairIronmanView() {
   const { data, loading, error, mounted, pin, setPin } = useLordasData<PairIronmanDetail>('/api/lordas/ironman')
 
   if (!mounted || !pin) return <PinGate onSubmit={setPin} error={error} />
-
   if (loading && !data) {
-    return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: CREAM }}>
-        <div className="text-[13px] font-serif uppercase tracking-[0.5px]" style={{ color: TERRACOTTA }}>Loading…</div>
-      </div>
-    )
+    return <div className="lordas-wrap"><div className="lordas-empty">Loading…</div></div>
   }
-
   if (!data) {
-    return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: CREAM }}>
-        <div className="text-[13px]" style={{ color: '#8c3d3d' }}>{error ?? 'No data available.'}</div>
-      </div>
-    )
+    return <div className="lordas-wrap"><div className="lordas-empty">{error ?? 'No data available.'}</div></div>
   }
 
   const today = data.today
-  const g = data.goalSplits
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: CREAM }}>
-      <div className="max-w-[1100px] mx-auto px-4 py-6">
-        <LordasSubHeader
-          title="Ironman"
-          subtitle="Lori &amp; Aidas · Belgrade Sep 13 · New York Sep 26"
-          current="ironman"
-          right={
-            <span className="font-mono text-[10px] text-right" style={{ color: MUTED }}>
-              {data.races.map((r) => (
-                <span key={r.date} className="block">
-                  {r.days}d · {r.location}
-                </span>
-              ))}
-            </span>
-          }
-        />
+    <div className="lordas-wrap">
+      <LordasHeader
+        title="Ironman"
+        subtitle={data.races.map((r) => `${r.location} T−${r.days}`).join(' · ')}
+        current="ironman"
+        right={<TrifectaIcon size={20} color={C.muted} />}
+      />
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 mb-3 items-start">
-          <Card title="Today, Together" right={<a href={lordasHref('/exec')} className="font-serif text-[10px] px-2 py-1 rounded-sm border" style={{ color: MUTED, borderColor: RULE }}>Orders</a>}>
-            <div className="font-serif text-[12px] mb-1" style={{ color: INK }}>{today.headline}</div>
-            {today.focus && <div className="text-[10px] mb-1.5" style={{ color: MUTED }}>{today.phase} · {today.focus}</div>}
-            {today.divergence.length > 0 && (
-              <ul className="space-y-0.5">
-                {today.divergence.map((d, i) => (
-                  <li key={i} className="text-[10px] leading-relaxed" style={{ color: MUTED }}>— {d}</li>
-                ))}
-              </ul>
-            )}
-          </Card>
+      <Seam cols={4}>
+        {data.races.map((r) => (
+          <FieldCard key={r.date} label={r.name.replace('Ironman 70.3 ', '')} meta={r.date}>
+            <Stat value={r.days} unit="days" color={r.days <= 21 ? C.warn : C.ink} />
+            <Sub>{r.location}</Sub>
+          </FieldCard>
+        ))}
+        {data.athletes.map((a) => (
+          <FieldCard key={a.person} label={<><PersonSigil person={a.person} size={13} />Target</>} meta="NYC finish">
+            <Stat value={hm(a.splits.total)} color={OWNER[a.person]} />
+            <Sub>Projected {hm(a.forecast.forecastTotalMin)} · all three {pct(a.forecast.allThree)}</Sub>
+          </FieldCard>
+        ))}
+      </Seam>
 
-          <Card title="Shared Goal — NYC">
-            <div className="space-y-0.5">
-              <StatRow label="Swim 1.9km" value={fmtMinutes(g.swim)} />
-              <StatRow label={`Bike 90km @ ${data.goals.bikeMph} mph`} value={fmtMinutes(g.bike)} />
-              <StatRow label={`Run 21.1km @ ${data.goals.runPaceMinPerMile}:00/mi`} value={fmtMinutes(g.run)} />
-              <StatRow label="Transitions" value={fmtMinutes(g.transitions)} />
-            </div>
-            <div className="mt-1 pt-1 border-t" style={{ borderColor: RULE_LIGHT }}>
-              <StatRow label="Target finish" value={fmtMinutes(g.total)} color={TERRACOTTA} />
-            </div>
-            <p className="text-[10px] leading-relaxed mt-1.5" style={{ color: FAINT }}>
-              One target for both of you. The odds in each column are that same target scored against that
-              person&apos;s own history — the number to beat is shared, the probability is not.
-            </p>
-          </Card>
-
-          <Card title="Races">
-            <div className="space-y-1.5">
-              {data.races.map((r) => (
-                <div key={r.date}>
-                  <div className="flex items-baseline justify-between gap-2">
-                    <span className="text-[11px] font-semibold" style={{ color: INK }}>{r.name.replace('Ironman 70.3 ', '')}</span>
-                    <span className="font-mono text-[10px]" style={{ color: TERRACOTTA }}>{r.days} days</span>
-                  </div>
-                  <div className="font-mono text-[10px]" style={{ color: MUTED }}>{r.date} · {r.location}</div>
-                </div>
+      <SectionHead title="Today" meta={today.phase ?? undefined} />
+      <Seam cols={1}>
+        <FieldCard label="Together" meta={today.togetherMin > 0 ? `${today.togetherMin}min side by side` : undefined}>
+          <Lede>{today.headline}</Lede>
+          {today.focus && <Sub>{today.focus}</Sub>}
+          {today.divergence.length > 0 && (
+            <div style={{ marginTop: 4 }}>
+              {today.divergence.map((line, i) => (
+                <Sub key={i}>{line}</Sub>
               ))}
             </div>
-            <p className="text-[10px] leading-relaxed mt-1.5" style={{ color: FAINT }}>
-              Belgrade is the dress rehearsal, thirteen days out. The block between the two races recovers,
-              sharpens and tapers again so the peak lands in New York.
-            </p>
-          </Card>
-        </div>
+          )}
+        </FieldCard>
+      </Seam>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 items-start">
-          {data.athletes.map((a) => <AthletePanel key={a.person} a={a} />)}
-        </div>
+      <SectionHead title="Recovery" meta="sleep · hrv · body battery · rhr · load" />
+      <Seam cols={2}>{data.athletes.map((a) => <ReadinessCard key={a.person} a={a} />)}</Seam>
 
-        <p className="text-[10px] mt-4 leading-relaxed" style={{ color: MUTED }}>
-          Readiness weights sleep, HRV against its weekly average, body battery, resting heart rate against a 30-day
-          baseline, and yesterday&apos;s load. The goal forecast scales each logged session to race distance, weights
-          recent work more heavily, projects the trend to race day, and widens its uncertainty the further out that
-          day still is. Both columns run the same code on the same window, so the difference between them is the
-          athletes, not the method.
-        </p>
-      </div>
+      <SectionHead title="Capability" meta="what the logs actually show" />
+      <Seam cols={2}>{data.athletes.map((a) => <PaceCard key={a.person} a={a} />)}</Seam>
+
+      <SectionHead title="Targets" meta="two athletes, two races to run" />
+      <Seam cols={2}>{data.athletes.map((a) => <TargetCard key={a.person} a={a} />)}</Seam>
+      <Callout>
+        The targets are deliberately not the same shape. Aidas gives up ten minutes in the water and takes
+        twenty-six back on the bike, which is what the strength profile says should happen. A single shared
+        number would ask each of you to train the other&apos;s race.
+      </Callout>
+
+      <SectionHead title="Odds" meta="projected to New York" />
+      <Seam cols={2}>{data.athletes.map((a) => <OddsCard key={a.person} a={a} />)}</Seam>
+
+      <SectionHead title="Race pace" meta="the anchor every zone hangs off" />
+      <Seam cols={2}>{data.athletes.map((a) => <AnchorCard key={a.person} a={a} />)}</Seam>
+
+      <SectionHead title="Where the race is" meta="ranked by minutes on the table" />
+      <Seam cols={2}>{data.athletes.map((a) => <LeverageCard key={a.person} a={a} />)}</Seam>
+      <Callout>
+        The ranking is minutes over goal split, not percentage off pace — a discipline worth forty minutes of race
+        outranks one that is further off but worth ten. Whether the distance is already covered decides what kind of
+        session those minutes want: distance and speed are different deficits and they take different weeks.
+      </Callout>
+
+      <Seam cols={2}>{data.athletes.map((a) => <MovesCard key={a.person} a={a} />)}</Seam>
+
+      <SectionHead title="The block" meta="volume and compliance" />
+      <Seam cols={2}>
+        {data.athletes.map((a) => <ProgressCard key={a.person} a={a} />)}
+        {data.athletes.map((a) => <ComplianceCard key={a.person} a={a} />)}
+      </Seam>
+
+      <p style={{ fontSize: 11, color: C.faint, lineHeight: 1.55, marginTop: 18 }}>
+        Readiness weights sleep, HRV against its weekly average, body battery, resting heart rate against a 30-day
+        baseline, and yesterday&apos;s load. The forecast scales each logged session to race distance, weights recent
+        work more heavily, and widens its uncertainty the further out race day still is. Sessions trained alongside
+        the other athlete are discounted as evidence — a partner ride measures the slower rider&apos;s tempo — and
+        only where that athlete has said they are faster alone. The printed plan is still the backbone; the
+        recalibration edits days it can prove are already paid for, and never rewrites more than a week ahead.
+      </p>
     </div>
   )
 }

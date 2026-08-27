@@ -19,7 +19,7 @@ export function DreamsConstraintsSummary({ items }: DreamsConstraintsSummaryProp
     <div className="space-y-6">
       {items.map((item) => (
         <div key={item.person} className="space-y-2">
-          <h4 className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy">
+          <h4 className="lordas-display text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy">
             {item.person === 'lori' ? 'Lori' : 'Aidas'}
           </h4>
 

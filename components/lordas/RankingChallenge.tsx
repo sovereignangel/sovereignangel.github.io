@@ -18,43 +18,43 @@ export function RankingChallenge({ planA, planB, onChoose, onSkip }: RankingChal
     <div
       style={{
         padding: '16px',
-        background: '#faf8f4',
-        border: '2px solid #d8cfc4',
+        background: '#241811',
+        border: '2px solid #3E2C20',
         borderRadius: '8px',
         flex: 1,
         cursor: 'pointer',
         transition: 'all 0.2s',
       }}
       onMouseEnter={(e) => {
-        e.currentTarget.style.borderColor = '#b85c38'
-        e.currentTarget.style.background = '#ebe4d4'
+        e.currentTarget.style.borderColor = '#6FA3CE'
+        e.currentTarget.style.background = '#2E1F16'
       }}
       onMouseLeave={(e) => {
-        e.currentTarget.style.borderColor = '#d8cfc4'
-        e.currentTarget.style.background = '#faf8f4'
+        e.currentTarget.style.borderColor = '#3E2C20'
+        e.currentTarget.style.background = '#241811'
       }}
       onClick={() => onChoose(plan.id)}
     >
-      <h3 style={{ fontSize: '14px', fontWeight: 600, color: '#2a2420', marginBottom: '12px' }}>
+      <h3 style={{ fontSize: '14px', fontWeight: 600, color: '#F2E8DA', marginBottom: '12px' }}>
         {plan.phases[0]?.name} → {plan.phases[plan.phases.length - 1]?.name}
       </h3>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '12px' }}>
-        <div style={{ padding: '8px', background: '#ebe4d4', borderRadius: '4px', textAlign: 'center' }}>
-          <div style={{ fontSize: '10px', color: '#8a7e72' }}>Kiting</div>
-          <div style={{ fontSize: '13px', fontWeight: 600, color: '#2a2420' }}>{Math.round(stats.kitingHours)}h</div>
+        <div style={{ padding: '8px', background: '#2E1F16', borderRadius: '4px', textAlign: 'center' }}>
+          <div style={{ fontSize: '10px', color: '#B39D85' }}>Kiting</div>
+          <div style={{ fontSize: '13px', fontWeight: 600, color: '#F2E8DA' }}>{Math.round(stats.kitingHours)}h</div>
         </div>
-        <div style={{ padding: '8px', background: '#ebe4d4', borderRadius: '4px', textAlign: 'center' }}>
-          <div style={{ fontSize: '10px', color: '#8a7e72' }}>Cycling</div>
-          <div style={{ fontSize: '13px', fontWeight: 600, color: '#2a2420' }}>{Math.round(stats.cyclingMiles)}mi</div>
+        <div style={{ padding: '8px', background: '#2E1F16', borderRadius: '4px', textAlign: 'center' }}>
+          <div style={{ fontSize: '10px', color: '#B39D85' }}>Cycling</div>
+          <div style={{ fontSize: '13px', fontWeight: 600, color: '#F2E8DA' }}>{Math.round(stats.cyclingMiles)}mi</div>
         </div>
-        <div style={{ padding: '8px', background: '#ebe4d4', borderRadius: '4px', textAlign: 'center' }}>
-          <div style={{ fontSize: '10px', color: '#8a7e72' }}>Budget</div>
-          <div style={{ fontSize: '13px', fontWeight: 600, color: '#2a2420' }}>${(stats.budget / 1000).toFixed(1)}k</div>
+        <div style={{ padding: '8px', background: '#2E1F16', borderRadius: '4px', textAlign: 'center' }}>
+          <div style={{ fontSize: '10px', color: '#B39D85' }}>Budget</div>
+          <div style={{ fontSize: '13px', fontWeight: 600, color: '#F2E8DA' }}>${(stats.budget / 1000).toFixed(1)}k</div>
         </div>
-        <div style={{ padding: '8px', background: '#ebe4d4', borderRadius: '4px', textAlign: 'center' }}>
-          <div style={{ fontSize: '10px', color: '#8a7e72' }}>Cities</div>
-          <div style={{ fontSize: '13px', fontWeight: 600, color: '#2a2420' }}>{Math.round(stats.citiesCount)}</div>
+        <div style={{ padding: '8px', background: '#2E1F16', borderRadius: '4px', textAlign: 'center' }}>
+          <div style={{ fontSize: '10px', color: '#B39D85' }}>Cities</div>
+          <div style={{ fontSize: '13px', fontWeight: 600, color: '#F2E8DA' }}>{Math.round(stats.citiesCount)}</div>
         </div>
       </div>
 
@@ -94,7 +94,7 @@ export function RankingChallenge({ planA, planB, onChoose, onSkip }: RankingChal
     >
       <div
         style={{
-          background: '#faf8f4',
+          background: '#241811',
           borderRadius: '12px',
           padding: '32px',
           maxWidth: '800px',
@@ -107,7 +107,7 @@ export function RankingChallenge({ planA, planB, onChoose, onSkip }: RankingChal
           style={{
             fontSize: '16px',
             fontWeight: 600,
-            color: '#b85c38',
+            color: '#6FA3CE',
             marginBottom: '24px',
             textAlign: 'center',
             textTransform: 'uppercase',
@@ -129,8 +129,8 @@ export function RankingChallenge({ planA, planB, onChoose, onSkip }: RankingChal
               width: '100%',
               padding: '12px',
               background: 'transparent',
-              color: '#8a7e72',
-              border: '1px solid #d8cfc4',
+              color: '#B39D85',
+              border: '1px solid #3E2C20',
               borderRadius: '4px',
               cursor: 'pointer',
               fontSize: '12px',
@@ -147,22 +147,22 @@ export function RankingChallenge({ planA, planB, onChoose, onSkip }: RankingChal
 
 function getPhaseColor(icon: string): string {
   const colors: Record<string, string> = {
-    morocco: '#C0703F',
-    base: '#E7D9BE',
-    spoke: '#6E1423',
-    ride: '#A87A2C',
-    como: '#560E1A',
+    morocco: '#DE7259',
+    base: '#2E1F16',
+    spoke: '#DE7259',
+    ride: '#D9A63F',
+    como: '#DE7259',
   }
-  return colors[icon] || '#D8CBB2'
+  return colors[icon] || '#3E2C20'
 }
 
 function getPhaseTextColor(icon: string): string {
   const colors: Record<string, string> = {
-    morocco: '#FBF6EC',
-    base: '#5A5046',
-    spoke: '#FBF6EC',
-    ride: '#FBF6EC',
-    como: '#FBF6EC',
+    morocco: '#1B120C',
+    base: '#836F5C',
+    spoke: '#1B120C',
+    ride: '#1B120C',
+    como: '#1B120C',
   }
-  return colors[icon] || '#2a2420'
+  return colors[icon] || '#F2E8DA'
 }

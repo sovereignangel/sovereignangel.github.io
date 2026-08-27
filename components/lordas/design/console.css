@@ -1,0 +1,166 @@
+/*
+ * Lordas Console — the shared stylesheet.
+ *
+ * Scoped under `.lordas` so nothing here escapes into the rest of the site.
+ * The important rule is `.lordas-seam`: cards share a 1px rule-coloured seam
+ * instead of sitting in gaps, which is what makes the ecosystem read as one
+ * instrument. See LORDAS_BRAND_STRATEGY.md §4.
+ */
+
+.lordas {
+  --lordas-ground: #1B120C;
+  --lordas-panel: #241811;
+  --lordas-panel-quiet: #2E1F16;
+  --lordas-panel-raise: #3A2A20;
+  --lordas-rule: #3E2C20;
+  --lordas-rule-soft: #33241A;
+  --lordas-ink: #F2E8DA;
+  --lordas-muted: #B39D85;
+  --lordas-faint: #836F5C;
+  --lordas-accent: #6FA3CE;
+  --lordas-ok: #6FB89A;
+  --lordas-warn: #D9A63F;
+  --lordas-crit: #DE7259;
+  --lordas-sun: #D9A63F;
+  --lordas-lens: #54BFC4;
+
+  --lordas-display: Fraunces, Georgia, 'Times New Roman', serif;
+  --lordas-body: Chivo, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --lordas-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  background: var(--lordas-ground);
+  color: var(--lordas-ink);
+  font-family: var(--lordas-body);
+  font-size: 13px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+}
+
+.lordas *, .lordas *::before, .lordas *::after { box-sizing: border-box; }
+.lordas svg { display: block; }
+
+/* ── Seam grid ──────────────────────────────────────────────────────── */
+.lordas-seam {
+  display: grid;
+  gap: 1px;
+  background: var(--lordas-rule);
+  border: 1px solid var(--lordas-rule);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.lordas-seam-1 { grid-template-columns: 1fr; }
+.lordas-seam-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.lordas-seam-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.lordas-seam-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+@media (max-width: 780px) {
+  .lordas-seam-3, .lordas-seam-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 470px) {
+  .lordas-seam-2, .lordas-seam-3, .lordas-seam-4 { grid-template-columns: 1fr; }
+}
+
+/* ── Field card ─────────────────────────────────────────────────────── */
+.lordas-fc {
+  background: var(--lordas-panel);
+  padding: 10px 12px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+.lordas-fc-head {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 8px;
+  font-family: var(--lordas-mono); font-size: 9px; letter-spacing: .15em;
+  text-transform: uppercase; color: var(--lordas-faint);
+}
+.lordas-fc-head > span { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.lordas-fc-lede {
+  font-family: var(--lordas-display); font-size: 16px; font-weight: 600;
+  letter-spacing: -.012em; line-height: 1.2; text-wrap: balance;
+}
+.lordas-fc-stat {
+  font-family: var(--lordas-mono); font-size: 26px; font-weight: 500;
+  letter-spacing: -.02em; line-height: 1; font-variant-numeric: tabular-nums;
+}
+.lordas-fc-stat small { font-size: 12px; color: var(--lordas-muted); font-weight: 400; letter-spacing: 0; }
+.lordas-fc-sub { font-size: 11.5px; color: var(--lordas-muted); line-height: 1.5; }
+.lordas-fc-rows { display: flex; flex-direction: column; }
+.lordas-fc-row {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 10px;
+  padding: 6px 0; border-bottom: 1px solid var(--lordas-rule-soft);
+}
+.lordas-fc-row:last-child { border-bottom: 0; padding-bottom: 0; }
+.lordas-fc-row:first-child { padding-top: 0; }
+.lordas-fc-row .t { display: flex; align-items: center; gap: 6px; min-width: 0; font-size: 12.5px; }
+.lordas-fc-row .t b { font-weight: 600; }
+.lordas-fc-row .t .d { color: var(--lordas-muted); font-size: 11px; display: block; }
+.lordas-fc-row .v {
+  font-family: var(--lordas-mono); font-size: 11.5px; white-space: nowrap;
+  text-align: right; font-variant-numeric: tabular-nums;
+}
+.lordas-fc-foot { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 2px; }
+
+.lordas-chip {
+  font-family: var(--lordas-mono); font-size: 9px; letter-spacing: .09em;
+  text-transform: uppercase; padding: 3px 7px; border: 1px solid var(--lordas-rule);
+  border-radius: 2px; color: var(--lordas-muted); white-space: nowrap;
+  background: transparent; display: inline-flex; align-items: center; gap: 5px;
+}
+button.lordas-chip { cursor: pointer; transition: color .12s, border-color .12s, background .12s; }
+button.lordas-chip:hover { color: var(--lordas-ink); border-color: var(--lordas-faint); }
+button.lordas-chip:focus-visible { outline: 2px solid var(--lordas-accent); outline-offset: 2px; }
+
+/* ── Section heading ────────────────────────────────────────────────── */
+.lordas-sechd {
+  display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;
+  margin: 22px 0 10px; padding-bottom: 7px; border-bottom: 1px solid var(--lordas-rule);
+}
+.lordas-sechd:first-child { margin-top: 0; }
+.lordas-sechd-t {
+  font-family: var(--lordas-mono); font-size: 9.5px; letter-spacing: .16em;
+  text-transform: uppercase; color: var(--lordas-ink);
+}
+.lordas-sechd-m { font-family: var(--lordas-mono); font-size: 9.5px; letter-spacing: .1em; color: var(--lordas-faint); }
+
+.lordas-callout {
+  border-left: 2px solid var(--lordas-accent); padding: 7px 0 7px 11px;
+  color: var(--lordas-muted); font-size: 12.5px; line-height: 1.55; margin-top: 10px;
+}
+.lordas-callout b { color: var(--lordas-ink); font-weight: 600; }
+
+.lordas-empty {
+  padding: 18px 14px; color: var(--lordas-faint); font-size: 12px;
+  background: var(--lordas-panel-quiet); text-align: center;
+}
+
+/* ── Shell ──────────────────────────────────────────────────────────── */
+.lordas-wrap { max-width: 1180px; margin: 0 auto; padding: 16px 14px 60px; }
+@media (min-width: 720px) { .lordas-wrap { padding: 22px 20px 72px; } }
+
+.lordas-mono { font-family: var(--lordas-mono); font-variant-numeric: tabular-nums; }
+.lordas-display { font-family: var(--lordas-display); }
+
+.lordas input, .lordas textarea, .lordas select {
+  background: var(--lordas-panel-raise); border: 1px solid var(--lordas-rule);
+  color: var(--lordas-ink); font-family: var(--lordas-body); font-size: 12.5px;
+  border-radius: 2px; padding: 7px 9px;
+}
+.lordas input:focus, .lordas textarea:focus, .lordas select:focus {
+  outline: none; border-color: var(--lordas-accent);
+}
+.lordas input::placeholder, .lordas textarea::placeholder { color: var(--lordas-faint); }
+
+/* Legacy class shims — these names survive in the older module components.
+   `.lordas-surface` replaces a `bg-white` that would have punched a hole in
+   the ground; `.lordas-display` pins the serif to Fraunces rather than
+   whatever the site-wide serif stack resolves to. */
+.lordas .lordas-surface { background: var(--lordas-panel); }
+.lordas .lordas-display { font-family: var(--lordas-display); }
+
+/* Tailwind utilities used by the older components resolve against Console. */
+.lordas .rounded-lg, .lordas .rounded-md { border-radius: 3px; }
+.lordas .rounded-full { border-radius: 999px; }
+.lordas hr { border: 0; border-top: 1px solid var(--lordas-rule); }
+.lordas a { color: var(--lordas-accent); }
+.lordas button { font-family: inherit; }

@@ -1,61 +1,42 @@
 'use client'
 
 import type { LordasPerson } from '@/lib/types'
-import { personLabel, partnerOf } from '@/lib/lordas-goals'
+import { C, OWNER } from './design/tokens'
+import { LoriSigil, AidasSigil } from './design/assets'
 
-const TERRACOTTA = '#b85c38'
-const CREAM = '#f5f0e8'
-const PAPER = '#faf7f2'
-const INK = '#2a2420'
-const MUTED = '#8a7e72'
-const RULE = '#d8cfc4'
+const PEOPLE: { id: LordasPerson; name: string; role: string; Sigil: (p: { size?: number }) => JSX.Element }[] = [
+  { id: 'lori', name: 'Lori', role: 'expands what is possible', Sigil: LoriSigil },
+  { id: 'aidas', name: 'Aidas', role: 'tests what is feasible', Sigil: AidasSigil },
+]
 
-/**
- * Full-screen "Who's here?" picker shown once after the PIN gate.
- * The choice is stored in localStorage('lordas_person') by the caller.
- */
-export function PersonPicker({ onSelect }: { onSelect: (person: LordasPerson) => void }) {
+/** Full-screen choice, shown once per device. */
+export function PersonPicker({ onSelect }: { onSelect: (p: LordasPerson) => void }) {
   return (
-    <div className="min-h-screen flex items-center justify-center px-4" style={{ backgroundColor: CREAM }}>
-      <div className="w-full max-w-[420px] text-center">
-        <svg
-          width="32"
-          height="32"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke={TERRACOTTA}
-          strokeWidth="1.5"
-          strokeLinecap="round"
-          className="mx-auto mb-4"
-        >
-          <circle cx="12" cy="5" r="2" />
-          <circle cx="6" cy="15" r="2" />
-          <circle cx="18" cy="15" r="2" />
-          <path d="M12 7 L6 13 M12 7 L18 13 M6 15 L18 15" />
-        </svg>
-        <h1 className="font-serif text-[22px] font-semibold mb-1" style={{ color: TERRACOTTA }}>
-          Who&rsquo;s here?
-        </h1>
-        <p className="text-[11px] uppercase tracking-[0.5px] mb-6" style={{ color: MUTED }}>
-          Your commitments are signed in your name
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+      <div style={{ textAlign: 'center', width: '100%', maxWidth: 420 }}>
+        <p style={{
+          fontFamily: 'var(--lordas-mono)', fontSize: 9.5, letterSpacing: '.15em',
+          textTransform: 'uppercase', color: C.faint, marginBottom: 16,
+        }}>
+          Who&apos;s here?
         </p>
-
-        <div className="grid grid-cols-2 gap-3">
-          {(['lori', 'aidas'] as LordasPerson[]).map((p) => (
+        <div className="lordas-seam lordas-seam-2">
+          {PEOPLE.map(({ id, name, role, Sigil }) => (
             <button
-              key={p}
-              onClick={() => onSelect(p)}
-              className="rounded-sm border-2 py-8 transition-colors group"
-              style={{ backgroundColor: PAPER, borderColor: RULE }}
-              onMouseEnter={(e) => (e.currentTarget.style.borderColor = TERRACOTTA)}
-              onMouseLeave={(e) => (e.currentTarget.style.borderColor = RULE)}
+              key={id}
+              type="button"
+              onClick={() => onSelect(id)}
+              className="lordas-fc"
+              style={{ alignItems: 'center', cursor: 'pointer', border: 'none', textAlign: 'center', padding: '22px 14px' }}
             >
-              <span className="font-serif text-[24px] font-semibold block" style={{ color: INK }}>
-                {personLabel(p)}
+              <Sigil size={34} />
+              <span style={{
+                fontFamily: 'var(--lordas-display)', fontSize: 18, fontWeight: 600,
+                color: C.ink, marginTop: 4,
+              }}>
+                {name}
               </span>
-              <span className="text-[10px] uppercase tracking-[0.5px]" style={{ color: MUTED }}>
-                {p === 'lori' ? 'Fund manager in the making' : 'Founder in the making'}
-              </span>
+              <span style={{ fontSize: 11, color: C.muted, lineHeight: 1.4 }}>{role}</span>
             </button>
           ))}
         </div>
@@ -64,33 +45,36 @@ export function PersonPicker({ onSelect }: { onSelect: (person: LordasPerson) =>
   )
 }
 
-/**
- * Small header pill showing the active person; click swaps to the partner.
- */
+/** Inline switch for the header, once a person is chosen. */
 export function PersonSwitch({
   person,
   onChange,
 }: {
   person: LordasPerson
-  onChange: (person: LordasPerson) => void
+  onChange: (p: LordasPerson) => void
 }) {
   return (
-    <button
-      onClick={() => onChange(partnerOf(person))}
-      title={`Switch to ${personLabel(partnerOf(person))}`}
-      className="flex items-center gap-1.5 px-2 py-1.5 rounded-sm border text-[9px] font-serif font-semibold uppercase transition-colors flex-shrink-0"
-      style={{ backgroundColor: 'transparent', color: MUTED, borderColor: RULE }}
-    >
-      <span
-        className="inline-flex items-center justify-center w-4 h-4 rounded-sm font-mono text-[9px] font-semibold"
-        style={{ backgroundColor: TERRACOTTA, color: PAPER }}
-      >
-        {personLabel(person).charAt(0)}
-      </span>
-      {personLabel(person)}
-      <svg width="8" height="8" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M3 4 L1 6 L3 8 M9 4 L11 6 L9 8 M1 6 L11 6" />
-      </svg>
-    </button>
+    <div style={{ display: 'flex', gap: 3 }}>
+      {PEOPLE.map(({ id, name, Sigil }) => {
+        const active = id === person
+        return (
+          <button
+            key={id}
+            type="button"
+            onClick={() => onChange(id)}
+            className="lordas-chip"
+            style={{
+              cursor: 'pointer',
+              color: active ? C.ground : C.muted,
+              background: active ? OWNER[id] : 'transparent',
+              borderColor: active ? OWNER[id] : C.rule,
+            }}
+          >
+            <Sigil size={11} />
+            {name}
+          </button>
+        )
+      })}
+    </div>
   )
 }

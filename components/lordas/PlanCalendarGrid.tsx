@@ -9,24 +9,24 @@ interface PlanCalendarGridProps {
 export function PlanCalendarGrid({ plan }: PlanCalendarGridProps) {
   const getPhaseColor = (icon: string): string => {
     const colors: Record<string, string> = {
-      morocco: '#C0703F',
-      base: '#E7D9BE',
-      spoke: '#6E1423',
-      ride: '#A87A2C',
-      como: '#560E1A',
+      morocco: '#DE7259',
+      base: '#2E1F16',
+      spoke: '#DE7259',
+      ride: '#D9A63F',
+      como: '#DE7259',
     }
-    return colors[icon] || '#D8CBB2'
+    return colors[icon] || '#3E2C20'
   }
 
   const getPhaseTextColor = (icon: string): string => {
     const colors: Record<string, string> = {
-      morocco: '#FBF6EC',
-      base: '#5A5046',
-      spoke: '#FBF6EC',
-      ride: '#FBF6EC',
-      como: '#FBF6EC',
+      morocco: '#1B120C',
+      base: '#836F5C',
+      spoke: '#1B120C',
+      ride: '#1B120C',
+      como: '#1B120C',
     }
-    return colors[icon] || '#2a2420'
+    return colors[icon] || '#F2E8DA'
   }
 
   return (

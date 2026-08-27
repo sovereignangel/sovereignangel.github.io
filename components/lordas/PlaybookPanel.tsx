@@ -24,7 +24,7 @@ export function PlaybookPanel() {
     <div className="relative" ref={ref}>
       <button
         onClick={() => setOpen(!open)}
-        className="flex items-center gap-1 px-2 py-1.5 rounded-sm border text-[9px] font-serif font-semibold uppercase transition-colors flex-shrink-0"
+        className="flex items-center gap-1 px-2 py-1.5 rounded-sm border text-[9px] lordas-display font-semibold uppercase transition-colors flex-shrink-0"
         style={{
           backgroundColor: open ? TERRACOTTA : 'transparent',
           color: open ? PAPER : MUTED,
@@ -46,7 +46,7 @@ export function PlaybookPanel() {
         >
           <div className="flex items-start justify-between mb-3 pb-2 border-b-2" style={{ borderColor: RULE }}>
             <div>
-              <h3 className="font-serif text-[14px] font-semibold uppercase tracking-[0.5px]" style={{ color: TERRACOTTA }}>
+              <h3 className="lordas-display text-[14px] font-semibold uppercase tracking-[0.5px]" style={{ color: TERRACOTTA }}>
                 The Playbook
               </h3>
               <p className="text-[10px] uppercase tracking-[0.5px]" style={{ color: MUTED }}>
@@ -96,7 +96,7 @@ export function PlaybookPanel() {
 function Section({ title, color, children }: { title: string; color: string; children: React.ReactNode }) {
   return (
     <div className="mb-3">
-      <h4 className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] mb-1.5 pb-1 border-b" style={{ color, borderColor: RULE }}>
+      <h4 className="lordas-display text-[11px] font-semibold uppercase tracking-[0.5px] mb-1.5 pb-1 border-b" style={{ color, borderColor: RULE }}>
         {title}
       </h4>
       <div className="space-y-1.5">{children}</div>

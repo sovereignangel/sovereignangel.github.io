@@ -125,13 +125,13 @@ function OwnerColumn({
 
       {/* Overarching summer goal (charter) */}
       {editingCharter ? (
-        <div className="mb-3 rounded-sm border p-2 bg-white space-y-1.5" style={{ borderColor: accent }}>
+        <div className="mb-3 rounded-sm border p-2 lordas-surface space-y-1.5" style={{ borderColor: accent }}>
           <textarea
             value={charterStatement}
             onChange={(e) => setCharterStatement(e.target.value)}
             rows={3}
             placeholder="The overarching summer goal — one sentence, falsifiable"
-            className="w-full text-[12px] font-serif rounded-sm border p-1.5"
+            className="w-full text-[12px] lordas-display rounded-sm border p-1.5"
             style={{ borderColor: RULE, color: INK }}
             autoFocus
           />
@@ -146,14 +146,14 @@ function OwnerColumn({
             <button
               onClick={saveCharter}
               disabled={saving || !charterStatement.trim()}
-              className="px-3 py-1 rounded-sm text-[9px] font-serif font-semibold uppercase"
+              className="px-3 py-1 rounded-sm text-[9px] lordas-display font-semibold uppercase"
               style={{ backgroundColor: accent, color: PAPER, opacity: saving ? 0.6 : 1 }}
             >
               Save
             </button>
             <button
               onClick={() => setEditingCharter(false)}
-              className="px-3 py-1 rounded-sm border text-[9px] font-serif font-semibold uppercase"
+              className="px-3 py-1 rounded-sm border text-[9px] lordas-display font-semibold uppercase"
               style={{ borderColor: RULE, color: MUTED }}
             >
               Cancel
@@ -162,7 +162,7 @@ function OwnerColumn({
         </div>
       ) : charter ? (
         <div className="mb-3 pb-2 border-b group relative" style={{ borderColor: RULE }}>
-          <p className="font-serif text-[13px] leading-snug" style={{ color: INK }}>
+          <p className="lordas-display text-[13px] leading-snug" style={{ color: INK }}>
             {charter.statement}
           </p>
           {charter.doneLooksLike && (
@@ -207,7 +207,7 @@ function OwnerColumn({
 
       <div className="space-y-1.5">
         {milestones.map((m) => (
-          <div key={m.id} className="rounded-sm border p-2 bg-white group" style={{ borderColor: RULE }}>
+          <div key={m.id} className="rounded-sm border p-2 lordas-surface group" style={{ borderColor: RULE }}>
             <div className="flex items-start justify-between gap-2">
               <p className="text-[12px] font-medium leading-snug" style={{ color: m.status === 'dropped' ? MUTED : INK, textDecoration: m.status === 'dropped' ? 'line-through' : 'none' }}>
                 {m.title}
@@ -266,7 +266,7 @@ function OwnerColumn({
       </div>
 
       {draft && (
-        <div className="mt-2 rounded-sm border p-2 bg-white space-y-1.5" style={{ borderColor: accent }}>
+        <div className="mt-2 rounded-sm border p-2 lordas-surface space-y-1.5" style={{ borderColor: accent }}>
           <input
             value={draft.title}
             onChange={(e) => setDraft({ ...draft, title: e.target.value })}
@@ -301,7 +301,7 @@ function OwnerColumn({
           <select
             value={draft.category}
             onChange={(e) => setDraft({ ...draft, category: e.target.value as LordasGoalCategory | '' })}
-            className="w-full text-[10px] rounded-sm border p-1.5 bg-white"
+            className="w-full text-[10px] rounded-sm border p-1.5 lordas-surface"
             style={{ borderColor: RULE, color: draft.category ? INK : MUTED }}
           >
             <option value="">Group (optional)</option>
@@ -315,14 +315,14 @@ function OwnerColumn({
             <button
               onClick={saveMilestone}
               disabled={saving || !draft.title.trim()}
-              className="px-3 py-1 rounded-sm text-[9px] font-serif font-semibold uppercase"
+              className="px-3 py-1 rounded-sm text-[9px] lordas-display font-semibold uppercase"
               style={{ backgroundColor: accent, color: PAPER, opacity: saving ? 0.6 : 1 }}
             >
               {saving ? 'Saving' : draft.id ? 'Update' : 'Add'}
             </button>
             <button
               onClick={() => setDraft(null)}
-              className="px-3 py-1 rounded-sm border text-[9px] font-serif font-semibold uppercase"
+              className="px-3 py-1 rounded-sm border text-[9px] lordas-display font-semibold uppercase"
               style={{ borderColor: RULE, color: MUTED }}
             >
               Cancel

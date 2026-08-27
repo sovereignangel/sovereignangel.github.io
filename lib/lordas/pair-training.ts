@@ -2,18 +2,29 @@
  * Pair training — one plan, two bodies.
  *
  * Lori and Aidas are training for the same two races off the same block, so
- * the session is shared by construction. What is *not* shared is recovery and
- * speed: readiness is computed per athlete from their own Garmin data, and
- * pace targets come from each athlete's own recent work. The output is one
- * workout with two prescriptions plus an explicit "how much of it you do
- * side by side" number, so a shared session never turns into one person
- * quietly training alone at the wrong intensity.
+ * the session is shared by construction. What is *not* shared is recovery,
+ * speed, or the finish time each is chasing: readiness comes from each
+ * athlete's own Garmin data, pace targets are anchored to each athlete's own
+ * goal, and the day is rebalanced against what each has actually been doing.
+ * The output is one workout with two prescriptions plus an explicit "how much
+ * of it you do side by side" number, so a shared session never turns into one
+ * person quietly training alone at the wrong intensity.
  */
 
-import { computeReadiness, adaptDay, sportOfActivity, type Readiness } from '@/lib/ironman/adapt'
-import { getPlanDay, type PlanDay, type PlannedSession, type Sport, type Zone } from '@/lib/ironman/plan'
+import { computeReadiness, adaptDay, sportOfActivity, dedupeActivities, type Readiness } from '@/lib/ironman/adapt'
+import { computeRaceForecast } from '@/lib/ironman/forecast'
+import { computeRebalance, planDayWith, type Rebalance } from '@/lib/ironman/rebalance'
+import { fmtPace, raceTargets, zonePaceMinKm, type RaceTarget } from '@/lib/ironman/pace'
+import {
+  DECLARED_CAPABILITY, STRENGTHS,
+  goalsFor,
+  type AthleteId, type PlanDay, type PlannedSession, type RaceGoals,
+  type Sport, type Sport3, type Zone,
+} from '@/lib/ironman/plan'
 import type { GarminActivity, LordasPerson } from '@/lib/types'
 import type { AthleteData } from './athletes'
+
+export { fmtRunPace, fmtSwimPace, fmtBikeSpeed, fmtPace } from '@/lib/ironman/pace'
 
 // ── Pace profiles ─────────────────────────────────────────────────────────
 
@@ -56,7 +67,7 @@ function weightedPace(acts: GarminActivity[]): { metres: number; seconds: number
 }
 
 export function paceProfile(activities: GarminActivity[], today: string): PaceProfile {
-  const recent = activities.filter((a) => withinWindow(a, today))
+  const recent = dedupeActivities(activities).filter((a) => withinWindow(a, today))
   const bySport = (sport: Sport) => recent.filter((a) => sportOfActivity(a.type) === sport)
 
   const run = weightedPace(bySport('run'))
@@ -75,69 +86,65 @@ export function paceProfile(activities: GarminActivity[], today: string): PacePr
   }
 }
 
+/** Habitual pace as min/km, the unit the zone ladder works in */
+function habitualMinKm(sport: Sport3, p: PaceProfile): number | null {
+  if (sport === 'run') return p.runMinPerKm
+  if (sport === 'bike') return p.bikeKmh ? 60 / p.bikeKmh : null
+  return p.swimSecPer100m ? (p.swimSecPer100m * 10) / 60 : null
+}
+
+/**
+ * The partner's own pace for every sport they trained, by date. The forecast
+ * uses it to tell a session ridden *together* from two sessions that merely
+ * happened on the same day — the first measures whoever set the tempo, the
+ * second measures each of them.
+ */
+export function partnerPacesOf(partner: AthleteData | undefined): Partial<Record<Sport3, Map<string, number>>> {
+  const out: Partial<Record<Sport3, Map<string, number>>> = {}
+  if (!partner) return out
+  // Their longest session of a sport that day is the one that could have been
+  // shared, so it is the pace worth remembering.
+  const longest: Partial<Record<Sport3, Map<string, { min: number; pace: number }>>> = {}
+  for (const a of dedupeActivities(partner.activities)) {
+    const sport = a.date ? sportOfActivity(a.type) : null
+    if (sport !== 'swim' && sport !== 'bike' && sport !== 'run') continue
+    const km = (a.distanceMeters ?? 0) / 1000
+    const min = (a.durationSeconds ?? 0) / 60
+    if (km <= 0 || min < MIN_DURATION_S / 60) continue
+    const map = (longest[sport] ??= new Map())
+    const prev = map.get(a.date as string)
+    if (!prev || min > prev.min) map.set(a.date as string, { min, pace: min / km })
+  }
+  for (const sport of ['swim', 'bike', 'run'] as const) {
+    const map = longest[sport]
+    if (!map) continue
+    out[sport] = new Map([...map].map(([date, v]) => [date, v.pace]))
+  }
+  return out
+}
+
 // ── Zone → pace ───────────────────────────────────────────────────────────
-//
-// The profile is habitual training pace, which for an endurance block sits at
-// Z2 by definition. Zones are expressed as offsets from it rather than from a
-// tested threshold, because nobody here has done a lab test and a wrong
-// threshold is more dangerous than an honest approximation.
-
-const RUN_OFFSET_SEC_PER_KM: Record<Zone, number | null> = {
-  Z1: 35, Z2: 0, Z3: -25, race: -35, mixed: 0, '-': null,
-}
-const BIKE_OFFSET_KMH: Record<Zone, number | null> = {
-  Z1: -3, Z2: 0, Z3: 1.5, race: 2.5, mixed: 0, '-': null,
-}
-const SWIM_OFFSET_SEC_PER_100: Record<Zone, number | null> = {
-  Z1: 8, Z2: 0, Z3: -5, race: -6, mixed: 0, '-': null,
-}
-
-export function fmtRunPace(minPerKm: number): string {
-  const total = Math.round(minPerKm * 60)
-  return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, '0')}/km`
-}
-
-export function fmtSwimPace(secPer100m: number): string {
-  const total = Math.round(secPer100m)
-  return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, '0')}/100m`
-}
-
-export function fmtBikeSpeed(kmh: number): string {
-  return `${kmh.toFixed(1)} km/h`
-}
 
 /** The pace this athlete should hold for this session, or null when unknown. */
-export function paceTarget(sport: Sport, zone: Zone, profile: PaceProfile): string | null {
-  if (sport === 'run' && profile.runMinPerKm != null) {
-    const off = RUN_OFFSET_SEC_PER_KM[zone]
-    if (off === null) return null
-    return fmtRunPace(profile.runMinPerKm + off / 60)
-  }
-  if (sport === 'bike' && profile.bikeKmh != null) {
-    const off = BIKE_OFFSET_KMH[zone]
-    if (off === null) return null
-    return fmtBikeSpeed(profile.bikeKmh + off)
-  }
-  if (sport === 'swim' && profile.swimSecPer100m != null) {
-    const off = SWIM_OFFSET_SEC_PER_100[zone]
-    if (off === null) return null
-    return fmtSwimPace(profile.swimSecPer100m + off)
-  }
+export function paceTarget(
+  sport: Sport,
+  zone: Zone,
+  profile: PaceProfile,
+  targets?: Record<Sport3, RaceTarget>
+): string | null {
   // A brick spans sports — the bike leg sets the number worth quoting.
-  if (sport === 'brick' && profile.bikeKmh != null) {
-    const off = BIKE_OFFSET_KMH[zone]
-    if (off === null) return null
-    return fmtBikeSpeed(profile.bikeKmh + off)
-  }
-  return null
+  const s: Sport3 | null =
+    sport === 'run' || sport === 'bike' || sport === 'swim' ? sport : sport === 'brick' ? 'bike' : null
+  if (!s) return null
+  return fmtPace(s, zonePaceMinKm(s, zone, targets?.[s], habitualMinKm(s, profile)))
 }
 
 // ── Prescriptions ─────────────────────────────────────────────────────────
 
 export interface PrescribedSession extends PlannedSession {
-  /** This athlete's own number for the session, from their own recent work */
+  /** This athlete's own number for the session, from their own goal and history */
   pace: string | null
-  /** Set when readiness moved this session off the printed plan */
+  /** Set when readiness or the rebalance moved this session off the printed plan */
   adjusted: boolean
 }
 
@@ -147,6 +154,11 @@ export interface AthletePrescription {
   color: string
   readiness: Readiness
   profile: PaceProfile
+  goals: RaceGoals
+  /** Race-pace anchor per discipline, and how far it had to back off the goal */
+  targets: Record<Sport3, RaceTarget>
+  /** Which sport is worth the most minutes, and what kind of session it needs */
+  rebalance: Rebalance
   adaptLevel: string
   adaptHeadline: string
   adaptNote: string
@@ -156,15 +168,32 @@ export interface AthletePrescription {
   noData: boolean
 }
 
-function prescribe(data: AthleteData, day: PlanDay | undefined, today: string): AthletePrescription {
-  const readiness = computeReadiness(data.metrics, data.activities, today)
-  const profile = paceProfile(data.activities, today)
+function prescribe(data: AthleteData, date: string, partner?: AthleteData): AthletePrescription {
+  const person = data.athlete.id as AthleteId
+  const goals = goalsFor(person)
+  const activities = dedupeActivities(data.activities)
+  const readiness = computeReadiness(data.metrics, activities, date)
+  const profile = paceProfile(activities, date)
+
+  const opts = { goals, declared: DECLARED_CAPABILITY[person], partnerPaces: partnerPacesOf(partner) }
+  const forecast = computeRaceForecast(activities, data.metrics, date, opts)
+  const targets = raceTargets(forecast, goals)
+  const rebalance = computeRebalance(activities, data.metrics, date, person, opts)
+
+  // The printed plan first, then anything the rebalance moved, then readiness.
+  // Order matters: readiness should shrink the session you actually need, not
+  // the one the calendar happened to print.
+  const day: PlanDay | undefined = planDayWith(date, rebalance.moves)
+
   const base = {
     person: data.athlete.id,
     name: data.athlete.name,
     color: data.athlete.color,
     readiness,
     profile,
+    goals,
+    targets,
+    rebalance,
     noData: data.empty,
   }
 
@@ -180,12 +209,12 @@ function prescribe(data: AthleteData, day: PlanDay | undefined, today: string): 
   }
 
   const adaptation = adaptDay(day, readiness)
-  const plannedByTitle = new Map(day.sessions.map((s) => [s.title, s]))
+  const printed = new Map((planDayWith(date, [])?.sessions ?? []).map((s) => [s.title, s]))
   const sessions: PrescribedSession[] = adaptation.sessions.map((s) => {
-    const original = plannedByTitle.get(s.title)
+    const original = printed.get(s.title)
     return {
       ...s,
-      pace: paceTarget(s.sport, s.zone, profile),
+      pace: paceTarget(s.sport, s.zone, profile, targets),
       adjusted: !original || original.durationMin !== s.durationMin || original.zone !== s.zone,
     }
   })
@@ -206,7 +235,7 @@ export interface PairDay {
   date: string
   phase: string | null
   focus: string | null
-  /** The printed plan, before either body had a say */
+  /** The plan as it now stands for this date, before either body had a say */
   planned: PlannedSession[]
   athletes: AthletePrescription[]
   /** Minutes both of them can do side by side — the shorter adapted session */
@@ -229,9 +258,59 @@ function sharedTitle(day: PlanDay | undefined): string {
   return active.map((s) => s.title).join(' + ')
 }
 
+/**
+ * Where the two race-pace anchors sit for a discipline both of them are about
+ * to train together. This is the line that decides whether a shared session is
+ * a session or a compromise: two anchors far apart mean one of them is either
+ * soft-pedalling or drowning, and saying so beats discovering it at km 40.
+ */
+function paceDivergence(
+  sport: Sport3,
+  a: AthletePrescription,
+  b: AthletePrescription,
+  threshold: number
+): string | null {
+  const ta = a.targets[sport]?.prescribedPaceMinKm
+  const tb = b.targets[sport]?.prescribedPaceMinKm
+  if (ta == null || tb == null) return null
+  const gap = Math.abs(ta - tb) / Math.min(ta, tb)
+  if (gap < threshold) return null
+  const faster = ta < tb ? a : b
+  const slower = faster === a ? b : a
+  const fs = faster.targets[sport]
+  const ss = slower.targets[sport]
+  const strongFor = STRENGTHS[faster.person as AthleteId]?.[sport]
+  const weakFor = STRENGTHS[slower.person as AthleteId]?.[sport]
+  const framing =
+    strongFor === 'strong' && weakFor === 'weak'
+      ? ` It is ${faster.name}'s strongest discipline and ${slower.name}'s weakest, so this is the gap that will not close by race day —`
+      : ''
+
+  if (sport === 'bike') {
+    return (
+      `Race-pace bike targets are ${Math.round(gap * 100)}% apart — ${faster.name} ${fmtPace('bike', fs.prescribedPaceMinKm)}, ` +
+      `${slower.name} ${fmtPace('bike', ss.prescribedPaceMinKm)}.${framing} ` +
+      `ride it as one: ${faster.name} on the front the whole way at ${slower.name}'s number, drafting is the point. ` +
+      `${faster.name}'s own race-effort work has to happen alone.`
+    )
+  }
+  if (sport === 'run') {
+    return (
+      `Race-pace run targets are ${Math.round(gap * 100)}% apart — ${faster.name} ${fmtPace('run', fs.prescribedPaceMinKm)}, ` +
+      `${slower.name} ${fmtPace('run', ss.prescribedPaceMinKm)}.${framing} ` +
+      `run the same loop out-and-back rather than side by side, or ${faster.name} runs ${slower.name}'s number and calls it Z2.`
+    )
+  }
+  return (
+    `Race-pace swim targets are ${Math.round(gap * 100)}% apart — ${faster.name} ${fmtPace('swim', fs.prescribedPaceMinKm)}, ` +
+    `${slower.name} ${fmtPace('swim', ss.prescribedPaceMinKm)}.${framing} ` +
+    `same lane, same set, different send-offs — nobody should be sitting on the wall waiting.`
+  )
+}
+
 export function buildPairDay(date: string, athletes: AthleteData[]): PairDay {
-  const day = getPlanDay(date)
-  const prescriptions = athletes.map((a) => prescribe(a, day, date))
+  const prescriptions = athletes.map((a, i) => prescribe(a, date, athletes[1 - i]))
+  const day = planDayWith(date, prescriptions[0]?.rebalance.moves ?? [])
   const working = prescriptions.filter((p) => p.totalMin > 0)
   const restDay = !day || day.sessions.every((s) => s.sport === 'rest')
 
@@ -265,27 +344,32 @@ export function buildPairDay(date: string, athletes: AthleteData[]): PairDay {
       divergence.push(`${behind.name}'s readiness pulled the session to recovery — going anyway costs more than it buys.`)
     }
 
-    // Pace divergence is the thing that quietly ruins a shared endurance ride.
-    for (const sport of ['run', 'bike', 'swim'] as const) {
-      const pa = a.profile
-      const pb = b.profile
-      if (sport === 'run' && pa.runMinPerKm != null && pb.runMinPerKm != null) {
-        const diffSec = Math.abs(pa.runMinPerKm - pb.runMinPerKm) * 60
-        if (diffSec >= 20 && prescriptions.some((p) => p.sessions.some((s) => s.sport === 'run' || s.sport === 'brick'))) {
-          const faster = pa.runMinPerKm < pb.runMinPerKm ? a : b
-          divergence.push(
-            `Run paces are ${Math.round(diffSec)}s/km apart — ${faster.name} runs at the slower number for the shared part, or you run the same loop out-and-back.`
-          )
-        }
+    // Only speak about the disciplines actually on today's card.
+    const onCard = new Set<Sport3>()
+    for (const p of prescriptions) {
+      for (const s of p.sessions) {
+        if (s.sport === 'brick') onCard.add('bike')
+        else if (s.sport === 'run' || s.sport === 'bike' || s.sport === 'swim') onCard.add(s.sport)
       }
-      if (sport === 'bike' && pa.bikeKmh != null && pb.bikeKmh != null) {
-        const diff = Math.abs(pa.bikeKmh - pb.bikeKmh)
-        if (diff >= 2 && prescriptions.some((p) => p.sessions.some((s) => s.sport === 'bike' || s.sport === 'brick'))) {
-          const faster = pa.bikeKmh > pb.bikeKmh ? a : b
-          divergence.push(
-            `Bike speeds are ${diff.toFixed(1)} km/h apart — ${faster.name} sits on the front and holds the slower number; drafting is the point.`
-          )
-        }
+    }
+    // Bike speed diverges hardest and hurts a shared ride fastest, so it gets
+    // the tightest threshold of the three.
+    const THRESHOLD: Record<Sport3, number> = { bike: 0.06, run: 0.06, swim: 0.08 }
+    for (const sport of ['bike', 'run', 'swim'] as const) {
+      if (!onCard.has(sport)) continue
+      const line = paceDivergence(sport, a, b, THRESHOLD[sport])
+      if (line) divergence.push(line)
+    }
+
+    // A capability taken from a declaration rather than from logged work is a
+    // claim, and the page should say so rather than quietly present it as data.
+    for (const p of prescriptions) {
+      for (const g of p.rebalance.sports) {
+        if (!onCard.has(g.sport) || g.paceSource !== 'declared') continue
+        divergence.push(
+          `${p.name}'s ${g.sport} number is declared, not measured — ${g.sharedN} of the logged sessions were done together, ` +
+            `so the model is using ${DECLARED_CAPABILITY[p.person as AthleteId]?.note ?? 'the stated solo figure'} A solo effort would replace it with evidence.`
+        )
       }
     }
   }

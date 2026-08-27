@@ -226,15 +226,15 @@ export function AdventuresView({
   return (
     <div className="space-y-8">
       {/* Tabs */}
-      <div style={{ display: 'flex', gap: '8px', borderBottom: '1px solid #d8cfc4', paddingBottom: '12px' }}>
+      <div style={{ display: 'flex', gap: '8px', borderBottom: '1px solid #3E2C20', paddingBottom: '12px' }}>
         {['browse', 'play', 'priorities'].map((t) => (
           <button
             key={t}
             onClick={() => setTab(t as Tab)}
             style={{
               padding: '8px 16px',
-              background: tab === t ? '#b85c38' : 'transparent',
-              color: tab === t ? '#faf7f2' : '#8a7e72',
+              background: tab === t ? '#6FA3CE' : 'transparent',
+              color: tab === t ? '#241811' : '#B39D85',
               border: 'none',
               borderRadius: '4px',
               cursor: 'pointer',

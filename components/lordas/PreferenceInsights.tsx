@@ -44,12 +44,12 @@ export function PreferenceInsights({ plans, votes }: PreferenceInsightsProps) {
     .slice(0, 3)
 
   return (
-    <div style={{ padding: '20px', background: '#ebe4d4', borderRadius: '8px', marginTop: '20px' }}>
+    <div style={{ padding: '20px', background: '#2E1F16', borderRadius: '8px', marginTop: '20px' }}>
       <h3
         style={{
           fontSize: '13px',
           fontWeight: 600,
-          color: '#b85c38',
+          color: '#6FA3CE',
           marginBottom: '16px',
           textTransform: 'uppercase',
           letterSpacing: '0.5px',
@@ -60,34 +60,34 @@ export function PreferenceInsights({ plans, votes }: PreferenceInsightsProps) {
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
         <div>
-          <div style={{ fontSize: '10px', color: '#8a7e72', marginBottom: '4px' }}>Avg Kiting Hours</div>
-          <div style={{ fontSize: '16px', fontWeight: 600, color: '#2a2420' }}>{Math.round(avgKiting)}h</div>
+          <div style={{ fontSize: '10px', color: '#B39D85', marginBottom: '4px' }}>Avg Kiting Hours</div>
+          <div style={{ fontSize: '16px', fontWeight: 600, color: '#F2E8DA' }}>{Math.round(avgKiting)}h</div>
         </div>
         <div>
-          <div style={{ fontSize: '10px', color: '#8a7e72', marginBottom: '4px' }}>Avg Cycling Miles</div>
-          <div style={{ fontSize: '16px', fontWeight: 600, color: '#2a2420' }}>{Math.round(avgCycling)}mi</div>
+          <div style={{ fontSize: '10px', color: '#B39D85', marginBottom: '4px' }}>Avg Cycling Miles</div>
+          <div style={{ fontSize: '16px', fontWeight: 600, color: '#F2E8DA' }}>{Math.round(avgCycling)}mi</div>
         </div>
         <div>
-          <div style={{ fontSize: '10px', color: '#8a7e72', marginBottom: '4px' }}>Avg Budget</div>
-          <div style={{ fontSize: '16px', fontWeight: 600, color: '#2a2420' }}>${(avgBudget / 1000).toFixed(1)}k</div>
+          <div style={{ fontSize: '10px', color: '#B39D85', marginBottom: '4px' }}>Avg Budget</div>
+          <div style={{ fontSize: '16px', fontWeight: 600, color: '#F2E8DA' }}>${(avgBudget / 1000).toFixed(1)}k</div>
         </div>
         <div>
-          <div style={{ fontSize: '10px', color: '#8a7e72', marginBottom: '4px' }}>Loved Plans</div>
-          <div style={{ fontSize: '16px', fontWeight: 600, color: '#b85c38' }}>{lovedPlans.length}</div>
+          <div style={{ fontSize: '10px', color: '#B39D85', marginBottom: '4px' }}>Loved Plans</div>
+          <div style={{ fontSize: '16px', fontWeight: 600, color: '#6FA3CE' }}>{lovedPlans.length}</div>
         </div>
       </div>
 
       {topThemes.length > 0 && (
         <div style={{ marginBottom: '16px' }}>
-          <div style={{ fontSize: '11px', fontWeight: 600, color: '#8a7e72', marginBottom: '8px' }}>TOP THEMES</div>
+          <div style={{ fontSize: '11px', fontWeight: 600, color: '#B39D85', marginBottom: '8px' }}>TOP THEMES</div>
           <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
             {topThemes.map(([theme, count]) => (
               <span
                 key={theme}
                 style={{
                   padding: '6px 12px',
-                  background: '#b85c38',
-                  color: '#faf8f4',
+                  background: '#6FA3CE',
+                  color: '#241811',
                   borderRadius: '4px',
                   fontSize: '10px',
                   fontWeight: 600,
@@ -103,18 +103,18 @@ export function PreferenceInsights({ plans, votes }: PreferenceInsightsProps) {
 
       {blockers.length > 0 && (
         <div>
-          <div style={{ fontSize: '11px', fontWeight: 600, color: '#8a7e72', marginBottom: '8px' }}>BLOCKERS TO WATCH</div>
+          <div style={{ fontSize: '11px', fontWeight: 600, color: '#B39D85', marginBottom: '8px' }}>BLOCKERS TO WATCH</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
             {blockers.map((blocker, i) => (
               <div
                 key={i}
                 style={{
                   padding: '8px 12px',
-                  background: '#faf8f4',
-                  border: '1px solid #d8cfc4',
+                  background: '#241811',
+                  border: '1px solid #3E2C20',
                   borderRadius: '4px',
                   fontSize: '10px',
-                  color: '#8a7e72',
+                  color: '#B39D85',
                 }}
               >
                 {blocker}

@@ -61,7 +61,7 @@ export function WeekHistory({ weekHistory, milestones, person }: WeekHistoryProp
         {weekHistory.map((week) => {
           const isOpen = expanded === week.weekStart
           return (
-            <div key={week.weekStart} className="rounded-sm border bg-white" style={{ borderColor: RULE }}>
+            <div key={week.weekStart} className="rounded-sm border lordas-surface" style={{ borderColor: RULE }}>
               <button
                 onClick={() => setExpanded(isOpen ? null : week.weekStart)}
                 className="w-full flex items-center justify-between p-2.5"
@@ -122,7 +122,7 @@ export function WeekHistory({ weekHistory, milestones, person }: WeekHistoryProp
                             </div>
                           )}
                           {o !== 'relationship' && week.partnerNotes[o === 'lori' ? 'aidas' : 'lori'] && (
-                            <p className="mt-1 text-[10px] font-serif italic" style={{ color: MUTED }}>
+                            <p className="mt-1 text-[10px] lordas-display italic" style={{ color: MUTED }}>
                               &ldquo;{week.partnerNotes[o === 'lori' ? 'aidas' : 'lori']!.text}&rdquo; — {personLabel(o === 'lori' ? 'aidas' : 'lori')}
                             </p>
                           )}

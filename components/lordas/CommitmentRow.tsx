@@ -85,7 +85,7 @@ export function CommitmentRow({
   const canLock = !readOnly && viewer !== proposer && !locked && onLock
 
   return (
-    <div className="rounded-sm border bg-white p-2 group" style={{ borderColor: locked ? `${STATUS_META[c.status].color}50` : RULE }}>
+    <div className="rounded-sm border lordas-surface p-2 group" style={{ borderColor: locked ? `${STATUS_META[c.status].color}50` : RULE }}>
       <div className="flex items-start gap-2">
         <button
           onClick={() => canCycle && onCycleStatus!(c)}
@@ -156,7 +156,7 @@ export function CommitmentRow({
             <button
               onClick={() => onLock!(c)}
               title="Countersign this commitment"
-              className="flex items-center gap-1 font-serif text-[9px] font-semibold uppercase px-2 py-1 rounded-sm border transition-colors"
+              className="flex items-center gap-1 lordas-display text-[9px] font-semibold uppercase px-2 py-1 rounded-sm border transition-colors"
               style={{ color: SAGE, borderColor: `${SAGE}60` }}
             >
               <svg width="9" height="10" viewBox="0 0 10 12" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">

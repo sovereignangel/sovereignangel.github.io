@@ -17,16 +17,16 @@ export function DashboardHeader({ latest, snapshot, conversationCount, currentTa
   const composite = scores?.composite ?? 0
 
   return (
-    <div className="border-b-2 pb-4" style={{ borderColor: '#d8cfc4' }}>
+    <div className="border-b-2 pb-4" style={{ borderColor: '#3E2C20' }}>
       {/* Title row with buttons */}
       <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
         <div className="flex items-center gap-3">
-          <CompassIcon size={28} color="#b85c38" />
+          <CompassIcon size={28} color="#6FA3CE" />
           <div>
-            <h1 className="font-serif text-[20px] font-semibold tracking-[0.5px]" style={{ color: '#b85c38' }}>
+            <h1 className="lordas-display text-[20px] font-semibold tracking-[0.5px]" style={{ color: '#6FA3CE' }}>
               lordas
             </h1>
-            <p className="text-[10px] uppercase tracking-[0.5px]" style={{ color: '#8a7e72' }}>
+            <p className="text-[10px] uppercase tracking-[0.5px]" style={{ color: '#B39D85' }}>
               Lori & Aidas · Connection Insights
             </p>
           </div>
@@ -37,13 +37,13 @@ export function DashboardHeader({ latest, snapshot, conversationCount, currentTa
 
         {latest && (
           <div className="text-right">
-            <p className="text-[10px]" style={{ color: '#8a7e72' }}>
+            <p className="text-[10px]" style={{ color: '#B39D85' }}>
               Last session
             </p>
-            <p className="text-[12px] font-mono font-medium" style={{ color: '#2a2420' }}>
+            <p className="text-[12px] font-mono font-medium" style={{ color: '#F2E8DA' }}>
               {formatDate(latest.date)}
             </p>
-            <p className="text-[10px]" style={{ color: '#8a7e72' }}>
+            <p className="text-[10px]" style={{ color: '#B39D85' }}>
               {conversationCount} session{conversationCount !== 1 ? 's' : ''} total
             </p>
           </div>
@@ -54,27 +54,27 @@ export function DashboardHeader({ latest, snapshot, conversationCount, currentTa
       {scores ? (
         <div className="flex items-end gap-6">
           <div>
-            <p className="text-[10px] uppercase tracking-[0.5px] mb-0.5" style={{ color: '#8a7e72' }}>
+            <p className="text-[10px] uppercase tracking-[0.5px] mb-0.5" style={{ color: '#B39D85' }}>
               Connection Health
             </p>
             <div className="flex items-baseline gap-1">
-              <span className="font-mono text-[32px] font-semibold leading-none" style={{ color: '#2a2420' }}>
+              <span className="font-mono text-[32px] font-semibold leading-none" style={{ color: '#F2E8DA' }}>
                 {composite.toFixed(1)}
               </span>
-              <span className="font-mono text-[14px]" style={{ color: '#8a7e72' }}>/10</span>
+              <span className="font-mono text-[14px]" style={{ color: '#B39D85' }}>/10</span>
             </div>
           </div>
 
           <div className="flex gap-4 pb-1">
-            <PillarBadge label="Safety" value={scores.safety} color="#2d5f4a" />
-            <PillarBadge label="Growth" value={scores.growth} color="#b85c38" />
-            <PillarBadge label="Alignment" value={scores.alignment} color="#c4873a" />
+            <PillarBadge label="Safety" value={scores.safety} color="#6FB89A" />
+            <PillarBadge label="Growth" value={scores.growth} color="#6FA3CE" />
+            <PillarBadge label="Alignment" value={scores.alignment} color="#D9A63F" />
           </div>
 
           {/* Trend sparkline placeholder */}
           {snapshot && snapshot.conversationCount > 1 && (
             <div className="ml-auto pb-1">
-              <p className="text-[9px] uppercase tracking-[0.5px]" style={{ color: '#8a7e72' }}>
+              <p className="text-[9px] uppercase tracking-[0.5px]" style={{ color: '#B39D85' }}>
                 {snapshot.conversationCount}-session avg
               </p>
             </div>
@@ -82,7 +82,7 @@ export function DashboardHeader({ latest, snapshot, conversationCount, currentTa
         </div>
       ) : (
         <div className="py-4">
-          <p className="text-[13px] font-serif" style={{ color: '#8a7e72' }}>
+          <p className="text-[13px] lordas-display" style={{ color: '#B39D85' }}>
             No sessions yet. Start a conversation with &ldquo;relational transcript&rdquo; to begin tracking.
           </p>
         </div>
@@ -95,7 +95,7 @@ function PillarBadge({ label, value, color }: { label: string; value: number; co
   const pct = Math.round(value * 100)
   return (
     <div>
-      <p className="text-[9px] uppercase tracking-[0.5px]" style={{ color: '#8a7e72' }}>
+      <p className="text-[9px] uppercase tracking-[0.5px]" style={{ color: '#B39D85' }}>
         {label}
       </p>
       <div className="flex items-baseline gap-1">

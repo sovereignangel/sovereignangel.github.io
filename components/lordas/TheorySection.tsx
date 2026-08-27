@@ -36,7 +36,7 @@ const FRAMEWORKS: Framework[] = [
   {
     author: 'John Gottman',
     method: 'The Gottman Method',
-    color: '#2d5f4a',
+    color: '#6FB89A',
     concepts: [
       {
         name: 'The Four Horsemen',
@@ -116,7 +116,7 @@ const FRAMEWORKS: Framework[] = [
   {
     author: 'Esther Perel',
     method: 'Relational Intelligence',
-    color: '#b85c38',
+    color: '#6FA3CE',
     concepts: [
       {
         name: 'Curiosity Over Certainty',
@@ -177,7 +177,7 @@ const FRAMEWORKS: Framework[] = [
   {
     author: 'Sue Johnson',
     method: 'Emotionally Focused Therapy (EFT)',
-    color: '#c4873a',
+    color: '#D9A63F',
     concepts: [
       {
         name: 'A.R.E. — Accessibility, Responsiveness, Engagement',
@@ -224,7 +224,7 @@ const FRAMEWORKS: Framework[] = [
   {
     author: 'Terry Real',
     method: 'Relational Life Therapy (RLT)',
-    color: '#8b4429',
+    color: '#4C7BA6',
     concepts: [
       {
         name: 'Accountability Over Blame',
@@ -279,7 +279,7 @@ const FRAMEWORKS: Framework[] = [
   {
     author: 'Stan Tatkin',
     method: 'PACT (Psychobiological Approach to Couple Therapy)',
-    color: '#2a2420',
+    color: '#F2E8DA',
     concepts: [
       {
         name: 'Secure Functioning',
@@ -355,11 +355,11 @@ export function TheorySection({ conversations }: TheorySectionProps) {
   return (
     <div>
       {/* Section header */}
-      <div className="flex items-center gap-2 mb-3 pb-1.5 border-b-2" style={{ borderColor: '#d8cfc4' }}>
-        <h2 className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px]" style={{ color: '#2a2420' }}>
+      <div className="flex items-center gap-2 mb-3 pb-1.5 border-b-2" style={{ borderColor: '#3E2C20' }}>
+        <h2 className="lordas-display text-[13px] font-semibold uppercase tracking-[0.5px]" style={{ color: '#F2E8DA' }}>
           Theory & Application
         </h2>
-        <span className="text-[10px] ml-auto" style={{ color: '#8a7e72' }}>
+        <span className="text-[10px] ml-auto" style={{ color: '#B39D85' }}>
           5 frameworks · {FRAMEWORKS.reduce((s, f) => s + f.concepts.length, 0)} concepts
         </span>
       </div>
@@ -369,20 +369,20 @@ export function TheorySection({ conversations }: TheorySectionProps) {
           const isCollapsed = collapsedCoaches.has(framework.author)
 
           return (
-            <div key={framework.author} className="border rounded-sm" style={{ borderColor: '#d8cfc4' }}>
+            <div key={framework.author} className="border rounded-sm" style={{ borderColor: '#3E2C20' }}>
               {/* Coach header — clickable to collapse */}
               <button
                 onClick={() => toggleCoach(framework.author)}
                 className="w-full text-left px-3 py-2 flex items-center gap-2"
-                style={{ backgroundColor: '#faf7f2' }}
+                style={{ backgroundColor: '#241811' }}
               >
-                <span className="text-[10px]" style={{ color: '#c0b8aa' }}>
+                <span className="text-[10px]" style={{ color: '#836F5C' }}>
                   {isCollapsed ? '▸' : '▾'}
                 </span>
-                <span className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px]" style={{ color: framework.color }}>
+                <span className="lordas-display text-[11px] font-semibold uppercase tracking-[0.5px]" style={{ color: framework.color }}>
                   {framework.author}
                 </span>
-                <span className="text-[9px]" style={{ color: '#c0b8aa' }}>
+                <span className="text-[9px]" style={{ color: '#836F5C' }}>
                   {framework.method}
                 </span>
                 <span className="text-[8px] font-mono ml-auto px-1.5 py-0.5 rounded-sm" style={{ backgroundColor: `${framework.color}10`, color: framework.color }}>
@@ -396,7 +396,7 @@ export function TheorySection({ conversations }: TheorySectionProps) {
                   className="grid gap-px"
                   style={{
                     gridTemplateColumns: `repeat(${framework.concepts.length}, 1fr)`,
-                    backgroundColor: '#d8cfc4',
+                    backgroundColor: '#3E2C20',
                   }}
                 >
                   {framework.concepts.map((concept) => {
@@ -405,25 +405,25 @@ export function TheorySection({ conversations }: TheorySectionProps) {
                     const totalItems = examples.filter(e => !e.isSummary).length
 
                     return (
-                      <div key={concept.name} className="bg-white p-3 flex flex-col">
+                      <div key={concept.name} className="lordas-surface p-3 flex flex-col">
                         {/* Concept name */}
-                        <div className="mb-2 pb-1.5 border-b" style={{ borderColor: '#e8e0d6' }}>
-                          <span className="text-[11px] font-medium" style={{ color: '#2a2420' }}>
+                        <div className="mb-2 pb-1.5 border-b" style={{ borderColor: '#33241A' }}>
+                          <span className="text-[11px] font-medium" style={{ color: '#F2E8DA' }}>
                             {concept.name}
                           </span>
                         </div>
 
                         {/* Theory */}
-                        <p className="text-[10px] leading-relaxed mb-1.5" style={{ color: '#6b6158' }}>
+                        <p className="text-[10px] leading-relaxed mb-1.5" style={{ color: '#836F5C' }}>
                           {concept.theory}
                         </p>
-                        <p className="text-[9px] italic mb-2" style={{ color: '#c0b8aa' }}>
+                        <p className="text-[9px] italic mb-2" style={{ color: '#836F5C' }}>
                           — {concept.source}
                         </p>
 
                         {/* Examples — grouped by session, scrollable */}
                         {grouped.length > 0 ? (
-                          <div className="pt-1.5 border-t flex-1" style={{ borderColor: '#e8e0d6' }}>
+                          <div className="pt-1.5 border-t flex-1" style={{ borderColor: '#33241A' }}>
                             <p className="text-[9px] font-semibold uppercase tracking-[0.5px] mb-1.5" style={{ color: framework.color }}>
                               Examples ({totalItems || examples.length})
                             </p>
@@ -431,13 +431,13 @@ export function TheorySection({ conversations }: TheorySectionProps) {
                               {grouped.map((group, gi) => (
                                 <div key={gi}>
                                   {/* Date header + summary — sticky */}
-                                  <div className="sticky top-0 z-10 bg-white pb-1 mb-1">
+                                  <div className="sticky top-0 z-10 lordas-surface pb-1 mb-1">
                                     <div className="flex items-baseline gap-1.5">
-                                      <span className="font-mono text-[10px] font-medium shrink-0" style={{ color: '#8a7e72' }}>
+                                      <span className="font-mono text-[10px] font-medium shrink-0" style={{ color: '#B39D85' }}>
                                         {formatDate(group.date)}
                                       </span>
                                       {group.summary && (
-                                        <span className="text-[9px]" style={{ color: '#6b6158' }}>
+                                        <span className="text-[9px]" style={{ color: '#836F5C' }}>
                                           {group.summary.text}
                                         </span>
                                       )}
@@ -445,17 +445,17 @@ export function TheorySection({ conversations }: TheorySectionProps) {
                                   </div>
                                   {/* Individual instances */}
                                   {group.items.length > 0 && (
-                                    <div className="ml-2 pl-2 space-y-1" style={{ borderLeft: '2px solid #e8e0d6' }}>
+                                    <div className="ml-2 pl-2 space-y-1" style={{ borderLeft: '2px solid #33241A' }}>
                                       {group.items.map((ex, i) => (
                                         <div key={i} className="text-[10px]">
                                           {ex.by && (
                                             <span className="font-medium mr-1" style={{
-                                              color: ex.by === 'Lori' ? '#b85c38' : '#2d5f4a'
+                                              color: ex.by === 'Lori' ? '#6FA3CE' : '#6FB89A'
                                             }}>
                                               {ex.by}
                                             </span>
                                           )}
-                                          <span style={{ color: '#2a2420' }}>{ex.text}</span>
+                                          <span style={{ color: '#F2E8DA' }}>{ex.text}</span>
                                         </div>
                                       ))}
                                     </div>
@@ -465,8 +465,8 @@ export function TheorySection({ conversations }: TheorySectionProps) {
                             </div>
                           </div>
                         ) : (
-                          <div className="pt-1.5 border-t" style={{ borderColor: '#e8e0d6' }}>
-                            <p className="text-[9px] italic" style={{ color: '#c0b8aa' }}>
+                          <div className="pt-1.5 border-t" style={{ borderColor: '#33241A' }}>
+                            <p className="text-[9px] italic" style={{ color: '#836F5C' }}>
                               No examples yet
                             </p>
                           </div>

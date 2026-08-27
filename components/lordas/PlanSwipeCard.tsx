@@ -90,8 +90,8 @@ export function PlanSwipeCard({ plan, index, total, onSwipe, onUndo }: PlanSwipe
     return (
       <div
         style={{
-          background: '#faf8f4',
-          border: '1px solid #d8cfc4',
+          background: '#241811',
+          border: '1px solid #3E2C20',
           borderRadius: '8px',
           padding: 'clamp(16px, 5vw, 24px)',
           width: '100%',
@@ -100,7 +100,7 @@ export function PlanSwipeCard({ plan, index, total, onSwipe, onUndo }: PlanSwipe
           boxSizing: 'border-box',
         }}
       >
-        <h3 style={{ marginBottom: '16px', color: '#b85c38', fontSize: '14px', fontWeight: 600 }}>
+        <h3 style={{ marginBottom: '16px', color: '#6FA3CE', fontSize: '14px', fontWeight: 600 }}>
           What's driving the no?
         </h3>
         <textarea
@@ -110,7 +110,7 @@ export function PlanSwipeCard({ plan, index, total, onSwipe, onUndo }: PlanSwipe
           style={{
             width: '100%',
             padding: '12px',
-            border: '1px solid #d8cfc4',
+            border: '1px solid #3E2C20',
             borderRadius: '4px',
             minHeight: '60px',
             marginBottom: '12px',
@@ -123,8 +123,8 @@ export function PlanSwipeCard({ plan, index, total, onSwipe, onUndo }: PlanSwipe
             onClick={submitFeedback}
             style={{
               flex: 1,
-              background: '#b85c38',
-              color: '#faf7f2',
+              background: '#6FA3CE',
+              color: '#241811',
               padding: '10px',
               border: 'none',
               borderRadius: '4px',
@@ -140,9 +140,9 @@ export function PlanSwipeCard({ plan, index, total, onSwipe, onUndo }: PlanSwipe
             style={{
               flex: 1,
               background: 'transparent',
-              color: '#8a7e72',
+              color: '#B39D85',
               padding: '10px',
-              border: '1px solid #d8cfc4',
+              border: '1px solid #3E2C20',
               borderRadius: '4px',
               cursor: 'pointer',
               fontSize: '12px',
@@ -158,8 +158,8 @@ export function PlanSwipeCard({ plan, index, total, onSwipe, onUndo }: PlanSwipe
   return (
     <div
       style={{
-        background: '#faf8f4',
-        border: '1px solid #d8cfc4',
+        background: '#241811',
+        border: '1px solid #3E2C20',
         borderRadius: '8px',
         padding: 'clamp(16px, 5vw, 24px)',
         width: '100%',
@@ -177,12 +177,12 @@ export function PlanSwipeCard({ plan, index, total, onSwipe, onUndo }: PlanSwipe
       onTouchEnd={handleTouchEnd}
     >
       {/* Progress */}
-      <div style={{ fontSize: '11px', color: '#8a7e72', marginBottom: '16px', textAlign: 'center' }}>
+      <div style={{ fontSize: '11px', color: '#B39D85', marginBottom: '16px', textAlign: 'center' }}>
         PLAN {index + 1} OF {total}
       </div>
 
       {/* Plan info */}
-      <h2 style={{ fontSize: '24px', fontWeight: 600, marginBottom: '12px', color: '#2a2420' }}>
+      <h2 style={{ fontSize: '24px', fontWeight: 600, marginBottom: '12px', color: '#F2E8DA' }}>
         {plan.phases[0]?.name} → {plan.phases[plan.phases.length - 1]?.name}
       </h2>
 
@@ -214,9 +214,9 @@ export function PlanSwipeCard({ plan, index, total, onSwipe, onUndo }: PlanSwipe
           style={{
             flex: 1,
             padding: '12px',
-            background: '#ebe4d4',
-            color: '#b85c38',
-            border: '1px solid #d8cfc4',
+            background: '#2E1F16',
+            color: '#6FA3CE',
+            border: '1px solid #3E2C20',
             borderRadius: '4px',
             cursor: 'pointer',
             fontSize: '12px',
@@ -232,8 +232,8 @@ export function PlanSwipeCard({ plan, index, total, onSwipe, onUndo }: PlanSwipe
             flex: 1,
             padding: '12px',
             background: 'transparent',
-            color: '#8a7e72',
-            border: '1px solid #d8cfc4',
+            color: '#B39D85',
+            border: '1px solid #3E2C20',
             borderRadius: '4px',
             cursor: 'pointer',
             fontSize: '12px',
@@ -248,8 +248,8 @@ export function PlanSwipeCard({ plan, index, total, onSwipe, onUndo }: PlanSwipe
           style={{
             flex: 1,
             padding: '12px',
-            background: '#b85c38',
-            color: '#faf7f2',
+            background: '#6FA3CE',
+            color: '#241811',
             border: 'none',
             borderRadius: '4px',
             cursor: 'pointer',
@@ -265,10 +265,10 @@ export function PlanSwipeCard({ plan, index, total, onSwipe, onUndo }: PlanSwipe
       <div
         style={{
           padding: '12px',
-          background: '#ebe4d4',
+          background: '#2E1F16',
           borderRadius: '4px',
           fontSize: '10px',
-          color: '#8a7e72',
+          color: '#B39D85',
           textAlign: 'center',
           marginBottom: '12px',
         }}
@@ -283,8 +283,8 @@ export function PlanSwipeCard({ plan, index, total, onSwipe, onUndo }: PlanSwipe
             width: '100%',
             padding: '8px',
             background: 'transparent',
-            color: '#8a7e72',
-            border: '1px solid #d8cfc4',
+            color: '#B39D85',
+            border: '1px solid #3E2C20',
             borderRadius: '4px',
             cursor: 'pointer',
             fontSize: '11px',
@@ -302,24 +302,24 @@ function StatCard({ label, value }: { label: string; value: string | number }) {
     <div
       style={{
         padding: '12px',
-        background: '#ebe4d4',
+        background: '#2E1F16',
         borderRadius: '4px',
         textAlign: 'center',
       }}
     >
-      <div style={{ fontSize: '10px', color: '#8a7e72', marginBottom: '4px' }}>{label}</div>
-      <div style={{ fontSize: '14px', fontWeight: 600, color: '#2a2420' }}>{value}</div>
+      <div style={{ fontSize: '10px', color: '#B39D85', marginBottom: '4px' }}>{label}</div>
+      <div style={{ fontSize: '14px', fontWeight: 600, color: '#F2E8DA' }}>{value}</div>
     </div>
   )
 }
 
 function getPhaseColor(icon: string): string {
   const colors: Record<string, string> = {
-    morocco: '#C0703F',
-    base: '#E7D9BE',
-    spoke: '#6E1423',
-    ride: '#A87A2C',
-    como: '#560E1A',
+    morocco: '#DE7259',
+    base: '#2E1F16',
+    spoke: '#DE7259',
+    ride: '#D9A63F',
+    como: '#DE7259',
   }
-  return colors[icon] || '#D8CBB2'
+  return colors[icon] || '#3E2C20'
 }

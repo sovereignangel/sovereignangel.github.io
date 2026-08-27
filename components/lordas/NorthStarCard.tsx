@@ -5,10 +5,10 @@ import type { LordasGoalsData, LordasNorthStar, LordasGoalOwner, LordasPerson } 
 import { GOAL_OWNERS } from '@/lib/lordas-goals'
 import { ownerLabel, OWNER_COLORS } from './goals-theme'
 
-const PAPER = '#faf7f2'
-const INK = '#2a2420'
-const MUTED = '#8a7e72'
-const RULE = '#d8cfc4'
+const PAPER = '#241811'
+const INK = '#F2E8DA'
+const MUTED = '#B39D85'
+const RULE = '#3E2C20'
 
 interface NorthStarCardProps {
   northStars: LordasGoalsData['northStars']
@@ -99,7 +99,7 @@ function CharterCard({
               value={statement}
               onChange={(e) => setStatement(e.target.value)}
               rows={3}
-              className="w-full mt-0.5 rounded-sm border p-2 text-[13px] font-serif bg-white"
+              className="w-full mt-0.5 rounded-sm border p-2 text-[13px] lordas-display lordas-surface"
               style={{ borderColor: RULE, color: INK }}
             />
           </label>
@@ -109,7 +109,7 @@ function CharterCard({
               value={doneLooksLike}
               onChange={(e) => setDoneLooksLike(e.target.value)}
               rows={2}
-              className="w-full mt-0.5 rounded-sm border p-2 text-[12px] bg-white"
+              className="w-full mt-0.5 rounded-sm border p-2 text-[12px] lordas-surface"
               style={{ borderColor: RULE, color: INK }}
             />
           </label>
@@ -119,7 +119,7 @@ function CharterCard({
               type="date"
               value={targetDate}
               onChange={(e) => setTargetDate(e.target.value)}
-              className="block mt-0.5 rounded-sm border p-1.5 text-[11px] font-mono bg-white"
+              className="block mt-0.5 rounded-sm border p-1.5 text-[11px] font-mono lordas-surface"
               style={{ borderColor: RULE, color: INK }}
             />
           </label>
@@ -127,14 +127,14 @@ function CharterCard({
             <button
               onClick={save}
               disabled={saving || !statement.trim()}
-              className="px-3 py-1.5 rounded-sm text-[9px] font-serif font-semibold uppercase"
+              className="px-3 py-1.5 rounded-sm text-[9px] lordas-display font-semibold uppercase"
               style={{ backgroundColor: accent, color: PAPER, opacity: saving ? 0.6 : 1 }}
             >
               {saving ? 'Saving' : 'Save'}
             </button>
             <button
               onClick={() => setEditing(false)}
-              className="px-3 py-1.5 rounded-sm border text-[9px] font-serif font-semibold uppercase"
+              className="px-3 py-1.5 rounded-sm border text-[9px] lordas-display font-semibold uppercase"
               style={{ borderColor: RULE, color: MUTED }}
             >
               Cancel
@@ -195,7 +195,7 @@ function StatementBlock({ text, accent }: { text: string; accent: string }) {
         const bullet = line.startsWith('·') || line.startsWith('- ')
         if (!bullet) {
           return (
-            <p key={i} className="font-serif text-[15px] leading-snug" style={{ color: INK }}>
+            <p key={i} className="lordas-display text-[15px] leading-snug" style={{ color: INK }}>
               {line}
             </p>
           )
@@ -228,7 +228,7 @@ export function SectionHeading({ title, subtitle, right }: { title: string; subt
   return (
     <div className="flex items-end justify-between mb-3 pb-1.5 border-b" style={{ borderColor: RULE }}>
       <div>
-        <h2 className="font-serif text-[15px] font-semibold uppercase tracking-[0.5px]" style={{ color: '#b85c38' }}>
+        <h2 className="lordas-display text-[15px] font-semibold uppercase tracking-[0.5px]" style={{ color: '#6FA3CE' }}>
           {title}
         </h2>
         {subtitle && (

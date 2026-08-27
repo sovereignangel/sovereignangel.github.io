@@ -16,13 +16,13 @@ export function ConstraintInput({ onSubmit, loading }: ConstraintInputProps) {
   }
 
   return (
-    <div style={{ padding: '32px 24px', background: '#faf8f4', borderRadius: '4px' }}>
+    <div style={{ padding: '32px 24px', background: '#241811', borderRadius: '4px' }}>
       <h3
         style={{
           fontFamily: 'Crimson Pro, serif',
           fontSize: '18px',
           fontWeight: 600,
-          color: '#b85c38',
+          color: '#6FA3CE',
           marginBottom: '8px',
           textTransform: 'uppercase',
           letterSpacing: '0.5px',
@@ -34,7 +34,7 @@ export function ConstraintInput({ onSubmit, loading }: ConstraintInputProps) {
       <p
         style={{
           fontSize: '12px',
-          color: '#8a7e72',
+          color: '#B39D85',
           marginBottom: '16px',
           lineHeight: 1.6,
         }}
@@ -49,7 +49,7 @@ export function ConstraintInput({ onSubmit, loading }: ConstraintInputProps) {
           placeholder="Add your thoughts here (or leave blank to skip)..."
           style={{
             padding: '12px',
-            border: '1px solid #d8cfc4',
+            border: '1px solid #3E2C20',
             borderRadius: '4px',
             fontFamily: 'inherit',
             fontSize: '13px',
@@ -63,8 +63,8 @@ export function ConstraintInput({ onSubmit, loading }: ConstraintInputProps) {
           type="submit"
           disabled={loading}
           style={{
-            background: '#b85c38',
-            color: '#faf7f2',
+            background: '#6FA3CE',
+            color: '#241811',
             padding: '12px 20px',
             border: 'none',
             borderRadius: '4px',

@@ -2,6 +2,7 @@
 
 import type { RelationshipConversation, RelationshipTheme, RelationshipValue } from '@/lib/types'
 import { CompassIcon } from './pillar-icons'
+import { OWNER } from './design/tokens'
 
 interface AlignmentPillarProps {
   conversations: RelationshipConversation[]
@@ -10,9 +11,9 @@ interface AlignmentPillarProps {
 }
 
 const STATUS_COLORS: Record<string, { bg: string; text: string; border: string }> = {
-  active: { bg: 'rgba(140, 61, 61, 0.10)', text: '#8c3d3d', border: 'rgba(140, 61, 61, 0.20)' },
-  improving: { bg: 'rgba(196, 135, 58, 0.10)', text: '#c4873a', border: 'rgba(196, 135, 58, 0.20)' },
-  resolved: { bg: 'rgba(45, 95, 74, 0.10)', text: '#2d5f4a', border: 'rgba(45, 95, 74, 0.20)' },
+  active: { bg: 'rgba(140, 61, 61, 0.10)', text: '#DE7259', border: 'rgba(140, 61, 61, 0.20)' },
+  improving: { bg: 'rgba(196, 135, 58, 0.10)', text: '#D9A63F', border: 'rgba(196, 135, 58, 0.20)' },
+  resolved: { bg: 'rgba(45, 95, 74, 0.10)', text: '#6FB89A', border: 'rgba(45, 95, 74, 0.20)' },
 }
 
 export function AlignmentPillar({ conversations, themes, values }: AlignmentPillarProps) {
@@ -33,23 +34,23 @@ export function AlignmentPillar({ conversations, themes, values }: AlignmentPill
   return (
     <div>
       {/* Section header */}
-      <div className="flex items-center gap-2 mb-3 pb-1.5 border-b-2" style={{ borderColor: '#d8cfc4' }}>
-        <CompassIcon size={18} color="#c4873a" />
-        <h2 className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px]" style={{ color: '#c4873a' }}>
+      <div className="flex items-center gap-2 mb-3 pb-1.5 border-b-2" style={{ borderColor: '#3E2C20' }}>
+        <CompassIcon size={18} color="#D9A63F" />
+        <h2 className="lordas-display text-[13px] font-semibold uppercase tracking-[0.5px]" style={{ color: '#D9A63F' }}>
           Alignment
         </h2>
-        <span className="text-[10px] ml-auto" style={{ color: '#8a7e72' }}>
+        <span className="text-[10px] ml-auto" style={{ color: '#B39D85' }}>
           Do we want the same life?
         </span>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
         {/* Theme Map */}
-        <div className="border rounded-sm p-3" style={{ backgroundColor: '#faf7f2', borderColor: '#d8cfc4' }}>
-          <h3 className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] mb-2" style={{ color: '#2a2420' }}>
+        <div className="border rounded-sm p-3" style={{ backgroundColor: '#241811', borderColor: '#3E2C20' }}>
+          <h3 className="lordas-display text-[11px] font-semibold uppercase tracking-[0.5px] mb-2" style={{ color: '#F2E8DA' }}>
             Theme Map
           </h3>
-          <p className="text-[10px] mb-3" style={{ color: '#8a7e72' }}>
+          <p className="text-[10px] mb-3" style={{ color: '#B39D85' }}>
             Recurring friction topics and resolution status
           </p>
 
@@ -69,10 +70,10 @@ export function AlignmentPillar({ conversations, themes, values }: AlignmentPill
                     >
                       {theme.status}
                     </span>
-                    <span className="text-[11px] font-medium capitalize" style={{ color: '#2a2420' }}>
+                    <span className="text-[11px] font-medium capitalize" style={{ color: '#F2E8DA' }}>
                       {theme.label || theme.domain}
                     </span>
-                    <span className="text-[9px] ml-auto" style={{ color: '#c0b8aa' }}>
+                    <span className="text-[9px] ml-auto" style={{ color: '#836F5C' }}>
                       {theme.conversationIds?.length || 0} session{(theme.conversationIds?.length || 0) !== 1 ? 's' : ''}
                     </span>
                   </div>
@@ -83,7 +84,7 @@ export function AlignmentPillar({ conversations, themes, values }: AlignmentPill
             /* Show latest session conflicts if no accumulated themes yet */
             <div className="space-y-2">
               {latest.extraction.priorityConflicts.map((conflict, i) => (
-                <div key={i} className="border rounded-sm p-2" style={{ borderColor: '#e8e0d6' }}>
+                <div key={i} className="border rounded-sm p-2" style={{ borderColor: '#33241A' }}>
                   <div className="flex items-center gap-2 mb-1">
                     <span
                       className="text-[8px] font-mono uppercase px-1.5 py-0.5 rounded-sm border"
@@ -95,30 +96,30 @@ export function AlignmentPillar({ conversations, themes, values }: AlignmentPill
                     >
                       {conflict.resolution}
                     </span>
-                    <span className="text-[10px] font-medium" style={{ color: '#2a2420' }}>
+                    <span className="text-[10px] font-medium" style={{ color: '#F2E8DA' }}>
                       {conflict.topic}
                     </span>
                   </div>
                   <div className="grid grid-cols-2 gap-2 text-[9px]">
                     <div>
-                      <span className="font-medium" style={{ color: '#b85c38' }}>Lori: </span>
-                      <span style={{ color: '#8a7e72' }}>{conflict.loriPosition}</span>
+                      <span className="font-medium" style={{ color: '#6FA3CE' }}>Lori: </span>
+                      <span style={{ color: '#B39D85' }}>{conflict.loriPosition}</span>
                     </div>
                     <div>
-                      <span className="font-medium" style={{ color: '#2d5f4a' }}>Aidas: </span>
-                      <span style={{ color: '#8a7e72' }}>{conflict.aidasPosition}</span>
+                      <span className="font-medium" style={{ color: '#6FB89A' }}>Aidas: </span>
+                      <span style={{ color: '#B39D85' }}>{conflict.aidasPosition}</span>
                     </div>
                   </div>
                 </div>
               ))}
             </div>
           ) : (
-            <p className="text-[10px]" style={{ color: '#c0b8aa' }}>No themes yet</p>
+            <p className="text-[10px]" style={{ color: '#836F5C' }}>No themes yet</p>
           )}
 
           {/* Domain legend */}
-          <div className="mt-3 pt-2 border-t flex flex-wrap gap-1" style={{ borderColor: '#e8e0d6' }}>
-            <span className="text-[8px]" style={{ color: '#c0b8aa' }}>Legend:</span>
+          <div className="mt-3 pt-2 border-t flex flex-wrap gap-1" style={{ borderColor: '#33241A' }}>
+            <span className="text-[8px]" style={{ color: '#836F5C' }}>Legend:</span>
             {Object.entries(STATUS_COLORS).map(([status, style]) => (
               <span
                 key={status}
@@ -132,11 +133,11 @@ export function AlignmentPillar({ conversations, themes, values }: AlignmentPill
         </div>
 
         {/* Values Ledger */}
-        <div className="border rounded-sm p-3" style={{ backgroundColor: '#faf7f2', borderColor: '#d8cfc4' }}>
-          <h3 className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] mb-2" style={{ color: '#2a2420' }}>
+        <div className="border rounded-sm p-3" style={{ backgroundColor: '#241811', borderColor: '#3E2C20' }}>
+          <h3 className="lordas-display text-[11px] font-semibold uppercase tracking-[0.5px] mb-2" style={{ color: '#F2E8DA' }}>
             Values Ledger
           </h3>
-          <p className="text-[10px] mb-3" style={{ color: '#8a7e72' }}>
+          <p className="text-[10px] mb-3" style={{ color: '#B39D85' }}>
             Values surfaced through conversation
           </p>
 
@@ -145,15 +146,15 @@ export function AlignmentPillar({ conversations, themes, values }: AlignmentPill
               {/* Shared / Overlapping */}
               {(sharedValues.length > 0 || overlapping.length > 0) && (
                 <div>
-                  <p className="text-[9px] font-semibold uppercase tracking-[0.5px] mb-1" style={{ color: '#c4873a' }}>
+                  <p className="text-[9px] font-semibold uppercase tracking-[0.5px] mb-1" style={{ color: '#D9A63F' }}>
                     Shared
                   </p>
                   <div className="flex flex-wrap gap-1">
                     {sharedValues.map(v => (
-                      <ValueChip key={v.id} value={v.value} mentions={v.mentions} color="#c4873a" />
+                      <ValueChip key={v.id} value={v.value} mentions={v.mentions} color="#D9A63F" />
                     ))}
                     {overlapping.map(v => (
-                      <ValueChip key={`overlap-${v}`} value={v} color="#c4873a" />
+                      <ValueChip key={`overlap-${v}`} value={v} color="#D9A63F" />
                     ))}
                   </div>
                 </div>
@@ -162,14 +163,14 @@ export function AlignmentPillar({ conversations, themes, values }: AlignmentPill
               {/* Lori's values */}
               {loriValues.length > 0 && (
                 <div>
-                  <p className="text-[9px] font-semibold uppercase tracking-[0.5px] mb-1" style={{ color: '#b85c38' }}>
+                  <p className="text-[9px] font-semibold uppercase tracking-[0.5px] mb-1" style={{ color: '#6FA3CE' }}>
                     Lori
                   </p>
                   <div className="flex flex-wrap gap-1">
                     {loriValues
                       .filter(v => !overlapping.includes(v.value.toLowerCase()))
                       .map(v => (
-                        <ValueChip key={v.id} value={v.value} mentions={v.mentions} color="#b85c38" />
+                        <ValueChip key={v.id} value={v.value} mentions={v.mentions} color="#6FA3CE" />
                       ))}
                   </div>
                 </div>
@@ -178,14 +179,14 @@ export function AlignmentPillar({ conversations, themes, values }: AlignmentPill
               {/* Aidas's values */}
               {aidasValues.length > 0 && (
                 <div>
-                  <p className="text-[9px] font-semibold uppercase tracking-[0.5px] mb-1" style={{ color: '#2d5f4a' }}>
+                  <p className="text-[9px] font-semibold uppercase tracking-[0.5px] mb-1" style={{ color: '#6FB89A' }}>
                     Aidas
                   </p>
                   <div className="flex flex-wrap gap-1">
                     {aidasValues
                       .filter(v => !overlapping.includes(v.value.toLowerCase()))
                       .map(v => (
-                        <ValueChip key={v.id} value={v.value} mentions={v.mentions} color="#2d5f4a" />
+                        <ValueChip key={v.id} value={v.value} mentions={v.mentions} color="#6FB89A" />
                       ))}
                   </div>
                 </div>
@@ -197,28 +198,28 @@ export function AlignmentPillar({ conversations, themes, values }: AlignmentPill
               {latest.extraction.valuesExpressed.map((val, i) => (
                 <div key={i} className="flex items-center gap-2 text-[10px]">
                   <span className="font-medium capitalize" style={{
-                    color: val.by === 'lori' ? '#b85c38' : '#2d5f4a'
+                    color: val.by === 'lori' ? OWNER.lori : OWNER.aidas
                   }}>
                     {val.by === 'lori' ? 'Lori' : 'Aidas'}
                   </span>
-                  <span style={{ color: '#2a2420' }}>{val.value}</span>
-                  <span style={{ color: '#c0b8aa' }}>— {val.context}</span>
+                  <span style={{ color: '#F2E8DA' }}>{val.value}</span>
+                  <span style={{ color: '#836F5C' }}>— {val.context}</span>
                 </div>
               ))}
             </div>
           ) : (
-            <p className="text-[10px]" style={{ color: '#c0b8aa' }}>No values discovered yet</p>
+            <p className="text-[10px]" style={{ color: '#836F5C' }}>No values discovered yet</p>
           )}
 
           {/* Shared vision statements */}
           {latest && latest.extraction.sharedVisionStatements.length > 0 && (
-            <div className="mt-3 pt-2 border-t" style={{ borderColor: '#e8e0d6' }}>
-              <p className="text-[9px] font-semibold uppercase tracking-[0.5px] mb-1" style={{ color: '#c4873a' }}>
+            <div className="mt-3 pt-2 border-t" style={{ borderColor: '#33241A' }}>
+              <p className="text-[9px] font-semibold uppercase tracking-[0.5px] mb-1" style={{ color: '#D9A63F' }}>
                 Shared Vision
               </p>
               <div className="space-y-1">
                 {latest.extraction.sharedVisionStatements.map((s, i) => (
-                  <p key={i} className="text-[10px] italic" style={{ color: '#8a7e72' }}>
+                  <p key={i} className="text-[10px] italic" style={{ color: '#B39D85' }}>
                     &ldquo;{s}&rdquo;
                   </p>
                 ))}

@@ -75,7 +75,7 @@ export function PrioritiesView({ plans, votes }: PrioritiesViewProps) {
         const maybeCount = topVotes.filter((v) => v.vote === 'maybe').length
 
         return (
-          <div style={{ padding: '20px', background: '#b85c38', borderRadius: '8px', color: '#faf7f2' }}>
+          <div style={{ padding: '20px', background: '#6FA3CE', borderRadius: '8px', color: '#241811' }}>
             <h3 style={{ fontSize: '13px', fontWeight: 600, marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
               Winner: {topPlan.phases[0]?.name} → {topPlan.phases[topPlan.phases.length - 1]?.name}
             </h3>
@@ -89,12 +89,12 @@ export function PrioritiesView({ plans, votes }: PrioritiesViewProps) {
 
       {/* Summary */}
       {votes.length > 0 && (
-        <div style={{ padding: '24px', background: '#ebe4d4', borderRadius: '8px' }}>
+        <div style={{ padding: '24px', background: '#2E1F16', borderRadius: '8px' }}>
           <h3
             style={{
               fontSize: '13px',
               fontWeight: 600,
-              color: '#b85c38',
+              color: '#6FA3CE',
               marginBottom: '12px',
               textTransform: 'uppercase',
               letterSpacing: '0.5px',
@@ -105,25 +105,25 @@ export function PrioritiesView({ plans, votes }: PrioritiesViewProps) {
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
             <div>
-              <div style={{ fontSize: '11px', color: '#8a7e72', marginBottom: '4px' }}>Total Swipes</div>
-              <div style={{ fontSize: '18px', fontWeight: 600, color: '#2a2420' }}>{summary.totalVotes}</div>
+              <div style={{ fontSize: '11px', color: '#B39D85', marginBottom: '4px' }}>Total Swipes</div>
+              <div style={{ fontSize: '18px', fontWeight: 600, color: '#F2E8DA' }}>{summary.totalVotes}</div>
             </div>
 
             <div>
-              <div style={{ fontSize: '11px', color: '#8a7e72', marginBottom: '4px' }}>Alignment</div>
-              <div style={{ fontSize: '18px', fontWeight: 600, color: '#2a2420' }}>
+              <div style={{ fontSize: '11px', color: '#B39D85', marginBottom: '4px' }}>Alignment</div>
+              <div style={{ fontSize: '18px', fontWeight: 600, color: '#F2E8DA' }}>
                 {summary.alignmentScore || '—'}%
               </div>
             </div>
 
             <div>
-              <div style={{ fontSize: '11px', color: '#8a7e72', marginBottom: '4px' }}>Loves</div>
-              <div style={{ fontSize: '18px', fontWeight: 600, color: '#b85c38' }}>❤️ {summary.rightCount}</div>
+              <div style={{ fontSize: '11px', color: '#B39D85', marginBottom: '4px' }}>Loves</div>
+              <div style={{ fontSize: '18px', fontWeight: 600, color: '#6FA3CE' }}>❤️ {summary.rightCount}</div>
             </div>
 
             <div>
-              <div style={{ fontSize: '11px', color: '#8a7e72', marginBottom: '4px' }}>Maybes</div>
-              <div style={{ fontSize: '18px', fontWeight: 600, color: '#8a7e72' }}>? {summary.maybeCount}</div>
+              <div style={{ fontSize: '11px', color: '#B39D85', marginBottom: '4px' }}>Maybes</div>
+              <div style={{ fontSize: '18px', fontWeight: 600, color: '#B39D85' }}>? {summary.maybeCount}</div>
             </div>
           </div>
         </div>
@@ -135,7 +135,7 @@ export function PrioritiesView({ plans, votes }: PrioritiesViewProps) {
           style={{
             fontSize: '13px',
             fontWeight: 600,
-            color: '#b85c38',
+            color: '#6FA3CE',
             marginBottom: '12px',
             textTransform: 'uppercase',
             letterSpacing: '0.5px',
@@ -145,8 +145,8 @@ export function PrioritiesView({ plans, votes }: PrioritiesViewProps) {
         </h3>
 
         {ranked.length === 0 ? (
-          <div style={{ padding: '24px', background: '#faf8f4', borderRadius: '8px', textAlign: 'center' }}>
-            <p style={{ color: '#8a7e72', fontSize: '13px' }}>No swipes yet. Start playing to see rankings!</p>
+          <div style={{ padding: '24px', background: '#241811', borderRadius: '8px', textAlign: 'center' }}>
+            <p style={{ color: '#B39D85', fontSize: '13px' }}>No swipes yet. Start playing to see rankings!</p>
           </div>
         ) : (
           <div className="space-y-3">
@@ -162,8 +162,8 @@ export function PrioritiesView({ plans, votes }: PrioritiesViewProps) {
                   key={score.planId}
                   style={{
                     padding: '16px',
-                    background: '#faf8f4',
-                    border: '1px solid #d8cfc4',
+                    background: '#241811',
+                    border: '1px solid #3E2C20',
                     borderRadius: '8px',
                     cursor: 'pointer',
                     transition: 'all 0.2s',
@@ -171,10 +171,10 @@ export function PrioritiesView({ plans, votes }: PrioritiesViewProps) {
                   onClick={() => setExpandedPlanId(isExpanded ? null : score.planId)}
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '8px' }}>
-                    <div style={{ fontSize: '14px', fontWeight: 600, color: '#2a2420' }}>
+                    <div style={{ fontSize: '14px', fontWeight: 600, color: '#F2E8DA' }}>
                       #{idx + 1} {plan.phases[0]?.name} → {plan.phases[plan.phases.length - 1]?.name}
                     </div>
-                    <span style={{ fontSize: '12px', color: '#8a7e72' }}>{isExpanded ? '▼' : '▶'}</span>
+                    <span style={{ fontSize: '12px', color: '#B39D85' }}>{isExpanded ? '▼' : '▶'}</span>
                   </div>
 
                   <div style={{ marginBottom: '12px' }}>
@@ -183,27 +183,27 @@ export function PrioritiesView({ plans, votes }: PrioritiesViewProps) {
 
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', fontSize: '10px' }}>
                     <div>
-                      <span style={{ color: '#8a7e72' }}>Kiting:</span> {Math.round(stats.kitingHours)}h
+                      <span style={{ color: '#B39D85' }}>Kiting:</span> {Math.round(stats.kitingHours)}h
                     </div>
                     <div>
-                      <span style={{ color: '#8a7e72' }}>Cycling:</span> {Math.round(stats.cyclingMiles)}mi
+                      <span style={{ color: '#B39D85' }}>Cycling:</span> {Math.round(stats.cyclingMiles)}mi
                     </div>
                     <div>
-                      <span style={{ color: '#8a7e72' }}>Budget:</span> ${stats.budget.toLocaleString()}
+                      <span style={{ color: '#B39D85' }}>Budget:</span> ${stats.budget.toLocaleString()}
                     </div>
                   </div>
 
                   {isExpanded && (
-                    <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid #d8cfc4' }}>
+                    <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid #3E2C20' }}>
                       <div style={{ marginBottom: '12px' }}>
-                        <h4 style={{ fontSize: '11px', fontWeight: 600, color: '#b85c38', marginBottom: '8px', textTransform: 'uppercase' }}>
+                        <h4 style={{ fontSize: '11px', fontWeight: 600, color: '#6FA3CE', marginBottom: '8px', textTransform: 'uppercase' }}>
                           Timeline
                         </h4>
                         <PlanCalendarGrid plan={plan} />
                       </div>
 
                       <div>
-                        <h4 style={{ fontSize: '11px', fontWeight: 600, color: '#b85c38', marginBottom: '8px', textTransform: 'uppercase' }}>
+                        <h4 style={{ fontSize: '11px', fontWeight: 600, color: '#6FA3CE', marginBottom: '8px', textTransform: 'uppercase' }}>
                           Route Map
                         </h4>
                         <PlanWorldMap plan={plan} compact={false} />

@@ -2,6 +2,7 @@
 
 import type { RelationshipConversation } from '@/lib/types'
 import { SpiralIcon } from './pillar-icons'
+import { OWNER } from './design/tokens'
 
 interface GrowthPillarProps {
   conversations: RelationshipConversation[]
@@ -38,23 +39,23 @@ export function GrowthPillar({ conversations }: GrowthPillarProps) {
   return (
     <div>
       {/* Section header */}
-      <div className="flex items-center gap-2 mb-3 pb-1.5 border-b-2" style={{ borderColor: '#d8cfc4' }}>
-        <SpiralIcon size={18} color="#b85c38" />
-        <h2 className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px]" style={{ color: '#b85c38' }}>
+      <div className="flex items-center gap-2 mb-3 pb-1.5 border-b-2" style={{ borderColor: '#3E2C20' }}>
+        <SpiralIcon size={18} color="#6FA3CE" />
+        <h2 className="lordas-display text-[13px] font-semibold uppercase tracking-[0.5px]" style={{ color: '#6FA3CE' }}>
           Growth
         </h2>
-        <span className="text-[10px] ml-auto" style={{ color: '#8a7e72' }}>
+        <span className="text-[10px] ml-auto" style={{ color: '#B39D85' }}>
           Are we evolving together?
         </span>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
         {/* Curiosity vs Assumption */}
-        <div className="border rounded-sm p-3" style={{ backgroundColor: '#faf7f2', borderColor: '#d8cfc4' }}>
-          <h3 className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] mb-2" style={{ color: '#2a2420' }}>
+        <div className="border rounded-sm p-3" style={{ backgroundColor: '#241811', borderColor: '#3E2C20' }}>
+          <h3 className="lordas-display text-[11px] font-semibold uppercase tracking-[0.5px] mb-2" style={{ color: '#F2E8DA' }}>
             Curiosity vs Assumption
           </h3>
-          <p className="text-[10px] mb-3" style={{ color: '#8a7e72' }}>
+          <p className="text-[10px] mb-3" style={{ color: '#B39D85' }}>
             Genuine questions vs assuming intent
           </p>
 
@@ -66,7 +67,7 @@ export function GrowthPillar({ conversations }: GrowthPillarProps) {
               leftValue={loriQ.genuineQuestions}
               rightValue={loriQ.assumptions}
               percentage={loriCuriosityPct}
-              color="#b85c38"
+              color={OWNER.lori}
             />
             <RatioBar
               label="Aidas"
@@ -75,14 +76,14 @@ export function GrowthPillar({ conversations }: GrowthPillarProps) {
               leftValue={aidasQ.genuineQuestions}
               rightValue={aidasQ.assumptions}
               percentage={aidasCuriosityPct}
-              color="#2d5f4a"
+              color={OWNER.aidas}
             />
           </div>
 
           {/* Trend */}
           {recent.length > 1 && (
-            <div className="mt-3 pt-2 border-t" style={{ borderColor: '#e8e0d6' }}>
-              <p className="text-[9px] uppercase tracking-[0.5px] mb-1" style={{ color: '#8a7e72' }}>
+            <div className="mt-3 pt-2 border-t" style={{ borderColor: '#33241A' }}>
+              <p className="text-[9px] uppercase tracking-[0.5px] mb-1" style={{ color: '#B39D85' }}>
                 Combined curiosity ratio
               </p>
               <div className="flex items-end gap-1 h-[24px]">
@@ -99,7 +100,7 @@ export function GrowthPillar({ conversations }: GrowthPillarProps) {
                       className="flex-1 rounded-sm"
                       style={{
                         height: `${Math.max(2, ratio * 24)}px`,
-                        backgroundColor: isLatest ? '#b85c38' : 'rgba(184, 92, 56, 0.25)',
+                        backgroundColor: isLatest ? '#6FA3CE' : 'rgba(184, 92, 56, 0.25)',
                       }}
                       title={`${conv.date}: ${Math.round(ratio * 100)}%`}
                     />
@@ -111,11 +112,11 @@ export function GrowthPillar({ conversations }: GrowthPillarProps) {
         </div>
 
         {/* Accountability vs Blame */}
-        <div className="border rounded-sm p-3" style={{ backgroundColor: '#faf7f2', borderColor: '#d8cfc4' }}>
-          <h3 className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] mb-2" style={{ color: '#2a2420' }}>
+        <div className="border rounded-sm p-3" style={{ backgroundColor: '#241811', borderColor: '#3E2C20' }}>
+          <h3 className="lordas-display text-[11px] font-semibold uppercase tracking-[0.5px] mb-2" style={{ color: '#F2E8DA' }}>
             Accountability vs Blame
           </h3>
-          <p className="text-[10px] mb-3" style={{ color: '#8a7e72' }}>
+          <p className="text-[10px] mb-3" style={{ color: '#B39D85' }}>
             Owning your part vs externalizing
           </p>
 
@@ -127,7 +128,7 @@ export function GrowthPillar({ conversations }: GrowthPillarProps) {
               leftValue={loriA.ownership}
               rightValue={loriA.blame}
               percentage={loriAcctPct}
-              color="#b85c38"
+              color={OWNER.lori}
             />
             <RatioBar
               label="Aidas"
@@ -136,14 +137,14 @@ export function GrowthPillar({ conversations }: GrowthPillarProps) {
               leftValue={aidasA.ownership}
               rightValue={aidasA.blame}
               percentage={aidasAcctPct}
-              color="#2d5f4a"
+              color={OWNER.aidas}
             />
           </div>
 
           {/* Trend */}
           {recent.length > 1 && (
-            <div className="mt-3 pt-2 border-t" style={{ borderColor: '#e8e0d6' }}>
-              <p className="text-[9px] uppercase tracking-[0.5px] mb-1" style={{ color: '#8a7e72' }}>
+            <div className="mt-3 pt-2 border-t" style={{ borderColor: '#33241A' }}>
+              <p className="text-[9px] uppercase tracking-[0.5px] mb-1" style={{ color: '#B39D85' }}>
                 Combined accountability ratio
               </p>
               <div className="flex items-end gap-1 h-[24px]">
@@ -160,7 +161,7 @@ export function GrowthPillar({ conversations }: GrowthPillarProps) {
                       className="flex-1 rounded-sm"
                       style={{
                         height: `${Math.max(2, ratio * 24)}px`,
-                        backgroundColor: isLatest ? '#2d5f4a' : 'rgba(45, 95, 74, 0.25)',
+                        backgroundColor: isLatest ? '#6FB89A' : 'rgba(45, 95, 74, 0.25)',
                       }}
                       title={`${conv.date}: ${Math.round(ratio * 100)}%`}
                     />
@@ -172,14 +173,14 @@ export function GrowthPillar({ conversations }: GrowthPillarProps) {
         </div>
 
         {/* Dynamics + Insights */}
-        <div className="border rounded-sm p-3" style={{ backgroundColor: '#faf7f2', borderColor: '#d8cfc4' }}>
-          <h3 className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] mb-2" style={{ color: '#2a2420' }}>
+        <div className="border rounded-sm p-3" style={{ backgroundColor: '#241811', borderColor: '#3E2C20' }}>
+          <h3 className="lordas-display text-[11px] font-semibold uppercase tracking-[0.5px] mb-2" style={{ color: '#F2E8DA' }}>
             Dynamics
           </h3>
 
           {/* Pursue-withdraw pattern */}
           <div className="mb-3">
-            <p className="text-[10px] mb-1" style={{ color: '#8a7e72' }}>
+            <p className="text-[10px] mb-1" style={{ color: '#B39D85' }}>
               Pursue / Withdraw pattern
             </p>
             <div className="flex items-center gap-2">
@@ -193,12 +194,12 @@ export function GrowthPillar({ conversations }: GrowthPillarProps) {
           {/* New understandings */}
           {extraction.newUnderstandings.length > 0 && (
             <div className="mb-3">
-              <p className="text-[10px] font-medium mb-1" style={{ color: '#2a2420' }}>
+              <p className="text-[10px] font-medium mb-1" style={{ color: '#F2E8DA' }}>
                 New understandings
               </p>
               <div className="space-y-1">
                 {extraction.newUnderstandings.map((u, i) => (
-                  <p key={i} className="text-[10px]" style={{ color: '#8a7e72' }}>
+                  <p key={i} className="text-[10px]" style={{ color: '#B39D85' }}>
                     • {u}
                   </p>
                 ))}
@@ -208,8 +209,8 @@ export function GrowthPillar({ conversations }: GrowthPillarProps) {
 
           {/* Pursue-withdraw trend */}
           {recent.length > 1 && (
-            <div className="mt-3 pt-2 border-t" style={{ borderColor: '#e8e0d6' }}>
-              <p className="text-[9px] uppercase tracking-[0.5px] mb-1" style={{ color: '#8a7e72' }}>
+            <div className="mt-3 pt-2 border-t" style={{ borderColor: '#33241A' }}>
+              <p className="text-[9px] uppercase tracking-[0.5px] mb-1" style={{ color: '#B39D85' }}>
                 Pattern history
               </p>
               <div className="space-y-0.5">
@@ -217,11 +218,11 @@ export function GrowthPillar({ conversations }: GrowthPillarProps) {
                   const p = conv.extraction.pursueWithdraw
                   return (
                     <div key={conv.id || i} className="flex items-center gap-1">
-                      <span className="text-[8px] font-mono w-[40px]" style={{ color: '#c0b8aa' }}>
+                      <span className="text-[8px] font-mono w-[40px]" style={{ color: '#836F5C' }}>
                         {conv.date.slice(5)}
                       </span>
                       <PursueWithdrawDot pattern={p.pattern} />
-                      <span className="text-[8px]" style={{ color: '#c0b8aa' }}>
+                      <span className="text-[8px]" style={{ color: '#836F5C' }}>
                         {p.pattern.replace('-', ' ')}
                       </span>
                     </div>
@@ -261,7 +262,7 @@ function RatioBar({
           style={{ width: `${percentage}%`, backgroundColor: color }}
         />
       </div>
-      <div className="flex justify-between text-[8px] mt-0.5" style={{ color: '#c0b8aa' }}>
+      <div className="flex justify-between text-[8px] mt-0.5" style={{ color: '#836F5C' }}>
         <span>{leftLabel}: {leftValue}</span>
         <span>{rightLabel}: {rightValue}</span>
       </div>
@@ -277,34 +278,34 @@ function PursueWithdrawIndicator({ pattern, intensity }: { pattern: string; inte
     'both-withdraw': 'Both withdrawing',
   }
   const colors: Record<string, string> = {
-    'lori-pursues': '#b85c38',
-    'aidas-pursues': '#2d5f4a',
-    'balanced': '#c4873a',
-    'both-withdraw': '#8c3d3d',
+    'lori-pursues': '#6FA3CE',
+    'aidas-pursues': '#6FB89A',
+    'balanced': '#D9A63F',
+    'both-withdraw': '#DE7259',
   }
   const intensityLabel = intensity === 'strong' ? '●●●' : intensity === 'moderate' ? '●●○' : '●○○'
 
   return (
     <div className="flex items-center gap-2">
-      <span className="text-[10px] font-medium" style={{ color: colors[pattern] || '#8a7e72' }}>
+      <span className="text-[10px] font-medium" style={{ color: colors[pattern] || '#B39D85' }}>
         {labels[pattern] || pattern}
       </span>
-      <span className="text-[9px]" style={{ color: '#c0b8aa' }}>{intensityLabel}</span>
+      <span className="text-[9px]" style={{ color: '#836F5C' }}>{intensityLabel}</span>
     </div>
   )
 }
 
 function PursueWithdrawDot({ pattern }: { pattern: string }) {
   const colors: Record<string, string> = {
-    'lori-pursues': '#b85c38',
-    'aidas-pursues': '#2d5f4a',
-    'balanced': '#c4873a',
-    'both-withdraw': '#8c3d3d',
+    'lori-pursues': '#6FA3CE',
+    'aidas-pursues': '#6FB89A',
+    'balanced': '#D9A63F',
+    'both-withdraw': '#DE7259',
   }
   return (
     <div
       className="w-[6px] h-[6px] rounded-sm"
-      style={{ backgroundColor: colors[pattern] || '#c0b8aa' }}
+      style={{ backgroundColor: colors[pattern] || '#836F5C' }}
     />
   )
 }

@@ -9,10 +9,10 @@ interface LordasTabsProps {
   onChange: (tab: LordasTab) => void
 }
 
-const TERRACOTTA = '#b85c38'
-const PAPER = '#faf7f2'
-const MUTED = '#8a7e72'
-const RULE = '#d8cfc4'
+const TERRACOTTA = '#6FA3CE'
+const PAPER = '#241811'
+const MUTED = '#B39D85'
+const RULE = '#3E2C20'
 
 function TabButton({
   active,
@@ -26,7 +26,7 @@ function TabButton({
   return (
     <button
       onClick={onClick}
-      className="flex items-center gap-1 px-2 py-1.5 rounded-sm border text-[9px] font-serif font-semibold uppercase transition-colors flex-shrink-0"
+      className="flex items-center gap-1 px-2 py-1.5 rounded-sm border text-[9px] lordas-display font-semibold uppercase transition-colors flex-shrink-0"
       style={{
         backgroundColor: active ? TERRACOTTA : 'transparent',
         color: active ? PAPER : MUTED,
@@ -48,7 +48,7 @@ function TabLink({ href, external, children }: { href: string; external?: boolea
     <a
       href={href}
       {...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
-      className="flex items-center gap-1 px-2 py-1.5 rounded-sm border text-[9px] font-serif font-semibold uppercase transition-colors flex-shrink-0"
+      className="flex items-center gap-1 px-2 py-1.5 rounded-sm border text-[9px] lordas-display font-semibold uppercase transition-colors flex-shrink-0"
       style={{ backgroundColor: 'transparent', color: MUTED, borderColor: RULE }}
     >
       {children}

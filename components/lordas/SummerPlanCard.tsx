@@ -10,8 +10,8 @@ interface SummerPlanCardProps {
 export function SummerPlanCard({ plan }: SummerPlanCardProps) {
   if (!plan) {
     return (
-      <div className="bg-white border border-rule rounded-sm p-4">
-        <h3 className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-2 pb-2 border-b border-rule">
+      <div className="lordas-surface border border-rule rounded-sm p-4">
+        <h3 className="lordas-display text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-2 pb-2 border-b border-rule">
           Summer Plan
         </h3>
         <p className="text-[11px] text-ink-muted">No summer plan created yet</p>
@@ -20,9 +20,9 @@ export function SummerPlanCard({ plan }: SummerPlanCardProps) {
   }
 
   return (
-    <div className="bg-white border border-rule rounded-sm p-4 space-y-4">
+    <div className="lordas-surface border border-rule rounded-sm p-4 space-y-4">
       <div>
-        <h3 className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-2 pb-2 border-b border-rule">
+        <h3 className="lordas-display text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-2 pb-2 border-b border-rule">
           Summer Plan {plan.year}
         </h3>
         <div className="text-[10px] font-mono text-ink-muted">

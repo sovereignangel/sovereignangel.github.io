@@ -44,11 +44,11 @@ export function PlanWorldMap({ plan, compact = false }: PlanWorldMapProps) {
         style={{
           width: '100%',
           height: '120px',
-          background: '#ebe4d4',
+          background: '#2E1F16',
           borderRadius: '4px',
           padding: '8px',
           fontSize: '10px',
-          color: '#8a7e72',
+          color: '#B39D85',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -79,8 +79,8 @@ export function PlanWorldMap({ plan, compact = false }: PlanWorldMapProps) {
 
   if (coords.length === 0) {
     return (
-      <div style={{ padding: '12px', background: '#ebe4d4', borderRadius: '4px', textAlign: 'center' }}>
-        <p style={{ color: '#8a7e72', fontSize: '11px' }}>Map visualization unavailable</p>
+      <div style={{ padding: '12px', background: '#2E1F16', borderRadius: '4px', textAlign: 'center' }}>
+        <p style={{ color: '#B39D85', fontSize: '11px' }}>Map visualization unavailable</p>
       </div>
     )
   }
@@ -103,11 +103,11 @@ export function PlanWorldMap({ plan, compact = false }: PlanWorldMapProps) {
   }
 
   const phaseColors: Record<string, string> = {
-    morocco: '#C0703F',
-    base: '#E7D9BE',
-    spoke: '#6E1423',
-    ride: '#A87A2C',
-    como: '#560E1A',
+    morocco: '#DE7259',
+    base: '#2E1F16',
+    spoke: '#DE7259',
+    ride: '#D9A63F',
+    como: '#DE7259',
   }
 
   return (
@@ -116,8 +116,8 @@ export function PlanWorldMap({ plan, compact = false }: PlanWorldMapProps) {
       style={{
         width: '100%',
         height: 'auto',
-        background: '#faf8f4',
-        border: '1px solid #d8cfc4',
+        background: '#241811',
+        border: '1px solid #3E2C20',
         borderRadius: '4px',
       }}
     >
@@ -129,13 +129,13 @@ export function PlanWorldMap({ plan, compact = false }: PlanWorldMapProps) {
         return (
           <g key={`route-${i}`}>
             {/* Arrow line */}
-            <line x1={x1} y1={y1} x2={x2} y2={y2} stroke="#b85c38" strokeWidth="2" markerEnd="url(#arrowhead)" />
+            <line x1={x1} y1={y1} x2={x2} y2={y2} stroke="#6FA3CE" strokeWidth="2" markerEnd="url(#arrowhead)" />
             {/* Date label on line */}
             <text
               x={(x1 + x2) / 2}
               y={(y1 + y2) / 2 - 5}
               fontSize="10"
-              fill="#8a7e72"
+              fill="#B39D85"
               textAnchor="middle"
             >
               {new Date(coords[i].phase.endDate).toLocaleDateString('en-US', {
@@ -150,19 +150,19 @@ export function PlanWorldMap({ plan, compact = false }: PlanWorldMapProps) {
       {/* Arrow marker definition */}
       <defs>
         <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
-          <polygon points="0 0, 10 3, 0 6" fill="#b85c38" />
+          <polygon points="0 0, 10 3, 0 6" fill="#6FA3CE" />
         </marker>
       </defs>
 
       {/* Location dots and labels */}
       {coords.map((c, i) => {
         const [x, y] = normalize(c.coords![0], c.coords![1])
-        const color = phaseColors[c.phase.icon] || '#b85c38'
+        const color = phaseColors[c.phase.icon] || '#6FA3CE'
 
         return (
           <g key={`loc-${i}`}>
             {/* Circle */}
-            <circle cx={x} cy={y} r="8" fill={color} stroke="#faf8f4" strokeWidth="2" />
+            <circle cx={x} cy={y} r="8" fill={color} stroke="#241811" strokeWidth="2" />
 
             {/* Location name */}
             <text
@@ -170,14 +170,14 @@ export function PlanWorldMap({ plan, compact = false }: PlanWorldMapProps) {
               y={y - 15}
               fontSize="11"
               fontWeight="600"
-              fill="#2a2420"
+              fill="#F2E8DA"
               textAnchor="middle"
             >
               {c.phase.location}
             </text>
 
             {/* Start date */}
-            <text x={x} y={y + 18} fontSize="9" fill="#8a7e72" textAnchor="middle">
+            <text x={x} y={y + 18} fontSize="9" fill="#B39D85" textAnchor="middle">
               {new Date(c.phase.startDate).toLocaleDateString('en-US', {
                 month: 'short',
                 day: 'numeric',
@@ -189,7 +189,7 @@ export function PlanWorldMap({ plan, compact = false }: PlanWorldMapProps) {
 
       {/* Legend */}
       <g>
-        <text x="20" y="490" fontSize="10" fill="#8a7e72">
+        <text x="20" y="490" fontSize="10" fill="#B39D85">
           Route with dates
         </text>
       </g>

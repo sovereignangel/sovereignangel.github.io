@@ -42,7 +42,7 @@ export function CommentsSidebar({
       {!isOpen && (
         <button
           onClick={onOpen}
-          className="fixed right-0 z-45 flex items-center justify-center rounded-l-sm border border-r-0 border-rule bg-white hover:bg-paper transition-colors"
+          className="fixed right-0 z-45 flex items-center justify-center rounded-l-sm border border-r-0 border-rule lordas-surface hover:bg-paper transition-colors"
           style={{
             top: '160px',
             width: '32px',
@@ -66,13 +66,13 @@ export function CommentsSidebar({
 
       {/* Sidebar */}
       <div
-        className={`fixed top-0 right-0 h-screen w-full max-w-[420px] bg-white border-l border-rule z-50 flex flex-col transition-transform duration-200 ease-out ${
+        className={`fixed top-0 right-0 h-screen w-full max-w-[420px] lordas-surface border-l border-rule z-50 flex flex-col transition-transform duration-200 ease-out ${
           isOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
         {/* Header */}
         <div className="border-b border-rule p-4 flex items-center justify-between flex-shrink-0">
-          <h3 className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy">
+          <h3 className="lordas-display text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy">
             Summer Plan Comments
           </h3>
           <button

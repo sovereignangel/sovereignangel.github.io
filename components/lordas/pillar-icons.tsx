@@ -9,7 +9,7 @@ interface IconProps {
   className?: string
 }
 
-export function AnchorIcon({ size = 24, color = '#b85c38', className }: IconProps) {
+export function AnchorIcon({ size = 24, color = '#6FA3CE', className }: IconProps) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className}>
       <circle cx="12" cy="5" r="2.5" stroke={color} strokeWidth="1.5" />
@@ -20,7 +20,7 @@ export function AnchorIcon({ size = 24, color = '#b85c38', className }: IconProp
   )
 }
 
-export function SpiralIcon({ size = 24, color = '#b85c38', className }: IconProps) {
+export function SpiralIcon({ size = 24, color = '#6FA3CE', className }: IconProps) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className}>
       <path
@@ -34,7 +34,7 @@ export function SpiralIcon({ size = 24, color = '#b85c38', className }: IconProp
   )
 }
 
-export function CompassIcon({ size = 24, color = '#b85c38', className }: IconProps) {
+export function CompassIcon({ size = 24, color = '#6FA3CE', className }: IconProps) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className}>
       <circle cx="12" cy="12" r="10" stroke={color} strokeWidth="1.2" />

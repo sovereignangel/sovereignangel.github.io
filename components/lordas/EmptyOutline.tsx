@@ -10,12 +10,12 @@ export function EmptyOutline() {
   return (
     <div className="space-y-6">
       {/* How to start */}
-      <div className="border rounded-sm p-4 text-center" style={{ backgroundColor: '#faf7f2', borderColor: '#d8cfc4' }}>
-        <p className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] mb-2" style={{ color: '#b85c38' }}>
+      <div className="border rounded-sm p-4 text-center" style={{ backgroundColor: '#241811', borderColor: '#3E2C20' }}>
+        <p className="lordas-display text-[13px] font-semibold uppercase tracking-[0.5px] mb-2" style={{ color: '#6FA3CE' }}>
           Getting Started
         </p>
-        <p className="text-[11px] leading-relaxed max-w-[500px] mx-auto" style={{ color: '#8a7e72' }}>
-          Record a conversation with Wave.ai and say <strong style={{ color: '#2a2420' }}>&ldquo;relational transcript&rdquo;</strong> or <strong style={{ color: '#2a2420' }}>&ldquo;relationship transcript&rdquo;</strong> near
+        <p className="text-[11px] leading-relaxed max-w-[500px] mx-auto" style={{ color: '#B39D85' }}>
+          Record a conversation with Wave.ai and say <strong style={{ color: '#F2E8DA' }}>&ldquo;relational transcript&rdquo;</strong> or <strong style={{ color: '#F2E8DA' }}>&ldquo;relationship transcript&rdquo;</strong> near
           the beginning. The transcript will be automatically processed and the dashboard will update within minutes.
         </p>
       </div>
@@ -24,9 +24,9 @@ export function EmptyOutline() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
         {/* Safety column */}
         <PillarColumn
-          icon={<AnchorIcon size={18} color="#2d5f4a" />}
+          icon={<AnchorIcon size={18} color="#6FB89A" />}
           title="Safety"
-          color="#2d5f4a"
+          color="#6FB89A"
           subtitle="Can we be vulnerable without punishment?"
           cards={[
             {
@@ -55,9 +55,9 @@ export function EmptyOutline() {
 
         {/* Growth column */}
         <PillarColumn
-          icon={<SpiralIcon size={18} color="#b85c38" />}
+          icon={<SpiralIcon size={18} color="#6FA3CE" />}
           title="Growth"
-          color="#b85c38"
+          color="#6FA3CE"
           subtitle="Are we evolving together?"
           cards={[
             {
@@ -92,9 +92,9 @@ export function EmptyOutline() {
 
         {/* Alignment column */}
         <PillarColumn
-          icon={<CompassIcon size={18} color="#c4873a" />}
+          icon={<CompassIcon size={18} color="#D9A63F" />}
           title="Alignment"
-          color="#c4873a"
+          color="#D9A63F"
           subtitle="Do we want the same life?"
           cards={[
             {
@@ -123,14 +123,14 @@ export function EmptyOutline() {
       {/* Sessions + Scoring row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
         {/* Sessions outline */}
-        <div className="border rounded-sm p-3" style={{ backgroundColor: '#faf7f2', borderColor: '#d8cfc4' }}>
-          <p className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] mb-2" style={{ color: '#2a2420' }}>
+        <div className="border rounded-sm p-3" style={{ backgroundColor: '#241811', borderColor: '#3E2C20' }}>
+          <p className="lordas-display text-[11px] font-semibold uppercase tracking-[0.5px] mb-2" style={{ color: '#F2E8DA' }}>
             Sessions
           </p>
-          <p className="text-[10px] mb-2" style={{ color: '#8a7e72' }}>
+          <p className="text-[10px] mb-2" style={{ color: '#B39D85' }}>
             Each conversation appears as an expandable card showing:
           </p>
-          <div className="space-y-0.5 text-[10px]" style={{ color: '#8a7e72' }}>
+          <div className="space-y-0.5 text-[10px]" style={{ color: '#B39D85' }}>
             <p>• Date, trigger topic, and life domain</p>
             <p>• Overall tone (constructive / tense / breakthrough)</p>
             <p>• Composite score with pillar breakdown</p>
@@ -139,14 +139,14 @@ export function EmptyOutline() {
         </div>
 
         {/* Scoring formula */}
-        <div className="border rounded-sm p-3" style={{ backgroundColor: 'rgba(184, 92, 56, 0.04)', borderColor: '#d8cfc4' }}>
-          <p className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] mb-2" style={{ color: '#b85c38' }}>
+        <div className="border rounded-sm p-3" style={{ backgroundColor: 'rgba(184, 92, 56, 0.04)', borderColor: '#3E2C20' }}>
+          <p className="lordas-display text-[11px] font-semibold uppercase tracking-[0.5px] mb-2" style={{ color: '#6FA3CE' }}>
             How Scoring Works
           </p>
-          <p className="text-[10px] font-mono mb-1" style={{ color: '#2a2420' }}>
+          <p className="text-[10px] font-mono mb-1" style={{ color: '#F2E8DA' }}>
             health = 10 × safety<sup>0.4</sup> × growth<sup>0.3</sup> × alignment<sup>0.3</sup>
           </p>
-          <p className="text-[10px]" style={{ color: '#8a7e72' }}>
+          <p className="text-[10px]" style={{ color: '#B39D85' }}>
             Safety weighted highest because without it, nothing else is honest.
             Metrics use 5-session rolling averages so one bad conversation doesn&apos;t define the connection.
           </p>
@@ -177,35 +177,35 @@ function PillarColumn({
   return (
     <div className="flex flex-col">
       {/* Pillar header */}
-      <div className="flex items-center gap-2 mb-2 pb-1.5 border-b-2" style={{ borderColor: '#d8cfc4' }}>
+      <div className="flex items-center gap-2 mb-2 pb-1.5 border-b-2" style={{ borderColor: '#3E2C20' }}>
         {icon}
-        <h2 className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px]" style={{ color }}>
+        <h2 className="lordas-display text-[13px] font-semibold uppercase tracking-[0.5px]" style={{ color }}>
           {title}
         </h2>
       </div>
-      <p className="text-[10px] mb-3" style={{ color: '#8a7e72' }}>
+      <p className="text-[10px] mb-3" style={{ color: '#B39D85' }}>
         {subtitle}
       </p>
 
       {/* Cards stack vertically */}
       <div className="flex flex-col gap-3 flex-1">
         {cards.map((card) => (
-          <div key={card.title} className="border rounded-sm p-3 flex-1" style={{ backgroundColor: '#faf7f2', borderColor: '#d8cfc4' }}>
-            <h3 className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] mb-1" style={{ color: '#2a2420' }}>
+          <div key={card.title} className="border rounded-sm p-3 flex-1" style={{ backgroundColor: '#241811', borderColor: '#3E2C20' }}>
+            <h3 className="lordas-display text-[11px] font-semibold uppercase tracking-[0.5px] mb-1" style={{ color: '#F2E8DA' }}>
               {card.title}
             </h3>
-            <p className="text-[10px] mb-2" style={{ color: '#8a7e72' }}>
+            <p className="text-[10px] mb-2" style={{ color: '#B39D85' }}>
               {card.description}
             </p>
             <div className="space-y-0.5 mb-2">
               {card.items.map((item, i) => (
-                <p key={i} className="text-[10px]" style={{ color: '#8a7e72' }}>
+                <p key={i} className="text-[10px]" style={{ color: '#B39D85' }}>
                   • {item}
                 </p>
               ))}
             </div>
-            <div className="pt-1.5 border-t" style={{ borderColor: '#e8e0d6' }}>
-              <p className="text-[9px] font-mono uppercase" style={{ color: '#c0b8aa' }}>
+            <div className="pt-1.5 border-t" style={{ borderColor: '#33241A' }}>
+              <p className="text-[9px] font-mono uppercase" style={{ color: '#836F5C' }}>
                 {card.metric}
               </p>
             </div>

@@ -3,16 +3,29 @@
  *
  * Per athlete: readiness and its factors, the pace profile their prescriptions
  * are built from, block compliance against the printed plan, distance progress
- * per discipline, and the goal forecast for New York. Assembled server-side so
- * the two columns are computed identically and can be compared honestly.
+ * per discipline, the goal forecast for New York, and the recalibration that
+ * says which discipline the remaining weeks belong to. Assembled server-side
+ * so the two columns are computed identically and can be compared honestly.
+ *
+ * The two athletes do not share a finish time. Each column is scored against
+ * that person's own goals, and each capability estimate discounts the sessions
+ * they only rode alongside the other.
  */
 
-import { computeReadiness, matchDay, computeProgress, type Readiness, type SportProgress } from '@/lib/ironman/adapt'
+import {
+  computeReadiness, matchDay, computeProgress, dedupeActivities,
+  type Readiness, type SportProgress,
+} from '@/lib/ironman/adapt'
 import { computeRaceForecast, type RaceForecast } from '@/lib/ironman/forecast'
-import { PLAN, RACE, RACE_NYC, GOALS, goalSplits, daysToRace, todayLocal } from '@/lib/ironman/plan'
-import { paceProfile, type PaceProfile } from './pair-training'
+import { computeRebalance, type Rebalance } from '@/lib/ironman/rebalance'
+import { raceTargets, type RaceTarget } from '@/lib/ironman/pace'
+import {
+  PLAN, RACE, RACE_NYC, DECLARED_CAPABILITY, STRENGTHS,
+  daysToRace, goalsFor, goalSplits, goalDisplay, todayLocal,
+  type AthleteId, type RaceGoals, type Sport3, type Standing,
+} from '@/lib/ironman/plan'
 import { loadBothAthletes, type AthleteData } from './athletes'
-import { buildPairDay, type PairDay } from './pair-training'
+import { buildPairDay, paceProfile, partnerPacesOf, type PairDay, type PaceProfile } from './pair-training'
 import type { LordasPerson } from '@/lib/types'
 
 export interface ComplianceWeek {
@@ -31,7 +44,16 @@ export interface AthleteDetail {
   name: string
   color: string
   readiness: Readiness
+  /** This athlete's own targets — the two of them are not chasing one finish time */
+  goals: RaceGoals
+  splits: ReturnType<typeof goalSplits>
+  display: ReturnType<typeof goalDisplay>
+  strengths: Record<Sport3, Standing>
   profile: PaceProfile
+  /** Race-pace anchor per discipline, and how far the goal had to be backed off */
+  targets: Record<Sport3, RaceTarget>
+  /** Which discipline the remaining weeks belong to, and why */
+  rebalance: Rebalance
   progress: SportProgress[]
   forecast: RaceForecast
   compliance: { planned: number; done: number; partial: number; missed: number; upcoming: number; weeks: ComplianceWeek[] }
@@ -44,8 +66,6 @@ export interface AthleteDetail {
 export interface PairIronmanDetail {
   date: string
   races: { name: string; date: string; days: number; location: string }[]
-  goals: typeof GOALS
-  goalSplits: ReturnType<typeof goalSplits>
   today: PairDay
   athletes: AthleteDetail[]
 }
@@ -57,18 +77,28 @@ function mondayOf(date: string): string {
   return d.toISOString().slice(0, 10)
 }
 
-function detailFor(data: AthleteData, today: string): AthleteDetail {
-  const readiness = computeReadiness(data.metrics, data.activities, today)
-  const profile = paceProfile(data.activities, today)
-  const progress = computeProgress(data.activities, today)
-  const forecast = computeRaceForecast(data.activities, data.metrics, today)
+function detailFor(data: AthleteData, today: string, partner?: AthleteData): AthleteDetail {
+  const person = data.athlete.id as AthleteId
+  const goals = goalsFor(person)
+  const activities = dedupeActivities(data.activities)
+  const readiness = computeReadiness(data.metrics, activities, today)
+  const profile = paceProfile(activities, today)
+  const progress = computeProgress(activities, today)
+  const opts = {
+    goals,
+    declared: DECLARED_CAPABILITY[person],
+    partnerPaces: partnerPacesOf(partner),
+  }
+  const forecast = computeRaceForecast(activities, data.metrics, today, opts)
+  const targets = raceTargets(forecast, goals)
+  const rebalance = computeRebalance(activities, data.metrics, today, person, opts)
 
   const totals = { planned: 0, done: 0, partial: 0, missed: 0, upcoming: 0 }
   const weekMap = new Map<string, ComplianceWeek>()
   let extras = 0
 
   for (const day of PLAN.filter((d) => d.date <= today)) {
-    const status = matchDay(day, data.activities, today)
+    const status = matchDay(day, activities, today)
     extras += status.extras.length
     const wk = mondayOf(day.date)
     const week = weekMap.get(wk) ?? { start: wk, end: wk, planned: 0, done: 0, partial: 0, missed: 0, upcoming: 0 }
@@ -93,7 +123,13 @@ function detailFor(data: AthleteData, today: string): AthleteDetail {
     name: data.athlete.name,
     color: data.athlete.color,
     readiness,
+    goals,
+    splits: goalSplits(goals),
+    display: goalDisplay(goals),
+    strengths: STRENGTHS[person] ?? STRENGTHS.lori,
     profile,
+    targets,
+    rebalance,
     progress,
     forecast,
     compliance: { ...totals, weeks: [...weekMap.values()].sort((a, b) => (a.start < b.start ? -1 : 1)) },
@@ -110,9 +146,7 @@ export async function buildPairIronmanDetail(date: string = todayLocal()): Promi
     races: [RACE, RACE_NYC]
       .map((r) => ({ name: r.name, date: r.date, days: daysToRace(date, r.date), location: r.location }))
       .filter((r) => r.days >= 0),
-    goals: GOALS,
-    goalSplits: goalSplits(),
     today: buildPairDay(date, athletes),
-    athletes: athletes.map((a) => detailFor(a, date)),
+    athletes: athletes.map((a, i) => detailFor(a, date, athletes[1 - i])),
   }
 }

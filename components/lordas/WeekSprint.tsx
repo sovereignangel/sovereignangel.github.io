@@ -70,7 +70,7 @@ export function WeekSprint({ currentWeek, nextWeek, milestones, person, mutate }
           (isPlanningWindow || planningNext || nextWeek) ? (
             <button
               onClick={() => setPlanningNext(!planningNext)}
-              className="font-serif text-[9px] font-semibold uppercase px-2 py-1 rounded-sm border transition-colors"
+              className="lordas-display text-[9px] font-semibold uppercase px-2 py-1 rounded-sm border transition-colors"
               style={{
                 backgroundColor: planningNext ? OWNER_COLORS[person] : 'transparent',
                 color: planningNext ? PAPER : MUTED,
@@ -200,7 +200,7 @@ function OwnerWeekColumn({
       </div>
 
       {draft && (
-        <div className="mt-2 rounded-sm border p-2 bg-white space-y-1.5" style={{ borderColor: accent }}>
+        <div className="mt-2 rounded-sm border p-2 lordas-surface space-y-1.5" style={{ borderColor: accent }}>
           <input
             value={draft.title}
             onChange={(e) => setDraft({ ...draft, title: e.target.value })}
@@ -220,7 +220,7 @@ function OwnerWeekColumn({
             <select
               value={draft.category}
               onChange={(e) => setDraft({ ...draft, category: e.target.value as LordasGoalCategory | '' })}
-              className="text-[10px] rounded-sm border p-1.5 bg-white"
+              className="text-[10px] rounded-sm border p-1.5 lordas-surface"
               style={{ borderColor: RULE, color: draft.category ? INK : MUTED }}
             >
               <option value="">Group (optional)</option>
@@ -234,7 +234,7 @@ function OwnerWeekColumn({
               <select
                 value={draft.milestoneId}
                 onChange={(e) => setDraft({ ...draft, milestoneId: e.target.value })}
-                className="text-[10px] rounded-sm border p-1.5 bg-white"
+                className="text-[10px] rounded-sm border p-1.5 lordas-surface"
                 style={{ borderColor: RULE, color: draft.milestoneId ? INK : MUTED }}
               >
                 <option value="">Serves KPI (optional)</option>
@@ -252,14 +252,14 @@ function OwnerWeekColumn({
             <button
               onClick={save}
               disabled={saving || !draft.title.trim()}
-              className="px-3 py-1 rounded-sm text-[9px] font-serif font-semibold uppercase"
+              className="px-3 py-1 rounded-sm text-[9px] lordas-display font-semibold uppercase"
               style={{ backgroundColor: accent, color: PAPER, opacity: saving ? 0.6 : 1 }}
             >
               {saving ? 'Saving' : draft.id ? 'Update' : 'Commit'}
             </button>
             <button
               onClick={() => setDraft(null)}
-              className="px-3 py-1 rounded-sm border text-[9px] font-serif font-semibold uppercase"
+              className="px-3 py-1 rounded-sm border text-[9px] lordas-display font-semibold uppercase"
               style={{ borderColor: RULE, color: MUTED }}
             >
               Cancel
@@ -336,7 +336,7 @@ function ReviewZone({
   return (
     <div className="mt-3 rounded-sm border p-3" style={{ backgroundColor: PAPER, borderColor: RULE }}>
       <div className="flex items-center justify-between mb-2 pb-1.5 border-b flex-wrap gap-2" style={{ borderColor: RULE }}>
-        <p className="font-serif text-[12px] font-semibold uppercase tracking-[0.5px]" style={{ color: INK }}>
+        <p className="lordas-display text-[12px] font-semibold uppercase tracking-[0.5px]" style={{ color: INK }}>
           Week-End Review
         </p>
         <div className="flex gap-4">
@@ -368,20 +368,20 @@ function ReviewZone({
                 value={win}
                 onChange={(e) => setWin(e.target.value)}
                 placeholder="Biggest win"
-                className="w-full text-[11px] rounded-sm border p-1.5 bg-white"
+                className="w-full text-[11px] rounded-sm border p-1.5 lordas-surface"
                 style={{ borderColor: RULE, color: INK }}
               />
               <input
                 value={lesson}
                 onChange={(e) => setLesson(e.target.value)}
                 placeholder="Hardest lesson"
-                className="w-full text-[11px] rounded-sm border p-1.5 bg-white"
+                className="w-full text-[11px] rounded-sm border p-1.5 lordas-surface"
                 style={{ borderColor: RULE, color: INK }}
               />
               <button
                 onClick={submitReview}
                 disabled={saving || (!win.trim() && !lesson.trim())}
-                className="px-3 py-1 rounded-sm text-[9px] font-serif font-semibold uppercase"
+                className="px-3 py-1 rounded-sm text-[9px] lordas-display font-semibold uppercase"
                 style={{ backgroundColor: OWNER_COLORS[person], color: PAPER, opacity: saving ? 0.6 : 1 }}
               >
                 {myReview ? 'Update review' : 'Submit review'}
@@ -414,7 +414,7 @@ function ReviewZone({
             On {personLabel(partner)}&rsquo;s week · acknowledge or challenge
           </p>
           {myNote ? (
-            <p className="text-[11px] rounded-sm border p-2 bg-white" style={{ borderColor: RULE, color: INK }}>
+            <p className="text-[11px] rounded-sm border p-2 lordas-surface" style={{ borderColor: RULE, color: INK }}>
               {myNote.text}
             </p>
           ) : (
@@ -424,13 +424,13 @@ function ReviewZone({
                 onChange={(e) => setNoteText(e.target.value)}
                 rows={2}
                 placeholder={`One honest sentence for ${personLabel(partner)} — celebrate the real or call the gap`}
-                className="w-full text-[11px] rounded-sm border p-1.5 bg-white"
+                className="w-full text-[11px] rounded-sm border p-1.5 lordas-surface"
                 style={{ borderColor: RULE, color: INK }}
               />
               <button
                 onClick={submitNote}
                 disabled={saving || !noteText.trim()}
-                className="px-3 py-1 rounded-sm text-[9px] font-serif font-semibold uppercase"
+                className="px-3 py-1 rounded-sm text-[9px] lordas-display font-semibold uppercase"
                 style={{ backgroundColor: OWNER_COLORS[partner], color: PAPER, opacity: saving ? 0.6 : 1 }}
               >
                 Send note
@@ -442,7 +442,7 @@ function ReviewZone({
               <p className="text-[9px] uppercase tracking-[0.5px] mb-0.5" style={{ color: MUTED }}>
                 {personLabel(partner)} on your week
               </p>
-              <p className="text-[11px] rounded-sm border p-2 bg-white font-serif italic" style={{ borderColor: `${SAGE}50`, color: INK }}>
+              <p className="text-[11px] rounded-sm border p-2 lordas-surface lordas-display italic" style={{ borderColor: `${SAGE}50`, color: INK }}>
                 &ldquo;{noteAboutMe.text}&rdquo;
               </p>
             </div>
@@ -455,7 +455,7 @@ function ReviewZone({
 
 function ReviewDisplay({ win, lesson, onEdit }: { win: string; lesson: string; onEdit?: () => void }) {
   return (
-    <div className="rounded-sm border p-2 bg-white relative group" style={{ borderColor: RULE }}>
+    <div className="rounded-sm border p-2 lordas-surface relative group" style={{ borderColor: RULE }}>
       {win && (
         <p className="text-[11px]" style={{ color: INK }}>
           <span className="text-[9px] uppercase tracking-[0.5px] mr-1" style={{ color: SAGE }}>Win</span>
