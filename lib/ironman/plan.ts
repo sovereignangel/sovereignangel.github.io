@@ -72,6 +72,7 @@ export const KM_PER_MILE = 1.609344
  * pace number does not.
  */
 export interface PriorRace {
+  athlete: AthleteId
   name: string
   date: string
   location: string
@@ -89,6 +90,7 @@ export interface PriorRace {
 
 export const PRIOR_RACES: PriorRace[] = [
   {
+    athlete: 'lori',
     name: 'Oceanlava Lanzarote',
     date: '2023-05-14',
     location: 'Lanzarote',
@@ -104,11 +106,20 @@ export const PRIOR_RACES: PriorRace[] = [
   },
 ]
 
-/** The prior race at the same distance as `race`, most recent first, or undefined */
-export function priorRaceAtDistance(race: { swimKm: number; bikeKm: number; runKm: number }) {
+/** That athlete's most recent race at the same distance as `race`, or undefined */
+export function priorRaceAtDistance(
+  race: { swimKm: number; bikeKm: number; runKm: number },
+  athlete?: AthleteId
+) {
   return [...PRIOR_RACES]
     .sort((a, b) => b.date.localeCompare(a.date))
-    .find((r) => r.swimKm === race.swimKm && r.bikeKm === race.bikeKm && r.runKm === race.runKm)
+    .find(
+      (r) =>
+        (athlete == null || r.athlete === athlete) &&
+        r.swimKm === race.swimKm &&
+        r.bikeKm === race.bikeKm &&
+        r.runKm === race.runKm
+    )
 }
 
 /** Prior-race splits said the way each discipline is normally spoken about */

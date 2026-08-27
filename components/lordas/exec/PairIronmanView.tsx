@@ -27,6 +27,8 @@ import { Track } from '@/components/lordas/design/charts'
 import { PersonSigil, SportGlyph, TrifectaIcon } from '@/components/lordas/design/assets'
 import { fmtRunPace, fmtSwimPace, fmtBikeSpeed, fmtPace } from '@/lib/lordas/pair-training'
 import { paceBoth } from '@/lib/ironman/pace'
+import { RACE_NYC, KM_PER_MILE, priorRaceAtDistance, priorRaceDisplay, priorRaceVsGoal,
+  type PriorRace } from '@/lib/ironman/plan'
 import type { PairIronmanDetail, AthleteDetail } from '@/lib/lordas/ironman-detail'
 import { freshnessOf, stampOf } from '@/lib/lordas/freshness'
 import type { SportNeed } from '@/lib/ironman/rebalance'
@@ -139,6 +141,113 @@ function RecoveryCard({ a }: { a: AthleteDetail }) {
 }
 
 // ── The tearsheet ─────────────────────────────────────────────────────────
+
+// ── Half Ironman gap analysis ─────────────────────────────────────────────
+
+/** h:mm:ss / m:ss from raw seconds */
+function clk(sec: number): string {
+  const a = Math.abs(Math.round(sec))
+  const h = Math.floor(a / 3600)
+  const m = Math.floor((a % 3600) / 60)
+  const ss = a % 60
+  return h > 0
+    ? `${h}:${String(m).padStart(2, '0')}:${String(ss).padStart(2, '0')}`
+    : `${m}:${String(ss).padStart(2, '0')}`
+}
+
+/** A gap reads as its sign: ahead of goal is a gain, behind it is a cost. */
+function gapCell(sec: number): { text: string; color: string } {
+  if (Math.round(sec) === 0) return { text: 'on goal', color: C.ok }
+  const behind = sec > 0
+  return { text: `${behind ? '+' : '−'}${clk(sec)}`, color: behind ? C.crit : C.ok }
+}
+
+/**
+ * The ledger: every half-iron already finished, set against that athlete's
+ * current goal.
+ *
+ * A finished race is the only honest measurement of transition cost and
+ * race-day pacing — no training block produces either. So it sits beside the
+ * target it is being asked to beat, with the gap subtracted for the reader
+ * rather than left implied.
+ */
+function GapSheet({ a }: { a: AthleteDetail }) {
+  const race = priorRaceAtDistance(RACE_NYC, a.person as 'lori' | 'aidas')
+
+  return (
+    <FieldCard
+      label={<><PersonSigil person={a.person} size={13} />{a.name}</>}
+      meta={race ? `${race.name} · ${race.date}` : 'no half-iron on record'}
+    >
+      {race ? <GapRows a={a} race={race} /> : (
+        <>
+          <Sub>Awaiting a finished race at {RACE_NYC.swimKm}/{RACE_NYC.bikeKm}/{RACE_NYC.runKm}km.</Sub>
+          <Sub>Goal is {hm(a.splits.total)} — nothing is inferred until there is a result to compare.</Sub>
+        </>
+      )}
+    </FieldCard>
+  )
+}
+
+function GapRows({ a, race }: { a: AthleteDetail; race: PriorRace }) {
+  const d = priorRaceDisplay(race)
+  const v = priorRaceVsGoal(race, a.goals)
+  const g = a.splits
+  const rows: SheetRow[] = [
+    {
+      label: 'Raced',
+      cells: [clk(race.swimSec), clk(race.bikeSec), clk(race.runSec), clk(d.transitionSec), clk(race.totalSec)],
+    },
+    {
+      label: 'Goal',
+      cells: [clk(g.swim * 60), clk(g.bike * 60), clk(g.run * 60), clk(g.transitions * 60), clk(g.total * 60)],
+    },
+    {
+      label: 'Gap',
+      emphasis: true,
+      cells: [v.swim, v.bike, v.run, v.transitions, v.total].map((x) => gapCell(x).text),
+      colors: [v.swim, v.bike, v.run, v.transitions, v.total].map((x) => gapCell(x).color),
+    },
+    {
+      label: 'Raced at',
+      cells: [
+        `${clk(d.swimSecPer100m)}/100m`,
+        `${d.bikeMph.toFixed(1)}mph`,
+        `${clk(race.runSec / (race.runKm / KM_PER_MILE))}/mi`,
+        '—', '',
+      ],
+    },
+    {
+      label: 'Goal at',
+      cells: [
+        `${clk((a.goals.swimMinutes * 60) / (race.swimKm * 10))}/100m`,
+        `${(race.bikeKm / KM_PER_MILE / (a.goals.bikeMinutes / 60)).toFixed(1)}mph`,
+        `${clk((a.goals.runMinutes * 60) / (race.runKm / KM_PER_MILE))}/mi`,
+        '—', '',
+      ],
+    },
+  ]
+
+  return (
+    <>
+      <Tearsheet
+        columns={[
+          { key: 'swim', label: 'SWIM' },
+          { key: 'bike', label: 'BIKE' },
+          { key: 'run', label: 'RUN' },
+          { key: 'tx', label: 'T1+T2' },
+          { key: 'total', label: 'TOTAL' },
+        ]}
+        rows={rows}
+      />
+      <Foot>
+        Gap is race minus goal, leg by leg. Transitions are shown because they are a
+        real split that training never measures. Courses differ — a windy or hilly
+        bike leg is not the same number as a flat one.
+      </Foot>
+    </>
+  )
+}
 
 function AthleteSheet({ a }: { a: AthleteDetail }) {
   const color = OWNER[a.person] ?? C.muted
@@ -486,6 +595,10 @@ export default function PairIronmanView() {
 
       <Seam cols={2} className="lordas-mt">
         {data.athletes.map((a) => <AthleteSheet key={a.person} a={a} />)}
+      </Seam>
+
+      <Seam cols={2} className="lordas-mt">
+        {data.athletes.map((a) => <GapSheet key={a.person} a={a} />)}
       </Seam>
     </div>
   )
