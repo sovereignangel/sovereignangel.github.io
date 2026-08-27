@@ -113,45 +113,48 @@ function AthleteSheet({ a }: { a: AthleteDetail }) {
 
   const rows: SheetRow[] = [
     {
-      label: 'Goal split',
+      label: 'Goal Total',
       cells: SPORTS.map((s) => hm(goalSplit(a, s))),
     },
     {
-      label: 'Goal pace',
+      label: 'Goal Pace',
       cells: SPORTS.map((s) => goalPace(a, s)),
     },
     {
-      label: 'Hold today',
+      label: 'Current Pace',
       cells: cols.map((c, i) =>
-        c.t?.prescribedPaceMinKm != null
+        c.d?.currentPaceMinKm != null
           ? <Hover
               key={i}
               panel={
                 <>
-                  <div className="hd">{SPORT_LABEL[SPORTS[i]]} · race effort</div>
-                  <div className="k"><span>Goal pace</span><b>{goalPace(a, SPORTS[i])}</b></div>
-                  <div className="k"><span>Prescribed</span><b>{fmtPace(SPORTS[i], c.t!.prescribedPaceMinKm)}</b></div>
-                  {c.t?.capped && <div className="k"><span>Backed off</span><b>goal out of reach</b></div>}
+                  <div className="hd">{SPORT_LABEL[SPORTS[i]]} · where the pace stands</div>
+                  <div className="k"><span>Current</span><b>{fmtPace(SPORTS[i], c.d!.currentPaceMinKm)}</b></div>
+                  <div className="k"><span>Goal</span><b>{goalPace(a, SPORTS[i])}</b></div>
+                  {c.t?.prescribedPaceMinKm != null && (
+                    <div className="k"><span>Hold today</span><b>{fmtPace(SPORTS[i], c.t.prescribedPaceMinKm)}</b></div>
+                  )}
+                  {c.t?.capped && <div className="k"><span>Note</span><b>goal out of reach</b></div>}
                 </>
               }
             >
-              {fmtPace(SPORTS[i], c.t.prescribedPaceMinKm)}
+              {fmtPace(SPORTS[i], c.d.currentPaceMinKm)}
             </Hover>
           : '—'
       ),
-      colors: cols.map((c) => (c.t?.capped ? C.warn : undefined)),
+      colors: cols.map((c) => (c.d?.currentPaceMinKm == null ? C.faint : undefined)),
     },
     {
-      label: 'Habitual · 6wk',
+      label: '6w avg Pace',
       cells: SPORTS.map((s) => habitual(a, s) ?? '—'),
       colors: SPORTS.map((s) => (habitual(a, s) ? undefined : C.faint)),
     },
     {
-      label: 'Projected',
+      label: 'Projected Total',
       cells: cols.map((c) => hm(c.d?.projectedSplitMin)),
     },
     {
-      label: 'Probability',
+      label: 'Goal Probability',
       cells: cols.map((c, i) => (
         <Hover
           key={i}
@@ -172,7 +175,7 @@ function AthleteSheet({ a }: { a: AthleteDetail }) {
       emphasis: true,
     },
     {
-      label: 'On the table',
+      label: 'Goal Spread',
       cells: cols.map((c) =>
         c.g?.minutesOverGoal == null ? '—' : `+${Math.round(c.g.minutesOverGoal)}min`
       ),
