@@ -55,6 +55,14 @@
     {
       "path": "/api/cron/wind-observe",
       "schedule": "0 * * * *"
+    },
+    {
+      "path": "/api/cron/lordas-garmin",
+      "schedule": "20 4 * * *"
+    },
+    {
+      "path": "/api/cron/lordas-orders",
+      "schedule": "55 4 * * *"
     }
   ]
 }

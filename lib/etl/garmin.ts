@@ -15,8 +15,8 @@ const TOKEN_DOC = 'system/garmin_tokens'
 
 // ─── Token Persistence ──────────────────────────────────────────────────
 
-async function loadGarminTokens() {
-  const doc = await adminDb.doc(TOKEN_DOC).get()
+async function loadGarminTokens(tokenDoc: string = TOKEN_DOC) {
+  const doc = await adminDb.doc(tokenDoc).get()
   if (!doc.exists) return null
   const data = doc.data()
   return data?.oauth1 && data?.oauth2
@@ -24,9 +24,9 @@ async function loadGarminTokens() {
     : null
 }
 
-async function saveGarminTokens(garmin: GarminConnect) {
+async function saveGarminTokens(garmin: GarminConnect, tokenDoc: string = TOKEN_DOC) {
   const tokens = garmin.exportToken()
-  await adminDb.doc(TOKEN_DOC).set(
+  await adminDb.doc(tokenDoc).set(
     {
       oauth1: tokens.oauth1,
       oauth2: tokens.oauth2,
@@ -38,14 +38,26 @@ async function saveGarminTokens(garmin: GarminConnect) {
 
 // ─── Garmin Client ──────────────────────────────────────────────────────
 
-async function initGarminClient(): Promise<GarminConnect> {
-  const garmin = new GarminConnect({
-    username: process.env.GARMIN_EMAIL || '',
-    password: process.env.GARMIN_PASSWORD || '',
-  })
+/**
+ * Credentials + token doc for one Garmin account. Omitted, it is the owner's
+ * account; the Lordas pair passes the partner's account through the same code
+ * path so both athletes get identical metrics with identical parsing.
+ */
+export interface GarminAccount {
+  email: string
+  password: string
+  tokenDoc: string
+}
+
+async function initGarminClient(account?: GarminAccount): Promise<GarminConnect> {
+  const username = account?.email ?? process.env.GARMIN_EMAIL ?? ''
+  const password = account?.password ?? process.env.GARMIN_PASSWORD ?? ''
+  const tokenDoc = account?.tokenDoc ?? TOKEN_DOC
+
+  const garmin = new GarminConnect({ username, password })
 
   // Try saved tokens first (avoids MFA)
-  const saved = await loadGarminTokens()
+  const saved = await loadGarminTokens(tokenDoc)
   if (saved) {
     garmin.loadToken(saved.oauth1, saved.oauth2)
   } else {
@@ -58,7 +70,7 @@ async function initGarminClient(): Promise<GarminConnect> {
 
 // ─── Data Fetching ──────────────────────────────────────────────────────
 
-async function fetchGarminData(
+export async function fetchGarminData(
   garmin: GarminConnect,
   date: string
 ): Promise<Omit<GarminMetrics, 'syncedAt'>> {
@@ -279,7 +291,10 @@ export async function syncGarminMetrics(
 
     // Upsert recent activities so new workouts land in garmin_activities
     try {
-      await syncRecentActivities(garmin, uid)
+      await syncRecentActivities(
+        garmin,
+        adminDb.collection('users').doc(uid).collection('garmin_activities')
+      )
     } catch (e) {
       console.warn('Garmin activities sync failed:', (e as Error).message)
     }
@@ -301,14 +316,13 @@ export async function syncGarminMetrics(
 
 // ─── Activities ─────────────────────────────────────────────────────────
 
-async function syncRecentActivities(garmin: GarminConnect, uid: string) {
+export async function syncRecentActivities(garmin: GarminConnect, col: any, limit = 15) {
   const num = (v: any) => (typeof v === 'number' && isFinite(v) ? v : null)
   const acts = await garmin.get<any>(
-    `${GC_API}/activitylist-service/activities/search/activities?limit=15&start=0`
+    `${GC_API}/activitylist-service/activities/search/activities?limit=${limit}&start=0`
   )
   if (!Array.isArray(acts)) return
 
-  const col = adminDb.collection('users').doc(uid).collection('garmin_activities')
   for (const a of acts) {
     if (!a.activityId) continue
     await col.doc(String(a.activityId)).set(
