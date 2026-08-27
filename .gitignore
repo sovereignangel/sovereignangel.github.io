@@ -15,6 +15,7 @@ scripts/firebase-service-account.json
 
 # Sensitive docs (keep local, don't publish)
 LORI_PERSONAL_CONTEXT.md
+MENTAL_OS.md
 THESIS_ENGINE_PHILOSOPHY.md
 THESIS_ENGINE_BRAND_STRATEGY.md
 THESIS_ENGINE_PRD.md
@@ -27,3 +28,10 @@ scripts/garmin_sync.log
 
 # Mahamudra recordings — served from Firebase Storage, never committed
 app/mahamudra/recordings/*.m4a
+
+# Its own git repository — a standalone project that happens to live here.
+# Committing it from the parent would only record a broken gitlink.
+connection-insights/
+
+# Local incremental-build cache
+*.tsbuildinfo
