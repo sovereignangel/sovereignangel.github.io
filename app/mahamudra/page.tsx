@@ -13,7 +13,7 @@ const STAGES: { glyph: 1 | 2 | 3 | 4; label: string; title: string; body: string
 const TEACHERS = [
   {
     name: 'Lev Brie',
-    role: 'Facilitator',
+    role: 'Convener · Sundays',
     photo: '/mahamudra/lev-brie.jpg',
     bio: 'A technologist and teacher — engineering and product executive, startup founder, and adjunct professor of computer science at Columbia University. He leads the weekly practice in New York and is authorized to teach Mahāmudrā foundations by Dustin DiPerna.',
   },
@@ -257,7 +257,7 @@ export default function MahamudraPage() {
           <div>
             <div
               className="flex justify-between items-baseline gap-5"
-              style={{ padding: '18px 0', borderTop: `1px solid ${C.border}`, borderBottom: `1px solid ${C.border}` }}
+              style={{ padding: '18px 0', borderTop: `1px solid ${C.border}` }}
             >
               <div>
                 <div className="uppercase" style={{ fontFamily: display, fontSize: 15, letterSpacing: '0.28em', color: C.indigo }}>
@@ -267,6 +267,17 @@ export default function MahamudraPage() {
               </div>
               <div style={{ fontFamily: display, fontSize: 17, letterSpacing: '0.14em', color: C.bronze, whiteSpace: 'nowrap' }}>
                 Weekly
+              </div>
+            </div>
+            <div
+              className="flex justify-between items-baseline gap-5"
+              style={{ padding: '18px 0', borderTop: `1px solid ${C.border}`, borderBottom: `1px solid ${C.border}` }}
+            >
+              <div>
+                <div className="uppercase" style={{ fontFamily: display, fontSize: 15, letterSpacing: '0.28em', color: C.indigo }}>
+                  Convened by
+                </div>
+                <div style={{ fontSize: 17, color: C.inkSoft }}>Lev Brie — authorized to teach Mahāmudrā foundations</div>
               </div>
             </div>
             <p style={{ fontSize: 15, color: C.inkMuted, fontStyle: 'italic', margin: '16px 0 0' }}>
