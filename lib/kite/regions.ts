@@ -122,6 +122,29 @@ const NYC_SPOT_LIST: KiteSpot[] = [
     favorWhen: { maxKn: 20, bonus: 3 },
   },
   {
+    slug: 'amityville',
+    name: 'Amityville',
+    area: 'Long Island · Great South Bay',
+    // Out on the bay rather than at the shoreline, so the forecast reads
+    // water rather than the mainland behind the launch.
+    lat: 40.65,
+    lon: -73.417,
+    water: 'bay',
+    // The Great South Bay is enclosed: Jones Beach island runs the whole
+    // length of it about 5 km south, so a N wind that blows off the mainland
+    // still has a hard backstop downwind. Nothing here is offshore into open
+    // ocean the way it is at the other two, which is why locals call it
+    // rideable on any direction. The N sector is kept narrow to mark the
+    // fetch-limited, blow-away-from-shore days rather than to forbid them.
+    offshoreSector: [345, 20],
+    onshoreSector: [120, 260],
+    idealWind: 'rideable on any direction — bay is enclosed',
+    tagline: 'butter-flat, waist deep',
+    note: 'The premier spot in the tri-state area and the one worth the drive: miles of waist-deep, butter-flat bay. Launch at the NY Kite Center end of South Bayview Ave — about 90 minutes by car, 65 by train. Jones Beach island closes the bay 5 km south, so N days are fetch-limited rather than dangerous, but they are still the days to ride with someone on the beach. No kiting inside any NY State Park, which rules out Jones Beach and Robert Moses.',
+    priority: 1,
+    favorWhen: { minKn: 14, bonus: 2 },
+  },
+  {
     slug: 'sandy-hook',
     name: 'Sandy Hook',
     area: 'New Jersey · Sandy Hook Bay',
