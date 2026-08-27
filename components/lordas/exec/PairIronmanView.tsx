@@ -21,6 +21,7 @@ import { Track } from '@/components/lordas/design/charts'
 import { PersonSigil, SportGlyph, TrifectaIcon } from '@/components/lordas/design/assets'
 import { fmtRunPace, fmtSwimPace, fmtBikeSpeed, fmtPace } from '@/lib/lordas/pair-training'
 import type { PairIronmanDetail, AthleteDetail } from '@/lib/lordas/ironman-detail'
+import { freshnessOf, stampOf } from '@/lib/lordas/freshness'
 import type { SportNeed } from '@/lib/ironman/rebalance'
 
 const SPORT_LABEL: Record<string, string> = { swim: 'Swim', bike: 'Bike', run: 'Run' }
@@ -34,6 +35,8 @@ function hm(min: number | null | undefined): string {
 const pct = (p: number | null | undefined) => (p == null ? '--' : `${Math.round(p * 100)}%`)
 
 const STANDING_TONE: Record<string, string> = { strong: C.ok, even: C.muted, weak: C.warn }
+
+const FEED_TONE = { fresh: 'none', aging: 'warn', stale: 'crit', never: 'crit' } as const
 
 const NEED_LABEL: Record<SportNeed, string> = {
   volume: 'needs distance',
@@ -50,10 +53,11 @@ const NEED_TONE: Record<SportNeed, 'ok' | 'warn' | 'crit' | 'none'> = {
 
 function ReadinessCard({ a }: { a: AthleteDetail }) {
   const color = OWNER[a.person] ?? C.muted
+  const feed = freshnessOf(a.lastRefresh)
   return (
     <FieldCard
       label={<><PersonSigil person={a.person} size={13} />{a.name}</>}
-      meta={a.lastSync ? `synced ${a.lastSync.slice(5)}` : 'never synced'}
+      meta={`Garmin ${feed.label}`}
       tone={a.readiness.band === 'green' ? 'ok' : a.readiness.band === 'amber' ? 'warn' : a.readiness.band === 'red' ? 'crit' : 'none'}
     >
       <Stat value={a.readiness.score ?? '--'} unit={`/100 ${a.readiness.band}`} color={bandColor(a.readiness.band)} />
@@ -64,7 +68,12 @@ function ReadinessCard({ a }: { a: AthleteDetail }) {
         ))}
       </Rows>
       {a.noData && <Sub>No Garmin data has synced for this account yet.</Sub>}
-      <Foot><Chip>{color === OWNER.lori ? 'sun' : 'lens'}</Chip></Foot>
+      <Foot>
+        {feed.level !== 'fresh' && (
+          <Chip tone={FEED_TONE[feed.level]} title={feed.iso ?? undefined}>Feed {feed.label}</Chip>
+        )}
+        {a.lastSync && <Chip>Newest reading {a.lastSync.slice(5)}</Chip>}
+      </Foot>
     </FieldCard>
   )
 }
@@ -341,6 +350,7 @@ export default function PairIronmanView() {
   }
 
   const today = data.today
+  const feed = freshnessOf(data.feedRefreshedAt)
 
   return (
     <div className="lordas-wrap">
@@ -348,7 +358,17 @@ export default function PairIronmanView() {
         title="Ironman"
         subtitle={data.races.map((r) => `${r.location} T−${r.days}`).join(' · ')}
         current="ironman"
-        right={<TrifectaIcon size={20} color={C.muted} />}
+        right={
+          <span style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+            <span className="lordas-mono" style={{
+              fontSize: 10, letterSpacing: '.1em',
+              color: feed.level === 'fresh' ? C.faint : feed.level === 'aging' ? C.warn : C.crit,
+            }}>
+              Garmin {feed.label}
+            </span>
+            <TrifectaIcon size={20} color={C.muted} />
+          </span>
+        }
       />
 
       <Seam cols={4}>

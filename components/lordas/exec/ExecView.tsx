@@ -25,8 +25,12 @@ import { gcalUrl, fmtWindow, type ExecWindDay, type SpotStatus } from '@/lib/exe
 import { precipLabel } from '@/lib/kite/lithuania-spots'
 import type { LordasOrders, LordasWindDay } from '@/lib/lordas/exec'
 import type { AthletePrescription, PairDay } from '@/lib/lordas/pair-training'
+import { freshnessOf, stampOf } from '@/lib/lordas/freshness'
 
 const TZ = 'Europe/Vilnius'
+
+/** A feed that stopped uploading looks exactly like a rest day unless said. */
+const FEED_TONE = { fresh: 'none', aging: 'warn', stale: 'crit', never: 'crit' } as const
 const PACED = new Set(['swim', 'bike', 'run', 'brick'])
 
 function fmtDate(date: string): string {
@@ -121,11 +125,12 @@ function AthleteCard({ a }: { a: AthletePrescription }) {
   const color = OWNER[a.person] ?? C.muted
   const active = a.sessions.filter((s) => s.sport !== 'rest')
   const band = a.readiness.band
+  const feed = freshnessOf(a.lastRefresh)
 
   return (
     <FieldCard
       label={<><PersonSigil person={a.person} size={13} />{a.name}</>}
-      meta={`readiness ${a.readiness.score ?? '--'}`}
+      meta={feed.level === 'fresh' ? feed.label : undefined}
       tone={band === 'green' ? 'ok' : band === 'amber' ? 'warn' : band === 'red' ? 'crit' : 'none'}
     >
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
@@ -154,6 +159,11 @@ function AthleteCard({ a }: { a: AthletePrescription }) {
       )}
 
       <Foot>
+        {feed.level !== 'fresh' && (
+          <Chip tone={FEED_TONE[feed.level]} title={feed.iso ?? undefined}>
+            Garmin {feed.label}
+          </Chip>
+        )}
         <Chip>{a.totalMin}min total</Chip>
         {a.readiness.factors.slice(0, 2).map((f) => (
           <Chip key={f.label}>{f.label} {f.value}</Chip>
@@ -223,6 +233,8 @@ export default function ExecView() {
 
   const today = data.training.today
   const race = data.races[0]
+  // The orders are only as current as the staler of the two feeds.
+  const feed = freshnessOf(data.feedRefreshedAt)
   const rideable = data.wind.today.statuses.filter((s) => s.state === 'rideable').length
 
   return (
@@ -232,11 +244,12 @@ export default function ExecView() {
         subtitle={`${fmtDate(data.date)} · ${data.generatedLabel} LT`}
         current="exec"
         right={
-          race ? (
-            <span className="lordas-mono" style={{ fontSize: 10, color: C.faint, letterSpacing: '.1em' }}>
-              {race.name.replace('Ironman 70.3 ', '')} T&minus;{race.days}
+          <span className="lordas-mono" style={{ fontSize: 10, color: C.faint, letterSpacing: '.1em', textAlign: 'right', lineHeight: 1.6 }}>
+            {race && <>{race.name.replace('Ironman 70.3 ', '')} T&minus;{race.days}<br /></>}
+            <span style={{ color: feed.level === 'fresh' ? C.faint : feed.level === 'aging' ? C.warn : C.crit }}>
+              Garmin {feed.label}
             </span>
-          ) : null
+          </span>
         }
       />
 
@@ -316,6 +329,10 @@ export default function ExecView() {
         A spot the primary model calls offshore, over the gust cap, or rained out is never recommended, even when the
         second model finds a window there. Readiness comes from each person&apos;s own Garmin; pace targets from each
         person&apos;s own distance-weighted work over the last six weeks. Calendar events land in Palanga time.
+        {data.feedRefreshedAt && (
+          <> Garmin last refreshed {stampOf(data.feedRefreshedAt)} LT, {feed.label} — every readiness number and
+          pace target above is computed from that pull, not from live data.</>
+        )}
       </p>
     </div>
   )

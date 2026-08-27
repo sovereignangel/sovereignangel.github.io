@@ -50,6 +50,8 @@ export interface LordasOrders {
   wind: { today: LordasWindDay; tomorrow: LordasWindDay; stale: boolean }
   training: { today: PairDay; tomorrow: PairDay }
   races: RaceCountdown[]
+  /** Oldest of the two Garmin feeds — the orders are only as current as that */
+  feedRefreshedAt: string | null
 }
 
 function countdowns(date: string): RaceCountdown[] {
@@ -109,6 +111,10 @@ export async function buildLordasOrders(
     },
     training: { today: pairToday, tomorrow: pairTomorrow },
     races: countdowns(date),
+    feedRefreshedAt: (() => {
+      const r = pairToday.athletes.map((a) => a.lastRefresh).filter(Boolean) as string[]
+      return r.length === pairToday.athletes.length ? r.sort()[0] : null
+    })(),
   }
 }
 

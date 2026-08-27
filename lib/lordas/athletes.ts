@@ -86,6 +86,38 @@ export interface AthleteData {
   activities: GarminActivity[]
   /** True when nothing has ever synced for this athlete */
   empty: boolean
+  /**
+   * When the sync last ran, as an ISO string — not the date of the newest
+   * reading. The two come apart exactly when it matters: a watch that has not
+   * uploaded for two days still reports a "latest" date of two days ago, which
+   * looks like a rest day rather than a gap in the feed.
+   */
+  lastRefresh: string | null
+  /** Newest date any reading covers, which is a different question */
+  latestReading: string | null
+}
+
+/** Firestore Timestamp, a raw {seconds}, or an ISO string — all end up ISO. */
+function toIso(value: unknown): string | null {
+  if (!value) return null
+  const v = value as { toDate?: () => Date; seconds?: number; _seconds?: number }
+  if (typeof v.toDate === 'function') return v.toDate().toISOString()
+  const secs = v.seconds ?? v._seconds
+  if (typeof secs === 'number') return new Date(secs * 1000).toISOString()
+  if (typeof value === 'string') {
+    const d = new Date(value)
+    return isNaN(d.getTime()) ? null : d.toISOString()
+  }
+  return null
+}
+
+function newestSync(docs: Array<Record<string, unknown>>): string | null {
+  let best: string | null = null
+  for (const doc of docs) {
+    const iso = toIso(doc.syncedAt)
+    if (iso && (!best || iso > best)) best = iso
+  }
+  return best
 }
 
 /** Recent recovery metrics + activities, enough for readiness and pace profiles. */
@@ -97,12 +129,26 @@ export async function loadAthleteData(id: LordasPerson): Promise<AthleteData> {
       cols.metrics.orderBy('date', 'desc').limit(35).get(),
       cols.activities.orderBy('date', 'desc').limit(80).get(),
     ])
-    const metrics = metricsSnap.docs.map((d: any) => d.data() as GarminMetrics)
-    const activities = activitiesSnap.docs.map((d: any) => d.data() as GarminActivity)
-    return { athlete: a, metrics, activities, empty: metrics.length === 0 && activities.length === 0 }
+    const metricDocs = metricsSnap.docs.map((d: any) => d.data() as Record<string, unknown>)
+    const activityDocs = activitiesSnap.docs.map((d: any) => d.data() as Record<string, unknown>)
+    const metrics = metricDocs as unknown as GarminMetrics[]
+    const activities = activityDocs as unknown as GarminActivity[]
+
+    // Either collection proves the account was reached, so take the later.
+    const syncs = [newestSync(metricDocs), newestSync(activityDocs)].filter(Boolean) as string[]
+    const dates = metrics.map((m) => m.date).filter(Boolean).sort()
+
+    return {
+      athlete: a,
+      metrics,
+      activities,
+      empty: metrics.length === 0 && activities.length === 0,
+      lastRefresh: syncs.length ? syncs.sort().slice(-1)[0] : null,
+      latestReading: dates.length ? dates[dates.length - 1] : null,
+    }
   } catch (e) {
     console.error(`[lordas/athletes] load failed for ${id}:`, e)
-    return { athlete: a, metrics: [], activities: [], empty: true }
+    return { athlete: a, metrics: [], activities: [], empty: true, lastRefresh: null, latestReading: null }
   }
 }
 

@@ -152,6 +152,10 @@ export interface AthletePrescription {
   person: LordasPerson
   name: string
   color: string
+  /** When this athlete's Garmin last synced, ISO — not the newest reading */
+  lastRefresh: string | null
+  /** Newest date any reading covers, which is a different question */
+  latestReading: string | null
   readiness: Readiness
   profile: PaceProfile
   goals: RaceGoals
@@ -189,6 +193,8 @@ function prescribe(data: AthleteData, date: string, partner?: AthleteData): Athl
     person: data.athlete.id,
     name: data.athlete.name,
     color: data.athlete.color,
+    lastRefresh: data.lastRefresh,
+    latestReading: data.latestReading,
     readiness,
     profile,
     goals,

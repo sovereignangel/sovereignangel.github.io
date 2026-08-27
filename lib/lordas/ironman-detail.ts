@@ -60,11 +60,16 @@ export interface AthleteDetail {
   /** Sessions logged in the block that matched no planned session */
   extras: number
   noData: boolean
+  /** Newest date any reading covers */
   lastSync: string | null
+  /** When the sync itself last ran, ISO */
+  lastRefresh: string | null
 }
 
 export interface PairIronmanDetail {
   date: string
+  /** Oldest of the two athletes' refreshes — the page is only as fresh as that */
+  feedRefreshedAt: string | null
   races: { name: string; date: string; days: number; location: string }[]
   today: PairDay
   athletes: AthleteDetail[]
@@ -116,7 +121,7 @@ function detailFor(data: AthleteData, today: string, partner?: AthleteData): Ath
     weekMap.set(wk, week)
   }
 
-  const lastSync = data.metrics.length ? data.metrics.map((m) => m.date).sort().slice(-1)[0] : null
+  const lastSync = data.latestReading
 
   return {
     person: data.athlete.id,
@@ -136,13 +141,17 @@ function detailFor(data: AthleteData, today: string, partner?: AthleteData): Ath
     extras,
     noData: data.empty,
     lastSync,
+    lastRefresh: data.lastRefresh,
   }
 }
 
 export async function buildPairIronmanDetail(date: string = todayLocal()): Promise<PairIronmanDetail> {
   const athletes = await loadBothAthletes()
+  const refreshes = athletes.map((a) => a.lastRefresh).filter(Boolean) as string[]
   return {
     date,
+    // A pair page is only as current as its staler half.
+    feedRefreshedAt: refreshes.length === athletes.length ? refreshes.sort()[0] : null,
     races: [RACE, RACE_NYC]
       .map((r) => ({ name: r.name, date: r.date, days: daysToRace(date, r.date), location: r.location }))
       .filter((r) => r.days >= 0),
