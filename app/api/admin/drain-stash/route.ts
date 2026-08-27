@@ -160,8 +160,12 @@ async function drainPendingMeetings(
         headers: { 'content-type': 'application/json', 'x-inbox-secret': secret },
         body: JSON.stringify({
           wave_session_id: row.wave_session_id,
-          title: row.wave_session_title || 'Untitled',
-          transcript: row.transcript_text,
+          // Field names must match the stash writer in
+          // app/api/telegram/webhook/route.ts (handleWaveCallback), which
+          // writes `title` / `transcript`. The `wave_session_title` /
+          // `transcript_text` fallbacks cover any older stash rows.
+          title: row.title || row.wave_session_title || 'Untitled',
+          transcript: row.transcript ?? row.transcript_text,
           segments: row.segments || [],
           attendees: [],
           duration_seconds: row.duration_seconds || 0,
