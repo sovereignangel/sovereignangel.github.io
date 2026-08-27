@@ -1,5 +1,15 @@
 'use client'
 
+/**
+ * Adventure scheming — archived, not deleted.
+ *
+ * This was the Scheming tab on the Lordas root and a sixth item in the nav.
+ * Both are gone; the page is not linked from anywhere. It still works if you
+ * type the URL, still reads the same PIN-gated endpoint, and the votes,
+ * preferences and summer plan behind it are untouched in Firestore. Kept so
+ * that picking it back up is a decision rather than an excavation.
+ */
+
 export const dynamic = 'force-dynamic'
 
 import { useState, useEffect, useCallback } from 'react'

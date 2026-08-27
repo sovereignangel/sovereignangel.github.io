@@ -1,11 +1,16 @@
 'use client'
 
 /**
- * The Lordas root — Goals, Insights and Scheming.
+ * The Lordas root — Goals and Insights.
  *
- * Exec and Ironman are their own routes; these three are tab state on one
- * page because they share a single fetch. One header, one nav, and each tab
- * states its own job before the cards start.
+ * Exec and Ironman are their own routes; these two are tab state on one page
+ * because they share a single fetch. One header, one nav, and each tab states
+ * its own job before the cards start.
+ *
+ * Scheming used to be the third tab. It is archived rather than deleted: the
+ * fetch still returns its data, the components are untouched, and the page
+ * still stands at /lordas/adventures for anyone who types it. Nothing links
+ * there.
  */
 
 import { useState, useEffect, useCallback } from 'react'
@@ -18,12 +23,11 @@ import { GrowthPillar } from '@/components/lordas/GrowthPillar'
 import { AlignmentPillar } from '@/components/lordas/AlignmentPillar'
 import { SessionTimeline } from '@/components/lordas/SessionTimeline'
 import { TheorySection } from '@/components/lordas/TheorySection'
-import { AdventuresView } from '@/components/lordas/AdventuresView'
 import { GoalsView } from '@/components/lordas/GoalsView'
 import { EmptyOutline } from '@/components/lordas/EmptyOutline'
 import type {
   RelationshipConversation, RelationshipTheme, RelationshipValue, RelationshipSnapshot,
-  SummerPlan, AdventureComment, RelationalSpeaker, LordasGoalsData, LordasPerson,
+  SummerPlan, AdventureComment, LordasGoalsData, LordasPerson,
 } from '@/lib/types'
 
 interface DashboardData {
@@ -31,17 +35,17 @@ interface DashboardData {
   themes: RelationshipTheme[]
   values: RelationshipValue[]
   snapshots: RelationshipSnapshot[]
+  /** Still returned by the API and still used by the archived /lordas/adventures page */
   summerPlan?: SummerPlan
   adventureComments?: AdventureComment[]
   goals?: LordasGoalsData
 }
 
-type RootTab = Extract<LordasModule, 'goals' | 'insights' | 'scheming'>
+type RootTab = Extract<LordasModule, 'goals' | 'insights'>
 
 const SUBTITLE: Record<RootTab, string> = {
   goals: 'Who we are each becoming',
   insights: 'What the relationship is doing',
-  scheming: 'Where we are going next',
 }
 
 export default function LordasPage() {
@@ -113,21 +117,6 @@ export default function LordasPage() {
     [pin, person, fetchData]
   )
 
-  const handleAddComment = async (author: RelationalSpeaker, text: string) => {
-    if (!pin) return
-    try {
-      const res = await fetch(`/api/lordas/adventures/comments?pin=${encodeURIComponent(pin)}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ author, text }),
-      })
-      if (!res.ok) throw new Error('Failed to post comment')
-      await fetchData(pin)
-    } catch (err) {
-      console.error('Error posting comment:', err)
-    }
-  }
-
   if (!mounted || !pin) return <PinGate onSubmit={handlePin} error={error} />
   if (!person) return <PersonPicker onSelect={handlePerson} />
 
@@ -138,18 +127,16 @@ export default function LordasPage() {
   const conversations = data?.conversations || []
   const themes = data?.themes || []
   const values = data?.values || []
-  const summerPlan = data?.summerPlan || null
-  const adventureComments = data?.adventureComments || []
   const goals = data?.goals || null
 
   return (
     <div className="lordas-wrap">
       <LordasHeader
-        title={tab === 'goals' ? 'Goals' : tab === 'insights' ? 'Insights' : 'Scheming'}
+        title={tab === 'goals' ? 'Goals' : 'Insights'}
         subtitle={SUBTITLE[tab]}
         current={tab}
         onSelect={(m) => {
-          if (m === 'goals' || m === 'insights' || m === 'scheming') setTab(m)
+          if (m === 'goals' || m === 'insights') setTab(m)
         }}
         right={<PersonSwitch person={person} onChange={handlePerson} />}
       />
@@ -202,10 +189,6 @@ export default function LordasPage() {
             )}
           </>
         )
-      )}
-
-      {tab === 'scheming' && (
-        <AdventuresView summerPlan={summerPlan} comments={adventureComments} onAddComment={handleAddComment} />
       )}
     </div>
   )

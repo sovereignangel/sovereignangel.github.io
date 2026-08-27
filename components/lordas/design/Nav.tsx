@@ -3,21 +3,36 @@
 /**
  * The one nav for the whole ecosystem.
  *
- * Goals, Insights and Scheming are tab state on the root page; Exec and
- * Ironman are their own routes; Wind is an outbound link to the main site's
- * forecast, which Lordas links and never rebuilds. Mixing all six here means
- * the reader sees one navigation, not two systems bolted together.
+ * Goals and Insights are tab state on the root page; Exec and Ironman are
+ * their own routes; Wind is an outbound link to the main site's forecast,
+ * which Lordas links and never rebuilds. Mixing them all here means the
+ * reader sees one navigation, not two systems bolted together.
+ *
+ * Scheming was the sixth item and is archived: the code and the standalone
+ * route at /lordas/adventures are untouched and the Firestore data is intact,
+ * but nothing links to it any more. Restoring it is re-adding one ITEMS entry
+ * and putting 'scheming' back in LordasModule.
  */
 
 import { C } from './tokens'
 import {
-  LordasMarkCompact, CompassIcon, LightbulbIcon, FlagIcon,
+  LordasMark, CompassIcon, LightbulbIcon,
   TrifectaIcon, SummitIcon, KiteIcon,
 } from './assets'
 
-export type LordasModule = 'goals' | 'insights' | 'scheming' | 'exec' | 'ironman'
+export type LordasModule = 'goals' | 'insights' | 'exec' | 'ironman'
 
 export const WIND_URL = 'https://www.loricorpuz.com/wind'
+
+/**
+ * The house line, under the mark on every screen.
+ *
+ * It is the mark said in three words. A source is undirected by nature and a
+ * lens has nothing of its own to give; the order is the whole claim, which is
+ * why it is "then" and not "and". Widen first, aim second — reverse it and you
+ * get precision about the wrong thing, which is the expensive failure.
+ */
+export const LORDAS_MOTTO = 'Source then aim.'
 
 /** Routes are served both from lordas.loricorpuz.com and from /lordas. */
 export function lordasHref(path: string): string {
@@ -37,7 +52,6 @@ const ITEMS: {
   { id: 'ironman', label: 'Ironman', Icon: TrifectaIcon, href: '/ironman' },
   { id: 'goals', label: 'Goals', Icon: SummitIcon },
   { id: 'insights', label: 'Insights', Icon: LightbulbIcon },
-  { id: 'scheming', label: 'Scheming', Icon: FlagIcon },
   { id: 'wind', label: 'Wind', Icon: KiteIcon, href: WIND_URL, external: true },
 ]
 
@@ -67,14 +81,14 @@ export function LordasNav({
   onSelect,
 }: {
   current: LordasModule
-  /** Provided on the root page, where three of the six are tab state */
+  /** Provided on the root page, where two of the items are tab state */
   onSelect?: (m: LordasModule) => void
 }) {
   return (
     <nav style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }} aria-label="Lordas">
       {ITEMS.map(({ id, label, Icon, href, external }) => {
         const active = id === current
-        const tab = (id === 'goals' || id === 'insights' || id === 'scheming') && onSelect
+        const tab = (id === 'goals' || id === 'insights') && onSelect
         const content = (
           <>
             <Icon size={13} color={active ? C.ground : C.muted} />
@@ -106,6 +120,11 @@ export function LordasNav({
 /**
  * Header for every module. The mark is the union — sun through lens — so the
  * relationship's own symbol is what sits above every screen.
+ *
+ * It runs at the full 40px drawing rather than the nav-sized reduction. The
+ * corner of the page is the one place the whole gesture has room to read:
+ * source, glass, beam, burn, smoke. Everywhere smaller than this the smoke and
+ * the ray detail collapse into noise and the compact mark is the right call.
  */
 export function LordasHeader({
   title,
@@ -133,35 +152,50 @@ export function LordasHeader({
         borderBottom: `1px solid ${C.rule}`,
       }}
     >
-      <div style={{ display: 'flex', gap: 11, alignItems: 'center', minWidth: 0 }}>
-        <LordasMarkCompact size={30} />
-        <div style={{ minWidth: 0 }}>
-          <h1
-            style={{
-              margin: 0,
-              fontFamily: 'var(--lordas-display)',
-              fontSize: 21,
-              fontWeight: 600,
-              letterSpacing: '-.02em',
-              lineHeight: 1.05,
-            }}
-          >
-            {title}
-          </h1>
-          {subtitle ? (
-            <div
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 7, minWidth: 0 }}>
+        <div style={{ display: 'flex', gap: 11, alignItems: 'center', minWidth: 0 }}>
+          <LordasMark size={40} />
+          <div style={{ minWidth: 0 }}>
+            <h1
               style={{
-                fontFamily: 'var(--lordas-mono)',
-                fontSize: 9.5,
-                letterSpacing: '.12em',
-                textTransform: 'uppercase',
-                color: C.faint,
-                marginTop: 3,
+                margin: 0,
+                fontFamily: 'var(--lordas-display)',
+                fontSize: 21,
+                fontWeight: 600,
+                letterSpacing: '-.02em',
+                lineHeight: 1.05,
               }}
             >
-              {subtitle}
-            </div>
-          ) : null}
+              {title}
+            </h1>
+            {subtitle ? (
+              <div
+                style={{
+                  fontFamily: 'var(--lordas-mono)',
+                  fontSize: 9.5,
+                  letterSpacing: '.12em',
+                  textTransform: 'uppercase',
+                  color: C.faint,
+                  marginTop: 3,
+                }}
+              >
+                {subtitle}
+              </div>
+            ) : null}
+          </div>
+        </div>
+        {/* Wider tracking than the subtitle above it, so it reads as a
+            wordmark line and not as another description of this screen. */}
+        <div
+          style={{
+            fontFamily: 'var(--lordas-mono)',
+            fontSize: 9,
+            letterSpacing: '.28em',
+            textTransform: 'uppercase',
+            color: C.faint,
+          }}
+        >
+          {LORDAS_MOTTO}
         </div>
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
