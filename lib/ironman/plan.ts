@@ -62,6 +62,78 @@ export function nextRace(today: string) {
 
 export const KM_PER_MILE = 1.609344
 
+/**
+ * Races already in the legs.
+ *
+ * A finished race is stronger evidence than any training extrapolation: it
+ * carries the transition cost, the nutrition, and the pacing decisions that
+ * only happen with a number on. Stored as raw seconds per leg — the same
+ * reasoning as RaceGoals, that a split survives a change of course where a
+ * pace number does not.
+ */
+export interface PriorRace {
+  name: string
+  date: string
+  location: string
+  swimKm: number
+  bikeKm: number
+  runKm: number
+  /** Seconds, leg by leg, in race order */
+  swimSec: number
+  t1Sec: number
+  bikeSec: number
+  t2Sec: number
+  runSec: number
+  totalSec: number
+}
+
+export const PRIOR_RACES: PriorRace[] = [
+  {
+    name: 'Oceanlava Lanzarote',
+    date: '2023-05-14',
+    location: 'Lanzarote',
+    swimKm: 1.9,
+    bikeKm: 90,
+    runKm: 21.1,
+    swimSec: 33 * 60 + 4, //      33:04
+    t1Sec: 8 * 60 + 27, //         8:27
+    bikeSec: 3 * 3600 + 40 * 60 + 50, // 3:40:50
+    t2Sec: 6 * 60 + 49, //         6:49
+    runSec: 2 * 3600 + 1 * 60 + 24, //   2:01:24 (derived: total less the four timed legs)
+    totalSec: 6 * 3600 + 30 * 60 + 34, // 6:30:34
+  },
+]
+
+/** The prior race at the same distance as `race`, most recent first, or undefined */
+export function priorRaceAtDistance(race: { swimKm: number; bikeKm: number; runKm: number }) {
+  return [...PRIOR_RACES]
+    .sort((a, b) => b.date.localeCompare(a.date))
+    .find((r) => r.swimKm === race.swimKm && r.bikeKm === race.bikeKm && r.runKm === race.runKm)
+}
+
+/** Prior-race splits said the way each discipline is normally spoken about */
+export function priorRaceDisplay(r: PriorRace) {
+  return {
+    swimSecPer100m: r.swimSec / (r.swimKm * 10),
+    bikeKmh: r.bikeKm / (r.bikeSec / 3600),
+    bikeMph: r.bikeKm / KM_PER_MILE / (r.bikeSec / 3600),
+    runMinPerKm: r.runSec / 60 / r.runKm,
+    runPaceMinPerMile: r.runSec / 60 / (r.runKm / KM_PER_MILE),
+    transitionSec: r.t1Sec + r.t2Sec,
+  }
+}
+
+/** Prior race minus goal, in seconds per leg. Positive = the race was slower. */
+export function priorRaceVsGoal(r: PriorRace, goals: RaceGoals = GOALS) {
+  return {
+    swim: r.swimSec - goals.swimMinutes * 60,
+    bike: r.bikeSec - goals.bikeMinutes * 60,
+    run: r.runSec - goals.runMinutes * 60,
+    transitions: r.t1Sec + r.t2Sec - goals.transitionMinutes * 60,
+    total: r.totalSec - goalSplits(goals).total * 60,
+  }
+}
+
 export type AthleteId = 'lori' | 'aidas'
 /** The three disciplines that carry a time. Strength and rest do not. */
 export type Sport3 = 'swim' | 'bike' | 'run'
