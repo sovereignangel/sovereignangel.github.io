@@ -17,8 +17,29 @@ import {
   type DayStatus,
 } from '@/lib/ironman/adapt'
 import { SportIcon, FinishFlag } from '@/components/ironman/IronmanIcons'
+import {
+  Seam, FieldCard, Sub, Row, Rows, Foot, Chip, Hover, Ticker, Disclosure, Tearsheet,
+  type SheetRow,
+} from '@/components/lordas/design/primitives'
+import { raceTargets, paceBoth } from '@/lib/ironman/pace'
+// Pure function, no lordas state — imported rather than re-implemented so both
+// pages compute the six-week average from exactly the same rule.
+import { paceProfile } from '@/lib/lordas/pair-training'
+import './ironsheet.css'
 
 // ── Shared UI ─────────────────────────────────────────────────────────────
+
+/**
+ * Card, unless the caller is already inside one. These panels are reused both
+ * standalone and nested inside a field card, and a card inside a card reads as
+ * a mistake.
+ */
+function Shell({ bare, title, right, children }: {
+  bare?: boolean; title: string; right?: React.ReactNode; children: React.ReactNode
+}) {
+  if (bare) return <>{children}</>
+  return <Card title={title} right={right}>{children}</Card>
+}
 
 const IRON_SHADOW = 'shadow-[0_2px_12px_rgba(94,31,36,0.06)]'
 
@@ -114,124 +135,6 @@ function probColor(p: number | null): string {
   return p >= 0.5 ? '#2d6b4a' : p >= 0.25 ? '#8a6d2f' : '#c94f35'
 }
 
-function GoalsPanel({ activities, metrics, today }: { activities: GarminActivity[]; metrics: GarminMetrics[]; today: string }) {
-  const splits = useMemo(() => goalSplits(), [])
-  const forecast = useMemo(() => computeRaceForecast(activities, metrics, today), [activities, metrics, today])
-
-  // Forecast trend: re-run the model as-of each of the last 14 days, using
-  // only the data that existed then
-  const trend = useMemo(() => {
-    const days: { date: string; p: number | null }[] = []
-    for (let i = 13; i >= 0; i--) {
-      const d = new Date(today + 'T00:00:00Z')
-      d.setUTCDate(d.getUTCDate() - i)
-      const date = d.toISOString().slice(0, 10)
-      days.push({ date, p: computeRaceForecast(activities, metrics, date).allThree })
-    }
-    return days
-  }, [activities, metrics, today])
-
-  const show = goalDisplay()
-  const goalText: Record<string, string> = {
-    swim: `${Math.round(RACE.swimKm * 1000)}m in ${fmtMinSec(GOALS.swimMinutes)}`,
-    bike: `${RACE.bikeKm}km at ${show.bikeMph.toFixed(1)} mph avg`,
-    run: `${RACE.runKm}km at ${fmtMinSec(show.runPaceMinPerMile)} /mile`,
-  }
-  const goalSplit: Record<string, number> = { swim: splits.swim, bike: splits.bike, run: splits.run }
-
-  const rows: DisciplineForecast[] = forecast.disciplines
-
-  return (
-    <Card title={`Race Goals — ${fmtClock(splits.total)} at NYC`}>
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_240px] gap-x-6 gap-y-3">
-        <div>
-          <div className="space-y-2">
-            {rows.map((d) => (
-              <div key={d.sport} className="flex items-center gap-3 flex-wrap">
-                <SportChip sport={d.sport} />
-                <span className="text-[11px] font-semibold text-iron-ink w-[170px] shrink-0">{goalText[d.sport]}</span>
-                <span className="font-mono text-[11px] font-semibold text-iron-ink w-[64px] shrink-0">
-                  {fmtClock(goalSplit[d.sport])}
-                </span>
-                <span className="text-[10px] text-iron-muted flex-1 min-w-[150px] hidden sm:inline">
-                  {d.currentPaceMinKm != null ? (
-                    <>
-                      now <span className="font-mono text-iron-ink">{fmtPace(d.sport, d.currentPaceMinKm)}</span>
-                      {' '}→ race-day <span className="font-mono text-iron-ink">{fmtPace(d.sport, d.projectedPaceMinKm)}</span>
-                      {' '}· {d.n} session{d.n === 1 ? '' : 's'}
-                    </>
-                  ) : (
-                    'no sessions logged yet'
-                  )}
-                </span>
-                <span
-                  className="font-mono text-[14px] font-semibold w-[48px] text-right ml-auto"
-                  style={{ color: probColor(d.probability) }}
-                >
-                  {d.probability == null ? '—' : `${Math.round(d.probability * 100)}%`}
-                </span>
-              </div>
-            ))}
-          </div>
-          <div className="flex items-center gap-3 mt-2.5 pt-2 border-t border-iron-rule-light flex-wrap">
-            <span className="text-[10px] text-iron-muted w-[194px] shrink-0">T1 + T2 transitions</span>
-            <span className="font-mono text-[11px] font-medium text-iron-ink">{fmtClock(splits.transitions)}</span>
-            <span className="text-[10px] text-iron-muted ml-auto">Goal</span>
-            <span className="font-mono text-[14px] font-semibold text-iron-burgundy">{fmtClock(splits.total)}</span>
-            <span className="text-[10px] text-iron-muted">Forecast</span>
-            <span
-              className="font-mono text-[14px] font-semibold"
-              style={{
-                color:
-                  forecast.forecastTotalMin == null
-                    ? '#8a7c7c'
-                    : forecast.forecastTotalMin <= splits.total
-                      ? '#2d6b4a'
-                      : forecast.forecastTotalMin <= splits.total * 1.05
-                        ? '#8a6d2f'
-                        : '#c94f35',
-              }}
-            >
-              {forecast.forecastTotalMin == null ? '—' : fmtClock(forecast.forecastTotalMin)}
-            </span>
-          </div>
-        </div>
-        <div className="lg:border-l lg:border-iron-rule-light lg:pl-4">
-          <div className="text-[10px] text-iron-muted mb-1">Chance of hitting all three in NYC</div>
-          <div className="font-mono text-[24px] font-semibold leading-none mb-2" style={{ color: probColor(forecast.allThree) }}>
-            {forecast.allThree == null ? '—' : `${Math.round(forecast.allThree * 100)}%`}
-          </div>
-          <div className="text-[10px] text-iron-muted mb-1">Forecast over the last 14 days</div>
-          <div className="flex items-end gap-[3px] h-8 mb-2">
-            {trend.map((d) => (
-              <div
-                key={d.date}
-                title={`${d.date} — ${d.p == null ? 'no data' : Math.round(d.p * 100) + '%'}`}
-                className="w-[7px] rounded-full"
-                style={{
-                  height: `${Math.max(6, (d.p ?? 0) * 100)}%`,
-                  backgroundColor: d.date === today ? '#8f2d33' : '#c3b8b8',
-                }}
-              />
-            ))}
-          </div>
-          <div className="text-[10px] text-iron-muted leading-relaxed">
-            Recomputed on every Garmin sync: recent sessions are pace-adjusted to race distance, trend-projected to the
-            NYC start line ({fmtDate(RACE_NYC.date)}), and scored against each goal — race 1 feeds the model as data.
-            The last 7 days of sleep and HRV nudge the odds
-            {forecast.recoveryAdj !== 0 && (
-              <>
-                {' '}(currently <span className="font-mono" style={{ color: forecast.recoveryAdj > 0 ? '#2d6b4a' : '#c94f35' }}>
-                  {forecast.recoveryAdj > 0 ? '+' : ''}{Math.round(forecast.recoveryAdj * 100)}pts
-                </span>)
-              </>
-            )}.
-          </div>
-        </div>
-      </div>
-    </Card>
-  )
-}
 
 // ── Where the race is ─────────────────────────────────────────────────────
 
@@ -249,82 +152,6 @@ const NEED_TEXT: Record<SportNeed, string> = {
  * percentage off pace — forty minutes on the bike outranks ten in the water
  * however much worse the water looks in percentage terms.
  */
-function LeveragePanel({
-  activities,
-  metrics,
-  today,
-}: {
-  activities: GarminActivity[]
-  metrics: GarminMetrics[]
-  today: string
-}) {
-  const r = useMemo(() => computeRebalance(activities, metrics, today, 'lori'), [activities, metrics, today])
-
-  return (
-    <Card title="Where the Race Is" right={<span className="text-[10px] text-iron-muted">minutes on the table</span>}>
-      <div className="text-[12px] font-semibold text-iron-ink mb-2">{r.headline}</div>
-      <div className="space-y-2">
-        {r.sports.map((g) => (
-          <div key={g.sport}>
-            <div className="flex items-center gap-3 flex-wrap">
-              <SportChip sport={g.sport} />
-              <span className="text-[11px] font-semibold text-iron-ink w-[150px] shrink-0">{NEED_TEXT[g.need]}</span>
-              <span className="font-mono text-[10px] text-iron-muted">
-                hold {fmtRacePace(g.sport, g.target.prescribedPaceMinKm) ?? '—'}
-                {g.target.capped && (
-                  <> · goal {fmtRacePace(g.sport, g.target.goalPaceMinKm)} is {Math.round((g.target.gapPct ?? 0) * 100)}% off</>
-                )}
-              </span>
-              <span
-                className="font-mono text-[14px] font-semibold ml-auto w-[64px] text-right"
-                style={{
-                  color:
-                    g.minutesOverGoal == null ? '#8a7c7c'
-                    : g.minutesOverGoal > 30 ? '#c94f35'
-                    : g.minutesOverGoal > 5 ? '#8a6d2f'
-                    : '#2d6b4a',
-                }}
-              >
-                {g.minutesOverGoal == null ? '—' : `+${Math.round(g.minutesOverGoal)}m`}
-              </span>
-            </div>
-            <div className="text-[10px] text-iron-muted leading-relaxed mt-0.5">{g.why}</div>
-          </div>
-        ))}
-      </div>
-
-      {r.moves.length > 0 && (
-        <div className="mt-3 pt-2 border-t border-iron-rule-light space-y-2">
-          <div className="text-[11px] font-semibold text-iron-ink">Days the plan just rewrote</div>
-          {r.moves.map((m) =>
-            m.after.map((after, i) =>
-              after === m.before[i] ? null : (
-                <div key={`${m.date}-${i}`} className="text-[10px] leading-relaxed">
-                  <div className="font-mono text-iron-muted">{fmtDate(m.date)}</div>
-                  <div className="text-iron-muted line-through">{m.before[i].title} · {m.before[i].durationMin}min {m.before[i].zone}</div>
-                  <div className="text-iron-ink font-semibold">{after.title} · {after.durationMin}min {after.zone}</div>
-                  <div className="text-iron-muted">{after.detail}</div>
-                </div>
-              )
-            )
-          )}
-        </div>
-      )}
-
-      {r.displaced.length > 0 && (
-        <div className="mt-3 pt-2 border-t border-iron-rule-light">
-          <div className="text-[11px] font-semibold text-iron-ink mb-1">Displaced, not rescheduled</div>
-          {r.displaced.map((d, i) => (
-            <div key={i} className="text-[10px] text-iron-muted leading-relaxed">{d}</div>
-          ))}
-          <div className="text-[10px] text-iron-muted leading-relaxed mt-1">{r.displacedNote}</div>
-        </div>
-      )}
-
-      {r.staleNote && <div className="text-[10px] leading-relaxed mt-2" style={{ color: '#8a6d2f' }}>{r.staleNote}</div>}
-    </Card>
-  )
-}
 
 // ── Readiness gauge ───────────────────────────────────────────────────────
 
@@ -366,18 +193,18 @@ function ReadinessBlock({ readiness }: { readiness: Readiness }) {
 
 // ── Today panel ───────────────────────────────────────────────────────────
 
-function TodayPanel({ today, readiness, dayStatus }: { today: string; readiness: Readiness; dayStatus: DayStatus | null }) {
+function TodayPanel({ today, readiness, dayStatus, bare }: { today: string; readiness: Readiness; dayStatus: DayStatus | null; bare?: boolean }) {
   const day = dayStatus?.day
   const adaptation = useMemo(() => (day ? adaptDay(day, readiness) : null), [day, readiness])
 
   if (!day || !adaptation) {
     const past = today > RACE_NYC.date
     return (
-      <Card title="Today">
+      <Shell bare={bare} title="Today">
         <div className="text-[11px] text-iron-muted py-4">
           {past ? 'Both races are behind you. Recover well.' : 'No session planned for today.'}
         </div>
-      </Card>
+      </Shell>
     )
   }
 
@@ -388,7 +215,7 @@ function TodayPanel({ today, readiness, dayStatus }: { today: string; readiness:
     : '#c94f35'
 
   return (
-    <Card title={`Today — ${fmtDate(day.date)} · ${day.phase}`}>
+    <Shell bare={bare} title={`Today — ${fmtDate(day.date)} · ${day.phase}`}>
       <div className="mb-2">
         <span
           className="font-mono text-[9px] uppercase px-1.5 py-0.5 rounded-md border"
@@ -424,52 +251,16 @@ function TodayPanel({ today, readiness, dayStatus }: { today: string; readiness:
           )
         })}
       </div>
-    </Card>
+    </Shell>
   )
 }
 
 // ── Volume progress ───────────────────────────────────────────────────────
 
-function ProgressPanel({ activities, today }: { activities: GarminActivity[]; today: string }) {
-  const progress = useMemo(() => computeProgress(activities, today), [activities, today])
-  return (
-    <Card title="Block Volume — Actual vs Plan">
-      <div className="space-y-3">
-        {progress.map((p) => {
-          const pct = p.plannedKm > 0 ? Math.min(100, Math.round((p.actualKm / p.plannedKm) * 100)) : 0
-          const longestPct = Math.min(100, Math.round((p.longestKm / p.raceKm) * 100))
-          return (
-            <div key={p.sport}>
-              <div className="flex items-baseline justify-between mb-1">
-                <SportChip sport={p.sport} />
-                <span className="font-mono text-[10px] font-medium text-iron-ink">
-                  {p.actualKm}km <span className="text-iron-muted">of {p.plannedKm}km planned to date</span>
-                </span>
-              </div>
-              <div className="h-2 bg-iron-rule-light rounded-full overflow-hidden mb-1">
-                <div
-                  className="h-full rounded-full"
-                  style={{ width: `${pct}%`, backgroundColor: pct >= 80 ? '#2d6b4a' : pct >= 50 ? '#8a6d2f' : '#c94f35' }}
-                />
-              </div>
-              <div className="text-[10px] text-iron-muted">
-                Longest session {p.longestKm}km — {longestPct}% of race {p.raceKm}km
-              </div>
-            </div>
-          )
-        })}
-      </div>
-      <div className="mt-3 pt-2 border-t border-iron-rule-light text-[10px] text-iron-muted">
-        Baseline entering the block: {BASELINE.longestRideKm}km ride · {BASELINE.swimBenchmark.distanceM}m swim in{' '}
-        {BASELINE.swimBenchmark.minutes}min
-      </div>
-    </Card>
-  )
-}
 
 // ── Plan calendar ─────────────────────────────────────────────────────────
 
-function PlanCalendar({ days, today }: { days: DayStatus[]; today: string }) {
+function PlanCalendar({ days, today, bare }: { days: DayStatus[]; today: string; bare?: boolean }) {
   const [expanded, setExpanded] = useState<string | null>(null)
   const phases = useMemo(() => {
     const order: string[] = []
@@ -485,7 +276,7 @@ function PlanCalendar({ days, today }: { days: DayStatus[]; today: string }) {
   }, [days])
 
   return (
-    <Card title="The Plan — Two Start Lines">
+    <Shell bare={bare} title="The Plan — Two Start Lines">
       <div className="space-y-4">
         {phases.map(({ phase, days: phaseDays }) => (
           <div key={phase}>
@@ -589,11 +380,218 @@ function PlanCalendar({ days, today }: { days: DayStatus[]; today: string }) {
           </div>
         ))}
       </div>
-    </Card>
+    </Shell>
   )
 }
 
 // ── Main ──────────────────────────────────────────────────────────────────
+
+const SPORTS3 = ['swim', 'bike', 'run'] as const
+type S3 = (typeof SPORTS3)[number]
+const S3_LABEL: Record<string, string> = { swim: 'Swim', bike: 'Bike', run: 'Run' }
+const S3_COLOR: Record<string, string> = { swim: '#2d5f6b', bike: '#8f2d33', run: '#2d6b4a' }
+
+const NEED_SHORT: Record<SportNeed, string> = {
+  volume: 'distance', intensity: 'speed', both: 'distance + speed',
+  holding: 'holding', unknown: 'evidence',
+}
+
+function splitOf(min: number | null | undefined): string {
+  if (min == null) return '—'
+  const h = Math.floor(min / 60)
+  const m = Math.round(min % 60)
+  return h > 0 ? `${h}:${String(m).padStart(2, '0')}` : `${m}m`
+}
+const pctOf = (p: number | null | undefined) => (p == null ? '—' : `${Math.round(p * 100)}%`)
+const kmOf = (v: number | null | undefined) => (v == null ? '—' : `${Math.round(v)}km`)
+
+/**
+ * A pace in US units — the way the race is scored — with the metric reading
+ * behind a hover. Everything underneath stays metric, so the second reading
+ * is one hover away rather than discarded.
+ */
+function PaceCell({ sport, minKm, title, extra }: {
+  sport: S3; minKm: number | null; title: string; extra?: React.ReactNode
+}) {
+  const both = paceBoth(sport, minKm)
+  if (!both) return <span style={{ color: 'var(--lordas-faint)' }}>—</span>
+  return (
+    <Hover
+      panel={
+        <>
+          <div className="hd">{S3_LABEL[sport]} · {title}</div>
+          <div className="k"><span>US</span><b>{both.primary}</b></div>
+          <div className="k"><span>Metric</span><b>{both.secondary}</b></div>
+          {extra}
+        </>
+      }
+    >
+      {both.primary}
+    </Hover>
+  )
+}
+
+/**
+ * Goals, capability, the forecast and the block, as one institutional sheet.
+ * Disciplines across, metrics down: a row compares the three sports on one
+ * measure, a column is one sport's whole case.
+ */
+function RaceSheet({ activities, metrics, today }: {
+  activities: GarminActivity[]; metrics: GarminMetrics[]; today: string
+}) {
+  const forecast = useMemo(() => computeRaceForecast(activities, metrics, today), [activities, metrics, today])
+  const rebalance = useMemo(() => computeRebalance(activities, metrics, today, 'lori'), [activities, metrics, today])
+  const progress = useMemo(() => computeProgress(activities, today), [activities, today])
+  const targets = useMemo(() => raceTargets(forecast, GOALS), [forecast])
+  const profile = useMemo(() => paceProfile(activities, today), [activities, today])
+  const splits = useMemo(() => goalSplits(), [])
+  const show = useMemo(() => goalDisplay(), [])
+
+  const goalPaceMinKm = (s: S3) =>
+    s === 'swim' ? (show.swimSecPer100m * 10) / 60 : s === 'bike' ? 60 / show.bikeKmh : show.runMinPerKm
+  const goalSplitMin = (s: S3) =>
+    s === 'swim' ? GOALS.swimMinutes : s === 'bike' ? GOALS.bikeMinutes : GOALS.runMinutes
+
+  const cols = SPORTS3.map((s) => ({
+    s,
+    d: forecast.disciplines.find((x) => x.sport === s),
+    t: targets[s],
+    g: rebalance.sports.find((x) => x.sport === s),
+    p: progress.find((x) => x.sport === s),
+  }))
+
+  const probColor = (p: number | null | undefined) =>
+    p == null ? 'var(--lordas-faint)' : p >= 0.5 ? '#2d6b4a' : p >= 0.25 ? '#8a6420' : '#c94f35'
+
+  const rows: SheetRow[] = [
+    { label: 'Goal Total', cells: SPORTS3.map((s) => splitOf(goalSplitMin(s))) },
+    {
+      label: 'Goal Pace',
+      cells: SPORTS3.map((s) => <PaceCell key={s} sport={s} minKm={goalPaceMinKm(s)} title="goal pace" />),
+    },
+    {
+      label: 'Current Pace',
+      cells: cols.map((c, i) => (
+        <PaceCell
+          key={i}
+          sport={c.s}
+          minKm={c.d?.currentPaceMinKm ?? null}
+          title="where the pace stands"
+          extra={
+            <>
+              <div className="k"><span>Goal</span><b>{paceBoth(c.s, goalPaceMinKm(c.s))?.primary}</b></div>
+              {c.t?.prescribedPaceMinKm != null && (
+                <div className="k"><span>Hold today</span><b>{paceBoth(c.s, c.t.prescribedPaceMinKm)?.primary}</b></div>
+              )}
+              {c.t?.capped && <div className="k"><span>Note</span><b>goal out of reach</b></div>}
+            </>
+          }
+        />
+      )),
+    },
+    {
+      label: '6w avg Pace',
+      cells: SPORTS3.map((s) => {
+        const minKm =
+          s === 'swim' ? (profile.swimSecPer100m != null ? (profile.swimSecPer100m * 10) / 60 : null)
+            : s === 'bike' ? (profile.bikeKmh != null ? 60 / profile.bikeKmh : null)
+            : profile.runMinPerKm
+        return <PaceCell key={s} sport={s} minKm={minKm} title="six-week average" />
+      }),
+    },
+    { label: 'Projected Total', cells: cols.map((c) => splitOf(c.d?.projectedSplitMin)) },
+    {
+      label: 'Goal Probability',
+      emphasis: true,
+      cells: cols.map((c, i) => (
+        <Hover
+          key={i}
+          panel={
+            <>
+              <div className="hd">{S3_LABEL[c.s]} target</div>
+              <div className="k"><span>Goal split</span><b>{splitOf(goalSplitMin(c.s))}</b></div>
+              <div className="k"><span>Goal pace</span><b>{paceBoth(c.s, goalPaceMinKm(c.s))?.primary}</b></div>
+              <div className="k"><span>Projected</span><b>{splitOf(c.d?.projectedSplitMin)}</b></div>
+              <div className="k"><span>Evidence</span><b>{c.d?.n ?? 0} sessions</b></div>
+            </>
+          }
+        >
+          {pctOf(c.d?.probability)}
+        </Hover>
+      )),
+      colors: cols.map((c) => probColor(c.d?.probability)),
+    },
+    {
+      label: 'Goal Spread',
+      cells: cols.map((c) => (c.g?.minutesOverGoal == null ? '—' : `+${Math.round(c.g.minutesOverGoal)}min`)),
+      colors: cols.map((c) =>
+        c.g?.minutesOverGoal == null ? 'var(--lordas-faint)'
+          : c.g.minutesOverGoal > 30 ? '#c94f35'
+          : c.g.minutesOverGoal > 5 ? '#8a6420'
+          : '#2d6b4a'
+      ),
+    },
+  ]
+
+  const evidence: SheetRow[] = [
+    { label: 'Sessions logged', cells: cols.map((c) => c.d?.n ?? 0) },
+    { label: 'Volume, block', cells: cols.map((c) => kmOf(c.p?.actualKm)) },
+    { label: 'Planned to date', cells: cols.map((c) => kmOf(c.p?.plannedKm)) },
+    { label: 'Longest', cells: cols.map((c) => kmOf(c.g?.longestKm ?? c.p?.longestKm)) },
+    { label: 'Race distance', cells: cols.map((c) => kmOf(c.p?.raceKm)) },
+    { label: 'Last 7 days', cells: cols.map((c) => (c.g?.recentMin != null ? `${Math.round(c.g.recentMin)}min` : '—')) },
+    {
+      label: 'Standing',
+      cells: cols.map((c) => c.g?.standing ?? '—'),
+      colors: cols.map((c) => (c.g?.standing === 'strong' ? '#2d6b4a' : c.g?.standing === 'weak' ? '#8a6420' : undefined)),
+    },
+    { label: 'Needs', cells: cols.map((c) => (c.g ? NEED_SHORT[c.g.need] : '—')) },
+  ]
+
+  return (
+    <FieldCard
+      label="Race sheet"
+      meta={
+        <Hover
+          panel={
+            <>
+              <div className="hd">Finish</div>
+              <div className="k"><span>Target</span><b>{splitOf(splits.total)}</b></div>
+              <div className="k"><span>Projected</span><b>{splitOf(forecast.forecastTotalMin)}</b></div>
+              <div className="k"><span>All three goals</span><b>{pctOf(forecast.allThree)}</b></div>
+              <div className="k"><span>Transitions</span><b>{splitOf(GOALS.transitionMinutes)}</b></div>
+            </>
+          }
+        >
+          {splitOf(splits.total)} → {splitOf(forecast.forecastTotalMin)}
+        </Hover>
+      }
+    >
+      <Tearsheet
+        columns={SPORTS3.map((s) => ({
+          key: s,
+          label: (
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, justifyContent: 'flex-end' }}>
+              <SportIcon sport={s as Sport} className="w-3 h-3" />
+              {S3_LABEL[s]}
+            </span>
+          ),
+        }))}
+        rows={rows}
+      />
+      <Disclosure summary="Evidence" meta={rebalance.dataThrough ? `through ${rebalance.dataThrough.slice(5)}` : undefined}>
+        <Tearsheet columns={SPORTS3.map((s) => ({ key: s, label: S3_LABEL[s] }))} rows={evidence} />
+        {rebalance.sports.map((g) => <Sub key={g.sport}>{S3_LABEL[g.sport]} — {g.why}</Sub>)}
+        {rebalance.staleNote && <Sub>{rebalance.staleNote}</Sub>}
+      </Disclosure>
+      <Disclosure summary="Where the race is" meta={rebalance.lead ? `${S3_LABEL[rebalance.lead]} first` : undefined}>
+        <Sub>{rebalance.headline}</Sub>
+        {rebalance.displaced.slice(0, 4).map((d, i) => <Sub key={i}>{d}</Sub>)}
+        {rebalance.displacedNote && <Sub>{rebalance.displacedNote}</Sub>}
+      </Disclosure>
+    </FieldCard>
+  )
+}
 
 export default function IronmanDashboard() {
   const { user } = useAuth()
@@ -648,72 +646,40 @@ export default function IronmanDashboard() {
     return <div className="text-[11px] text-iron-coral py-12 text-center">Failed to load Garmin data: {error}</div>
   }
 
+  const feedLabel = lastSync
+    ? (() => {
+        const mins = Math.max(0, Math.round((Date.now() - lastSync.getTime()) / 60000))
+        if (mins < 60) return `${mins} min ago`
+        const h = Math.round(mins / 60)
+        return h < 24 ? `${h}h ago` : `${Math.round(h / 24)}d ago`
+      })()
+    : 'not yet synced'
+
   return (
-    <div className="space-y-3">
-      {/* Countdown strip */}
-      <div className={`bg-iron-card border border-iron-rule rounded-xl p-2.5 md:p-3 ${IRON_SHADOW} flex flex-wrap items-baseline gap-x-6 gap-y-2`}>
-        {countdown1 >= 0 && (
-          <div>
-            <span className="font-mono text-[32px] font-semibold text-iron-ink leading-none">{countdown1}</span>
-            <span className="text-[11px] text-iron-muted ml-2">days to Belgrade</span>
-          </div>
-        )}
-        <div className="flex items-baseline gap-2">
-          <FinishFlag className="w-4 h-4 text-iron-burgundy self-center shrink-0" />
-          <span className="font-mono text-[32px] font-semibold text-iron-burgundy leading-none">
-            {countdown2 >= 0 ? countdown2 : 0}
-          </span>
-          <span className="text-[11px] text-iron-muted">days to NYC · A-race</span>
-        </div>
-        <div className="text-[11px] text-iron-ink">
-          <span className="font-semibold">{RACE.name}</span>
-          <span className="text-iron-muted"> · {fmtDate(RACE.date)}</span>
-          <span className="text-iron-muted"> → </span>
-          <span className="font-semibold">{RACE_NYC.name}</span>
-          <span className="text-iron-muted"> · {fmtDate(RACE_NYC.date)} · </span>
-          <span className="font-mono">{RACE.swimKm}km / {RACE.bikeKm}km / {RACE.runKm}km each</span>
-        </div>
-        <div className="text-[10px] text-iron-muted ml-auto text-right">
-          <div>Plan re-adapts on every Garmin sync (3x daily)</div>
-          <div className="font-mono">
-            Last sync:{' '}
-            {lastSync
-              ? lastSync.toLocaleString('en-GB', {
-                  timeZone: 'Europe/Vilnius',
-                  day: 'numeric',
-                  month: 'short',
-                  hour: '2-digit',
-                  minute: '2-digit',
-                }) + ' Palanga time'
-              : 'not yet synced'}
-          </div>
-        </div>
-      </div>
+    <div className="iron-sheet" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+      <Ticker
+        items={[
+          ...(countdown1 >= 0 ? [{ label: 'Belgrade', value: `T−${countdown1} · ${fmtDate(RACE.date)}` }] : []),
+          {
+            label: 'New York',
+            value: `T−${countdown2 >= 0 ? countdown2 : 0} · ${fmtDate(RACE_NYC.date)}`,
+            color: countdown2 <= 21 ? '#8a6420' : undefined,
+          },
+          { label: 'Distance', value: `${RACE.swimKm} / ${RACE.bikeKm} / ${RACE.runKm} km` },
+          { label: 'Garmin', value: feedLabel },
+        ]}
+      />
 
-      <GoalsPanel activities={activities} metrics={metrics ?? []} today={today} />
-
-      <LeveragePanel activities={activities} metrics={metrics ?? []} today={today} />
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
-        <div className="lg:col-span-2">
-          <TodayPanel today={today} readiness={readiness} dayStatus={todayStatus} />
-        </div>
-        <Card title="Readiness — Last Night">
-          {metrics === null ? (
-            <div className="h-24 bg-iron-rule-light rounded-lg animate-pulse" />
-          ) : (
-            <ReadinessBlock readiness={readiness} />
-          )}
-        </Card>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
-        <div className="lg:col-span-2">
-          <PlanCalendar days={dayStatuses} today={today} />
-        </div>
-        <div className="space-y-3">
-          <ProgressPanel activities={activities} today={today} />
-          <Card title="Adaptation Rules">
+      {/* Today, and the body that has to do it. */}
+      <Seam cols={3}>
+        <FieldCard span={2} label={`Today · ${fmtDate(today)}`} meta={todayStatus?.day.phase} tone="accent">
+          <TodayPanel today={today} readiness={readiness} dayStatus={todayStatus} bare />
+          <Disclosure summary="Full plan" meta={`${PLAN.length} days · Belgrade to New York`}>
+            <div style={{ maxHeight: 300, overflowY: 'auto' }}>
+              <PlanCalendar days={dayStatuses} today={today} bare />
+            </div>
+          </Disclosure>
+          <Disclosure summary="Adaptation rules">
             <div className="space-y-1.5 text-[10px] text-iron-muted leading-relaxed">
               <div><span className="font-mono font-medium" style={{ color: '#2d6b4a' }}>68-100</span> — session exactly as planned.</div>
               <div><span className="font-mono font-medium" style={{ color: '#8a6d2f' }}>50-67</span> — keep duration, convert intervals to steady Z2.</div>
@@ -721,9 +687,46 @@ export default function IronmanDashboard() {
               <div><span className="font-mono font-medium" style={{ color: '#c94f35' }}>0-37</span> — full recovery day swapped in; missed work is absorbed, never crammed.</div>
               <div className="pt-1 border-t border-iron-rule-light">Readiness = sleep (30%) + HRV vs weekly avg (25%) + body battery (20%) + resting HR vs 30d baseline (15%) + yesterday&apos;s load (10%). Race day is never adjusted.</div>
             </div>
-          </Card>
-        </div>
-      </div>
+          </Disclosure>
+        </FieldCard>
+
+        <FieldCard
+          label="Readiness"
+          meta={feedLabel}
+          tone={readiness.band === 'green' ? 'ok' : readiness.band === 'amber' ? 'warn' : readiness.band === 'red' ? 'crit' : 'none'}
+        >
+          {metrics === null ? (
+            <div className="h-24 bg-iron-rule-light rounded-lg animate-pulse" />
+          ) : (
+            <>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: 7 }}>
+                <span className="font-mono" style={{
+                  fontSize: 23, fontWeight: 500, lineHeight: 1,
+                  color: readiness.band === 'green' ? '#2d6b4a' : readiness.band === 'amber' ? '#8a6420' : readiness.band === 'red' ? '#c94f35' : '#b3a5a5',
+                }}>
+                  {readiness.score ?? '--'}
+                </span>
+                <span className="font-mono" style={{
+                  fontSize: 9, letterSpacing: '.14em', textTransform: 'uppercase',
+                  color: readiness.band === 'green' ? '#2d6b4a' : readiness.band === 'amber' ? '#8a6420' : readiness.band === 'red' ? '#c94f35' : '#b3a5a5',
+                }}>
+                  {readiness.band}
+                </span>
+              </div>
+              <Rows>
+                {readiness.factors.map((f) => (
+                  <Row key={f.label} label={f.label} value={f.value}
+                    valueColor={f.score === null ? 'var(--lordas-faint)' : undefined} />
+                ))}
+              </Rows>
+            </>
+          )}
+        </FieldCard>
+      </Seam>
+
+      <Seam cols={1}>
+        <RaceSheet activities={activities} metrics={metrics ?? []} today={today} />
+      </Seam>
     </div>
   )
 }
