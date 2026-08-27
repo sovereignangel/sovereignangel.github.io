@@ -27,7 +27,7 @@ import { Track } from '@/components/lordas/design/charts'
 import { PersonSigil, SportGlyph, TrifectaIcon } from '@/components/lordas/design/assets'
 import { fmtRunPace, fmtSwimPace, fmtBikeSpeed, fmtPace } from '@/lib/lordas/pair-training'
 import { paceBoth } from '@/lib/ironman/pace'
-import { RACE_NYC, KM_PER_MILE, priorRaceAtDistance, priorRaceDisplay, priorRaceVsGoal,
+import { RACE_NYC, KM_PER_MILE, priorRaceAtDistance, priorRacesFor, raceDistanceLabel, priorRaceDisplay, priorRaceVsGoal,
   type PriorRace } from '@/lib/ironman/plan'
 import type { PairIronmanDetail, AthleteDetail } from '@/lib/lordas/ironman-detail'
 import { freshnessOf, stampOf } from '@/lib/lordas/freshness'
@@ -171,15 +171,61 @@ function gapCell(sec: number): { text: string; color: string } {
  * target it is being asked to beat, with the gap subtracted for the reader
  * rather than left implied.
  */
+/**
+ * Every race an athlete has finished, whatever the distance.
+ *
+ * The table below can only compare like with like, so it reads the most
+ * recent race at the target distance and ignores the rest. That is the right
+ * call for a gap analysis and the wrong one for a record of what someone has
+ * actually done, so the full ledger lives here — each race with its distance,
+ * its finish, and, where the distance matches, what it would be worth against
+ * today's goal.
+ */
+function RaceLedger({ races, goals }: { races: PriorRace[]; goals: AthleteDetail['goals'] }) {
+  return (
+    <>
+      <div className="hd">Races finished</div>
+      {races.map((r) => {
+        const comparable = r.swimKm === RACE_NYC.swimKm && r.bikeKm === RACE_NYC.bikeKm && r.runKm === RACE_NYC.runKm
+        const v = comparable ? priorRaceVsGoal(r, goals) : null
+        return (
+          <div className="k" key={`${r.date}-${r.name}`}>
+            <span>{r.name} · {r.date.slice(0, 4)} · {raceDistanceLabel(r)}</span>
+            <b>
+              {clk(r.totalSec)}
+              {v ? <span style={{ color: gapCell(v.total).color }}> · {gapCell(v.total).text}</span> : null}
+            </b>
+          </div>
+        )
+      })}
+    </>
+  )
+}
+
 function GapSheet({ a }: { a: AthleteDetail }) {
-  const race = priorRaceAtDistance(RACE_NYC, a.person as 'lori' | 'aidas')
+  const person = a.person as 'lori' | 'aidas'
+  const race = priorRaceAtDistance(RACE_NYC, person)
+  const races = priorRacesFor(person)
 
   return (
     <FieldCard
       label={<><PersonSigil person={a.person} size={13} />{a.name}</>}
-      meta={race ? `${race.name} · ${race.date}` : 'no half-iron on record'}
+      meta={
+        races.length > 0
+          ? <Hover panel={<RaceLedger races={races} goals={a.goals} />}>
+              {races.length} race{races.length === 1 ? '' : 's'} on record
+            </Hover>
+          : 'no race on record'
+      }
     >
-      {race ? <GapRows a={a} race={race} /> : (
+      {race ? (
+        <>
+          <Sub>
+            {race.name} · {race.location} · {race.date.slice(0, 4)} · {raceDistanceLabel(race)} · {clk(race.totalSec)}
+          </Sub>
+          <GapRows a={a} race={race} />
+        </>
+      ) : (
         <>
           <Sub>Awaiting a finished race at {RACE_NYC.swimKm}/{RACE_NYC.bikeKm}/{RACE_NYC.runKm}km.</Sub>
           <Sub>Goal is {hm(a.splits.total)} — nothing is inferred until there is a result to compare.</Sub>

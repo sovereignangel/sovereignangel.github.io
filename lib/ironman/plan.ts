@@ -111,6 +111,21 @@ export const PRIOR_RACES: PriorRace[] = [
   },
 ]
 
+/** Every race that athlete has finished, most recent first */
+export function priorRacesFor(athlete: AthleteId): PriorRace[] {
+  return PRIOR_RACES.filter((r) => r.athlete === athlete).sort((a, b) => b.date.localeCompare(a.date))
+}
+
+/**
+ * What to call a distance. The two standards get their names; anything else
+ * gets its own numbers rather than being forced into a label it does not fit.
+ */
+export function raceDistanceLabel(r: { swimKm: number; bikeKm: number; runKm: number }): string {
+  if (r.swimKm === 1.9 && r.bikeKm === 90 && r.runKm === 21.1) return '70.3'
+  if (r.swimKm === 3.8 && r.bikeKm === 180 && r.runKm === 42.2) return '140.6'
+  return `${r.swimKm}/${r.bikeKm}/${r.runKm}km`
+}
+
 /** That athlete's most recent race at the same distance as `race`, or undefined */
 export function priorRaceAtDistance(
   race: { swimKm: number; bikeKm: number; runKm: number },
