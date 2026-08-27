@@ -112,10 +112,32 @@ if [ "$INSTALL" -eq 1 ]; then
   for vol in /Volumes/*/GARMIN/APPS; do
     if [ -d "$vol" ]; then TARGET="$vol"; break; fi
   done
-  if [ -z "$TARGET" ]; then
-    echo "error: no watch mounted. Plug it in over USB and allow file access." >&2
-    exit 1
+
+  if [ -n "$TARGET" ]; then
+    cp "$OUT" "$TARGET/EXECORD.PRG"
+    echo "copied to $TARGET/EXECORD.PRG — eject the watch, then find it in the glance carousel"
+    exit 0
   fi
-  cp "$OUT" "$TARGET/EXECORD.PRG"
-  echo "copied to $TARGET/EXECORD.PRG — eject the watch, then find it in the glance carousel"
+
+  # The fr970 speaks MTP, not USB mass storage, and macOS does not mount MTP
+  # devices in Finder. There is no volume to copy to and there never will be,
+  # so this is guidance rather than an error to retry.
+  cat >&2 <<TXT
+No watch volume found — expected on macOS.
+
+The fr970 uses MTP, which macOS will not mount as a drive. Copy it by hand:
+
+  1. open -a OpenMTP           (brew install --cask openmtp)
+  2. Left pane  = this Mac, right pane = the watch. Pick the fr970 if asked.
+  3. On the watch, open  GARMIN/APPS
+  4. Drag this file across, and rename it EXECORD.PRG if it does not keep it:
+
+       $(pwd)/$OUT
+
+  5. Quit OpenMTP, unplug the watch. The app appears in the glance carousel.
+
+Garmin Express also talks MTP but conflicts with other MTP clients — run only
+one at a time.
+TXT
+  exit 1
 fi
