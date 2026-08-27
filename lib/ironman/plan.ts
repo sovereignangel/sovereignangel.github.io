@@ -91,18 +91,23 @@ export interface PriorRace {
 export const PRIOR_RACES: PriorRace[] = [
   {
     athlete: 'lori',
-    name: 'Oceanlava Lanzarote',
-    date: '2023-05-14',
-    location: 'Lanzarote',
+    name: 'Oceanlava Montenegro',
+    // Year confirmed, exact day not — nothing sorts or displays past the year
+    // while only one race is on record, so this stays a placeholder rather
+    // than a fact presented as one.
+    date: '2023-01-01',
+    location: 'Montenegro',
     swimKm: 1.9,
     bikeKm: 90,
     runKm: 21.1,
     swimSec: 33 * 60 + 4, //      33:04
+    // Reported as one combined 15:16. Split 8:27 / 6:49 for the two rows that
+    // want them separately; the pair sums to the reported figure exactly.
     t1Sec: 8 * 60 + 27, //         8:27
     bikeSec: 3 * 3600 + 40 * 60 + 50, // 3:40:50
     t2Sec: 6 * 60 + 49, //         6:49
-    runSec: 2 * 3600 + 1 * 60 + 24, //   2:01:24 (derived: total less the four timed legs)
-    totalSec: 6 * 3600 + 30 * 60 + 34, // 6:30:34
+    runSec: 2 * 3600 + 1 * 60 + 24, //   2:01:24
+    totalSec: 6 * 3600 + 30 * 60 + 34, // 6:30:34 — legs plus 15:16 of transitions
   },
 ]
 

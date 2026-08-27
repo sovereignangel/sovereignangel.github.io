@@ -5,8 +5,8 @@ import { useAuth } from '@/components/auth/AuthProvider'
 import { getAllGarminMetrics, getAllGarminActivities, getGarminRollups } from '@/lib/firestore'
 import type { GarminMetrics, GarminActivity } from '@/lib/types'
 import { PLAN, RACE, RACE_NYC, GOALS, BASELINE, goalSplits, goalDisplay, daysToRace, todayLocal,
-  PRIOR_RACES, priorRaceAtDistance, priorRaceDisplay, priorRaceVsGoal, goalsFor, KM_PER_MILE,
-  type PlanDay, type Sport, type AthleteId, type PriorRace } from '@/lib/ironman/plan'
+  priorRaceAtDistance, priorRaceDisplay, priorRaceVsGoal, KM_PER_MILE,
+  type PlanDay, type Sport } from '@/lib/ironman/plan'
 import { computeRebalance, type SportNeed } from '@/lib/ironman/rebalance'
 import { fmtPace as fmtRacePace } from '@/lib/ironman/pace'
 import { computeRaceForecast, type DisciplineForecast } from '@/lib/ironman/forecast'
@@ -446,8 +446,6 @@ function PaceCell({ sport, minKm, title, extra }: {
  */
 // ── Half Ironman gap analysis ─────────────────────────────────────────────
 
-const ATHLETE_NAME: Record<AthleteId, string> = { lori: 'Lori', aidas: 'Aidas' }
-
 /** h:mm:ss / m:ss from raw seconds */
 function clock(sec: number): string {
   const a = Math.abs(Math.round(sec))
@@ -469,107 +467,6 @@ function gap(sec: number): { text: string; color: string } {
   }
 }
 
-/**
- * The ledger of finished half-irons, athlete by athlete, each race set against
- * that athlete's current goal.
- *
- * A race already run is the only honest measurement of transition cost and
- * race-day pacing — training data cannot produce either. So it belongs beside
- * the targets it is being asked to beat, with the gap made explicit rather
- * than left for the reader to subtract.
- */
-function HalfIronGapAnalysis({ bare }: { bare?: boolean }) {
-  const athletes = Object.keys(ATHLETE_NAME) as AthleteId[]
-
-  return (
-    <Shell bare={bare} title="Half Ironman Gap Analysis"
-      right={<span className="text-[10px] text-iron-muted">raced vs goal · {RACE_NYC.swimKm}/{RACE_NYC.bikeKm}/{RACE_NYC.runKm}km</span>}>
-      <div className="flex flex-col gap-3">
-        {athletes.map((id) => {
-          const race = priorRaceAtDistance(RACE_NYC, id)
-          const goals = goalsFor(id)
-          return (
-            <div key={id}>
-              <div className="flex items-baseline justify-between mb-1">
-                <span className="font-serif text-[13px] font-semibold text-iron-deep">{ATHLETE_NAME[id]}</span>
-                <span className="text-[10px] text-iron-muted font-mono">
-                  {race ? `${race.name} · ${fmtDate(race.date)} ${race.date.slice(0, 4)}` : 'no half-iron on record'}
-                </span>
-              </div>
-              {race
-                ? <AthleteGapRows race={race} goals={goals} />
-                : (
-                  <div className="text-[11px] text-iron-muted py-1.5 px-2 border border-dashed border-iron-rule-light rounded">
-                    Awaiting a finished race at this distance. Goal is {fmtClock(goalSplits(goals).total)};
-                    nothing is inferred until there is a result to compare.
-                  </div>
-                )}
-            </div>
-          )
-        })}
-      </div>
-      <Foot>
-        Gap is race minus goal, leg by leg. Transitions are shown because they are
-        a real split that training never measures. Courses differ — a windy or hilly
-        bike leg is not the same number as a flat one.
-      </Foot>
-    </Shell>
-  )
-}
-
-function AthleteGapRows({ race, goals }: { race: PriorRace; goals: ReturnType<typeof goalsFor> }) {
-  const d = priorRaceDisplay(race)
-  const v = priorRaceVsGoal(race, goals)
-  const g = goalSplits(goals)
-
-  const columns = [
-    { key: 'swim', label: 'SWIM' },
-    { key: 'bike', label: 'BIKE' },
-    { key: 'run', label: 'RUN' },
-    { key: 'tx', label: 'T1+T2' },
-    { key: 'total', label: 'TOTAL' },
-  ]
-
-  const rows: SheetRow[] = [
-    {
-      label: 'Raced',
-      cells: [clock(race.swimSec), clock(race.bikeSec), clock(race.runSec), clock(d.transitionSec), clock(race.totalSec)],
-    },
-    {
-      label: 'Goal',
-      cells: [clock(g.swim * 60), clock(g.bike * 60), clock(g.run * 60), clock(g.transitions * 60), clock(g.total * 60)],
-    },
-    {
-      label: 'Gap',
-      emphasis: true,
-      cells: [gap(v.swim).text, gap(v.bike).text, gap(v.run).text, gap(v.transitions).text, gap(v.total).text],
-      colors: [gap(v.swim).color, gap(v.bike).color, gap(v.run).color, gap(v.transitions).color, gap(v.total).color],
-    },
-    {
-      label: 'Race pace',
-      cells: [
-        `${clock(d.swimSecPer100m)}/100m`,
-        `${d.bikeMph.toFixed(1)} mph`,
-        `${clock((race.runSec / (race.runKm / KM_PER_MILE)))}/mi`,
-        '—',
-        '',
-      ],
-    },
-    {
-      label: 'Goal pace',
-      cells: [
-        `${clock((goals.swimMinutes * 60) / (race.swimKm * 10))}/100m`,
-        `${(race.bikeKm / KM_PER_MILE / (goals.bikeMinutes / 60)).toFixed(1)} mph`,
-        `${clock((goals.runMinutes * 60) / (race.runKm / KM_PER_MILE))}/mi`,
-        '—',
-        '',
-      ],
-    },
-  ]
-
-  return <Tearsheet columns={columns} rows={rows} />
-}
-
 function RaceSheet({ activities, metrics, today }: {
   activities: GarminActivity[]; metrics: GarminMetrics[]; today: string
 }) {
@@ -580,6 +477,10 @@ function RaceSheet({ activities, metrics, today }: {
   const profile = useMemo(() => paceProfile(activities, today), [activities, today])
   const splits = useMemo(() => goalSplits(), [])
   const show = useMemo(() => goalDisplay(), [])
+  // The one measurement training cannot produce: a distance already raced,
+  // transitions and pacing decisions included. It belongs among the targets
+  // rather than in a table of its own, so it reads as one more row.
+  const raced = useMemo(() => priorRaceAtDistance(RACE_NYC, 'lori'), [])
 
   const goalPaceMinKm = (s: S3) =>
     s === 'swim' ? (show.swimSecPer100m * 10) / 60 : s === 'bike' ? 60 / show.bikeKmh : show.runMinPerKm
@@ -599,6 +500,34 @@ function RaceSheet({ activities, metrics, today }: {
 
   const rows: SheetRow[] = [
     { label: 'Goal Total', cells: SPORTS3.map((s) => splitOf(goalSplitMin(s))) },
+    ...(raced
+      ? [
+          {
+            label: (
+              <Hover
+                align="left"
+                panel={
+                  <>
+                    <div className="hd">{raced.name}</div>
+                    <div className="k"><span>Where</span><b>{raced.location} · {raced.date.slice(0, 4)}</b></div>
+                    <div className="k"><span>Transitions</span><b>{clock(priorRaceDisplay(raced).transitionSec)}</b></div>
+                    <div className="k"><span>Finish</span><b>{clock(raced.totalSec)}</b></div>
+                    <div className="k">
+                      <span>vs goal</span>
+                      <b style={{ color: gap(priorRaceVsGoal(raced, GOALS).total).color }}>
+                        {gap(priorRaceVsGoal(raced, GOALS).total).text}
+                      </b>
+                    </div>
+                  </>
+                }
+              >
+                Raced {raced.date.slice(0, 4)}
+              </Hover>
+            ),
+            cells: [clock(raced.swimSec), clock(raced.bikeSec), clock(raced.runSec)],
+          } as SheetRow,
+        ]
+      : []),
     {
       label: 'Goal Pace',
       cells: SPORTS3.map((s) => <PaceCell key={s} sport={s} minKm={goalPaceMinKm(s)} title="goal pace" />),
@@ -856,10 +785,6 @@ export default function IronmanDashboard() {
             </>
           )}
         </FieldCard>
-      </Seam>
-
-      <Seam cols={1}>
-        <HalfIronGapAnalysis />
       </Seam>
 
       <Seam cols={1}>
