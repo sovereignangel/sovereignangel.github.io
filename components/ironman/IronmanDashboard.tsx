@@ -81,12 +81,12 @@ const SPORT_LABEL: Record<Sport, string> = {
 }
 
 const SPORT_COLOR: Record<Sport, string> = {
-  swim: '#2d5f6b',
-  bike: '#8f2d33',
-  run: '#2d6b4a',
-  brick: '#6b2d52',
-  strength: '#8a6d2f',
-  rest: '#8a7c7c',
+  swim: 'var(--iron-swim)',
+  bike: 'var(--iron-bike)',
+  run: 'var(--lordas-ok)',
+  brick: 'var(--iron-brick)',
+  strength: 'var(--lordas-warn)',
+  rest: 'var(--lordas-faint)',
 }
 
 function SportChip({ sport }: { sport: Sport }) {
@@ -103,10 +103,10 @@ function SportChip({ sport }: { sport: Sport }) {
 }
 
 const STATUS_STYLE: Record<string, { label: string; color: string }> = {
-  done: { label: 'DONE', color: '#2d6b4a' },
-  partial: { label: 'PARTIAL', color: '#8a6d2f' },
-  missed: { label: 'MISSED', color: '#c94f35' },
-  upcoming: { label: '', color: '#c3b8b8' },
+  done: { label: 'DONE', color: 'var(--lordas-ok)' },
+  partial: { label: 'PARTIAL', color: 'var(--lordas-warn)' },
+  missed: { label: 'MISSED', color: 'var(--lordas-crit)' },
+  upcoming: { label: '', color: 'var(--lordas-faint)' },
 }
 
 function fmtDate(date: string): string {
@@ -137,8 +137,8 @@ function fmtPace(sport: Sport, paceMinKm: number | null): string {
 }
 
 function probColor(p: number | null): string {
-  if (p == null) return '#8a7c7c'
-  return p >= 0.5 ? '#2d6b4a' : p >= 0.25 ? '#8a6d2f' : '#c94f35'
+  if (p == null) return 'var(--lordas-faint)'
+  return p >= 0.5 ? 'var(--lordas-ok)' : p >= 0.25 ? 'var(--lordas-warn)' : 'var(--lordas-crit)'
 }
 
 
@@ -163,7 +163,7 @@ const NEED_TEXT: Record<SportNeed, string> = {
 
 function ReadinessBlock({ readiness }: { readiness: Readiness }) {
   const color =
-    readiness.band === 'green' ? '#2d6b4a' : readiness.band === 'amber' ? '#8a6d2f' : readiness.band === 'red' ? '#c94f35' : '#8a7c7c'
+    readiness.band === 'green' ? 'var(--lordas-ok)' : readiness.band === 'amber' ? 'var(--lordas-warn)' : readiness.band === 'red' ? 'var(--lordas-crit)' : 'var(--lordas-faint)'
   return (
     <div>
       <div className="flex items-baseline gap-2 mb-2">
@@ -184,7 +184,7 @@ function ReadinessBlock({ readiness }: { readiness: Readiness }) {
                     className="h-full rounded-full"
                     style={{
                       width: `${f.score}%`,
-                      backgroundColor: f.score >= 68 ? '#2d6b4a' : f.score >= 50 ? '#8a6d2f' : '#c94f35',
+                      backgroundColor: f.score >= 68 ? 'var(--lordas-ok)' : f.score >= 50 ? 'var(--lordas-warn)' : 'var(--lordas-crit)',
                     }}
                   />
                 )}
@@ -215,10 +215,10 @@ function TodayPanel({ today, readiness, dayStatus, bare }: { today: string; read
   }
 
   const levelColor =
-    adaptation.level === 'as-planned' ? '#2d6b4a'
-    : adaptation.level === 'ease-intensity' ? '#8a6d2f'
-    : adaptation.level === 'no-data' ? '#8a7c7c'
-    : '#c94f35'
+    adaptation.level === 'as-planned' ? 'var(--lordas-ok)'
+    : adaptation.level === 'ease-intensity' ? 'var(--lordas-warn)'
+    : adaptation.level === 'no-data' ? 'var(--lordas-faint)'
+    : 'var(--lordas-crit)'
 
   return (
     <Shell bare={bare} title={`Today — ${fmtDate(day.date)} · ${day.phase}`}>
@@ -343,7 +343,7 @@ function PlanCalendar({ days, today, bare }: { days: DayStatus[]; today: string;
                                 {x.type.replace(/_/g, ' ').slice(0, 12)}
                               </span>
                             )}
-                            <span className="font-mono text-[8px] uppercase" style={{ color: '#2d6b4a' }}>
+                            <span className="font-mono text-[8px] uppercase" style={{ color: 'var(--lordas-ok)' }}>
                               +{x.distanceKm != null ? `${x.distanceKm}km` : `${x.durationMin}min`} logged
                             </span>
                           </span>
@@ -356,7 +356,7 @@ function PlanCalendar({ days, today, bare }: { days: DayStatus[]; today: string;
                         viewBox="0 0 10 10"
                         aria-hidden="true"
                       >
-                        <path d="M2 3.5L5 6.5L8 3.5" stroke="#8a7c7c" strokeWidth="1.2" fill="none" strokeLinecap="round" />
+                        <path d="M2 3.5L5 6.5L8 3.5" stroke="var(--lordas-faint)" strokeWidth="1.2" fill="none" strokeLinecap="round" />
                       </svg>
                     </div>
                     {isOpen && (
@@ -395,7 +395,7 @@ function PlanCalendar({ days, today, bare }: { days: DayStatus[]; today: string;
 const SPORTS3 = ['swim', 'bike', 'run'] as const
 type S3 = (typeof SPORTS3)[number]
 const S3_LABEL: Record<string, string> = { swim: 'Swim', bike: 'Bike', run: 'Run' }
-const S3_COLOR: Record<string, string> = { swim: '#2d5f6b', bike: '#8f2d33', run: '#2d6b4a' }
+const S3_COLOR: Record<string, string> = { swim: 'var(--iron-swim)', bike: 'var(--iron-bike)', run: 'var(--lordas-ok)' }
 
 const NEED_SHORT: Record<SportNeed, string> = {
   volume: 'distance', intensity: 'speed', both: 'distance + speed',
@@ -467,7 +467,7 @@ function RaceSheet({ activities, metrics, today }: {
   }))
 
   const probColor = (p: number | null | undefined) =>
-    p == null ? 'var(--lordas-faint)' : p >= 0.5 ? '#2d6b4a' : p >= 0.25 ? '#8a6420' : '#c94f35'
+    p == null ? 'var(--lordas-faint)' : p >= 0.5 ? 'var(--lordas-ok)' : p >= 0.25 ? 'var(--lordas-warn)' : 'var(--lordas-crit)'
 
   const rows: SheetRow[] = [
     { label: 'Goal Total', cells: SPORTS3.map((s) => splitOf(goalSplitMin(s))) },
@@ -532,9 +532,9 @@ function RaceSheet({ activities, metrics, today }: {
       cells: cols.map((c) => (c.g?.minutesOverGoal == null ? '—' : `+${Math.round(c.g.minutesOverGoal)}min`)),
       colors: cols.map((c) =>
         c.g?.minutesOverGoal == null ? 'var(--lordas-faint)'
-          : c.g.minutesOverGoal > 30 ? '#c94f35'
-          : c.g.minutesOverGoal > 5 ? '#8a6420'
-          : '#2d6b4a'
+          : c.g.minutesOverGoal > 30 ? 'var(--lordas-crit)'
+          : c.g.minutesOverGoal > 5 ? 'var(--lordas-warn)'
+          : 'var(--lordas-ok)'
       ),
     },
   ]
@@ -549,7 +549,7 @@ function RaceSheet({ activities, metrics, today }: {
     {
       label: 'Standing',
       cells: cols.map((c) => c.g?.standing ?? '—'),
-      colors: cols.map((c) => (c.g?.standing === 'strong' ? '#2d6b4a' : c.g?.standing === 'weak' ? '#8a6420' : undefined)),
+      colors: cols.map((c) => (c.g?.standing === 'strong' ? 'var(--lordas-ok)' : c.g?.standing === 'weak' ? 'var(--lordas-warn)' : undefined)),
     },
     { label: 'Needs', cells: cols.map((c) => (c.g ? NEED_SHORT[c.g.need] : '—')) },
   ]
@@ -669,7 +669,7 @@ export default function IronmanDashboard() {
           {
             label: 'New York',
             value: `T−${countdown2 >= 0 ? countdown2 : 0} · ${fmtDate(RACE_NYC.date)}`,
-            color: countdown2 <= 21 ? '#8a6420' : undefined,
+            color: countdown2 <= 21 ? 'var(--lordas-warn)' : undefined,
           },
           { label: 'Distance', value: `${RACE.swimKm} / ${RACE.bikeKm} / ${RACE.runKm} km` },
           { label: 'Garmin', value: feedLabel },
@@ -687,10 +687,10 @@ export default function IronmanDashboard() {
           </Disclosure>
           <Disclosure summary="Adaptation rules">
             <div className="space-y-1.5 text-[10px] text-iron-muted leading-relaxed">
-              <div><span className="font-mono font-medium" style={{ color: '#2d6b4a' }}>68-100</span> — session exactly as planned.</div>
-              <div><span className="font-mono font-medium" style={{ color: '#8a6d2f' }}>50-67</span> — keep duration, convert intervals to steady Z2.</div>
-              <div><span className="font-mono font-medium" style={{ color: '#c94f35' }}>38-49</span> — key session only, volume cut 40%, all easy.</div>
-              <div><span className="font-mono font-medium" style={{ color: '#c94f35' }}>0-37</span> — full recovery day swapped in; missed work is absorbed, never crammed.</div>
+              <div><span className="font-mono font-medium" style={{ color: 'var(--lordas-ok)' }}>68-100</span> — session exactly as planned.</div>
+              <div><span className="font-mono font-medium" style={{ color: 'var(--lordas-warn)' }}>50-67</span> — keep duration, convert intervals to steady Z2.</div>
+              <div><span className="font-mono font-medium" style={{ color: 'var(--lordas-crit)' }}>38-49</span> — key session only, volume cut 40%, all easy.</div>
+              <div><span className="font-mono font-medium" style={{ color: 'var(--lordas-crit)' }}>0-37</span> — full recovery day swapped in; missed work is absorbed, never crammed.</div>
               <div className="pt-1 border-t border-iron-rule-light">Readiness = sleep (30%) + HRV vs weekly avg (25%) + body battery (20%) + resting HR vs 30d baseline (15%) + yesterday&apos;s load (10%). Race day is never adjusted.</div>
             </div>
           </Disclosure>
@@ -708,13 +708,13 @@ export default function IronmanDashboard() {
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 7 }}>
                 <span className="font-mono" style={{
                   fontSize: 23, fontWeight: 500, lineHeight: 1,
-                  color: readiness.band === 'green' ? '#2d6b4a' : readiness.band === 'amber' ? '#8a6420' : readiness.band === 'red' ? '#c94f35' : '#b3a5a5',
+                  color: readiness.band === 'green' ? 'var(--lordas-ok)' : readiness.band === 'amber' ? 'var(--lordas-warn)' : readiness.band === 'red' ? 'var(--lordas-crit)' : 'var(--lordas-faint)',
                 }}>
                   {readiness.score ?? '--'}
                 </span>
                 <span className="font-mono" style={{
                   fontSize: 9, letterSpacing: '.14em', textTransform: 'uppercase',
-                  color: readiness.band === 'green' ? '#2d6b4a' : readiness.band === 'amber' ? '#8a6420' : readiness.band === 'red' ? '#c94f35' : '#b3a5a5',
+                  color: readiness.band === 'green' ? 'var(--lordas-ok)' : readiness.band === 'amber' ? 'var(--lordas-warn)' : readiness.band === 'red' ? 'var(--lordas-crit)' : 'var(--lordas-faint)',
                 }}>
                   {readiness.band}
                 </span>
