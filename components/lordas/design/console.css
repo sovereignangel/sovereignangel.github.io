@@ -171,3 +171,88 @@ button.lordas-chip:focus-visible { outline: 2px solid var(--lordas-accent); outl
 .lordas hr { border: 0; border-top: 1px solid var(--lordas-rule); }
 .lordas a { color: var(--lordas-accent); }
 .lordas button { font-family: inherit; }
+
+/* ── Hover reveal ─────────────────────────────────────────────────────
+   A number that carries its own justification. The panel is absolutely
+   positioned so it never reflows the table it sits in, and it answers to
+   focus as well as hover so the reasoning is not mouse-only. */
+.lordas-hover {
+  position: relative;
+  border-bottom: 1px dotted var(--lordas-faint);
+  cursor: help;
+  outline: none;
+}
+.lordas-hover-panel {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  z-index: 20;
+  display: block;
+  min-width: 168px;
+  padding: 8px 10px;
+  background: var(--lordas-panel-raise);
+  border: 1px solid var(--lordas-rule);
+  border-radius: 3px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, .45);
+  font-family: var(--lordas-body);
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--lordas-muted);
+  text-align: left;
+  white-space: normal;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(3px);
+  transition: opacity .12s ease, transform .12s ease, visibility .12s;
+  pointer-events: none;
+}
+.lordas-hover-right { right: 0; }
+.lordas-hover-left { left: 0; }
+.lordas-hover:hover .lordas-hover-panel,
+.lordas-hover:focus .lordas-hover-panel,
+.lordas-hover:focus-visible .lordas-hover-panel {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+.lordas-hover:focus-visible { outline: 2px solid var(--lordas-accent); outline-offset: 2px; }
+.lordas-hover-panel .k {
+  display: flex; justify-content: space-between; gap: 12px;
+  padding: 2px 0;
+}
+.lordas-hover-panel .k b { color: var(--lordas-ink); font-weight: 600; font-family: var(--lordas-mono); }
+.lordas-hover-panel .hd {
+  font-family: var(--lordas-mono); font-size: 8.5px; letter-spacing: .14em;
+  text-transform: uppercase; color: var(--lordas-faint);
+  padding-bottom: 4px; margin-bottom: 4px; border-bottom: 1px solid var(--lordas-rule);
+}
+
+/* ── Ticker lane ──────────────────────────────────────────────────────
+   Standing facts that do not change within a session. Deliberately thin:
+   these are context, not cards, and giving them card weight was the
+   mistake this replaces. */
+.lordas-ticker {
+  display: flex; flex-wrap: wrap; justify-content: flex-end;
+  gap: 0; margin: -6px 0 14px;
+  border-bottom: 1px solid var(--lordas-rule);
+}
+.lordas-ticker-item {
+  display: flex; align-items: baseline; gap: 6px;
+  padding: 5px 11px; border-left: 1px solid var(--lordas-rule);
+  font-family: var(--lordas-mono); font-size: 10px;
+}
+.lordas-ticker-item:first-child { border-left: 0; }
+.lordas-ticker-item .l { letter-spacing: .13em; text-transform: uppercase; color: var(--lordas-faint); }
+.lordas-ticker-item .v { color: var(--lordas-ink); font-variant-numeric: tabular-nums; }
+@media (max-width: 560px) {
+  .lordas-ticker { justify-content: flex-start; }
+  .lordas-ticker-item { padding: 5px 9px; }
+}
+
+/* A table that groups several kinds of fact inside one card. */
+.lordas-group {
+  font-family: var(--lordas-mono); font-size: 8.5px; letter-spacing: .15em;
+  text-transform: uppercase; color: var(--lordas-faint);
+  display: flex; justify-content: space-between; gap: 10px;
+  padding: 9px 0 4px; margin-top: 3px; border-top: 1px solid var(--lordas-rule);
+}
+.lordas-fc > .lordas-group:first-of-type { border-top: 0; margin-top: 0; padding-top: 2px; }

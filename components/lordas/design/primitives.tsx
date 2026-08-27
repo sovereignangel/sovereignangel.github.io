@@ -47,8 +47,8 @@ export function FieldCard({
   meta?: React.ReactNode
   tone?: Tone
   quiet?: boolean
-  /** Let one card run the whole width of its seam grid */
-  span?: boolean
+  /** Let a card run wider than one column: `true` for the full row, or a count */
+  span?: boolean | number
   children?: React.ReactNode
   className?: string
   style?: React.CSSProperties
@@ -59,7 +59,7 @@ export function FieldCard({
       style={{
         background: quiet ? C.panelQuiet : C.panel,
         boxShadow: tone === 'none' ? undefined : `inset 2px 0 0 ${TONE[tone]}`,
-        gridColumn: span ? '1 / -1' : undefined,
+        gridColumn: span === true ? '1 / -1' : typeof span === 'number' ? `span ${span}` : undefined,
         ...style,
       }}
     >
@@ -188,4 +188,49 @@ export function Callout({ tone = 'accent', children }: { tone?: Tone; children: 
 
 export function Empty({ children }: { children: React.ReactNode }) {
   return <div className="lordas-empty">{children}</div>
+}
+
+
+// ── Hover reveal ──────────────────────────────────────────────────────────
+
+/**
+ * A value that carries its own justification. The number stays the thing you
+ * read; the reasoning behind it — the target it is being scored against —
+ * appears on hover or focus rather than taking a row of its own.
+ *
+ * Keyboard reachable, so the explanation is not mouse-only.
+ */
+export function Hover({
+  children,
+  panel,
+  align = 'right',
+}: {
+  children: React.ReactNode
+  panel: React.ReactNode
+  align?: 'left' | 'right'
+}) {
+  return (
+    <span className="lordas-hover" tabIndex={0}>
+      {children}
+      <span className={`lordas-hover-panel lordas-hover-${align}`} role="tooltip">
+        {panel}
+      </span>
+    </span>
+  )
+}
+
+// ── Ticker lane ───────────────────────────────────────────────────────────
+
+/** Standing facts that never change within a session — dates, targets, counts. */
+export function Ticker({ items }: { items: { label: string; value: React.ReactNode; color?: string }[] }) {
+  return (
+    <div className="lordas-ticker">
+      {items.map((it, i) => (
+        <span key={i} className="lordas-ticker-item">
+          <span className="l">{it.label}</span>
+          <span className="v" style={it.color ? { color: it.color } : undefined}>{it.value}</span>
+        </span>
+      ))}
+    </div>
+  )
 }

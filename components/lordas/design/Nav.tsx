@@ -153,7 +153,7 @@ export function LordasHeader({
       }}
     >
       <div style={{ display: 'flex', flexDirection: 'column', gap: 7, minWidth: 0 }}>
-        <div style={{ display: 'flex', gap: 11, alignItems: 'center', minWidth: 0 }}>
+        <div style={{ display: 'flex', gap: 11, alignItems: 'center', minWidth: 0, flexWrap: 'wrap' }}>
           <LordasMark size={40} />
           <div style={{ minWidth: 0 }}>
             <h1
@@ -185,7 +185,9 @@ export function LordasHeader({
           </div>
         </div>
         {/* Wider tracking than the subtitle above it, so it reads as a
-            wordmark line and not as another description of this screen. */}
+            wordmark line and not as another description of this screen.
+            Indented past the mark so it hangs off the title rather than
+            falling to the page edge when the header wraps. */}
         <div
           style={{
             fontFamily: 'var(--lordas-mono)',
@@ -193,6 +195,9 @@ export function LordasHeader({
             letterSpacing: '.28em',
             textTransform: 'uppercase',
             color: C.faint,
+            paddingLeft: 41,
+            marginTop: -2,
+            flexBasis: '100%',
           }}
         >
           {LORDAS_MOTTO}
