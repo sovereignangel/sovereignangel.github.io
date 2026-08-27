@@ -1,0 +1,23 @@
+<strings>
+    <string id="AppName">Exec Orders</string>
+
+    <string id="ServerUrlTitle">Orders endpoint</string>
+    <string id="ServerUrlPrompt">Full URL of /api/exec/orders</string>
+
+    <string id="TokenTitle">Watch token</string>
+    <string id="TokenPrompt">Value of EXEC_WATCH_TOKEN</string>
+
+    <string id="PersonTitle">Athlete</string>
+    <string id="PersonPrompt">Whose plan this watch shows. Each watch is set once.</string>
+    <string id="PersonLori">Lori</string>
+    <string id="PersonAidas">Aidas</string>
+
+    <string id="RefreshTitle">Refresh every (minutes)</string>
+    <string id="RefreshPrompt">How often the background check runs. 5 is the floor Garmin allows.</string>
+
+    <string id="MorningStartTitle">Morning window starts (hour)</string>
+    <string id="MorningEndTitle">Morning window ends (hour)</string>
+    <string id="EveningStartTitle">Evening window starts (hour)</string>
+    <string id="EveningEndTitle">Evening window ends (hour)</string>
+    <string id="WindowPrompt">Outside both windows the background check wakes, sees the clock, and exits without using the radio.</string>
+</strings>

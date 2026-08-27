@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<!--
+  Exec Orders — the /exec daily orders on the wrist.
+
+  Only fr970 is listed. Adding a sibling (fr965, fenix8*, epix2pro*) is a
+  one-line change here, but the device must be downloaded in the Connect IQ
+  SDK Manager first or the build fails for that product.
+-->
+<iq:manifest xmlns:iq="http://www.garmin.com/xml/connectiq" version="3">
+    <iq:application
+        entry="ExecOrdersApp"
+        id="cf6b2e8e57684ea0b54b9947613a23fa"
+        launcherIcon="@Drawables.LauncherIcon"
+        minApiLevel="3.1.0"
+        name="@Strings.AppName"
+        type="watch-app">
+        <iq:products>
+            <iq:product id="fr970"/>
+        </iq:products>
+        <iq:permissions>
+            <iq:uses-permission id="Communications"/>
+            <iq:uses-permission id="Background"/>
+        </iq:permissions>
+        <iq:languages>
+            <iq:language>eng</iq:language>
+        </iq:languages>
+        <iq:barrels/>
+    </iq:application>
+</iq:manifest>

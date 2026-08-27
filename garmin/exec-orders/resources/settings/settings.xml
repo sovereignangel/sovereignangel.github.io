@@ -1,0 +1,29 @@
+<settings>
+    <setting propertyKey="@Properties.serverUrl" title="@Strings.ServerUrlTitle" prompt="@Strings.ServerUrlPrompt">
+        <settingConfig type="alphaNumeric" maxLength="160"/>
+    </setting>
+    <setting propertyKey="@Properties.watchToken" title="@Strings.TokenTitle" prompt="@Strings.TokenPrompt">
+        <settingConfig type="alphaNumeric" maxLength="80"/>
+    </setting>
+    <setting propertyKey="@Properties.person" title="@Strings.PersonTitle" prompt="@Strings.PersonPrompt">
+        <settingConfig type="list">
+            <listEntry value="0">@Strings.PersonLori</listEntry>
+            <listEntry value="1">@Strings.PersonAidas</listEntry>
+        </settingConfig>
+    </setting>
+    <setting propertyKey="@Properties.refreshMinutes" title="@Strings.RefreshTitle" prompt="@Strings.RefreshPrompt">
+        <settingConfig type="numeric" min="5" max="240"/>
+    </setting>
+    <setting propertyKey="@Properties.morningStart" title="@Strings.MorningStartTitle" prompt="@Strings.WindowPrompt">
+        <settingConfig type="numeric" min="0" max="23"/>
+    </setting>
+    <setting propertyKey="@Properties.morningEnd" title="@Strings.MorningEndTitle">
+        <settingConfig type="numeric" min="0" max="23"/>
+    </setting>
+    <setting propertyKey="@Properties.eveningStart" title="@Strings.EveningStartTitle">
+        <settingConfig type="numeric" min="0" max="23"/>
+    </setting>
+    <setting propertyKey="@Properties.eveningEnd" title="@Strings.EveningEndTitle">
+        <settingConfig type="numeric" min="0" max="23"/>
+    </setting>
+</settings>

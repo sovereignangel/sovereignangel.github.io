@@ -1,0 +1,15 @@
+<properties>
+    <!-- Canonical host, never the apex: apex 301s and Connect IQ does not follow redirects. -->
+    <property id="serverUrl" type="string">https://www.loricorpuz.com/api/exec/orders</property>
+    <property id="watchToken" type="string"></property>
+    <!-- Which athlete this watch belongs to: 0 = Lori, 1 = Aidas. Numeric
+         because listEntry values are parsed as numbers whatever the property
+         type says, and a free-text athlete name that is typo'd would silently
+         show the wrong person's plan. Set once, per device. -->
+    <property id="person" type="number">0</property>
+    <property id="refreshMinutes" type="number">30</property>
+    <property id="morningStart" type="number">5</property>
+    <property id="morningEnd" type="number">11</property>
+    <property id="eveningStart" type="number">19</property>
+    <property id="eveningEnd" type="number">23</property>
+</properties>
