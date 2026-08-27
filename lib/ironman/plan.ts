@@ -60,23 +60,121 @@ export function nextRace(today: string) {
   return RACES.find((r) => r.date >= today) ?? RACES[RACES.length - 1]
 }
 
-/** Race goal targets — the numbers the whole build is aimed at, peaking at NYC (race 2) */
-export const GOALS = {
-  swimMinutes: 40, // full 1.9km swim
-  bikeMph: 18, // average over 90km
-  runPaceMinPerMile: 9, // average over 21.1km
-  transitionMinutes: 8, // T1 + T2 combined
+export const KM_PER_MILE = 1.609344
+
+export type AthleteId = 'lori' | 'aidas'
+/** The three disciplines that carry a time. Strength and rest do not. */
+export type Sport3 = 'swim' | 'bike' | 'run'
+
+/**
+ * Race goals, stored as the split each athlete is aiming at.
+ *
+ * Splits rather than paces because that is how the targets were actually set
+ * ("bike 2:40, run 2:00"), and because a split survives a change of race
+ * distance in a way an mph number does not. Goal pace, forecast probability
+ * and prescribed race effort all derive from these four numbers, so this is
+ * the only place a target is ever edited.
+ */
+export interface RaceGoals {
+  swimMinutes: number
+  bikeMinutes: number
+  runMinutes: number
+  transitionMinutes: number
 }
 
-const KM_PER_MILE = 1.609344
+/**
+ * Two athletes, two targets — and deliberately not the same shape. Aidas
+ * gives up ten minutes in the water and takes twenty-six back on the bike,
+ * which is exactly what the strength profile below says should happen. A
+ * single shared number would ask each of them to train the other's race.
+ */
+export const ATHLETE_GOALS: Record<AthleteId, RaceGoals> = {
+  // 40min swim, 18.0mph bike, 9:00/mile run — 5:52 total
+  lori: { swimMinutes: 40, bikeMinutes: 186.4, runMinutes: 118, transitionMinutes: 8 },
+  // 50min swim, 2:40 bike, 2:00 run — 5:38 total
+  aidas: { swimMinutes: 50, bikeMinutes: 160, runMinutes: 120, transitionMinutes: 8 },
+}
 
-/** Goal splits in minutes, derived from GOALS + RACE distances */
-export function goalSplits() {
-  const swim = GOALS.swimMinutes
-  const bike = (RACE.bikeKm / KM_PER_MILE / GOALS.bikeMph) * 60
-  const run = (RACE.runKm / KM_PER_MILE) * GOALS.runPaceMinPerMile
-  const transitions = GOALS.transitionMinutes
+/** Lori's targets are the default wherever the solo dashboard asks for "the" goal */
+export const GOALS = ATHLETE_GOALS.lori
+
+export function goalsFor(person: AthleteId): RaceGoals {
+  return ATHLETE_GOALS[person] ?? ATHLETE_GOALS.lori
+}
+
+/** Goal splits in minutes, and the finish they add up to */
+export function goalSplits(goals: RaceGoals = GOALS) {
+  const { swimMinutes: swim, bikeMinutes: bike, runMinutes: run, transitionMinutes: transitions } = goals
   return { swim, bike, run, transitions, total: swim + bike + run + transitions }
+}
+
+/** The same targets said the way each discipline is normally spoken about */
+export function goalDisplay(goals: RaceGoals = GOALS) {
+  return {
+    swimSecPer100m: (goals.swimMinutes * 60) / (RACE.swimKm * 10),
+    bikeKmh: RACE.bikeKm / (goals.bikeMinutes / 60),
+    bikeMph: RACE.bikeKm / KM_PER_MILE / (goals.bikeMinutes / 60),
+    runMinPerKm: goals.runMinutes / RACE.runKm,
+    runPaceMinPerMile: goals.runMinutes / (RACE.runKm / KM_PER_MILE),
+  }
+}
+
+/** Goal pace in min/km — the unit the forecast and the zone targets both work in */
+export function goalPaceMinKm(sport: Sport3, goals: RaceGoals = GOALS): number {
+  if (sport === 'swim') return goals.swimMinutes / RACE.swimKm
+  if (sport === 'bike') return goals.bikeMinutes / RACE.bikeKm
+  return goals.runMinutes / RACE.runKm
+}
+
+/**
+ * Where an athlete's logged evidence cannot be read as capability, and what
+ * they say the real number is.
+ *
+ * Aidas rides 30-34km/h when he is on his own, and a block spent riding next
+ * to Lori will never show it: a partner ride measures whoever set the tempo.
+ * Declaring 32km/h gives the model something to fall back on. It is a fallback
+ * and not an override — forecast.ts only reaches for it once most of the
+ * window is partner-limited, so as long as unshared rides exist they win. That
+ * guard is doing real work today: his solo rides currently sit at 24-27km/h
+ * over distance, so the logged number stands and the declaration waits.
+ *
+ * Lori needs no declaration. She sets the shared pace, so her rides already
+ * are her own.
+ */
+export interface DeclaredCapability {
+  bikeKmh?: number
+  runMinPerKm?: number
+  swimSecPer100m?: number
+  note?: string
+}
+
+export const DECLARED_CAPABILITY: Record<AthleteId, DeclaredCapability> = {
+  lori: {},
+  aidas: {
+    bikeKmh: 32,
+    note: 'Rides 30-34km/h solo — every ride logged in this block was a partner ride.',
+  },
+}
+
+/** Declared capability as a pace in min/km, or null where nothing is declared */
+export function declaredPaceMinKm(sport: Sport3, declared: DeclaredCapability | undefined): number | null {
+  if (!declared) return null
+  if (sport === 'bike') return declared.bikeKmh ? 60 / declared.bikeKmh : null
+  if (sport === 'run') return declared.runMinPerKm ?? null
+  return declared.swimSecPer100m ? (declared.swimSecPer100m * 10) / 60 : null
+}
+
+/**
+ * Relative standing per discipline. This sets no targets — the goals do that.
+ * It decides what a gap *means*: a weakness with minutes still on the table is
+ * where a block is won, while a strength already at goal only needs keeping
+ * awake.
+ */
+export type Standing = 'strong' | 'even' | 'weak'
+
+export const STRENGTHS: Record<AthleteId, Record<Sport3, Standing>> = {
+  lori: { swim: 'strong', bike: 'weak', run: 'strong' },
+  aidas: { swim: 'weak', bike: 'strong', run: 'even' },
 }
 
 /** Baselines observed before the plan started */

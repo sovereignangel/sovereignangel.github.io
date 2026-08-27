@@ -34,6 +34,36 @@ export function sportOfActivity(type: string): Sport | null {
   return null
 }
 
+/**
+ * Drop double-logged sessions before anything measures them.
+ *
+ * A ride recorded by both a head unit and a watch arrives as two activities
+ * with the same date, sport and numbers. Left alone it counts twice in weekly
+ * volume and twice in the pace model, which quietly doubles the apparent load
+ * of whoever happens to wear two devices. Same sport, same day, within 5% on
+ * both distance and duration is a duplicate; the longer record survives.
+ */
+export function dedupeActivities(activities: GarminActivity[]): GarminActivity[] {
+  const kept: GarminActivity[] = []
+  const near = (a: number, b: number) => {
+    const hi = Math.max(a, b)
+    return hi === 0 ? true : Math.abs(a - b) / hi <= 0.05
+  }
+  for (const a of [...activities].sort((x, y) => (y.durationSeconds ?? 0) - (x.durationSeconds ?? 0))) {
+    const sport = sportOfActivity(a.type)
+    const dup = kept.some(
+      (k) =>
+        k.date === a.date &&
+        sportOfActivity(k.type) === sport &&
+        sport !== null &&
+        near(k.distanceMeters ?? 0, a.distanceMeters ?? 0) &&
+        near(k.durationSeconds ?? 0, a.durationSeconds ?? 0)
+    )
+    if (!dup) kept.push(a)
+  }
+  return kept
+}
+
 // ── Readiness ─────────────────────────────────────────────────────────────
 
 export interface ReadinessFactor {

@@ -4,7 +4,9 @@ import { useEffect, useMemo, useState } from 'react'
 import { useAuth } from '@/components/auth/AuthProvider'
 import { getAllGarminMetrics, getAllGarminActivities, getGarminRollups } from '@/lib/firestore'
 import type { GarminMetrics, GarminActivity } from '@/lib/types'
-import { PLAN, RACE, RACE_NYC, GOALS, BASELINE, goalSplits, daysToRace, todayLocal, type PlanDay, type Sport } from '@/lib/ironman/plan'
+import { PLAN, RACE, RACE_NYC, GOALS, BASELINE, goalSplits, goalDisplay, daysToRace, todayLocal, type PlanDay, type Sport } from '@/lib/ironman/plan'
+import { computeRebalance, type SportNeed } from '@/lib/ironman/rebalance'
+import { fmtPace as fmtRacePace } from '@/lib/ironman/pace'
 import { computeRaceForecast, type DisciplineForecast } from '@/lib/ironman/forecast'
 import {
   computeReadiness,
@@ -129,10 +131,11 @@ function GoalsPanel({ activities, metrics, today }: { activities: GarminActivity
     return days
   }, [activities, metrics, today])
 
+  const show = goalDisplay()
   const goalText: Record<string, string> = {
     swim: `${Math.round(RACE.swimKm * 1000)}m in ${fmtMinSec(GOALS.swimMinutes)}`,
-    bike: `${RACE.bikeKm}km at ${GOALS.bikeMph.toFixed(1)} mph avg`,
-    run: `${RACE.runKm}km at ${fmtMinSec(GOALS.runPaceMinPerMile)} /mile`,
+    bike: `${RACE.bikeKm}km at ${show.bikeMph.toFixed(1)} mph avg`,
+    run: `${RACE.runKm}km at ${fmtMinSec(show.runPaceMinPerMile)} /mile`,
   }
   const goalSplit: Record<string, number> = { swim: splits.swim, bike: splits.bike, run: splits.run }
 
@@ -226,6 +229,99 @@ function GoalsPanel({ activities, metrics, today }: { activities: GarminActivity
           </div>
         </div>
       </div>
+    </Card>
+  )
+}
+
+// ── Where the race is ─────────────────────────────────────────────────────
+
+const NEED_TEXT: Record<SportNeed, string> = {
+  volume: 'needs distance',
+  intensity: 'needs speed',
+  both: 'needs distance and speed',
+  holding: 'holding — keep it awake',
+  unknown: 'needs evidence',
+}
+
+/**
+ * The plan says what today is. This says which discipline the weeks that are
+ * left actually belong to, ranked by minutes over goal split rather than by
+ * percentage off pace — forty minutes on the bike outranks ten in the water
+ * however much worse the water looks in percentage terms.
+ */
+function LeveragePanel({
+  activities,
+  metrics,
+  today,
+}: {
+  activities: GarminActivity[]
+  metrics: GarminMetrics[]
+  today: string
+}) {
+  const r = useMemo(() => computeRebalance(activities, metrics, today, 'lori'), [activities, metrics, today])
+
+  return (
+    <Card title="Where the Race Is" right={<span className="text-[10px] text-iron-muted">minutes on the table</span>}>
+      <div className="text-[12px] font-semibold text-iron-ink mb-2">{r.headline}</div>
+      <div className="space-y-2">
+        {r.sports.map((g) => (
+          <div key={g.sport}>
+            <div className="flex items-center gap-3 flex-wrap">
+              <SportChip sport={g.sport} />
+              <span className="text-[11px] font-semibold text-iron-ink w-[150px] shrink-0">{NEED_TEXT[g.need]}</span>
+              <span className="font-mono text-[10px] text-iron-muted">
+                hold {fmtRacePace(g.sport, g.target.prescribedPaceMinKm) ?? '—'}
+                {g.target.capped && (
+                  <> · goal {fmtRacePace(g.sport, g.target.goalPaceMinKm)} is {Math.round((g.target.gapPct ?? 0) * 100)}% off</>
+                )}
+              </span>
+              <span
+                className="font-mono text-[14px] font-semibold ml-auto w-[64px] text-right"
+                style={{
+                  color:
+                    g.minutesOverGoal == null ? '#8a7c7c'
+                    : g.minutesOverGoal > 30 ? '#c94f35'
+                    : g.minutesOverGoal > 5 ? '#8a6d2f'
+                    : '#2d6b4a',
+                }}
+              >
+                {g.minutesOverGoal == null ? '—' : `+${Math.round(g.minutesOverGoal)}m`}
+              </span>
+            </div>
+            <div className="text-[10px] text-iron-muted leading-relaxed mt-0.5">{g.why}</div>
+          </div>
+        ))}
+      </div>
+
+      {r.moves.length > 0 && (
+        <div className="mt-3 pt-2 border-t border-iron-rule-light space-y-2">
+          <div className="text-[11px] font-semibold text-iron-ink">Days the plan just rewrote</div>
+          {r.moves.map((m) =>
+            m.after.map((after, i) =>
+              after === m.before[i] ? null : (
+                <div key={`${m.date}-${i}`} className="text-[10px] leading-relaxed">
+                  <div className="font-mono text-iron-muted">{fmtDate(m.date)}</div>
+                  <div className="text-iron-muted line-through">{m.before[i].title} · {m.before[i].durationMin}min {m.before[i].zone}</div>
+                  <div className="text-iron-ink font-semibold">{after.title} · {after.durationMin}min {after.zone}</div>
+                  <div className="text-iron-muted">{after.detail}</div>
+                </div>
+              )
+            )
+          )}
+        </div>
+      )}
+
+      {r.displaced.length > 0 && (
+        <div className="mt-3 pt-2 border-t border-iron-rule-light">
+          <div className="text-[11px] font-semibold text-iron-ink mb-1">Displaced, not rescheduled</div>
+          {r.displaced.map((d, i) => (
+            <div key={i} className="text-[10px] text-iron-muted leading-relaxed">{d}</div>
+          ))}
+          <div className="text-[10px] text-iron-muted leading-relaxed mt-1">{r.displacedNote}</div>
+        </div>
+      )}
+
+      {r.staleNote && <div className="text-[10px] leading-relaxed mt-2" style={{ color: '#8a6d2f' }}>{r.staleNote}</div>}
     </Card>
   )
 }
@@ -595,6 +691,8 @@ export default function IronmanDashboard() {
       </div>
 
       <GoalsPanel activities={activities} metrics={metrics ?? []} today={today} />
+
+      <LeveragePanel activities={activities} metrics={metrics ?? []} today={today} />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
         <div className="lg:col-span-2">
