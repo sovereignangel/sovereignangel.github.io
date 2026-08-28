@@ -96,17 +96,51 @@ export const PRIOR_RACES: PriorRace[] = [
     location: 'Kotor, Montenegro',
     swimKm: 1.9,
     bikeKm: 90,
-    // Ocean Lava's half is officially 1.9 | 90 | 21 — a hundred metres shy of
-    // an Ironman 70.3 run, which the distance tolerance absorbs.
+    // Ocean Lava's half is officially 1.9 | 90 | 21.
     runKm: 21,
-    swimSec: 33 * 60 + 4, //      33:04
-    // Reported as one combined 15:16. Split 8:27 / 6:49 for the two rows that
-    // want them separately; the pair sums to the reported figure exactly.
-    t1Sec: 8 * 60 + 27, //         8:27
+    swimSec: 33 * 60 + 4, //             33:04
+    // Reported as one combined 15:16, split here for the two legs that want
+    // them apart; the pair sums to the reported figure exactly.
+    t1Sec: 8 * 60 + 27, //                8:27
     bikeSec: 3 * 3600 + 40 * 60 + 50, // 3:40:50
-    t2Sec: 6 * 60 + 49, //         6:49
+    t2Sec: 6 * 60 + 49, //                6:49
     runSec: 2 * 3600 + 1 * 60 + 24, //   2:01:24
-    totalSec: 6 * 3600 + 30 * 60 + 34, // 6:30:34 — legs plus 15:16 of transitions
+    totalSec: 6 * 3600 + 30 * 60 + 34, // 6:30:34
+  },
+  {
+    athlete: 'lori',
+    name: 'Ironman 70.3 Florida',
+    date: '2022-12-11',
+    location: 'Haines City, Florida',
+    swimKm: 1.9,
+    bikeKm: 90.2,
+    runKm: 21.4,
+    // Bib 298. 37th F30-34, 251st woman, 1098th overall.
+    swimSec: 58 * 60 + 51, //            58:51
+    t1Sec: 6 * 60 + 40, //                6:40
+    bikeSec: 3 * 3600 + 45 * 60 + 9, //  3:45:09
+    t2Sec: 6 * 60 + 13, //                6:13
+    runSec: 2 * 3600 + 24 * 60 + 23, //  2:24:23
+    totalSec: 7 * 3600 + 21 * 60 + 16, // 7:21:16
+  },
+  {
+    athlete: 'lori',
+    name: 'Ironman 70.3 North Carolina',
+    date: '2022-10-15',
+    location: 'Wilmington, North Carolina',
+    // The Cape Fear swim runs long and downstream — 2.3km with the current,
+    // which is why the split reads faster than any pool session she has done.
+    // Recorded as raced; the leg is not a like-for-like against a 1.9km swim.
+    swimKm: 2.3,
+    bikeKm: 91.4,
+    runKm: 21,
+    // Bib 1747. 49th F30-34, 458th woman, 1596th overall.
+    swimSec: 38 * 60 + 41, //            38:41
+    t1Sec: 7 * 60 + 56, //                7:56
+    bikeSec: 3 * 3600 + 39 * 60 + 19, // 3:39:19
+    t2Sec: 5 * 60 + 26, //                5:26
+    runSec: 2 * 3600 + 11 * 60 + 10, //  2:11:10
+    totalSec: 6 * 3600 + 42 * 60 + 32, // 6:42:32
   },
   {
     athlete: 'lori',
@@ -114,7 +148,7 @@ export const PRIOR_RACES: PriorRace[] = [
     date: '2022-03-20',
     location: 'San Juan, Puerto Rico',
     swimKm: 1.9,
-    bikeKm: 90,
+    bikeKm: 90.1,
     runKm: 21.1,
     // Bib 746. 22nd F30-34, 191st woman, 929th overall.
     swimSec: 49 * 60 + 3, //             49:03
@@ -122,23 +156,34 @@ export const PRIOR_RACES: PriorRace[] = [
     bikeSec: 3 * 3600 + 48 * 60 + 54, // 3:48:54
     t2Sec: 7 * 60 + 48, //                7:48
     runSec: 2 * 3600 + 33 * 60 + 56, //  2:33:56
-    totalSec: 7 * 3600 + 26 * 60 + 33, // 7:26:33 — the five legs sum to this exactly
+    totalSec: 7 * 3600 + 26 * 60 + 33, // 7:26:33
   },
 ]
 
 /**
- * Two race distances are the same race distance when they are within a few
- * percent. Ocean Lava's half runs 21km against Ironman's 21.1, and a hundred
- * metres is not a reason to refuse to compare two half-irons.
+ * Two races are the same distance when their totals are.
+ *
+ * Leg-by-leg equality is the obvious rule and the wrong one. No two half-irons
+ * measure the same: Ocean Lava runs 21km against Ironman's 21.1, bike legs
+ * come in at 90, 90.1, 90.2 and 91.4, and North Carolina's swim is 2.3km
+ * because the course runs downstream with the tide. Every one of those is a
+ * half, and a rule that refused to compare them would leave three of four
+ * races with nothing to measure against.
+ *
+ * Five percent on the total separates a half from anything that is not one —
+ * an olympic is barely half the distance and a full is double it — while
+ * absorbing every course-measurement difference above.
  */
-const DISTANCE_TOLERANCE = 0.03
+const DISTANCE_TOLERANCE = 0.05
+
+const totalKm = (r: { swimKm: number; bikeKm: number; runKm: number }) => r.swimKm + r.bikeKm + r.runKm
 
 export function sameDistance(
   a: { swimKm: number; bikeKm: number; runKm: number },
   b: { swimKm: number; bikeKm: number; runKm: number }
 ): boolean {
-  const near = (x: number, y: number) => Math.abs(x - y) / Math.max(x, y) <= DISTANCE_TOLERANCE
-  return near(a.swimKm, b.swimKm) && near(a.bikeKm, b.bikeKm) && near(a.runKm, b.runKm)
+  const [x, y] = [totalKm(a), totalKm(b)]
+  return Math.abs(x - y) / Math.max(x, y) <= DISTANCE_TOLERANCE
 }
 
 /** Every race that athlete has finished, most recent first */
@@ -151,8 +196,8 @@ export function priorRacesFor(athlete: AthleteId): PriorRace[] {
  * gets its own numbers rather than being forced into a label it does not fit.
  */
 export function raceDistanceLabel(r: { swimKm: number; bikeKm: number; runKm: number }): string {
-  if (r.swimKm === 1.9 && r.bikeKm === 90 && r.runKm === 21.1) return '70.3'
-  if (r.swimKm === 3.8 && r.bikeKm === 180 && r.runKm === 42.2) return '140.6'
+  if (sameDistance(r, { swimKm: 1.9, bikeKm: 90, runKm: 21.1 })) return '70.3'
+  if (sameDistance(r, { swimKm: 3.8, bikeKm: 180, runKm: 42.2 })) return '140.6'
   return `${r.swimKm}/${r.bikeKm}/${r.runKm}km`
 }
 
