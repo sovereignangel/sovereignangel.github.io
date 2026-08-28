@@ -173,87 +173,68 @@ function gapCell(sec: number): { text: string; color: string } {
 /**
  * The ledger: every race this athlete has finished, newest first.
  *
- * This replaced a five-row tearsheet that took one race apart leg by leg
- * against the goal. That table answered a narrower question than the card is
- * for — it could only ever show the most recent race at the target distance,
- * so every other result the athlete had ever finished was invisible. A record
- * of what someone has actually done should list all of it.
+ * This lived in a card of its own and now lives in a hover under the name,
+ * because a record of four finished races is context for the targets rather
+ * than a subject beside them. The card it replaced repeated the same three
+ * disciplines the sheet below already lays out, and put a second table on a
+ * page whose whole argument is one table per athlete.
  *
- * Each row carries the finish and, where the distance matches the target, what
- * that finish is worth against today's goal. The legs are one hover away, so
- * the detail is still reachable without a table competing with the one below.
+ * Each line carries where and when, the distance, the legs, the finish, and —
+ * where the total distance matches the target — what that finish is worth
+ * against today's goal.
  */
-function RaceLedger({ a }: { a: AthleteDetail }) {
+function RaceHistoryPanel({ a }: { a: AthleteDetail }) {
   const races = priorRacesFor(a.person as 'lori' | 'aidas')
-
   if (races.length === 0) {
     return (
       <>
-        <Sub>No finished race on record.</Sub>
-        <Sub>Goal is {hm(a.splits.total)} — nothing is inferred until there is a result to compare.</Sub>
+        <div className="hd">Races finished · {a.name}</div>
+        <div className="k"><span>None on record</span><b>—</b></div>
       </>
     )
   }
-
   return (
     <>
-      <Rows>
-        {races.map((r) => {
-          const comparable = sameDistance(r, RACE_NYC)
-          const v = comparable ? priorRaceVsGoal(r, a.goals) : null
-          const d = priorRaceDisplay(r)
-          return (
-            <Row
-              key={`${r.date}-${r.name}`}
-              label={r.name}
-              detail={`${r.location} · ${r.date.slice(0, 4)} · ${raceDistanceLabel(r)}`}
-              value={
-                <Hover
-                  panel={
-                    <>
-                      <div className="hd">{r.name} · {r.date.slice(0, 4)}</div>
-                      <div className="k"><span>Swim {r.swimKm}km</span><b>{clk(r.swimSec)}</b></div>
-                      <div className="k"><span>Bike {r.bikeKm}km</span><b>{clk(r.bikeSec)}</b></div>
-                      <div className="k"><span>Run {r.runKm}km</span><b>{clk(r.runSec)}</b></div>
-                      <div className="k"><span>T1 + T2</span><b>{clk(d.transitionSec)}</b></div>
-                      <div className="k"><span>Finish</span><b>{clk(r.totalSec)}</b></div>
-                      {v ? (
-                        <div className="k">
-                          <span>vs goal</span>
-                          <b style={{ color: gapCell(v.total).color }}>{gapCell(v.total).text}</b>
-                        </div>
-                      ) : (
-                        <div className="k"><span>vs goal</span><b>different distance</b></div>
-                      )}
-                    </>
-                  }
-                >
-                  {clk(r.totalSec)}
-                  {v ? <span style={{ color: gapCell(v.total).color }}> · {gapCell(v.total).text}</span> : null}
-                </Hover>
-              }
-            />
-          )
-        })}
-      </Rows>
-      <Foot>
-        Finish times as raced. The gap is against today's goal and is only shown where the
-        distance matches — courses differ, and a windy or hilly bike leg is not the same
-        number as a flat one.
-      </Foot>
+      <div className="hd">Races finished · {a.name}</div>
+      {races.map((r) => {
+        const v = sameDistance(r, RACE_NYC) ? priorRaceVsGoal(r, a.goals) : null
+        const d = priorRaceDisplay(r)
+        return (
+          <div className="k" key={`${r.date}-${r.name}`}>
+            <span>
+              {r.name}
+              <br />
+              {r.location} · {r.date} · {raceDistanceLabel(r)}
+              <br />
+              {clk(r.swimSec)} / {clk(r.bikeSec)} / {clk(r.runSec)} · T {clk(d.transitionSec)}
+            </span>
+            <b>
+              {clk(r.totalSec)}
+              {v ? (
+                <>
+                  <br />
+                  <span style={{ color: gapCell(v.total).color }}>{gapCell(v.total).text}</span>
+                </>
+              ) : null}
+            </b>
+          </div>
+        )
+      })}
     </>
   )
 }
 
-function GapSheet({ a }: { a: AthleteDetail }) {
+/** The one line under the name: how many, and the best of them. */
+function RaceHistoryLink({ a }: { a: AthleteDetail }) {
   const races = priorRacesFor(a.person as 'lori' | 'aidas')
+  if (races.length === 0) return <Sub>No race on record.</Sub>
+  const best = races.reduce((x, y) => (y.totalSec < x.totalSec ? y : x))
   return (
-    <FieldCard
-      label={<><PersonSigil person={a.person} size={13} />{a.name}</>}
-      meta={races.length > 0 ? `${races.length} race${races.length === 1 ? '' : 's'} on record` : 'no race on record'}
-    >
-      <RaceLedger a={a} />
-    </FieldCard>
+    <div className="lordas-fc-sub">
+      <Hover align="left" panel={<RaceHistoryPanel a={a} />}>
+        {races.length} race{races.length === 1 ? '' : 's'} raced · best {clk(best.totalSec)}
+      </Hover>
+    </div>
   )
 }
 
@@ -384,6 +365,8 @@ function AthleteSheet({ a }: { a: AthleteDetail }) {
         </Hover>
       }
     >
+      <RaceHistoryLink a={a} />
+
       <Tearsheet
         columns={SPORTS.map((s) => ({
           key: s,
@@ -603,10 +586,6 @@ export default function PairIronmanView() {
 
       <Seam cols={2} className="lordas-mt">
         {data.athletes.map((a) => <AthleteSheet key={a.person} a={a} />)}
-      </Seam>
-
-      <Seam cols={2} className="lordas-mt">
-        {data.athletes.map((a) => <GapSheet key={a.person} a={a} />)}
       </Seam>
     </div>
   )
