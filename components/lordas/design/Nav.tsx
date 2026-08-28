@@ -16,9 +16,10 @@
 
 import { C, LORDAS_MOTTO } from './tokens'
 import {
-  LordasMark, CompassIcon, LightbulbIcon,
+  CompassIcon, LightbulbIcon,
   TrifectaIcon, SummitIcon, KiteIcon,
 } from './assets'
+import { LordasLogo } from './Logo'
 
 export type LordasModule = 'goals' | 'insights' | 'exec' | 'ironman'
 
@@ -157,7 +158,7 @@ export function LordasHeader({
     >
       <div style={{ display: 'flex', flexDirection: 'column', gap: 7, minWidth: 0 }}>
         <div style={{ display: 'flex', gap: 11, alignItems: 'center', minWidth: 0, flexWrap: 'wrap' }}>
-          <LordasMark size={40} />
+          <LordasLogo height={40} />
           <div style={{ minWidth: 0 }}>
             <h1
               style={{
