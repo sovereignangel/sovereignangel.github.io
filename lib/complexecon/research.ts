@@ -280,6 +280,54 @@ export const LANES: ResearchLane[] = [
     firstProbe:
       'Runs continuously rather than as a sprint: as each regional probe closes, write the one-page transmission memo — which listed balance sheets feel this state variable, on what clock, and what is the cleanest expression.',
   },
+  {
+    id: 'lane-cognition-pjm',
+    numeral: 'V',
+    vector: 'Cognition · Load',
+    market: 'PJM · United States',
+    name: 'Who Pays for Cognition',
+    status: 'probing',
+    thesis:
+      'The Abu Dhabi paper. AI datacenter load does not distribute its own costs — the conventions of capacity procurement do. Utilities’ load forecasts set PJM’s reliability requirement, the requirement sets the capacity price, and the price lands on household bills through tariff design. The forecast is a performative convention: the model writes the price, again. This is the cost ledger of the original SFI lane — “who accumulates when cognition is free” was the gains ledger; this is who pays.',
+    whyOpen:
+      'The facts are public and dramatic: PJM’s capacity price rose from about $29 to $270 per MW-day for 2025-26, the market monitor attributed 63% of the increase to datacenters — roughly $9.3 billion recovered from customers — and prices remain elevated in 2026. The incidence question has been raised as law and policy (Peskoe & Martin, Harvard Electricity Law Initiative, 2025) and as journalism. Nobody has written the complexity version: the reflexive forecast-to-price loop, the distribution by income decile, or the counterfactual conventions.',
+    mechanism:
+      'A feedback loop with a convention at its center. Speculative interconnection requests and utility pipeline counting inflate load forecasts; forecasts raise the procurement target; the auction clears higher; bills rise; the rise is socialized across a customer class whose budget shares differ by decile. Change the convention — who bears forecast risk, how large loads are tariffed — and the same electrons produce a different distribution. Conventions as parameters of a system that generates inequality.',
+    hypotheses: [
+      {
+        id: 'PJ-1',
+        claim:
+          'Incidence: the datacenter-attributable share of 2025-26 capacity costs, passed through to residential bills, is regressive in income share — the bottom quintile bears a multiple of the top quintile’s burden as a fraction of income.',
+        test: 'PJM auction results by zone and utility pass-through (rate filings, EIA-861) allocate the attributable cost to residential customers; BLS Consumer Expenditure Survey electricity budget shares by income decile convert it to burden. Headline: dollars per household per year and percent of income, by decile.',
+      },
+      {
+        id: 'PJ-2',
+        claim:
+          'Reflexivity: a measurable share of the capacity-price increase was written by load-forecast revisions rather than by realized load — the forecast convention, not the electrons, moved the price.',
+        test: 'Decompose the 2024-25 price change into reliability-requirement changes driven by PJM load-forecast revisions vs supply-side drivers (retirements, accreditation methodology) vs realized peak load; the forecast-driven share is the estimate. Pre-register the decomposition before pulling results.',
+      },
+      {
+        id: 'PJ-3',
+        claim:
+          'Counterfactual conventions: under alternative cost-allocation rules — large-load tariffs, datacenters bearing forecast risk, price collars — the same load produces materially different household burdens; the dollars shifted per household is a property of the rule, not the demand.',
+        test: 'A calibrated procurement-and-allocation model (simple first, agent-based if time allows) run under the status quo and three alternative conventions already proposed in practice; output is dollars shifted per household per year under each. The Farmer-grade section: conventions as system parameters.',
+      },
+    ],
+    data: [
+      { name: 'PJM capacity market results', url: 'https://www.pjm.com/markets-and-operations/rpm', note: 'Base Residual Auction results and parameters by delivery year and zone' },
+      { name: 'PJM load forecast reports', url: 'https://www.pjm.com/planning/resource-adequacy-planning/load-forecast-dev-process', note: 'annual forecasts and revisions — the performative object' },
+      { name: 'Monitoring Analytics (IMM)', url: 'https://www.monitoringanalytics.com', note: 'State of the Market reports; the 63% datacenter attribution' },
+      { name: 'EIA-861', url: 'https://www.eia.gov/electricity/data/eia861/', note: 'retail sales and revenue by utility and customer class' },
+      { name: 'BLS Consumer Expenditure Survey', url: 'https://www.bls.gov/cex/', note: 'electricity spend by income decile — the incidence join' },
+      { name: 'Peskoe & Martin 2025', url: 'http://eelp.law.harvard.edu/wp-content/uploads/2025/03/Harvard-ELI-Extracting-Profits-from-the-Public.pdf', note: 'the legal account of the cost shift — nearest prior work' },
+    ],
+    armstrongAngle:
+      'Research capital first. A separate one-page trade memo maps the findings to who captures the capacity windfall — independent power producers with PJM exposure vs regulated utilities vs hyperscalers — without shaping the research.',
+    quantSkill:
+      'Incidence analysis, price decomposition, calibrated procurement modelling — and the discipline of a pre-registered decomposition on a politically charged question.',
+    firstProbe:
+      'Two-week data sprint before the Ironman: pull auction results, load-forecast revisions, and CEX budget shares; one chart of forecast revisions against capacity prices; the §1 incidence skeleton. Michael drafts the conventions-as-institutions theory section in parallel.',
+  },
 ]
 
 export const INEQUALITY_BRIDGE = {
@@ -344,6 +392,13 @@ export const SCORECARD: ScorecardRow[] = [
 
 export const PROPOSED_PATH: PathStep[] = [
   {
+    window: 'Weeks 1-19 · parallel track',
+    label: 'The Abu Dhabi paper — Who Pays for Cognition (Lane V)',
+    detail:
+      'Data sprint before September 26; §1 incidence drafted in October; §2 reflexivity decomposition and §3 counterfactual model in November; full draft to Lafond and the Oxford meetings in December; paper plus lightning talk in hand for January 3. Michael Ralph co-authors the theory section; Lori owns data and model.',
+    gate: 'A defensible headline number by end of October or the paper narrows to §1 plus §2. The gains ledger — valuation conventions — is the second paper of the same program, not a competing one.',
+  },
+  {
     window: 'Weeks 1-3',
     label: 'Lane I probe — while still in Palanga',
     detail:
@@ -373,6 +428,11 @@ export const PROPOSED_PATH: PathStep[] = [
 ]
 
 export const ITERATION_LOG: LogEntry[] = [
+  {
+    date: '2026-08-22',
+    version: 'v5',
+    note: 'Abu Dhabi paper decided by structured questioning: audience is Farmer and the SFI complexity crowd; scope is a full empirical paper with a headline number; data untouched, so English public data wins. Lane V added — “Who Pays for Cognition”: PJM datacenter load, load-forecast conventions, capacity prices, household incidence by income decile, in three sections (PJ-1 incidence, PJ-2 reflexivity, PJ-3 counterfactual conventions). Valuation conventions resolved as the gains ledger of the same program, not a second path. Brazil parked for the DPhil; Baltic stays the trading and blog lane. Solo with Michael Ralph on theory; trade memo alongside, not inside.',
+  },
   {
     date: '2026-08-22',
     version: 'v4',

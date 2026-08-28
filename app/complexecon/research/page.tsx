@@ -128,7 +128,7 @@ export default function ComplexEconResearchPage() {
 
         {/* ─── Lanes ─── */}
         <section className="mb-12">
-          <SectionHeader numeral="I–IV" title="The Lanes" />
+          <SectionHeader numeral="I–V" title="The Lanes" />
           <div className="space-y-6">
             {LANES.map(lane => (
               <div key={lane.id} className="rounded-sm border border-rule bg-white p-4">
