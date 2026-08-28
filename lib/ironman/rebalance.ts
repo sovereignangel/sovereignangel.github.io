@@ -42,6 +42,30 @@ const RECENT_DAYS = 7
 const LONGEST_WINDOW_DAYS = 56
 /** Days back a big session still counts as "just did this" for a duplicate */
 const DUPLICATE_WINDOW_DAYS = 5
+/**
+ * Minutes in one discipline the day before that count as a hard day, whether
+ * or not they matched the size of today's printed session. A 220-minute ride
+ * yesterday leaves the same legs regardless of what the plan happened to ask
+ * for today.
+ */
+const HARD_DAY_MIN = 90
+/**
+ * How much of the printed session survives, by how long ago the work was
+ * banked. The distance being ticked is only half the question — the other
+ * half is whether the body has had time to absorb it. Same-week is a
+ * duplicate; yesterday is fatigue.
+ */
+function retuneFactor(daysSince: number): { factor: number; recovery: boolean } {
+  if (daysSince <= 1) return { factor: 0.4, recovery: true }
+  if (daysSince <= 3) return { factor: 0.6, recovery: false }
+  return { factor: 0.8, recovery: false }
+}
+
+function daysApart(from: string, to: string): number {
+  return Math.round(
+    (new Date(to + 'T00:00:00Z').getTime() - new Date(from + 'T00:00:00Z').getTime()) / 86400000
+  )
+}
 /** Minutes over goal below which a discipline is simply holding */
 const AT_GOAL_MIN = 5
 /**
@@ -260,22 +284,47 @@ function movesFor(
 
       // Strictly before the day in question: a session cannot be the reason to
       // shrink itself, and on the day it runs, today's log is that session.
-      const recent = qualifying(activities, sport, shiftDate(day.date, -DUPLICATE_WINDOW_DAYS), shiftDate(day.date, -1))
-        .filter(
-          (a) =>
-            a.min >= session.durationMin * 0.85 ||
-            (session.distanceKm != null && a.km >= session.distanceKm * 0.9)
-        )
-        .sort((a, b) => b.min - a.min)[0]
-      if (!recent) return session
+      const window = qualifying(activities, sport, shiftDate(day.date, -DUPLICATE_WINDOW_DAYS), shiftDate(day.date, -1))
+      const duplicates = window.filter(
+        (a) =>
+          a.min >= session.durationMin * 0.85 ||
+          (session.distanceKm != null && a.km >= session.distanceKm * 0.9)
+      )
+      // The biggest session proves the distance is banked; the most recent one
+      // decides whether the legs have had time to absorb it. They are rarely
+      // the same session, and using only the biggest treated a ride three days
+      // ago exactly like one yesterday.
+      const biggest = [...duplicates].sort((a, b) => b.min - a.min)[0]
+      const yesterdayMin = window
+        .filter((a) => daysApart(a.date, day.date) <= 1)
+        .reduce((sum, a) => sum + a.min, 0)
+      const hardYesterday = yesterdayMin >= HARD_DAY_MIN
+      if (!biggest && !hardYesterday) return session
+
+      const latest = [...(biggest ? duplicates : window)]
+        .filter((a) => daysApart(a.date, day.date) >= 0)
+        .sort((a, b) => (a.date < b.date ? 1 : -1))[0]
+      const daysSince = latest ? daysApart(latest.date, day.date) : 99
+      const { factor, recovery } = retuneFactor(daysSince)
 
       const gap = gaps[sport]
-      const banked = `${Math.round(recent.km)}km in ${Math.round(recent.min)}min on ${recent.date}`
+      const anchor = biggest ?? latest
+      const banked = anchor
+        ? `${Math.round(anchor.km)}km in ${Math.round(anchor.min)}min on ${anchor.date}`
+        : `${Math.round(yesterdayMin)}min yesterday`
+      // Name yesterday's own work rather than implying the banked session was
+      // yesterday — they are usually different days, and saying otherwise
+      // reads as the engine not knowing what it looked at.
+      const fatigue = recovery
+        ? ` And ${Math.round(yesterdayMin)}min of it went in yesterday, which the legs have not absorbed yet — so this is the lighter version.`
+        : ''
       changed = true
 
       if (gap.need === 'intensity') {
-        const total = round5(session.durationMin * 0.6)
-        const brickMin = session.sport === 'brick' ? 20 : 0
+        const total = round5(session.durationMin * factor)
+        // A brick off the back of yesterday's long ride is the part that hurts
+        // and the part that teaches least, so it is the first thing dropped.
+        const brickMin = session.sport === 'brick' && !recovery ? 20 : 0
         const work = total - brickMin - 20
         const reps = clamp(Math.floor(work / 25), 2, 4)
         const at = fmtPace(sport, gap.target.prescribedPaceMinKm) ?? 'race effort'
@@ -288,23 +337,23 @@ function movesFor(
           ...session,
           zone: 'race' as const,
           durationMin: total,
-          distanceKm: session.distanceKm ? Math.round(session.distanceKm * 0.6) : undefined,
+          distanceKm: session.distanceKm ? Math.round(session.distanceKm * factor) : undefined,
           title: `${sport === 'bike' ? 'Bike' : 'Run'} ${total}min race effort${brickMin ? ` + ${brickMin}min brick run` : ''}`,
           detail:
-            `RETUNED: ${banked} already banked the distance — the endurance box is ticked and another slow one buys nothing. ` +
+            `RETUNED: ${banked} already banked the distance — the endurance box is ticked and another slow one buys nothing.${fatigue} ` +
             `Warm up 20min, then ${reps}x20min at ${at} with 5min easy between.${reach}` +
             (brickMin ? ` Rack the bike and run ${brickMin}min straight off it.` : '') +
             ' Full race nutrition — the fuelling rehearsal is still worth having.',
         }
       }
 
-      const total = round5(session.durationMin * 0.75)
+      const trimTo = round5(session.durationMin * Math.min(factor + 0.15, 0.85))
       return {
         ...session,
-        durationMin: total,
-        distanceKm: session.distanceKm ? Math.round(session.distanceKm * 0.75) : undefined,
-        title: `${session.title} (trimmed to ${total}min)`,
-        detail: `TRIMMED: ${banked} means this session is paying twice for one adaptation. ${total}min at the printed effort keeps it without the cost. ` + session.detail,
+        durationMin: trimTo,
+        distanceKm: session.distanceKm ? Math.round(session.distanceKm * Math.min(factor + 0.15, 0.85)) : undefined,
+        title: `${session.title} (trimmed to ${trimTo}min)`,
+        detail: `TRIMMED: ${banked} means this session is paying twice for one adaptation. ${trimTo}min at the printed effort keeps it without the cost.${fatigue} ` + session.detail,
       }
     })
 
