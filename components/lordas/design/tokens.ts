@@ -1,51 +1,69 @@
 /**
- * Lordas Console tokens — the single source of colour and spacing.
+ * Lordas tokens — Field.
  *
- * See LORDAS_BRAND_STRATEGY.md. Never write a hex literal in a component;
- * import from here or use the CSS custom properties the layout defines on
- * `.lordas`, which mirror these exactly.
+ * The arms are navy, antique gold and parchment; the interface was warm
+ * espresso with a teal accent that had no source in them. Field settles that
+ * by dividing the page the way a shield divides rather than picking one
+ * temperature: navy carries evidence, warm carries action, and a cool neutral
+ * ground holds both.
+ *
+ * See LORDAS_BRAND_STRATEGY.md. Never write a hex literal in a component.
  */
 
 export const C = {
-  ground: '#1B120C',
-  panel: '#241811',
-  panelQuiet: '#2E1F16',
-  panelRaise: '#3A2A20',
-  rule: '#3E2C20',
-  ruleSoft: '#33241A',
-  ink: '#F2E8DA',
-  muted: '#B39D85',
-  faint: '#836F5C',
-  accent: '#6FA3CE',
-  accentDeep: '#4C7BA6',
-  ok: '#6FB89A',
-  warn: '#D9A63F',
-  crit: '#DE7259',
+  /** The mediating ground — cool, but not the shield's own navy */
+  ground: '#171B26',
+
+  /** Action surfaces: today, the session, anything asking you to do something */
+  action: '#241811',
+  actionQuiet: '#2E1F16',
+
+  /** Evidence surfaces: tables, forecasts, the block, anything asking you to read */
+  evidence: '#141C30',
+  evidenceQuiet: '#1A2440',
+
+  rule: '#33344A',
+  ruleSoft: '#262A3A',
+  raise: '#2A3040',
+
+  ink: '#EFE9DE',
+  muted: '#A9A69E',
+  faint: '#7A7670',
+
+  /** Antique gold, off the device on the shield */
+  accent: '#C89646',
+  accentDeep: '#A07030',
+
+  ok: '#6E9E7F',
+  warn: '#D9A441',
+  crit: '#C0552E',
+  /** The banner's ember, dark enough for stripes and washes but not for text */
+  critDeep: '#8C3214',
+
+  /** The banner itself — used sparingly, for the one thing that is a record */
+  parchment: '#E6D2A0',
 
   /**
-   * Person colours. Lori is the sun — expanding what is possible; Aidas is
-   * the lens — testing what is feasible.
-   *
-   * Sun is brass, deliberately the same value as the `warn` state. They never
-   * collide in practice because they live in different registers: a person
-   * colour only ever appears beside its sigil or as a named series in a
-   * legend, and a state colour only ever appears as a left-edge stripe, a
-   * chip, or a status value. The sun glyph is what disambiguates — if brass
-   * appears without a sigil next to it, it means watch.
+   * Person colours, both taken from the arms. Lori is the sun that crowns
+   * them; Aidas is the lens on the shield, which samples as pewter — the
+   * teal it used to be had no source in the artwork at all.
    */
-  sun: '#D9A63F',
-  lens: '#54BFC4',
+  sun: '#C89646',
+  lens: '#9AAEB8',
+
+  /** Backwards-compatible aliases for the surfaces most components still name */
+  panel: '#141C30',
+  panelQuiet: '#1A2440',
+  panelRaise: '#2A3040',
 } as const
 
 /**
- * Lori is always sun, Aidas always lens — the reader should know whose number
- * they are looking at before they read a name. Relationship-owned things take
- * the brand accent.
- *
- * Person colour is never a bare status value. It always appears beside its
- * sigil or as a named series in a legend, which is what keeps sun from being
- * mistaken for the brass "watch" state.
+ * Which field a surface belongs to. `action` is warm and asks you to do
+ * something; `evidence` is navy and asks you to read. A card that cannot say
+ * which it is usually wants to be two cards.
  */
+export type Field = 'action' | 'evidence'
+
 export const OWNER: Record<string, string> = {
   lori: C.sun,
   aidas: C.lens,
@@ -62,38 +80,12 @@ export const TONE = {
 
 export type Tone = keyof typeof TONE
 
-/** 8% wash of a semantic colour, for chip and stripe backgrounds. */
-export const wash = (hex: string) => `${hex}14`
-/** 33% edge of a semantic colour, for chip borders. */
-export const edge = (hex: string) => `${hex}55`
-
-export const SPORT_COLOR: Record<string, string> = {
-  swim: C.accent,
-  bike: C.warn,
-  run: C.ok,
-  brick: '#B889CE',
-  strength: C.muted,
-  core: C.muted,
-  rest: C.faint,
-}
-
-/** Readiness and compliance bands share one vocabulary across every module. */
-export function bandColor(band: string | null | undefined): string {
-  if (band === 'green' || band === 'ok' || band === 'done') return C.ok
-  if (band === 'amber' || band === 'warn' || band === 'partial') return C.warn
-  if (band === 'red' || band === 'crit' || band === 'missed') return C.crit
-  return C.faint
-}
-
-/**
- * The same tokens as CSS variables. Components that may render inside a
- * second palette — the solo Ironman page hosts these primitives in burgundy
- * and blush — must read these rather than the literals above.
- */
 export const V = {
   ground: 'var(--lordas-ground)',
   panel: 'var(--lordas-panel)',
   panelQuiet: 'var(--lordas-panel-quiet)',
+  action: 'var(--lordas-action)',
+  evidence: 'var(--lordas-evidence)',
   rule: 'var(--lordas-rule)',
   ruleSoft: 'var(--lordas-rule-soft)',
   ink: 'var(--lordas-ink)',
@@ -105,12 +97,31 @@ export const V = {
   crit: 'var(--lordas-crit)',
 } as const
 
+export const wash = (hex: string) => `${hex}1A`
+export const edge = (hex: string) => `${hex}5C`
+
+export const SPORT_COLOR: Record<string, string> = {
+  swim: C.lens,
+  bike: C.accent,
+  run: C.ok,
+  brick: '#A88BC0',
+  strength: C.muted,
+  core: C.muted,
+  rest: C.faint,
+}
+
+export function bandColor(band: string | null | undefined): string {
+  if (band === 'green' || band === 'ok' || band === 'done') return C.ok
+  if (band === 'amber' || band === 'warn' || band === 'partial') return C.warn
+  if (band === 'red' || band === 'crit' || band === 'missed') return C.crit
+  return C.faint
+}
+
 export const FONT = {
   display: 'var(--lordas-display)',
   body: 'var(--lordas-body)',
   mono: 'var(--lordas-mono)',
 } as const
 
-/** The wordmark line. Lives here so the primitive library never has to
- *  import from a lordas-specific module to render a ticker. */
+/** The wordmark line, kept here so the primitives import nothing lordas-specific. */
 export const LORDAS_MOTTO = 'Source then Aim.'

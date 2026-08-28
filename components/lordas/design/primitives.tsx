@@ -9,7 +9,7 @@
  * LORDAS_BRAND_STRATEGY.md §4.
  */
 
-import { C, TONE, V, wash, edge, LORDAS_MOTTO, type Tone } from './tokens'
+import { C, TONE, V, wash, edge, LORDAS_MOTTO, type Tone, type Field } from './tokens'
 
 /**
  * Tones as CSS variables rather than literals. A primitive rendered inside a
@@ -46,6 +46,7 @@ export function FieldCard({
   label,
   meta,
   tone = 'none',
+  field,
   quiet,
   span,
   children,
@@ -55,6 +56,8 @@ export function FieldCard({
   label?: React.ReactNode
   meta?: React.ReactNode
   tone?: Tone
+  /** Which half of the shield this card belongs to — warm to act, navy to read */
+  field?: Field
   quiet?: boolean
   /** Let a card run wider than one column: `true` for the full row, or a count */
   span?: boolean | number
@@ -64,9 +67,11 @@ export function FieldCard({
 }) {
   return (
     <div
-      className={`lordas-fc ${className}`}
+      className={`lordas-fc${field ? ` lordas-fc--${field}` : ''}${quiet ? ' is-quiet' : ''} ${className}`}
       style={{
-        background: quiet ? V.panelQuiet : V.panel,
+        // The field classes carry the surface; only an undeclared card falls
+        // back to the token, so a declared one is never overridden inline.
+        background: field ? undefined : quiet ? V.panelQuiet : V.panel,
         boxShadow: tone === 'none' ? undefined : `inset 2px 0 0 ${TONE_V[tone]}`,
         gridColumn: span === true ? '1 / -1' : typeof span === 'number' ? `span ${span}` : undefined,
         ...style,

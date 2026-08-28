@@ -45,105 +45,54 @@ function Svg({ size = 16, color, className, children }: IconProps & { children: 
  * that marks the ground and leaves smoke behind. Possibility is worth nothing
  * until something tests and aims it.
  *
- * Use `LordasMark` at 40px and above. Below that the smoke and the ray detail
- * collapse into noise — use `LordasMarkCompact`, which keeps the gesture
- * (source, glass, beam, burn) and drops everything that will not survive.
+ * Drawn as the shield carries it — orb, lens, ember — so the flat mark and the
+ * artwork are the same device rather than two takes on one idea. Reads from
+ * about 18px up; below that use a person sigil instead.
  */
 export function LordasMark({
-  size = 40,
-  sunColor = C.sun,
-  lensColor = C.lens,
-  burnColor = C.crit,
-  smokeColor = C.muted,
-  className,
-}: IconProps & { sunColor?: string; lensColor?: string; burnColor?: string; smokeColor?: string }) {
-  const rays = [180, 225, 270, 315, 0]
-  return (
-    <svg
-      width={size} height={size} viewBox="0 0 24 24" fill="none"
-      className={className} aria-hidden="true"
-      style={{ display: 'block', flexShrink: 0 }}
-    >
-      <circle cx="12" cy="3.7" r="1.95" fill={sunColor} />
-      {rays.map((deg) => {
-        const a = (deg * Math.PI) / 180
-        return (
-          <line
-            key={deg}
-            x1={(12 + 3.1 * Math.cos(a)).toFixed(2)} y1={(3.7 + 3.1 * Math.sin(a)).toFixed(2)}
-            x2={(12 + 4.9 * Math.cos(a)).toFixed(2)} y2={(3.7 + 4.9 * Math.sin(a)).toFixed(2)}
-            stroke={sunColor} strokeWidth={1.5} strokeLinecap="round"
-          />
-        )
-      })}
-      <path d="M11.1 5.7 6.9 10.1M12.9 5.7 17.1 10.1" stroke={sunColor} strokeWidth={1.2}
-        strokeLinecap="round" opacity={0.75} />
-      <path d="M6.4 11.1Q12 7.5 17.6 11.1Q12 14.7 6.4 11.1Z" fill={lensColor} fillOpacity={0.16}
-        stroke={lensColor} strokeWidth={1.5} strokeLinejoin="round" />
-      <path d="M7.6 12.5 12 18.9M16.4 12.5 12 18.9" stroke={sunColor} strokeWidth={1.5} strokeLinecap="round" />
-      <circle cx="12" cy="19.3" r="1.35" fill={burnColor} />
-      <path d="M4.8 21.1h14.4" stroke={burnColor} strokeWidth={1.6} strokeLinecap="round" />
-      <path d="M8.2 21.1v1.1M15.8 21.1v1.1" stroke={burnColor} strokeWidth={1.3}
-        strokeLinecap="round" opacity={0.55} />
-      <path d="M15.2 18.4c1.5-.6.5-2 2-2.6" stroke={smokeColor} strokeWidth={1.25}
-        strokeLinecap="round" fill="none" opacity={0.7} />
-      <path d="M8.8 18.6c-1.4-.5-.4-1.8-1.9-2.3" stroke={smokeColor} strokeWidth={1.25}
-        strokeLinecap="round" fill="none" opacity={0.5} />
-    </svg>
-  )
-}
-
-/** The same gesture, stripped to what survives at nav size. 14-32px. */
-export function LordasMarkCompact({
-  size = 18,
-  sunColor = C.sun,
-  lensColor = C.lens,
-  burnColor = C.crit,
-  className,
+  size = 40, sunColor = C.sun, lensColor = C.lens, burnColor = C.crit, className,
 }: IconProps & { sunColor?: string; lensColor?: string; burnColor?: string }) {
   return (
-    <svg
-      width={size} height={size} viewBox="0 0 24 24" fill="none"
-      className={className} aria-hidden="true"
-      style={{ display: 'block', flexShrink: 0 }}
-    >
-      <circle cx="12" cy="4.2" r="2.4" fill={sunColor} />
-      <path d="M12 0.4v1.6M5.6 4.2h1.6M16.8 4.2h1.6M7.6 0.9l1 1.3M16.4 0.9l-1 1.3"
-        stroke={sunColor} strokeWidth={1.6} strokeLinecap="round" />
-      <path d="M6.6 11.6Q12 8.4 17.4 11.6Q12 14.8 6.6 11.6Z" fill={lensColor} fillOpacity={0.2}
-        stroke={lensColor} strokeWidth={1.7} strokeLinejoin="round" />
-      <path d="M7.8 13.1 12 18.6M16.2 13.1 12 18.6" stroke={sunColor} strokeWidth={1.7} strokeLinecap="round" />
-      <circle cx="12" cy="19.4" r="1.5" fill={burnColor} />
-      <path d="M5.8 21.6h12.4" stroke={burnColor} strokeWidth={1.8} strokeLinecap="round" />
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className}
+      aria-hidden="true" style={{ display: 'block', flexShrink: 0 }}>
+      {/* The device as the shield carries it: orb, lens, ember. */}
+      <circle cx="12" cy="3.4" r="2.1" fill={sunColor} />
+      <path d="M11 5.2 5.6 12M13 5.2 18.4 12" stroke={sunColor} strokeWidth={1.4} strokeLinecap="round" />
+      <path d="M4.4 12C7.6 8.4 16.4 8.4 19.6 12 16.4 15.6 7.6 15.6 4.4 12Z"
+        fill="none" stroke={lensColor} strokeWidth={1.5} strokeLinejoin="round" />
+      <circle cx="12" cy="12" r="2.4" fill="none" stroke={sunColor} strokeWidth={1.2} />
+      <path d="M5.6 12 12 20.4M18.4 12 12 20.4" stroke={sunColor} strokeWidth={1.4} strokeLinecap="round" />
+      <circle cx="12" cy="20.6" r="1.5" fill={burnColor} />
+      <path d="M12 14.4v4.6" stroke={burnColor} strokeWidth={1.3} strokeLinecap="round" />
     </svg>
   )
 }
 
 /**
- * Lori: the sun. She expands what is possible, so the mark is a source —
- * a solid core throwing rays outward. Rays are drawn at two lengths so the
- * silhouette stays legible when the glyph drops to nav size.
+ * Lori: the sun in splendour that crowns the arms.
+ *
+ * Rays alternate long straight and short wavy, which is how a heraldic sun is
+ * drawn and what separates it from a generic asterisk. The face on the full
+ * artwork is dropped — it does not survive below about 40px and the silhouette
+ * carries the identity without it.
  */
 export function LoriSigil({ size = 16, color = C.sun }: IconProps) {
-  const rays = [0, 45, 90, 135, 180, 225, 270, 315]
+  const rays = Array.from({ length: 12 }, (_, i) => i * 30)
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true"
       style={{ display: 'block', flexShrink: 0 }}>
-      <circle cx="12" cy="12" r="4.4" fill={color} />
+      <circle cx="12" cy="12" r="4.1" fill={color} />
       {rays.map((deg, i) => {
         const a = (deg * Math.PI) / 180
-        const inner = 6.8
-        const outer = i % 2 === 0 ? 10.6 : 9.4
+        const long = i % 2 === 0
+        const r1 = 5.6
+        const r2 = long ? 11 : 8.4
         return (
           <line
             key={deg}
-            x1={(12 + inner * Math.cos(a)).toFixed(2)}
-            y1={(12 + inner * Math.sin(a)).toFixed(2)}
-            x2={(12 + outer * Math.cos(a)).toFixed(2)}
-            y2={(12 + outer * Math.sin(a)).toFixed(2)}
-            stroke={color}
-            strokeWidth={1.7}
-            strokeLinecap="round"
+            x1={(12 + r1 * Math.cos(a)).toFixed(2)} y1={(12 + r1 * Math.sin(a)).toFixed(2)}
+            x2={(12 + r2 * Math.cos(a)).toFixed(2)} y2={(12 + r2 * Math.sin(a)).toFixed(2)}
+            stroke={color} strokeWidth={long ? 1.7 : 1.2} strokeLinecap="round"
           />
         )
       })}
@@ -152,19 +101,21 @@ export function LoriSigil({ size = 16, color = C.sun }: IconProps) {
 }
 
 /**
- * Aidas: the lens. He tests what is feasible, so the mark is an instrument —
- * a reticle resolving on a point. A literal microscope loses its silhouette
- * below about 20px; a lens with focus ticks stays unmistakably precise all
- * the way down to 12.
+ * Aidas: the lens on the shield.
+ *
+ * The arms draw it as a pointed oval — a vesica — with a rimmed edge and a
+ * reticle at its centre, which is why the colour is pewter rather than the
+ * teal it used to be: that teal had no source in the artwork.
  */
 export function AidasSigil({ size = 16, color = C.lens }: IconProps) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color}
-      strokeWidth={1.6} strokeLinecap="round" aria-hidden="true"
+      strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"
       style={{ display: 'block', flexShrink: 0 }}>
-      <circle cx="12" cy="12" r="8.2" />
-      <circle cx="12" cy="12" r="2.5" fill={color} stroke="none" />
-      <path d="M12 1.8v3.4M12 18.8v3.4M1.8 12h3.4M18.8 12h3.4" />
+      <path d="M2.4 12C6 7.2 18 7.2 21.6 12 18 16.8 6 16.8 2.4 12Z" />
+      <circle cx="12" cy="12" r="3.1" />
+      <circle cx="12" cy="12" r="0.9" fill={color} stroke="none" />
+      <path d="M12 7.4v1.6M12 15v1.6M6.6 12h1.7M15.7 12h1.7" strokeWidth={1.3} />
     </svg>
   )
 }

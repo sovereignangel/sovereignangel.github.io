@@ -8,21 +8,35 @@
  */
 
 .lordas {
-  --lordas-ground: #1B120C;
-  --lordas-panel: #241811;
-  --lordas-panel-quiet: #2E1F16;
-  --lordas-panel-raise: #3A2A20;
-  --lordas-rule: #3E2C20;
-  --lordas-rule-soft: #33241A;
-  --lordas-ink: #F2E8DA;
-  --lordas-muted: #B39D85;
-  --lordas-faint: #836F5C;
-  --lordas-accent: #6FA3CE;
-  --lordas-ok: #6FB89A;
-  --lordas-warn: #D9A63F;
-  --lordas-crit: #DE7259;
-  --lordas-sun: #D9A63F;
-  --lordas-lens: #54BFC4;
+  /* Field: navy carries evidence, warm carries action, a cool neutral holds
+     both. See LORDAS_BRAND_STRATEGY.md §1. */
+  --lordas-ground: #171B26;
+  --lordas-action: #241811;
+  --lordas-action-quiet: #2E1F16;
+  --lordas-evidence: #141C30;
+  --lordas-evidence-quiet: #1A2440;
+
+  /* A card that does not declare its field reads as evidence, which is the
+     safer default: most of the surface area is things you read. */
+  --lordas-panel: var(--lordas-evidence);
+  --lordas-panel-quiet: var(--lordas-evidence-quiet);
+  --lordas-panel-raise: #2A3040;
+
+  --lordas-rule: #33344A;
+  --lordas-rule-soft: #262A3A;
+  --lordas-ink: #EFE9DE;
+  --lordas-muted: #A9A69E;
+  --lordas-faint: #7A7670;
+
+  --lordas-accent: #C89646;
+  --lordas-ok: #6E9E7F;
+  --lordas-warn: #D9A441;
+  --lordas-crit: #C0552E;
+  --lordas-crit-deep: #8C3214;
+  --lordas-parchment: #E6D2A0;
+
+  --lordas-sun: #C89646;
+  --lordas-lens: #9AAEB8;
 
   --lordas-display: Fraunces, Georgia, 'Times New Roman', serif;
   --lordas-body: Chivo, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -353,3 +367,49 @@ button.lordas-chip:focus-visible { outline: 2px solid var(--lordas-accent); outl
   color: var(--lordas-faint);
 }
 .lordas-plan .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; }
+
+/* The two bodies under the printed day. Behind today these lines are a record
+   — what actually went in, and what the card lost to it; ahead of today they
+   are the recalibrated session, which is the only one either of them will do. */
+.lordas-plan .who {
+  display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap;
+  padding: 2px 0 0; font-size: 10px; color: var(--lordas-muted);
+}
+.lordas-plan .who svg { align-self: center; flex-shrink: 0; }
+.lordas-plan .who .tag {
+  font-family: var(--lordas-mono); font-size: 8.5px; letter-spacing: .12em;
+  text-transform: uppercase; flex-shrink: 0;
+}
+.lordas-plan .who em {
+  font-style: normal; font-family: var(--lordas-mono); font-size: 9.5px;
+  color: var(--lordas-faint); flex-basis: 100%;
+}
+/* Today is the anchor and reads loudest; tomorrow is the next decision and
+   only needs to be findable once you have scrolled past it. */
+.lordas-plan tr.next td { background: color-mix(in srgb, var(--lordas-accent) 4%, transparent); }
+
+.lordas-plan-scroll { max-height: 380px; overflow-y: auto; margin: 0 -2px; }
+.lordas-plan-nav {
+  display: flex; align-items: center; gap: 9px; padding-bottom: 6px;
+  font-size: 10px; color: var(--lordas-faint);
+}
+.lordas-plan-nav > span { min-width: 0; }
+.lordas-plan-nav .lordas-chip { margin-left: auto; flex-shrink: 0; }
+
+
+/* ── The two fields ───────────────────────────────────────────────────
+   Warm asks you to do something; navy asks you to read. A card that cannot
+   say which it is usually wants to be two cards. */
+.lordas-fc--action { background: var(--lordas-action); }
+.lordas-fc--action.is-quiet { background: var(--lordas-action-quiet); }
+.lordas-fc--evidence { background: var(--lordas-evidence); }
+.lordas-fc--evidence.is-quiet { background: var(--lordas-evidence-quiet); }
+
+/* Muted text picks up a touch of its own field so it never reads as a
+   foreign grey dropped onto the surface. */
+.lordas-fc--action .lordas-fc-sub,
+.lordas-fc--action .lordas-fc-row .t .d { color: #B0A28E; }
+.lordas-fc--evidence .lordas-fc-sub,
+.lordas-fc--evidence .lordas-fc-row .t .d { color: #9FA6B4; }
+.lordas-fc--action .lordas-fc-head { color: #8A7A64; }
+.lordas-fc--evidence .lordas-fc-head { color: #74809A; }

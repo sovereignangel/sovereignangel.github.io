@@ -63,7 +63,7 @@ function KiteCard({ label, wind }: { label: string; wind: LordasWindDay }) {
 
   if (!p) {
     return (
-      <FieldCard label={label} meta={fmtDate(day.date)}>
+      <FieldCard label={label} meta={fmtDate(day.date)} field="action">
         <Lede>Not today.</Lede>
         <Sub>
           Nothing on the coast reaches the band. Peak is{' '}
@@ -74,7 +74,7 @@ function KiteCard({ label, wind }: { label: string; wind: LordasWindDay }) {
   }
 
   return (
-    <FieldCard label={label} meta={fmtDate(day.date)} tone="accent">
+    <FieldCard label={label} meta={fmtDate(day.date)} tone="accent" field="action">
       <Lede>{p.spotName}</Lede>
       <div className="lordas-mono" style={{ fontSize: 13, fontWeight: 500 }}>
         {fmtWindow(p.startHour, p.endHour)} · {p.avgKn} kn
@@ -101,7 +101,7 @@ function KiteCard({ label, wind }: { label: string; wind: LordasWindDay }) {
 
 function CoastCard({ statuses }: { statuses: SpotStatus[] }) {
   return (
-    <FieldCard label="Coast" meta={`${statuses.filter((s) => s.state === 'rideable').length} of ${statuses.length} rideable`} quiet>
+    <FieldCard label="Coast" meta={`${statuses.filter((s) => s.state === 'rideable').length} of ${statuses.length} rideable`} field="evidence" quiet>
       <Rows>
         {statuses.map((s) => (
           <Row
@@ -132,6 +132,7 @@ function AthleteCard({ a }: { a: AthletePrescription }) {
       label={<><PersonSigil person={a.person} size={13} />{a.name}</>}
       meta={feed.level === 'fresh' ? feed.label : undefined}
       tone={band === 'green' ? 'ok' : band === 'amber' ? 'warn' : band === 'red' ? 'crit' : 'none'}
+      field="action"
     >
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
         <span className="lordas-mono" style={{ fontSize: 22, fontWeight: 500, color: bandColor(band) }}>
@@ -177,7 +178,7 @@ function SessionCard({ pair }: { pair: PairDay }) {
   const planned = pair.planned.filter((s) => s.sport !== 'rest')
   if (!planned.length) {
     return (
-      <FieldCard label="Session" meta={pair.phase ?? undefined}>
+      <FieldCard label="Session" meta={pair.phase ?? undefined} field="action">
         <Lede>Rest day.</Lede>
         <Sub>Both of you. Recovery is the session.</Sub>
       </FieldCard>
@@ -192,7 +193,7 @@ function SessionCard({ pair }: { pair: PairDay }) {
     details: planned.map((s) => `${s.title} — ${s.durationMin}min\n${s.detail}`).join('\n\n'),
   })
   return (
-    <FieldCard label="Session" meta={pair.phase ?? undefined} tone="accent">
+    <FieldCard label="Session" meta={pair.phase ?? undefined} tone="accent" field="action">
       <Lede>{planned[0].title}{planned.length > 1 ? ` + ${planned.length - 1} more` : ''}</Lede>
       {pair.focus && <Sub>{pair.focus}</Sub>}
       <Rows>
@@ -254,19 +255,19 @@ export default function ExecView() {
       />
 
       <Seam cols={4}>
-        <FieldCard label="Session today">
+        <FieldCard field="evidence" label="Session today">
           <Stat value={today.restDay ? 'Rest' : today.athletes[0]?.totalMin ?? 0} unit={today.restDay ? undefined : 'min'} />
           <Sub>{today.phase ?? 'off-plan'}</Sub>
         </FieldCard>
-        <FieldCard label="Side by side">
+        <FieldCard field="evidence" label="Side by side">
           <Stat value={today.togetherMin} unit="min" color={today.togetherMin > 0 ? C.accent : C.faint} />
           <Sub>{today.togetherMin > 0 ? 'Cards equal — no solo remainder' : 'Nothing shared today'}</Sub>
         </FieldCard>
-        <FieldCard label="Rideable spots" tone={rideable ? 'ok' : 'none'}>
+        <FieldCard field="evidence" label="Rideable spots" tone={rideable ? 'ok' : 'none'}>
           <Stat value={rideable} unit={`of ${data.wind.today.statuses.length}`} color={rideable ? C.ok : C.faint} />
           <Sub>{rideable ? 'Rig up' : 'Under the band all day'}</Sub>
         </FieldCard>
-        <FieldCard label="Next window">
+        <FieldCard field="evidence" label="Next window">
           <Stat
             value={data.wind.tomorrow.day.pick?.avgKn ?? '—'}
             unit={data.wind.tomorrow.day.pick ? 'kn' : undefined}
@@ -316,7 +317,7 @@ export default function ExecView() {
       <SectionHead title="Tomorrow" meta={fmtDate(data.training.tomorrow.date)} />
       <Seam cols={2}>
         <SessionCard pair={data.training.tomorrow} />
-        <FieldCard label="Ahead" quiet>
+        <FieldCard label="Ahead" field="evidence" quiet>
           <Rows>
             {data.races.map((r) => (
               <Row key={r.date} label={r.name.replace('Ironman 70.3 ', '')} detail={r.date} value={`${r.days} days`} />

@@ -15,6 +15,7 @@
  * and at their own speeds, so neither column is evidence about the other.
  */
 
+import { useCallback, useEffect, useRef } from 'react'
 import { PinGate } from '@/components/lordas/PinGate'
 import { LordasHeader } from '@/components/lordas/design/Nav'
 import { useLordasData } from './useLordasData'
@@ -29,7 +30,10 @@ import { fmtRunPace, fmtSwimPace, fmtBikeSpeed, fmtPace } from '@/lib/lordas/pai
 import { paceBoth } from '@/lib/ironman/pace'
 import { RACE_NYC, priorRacesFor, raceDistanceLabel, sameDistance, priorRaceDisplay, priorRaceVsGoal,
   type PriorRace } from '@/lib/ironman/plan'
-import type { PairIronmanDetail, AthleteDetail } from '@/lib/lordas/ironman-detail'
+import type {
+  PairIronmanDetail, AthleteDetail, PlanAthleteDay, PlanSessionRow, LoggedSession,
+} from '@/lib/lordas/ironman-detail'
+import type { PairDay } from '@/lib/lordas/pair-training'
 import { freshnessOf, stampOf } from '@/lib/lordas/freshness'
 import type { SportNeed } from '@/lib/ironman/rebalance'
 
@@ -120,6 +124,7 @@ function RecoveryCard({ a }: { a: AthleteDetail }) {
       label={<><PersonSigil person={a.person} size={13} />{a.name}</>}
       meta={feed.level === 'fresh' ? undefined : `Garmin ${feed.label}`}
       tone={a.readiness.band === 'green' ? 'ok' : a.readiness.band === 'amber' ? 'warn' : a.readiness.band === 'red' ? 'crit' : 'none'}
+      field="evidence"
     >
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 7 }}>
         <span className="lordas-mono" style={{ fontSize: 23, fontWeight: 500, color: band, lineHeight: 1 }}>
@@ -179,9 +184,9 @@ function gapCell(sec: number): { text: string; color: string } {
  * disciplines the sheet below already lays out, and put a second table on a
  * page whose whole argument is one table per athlete.
  *
- * Each line carries where and when, the distance, the legs, the finish, and —
- * where the total distance matches the target — what that finish is worth
- * against today's goal.
+ * Each line carries where and when, the distance, the finish, and — where the
+ * total distance matches the target — what that finish is worth against
+ * today's goal.
  */
 function RaceHistoryPanel({ a }: { a: AthleteDetail }) {
   const races = priorRacesFor(a.person as 'lori' | 'aidas')
@@ -346,6 +351,7 @@ function AthleteSheet({ a }: { a: AthleteDetail }) {
 
   return (
     <FieldCard
+      field="evidence"
       label={<><PersonSigil person={a.person} size={13} />{a.name}</>}
       meta={
         <Hover
@@ -430,64 +436,252 @@ const STATUS_COLOR: Record<string, string> = {
   done: C.ok, partial: C.warn, missed: C.crit, upcoming: C.faint,
 }
 
-/** The printed block in full, with who has actually done each day. */
-function FullPlan({ data }: { data: PairIronmanDetail }) {
-  const people = data.athletes.map((a) => a.person)
+/** Every sport the block can print, including the two the tearsheet ignores. */
+const SPORT_WORD: Record<string, string> = {
+  swim: 'Swim', bike: 'Bike', run: 'Run', brick: 'Brick', strength: 'Core', rest: 'Rest',
+}
+
+const LOG_COLOR: Record<LoggedSession['status'], string> = {
+  done: C.ok, partial: C.warn, extra: C.accent,
+}
+
+const dayLabel = (date: string) =>
+  new Date(`${date}T12:00:00`).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })
+
+/** `2.1km · 45min`, or just the minutes when the sport does not measure distance */
+function logSize(l: LoggedSession): string {
+  return `${l.distanceKm ? `${l.distanceKm}km · ` : ''}${l.durationMin}min`
+}
+
+function sessionSize(x: PlanSessionRow): string {
+  return `${x.durationMin}min${x.distanceKm ? ` · ${x.distanceKm}km` : ''}${x.zone !== '-' ? ` · ${x.zone}` : ''}`
+}
+
+/**
+ * One athlete's line under a printed day.
+ *
+ * Behind today it is a record — what they actually did, against what the card
+ * asked for, including the session that went in instead. Ahead of today it is
+ * a prescription — their own recalibrated version of the printed day, which is
+ * the only version either of them is going to do.
+ */
+function AthleteLine({
+  person,
+  name,
+  day,
+  past,
+}: {
+  person: string
+  name: string
+  day: PlanAthleteDay | undefined
+  past: boolean
+}) {
+  if (!day) return null
+  const bits: React.ReactNode[] = []
+
+  if (day.prescribed) {
+    const active = day.prescribed.filter((x) => x.sport !== 'rest')
+    bits.push(
+      <span key="rx" style={{ color: C.ink }}>
+        {active.length === 0
+          ? 'Recovery instead'
+          : active.map((x) => `${x.title} · ${sessionSize(x)}`).join(' + ')}
+      </span>
+    )
+  }
+
+  for (const [i, l] of day.logged.entries()) {
+    bits.push(
+      <span key={`l${i}`} style={{ color: LOG_COLOR[l.status] }}>
+        {l.status === 'extra' ? '+ ' : ''}
+        {SPORT_WORD[l.sport ?? ''] ?? l.sport ?? 'Session'} {logSize(l)}
+      </span>
+    )
+  }
+
+  if (past) {
+    for (const [i, m] of day.missed.entries()) {
+      bits.push(<span key={`m${i}`} style={{ color: C.crit }}>× {m}</span>)
+    }
+  }
+
+  if (bits.length === 0) return null
+
   return (
-    <div style={{ maxHeight: 320, overflowY: 'auto', margin: '0 -2px' }}>
-      <table className="lordas-plan">
-        <thead>
-          <tr>
-            <th>Date</th>
-            <th>Session</th>
-            {people.map((p) => (
-              <th key={p} style={{ textAlign: 'center' }}>
-                <PersonSigil person={p} size={11} />
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {data.plan.map((d) => {
-            const active = d.sessions.filter((x) => x.sport !== 'rest')
-            const isToday = d.date === data.date
-            return (
-              <tr key={d.date} className={isToday ? 'now' : undefined}>
-                <td className="dt">
-                  {new Date(`${d.date}T12:00:00`).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })}
-                  <span className="ph">{d.phase}</span>
-                </td>
-                <td className="ss">
-                  {active.length === 0 ? (
-                    <span style={{ color: C.faint }}>Rest</span>
-                  ) : (
-                    active.map((x, i) => (
-                      <span key={i} className="one">
-                        <SportGlyph sport={x.sport} size={11} color={SPORT_COLOR[x.sport] ?? C.muted} />
-                        {x.title}
-                        <em>
-                          {x.durationMin}min{x.distanceKm ? ` · ${x.distanceKm}km` : ''}
-                          {x.zone !== '-' ? ` · ${x.zone}` : ''}
-                        </em>
-                      </span>
-                    ))
-                  )}
-                </td>
-                {people.map((p) => (
-                  <td key={p} style={{ textAlign: 'center' }}>
-                    <span
-                      className="dot"
-                      style={{ background: STATUS_COLOR[d.status[p]] ?? C.faint }}
-                      title={`${p}: ${d.status[p]}`}
-                    />
+    <span className="who">
+      <PersonSigil person={person} size={10} />
+      <span className="tag" style={{ color: OWNER[person] ?? C.muted }}>{name}</span>
+      {bits}
+      {day.note && <em>{day.note}</em>}
+    </span>
+  )
+}
+
+/**
+ * The printed block in full, opened at today.
+ *
+ * A forty-day table that opens at day one answers a question nobody has. It
+ * opens on today's row and re-lands there every time it is opened, so tomorrow
+ * and the rest of the week are the first thing below the fold and the days
+ * already spent are one scroll up rather than the default view.
+ */
+function FullPlan({ data }: { data: PairIronmanDetail }) {
+  const people = data.athletes.map((a) => ({ id: a.person as string, name: a.name }))
+  const wrapRef = useRef<HTMLDivElement>(null)
+  const todayRef = useRef<HTMLTableRowElement>(null)
+
+  const toToday = useCallback(() => {
+    const wrap = wrapRef.current
+    const row = todayRef.current
+    if (!wrap || !row) return
+    const head = wrap.querySelector('thead')?.getBoundingClientRect().height ?? 0
+    wrap.scrollTop += row.getBoundingClientRect().top - wrap.getBoundingClientRect().top - head
+  }, [])
+
+  // `<details>` keeps its children mounted while closed, so a mount effect
+  // would run against a hidden table with no scroll height. The toggle is the
+  // only moment the measurement is real — and it is also the moment the reader
+  // asked to be shown today.
+  useEffect(() => {
+    const host = wrapRef.current?.closest('details')
+    if (!host) return
+    const land = () => { if (host.open) requestAnimationFrame(toToday) }
+    land()
+    host.addEventListener('toggle', land)
+    return () => host.removeEventListener('toggle', land)
+  }, [toToday, data.date])
+
+  return (
+    <>
+      <div className="lordas-plan-nav">
+        <span>What was printed, what each of you did, and where it has been recalibrated</span>
+        <Chip onClick={toToday} title="Scroll back to today">Today</Chip>
+      </div>
+      <div className="lordas-plan-scroll" ref={wrapRef}>
+        <table className="lordas-plan">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Session</th>
+              {people.map((p) => (
+                <th key={p.id} style={{ textAlign: 'center' }}>
+                  <PersonSigil person={p.id} size={11} />
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {data.plan.map((d) => {
+              const active = d.sessions.filter((x) => x.sport !== 'rest')
+              const isToday = d.date === data.date
+              const isNext = d.date === data.tomorrow.date
+              return (
+                <tr
+                  key={d.date}
+                  ref={isToday ? todayRef : undefined}
+                  className={isToday ? 'now' : isNext ? 'next' : undefined}
+                >
+                  <td className="dt">
+                    {dayLabel(d.date)}
+                    <span className="ph">{isToday ? 'Today' : isNext ? 'Tomorrow' : d.phase}</span>
                   </td>
-                ))}
-              </tr>
-            )
-          })}
-        </tbody>
-      </table>
-    </div>
+                  <td className="ss">
+                    {active.length === 0 ? (
+                      <span style={{ color: C.faint }}>Rest</span>
+                    ) : (
+                      active.map((x, i) => (
+                        <span key={i} className="one">
+                          <SportGlyph sport={x.sport} size={11} color={SPORT_COLOR[x.sport] ?? C.muted} />
+                          {x.title}
+                          <em>{sessionSize(x)}</em>
+                        </span>
+                      ))
+                    )}
+                    {people.map((p) => (
+                      <AthleteLine
+                        key={p.id}
+                        person={p.id}
+                        name={p.name}
+                        day={d.athletes[p.id]}
+                        past={d.date <= data.date}
+                      />
+                    ))}
+                  </td>
+                  {people.map((p) => (
+                    <td key={p.id} style={{ textAlign: 'center' }}>
+                      <span
+                        className="dot"
+                        style={{ background: STATUS_COLOR[d.athletes[p.id]?.status] ?? C.faint }}
+                        title={`${p.name}: ${d.athletes[p.id]?.status ?? 'upcoming'}`}
+                      />
+                    </td>
+                  ))}
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+      </div>
+    </>
+  )
+}
+
+/**
+ * Tomorrow, already scored against today.
+ *
+ * The block prints one session for the pair; by tomorrow morning it is two,
+ * because today's work and the freshest recovery on file land differently on
+ * each body. One of them rides 100km today and one rests, and that is the whole
+ * argument for showing it tonight: dinner, bedtime and whether the second ride
+ * is worth it are decisions with a deadline of this evening.
+ *
+ * Provisional by construction — tonight's sleep has not happened, so the
+ * recovery half of the number stands on last night's. Today's training half is
+ * already real.
+ */
+function Tomorrow({ day }: { day: PairDay }) {
+  return (
+    <Disclosure summary="Tomorrow" meta={dayLabel(day.date)}>
+      <Lede>{day.headline}</Lede>
+      {day.focus && <Sub>{day.phase} · {day.focus}</Sub>}
+      {day.athletes.map((p) => {
+        const active = p.sessions.filter((s) => s.sport !== 'rest')
+        const band = bandColor(p.readiness.band)
+        return (
+          <div key={p.person} style={{ marginTop: 8 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
+              <PersonSigil person={p.person} size={12} />
+              <span style={{ fontSize: 11.5, fontWeight: 600 }}>{p.name}</span>
+              <span className="lordas-mono" style={{ fontSize: 9, letterSpacing: '.12em', textTransform: 'uppercase', color: band, marginLeft: 'auto' }}>
+                {p.readiness.score ?? '--'} projected
+              </span>
+            </div>
+            <Rows>
+              {active.length === 0 ? (
+                <Row label="Recovery" detail="the card is absorbed, not rescheduled" />
+              ) : (
+                active.map((s, i) => (
+                  <Row
+                    key={i}
+                    icon={<SportGlyph sport={s.sport} size={11} color={SPORT_COLOR[s.sport] ?? C.muted} />}
+                    label={s.title}
+                    detail={sessionSize(s)}
+                    value={s.pace ?? undefined}
+                    valueColor={s.adjusted ? C.warn : undefined}
+                  />
+                ))
+              )}
+            </Rows>
+            <Sub>{p.adaptNote}</Sub>
+          </div>
+        )
+      })}
+      {day.divergence.slice(0, 2).map((line, i) => <Sub key={`d${i}`}>{line}</Sub>)}
+      <Foot>
+        Recalibrated on today&apos;s logged work and the freshest recovery on file. Tonight&apos;s sleep
+        replaces the recovery half of it, so treat the number as a forecast and the session as a plan.
+      </Foot>
+    </Disclosure>
   )
 }
 
@@ -550,6 +744,7 @@ export default function PairIronmanView() {
           label="Today, together"
           meta={today.togetherMin > 0 ? `${today.togetherMin}min side by side` : today.phase ?? undefined}
           tone="accent"
+          field="action"
         >
           <Lede>{today.headline}</Lede>
           {today.focus && <Sub>{today.phase} · {today.focus}</Sub>}
@@ -577,6 +772,7 @@ export default function PairIronmanView() {
               {today.divergence.slice(2).map((line, i) => <Sub key={`d${i}`}>{line}</Sub>)}
             </Disclosure>
           )}
+          <Tomorrow day={data.tomorrow} />
           <Disclosure summary="Full plan" meta={`${data.plan.length} days · Belgrade to New York`}>
             <FullPlan data={data} />
           </Disclosure>

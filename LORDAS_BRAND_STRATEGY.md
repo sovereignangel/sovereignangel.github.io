@@ -14,62 +14,67 @@ Lordas is a two-person instrument. It is read at 07:00 to answer one question �
 *what do we do today* — and read again on Sunday to answer *are we actually getting
 fitter, closer, and further along*. It is not a feed and not a marketing page.
 
-Console is the committed world: **espresso ground, harbor accent, the whole warm
-range reserved for state**. Dark only. There is no light theme.
+Field is the committed world: **navy for evidence, warm for action, antique gold
+throughout**. Dark only. There is no light theme.
 
 ---
 
-## 1 · Palette
+## 1 · Palette — Field
 
-Defined once in `components/lordas/design/tokens.ts` and mirrored as CSS custom
-properties on the `.lordas` wrapper. **Never write a hex literal in a component.**
+**Locked v2, 2026-08-28.** The arms are navy, antique gold and parchment. The
+interface was warm espresso with a teal accent that had no source in them.
+
+Field settles that without surrendering either temperature: **the page divides the
+way a shield divides.**
+
+| Field | Surface | Carries |
+|---|---|---|
+| **Action** | `#241811` warm | Today, the session, the kite call — anything asking you to *do* something |
+| **Evidence** | `#141C30` navy | Tables, forecasts, readings, the block — anything asking you to *read* |
+| Ground | `#171B26` | A cool neutral holding both |
+
+A card that cannot say which field it is in usually wants to be two cards.
 
 | Token | Hex | Role |
 |---|---|---|
-| `ground` | `#1B120C` | Page behind everything |
-| `panel` | `#241811` | Every field card |
-| `panelQuiet` | `#2E1F16` | Secondary / inactive card |
-| `panelRaise` | `#3A2A20` | Input, hover, pressed |
-| `rule` | `#3E2C20` | Seams, borders, chip edge |
-| `ruleSoft` | `#33241A` | Hairline inside a card |
-| `ink` | `#F2E8DA` | Primary text and numerals |
-| `muted` | `#B39D85` | Supporting prose |
-| `faint` | `#836F5C` | Labels only — never prose |
-| `accent` | `#6FA3CE` | Brand accent, links, active nav |
-| `ok` | `#6FB89A` | Good, done, on track |
-| `warn` | `#D9A63F` | Watch, ramp, partial |
-| `crit` | `#DE7259` | Stop, missed, blocked |
-| `sun` | `#D9A63F` | Lori — same value as `warn`, different register |
-| `lens` | `#54BFC4` | Aidas |
+| `ground` | `#171B26` | Page behind everything |
+| `action` | `#241811` | Warm surface · act |
+| `actionQuiet` | `#2E1F16` | Secondary warm |
+| `evidence` | `#141C30` | Navy surface · read |
+| `evidenceQuiet` | `#1A2440` | Secondary navy |
+| `rule` | `#33344A` | Seams and borders |
+| `ruleSoft` | `#262A3A` | Hairline inside a card |
+| `ink` | `#EFE9DE` | Primary text and numerals |
+| `muted` | `#A9A69E` | Supporting prose |
+| `faint` | `#7A7670` | Labels only — never prose |
+| `accent` | `#C89646` | Antique gold, off the device on the shield |
+| `ok` | `#6E9E7F` | Good, done, on track |
+| `warn` | `#D9A441` | Watch, ramp, partial |
+| `crit` | `#C0552E` | Stop, missed, blocked |
+| `critDeep` | `#8C3214` | The banner's ember — stripes and washes, never text |
+| `parchment` | `#E6D2A0` | The banner. Sparingly, for what is genuinely a record |
 
-### Person colour — a separate register
+### Person colour — both from the arms
 
-| Person | Colour | Meaning |
+| Person | Colour | Source |
 |---|---|---|
-| **Lori** | sun / brass `#D9A63F` | Expands what is possible |
-| **Aidas** | lens `#54BFC4` | Tests what is feasible |
-| Relationship | accent `#6FA3CE` | Shared, owned by neither |
+| **Lori** | sun `#C89646` | The sun in splendour crowning the arms |
+| **Aidas** | lens `#9AAEB8` | The lens on the shield, which samples as pewter |
+| Relationship | accent `#C89646` | Shared |
 
-**Lori is always sun. Aidas is always lens.** Every chart, sigil, column and owner
-badge. A reader identifies whose number they are looking at before they read a name.
+Aidas was teal for a while. **The teal had no source in the arms** — the lens is
+rendered in pewter, and that is what he is now.
 
-Sun is deliberately the same value as the `warn` state. They do not collide because
-they live in different registers:
-
-- **Person colour** appears only beside its sigil, or as a named series in a legend.
-- **State colour** appears only as a left-edge stripe, a chip, or a status value.
-
-The sigil is what disambiguates. Brass with a sun next to it is Lori. Brass without
-one means watch.
-
-Semantic colour means something. Never use green, amber or rust decoratively.
+Sun and `warn` sit close in the warm range. They do not collide because they live
+in different registers: a **person colour only appears beside its sigil or as a
+named series**, a **state colour only as a stripe, chip or status value**. The
+sigil is what disambiguates.
 
 ### Retired
 
-`#b85c38` terracotta, `#f5f0e8` cream ground, `#2d5f4a`, `#8a7e72`, `#d8cfc4`,
-`#faf7f2`, `#c4873a`, `#8c3d3d`. None of these may appear in `components/lordas/`.
-
----
+`#b85c38` terracotta, `#f5f0e8` cream, `#54BFC4` teal, `#6FA3CE` harbor,
+`#1B120C` espresso-as-ground, `#DE7259` rust. None may appear in
+`components/lordas/`.
 
 ## 2 · Type
 
@@ -147,23 +152,20 @@ joins, no fills except the Lori sigil.
 
 ### The marks
 
-| Mark | Form | Use |
-|---|---|---|
-| `LordasMark` | Sun → lens → converged beam → burn → smoke | **The union.** 40px and above. |
-| `LordasMarkCompact` | The same gesture, stripped | Nav and headers, 14–32px. |
-| `LoriSigil` | A sun — solid core, rays at two lengths | Lori, everywhere. Legible to 12px. |
-| `AidasSigil` | A lens — reticle resolving on a point | Aidas, everywhere. A literal microscope loses its silhouette below 20px; the reticle holds. |
+The logo is a heraldic achievement — sun in splendour, helm and mantling, the
+device on the shield, and a banner reading *Possibility × Feasibility*. It ships
+as artwork, in two cuts, because an achievement does not survive being shrunk.
 
-The mark **is** the relationship symbol. An earlier version drew two nodes on a
-shared arc, which said "these are two people" and nothing else. This one says what
-they are for: Lori's sun is a source, broad and undirected; Aidas' lens gives it
-somewhere to go. Focused, the light stops being warmth and becomes a beam that
-marks the ground and leaves smoke behind it. **Possibility is worth nothing until
-something tests and aims it.**
+| Asset | Use |
+|---|---|
+| `/lordas/lockup.webp` | The whole achievement. The gate, 280px. |
+| `/lordas/shield.webp` | The shield alone. Header, 38px — the only cut that reads small. |
+| `LordasMark` | Flat device: orb, lens, ember. 18px and up, where artwork is too heavy. |
+| `LoriSigil` | Sun in splendour — rays alternating long and short. Legible to 12px. |
+| `AidasSigil` | The lens as a vesica with a reticle. Legible to 12px. |
 
-Use the full mark on mastheads and for genuine milestones — a race completed, a
-campaign closed. Use the compact anywhere smaller. Never stretch, recolour outside
-the three roles, or set the full mark below 26px.
+The shield crop is taken **inside the mantling**: including it made the mark
+rectangular and busy at nav size and added nothing at 38px.
 
 ### Module glyphs
 
@@ -202,6 +204,7 @@ from Exec and from the nav. Never rebuilt inside Lordas.
 - [ ] No retired colours (terracotta `#b85c38`, cream `#f5f0e8`, …)
 - [ ] Every number in mono with tabular figures
 - [ ] Lori sun, Aidas lens, in that order, sigil always adjacent
+- [ ] Every card declares its field — `action` or `evidence`
 - [ ] Cards inside a `<Seam>`, not a `gap` grid
 - [ ] No prose below 10px
 - [ ] No emoji
