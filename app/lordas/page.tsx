@@ -7,6 +7,11 @@
  * because they share a single fetch. One header, one nav, and each tab states
  * its own job before the cards start.
  *
+ * Whose page this is gets decided once, at the picker, and then stays decided.
+ * The header used to carry a Lori/Aidas switch on both tabs; it is gone, so
+ * neither screen asks the reader to re-answer a question they already answered
+ * on the way in.
+ *
  * Scheming used to be the third tab. It is archived rather than deleted: the
  * fetch still returns its data, the components are untouched, and the page
  * still stands at /lordas/adventures for anyone who types it. Nothing links
@@ -15,7 +20,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { PinGate } from '@/components/lordas/PinGate'
-import { PersonPicker, PersonSwitch } from '@/components/lordas/PersonPicker'
+import { PersonPicker } from '@/components/lordas/PersonPicker'
 import { LordasHeader, type LordasModule } from '@/components/lordas/design/Nav'
 import { C } from '@/components/lordas/design/tokens'
 import { SafetyPillar } from '@/components/lordas/SafetyPillar'
@@ -138,14 +143,13 @@ export default function LordasPage() {
         onSelect={(m) => {
           if (m === 'goals' || m === 'insights') setTab(m)
         }}
-        right={<PersonSwitch person={person} onChange={handlePerson} />}
       />
 
       {error && <div className="lordas-empty" style={{ color: C.crit, marginBottom: 14 }}>{error}</div>}
 
       {tab === 'goals' && (
         goals ? (
-          <GoalsView goals={goals} person={person} onPersonChange={handlePerson} mutate={handleGoalsAction} />
+          <GoalsView goals={goals} person={person} mutate={handleGoalsAction} />
         ) : (
           <div className="lordas-empty">Goals data unavailable. Refresh to try again.</div>
         )

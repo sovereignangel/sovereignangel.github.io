@@ -10,11 +10,10 @@ import { WeekHistory } from './WeekHistory'
 interface GoalsViewProps {
   goals: LordasGoalsData
   person: LordasPerson
-  onPersonChange: (person: LordasPerson) => void
   mutate: (action: string, payload: Record<string, unknown>) => Promise<void>
 }
 
-export function GoalsView({ goals, person, onPersonChange, mutate }: GoalsViewProps) {
+export function GoalsView({ goals, person, mutate }: GoalsViewProps) {
   return (
     <div>
       <div style={{ display: "flex", flexDirection: "column", gap: 22 }}>
