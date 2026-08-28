@@ -12,16 +12,36 @@
  * needs — a person's name in a table row is not a place for a coat of arms.
  */
 
-const SHIELD_RATIO = 220 / 249
+const LOCKUP_H_RATIO = 600 / 927
 const LOCKUP_RATIO = 600 / 927
 
-/** The shield and its device. The only piece that holds up small. */
-export function LordasLogo({ height = 38, className }: { height?: number; className?: string }) {
+/**
+ * The whole achievement, at header size.
+ *
+ * Below about 64px tall the helm and mantling collapse and it reads as a blob;
+ * 68 is the smallest height at which it is still legibly a coat of arms. The
+ * shield-only cut remains available for anywhere that cannot afford that.
+ */
+export function LordasLogo({ height = 68, className }: { height?: number; className?: string }) {
+  return (
+    <img
+      src="/lordas/lockup.webp"
+      alt="Lordas — Possibility × Feasibility"
+      width={Math.round(height * LOCKUP_H_RATIO)}
+      height={height}
+      className={className}
+      style={{ display: 'block', flexShrink: 0, height, width: 'auto' }}
+    />
+  )
+}
+
+/** The shield alone, for anywhere the full achievement will not fit. */
+export function LordasShield({ height = 38, className }: { height?: number; className?: string }) {
   return (
     <img
       src="/lordas/shield.webp"
       alt="Lordas"
-      width={Math.round(height * SHIELD_RATIO)}
+      width={Math.round(height * (220 / 249))}
       height={height}
       className={className}
       style={{ display: 'block', flexShrink: 0, height, width: 'auto' }}
