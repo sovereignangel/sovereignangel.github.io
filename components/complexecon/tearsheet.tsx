@@ -8,7 +8,8 @@
  * expands unless it is asked to — the page is scanned first, read second.
  */
 
-import type { ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
+import Link from 'next/link'
 
 export function Chevron({ open }: { open: boolean }) {
   return (
@@ -165,6 +166,204 @@ export function Stat({ value, label, muted }: { value: ReactNode; label: string;
         {value}
       </div>
       <div className="mt-1 font-mono text-[11px] uppercase leading-tight tracking-[0.5px] text-ink-muted">{label}</div>
+    </div>
+  )
+}
+
+/** The three tabs, shared by every sheet. */
+const TABS: { id: SheetTab; label: string; href: string }[] = [
+  { id: 'pathway', label: 'Pathway', href: '/complexecon' },
+  { id: 'research', label: 'Research', href: '/complexecon/research' },
+  { id: 'strategy', label: 'Strategy', href: '/complexecon/strategy' },
+]
+
+export type SheetTab = 'pathway' | 'research' | 'strategy'
+
+export function Masthead({
+  kicker,
+  title,
+  meta,
+  active,
+}: {
+  kicker: string
+  title: string
+  meta: string
+  active: SheetTab
+}) {
+  return (
+    <header className="mb-3 flex flex-wrap items-end justify-between gap-x-6 gap-y-2 border-b-2 border-rule pb-2">
+      <div>
+        <div className="font-mono text-[12px] uppercase tracking-[3px] text-ink-muted">{kicker}</div>
+        <h1 className="font-serif text-[32px] font-semibold leading-tight text-ink md:text-[38px]">{title}</h1>
+      </div>
+      <div className="text-right">
+        <div className="font-mono text-[12px] uppercase tracking-[1.5px] text-ink-muted">{meta}</div>
+        <nav className="mt-1 flex justify-end gap-3">
+          {TABS.map(t =>
+            t.id === active ? (
+              <span
+                key={t.id}
+                className="border-b-2 border-burgundy font-serif text-[19px] font-semibold text-burgundy"
+              >
+                {t.label}
+              </span>
+            ) : (
+              <Link
+                key={t.id}
+                href={t.href}
+                className="font-serif text-[19px] text-ink-muted transition-colors hover:text-ink"
+              >
+                {t.label}
+              </Link>
+            ),
+          )}
+        </nav>
+      </div>
+    </header>
+  )
+}
+
+/** The question beside the numbers, with the expand/collapse controls beneath. */
+export function SheetHead({
+  question,
+  subline,
+  stats,
+  openCount,
+  onExpandAll,
+  onCollapseAll,
+}: {
+  question: string
+  subline: string
+  stats: ReactNode
+  openCount: number
+  onExpandAll: () => void
+  onCollapseAll: () => void
+}) {
+  return (
+    <section className="mb-3 border border-rule bg-white">
+      <div className="flex flex-col lg:flex-row">
+        <div className="flex-1 border-b border-rule px-4 py-3 lg:border-b-0 lg:border-r">
+          <p className="font-serif text-[21px] italic leading-snug text-ink md:text-[23px]">&ldquo;{question}&rdquo;</p>
+          <p className="mt-1 font-mono text-[12px] uppercase tracking-[1.5px] text-ink-muted">{subline}</p>
+        </div>
+        <div className="grid grid-cols-3 divide-x divide-rule-light sm:grid-cols-6 lg:w-[680px] lg:shrink-0">
+          {stats}
+        </div>
+      </div>
+      <div className="flex flex-wrap items-center justify-between gap-2 border-t border-rule px-3 py-1">
+        <Meta>Every line opens · {openCount} open</Meta>
+        <div className="flex gap-1">
+          <button
+            onClick={onExpandAll}
+            className="rounded-sm border border-rule px-2 py-px font-mono text-[11px] uppercase tracking-[1px] text-ink-muted transition-colors hover:border-ink-faint hover:text-ink"
+          >
+            Expand all
+          </button>
+          <button
+            onClick={onCollapseAll}
+            className="rounded-sm border border-rule px-2 py-px font-mono text-[11px] uppercase tracking-[1px] text-ink-muted transition-colors hover:border-ink-faint hover:text-ink"
+          >
+            Collapse all
+          </button>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+/**
+ * Rows are closed until asked for; blocks are open until folded away. Both are
+ * remembered per sheet, so a page reopens exactly as it was left.
+ */
+export function useSheetState({
+  storageKey,
+  blockIds,
+  defaultRows = [],
+}: {
+  storageKey: string
+  blockIds: string[]
+  defaultRows?: string[]
+}) {
+  const rowsKey = `${storageKey}-open`
+  const blocksKey = `${storageKey}-blocks-closed`
+
+  const [openRows, setOpenRows] = useState<Set<string>>(new Set())
+  const [closedBlocks, setClosedBlocks] = useState<Set<string>>(new Set())
+
+  useEffect(() => {
+    try {
+      const rows = localStorage.getItem(rowsKey)
+      setOpenRows(new Set(rows ? (JSON.parse(rows) as string[]) : defaultRows))
+      const blocks = localStorage.getItem(blocksKey)
+      if (blocks) setClosedBlocks(new Set(JSON.parse(blocks) as string[]))
+    } catch {
+      setOpenRows(new Set(defaultRows))
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  const writeRows = (next: Set<string>) => {
+    localStorage.setItem(rowsKey, JSON.stringify(Array.from(next)))
+    return next
+  }
+  const writeBlocks = (next: Set<string>) => {
+    localStorage.setItem(blocksKey, JSON.stringify(Array.from(next)))
+    return next
+  }
+
+  const toggleRow = (id: string) =>
+    setOpenRows(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return writeRows(next)
+    })
+
+  const toggleBlock = (id: string) =>
+    setClosedBlocks(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return writeBlocks(next)
+    })
+
+  const expandAll = (rowIds: string[]) => {
+    setOpenRows(writeRows(new Set(rowIds)))
+    setClosedBlocks(writeBlocks(new Set()))
+  }
+
+  const collapseAll = () => {
+    setOpenRows(writeRows(new Set()))
+    setClosedBlocks(writeBlocks(new Set(blockIds)))
+  }
+
+  return { openRows, closedBlocks, toggleRow, toggleBlock, expandAll, collapseAll }
+}
+
+/** Split an ordered list of groups into two columns of roughly equal height. */
+export function splitColumns<T>(groups: T[], weight: (g: T) => number): [T[], T[]] {
+  const weights = groups.map(weight)
+  const total = weights.reduce((a, b) => a + b, 0)
+  let running = 0
+  let cut = 1
+  let best = Infinity
+  weights.forEach((w, i) => {
+    running += w
+    const imbalance = Math.abs(total - 2 * running)
+    if (i < groups.length - 1 && imbalance < best) {
+      best = imbalance
+      cut = i + 1
+    }
+  })
+  return [groups.slice(0, cut), groups.slice(cut)]
+}
+
+/** Two columns of rows, ruled apart — how a wide block packs its lines. */
+export function TwoUp({ left, right }: { left: ReactNode; right: ReactNode }) {
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 md:divide-x md:divide-rule-light">
+      <div>{left}</div>
+      <div>{right}</div>
     </div>
   )
 }

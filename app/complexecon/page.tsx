@@ -6,7 +6,21 @@ import Link from 'next/link'
 import { AuthProvider, useAuth } from '@/components/auth/AuthProvider'
 import { getComplexEconNotes, saveComplexEconNote } from '@/lib/firestore/complexecon-notes'
 import type { ReaderSource } from '@/components/thesis/reader/ReaderOverlay'
-import { Block, Checkbox, Chevron, FlatRow, Meta, ProgressRule, Row, Stat } from '@/components/complexecon/tearsheet'
+import {
+  Block,
+  Checkbox,
+  Chevron,
+  FlatRow,
+  Masthead,
+  Meta,
+  ProgressRule,
+  Row,
+  SheetHead,
+  Stat,
+  TwoUp,
+  splitColumns,
+  useSheetState,
+} from '@/components/complexecon/tearsheet'
 import {
   ARTIFACTS,
   CENTRAL_QUESTION,
@@ -26,9 +40,6 @@ import {
 const ReaderOverlay = dynamic(() => import('@/components/thesis/reader/ReaderOverlay'), { ssr: false })
 
 const PROGRESS_KEY = 'complexecon-progress'
-const OPEN_KEY = 'complexecon-open'
-const BLOCKS_KEY = 'complexecon-blocks-closed'
-
 const BLOCK_IDS = ['blk-lane', 'blk-pathway', 'blk-library', 'blk-hypotheses', 'blk-artifacts']
 
 const TIER_LABEL: Record<BookTier, string> = {
@@ -78,79 +89,28 @@ function useProgress() {
   return { done, toggle, loaded }
 }
 
-/**
- * Rows are closed until asked for; blocks are open until folded away. Both are
- * remembered, so the sheet reopens exactly as it was left.
- */
-function useSheetState() {
-  const [openRows, setOpenRows] = useState<Set<string>>(new Set())
-  const [closedBlocks, setClosedBlocks] = useState<Set<string>>(new Set())
-
-  useEffect(() => {
-    try {
-      const rows = localStorage.getItem(OPEN_KEY)
-      setOpenRows(new Set(rows ? (JSON.parse(rows) as string[]) : [STAGES[0].id]))
-      const blocks = localStorage.getItem(BLOCKS_KEY)
-      if (blocks) setClosedBlocks(new Set(JSON.parse(blocks) as string[]))
-    } catch {
-      setOpenRows(new Set([STAGES[0].id]))
-    }
-  }, [])
-
-  const writeRows = (next: Set<string>) => {
-    localStorage.setItem(OPEN_KEY, JSON.stringify(Array.from(next)))
-    return next
-  }
-  const writeBlocks = (next: Set<string>) => {
-    localStorage.setItem(BLOCKS_KEY, JSON.stringify(Array.from(next)))
-    return next
-  }
-
-  const toggleRow = (id: string) =>
-    setOpenRows(prev => {
-      const next = new Set(prev)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
-      return writeRows(next)
-    })
-
-  const toggleBlock = (id: string) =>
-    setClosedBlocks(prev => {
-      const next = new Set(prev)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
-      return writeBlocks(next)
-    })
-
-  const expandAll = (rowIds: string[]) => {
-    setOpenRows(writeRows(new Set(rowIds)))
-    setClosedBlocks(writeBlocks(new Set()))
-  }
-
-  const collapseAll = () => {
-    setOpenRows(writeRows(new Set()))
-    setClosedBlocks(writeBlocks(new Set(BLOCK_IDS)))
-  }
-
-  return { openRows, closedBlocks, toggleRow, toggleBlock, expandAll, collapseAll }
-}
-
-/** Split the shelf into two columns of roughly equal height, order preserved. */
-function splitTopics(topics: LibraryTopic[]): [LibraryTopic[], LibraryTopic[]] {
-  const weights = topics.map(t => t.items.length + 1)
-  const total = weights.reduce((a, b) => a + b, 0)
-  let running = 0
-  let cut = 1
-  let best = Infinity
-  weights.forEach((w, i) => {
-    running += w
-    const imbalance = Math.abs(total - 2 * running)
-    if (i < topics.length - 1 && imbalance < best) {
-      best = imbalance
-      cut = i + 1
-    }
-  })
-  return [topics.slice(0, cut), topics.slice(cut)]
+function ArtifactRow({
+  artifact,
+  open,
+  onToggle,
+}: {
+  artifact: (typeof ARTIFACTS)[number]
+  open: boolean
+  onToggle: () => void
+}) {
+  return (
+    <Row
+      open={open}
+      onToggle={onToggle}
+      head={
+        <span className="font-serif text-[18px] font-semibold uppercase tracking-[0.5px] text-burgundy">
+          {artifact.name}
+        </span>
+      }
+    >
+      <p className="text-[16px] leading-relaxed text-ink-light">{artifact.detail}</p>
+    </Row>
+  )
 }
 
 function LaneRow({ pillar, open, onToggle }: { pillar: LanePillar; open: boolean; onToggle: () => void }) {
@@ -295,7 +255,11 @@ function BookRow({
 function ComplexEconInner() {
   const { user, signIn } = useAuth()
   const { done, toggle, loaded } = useProgress()
-  const { openRows, closedBlocks, toggleRow, toggleBlock, expandAll, collapseAll } = useSheetState()
+  const { openRows, closedBlocks, toggleRow, toggleBlock, expandAll, collapseAll } = useSheetState({
+    storageKey: 'complexecon',
+    blockIds: BLOCK_IDS,
+    defaultRows: [STAGES[0].id],
+  })
 
   const [reader, setReader] = useState<ReaderSource | null>(null)
   const [notes, setNotes] = useState<Record<string, string>>({})
@@ -305,7 +269,7 @@ function ComplexEconInner() {
   const allMilestoneIds = useMemo(() => STAGES.flatMap(s => s.milestones.map(m => m.id)), [])
   const allBookIds = useMemo(() => LIBRARY.flatMap(t => t.items.map(i => i.id)), [])
   const spineIds = useMemo(() => LIBRARY.flatMap(t => t.items.filter(i => i.tier === 'spine').map(i => i.id)), [])
-  const [shelfLeft, shelfRight] = useMemo(() => splitTopics(LIBRARY), [])
+  const [shelfLeft, shelfRight] = useMemo(() => splitColumns(LIBRARY, t => t.items.length + 1), [])
 
   const allRowIds = useMemo(
     () => [
@@ -402,52 +366,21 @@ function ComplexEconInner() {
   return (
     <main className="min-h-screen text-ink" style={{ background: '#f5f1ea' }}>
       <div className="mx-auto max-w-[1320px] px-3 py-5 md:px-5 md:py-7">
-        {/* ─── Masthead: title left, destination and tabs right ─── */}
-        <header className="mb-3 flex flex-wrap items-end justify-between gap-x-6 gap-y-2 border-b-2 border-rule pb-2">
-          <div>
-            <div className="font-mono text-[12px] uppercase tracking-[3px] text-ink-muted">
-              Lori Corpuz · A Research Program
-            </div>
-            <h1 className="font-serif text-[32px] font-semibold leading-tight text-ink md:text-[38px]">
-              Complexity Economics
-            </h1>
-          </div>
-          <div className="text-right">
-            <div className="font-mono text-[12px] uppercase tracking-[1.5px] text-ink-muted">
-              {WORKSHOP.name} · {WORKSHOP.place} · {WORKSHOP.dates}
-            </div>
-            <nav className="mt-1 flex justify-end gap-3">
-              <span className="border-b-2 border-burgundy font-serif text-[19px] font-semibold text-burgundy">
-                Pathway
-              </span>
-              <Link
-                href="/complexecon/research"
-                className="font-serif text-[19px] text-ink-muted transition-colors hover:text-ink"
-              >
-                Research
-              </Link>
-              <Link
-                href="/complexecon/strategy"
-                className="font-serif text-[19px] text-ink-muted transition-colors hover:text-ink"
-              >
-                Strategy
-              </Link>
-            </nav>
-          </div>
-        </header>
+        <Masthead
+          kicker="Lori Corpuz · A Research Program"
+          title="Complexity Economics"
+          meta={`${WORKSHOP.name} · ${WORKSHOP.place} · ${WORKSHOP.dates}`}
+          active="pathway"
+        />
 
-        {/* ─── Sheet head: the question beside the numbers ─── */}
-        <section className="mb-3 border border-rule bg-white">
-          <div className="flex flex-col lg:flex-row">
-            <div className="flex-1 border-b border-rule px-4 py-3 lg:border-b-0 lg:border-r">
-              <p className="font-serif text-[21px] italic leading-snug text-ink md:text-[23px]">
-                &ldquo;{CENTRAL_QUESTION}&rdquo;
-              </p>
-              <p className="mt-1 font-mono text-[12px] uppercase tracking-[1.5px] text-ink-muted">
-                Lane · Valuation conventions as distributive institutions
-              </p>
-            </div>
-            <div className="grid grid-cols-3 divide-x divide-rule-light sm:grid-cols-6 lg:w-[680px] lg:shrink-0">
+        <SheetHead
+          question={CENTRAL_QUESTION}
+          subline="Lane · Valuation conventions as distributive institutions"
+          openCount={openRows.size}
+          onExpandAll={() => expandAll(allRowIds)}
+          onCollapseAll={collapseAll}
+          stats={
+            <>
               <Stat value={weeksOut} label="Weeks out" />
               <Stat value={activeStage.numeral} label="Stage" />
               <Stat
@@ -481,26 +414,9 @@ function ComplexEconInner() {
                 label="Spine"
               />
               <Stat muted value={memoCount} label="Memos" />
-            </div>
-          </div>
-          <div className="flex flex-wrap items-center justify-between gap-2 border-t border-rule px-3 py-1">
-            <Meta>Every line opens · {openRows.size} open</Meta>
-            <div className="flex gap-1">
-              <button
-                onClick={() => expandAll(allRowIds)}
-                className="rounded-sm border border-rule px-2 py-px font-mono text-[11px] uppercase tracking-[1px] text-ink-muted transition-colors hover:border-ink-faint hover:text-ink"
-              >
-                Expand all
-              </button>
-              <button
-                onClick={collapseAll}
-                className="rounded-sm border border-rule px-2 py-px font-mono text-[11px] uppercase tracking-[1px] text-ink-muted transition-colors hover:border-ink-faint hover:text-ink"
-              >
-                Collapse all
-              </button>
-            </div>
-          </div>
-        </section>
+            </>
+          }
+        />
 
         {/* ─── The sheet: every block folds, every line opens ─── */}
         <div className="mb-3 space-y-3">
@@ -510,30 +426,30 @@ function ComplexEconInner() {
             open={!closedBlocks.has('blk-lane')}
             onToggle={() => toggleBlock('blk-lane')}
           >
-            <div className="grid grid-cols-1 md:grid-cols-2 md:divide-x md:divide-rule-light">
-              <div>
-                <Row
-                  open={openRows.has('lane-statement')}
-                  onToggle={() => toggleRow('lane-statement')}
-                  head={
-                    <span className="font-serif text-[18px] font-semibold text-ink">
-                      Valuation conventions as distributive institutions
-                    </span>
-                  }
-                  meta={<Meta>Statement</Meta>}
-                >
-                  <p className="text-[17px] leading-relaxed text-ink">{LANE_STATEMENT}</p>
-                </Row>
-                {LANE_PILLARS.slice(0, 1).map(p => (
-                  <LaneRow key={p.id} pillar={p} open={openRows.has(p.id)} onToggle={() => toggleRow(p.id)} />
-                ))}
-              </div>
-              <div>
-                {LANE_PILLARS.slice(1).map(p => (
-                  <LaneRow key={p.id} pillar={p} open={openRows.has(p.id)} onToggle={() => toggleRow(p.id)} />
-                ))}
-              </div>
-            </div>
+            <TwoUp
+              left={
+                <>
+                  <Row
+                    open={openRows.has('lane-statement')}
+                    onToggle={() => toggleRow('lane-statement')}
+                    head={
+                      <span className="font-serif text-[18px] font-semibold text-ink">
+                        Valuation conventions as distributive institutions
+                      </span>
+                    }
+                    meta={<Meta>Statement</Meta>}
+                  >
+                    <p className="text-[17px] leading-relaxed text-ink">{LANE_STATEMENT}</p>
+                  </Row>
+                  {LANE_PILLARS.slice(0, 1).map(p => (
+                    <LaneRow key={p.id} pillar={p} open={openRows.has(p.id)} onToggle={() => toggleRow(p.id)} />
+                  ))}
+                </>
+              }
+              right={LANE_PILLARS.slice(1).map(p => (
+                <LaneRow key={p.id} pillar={p} open={openRows.has(p.id)} onToggle={() => toggleRow(p.id)} />
+              ))}
+            />
           </Block>
           <Block
             label="The Pathway"
@@ -671,26 +587,14 @@ function ComplexEconInner() {
             open={!closedBlocks.has('blk-artifacts')}
             onToggle={() => toggleBlock('blk-artifacts')}
           >
-            <div className="grid grid-cols-1 md:grid-cols-2 md:divide-x md:divide-rule-light">
-              {[ARTIFACTS.slice(0, 2), ARTIFACTS.slice(2)].map((column, i) => (
-                <div key={i}>
-                  {column.map(a => (
-                    <Row
-                      key={a.id}
-                      open={openRows.has(a.id)}
-                      onToggle={() => toggleRow(a.id)}
-                      head={
-                        <span className="font-serif text-[18px] font-semibold uppercase tracking-[0.5px] text-burgundy">
-                          {a.name}
-                        </span>
-                      }
-                    >
-                      <p className="text-[16px] leading-relaxed text-ink-light">{a.detail}</p>
-                    </Row>
-                  ))}
-                </div>
+            <TwoUp
+              left={ARTIFACTS.slice(0, 2).map(a => (
+                <ArtifactRow key={a.id} artifact={a} open={openRows.has(a.id)} onToggle={() => toggleRow(a.id)} />
               ))}
-            </div>
+              right={ARTIFACTS.slice(2).map(a => (
+                <ArtifactRow key={a.id} artifact={a} open={openRows.has(a.id)} onToggle={() => toggleRow(a.id)} />
+              ))}
+            />
           </Block>
         </div>
 
