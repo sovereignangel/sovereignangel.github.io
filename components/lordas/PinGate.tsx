@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { C, LORDAS_MOTTO } from './design/tokens'
-import { LordasMark } from './design/assets'
+import { LordasLockup } from './design/Logo'
 
 /**
  * The gate. The union mark is shown at full size here — it is the one place
@@ -15,8 +15,8 @@ export function PinGate({ onSubmit, error }: { onSubmit: (pin: string) => void; 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
       <div style={{ textAlign: 'center', maxWidth: 300 }}>
-        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 18 }}>
-          <LordasMark size={72} />
+        <div style={{ marginBottom: 14 }}>
+          <LordasLockup width={280} />
         </div>
         {/* The mark already draws the motto — a source, aimed through a lens
             — so the gate says it in words directly beneath rather than
