@@ -27,7 +27,7 @@ import { Track } from '@/components/lordas/design/charts'
 import { PersonSigil, SportGlyph, TrifectaIcon } from '@/components/lordas/design/assets'
 import { fmtRunPace, fmtSwimPace, fmtBikeSpeed, fmtPace } from '@/lib/lordas/pair-training'
 import { paceBoth } from '@/lib/ironman/pace'
-import { RACE_NYC, KM_PER_MILE, priorRaceAtDistance, priorRacesFor, raceDistanceLabel, priorRaceDisplay, priorRaceVsGoal,
+import { RACE_NYC, priorRacesFor, raceDistanceLabel, priorRaceDisplay, priorRaceVsGoal,
   type PriorRace } from '@/lib/ironman/plan'
 import type { PairIronmanDetail, AthleteDetail } from '@/lib/lordas/ironman-detail'
 import { freshnessOf, stampOf } from '@/lib/lordas/freshness'
@@ -167,131 +167,94 @@ function gapCell(sec: number): { text: string; color: string } {
  * current goal.
  *
  * A finished race is the only honest measurement of transition cost and
- * race-day pacing — no training block produces either. So it sits beside the
- * target it is being asked to beat, with the gap subtracted for the reader
- * rather than left implied.
+ * race-day pacing — no training block produces either.
  */
+
 /**
- * Every race an athlete has finished, whatever the distance.
+ * The ledger: every race this athlete has finished, newest first.
  *
- * The table below can only compare like with like, so it reads the most
- * recent race at the target distance and ignores the rest. That is the right
- * call for a gap analysis and the wrong one for a record of what someone has
- * actually done, so the full ledger lives here — each race with its distance,
- * its finish, and, where the distance matches, what it would be worth against
- * today's goal.
+ * This replaced a five-row tearsheet that took one race apart leg by leg
+ * against the goal. That table answered a narrower question than the card is
+ * for — it could only ever show the most recent race at the target distance,
+ * so every other result the athlete had ever finished was invisible. A record
+ * of what someone has actually done should list all of it.
+ *
+ * Each row carries the finish and, where the distance matches the target, what
+ * that finish is worth against today's goal. The legs are one hover away, so
+ * the detail is still reachable without a table competing with the one below.
  */
-function RaceLedger({ races, goals }: { races: PriorRace[]; goals: AthleteDetail['goals'] }) {
+function RaceLedger({ a }: { a: AthleteDetail }) {
+  const races = priorRacesFor(a.person as 'lori' | 'aidas')
+
+  if (races.length === 0) {
+    return (
+      <>
+        <Sub>No finished race on record.</Sub>
+        <Sub>Goal is {hm(a.splits.total)} — nothing is inferred until there is a result to compare.</Sub>
+      </>
+    )
+  }
+
   return (
     <>
-      <div className="hd">Races finished</div>
-      {races.map((r) => {
-        const comparable = r.swimKm === RACE_NYC.swimKm && r.bikeKm === RACE_NYC.bikeKm && r.runKm === RACE_NYC.runKm
-        const v = comparable ? priorRaceVsGoal(r, goals) : null
-        return (
-          <div className="k" key={`${r.date}-${r.name}`}>
-            <span>{r.name} · {r.date.slice(0, 4)} · {raceDistanceLabel(r)}</span>
-            <b>
-              {clk(r.totalSec)}
-              {v ? <span style={{ color: gapCell(v.total).color }}> · {gapCell(v.total).text}</span> : null}
-            </b>
-          </div>
-        )
-      })}
+      <Rows>
+        {races.map((r) => {
+          const comparable =
+            r.swimKm === RACE_NYC.swimKm && r.bikeKm === RACE_NYC.bikeKm && r.runKm === RACE_NYC.runKm
+          const v = comparable ? priorRaceVsGoal(r, a.goals) : null
+          const d = priorRaceDisplay(r)
+          return (
+            <Row
+              key={`${r.date}-${r.name}`}
+              label={r.name}
+              detail={`${r.location} · ${r.date.slice(0, 4)} · ${raceDistanceLabel(r)}`}
+              value={
+                <Hover
+                  panel={
+                    <>
+                      <div className="hd">{r.name} · {r.date.slice(0, 4)}</div>
+                      <div className="k"><span>Swim {r.swimKm}km</span><b>{clk(r.swimSec)}</b></div>
+                      <div className="k"><span>Bike {r.bikeKm}km</span><b>{clk(r.bikeSec)}</b></div>
+                      <div className="k"><span>Run {r.runKm}km</span><b>{clk(r.runSec)}</b></div>
+                      <div className="k"><span>T1 + T2</span><b>{clk(d.transitionSec)}</b></div>
+                      <div className="k"><span>Finish</span><b>{clk(r.totalSec)}</b></div>
+                      {v ? (
+                        <div className="k">
+                          <span>vs goal</span>
+                          <b style={{ color: gapCell(v.total).color }}>{gapCell(v.total).text}</b>
+                        </div>
+                      ) : (
+                        <div className="k"><span>vs goal</span><b>different distance</b></div>
+                      )}
+                    </>
+                  }
+                >
+                  {clk(r.totalSec)}
+                  {v ? <span style={{ color: gapCell(v.total).color }}> · {gapCell(v.total).text}</span> : null}
+                </Hover>
+              }
+            />
+          )
+        })}
+      </Rows>
+      <Foot>
+        Finish times as raced. The gap is against today's goal and is only shown where the
+        distance matches — courses differ, and a windy or hilly bike leg is not the same
+        number as a flat one.
+      </Foot>
     </>
   )
 }
 
 function GapSheet({ a }: { a: AthleteDetail }) {
-  const person = a.person as 'lori' | 'aidas'
-  const race = priorRaceAtDistance(RACE_NYC, person)
-  const races = priorRacesFor(person)
-
+  const races = priorRacesFor(a.person as 'lori' | 'aidas')
   return (
     <FieldCard
       label={<><PersonSigil person={a.person} size={13} />{a.name}</>}
-      meta={
-        races.length > 0
-          ? <Hover panel={<RaceLedger races={races} goals={a.goals} />}>
-              {races.length} race{races.length === 1 ? '' : 's'} on record
-            </Hover>
-          : 'no race on record'
-      }
+      meta={races.length > 0 ? `${races.length} race${races.length === 1 ? '' : 's'} on record` : 'no race on record'}
     >
-      {race ? (
-        <>
-          <Sub>
-            {race.name} · {race.location} · {race.date.slice(0, 4)} · {raceDistanceLabel(race)} · {clk(race.totalSec)}
-          </Sub>
-          <GapRows a={a} race={race} />
-        </>
-      ) : (
-        <>
-          <Sub>Awaiting a finished race at {RACE_NYC.swimKm}/{RACE_NYC.bikeKm}/{RACE_NYC.runKm}km.</Sub>
-          <Sub>Goal is {hm(a.splits.total)} — nothing is inferred until there is a result to compare.</Sub>
-        </>
-      )}
+      <RaceLedger a={a} />
     </FieldCard>
-  )
-}
-
-function GapRows({ a, race }: { a: AthleteDetail; race: PriorRace }) {
-  const d = priorRaceDisplay(race)
-  const v = priorRaceVsGoal(race, a.goals)
-  const g = a.splits
-  const rows: SheetRow[] = [
-    {
-      label: 'Raced',
-      cells: [clk(race.swimSec), clk(race.bikeSec), clk(race.runSec), clk(d.transitionSec), clk(race.totalSec)],
-    },
-    {
-      label: 'Goal',
-      cells: [clk(g.swim * 60), clk(g.bike * 60), clk(g.run * 60), clk(g.transitions * 60), clk(g.total * 60)],
-    },
-    {
-      label: 'Gap',
-      emphasis: true,
-      cells: [v.swim, v.bike, v.run, v.transitions, v.total].map((x) => gapCell(x).text),
-      colors: [v.swim, v.bike, v.run, v.transitions, v.total].map((x) => gapCell(x).color),
-    },
-    {
-      label: 'Raced at',
-      cells: [
-        `${clk(d.swimSecPer100m)}/100m`,
-        `${d.bikeMph.toFixed(1)}mph`,
-        `${clk(race.runSec / (race.runKm / KM_PER_MILE))}/mi`,
-        '—', '',
-      ],
-    },
-    {
-      label: 'Goal at',
-      cells: [
-        `${clk((a.goals.swimMinutes * 60) / (race.swimKm * 10))}/100m`,
-        `${(race.bikeKm / KM_PER_MILE / (a.goals.bikeMinutes / 60)).toFixed(1)}mph`,
-        `${clk((a.goals.runMinutes * 60) / (race.runKm / KM_PER_MILE))}/mi`,
-        '—', '',
-      ],
-    },
-  ]
-
-  return (
-    <>
-      <Tearsheet
-        columns={[
-          { key: 'swim', label: 'SWIM' },
-          { key: 'bike', label: 'BIKE' },
-          { key: 'run', label: 'RUN' },
-          { key: 'tx', label: 'T1+T2' },
-          { key: 'total', label: 'TOTAL' },
-        ]}
-        rows={rows}
-      />
-      <Foot>
-        Gap is race minus goal, leg by leg. Transitions are shown because they are a
-        real split that training never measures. Courses differ — a windy or hilly
-        bike leg is not the same number as a flat one.
-      </Foot>
-    </>
   )
 }
 
