@@ -74,6 +74,35 @@ export const WORKSHOP = {
   startDate: '2027-01-03',
 }
 
+export interface LanePillar {
+  id: string
+  name: string
+  head: string
+  body: string
+}
+
+/** Why the lane holds — three arguments, one line each before they open. */
+export const LANE_PILLARS: LanePillar[] = [
+  {
+    id: 'continuity',
+    name: 'Continuity',
+    head: 'The Armstrong edge thesis is already a performativity claim.',
+    body: 'Analyst anchoring as a convention that partly constitutes the price it estimates. A live trading book as empirical evidence for a social-studies-of-finance argument.',
+  },
+  {
+    id: 'legibility',
+    name: 'Legibility',
+    head: 'The workshop’s own lines of inquiry run straight through valuation conventions.',
+    body: 'Embeddedness, value, the social structure of accumulation — exactly where capital-allocation conventions sit. This supplies the firm-level mechanism to a literature working at household scale.',
+  },
+  {
+    id: 'occupancy',
+    name: 'Occupancy',
+    head: 'Essentially no one holds this ground who also trades.',
+    body: 'The complexity economics of AI itself is the field’s biggest open gap, and performativity is the bridge into it.',
+  },
+]
+
 // ─── The five stages ──────────────────────────────────────────
 
 export const STAGES: PathwayStage[] = [
