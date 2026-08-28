@@ -1,8 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { C } from './design/tokens'
-import { LordasLockup } from './design/Logo'
+import { C, LORDAS_MOTTO } from './design/tokens'
+import { LordasMark } from './design/assets'
 
 /**
  * The gate. The union mark is shown at full size here — it is the one place
@@ -15,14 +15,20 @@ export function PinGate({ onSubmit, error }: { onSubmit: (pin: string) => void; 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
       <div style={{ textAlign: 'center', maxWidth: 300 }}>
-        <div style={{ marginBottom: 16 }}>
-          <LordasLockup width={280} />
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 18 }}>
+          <LordasMark size={72} />
         </div>
-        {/* The lockup carries Possibility × Feasibility and the three-word
-            line under it, so repeating the motto here would be the same claim
-            three times over. Only the names are left to add. */}
+        {/* The mark already draws the motto — a source, aimed through a lens
+            — so the gate says it in words directly beneath rather than
+            repeating the wordmark. */}
+        <h1 style={{
+          margin: 0, fontFamily: 'var(--lordas-display)', fontSize: 25,
+          fontWeight: 600, letterSpacing: '-.02em', lineHeight: 1.1,
+        }}>
+          {LORDAS_MOTTO}
+        </h1>
         <p style={{
-          margin: '2px 0 22px', fontFamily: 'var(--lordas-mono)', fontSize: 9.5,
+          margin: '7px 0 22px', fontFamily: 'var(--lordas-mono)', fontSize: 9.5,
           letterSpacing: '.18em', textTransform: 'uppercase', color: C.faint,
         }}>
           Lori &amp; Aidas
