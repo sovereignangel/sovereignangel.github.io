@@ -27,7 +27,7 @@ import { Track } from '@/components/lordas/design/charts'
 import { PersonSigil, SportGlyph, TrifectaIcon } from '@/components/lordas/design/assets'
 import { fmtRunPace, fmtSwimPace, fmtBikeSpeed, fmtPace } from '@/lib/lordas/pair-training'
 import { paceBoth } from '@/lib/ironman/pace'
-import { RACE_NYC, priorRacesFor, raceDistanceLabel, priorRaceDisplay, priorRaceVsGoal,
+import { RACE_NYC, priorRacesFor, raceDistanceLabel, sameDistance, priorRaceDisplay, priorRaceVsGoal,
   type PriorRace } from '@/lib/ironman/plan'
 import type { PairIronmanDetail, AthleteDetail } from '@/lib/lordas/ironman-detail'
 import { freshnessOf, stampOf } from '@/lib/lordas/freshness'
@@ -199,8 +199,7 @@ function RaceLedger({ a }: { a: AthleteDetail }) {
     <>
       <Rows>
         {races.map((r) => {
-          const comparable =
-            r.swimKm === RACE_NYC.swimKm && r.bikeKm === RACE_NYC.bikeKm && r.runKm === RACE_NYC.runKm
+          const comparable = sameDistance(r, RACE_NYC)
           const v = comparable ? priorRaceVsGoal(r, a.goals) : null
           const d = priorRaceDisplay(r)
           return (

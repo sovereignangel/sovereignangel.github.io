@@ -91,15 +91,14 @@ export interface PriorRace {
 export const PRIOR_RACES: PriorRace[] = [
   {
     athlete: 'lori',
-    name: 'Oceanlava Montenegro',
-    // Year confirmed, exact day not — nothing sorts or displays past the year
-    // while only one race is on record, so this stays a placeholder rather
-    // than a fact presented as one.
-    date: '2023-01-01',
-    location: 'Montenegro',
+    name: 'Ocean Lava Montenegro',
+    date: '2023-05-14',
+    location: 'Kotor, Montenegro',
     swimKm: 1.9,
     bikeKm: 90,
-    runKm: 21.1,
+    // Ocean Lava's half is officially 1.9 | 90 | 21 — a hundred metres shy of
+    // an Ironman 70.3 run, which the distance tolerance absorbs.
+    runKm: 21,
     swimSec: 33 * 60 + 4, //      33:04
     // Reported as one combined 15:16. Split 8:27 / 6:49 for the two rows that
     // want them separately; the pair sums to the reported figure exactly.
@@ -109,7 +108,38 @@ export const PRIOR_RACES: PriorRace[] = [
     runSec: 2 * 3600 + 1 * 60 + 24, //   2:01:24
     totalSec: 6 * 3600 + 30 * 60 + 34, // 6:30:34 — legs plus 15:16 of transitions
   },
+  {
+    athlete: 'lori',
+    name: 'Ironman 70.3 Puerto Rico',
+    date: '2022-03-20',
+    location: 'San Juan, Puerto Rico',
+    swimKm: 1.9,
+    bikeKm: 90,
+    runKm: 21.1,
+    // Bib 746. 22nd F30-34, 191st woman, 929th overall.
+    swimSec: 49 * 60 + 3, //             49:03
+    t1Sec: 6 * 60 + 52, //                6:52
+    bikeSec: 3 * 3600 + 48 * 60 + 54, // 3:48:54
+    t2Sec: 7 * 60 + 48, //                7:48
+    runSec: 2 * 3600 + 33 * 60 + 56, //  2:33:56
+    totalSec: 7 * 3600 + 26 * 60 + 33, // 7:26:33 — the five legs sum to this exactly
+  },
 ]
+
+/**
+ * Two race distances are the same race distance when they are within a few
+ * percent. Ocean Lava's half runs 21km against Ironman's 21.1, and a hundred
+ * metres is not a reason to refuse to compare two half-irons.
+ */
+const DISTANCE_TOLERANCE = 0.03
+
+export function sameDistance(
+  a: { swimKm: number; bikeKm: number; runKm: number },
+  b: { swimKm: number; bikeKm: number; runKm: number }
+): boolean {
+  const near = (x: number, y: number) => Math.abs(x - y) / Math.max(x, y) <= DISTANCE_TOLERANCE
+  return near(a.swimKm, b.swimKm) && near(a.bikeKm, b.bikeKm) && near(a.runKm, b.runKm)
+}
 
 /** Every race that athlete has finished, most recent first */
 export function priorRacesFor(athlete: AthleteId): PriorRace[] {
@@ -133,13 +163,7 @@ export function priorRaceAtDistance(
 ) {
   return [...PRIOR_RACES]
     .sort((a, b) => b.date.localeCompare(a.date))
-    .find(
-      (r) =>
-        (athlete == null || r.athlete === athlete) &&
-        r.swimKm === race.swimKm &&
-        r.bikeKm === race.bikeKm &&
-        r.runKm === race.runKm
-    )
+    .find((r) => (athlete == null || r.athlete === athlete) && sameDistance(r, race))
 }
 
 /** Prior-race splits said the way each discipline is normally spoken about */
