@@ -380,6 +380,9 @@ button.lordas-chip:focus-visible { outline: 2px solid var(--lordas-accent); outl
   font-family: var(--lordas-mono); font-size: 8.5px; letter-spacing: .12em;
   text-transform: uppercase; flex-shrink: 0;
 }
+/* One line, several claims — the separator keeps "did this, missed that" from
+   reading as a single run-on session. */
+.lordas-plan .who .bit + .bit::before { content: '·'; margin-right: 4px; color: var(--lordas-faint); }
 .lordas-plan .who em {
   font-style: normal; font-family: var(--lordas-mono); font-size: 9.5px;
   color: var(--lordas-faint); flex-basis: 100%;

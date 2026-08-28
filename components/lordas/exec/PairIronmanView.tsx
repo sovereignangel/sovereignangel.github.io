@@ -482,7 +482,7 @@ function AthleteLine({
   if (day.prescribed) {
     const active = day.prescribed.filter((x) => x.sport !== 'rest')
     bits.push(
-      <span key="rx" style={{ color: C.ink }}>
+      <span key="rx" className="bit" style={{ color: C.ink }}>
         {active.length === 0
           ? 'Recovery instead'
           : active.map((x) => `${x.title} · ${sessionSize(x)}`).join(' + ')}
@@ -492,7 +492,7 @@ function AthleteLine({
 
   for (const [i, l] of day.logged.entries()) {
     bits.push(
-      <span key={`l${i}`} style={{ color: LOG_COLOR[l.status] }}>
+      <span key={`l${i}`} className="bit" style={{ color: LOG_COLOR[l.status] }}>
         {l.status === 'extra' ? '+ ' : ''}
         {SPORT_WORD[l.sport ?? ''] ?? l.sport ?? 'Session'} {logSize(l)}
       </span>
@@ -501,7 +501,7 @@ function AthleteLine({
 
   if (past) {
     for (const [i, m] of day.missed.entries()) {
-      bits.push(<span key={`m${i}`} style={{ color: C.crit }}>× {m}</span>)
+      bits.push(<span key={`m${i}`} className="bit" style={{ color: C.crit }}>× {m}</span>)
     }
   }
 

@@ -22,7 +22,7 @@ import { raceTargets, type RaceTarget } from '@/lib/ironman/pace'
 import {
   PLAN, RACE, RACE_NYC, STRENGTHS,
   daysToRace, goalsFor, goalSplits, goalDisplay, todayLocal,
-  type AthleteId, type RaceGoals, type Sport3, type Standing,
+  type AthleteId, type PlannedSession, type RaceGoals, type Sport3, type Standing,
 } from '@/lib/ironman/plan'
 import { loadBothAthletes, type AthleteData } from './athletes'
 import { buildPairDay, paceProfile, type PairDay, type PaceProfile } from './pair-training'
@@ -68,18 +68,64 @@ export interface AthleteDetail {
   lastRefresh: string | null
 }
 
+/** One session, as printed on the block or as an athlete's own version of it */
+export interface PlanSessionRow {
+  sport: string
+  title: string
+  durationMin: number
+  distanceKm?: number
+  zone: string
+  key?: boolean
+}
+
+/**
+ * Something actually logged, set against what the card asked for.
+ *
+ * `against` is the printed session it counted towards, or null when nothing on
+ * the card matched it — a 45min run on a swim-and-spin day is not a failure to
+ * record, it is the day that happened.
+ */
+export interface LoggedSession {
+  against: string | null
+  sport: string | null
+  status: 'done' | 'partial' | 'extra'
+  durationMin: number
+  distanceKm: number | null
+  name: string | null
+}
+
+export type DayStanding = 'done' | 'partial' | 'missed' | 'upcoming'
+
+/** One athlete against one printed day — behind it, or ahead of it. */
+export interface PlanAthleteDay {
+  status: DayStanding
+  /** What happened: sessions that matched the card, then the ones that did not */
+  logged: LoggedSession[]
+  /** Printed sessions the day never delivered */
+  missed: string[]
+  /** This athlete's own version of the day, when calibration moved it off the print */
+  prescribed: PlanSessionRow[] | null
+  /** One line saying why it moved */
+  note: string | null
+}
+
 /**
  * One printed day, with each athlete's standing against it. The block is the
  * backbone the whole page argues about, so it ships whole rather than as the
  * weekly aggregate the compliance grid shows.
+ *
+ * A printed day is a claim about the future and a question about the past, and
+ * the row carries both answers per athlete: what they actually did on the days
+ * behind, and what their recalibrated card is on the days ahead. The two of
+ * them diverge in both directions — one rides 100km on a rest day, the other
+ * rests through a brick — so a single shared row would be a fiction.
  */
 export interface PlanDayRow {
   date: string
   phase: string
   focus: string
-  sessions: { sport: string; title: string; durationMin: number; distanceKm?: number; zone: string; key?: boolean }[]
-  /** done | partial | missed | upcoming, per athlete */
-  status: Record<string, string>
+  sessions: PlanSessionRow[]
+  athletes: Record<string, PlanAthleteDay>
 }
 
 export interface PairIronmanDetail {
@@ -90,6 +136,13 @@ export interface PairIronmanDetail {
   feedRefreshedAt: string | null
   races: { name: string; date: string; days: number; location: string }[]
   today: PairDay
+  /**
+   * Tomorrow, already recalibrated against today's work and the freshest
+   * recovery on file. Provisional by construction — tonight's sleep has not
+   * happened — but a session you can see coming is a session you can eat and
+   * sleep for.
+   */
+  tomorrow: PairDay
   athletes: AthleteDetail[]
 }
 
@@ -98,6 +151,31 @@ function mondayOf(date: string): string {
   const dow = (d.getUTCDay() + 6) % 7 // Monday = 0
   d.setUTCDate(d.getUTCDate() - dow)
   return d.toISOString().slice(0, 10)
+}
+
+function shiftDate(date: string, days: number): string {
+  const d = new Date(date + 'T00:00:00Z')
+  d.setUTCDate(d.getUTCDate() + days)
+  return d.toISOString().slice(0, 10)
+}
+
+function sessionRow(x: PlannedSession): PlanSessionRow {
+  return {
+    sport: x.sport,
+    title: x.title,
+    durationMin: x.durationMin,
+    distanceKm: x.distanceKm,
+    zone: x.zone,
+    key: x.key,
+  }
+}
+
+/** Two cards are the same card when every session matches title, length and zone. */
+function sameCard(a: PlanSessionRow[], b: PlanSessionRow[]): boolean {
+  return (
+    a.length === b.length &&
+    a.every((x, i) => x.title === b[i].title && x.durationMin === b[i].durationMin && x.zone === b[i].zone)
+  )
 }
 
 function detailFor(data: AthleteData, today: string, partner?: AthleteData): AthleteDetail {
@@ -163,6 +241,16 @@ function detailFor(data: AthleteData, today: string, partner?: AthleteData): Ath
 export async function buildPairIronmanDetail(date: string = todayLocal()): Promise<PairIronmanDetail> {
   const athletes = await loadBothAthletes()
   const refreshes = athletes.map((a) => a.lastRefresh).filter(Boolean) as string[]
+  const next = shiftDate(date, 1)
+
+  // Tomorrow is built exactly like today, one day forward. Nothing special is
+  // needed for it to see today's work: readiness reads the freshest metrics
+  // doc and yesterday-relative load, and the recalibration looks at the five
+  // days before the day it is editing — so a 100km ride today is already in
+  // both by the time it asks about tomorrow.
+  const today = buildPairDay(date, athletes)
+  const tomorrow = buildPairDay(next, athletes)
+  const details = athletes.map((a, i) => detailFor(a, date, athletes[1 - i]))
 
   // Statuses are matched per athlete against the same printed day, so a row
   // shows who did it and who did not without re-deriving the plan twice.
@@ -176,35 +264,97 @@ export async function buildPairIronmanDetail(date: string = todayLocal()): Promi
     ),
   }))
 
-  const plan: PlanDayRow[] = PLAN.map((d) => ({
-    date: d.date,
-    phase: d.phase,
-    focus: d.focus,
-    sessions: d.sessions.map((x) => ({
-      sport: x.sport,
-      title: x.title,
-      durationMin: x.durationMin,
-      distanceKm: x.distanceKm,
-      zone: x.zone,
-      key: x.key,
-    })),
-    status: Object.fromEntries(
-      matched.map((m) => {
-        const st = m.days.get(d.date)
-        const active = st?.sessions.filter((x) => x.session.sport !== 'rest') ?? []
-        if (!active.length) return [m.person, d.date <= date ? 'done' : 'upcoming']
-        const done = active.filter((x) => x.status === 'done').length
-        const partial = active.filter((x) => x.status === 'partial').length
-        const missed = active.filter((x) => x.status === 'missed').length
-        const label =
-          done === active.length ? 'done'
-            : done + partial > 0 ? 'partial'
-            : missed > 0 ? 'missed'
-            : 'upcoming'
-        return [m.person, label]
+  // Every day this athlete's card differs from the print, and why. The
+  // recalibration supplies the days out to its horizon; today and tomorrow are
+  // then overwritten by the full prescription, which carries readiness on top
+  // of the recalibration and is therefore the more complete answer for the only
+  // two days where recovery is actually known.
+  const overrides = new Map<string, Map<string, { sessions: PlanSessionRow[]; note: string }>>()
+  for (const d of details) {
+    const own = new Map<string, { sessions: PlanSessionRow[]; note: string }>()
+    for (const mv of d.rebalance.moves) {
+      own.set(mv.date, {
+        sessions: mv.after.map(sessionRow),
+        note: mv.reason || (mv.kind === 'retune' ? 'Retuned against the last few days' : 'Trimmed — already banked'),
       })
-    ),
-  }))
+    }
+    for (const [when, pair] of [[date, today], [next, tomorrow]] as const) {
+      const p = pair.athletes.find((x) => x.person === d.person)
+      if (!p) continue
+      // Two layers moved this card and they moved it for different reasons.
+      // Naming only the readiness one produces the contradiction of "full
+      // session as planned" printed beside a session that plainly is not, so
+      // the recalibration speaks first and recovery only when it did something.
+      const moved = p.rebalance.moves.find((m) => m.date === when)?.reason
+      const eased = p.adaptLevel === 'as-planned' || p.adaptLevel === 'no-data' ? null : p.adaptHeadline
+      own.set(when, {
+        sessions: p.sessions.map(sessionRow),
+        note: [moved, eased].filter(Boolean).join(' · ') || p.adaptHeadline,
+      })
+    }
+    overrides.set(d.person, own)
+  }
+
+  const plan: PlanDayRow[] = PLAN.map((d) => {
+    const printed = d.sessions.map(sessionRow)
+    return {
+      date: d.date,
+      phase: d.phase,
+      focus: d.focus,
+      sessions: printed,
+      athletes: Object.fromEntries(
+        matched.map((m): [string, PlanAthleteDay] => {
+          const st = m.days.get(d.date)
+          const active = st?.sessions.filter((x) => x.session.sport !== 'rest') ?? []
+          const done = active.filter((x) => x.status === 'done').length
+          const partial = active.filter((x) => x.status === 'partial').length
+          const missedCount = active.filter((x) => x.status === 'missed').length
+          const status: DayStanding =
+            active.length === 0 ? (d.date <= date ? 'done' : 'upcoming')
+              : done === active.length ? 'done'
+              : done + partial > 0 ? 'partial'
+              : missedCount > 0 ? 'missed'
+              : 'upcoming'
+
+          // Matched work first, then whatever went in instead of the card.
+          const logged: LoggedSession[] = [
+            ...active
+              .filter((x) => x.actual)
+              .map((x) => ({
+                against: x.session.title,
+                sport: x.session.sport as string,
+                status: x.status === 'partial' ? ('partial' as const) : ('done' as const),
+                durationMin: x.actual!.durationMin,
+                distanceKm: x.actual!.distanceKm,
+                name: x.actual!.name,
+              })),
+            ...(st?.extras ?? []).map((e) => ({
+              against: null,
+              sport: e.sport,
+              status: 'extra' as const,
+              durationMin: e.durationMin,
+              distanceKm: e.distanceKm,
+              name: null,
+            })),
+          ]
+
+          const ov = overrides.get(m.person)?.get(d.date)
+          const prescribed = ov && !sameCard(ov.sessions, printed) ? ov.sessions : null
+
+          return [
+            m.person,
+            {
+              status,
+              logged,
+              missed: active.filter((x) => x.status === 'missed').map((x) => x.session.title),
+              prescribed,
+              note: prescribed ? (ov?.note ?? null) : null,
+            },
+          ]
+        })
+      ),
+    }
+  })
 
   return {
     date,
@@ -214,7 +364,8 @@ export async function buildPairIronmanDetail(date: string = todayLocal()): Promi
     races: [RACE, RACE_NYC]
       .map((r) => ({ name: r.name, date: r.date, days: daysToRace(date, r.date), location: r.location }))
       .filter((r) => r.days >= 0),
-    today: buildPairDay(date, athletes),
-    athletes: athletes.map((a, i) => detailFor(a, date, athletes[1 - i])),
+    today,
+    tomorrow,
+    athletes: details,
   }
 }
