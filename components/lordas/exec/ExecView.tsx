@@ -121,64 +121,63 @@ function CoastCard({ statuses }: { statuses: SpotStatus[] }) {
 
 // ── Training ──────────────────────────────────────────────────────────────
 
-function AthleteCard({ a }: { a: AthletePrescription }) {
-  const color = OWNER[a.person] ?? C.muted
-  const active = a.sessions.filter((s) => s.sport !== 'rest')
-  const band = a.readiness.band
-  const feed = freshnessOf(a.lastRefresh, undefined, a.loadError)
-
+/**
+ * Both athletes' readiness in one column, a row each, so it sits beside today
+ * and tomorrow rather than pushing them apart. The per-session paces moved
+ * onto the session rows themselves, where the number belongs next to the work
+ * it describes.
+ */
+function ReadinessColumn({ athletes }: { athletes: AthletePrescription[] }) {
   return (
-    <FieldCard
-      label={<><PersonSigil person={a.person} size={13} />{a.name}</>}
-      meta={feed.level === 'fresh' ? feed.label : undefined}
-      tone={band === 'green' ? 'ok' : band === 'amber' ? 'warn' : band === 'red' ? 'crit' : 'none'}
-      field="action"
-    >
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-        <span className="lordas-mono" style={{ fontSize: 22, fontWeight: 500, color: bandColor(band) }}>
-          {a.readiness.score ?? '--'}
-        </span>
-        <span style={{ fontSize: 11.5, color: C.muted }}>{a.adaptHeadline}</span>
+    <FieldCard label="Readiness" meta="both" field="evidence">
+      <div style={{ display: 'flex', flexDirection: 'column' }}>
+        {athletes.map((a, i) => {
+          const last = i === athletes.length - 1
+          const feed = freshnessOf(a.lastRefresh)
+          return (
+            <div
+              key={a.person}
+              style={{
+                paddingTop: i ? 10 : 0,
+                paddingBottom: last ? 0 : 10,
+                borderBottom: last ? undefined : `1px solid ${C.ruleSoft}`,
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 10 }}>
+                <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12.5, fontWeight: 600 }}>
+                  <PersonSigil person={a.person} size={14} />
+                  {a.name}
+                </span>
+                <span className="lordas-mono" style={{ fontSize: 19, fontWeight: 500, color: bandColor(a.readiness.band) }}>
+                  {a.readiness.score ?? '--'}
+                </span>
+              </div>
+              {a.readiness.score !== null && <Track value={a.readiness.score} color={bandColor(a.readiness.band)} />}
+              <div style={{ fontSize: 10.5, color: C.faint, marginTop: 5, lineHeight: 1.5 }}>
+                {a.adaptHeadline}
+              </div>
+              <Foot>
+                <Chip>{a.totalMin}min</Chip>
+                {a.readiness.factors.slice(0, 2).map((f) => (
+                  <Chip key={f.label}>{f.label} {f.value}</Chip>
+                ))}
+                {feed.level !== 'fresh' && (
+                  <Chip tone={FEED_TONE[feed.level]} title={feed.iso ?? undefined}>Garmin {feed.label}</Chip>
+                )}
+              </Foot>
+            </div>
+          )
+        })}
       </div>
-      {a.readiness.score !== null && <Track value={a.readiness.score} color={bandColor(band)} />}
-
-      {active.length === 0 ? (
-        <Sub>{a.noData ? 'No Garmin data yet — go by the printed plan and by feel.' : 'Recovery day — nothing to schedule.'}</Sub>
-      ) : (
-        <Rows>
-          {active.map((s, i) => (
-            <Row
-              key={i}
-              icon={<SportGlyph sport={s.sport} size={13} color={SPORT_COLOR[s.sport] ?? C.muted} />}
-              label={s.title}
-              detail={`${s.durationMin}min${s.distanceKm ? ` · ${s.distanceKm}km` : ''}${s.zone !== '-' ? ` · ${s.zone}` : ''}`}
-              value={s.pace ?? (PACED.has(s.sport) ? 'by effort' : '')}
-              valueColor={s.pace ? color : C.faint}
-            />
-          ))}
-        </Rows>
-      )}
-
-      <Foot>
-        {feed.level !== 'fresh' && (
-          <Chip tone={FEED_TONE[feed.level]} title={feed.iso ?? undefined}>
-            Garmin {feed.label}
-          </Chip>
-        )}
-        <Chip>{a.totalMin}min total</Chip>
-        {a.readiness.factors.slice(0, 2).map((f) => (
-          <Chip key={f.label}>{f.label} {f.value}</Chip>
-        ))}
-      </Foot>
     </FieldCard>
   )
 }
 
-function SessionCard({ pair }: { pair: PairDay }) {
+function SessionCard({ pair, label }: { pair: PairDay; label: string }) {
   const planned = pair.planned.filter((s) => s.sport !== 'rest')
   if (!planned.length) {
     return (
-      <FieldCard label="Session" meta={pair.phase ?? undefined} field="action">
+      <FieldCard label={label} meta={fmtDate(pair.date)} field="action">
         <Lede>Rest day.</Lede>
         <Sub>Both of you. Recovery is the session.</Sub>
       </FieldCard>
@@ -193,19 +192,38 @@ function SessionCard({ pair }: { pair: PairDay }) {
     details: planned.map((s) => `${s.title} — ${s.durationMin}min\n${s.detail}`).join('\n\n'),
   })
   return (
-    <FieldCard label="Session" meta={pair.phase ?? undefined} tone="accent" field="action">
+    <FieldCard label={label} meta={fmtDate(pair.date)} tone="accent" field="action">
       <Lede>{planned[0].title}{planned.length > 1 ? ` + ${planned.length - 1} more` : ''}</Lede>
       {pair.focus && <Sub>{pair.focus}</Sub>}
       <Rows>
-        {planned.map((s, i) => (
-          <Row
-            key={i}
-            icon={<SportGlyph sport={s.sport} size={13} color={SPORT_COLOR[s.sport] ?? C.muted} />}
-            label={s.title}
-            detail={s.detail}
-            value={`${s.durationMin}min${s.zone !== '-' ? ` · ${s.zone}` : ''}`}
-          />
-        ))}
+        {planned.map((s, i) => {
+          // Each athlete's own number for this session, in the order they are
+          // named everywhere else: Lori first.
+          const paces = pair.athletes.map((a) => ({
+            person: a.person,
+            pace: a.sessions.find((x) => x.title === s.title)?.pace ?? null,
+          }))
+          return (
+            <Row
+              key={i}
+              icon={<SportGlyph sport={s.sport} size={13} color={SPORT_COLOR[s.sport] ?? C.muted} />}
+              label={s.title}
+              detail={`${s.durationMin}min${s.distanceKm ? ` · ${s.distanceKm}km` : ''}${s.zone !== '-' ? ` · ${s.zone}` : ''}`}
+              value={
+                paces.some((p) => p.pace) ? (
+                  <>
+                    {paces.map((p, j) => (
+                      <span key={p.person}>
+                        {j > 0 && <span style={{ color: C.faint }}> / </span>}
+                        <span style={{ color: OWNER[p.person] ?? C.muted }}>{p.pace ?? '—'}</span>
+                      </span>
+                    ))}
+                  </>
+                ) : `${s.durationMin}min`
+              }
+            />
+          )
+        })}
       </Rows>
       <Foot>
         {pair.togetherMin > 0 && <Chip tone="accent">{pair.togetherMin}min together</Chip>}
@@ -302,8 +320,9 @@ export default function ExecView() {
 
       <SectionHead title="Train" meta="One session, two prescriptions" />
       <Seam cols={3}>
-        <SessionCard pair={today} />
-        {today.athletes.map((a) => <AthleteCard key={a.person} a={a} />)}
+        <SessionCard pair={today} label="Today" />
+        <SessionCard pair={data.training.tomorrow} label="Tomorrow" />
+        <ReadinessColumn athletes={today.athletes} />
       </Seam>
 
       {today.divergence.length > 0 && (
@@ -313,18 +332,6 @@ export default function ExecView() {
           ))}
         </Callout>
       )}
-
-      <SectionHead title="Tomorrow" meta={fmtDate(data.training.tomorrow.date)} />
-      <Seam cols={2}>
-        <SessionCard pair={data.training.tomorrow} />
-        <FieldCard label="Ahead" field="evidence" quiet>
-          <Rows>
-            {data.races.map((r) => (
-              <Row key={r.date} label={r.name.replace('Ironman 70.3 ', '')} detail={r.date} value={`${r.days} days`} />
-            ))}
-          </Rows>
-        </FieldCard>
-      </Seam>
 
       <p style={{ fontSize: 11, color: C.faint, lineHeight: 1.55, marginTop: 18 }}>
         A spot the primary model calls offshore, over the gust cap, or rained out is never recommended, even when the

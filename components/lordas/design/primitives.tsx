@@ -1,5 +1,7 @@
 'use client'
 
+import * as React from 'react'
+
 /**
  * Lordas Console primitives.
  *
@@ -227,10 +229,36 @@ export function Hover({
   panel: React.ReactNode
   align?: 'left' | 'right'
 }) {
+  const ref = React.useRef<HTMLSpanElement>(null)
+  const [below, setBelow] = React.useState(false)
+
+  /**
+   * Open downward when there is not enough room above. Measured on the way in
+   * rather than assumed, because the same cell sits near the top of the page
+   * on one screen and near the bottom on another.
+   */
+  const place = React.useCallback(() => {
+    const el = ref.current
+    if (!el) return
+    const r = el.getBoundingClientRect()
+    const panelEl = el.querySelector('.lordas-hover-panel') as HTMLElement | null
+    const need = (panelEl?.offsetHeight || 120) + 12
+    setBelow(r.top < need)
+  }, [])
+
   return (
-    <span className="lordas-hover" tabIndex={0}>
+    <span
+      ref={ref}
+      className="lordas-hover"
+      tabIndex={0}
+      onMouseEnter={place}
+      onFocus={place}
+    >
       {children}
-      <span className={`lordas-hover-panel lordas-hover-${align}`} role="tooltip">
+      <span
+        className={`lordas-hover-panel lordas-hover-${align}${below ? ' is-below' : ''}`}
+        role="tooltip"
+      >
         {panel}
       </span>
     </span>
