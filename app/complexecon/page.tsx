@@ -5,6 +5,11 @@ import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import { AuthProvider, useAuth } from '@/components/auth/AuthProvider'
 import { getComplexEconNotes, saveComplexEconNote } from '@/lib/firestore/complexecon-notes'
+import {
+  getCampaignProgress,
+  migrateCampaignMilestones,
+  setCampaignMilestone,
+} from '@/lib/firestore/campaigns'
 import type { ReaderSource } from '@/components/thesis/reader/ReaderOverlay'
 import {
   Block,
@@ -61,27 +66,61 @@ const SOURCE_KIND_LABEL: Record<SourceKind, string> = {
   buy: 'Buy',
 }
 
-/** Checked-off milestones and books, kept in localStorage. */
-function useProgress() {
+/**
+ * Checked-off milestones and books.
+ *
+ * Signed out, this is localStorage as it always was. Signed in, Firestore is
+ * the truth — the same document /exec reads — and the local copy is lifted
+ * into it once, on first sign-in, so nothing checked before is lost. The
+ * local write stays as a mirror so the page still works offline and before
+ * auth resolves.
+ */
+function useProgress(uid: string | undefined) {
   const [done, setDone] = useState<Set<string>>(new Set())
   const [loaded, setLoaded] = useState(false)
 
-  useEffect(() => {
+  const readLocal = (): string[] => {
     try {
       const raw = localStorage.getItem(PROGRESS_KEY)
-      if (raw) setDone(new Set(JSON.parse(raw) as string[]))
+      return raw ? (JSON.parse(raw) as string[]) : []
     } catch {
-      // corrupted storage — start clean
+      return [] // corrupted storage — start clean
     }
+  }
+
+  useEffect(() => {
+    setDone(new Set(readLocal()))
     setLoaded(true)
   }, [])
+
+  useEffect(() => {
+    if (!uid) return
+    let live = true
+    void (async () => {
+      try {
+        await migrateCampaignMilestones(uid, 'complexecon', readLocal())
+        const remote = await getCampaignProgress(uid, 'complexecon')
+        if (!live) return
+        const ids = Object.entries(remote.milestones || {})
+          .filter(([, on]) => on)
+          .map(([id]) => id)
+        setDone(new Set(ids))
+        localStorage.setItem(PROGRESS_KEY, JSON.stringify(ids))
+      } catch {
+        // offline or rules — the local copy still drives the page
+      }
+    })()
+    return () => { live = false }
+  }, [uid])
 
   const toggle = (id: string) => {
     setDone(prev => {
       const next = new Set(prev)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
+      const on = !next.has(id)
+      if (on) next.add(id)
+      else next.delete(id)
       localStorage.setItem(PROGRESS_KEY, JSON.stringify(Array.from(next)))
+      if (uid) void setCampaignMilestone(uid, 'complexecon', id, on).catch(() => {})
       return next
     })
   }
@@ -254,7 +293,7 @@ function BookRow({
 
 function ComplexEconInner() {
   const { user, signIn } = useAuth()
-  const { done, toggle, loaded } = useProgress()
+  const { done, toggle, loaded } = useProgress(user?.uid)
   const { openRows, closedBlocks, toggleRow, toggleBlock, expandAll, collapseAll } = useSheetState({
     storageKey: 'complexecon',
     blockIds: BLOCK_IDS,

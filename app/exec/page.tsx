@@ -16,12 +16,14 @@ import {
   type SpotStatus,
 } from '@/lib/exec/windows'
 import { ExecIronmanLive, ExecDrills } from '@/components/exec/ExecLive'
+import { ExecToday, type PipedLane } from '@/components/exec/ExecToday'
+import { ExecCampaign } from '@/components/exec/ExecCampaign'
 import { SpotIcon, WaveDivider } from '@/components/wind/WindIcons'
 import { SportIcon, CourseDivider } from '@/components/ironman/IronmanIcons'
 
 export const metadata: Metadata = {
   title: 'Exec — Daily Orders',
-  description: 'Today and tomorrow: where to kite, what to train, and the odds on the race goals',
+  description: 'The five lanes of the day — practice, kite, training, the paper, the fund',
 }
 
 export const revalidate = 300
@@ -340,6 +342,33 @@ function IronmanDay({ label, day, slot, theme }: { label: string; day: PlanDay |
   )
 }
 
+// ── Piped lanes for the today band ────────────────────────────────────────
+// The band gets a flattened one-line version of what the cards below already
+// render. Building it here rather than in the client keeps a single source:
+// if the band and the card ever disagree it is a bug in this projection.
+
+function kiteLane(day: ExecWindDay): PipedLane {
+  if (!day.pick) return { headline: 'No rideable window', sub: 'train, study, recover', due: false }
+  const b = day.blocks[0]
+  return {
+    headline: `${b ? fmtWindow(b.startHour, b.endHour) : fmtWindow(day.pick.startHour, day.pick.endHour)} · ${day.pick.spotName}`,
+    sub: `${day.pick.avgKn} kn · ${day.pick.kiteSize}${day.pick.possible ? ' · recheck' : ''}`,
+    due: true,
+  }
+}
+
+function ironmanLane(day: PlanDay | undefined, slot: IronmanSlot | null): PipedLane {
+  if (!day) return { headline: 'No session on the plan', due: false }
+  const active = day.sessions.filter((s) => s.sport !== 'rest')
+  if (active.length === 0) return { headline: 'Rest day', sub: day.focus, due: false }
+  const minutes = active.reduce((sum, s) => sum + s.durationMin, 0)
+  return {
+    headline: `${slot ? fmtHourMin(slot.startMin) + ' · ' : ''}${active.map((s) => s.title).join(' + ')}`,
+    sub: `${minutes}min · ${day.phase}`,
+    due: true,
+  }
+}
+
 // ── Page ──────────────────────────────────────────────────────────────────
 
 export default async function ExecPage() {
@@ -385,14 +414,19 @@ export default async function ExecPage() {
               <CourseDivider className="w-10 h-2 text-iron-burgundy shrink-0" />
             </span>
             <span className="hidden lg:inline text-[10px] text-surf-muted">
-              Where to kite, what to train &middot; today and tomorrow
+              Five lanes &middot; practice, kite, training, the paper, the fund
             </span>
             <span className="ml-auto font-mono text-[9px] md:text-[10px] text-surf-muted whitespace-nowrap">
               {generatedAt} LT
             </span>
           </header>
 
+          <ExecToday date={today} kite={kiteLane(windToday)} ironman={ironmanLane(planToday, slotToday)} />
+
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 items-start">
+            {/* Each column stacks a body lane over a campaign lane, so a rest day or a
+                flat sea on one side never leaves a hole beside a full one. */}
+            <div className="flex flex-col gap-3">
             <Card title="Kite — Wind Windows" theme={SURF} right={<DetailLink href="/wind" theme={SURF} />}>
               {windError && (
                 <div className="text-[10px] text-surf-coral mb-2">Forecast service unreachable — refresh in a minute.</div>
@@ -407,6 +441,10 @@ export default async function ExecPage() {
               </div>
             </Card>
 
+            <ExecCampaign id="complexecon" laneId="complexecon" date={today} />
+            </div>
+
+            <div className="flex flex-col gap-3">
             <Card title="Ironman — Training" theme={IRON} right={<DetailLink href="/ironman" theme={IRON} />}>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-2.5 mb-2.5">
                 <IronmanDay label="Today" day={planToday} slot={slotToday} theme={IRON} />
@@ -417,13 +455,17 @@ export default async function ExecPage() {
                 <ExecIronmanLive today={today} />
               </div>
             </Card>
+            <ExecCampaign id="armstrong" laneId="armstrong" date={today} />
+            </div>
           </div>
 
           <p className="text-[10px] text-surf-muted mt-3">
             Wind from Open-Meteo (GFS + EU blend), refreshed every 5 minutes. A spot the primary model calls offshore,
             over your gust cap, or rained out is never recommended, even when the second model finds a window there.
             Training slots default to 07:00 and step aside when the wind window claims the morning. Calendar events land
-            in Palanga time.
+            in Palanga time. The paper and the fund run on dated blocks with an ordered ladder inside: the block
+            sets the deadline, the ladder sets the order, and an unfinished unit stays at the head of the queue
+            rather than disappearing off a calendar.
           </p>
         </div>
       </main>

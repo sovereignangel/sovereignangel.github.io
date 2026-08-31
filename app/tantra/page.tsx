@@ -21,18 +21,20 @@ import type {
   TantraCycle,
 } from '@/lib/types/tantra'
 import { todayString } from '@/lib/date-utils'
+import {
+  CYCLE_DAYS,
+  LEGACY_STARTS,
+  addDays,
+  computeStreak,
+  countCompleted,
+  daysBetween,
+} from '@/lib/tantra/cycle'
 
 const DEFAULT_ONELINER =
   'Builder-philosopher · Research engineer · Technical Principal — rigorous in mind, magnetic in body, present in every room'
 
-const CYCLE_DAYS = 40
-
-// Historical Day-1 dates for versions that predate the in-app version button.
-// New versions get their start date the moment the "Begin" button is pressed.
-const LEGACY_STARTS: Record<string, string> = {
-  V1: '2026-04-21',
-  V2: '2026-05-14',
-}
+// Cycle arithmetic and the historical Day-1 dates live in lib/tantra/cycle.ts,
+// shared with /exec so the two pages never disagree about which day this is.
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Version content lives in code. The timeline of WHEN each version was begun
@@ -381,42 +383,6 @@ function formatDateTime(d: Date): string {
 
 function monthDay(dateStr: string): string {
   return new Date(dateStr + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-}
-
-function addDays(dateStr: string, n: number): string {
-  const d = new Date(dateStr + 'T00:00:00')
-  d.setDate(d.getDate() + n)
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-}
-
-function daysBetween(a: string, b: string): number {
-  const ms = new Date(b + 'T00:00:00').getTime() - new Date(a + 'T00:00:00').getTime()
-  return Math.round(ms / (1000 * 60 * 60 * 24))
-}
-
-function computeStreak(checkinDates: Set<string>): number {
-  const fmt = (d: Date) =>
-    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-  const d = new Date()
-  if (!checkinDates.has(fmt(d))) d.setDate(d.getDate() - 1)
-  let streak = 0
-  for (let i = 0; i < 1000; i++) {
-    if (checkinDates.has(fmt(d))) {
-      streak += 1
-      d.setDate(d.getDate() - 1)
-    } else {
-      break
-    }
-  }
-  return streak
-}
-
-function countCompleted(startDate: string, length: number, checkinDates: Set<string>): number {
-  let done = 0
-  for (let i = 0; i < length; i++) {
-    if (checkinDates.has(addDays(startDate, i))) done += 1
-  }
-  return done
 }
 
 // ── Completion grid (used by active header + archive) ─────────────────────────

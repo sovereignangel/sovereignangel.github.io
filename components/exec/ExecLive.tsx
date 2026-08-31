@@ -12,9 +12,8 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { useAuth } from '@/components/auth/AuthProvider'
-import { getGarminWindow, getGarminRollups } from '@/lib/firestore'
+import { useGarminData } from './useGarminData'
 import { getKiteSessions, getGarminKiteSessions, getKiteProgress } from '@/lib/firestore/kite-sessions'
-import type { GarminMetrics, GarminActivity } from '@/lib/types'
 import { getPlanDay, type Sport } from '@/lib/ironman/plan'
 import { SportIcon } from '@/components/ironman/IronmanIcons'
 import { computeRaceForecast, paceForProbability, type DisciplineForecast } from '@/lib/ironman/forecast'
@@ -62,38 +61,6 @@ function SignInInline({ label, tone }: { label: string; tone: Tone }) {
 
 function Pulse({ h = 'h-16', tone }: { h?: string; tone: Tone }) {
   return <div className={`${h} ${TONE[tone].pulse} rounded-lg animate-pulse`} />
-}
-
-// ── Garmin data hook (rollups first, full scan fallback — same as /ironman) ─
-
-function useGarminData() {
-  const { user } = useAuth()
-  const [metrics, setMetrics] = useState<GarminMetrics[] | null>(null)
-  const [activities, setActivities] = useState<GarminActivity[] | null>(null)
-
-  useEffect(() => {
-    if (!user) return
-    // Windowed, and only when the rollup is missing rather than unreadable —
-    // scanning whole collections in response to a failed read is what keeps an
-    // exhausted quota exhausted.
-    const loadFull = () => {
-      getGarminWindow(user.uid)
-        .then(({ metrics: m, activities: a }) => { setMetrics(m); setActivities(a) })
-        .catch(() => { setMetrics([]); setActivities([]) })
-    }
-    getGarminRollups(user.uid)
-      .then((rollup) => {
-        if (rollup && rollup.metrics.length > 0) {
-          setMetrics(rollup.metrics)
-          setActivities(rollup.activities)
-          return
-        }
-        loadFull()
-      })
-      .catch(() => { setMetrics([]); setActivities([]) })
-  }, [user])
-
-  return { user, metrics, activities }
 }
 
 // ── Ironman: probabilities + pace needed + today's adaptation ─────────────
