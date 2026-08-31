@@ -13,6 +13,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useAuth } from '@/components/auth/AuthProvider'
 import { useGarminData } from './useGarminData'
+import { useExecDate } from './useExecDate'
 import { getKiteSessions, getGarminKiteSessions, getKiteProgress } from '@/lib/firestore/kite-sessions'
 import { getPlanDay, type Sport } from '@/lib/ironman/plan'
 import { SportIcon } from '@/components/ironman/IronmanIcons'
@@ -85,7 +86,8 @@ function probColor(p: number | null): string {
 const SPORT_LABEL: Record<string, string> = { swim: 'SWIM', bike: 'BIKE', run: 'RUN' }
 const SPORT_COLOR: Record<string, string> = { swim: '#2d5f6b', bike: '#8f2d33', run: '#2d6b4a' }
 
-export function ExecIronmanLive({ today }: { today: string }) {
+export function ExecIronmanLive({ today: serverToday }: { today: string }) {
+  const today = useExecDate(serverToday)
   const { user, metrics, activities } = useGarminData()
 
   const forecast = useMemo(

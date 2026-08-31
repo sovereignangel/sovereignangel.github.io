@@ -25,6 +25,7 @@ import {
   type Standing,
 } from '@/lib/campaign'
 import { LANE_BY_ID, LANE_INK, type LaneId } from '@/lib/exec/lanes'
+import { useExecDate } from './useExecDate'
 
 const STANDING_COLOR: Record<Standing, string> = {
   ahead: LANE_INK.good,
@@ -109,7 +110,8 @@ function UnitRow({
   )
 }
 
-export function ExecCampaign({ id, laneId, date }: { id: CampaignId; laneId: LaneId; date: string }) {
+export function ExecCampaign({ id, laneId, date: serverDate }: { id: CampaignId; laneId: LaneId; date: string }) {
+  const date = useExecDate(serverDate)
   const { user, signIn, loading: authLoading } = useAuth()
   const lane = LANE_BY_ID[laneId]
   const campaign = CAMPAIGNS[id]

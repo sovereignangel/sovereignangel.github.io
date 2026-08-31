@@ -22,6 +22,7 @@ import { activeCycle, type ActiveCycle } from '@/lib/tantra/cycle'
 import { CAMPAIGNS, campaignOrder, ritualDueOn, type CampaignId, type CampaignOrder } from '@/lib/campaign'
 import { LANES, LANE_INK, type Lane, type LaneId } from '@/lib/exec/lanes'
 import { useGarminData, kitedOn, trainedOn } from './useGarminData'
+import { useExecDate } from './useExecDate'
 
 // ── Server-supplied summaries for the two piped lanes ─────────────────────
 
@@ -160,7 +161,10 @@ function BandShell({ children, right }: { children: React.ReactNode; right?: Rea
 
 // ── Component ─────────────────────────────────────────────────────────────
 
-export function ExecToday({ date, kite, ironman }: ExecTodayProps) {
+export function ExecToday({ date: serverDate, kite, ironman }: ExecTodayProps) {
+  // Past Palanga midnight this advances on its own, and pulls the server
+  // halves along with it — an open tab must never keep yesterday's orders.
+  const date = useExecDate(serverDate)
   const { user, signIn, loading: authLoading } = useAuth()
   const { activities } = useGarminData()
 

@@ -26,7 +26,12 @@ export const metadata: Metadata = {
   description: 'The five lanes of the day — practice, kite, training, the paper, the fund',
 }
 
-export const revalidate = 300
+// The rendered output depends on what day it is, so the page cannot sit in a
+// five-minute cache across midnight. Sixty seconds costs nothing: the Open-Meteo
+// calls carry their own half-hour cache (lib/kite/forecast.ts), so re-rendering
+// more often re-formats data that is already in hand rather than re-fetching it.
+// An already-open tab is handled on the client — see useExecDate.
+export const revalidate = 60
 
 // ── Theming ───────────────────────────────────────────────────────────────
 // One structure, two accents: the kite half wears the surf palette, the
@@ -460,12 +465,13 @@ export default async function ExecPage() {
           </div>
 
           <p className="text-[10px] text-surf-muted mt-3">
-            Wind from Open-Meteo (GFS + EU blend), refreshed every 5 minutes. A spot the primary model calls offshore,
+            Wind from Open-Meteo (GFS + EU blend), cached half an hour. A spot the primary model calls offshore,
             over your gust cap, or rained out is never recommended, even when the second model finds a window there.
             Training slots default to 07:00 and step aside when the wind window claims the morning. Calendar events land
             in Palanga time. The paper and the fund run on dated blocks with an ordered ladder inside: the block
             sets the deadline, the ladder sets the order, and an unfinished unit stays at the head of the queue
-            rather than disappearing off a calendar.
+            rather than disappearing off a calendar. The day turns over at Palanga midnight, in an open tab as well
+            as on a fresh load.
           </p>
         </div>
       </main>
