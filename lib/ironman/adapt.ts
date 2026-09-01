@@ -86,8 +86,17 @@ const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v
  * yesterday's training load vs 7d avg 10.
  */
 export function computeReadiness(history: GarminMetrics[], activities: GarminActivity[], today: string): Readiness {
-  const past = history.filter((m) => m.date < today).sort((a, b) => (a.date < b.date ? 1 : -1))
-  const latest = past[0]
+  /**
+   * Garmin labels a night by the date you woke up, so the record dated *today*
+   * is last night's sleep — the exact night readiness is about. Excluding it
+   * meant every readiness score was computed from the night before last.
+   *
+   * Today's record only counts once Garmin has actually scored the night;
+   * before that it exists with a null sleepScore, so fall back to the newest
+   * night that has one.
+   */
+  const past = history.filter((m) => m.date <= today).sort((a, b) => (a.date < b.date ? 1 : -1))
+  const latest = past.find((m) => m.sleepScore != null) ?? past[0]
   if (!latest) return { score: null, band: 'unknown', factors: [] }
 
   const factors: ReadinessFactor[] = []
