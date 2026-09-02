@@ -382,44 +382,53 @@ export const LANES: ResearchLane[] = [
     name: 'The Observable Economy',
     status: 'candidate',
     thesis:
-      'The fruit fly, upgraded from a market to a country. Every Lithuanian firm files financial statements with Registru centras; weather over the whole territory is free (ERA5, LHMT, Open-Meteo) and partly self-collected (the Sventoji station data); the price layer is small but complete — Nasdaq Vilnius, whose listed names are conveniently weather-exposed (Ignitis, Linas Agro, the dairy processors, Novaturas, Apranga), plus the LT power zone and registry bankruptcy events. Weather to business fundamentals to asset prices, for an entire nation, on public data end to end.',
+      'The fruit-fly country, structured as serious research. The naive version — five years of one beach station mapped to listed prices — would be elementary, and it is not the design. The weather panel is ERA5 back to 1940 plus LHMT stations; the Sventoji series is the calibration key that bias-corrects the gridded product at the shoreline, not the sample. The outcome panel is the full registry firm population, so identification comes from cross-sectional exposure differences at national scale — thousands of firms — not from one short time series. The headline claim: weather risk lives below the listing threshold.',
     whyOpen:
-      'Country-scale firm-level complexity work exists — CSH Vienna on Hungary’s firm-to-firm VAT network, Farmer’s group on pandemic supply chains, Axtell on the US firm population — but it runs on confidential administrative data obtained through central banks, and none of it has an exogenous physical driver. A public-registry version with weather as the instrument is reproducible and causally identified, and nobody has built it. Lithuania’s data openness, small size, and one observable exchange make it the tractable site; language and local knowledge are the moat.',
+      'The design resolves a published puzzle. Addoum, Ng and Ortiz-Bobea find temperature barely moves listed US firms’ earnings; Barrot and Sauvagnat needed hurricanes to detect network propagation. The likely reason is selection — listed firms are large, diversified and adapted, so weather risk concentrates in small private firms no US dataset can see. Lithuania’s registry makes the entire firm-size distribution observable, so the hypothesis becomes testable for the first time. CSH Vienna’s Hungary work proved country-scale firm data supports complexity analysis — but on confidential VAT data, with no physical driver; this version is public and causally identified.',
     mechanism:
-      'One exogenous field (weather) forcing a fully enumerated population of firms, whose responses aggregate through supply chains and sectors into filed fundamentals, credit events, and a small set of listed prices. The economy as a single observable transmission system — the ABM calibration target Lane VI needs, one level up from the power market.',
+      'One exogenous field forcing an enumerated firm population, with three levels of response the design estimates separately: direct exposure (the weather beta), propagation (through input-output structure and ownership links — the network level), and capitalization (thin equities, credit hazards, firm exit). Adaptation makes betas time-varying; extremes make them nonlinear; a single correlation would measure none of this.',
     hypotheses: [
       {
         id: 'OE-1',
         claim:
-          'The weather balance sheet of a nation: firm-level registry panels reveal stable, sector-specific weather betas — revenue and margin sensitivity to growing-season, heating-season, and tourist-season anomalies — estimable across the whole firm population, not a listed sample.',
-        test: 'Registry financials joined to ERA5 sector-relevant weather aggregates; panel regressions with firm and year fixed effects; pre-register the sector-season pairs before estimation.',
+          'Weather risk lives below the listing threshold: betas on revenue and margins are large for small, undiversified, locally bound firms and decay with size, diversification and geographic spread — which is why the US listed-firm literature finds almost nothing.',
+        test: 'Registry panel joined to ERA5 sector-season exposure fields; betas estimated within sector-year with firm fixed effects; the size-decay profile is the pre-registered headline exhibit.',
       },
       {
         id: 'OE-2',
         claim:
-          'The Sventoji study: coastal-summer weather causally moves the filed revenues of Palanga and Sventoji hospitality and tourism firms — the cleanest small natural experiment available, run partly on self-collected station data.',
-        test: 'Beach-season weather indices (own station + LHMT) against registry revenues of coastal hospitality firms vs inland matched controls; sunny-season deviation as the treatment.',
+          'The coastal identification: summer weather quality causally moves coastal tourism and hospitality revenues — a difference-in-differences against matched inland firms, with the five-year Sventoji station bias-correcting ERA5 at the shoreline rather than serving as the sample.',
+        test: 'Beach-season indices from corrected ERA5 (1990s-present) as treatment; coastal hospitality firms vs matched inland controls; the Jonas series validates the grid and contributes sea-breeze variables it cannot see.',
       },
       {
         id: 'OE-3',
         claim:
-          'Transmission to prices: weather-driven fundamental shocks reach Nasdaq Vilnius with a lag the thin market does not arbitrage, and reach credit events (registry bankruptcies) with predictable sectoral timing.',
-        test: 'Event studies on weather-exposed listed names (Ignitis, Linas Agro, Novaturas, dairy) around fundamental-relevant weather seasons; bankruptcy hazard models with weather-beta exposures; honest about illiquidity — credit and power prices carry the fast layer.',
+          'Propagation: weather shocks to exposed firms travel to their suppliers and customers with a lag — the weather beta as a network object, and the complexity result. Barrot-Sauvagnat’s disaster finding, made continuous.',
+        test: 'Statistics Lithuania input-output tables plus registry ownership links as the network proxy; partners of shocked firms vs matched non-partners in following years; falsified if propagation is indistinguishable from sector-common shocks.',
+      },
+      {
+        id: 'OE-4',
+        claim:
+          'Capitalization: the thin price layer prices weather risk slowly or not at all — Nasdaq Vilnius names underreact to fundamental weather states, and registry bankruptcy hazards carry weather-beta exposure credit never priced.',
+        test: 'Event studies on the listed weather-exposed set (Ignitis, Linas Agro, Novaturas, dairy); hazard models with OE-1 betas as exposures; the claim is mispricing and credit, honestly not high-frequency alpha.',
       },
     ],
     data: [
-      { name: 'Registru centras', url: 'https://www.registrucentras.lt', note: 'the company register — filed financial statements for the whole firm population' },
-      { name: 'data.gov.lt / Statistics Lithuania', url: 'https://data.gov.lt', note: 'open national datasets — sector aggregates, tourism, regional statistics' },
-      { name: 'LHMT', url: 'https://www.meteo.lt', note: 'Lithuanian Hydrometeorological Service — station observations, incl. the coast' },
-      { name: 'ERA5 / Open-Meteo', url: 'https://open-meteo.com', note: 'gridded weather over the whole territory, decades deep — plus the self-collected Sventoji data' },
-      { name: 'Nasdaq Vilnius', url: 'https://nasdaqbaltic.com', note: 'the complete listed universe — small, enumerable, weather-exposed' },
+      { name: 'Registru centras', url: 'https://www.registrucentras.lt', note: 'the company register — filed financials for the whole firm population; stage-zero audit item: fields, years, cost, format' },
+      { name: 'ERA5 / Copernicus', url: 'https://cds.climate.copernicus.eu', note: 'hourly gridded weather back to 1940 — the actual weather panel; Sventoji bias-corrects it at the coast' },
+      { name: 'LHMT', url: 'https://www.meteo.lt', note: 'Lithuanian met service stations — the second validation layer' },
+      { name: 'Statistics Lithuania / data.gov.lt', url: 'https://data.gov.lt', note: 'input-output tables and sector aggregates — the network proxy for OE-3' },
+      { name: 'Nasdaq Vilnius', url: 'https://nasdaqbaltic.com', note: 'the complete listed universe for OE-4' },
+      { name: 'Addoum, Ng & Ortiz-Bobea', url: 'https://scholar.google.com/scholar?q=Temperature+Shocks+and+Establishment+Sales', note: 'the listed-firm null result OE-1 explains' },
+      { name: 'Barrot & Sauvagnat 2016', url: 'https://scholar.google.com/scholar?q=Barrot+Sauvagnat+Input+Specificity+and+the+Propagation+of+Idiosyncratic+Shocks', note: 'disaster propagation through production networks — the discrete precedent OE-3 makes continuous' },
+      { name: 'CSH Vienna Hungary network papers', url: 'https://scholar.google.com/scholar?q=Diem+Borsos+Thurner+Hungary+firm+level+production+network', note: 'country-scale firm-network complexity — confidential data, no physical driver' },
     ],
     armstrongAngle:
-      'Weather-beta positions in Baltic listed names and the bankruptcy-hazard screen as a credit lens; more deeply, this is the calibration substrate that turns Lane VI’s generator from one market into an economy.',
+      'Weather-beta positions in Baltic listed names and a weather-conditioned bankruptcy screen as a credit lens; structurally, the calibrated firm population is the substrate that scales Lane VI’s generator from a market to an economy.',
     quantSkill:
-      'Panel econometrics on administrative data, record linkage at population scale, hazard models — the applied-micro toolkit added to the program, and a data moat built with local language and local knowledge.',
+      'Panel econometrics on administrative data, bias-correction of reanalysis against station records, network identification, hazard models — the applied-micro toolkit added to the program, with a moat built from local language and local knowledge.',
     firstProbe:
-      'The Sventoji study (OE-2), scoped as a blog post first: one beach season of own-station weather against the filed revenues of a dozen coastal firms, pulled from the registry with Aidas as translator and co-conspirator. Cheap, charming, causally clean — and the proof that the registry join works before the population-scale version is attempted.',
+      'Stage zero is an audit, not a regression. (1) Registru centras: what fields, which years, what cost, what format. (2) Statistics Lithuania: IO table vintage and sector resolution. (3) The Jonas ask, specified: five years of Sventoji observations at native resolution — wind speed, direction, gusts, temperature, precipitation, pressure — plus station coordinates, sensor heights, instrument types, calibration and gap history, so the series can bias-correct ERA5 rather than stand alone. Then OE-2 at blog scale as the join proof.',
   },
 ]
 
@@ -521,6 +530,11 @@ export const PROPOSED_PATH: PathStep[] = [
 ]
 
 export const ITERATION_LOG: LogEntry[] = [
+  {
+    date: '2026-08-22',
+    version: 'v8',
+    note: 'Lane VII restructured from elementary to serious after the five-years-of-data concern: the Sventoji series is recast as the calibration key that bias-corrects ERA5 at the coast (the weather panel is ERA5 back to 1940), identification comes from cross-sectional breadth of the registry firm population rather than time depth, and the headline claim is now “weather risk lives below the listing threshold” — an explanation of the Addoum-Ng-Ortiz-Bobea listed-firm null result, testable only where private financials are public. Hypotheses rebuilt as a ladder (OE-1 size decay, OE-2 coastal DiD, OE-3 network propagation, OE-4 capitalization) with literature anchors; first probe is a stage-zero data audit including the fully specified Jonas ask.',
+  },
   {
     date: '2026-08-22',
     version: 'v7',
