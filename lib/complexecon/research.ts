@@ -374,6 +374,53 @@ export const LANES: ResearchLane[] = [
     firstProbe:
       'Not before January — this is the 12-24 month methods spine and DPhil paper three. Its embryo already exists as PJ-3, the Abu Dhabi paper’s calibrated procurement model; the winter school is where the design goes in front of both audiences at once. First real milestone after Abu Dhabi: GEN-1 validation on the LT zone.',
   },
+  {
+    id: 'lane-observable-economy',
+    numeral: 'VII',
+    vector: 'Weather · Firms',
+    market: 'Lithuania · Registry + Nasdaq Vilnius',
+    name: 'The Observable Economy',
+    status: 'candidate',
+    thesis:
+      'The fruit fly, upgraded from a market to a country. Every Lithuanian firm files financial statements with Registru centras; weather over the whole territory is free (ERA5, LHMT, Open-Meteo) and partly self-collected (the Sventoji station data); the price layer is small but complete — Nasdaq Vilnius, whose listed names are conveniently weather-exposed (Ignitis, Linas Agro, the dairy processors, Novaturas, Apranga), plus the LT power zone and registry bankruptcy events. Weather to business fundamentals to asset prices, for an entire nation, on public data end to end.',
+    whyOpen:
+      'Country-scale firm-level complexity work exists — CSH Vienna on Hungary’s firm-to-firm VAT network, Farmer’s group on pandemic supply chains, Axtell on the US firm population — but it runs on confidential administrative data obtained through central banks, and none of it has an exogenous physical driver. A public-registry version with weather as the instrument is reproducible and causally identified, and nobody has built it. Lithuania’s data openness, small size, and one observable exchange make it the tractable site; language and local knowledge are the moat.',
+    mechanism:
+      'One exogenous field (weather) forcing a fully enumerated population of firms, whose responses aggregate through supply chains and sectors into filed fundamentals, credit events, and a small set of listed prices. The economy as a single observable transmission system — the ABM calibration target Lane VI needs, one level up from the power market.',
+    hypotheses: [
+      {
+        id: 'OE-1',
+        claim:
+          'The weather balance sheet of a nation: firm-level registry panels reveal stable, sector-specific weather betas — revenue and margin sensitivity to growing-season, heating-season, and tourist-season anomalies — estimable across the whole firm population, not a listed sample.',
+        test: 'Registry financials joined to ERA5 sector-relevant weather aggregates; panel regressions with firm and year fixed effects; pre-register the sector-season pairs before estimation.',
+      },
+      {
+        id: 'OE-2',
+        claim:
+          'The Sventoji study: coastal-summer weather causally moves the filed revenues of Palanga and Sventoji hospitality and tourism firms — the cleanest small natural experiment available, run partly on self-collected station data.',
+        test: 'Beach-season weather indices (own station + LHMT) against registry revenues of coastal hospitality firms vs inland matched controls; sunny-season deviation as the treatment.',
+      },
+      {
+        id: 'OE-3',
+        claim:
+          'Transmission to prices: weather-driven fundamental shocks reach Nasdaq Vilnius with a lag the thin market does not arbitrage, and reach credit events (registry bankruptcies) with predictable sectoral timing.',
+        test: 'Event studies on weather-exposed listed names (Ignitis, Linas Agro, Novaturas, dairy) around fundamental-relevant weather seasons; bankruptcy hazard models with weather-beta exposures; honest about illiquidity — credit and power prices carry the fast layer.',
+      },
+    ],
+    data: [
+      { name: 'Registru centras', url: 'https://www.registrucentras.lt', note: 'the company register — filed financial statements for the whole firm population' },
+      { name: 'data.gov.lt / Statistics Lithuania', url: 'https://data.gov.lt', note: 'open national datasets — sector aggregates, tourism, regional statistics' },
+      { name: 'LHMT', url: 'https://www.meteo.lt', note: 'Lithuanian Hydrometeorological Service — station observations, incl. the coast' },
+      { name: 'ERA5 / Open-Meteo', url: 'https://open-meteo.com', note: 'gridded weather over the whole territory, decades deep — plus the self-collected Sventoji data' },
+      { name: 'Nasdaq Vilnius', url: 'https://nasdaqbaltic.com', note: 'the complete listed universe — small, enumerable, weather-exposed' },
+    ],
+    armstrongAngle:
+      'Weather-beta positions in Baltic listed names and the bankruptcy-hazard screen as a credit lens; more deeply, this is the calibration substrate that turns Lane VI’s generator from one market into an economy.',
+    quantSkill:
+      'Panel econometrics on administrative data, record linkage at population scale, hazard models — the applied-micro toolkit added to the program, and a data moat built with local language and local knowledge.',
+    firstProbe:
+      'The Sventoji study (OE-2), scoped as a blog post first: one beach season of own-station weather against the filed revenues of a dozen coastal firms, pulled from the registry with Aidas as translator and co-conspirator. Cheap, charming, causally clean — and the proof that the registry join works before the population-scale version is attempted.',
+  },
 ]
 
 export const INEQUALITY_BRIDGE = {
@@ -474,6 +521,11 @@ export const PROPOSED_PATH: PathStep[] = [
 ]
 
 export const ITERATION_LOG: LogEntry[] = [
+  {
+    date: '2026-08-22',
+    version: 'v7',
+    note: 'Lane VII added — The Observable Economy, from Aidas’s observation that every business files financials: Lithuania as a fruit-fly country, not just a fruit-fly market. Registry financials (Registru centras) + free and self-collected weather (ERA5, LHMT, Sventoji station) + a complete small price layer (Nasdaq Vilnius, LT power zone, bankruptcy events). OE-1 national weather betas, OE-2 the Sventoji coastal-tourism natural experiment, OE-3 transmission to thin prices and credit. Precedent: CSH Vienna Hungary VAT network, Farmer pandemic supply chains, Axtell US firms — all on confidential data with no physical driver; this version is public and causally identified.',
+  },
   {
     date: '2026-08-22',
     version: 'v6',
