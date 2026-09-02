@@ -328,6 +328,52 @@ export const LANES: ResearchLane[] = [
     firstProbe:
       'Two-week data sprint before the Ironman: pull auction results, load-forecast revisions, and CEX budget shares; one chart of forecast revisions against capacity prices; the §1 incidence skeleton. Michael drafts the conventions-as-institutions theory section in parallel.',
   },
+  {
+    id: 'lane-generator',
+    numeral: 'VI',
+    vector: 'Weather · ABM',
+    market: 'Nord Pool LT · Nordic futures',
+    name: 'The Generator: Weather to ABM to Asset Pricing',
+    status: 'candidate',
+    thesis:
+      'The Farmer-Lopez de Prado intersection, built as one object: an agent-based model of a small transparent power market, driven by real weather data, that prices assets. Farmer needs an ABM that predicts rather than illustrates and a market transparent enough to observe its ecology; Lopez de Prado needs synthetic data with true causal structure to defeat backtest overfitting. A merit-order ABM of the LT zone under measured weather is both at once — the causal market generator.',
+    whyOpen:
+      'Market generators exist as GANs, which learn correlations with no causal content — failing Lopez de Prado’s own standard. Farmer’s market ecology has no public empirical implementation because liquid markets never reveal who holds what. Electricity markets dissolve both obstacles: supply is near-mechanical merit order, demand is inelastic, participation is observable, and the exogenous driver is measured by satellites. Nobody has assembled the pieces.',
+    mechanism:
+      'Weather paths (reanalysis and forecast archives) drive generation and load; heterogeneous agents — wind, gas, hydro generators, retailers, hedgers, speculators — bid into a uniform-price auction; prices, spikes, and forward premia emerge. The asset-pricing claim is market ecology made testable: the electricity forward risk premium (Bessembinder-Lemmon 2002, Longstaff-Wang 2004) as an emergent property of participant composition under weather-driven fundamentals.',
+    hypotheses: [
+      {
+        id: 'GEN-1',
+        claim:
+          'Validation, at Farmer’s bar: a merit-order ABM of the LT zone calibrated only on public data reproduces the spike distribution, negative-price frequency, and forecast-error response out of sample — an ABM that predicts, not illustrates.',
+        test: 'Calibrate on 2023-2024 ENTSO-E and weather data; validate stylized facts and conditional distributions on 2025-2026 held out; pre-register the validation metrics.',
+      },
+      {
+        id: 'GEN-2',
+        claim:
+          'Asset pricing: weather-state-conditional forward risk premia in Nordic power beat the Bessembinder-Lemmon equilibrium benchmark, and vary with hedger/speculator composition as market ecology predicts.',
+        test: 'ABM-predicted premia by weather state against realized Nordic/German power futures premia; the ecology term must add explanatory power over the hedging-pressure benchmark.',
+      },
+      {
+        id: 'GEN-3',
+        claim:
+          'The Lopez de Prado result: strategies trained on the ABM’s causal synthetic paths generalize to real out-of-sample data better than strategies trained on historical bootstraps — simulation with causal structure as the cure for backtest overfitting.',
+        test: 'Identical strategy-search protocols on (a) historical bootstrap and (b) ABM-generated paths; compare out-of-sample decay. The deflated-Sharpe framework scores both; presentable at an ADIA Lab symposium.',
+      },
+    ],
+    data: [
+      { name: 'ENTSO-E Transparency', url: 'https://transparency.entsoe.eu', note: 'generation by unit and source, load, prices — the calibration set' },
+      { name: 'ERA5 / Copernicus', url: 'https://cds.climate.copernicus.eu', note: 'weather reanalysis — the exogenous driver, decades deep' },
+      { name: 'Open-Meteo forecast archive', url: 'https://open-meteo.com', note: 'what agents believed, not just what happened — needed for forecast-response calibration' },
+      { name: 'Nasdaq Commodities / EEX', url: 'https://www.nasdaq.com/solutions/european-commodities', note: 'Nordic and German power futures — the asset-pricing test set' },
+    ],
+    armstrongAngle:
+      'The generator is Armstrong’s research engine: every signal the book trades in power markets gets stress-tested on causal synthetic paths before capital touches it — the discipline itself becomes the edge.',
+    quantSkill:
+      'ABM engineering and calibration, equilibrium asset-pricing benchmarks, synthetic-data experimental design — the complete Farmer toolkit and the complete Lopez de Prado toolkit, forced to work together.',
+    firstProbe:
+      'Not before January — this is the 12-24 month methods spine and DPhil paper three. Its embryo already exists as PJ-3, the Abu Dhabi paper’s calibrated procurement model; the winter school is where the design goes in front of both audiences at once. First real milestone after Abu Dhabi: GEN-1 validation on the LT zone.',
+  },
 ]
 
 export const INEQUALITY_BRIDGE = {
@@ -428,6 +474,11 @@ export const PROPOSED_PATH: PathStep[] = [
 ]
 
 export const ITERATION_LOG: LogEntry[] = [
+  {
+    date: '2026-08-22',
+    version: 'v6',
+    note: 'Lane VI added — The Generator, the Farmer x Lopez de Prado intersection: weather data driving a calibrated ABM of the LT power zone, priced against Nordic futures. GEN-1 out-of-sample validation, GEN-2 forward risk premia as emergent ecology (vs Bessembinder-Lemmon), GEN-3 causal synthetic data beating historical bootstraps on backtest-overfitting decay. Status candidate: the 12-24 month methods spine and DPhil paper three, seeded by PJ-3; design presented at the winter school, built after.',
+  },
   {
     date: '2026-08-22',
     version: 'v5',
