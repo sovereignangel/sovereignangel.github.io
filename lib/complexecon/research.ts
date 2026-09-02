@@ -433,6 +433,60 @@ export const LANES: ResearchLane[] = [
     firstProbe:
       'Stage zero partially complete (2026-08-22): JAR attributes are free via API with address and NACE (the exposure join); bulk registry financials are paid — deferred; Sodra publishes free MONTHLY per-employer wages and headcounts, which upgrades the whole design. The probe is now free end to end: geolocate coastal hospitality firms from JAR, take monthly Sodra employment and wages as the outcome, corrected-ERA5 beach-season quality as treatment, inland matched controls. Remaining asks: the Jonas spec (native-resolution wind, temperature, precipitation, pressure, plus station metadata and calibration history) and an RC price quote for bulk financials, with Aidas on the Lithuanian paperwork.',
   },
+  {
+    id: 'lane-aquarium',
+    numeral: 'VIII',
+    vector: 'Weather · Ships',
+    market: 'Global shipping · Baltic FFAs',
+    name: 'The Aquarium: Market Ecology Under Maritime Law',
+    status: 'candidate',
+    thesis:
+      'AIS is the only dataset on earth where every agent in a global market is legally required to broadcast its state — position, heading, speed, draught (loaded or empty). Market ecology’s observability problem, the thing that has kept Farmer’s theory unimplemented for fifteen years, is solved by international maritime law. If the power market is the fruit fly, the tanker market is the aquarium: a global market with glass walls. The ABM: vessels and operators as agents with routing and fixture rules, weather as the exogenous forcing, port congestion and effective tonnage supply as emergent states — priced directly into freight rates, the Baltic indices and Forward Freight Agreements.',
+    whyOpen:
+      'The nowcasting literature (IMF, Global Fishing Watch era) uses AIS for trade statistics — counting, not behavior. Freight economists model rates with supply-demand reduced forms. Nobody has built the behavioral ABM calibrated agent-by-agent from broadcast positions and priced it against the FFA curve. The observability that makes it possible is public and mandatory; the gap exists because the people who model behavior and the people who watch ships are different people. Origin: Bilawal Sidhu’s gods-eye-view repo — the ingestion scaffold for the feeds.',
+    mechanism:
+      'Heterogeneous operators choose routes, speeds, ballast legs and fixtures; storms, wind and fog perturb voyage times and close ports; congestion queues form; effective tonnage supply in each basin emerges from thousands of individual decisions and prices into spot and forward freight. Strategy crowding is directly visible — who ballasts speculatively toward a region, who waits — so ecology dynamics (entry, exit, crowding, regime shift) can be measured per agent rather than inferred. Weather is the causal instrument; the draught field even reveals cargo state by law.',
+    hypotheses: [
+      {
+        id: 'AQ-1',
+        claim:
+          'Ecology, observed: tanker operators cluster into a small number of persistent behavioral strategies (spot-chasers, contract sailors, speculative ballasters) identifiable from AIS trajectories alone — and the population mix shifts with the freight cycle as market ecology predicts.',
+        test: 'Cluster voyage-level behavior from archived AIS (routes, speeds, ballast patterns, port-wait tolerance); strategies must be stable within operator and predictive of the operator’s next fixture behavior out of sample.',
+      },
+      {
+        id: 'AQ-2',
+        claim:
+          'Weather to freight: basin-level weather states (storm tracks, seasonal wind fields) causally move effective tonnage supply through rerouting and congestion, and freight rates respond with a measurable lag — the exogenous-instrument result, at sea.',
+        test: 'ERA5 marine weather joined to archived AIS congestion and voyage-time states; freight-rate response estimated against Baltic indices; pre-registered basins and seasons.',
+      },
+      {
+        id: 'AQ-3',
+        claim:
+          'The generator, afloat: an ABM whose agents carry AQ-1’s empirical strategies, forced by real weather, reproduces freight-rate dynamics out of sample and prices FFAs better than reduced-form supply-demand benchmarks.',
+        test: 'Calibrate on archived AIS plus ERA5; validate on held-out periods; benchmark against standard freight-rate models; the Lane VI protocol with hulls instead of megawatts.',
+      },
+      {
+        id: 'AQ-4',
+        claim:
+          'The Klaipeda pulse (the immediate probe): daily AIS port calls at Klaipeda form a free, daily index of Lithuanian trade that leads the monthly Sodra employment panel and complements Lane VII — and coastal weather measurably moves port throughput.',
+        test: 'One archiver running from macro-signals from today; port-call index vs Sodra monthly aggregates and Statistics Lithuania trade data; weather sensitivity of daily throughput.',
+      },
+    ],
+    data: [
+      { name: 'gods-eye-view', url: 'https://github.com/bilawalsidhu/gods-eye-view', note: 'Bilawal’s OSINT globe — the ingestion scaffold; live feeds, not an archive, so collection starts now' },
+      { name: 'AIS streams', url: 'https://aisstream.io', note: 'free live AIS websocket; archive from today — flows data compounds only if collected before needed' },
+      { name: 'Global Fishing Watch', url: 'https://globalfishingwatch.org/datasets-and-code/', note: 'historical processed AIS — the deep backfill for AQ-1/AQ-2' },
+      { name: 'ERA5 marine fields', url: 'https://cds.climate.copernicus.eu', note: 'wind, waves, storm tracks over the basins — the forcing' },
+      { name: 'Baltic Exchange indices', url: 'https://www.balticexchange.com', note: 'BDI and route assessments — the price layer; FFA curves via brokers' },
+      { name: 'OpenSky Network', url: 'https://opensky-network.org', note: 'aircraft feed if the air layer ever earns its place — value concentrates in AIS' },
+    ],
+    armstrongAngle:
+      'Freight is tradable — FFAs directly, or listed shipping equities (tanker and dry-bulk owners) as the accessible expression; AQ-2’s weather-to-rates lag is a signal candidate, and the ecology mix from AQ-1 is a crowding indicator no desk publishes.',
+    quantSkill:
+      'Trajectory data engineering at scale, behavioral clustering, marine meteorology, freight-market mechanics — plus the discipline of running a live archiver, the first dataset the program collects rather than downloads.',
+    firstProbe:
+      'AQ-4, this month: an afternoon to stand up the Klaipeda AIS archiver in macro-signals and let it run. The full aquarium is a sibling design to Lane VI, sequenced after Abu Dhabi — the archive quietly accumulating in the meantime is the point.',
+  },
 ]
 
 export const INEQUALITY_BRIDGE = {
@@ -533,6 +587,11 @@ export const PROPOSED_PATH: PathStep[] = [
 ]
 
 export const ITERATION_LOG: LogEntry[] = [
+  {
+    date: '2026-08-22',
+    version: 'v10',
+    note: 'Lane VIII added — The Aquarium, from Bilawal Sidhu’s gods-eye-view: AIS as the only market where every agent broadcasts state by law, solving market ecology’s observability problem. AQ-1 behavioral strategies from trajectories, AQ-2 weather-to-freight instrument, AQ-3 the generator afloat (Lane VI protocol on FFAs), AQ-4 the Klaipeda daily port-call pulse feeding Lane VII. Candidate, sequenced after Abu Dhabi; the immediate action is the archiver — flows data compounds only if collected before needed.',
+  },
   {
     date: '2026-08-22',
     version: 'v9',
