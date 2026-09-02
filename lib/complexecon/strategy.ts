@@ -197,7 +197,7 @@ export const GAPS: StrategyGap[] = [
     name: 'Physical states → market prices',
     gap: 'No school traces climate and physical-system state variables (wind fields, reservoir levels, heat domes) through electricity markets into asset prices as public research. The methods exist; they have never been pointed here.',
     nearest: 'Farmer’s group does energy-transition cost forecasting (policy-facing, not price-facing); Tesfatsion built ABMs of electricity market design (academic, US-centric); Battiston does climate-finance stress tests (regulatory). Power desks do it privately and publish nothing.',
-    claim: 'Research Lanes I–III. The entire climate-grids-balance-sheets program sits in this gap.',
+    claim: 'Research Lanes I–III, and Lane VII — the Observable Economy — which extends the transmission claim from markets to the full firm population.',
   },
   {
     id: 'gap-small-markets',
@@ -437,7 +437,7 @@ export const DISCIPLINES: Discipline[] = [
     people: 'Tesfatsion, Farmer’s energy group, Battiston',
     valueNote: 'Physical state variables are genuinely exogenous causal instruments — the identification quality causal financial ML demands and almost never gets.',
     minedNote: 'Publicly near-empty: academics stop at policy, desks publish nothing.',
-    claim: 'Research Lanes I–III — the core of the climate-grids-balance-sheets program.',
+    claim: 'Research Lanes I–III and VII — the core of the climate-grids-balance-sheets program, extended to the full firm population by the Observable Economy lane.',
     labelAnchor: 'start', labelDy: -12,
   },
   {

@@ -414,10 +414,13 @@ export const LANES: ResearchLane[] = [
       },
     ],
     data: [
-      { name: 'Registru centras', url: 'https://www.registrucentras.lt', note: 'the company register — filed financials for the whole firm population; stage-zero audit item: fields, years, cost, format' },
+      { name: 'JAR open data (Spinta API)', url: 'https://data.gov.lt', note: 'AUDITED free: ~538k entities (226k active) — name, code, legal form, NACE sector, registered address, status, dates; daily updates, ~5k req/hr. Address + NACE = the exposure join. No financials here.' },
+      { name: 'Sodra open data', url: 'https://atvira.sodra.lt/imones/rinkiniai/index.html', note: 'AUDITED free, the find: bulk CSV/JSON per employer, MONTHLY average wage and insured employee count. Frequency matches weather seasons — the high-frequency outcome panel the annual filings cannot be.' },
+      { name: 'Registru centras financial statements', url: 'https://www.registrucentras.lt/p/fa-rinkiniai', note: 'AUDITED caveat: filed sets are viewable per company, but bulk machine-readable financials are a paid product or via resellers (Okredo, Rekvizitai, Scorify) — price quote is an open task, deferred until the free-data probe works.' },
+      { name: 'State-owned enterprise financials', url: 'https://data.gov.lt/datasets/2839/', note: 'free and detailed (full P&L and balance sheet, 2019+) — includes the Ignitis family; supplementary panel.' },
       { name: 'ERA5 / Copernicus', url: 'https://cds.climate.copernicus.eu', note: 'hourly gridded weather back to 1940 — the actual weather panel; Sventoji bias-corrects it at the coast' },
       { name: 'LHMT', url: 'https://www.meteo.lt', note: 'Lithuanian met service stations — the second validation layer' },
-      { name: 'Statistics Lithuania / data.gov.lt', url: 'https://data.gov.lt', note: 'input-output tables and sector aggregates — the network proxy for OE-3' },
+      { name: 'Statistics Lithuania / data.gov.lt', url: 'https://data.gov.lt', note: 'input-output tables and sector aggregates — the network proxy for OE-3 (portal search UI flaky; use direct dataset URLs)' },
       { name: 'Nasdaq Vilnius', url: 'https://nasdaqbaltic.com', note: 'the complete listed universe for OE-4' },
       { name: 'Addoum, Ng & Ortiz-Bobea', url: 'https://scholar.google.com/scholar?q=Temperature+Shocks+and+Establishment+Sales', note: 'the listed-firm null result OE-1 explains' },
       { name: 'Barrot & Sauvagnat 2016', url: 'https://scholar.google.com/scholar?q=Barrot+Sauvagnat+Input+Specificity+and+the+Propagation+of+Idiosyncratic+Shocks', note: 'disaster propagation through production networks — the discrete precedent OE-3 makes continuous' },
@@ -428,7 +431,7 @@ export const LANES: ResearchLane[] = [
     quantSkill:
       'Panel econometrics on administrative data, bias-correction of reanalysis against station records, network identification, hazard models — the applied-micro toolkit added to the program, with a moat built from local language and local knowledge.',
     firstProbe:
-      'Stage zero is an audit, not a regression. (1) Registru centras: what fields, which years, what cost, what format. (2) Statistics Lithuania: IO table vintage and sector resolution. (3) The Jonas ask, specified: five years of Sventoji observations at native resolution — wind speed, direction, gusts, temperature, precipitation, pressure — plus station coordinates, sensor heights, instrument types, calibration and gap history, so the series can bias-correct ERA5 rather than stand alone. Then OE-2 at blog scale as the join proof.',
+      'Stage zero partially complete (2026-08-22): JAR attributes are free via API with address and NACE (the exposure join); bulk registry financials are paid — deferred; Sodra publishes free MONTHLY per-employer wages and headcounts, which upgrades the whole design. The probe is now free end to end: geolocate coastal hospitality firms from JAR, take monthly Sodra employment and wages as the outcome, corrected-ERA5 beach-season quality as treatment, inland matched controls. Remaining asks: the Jonas spec (native-resolution wind, temperature, precipitation, pressure, plus station metadata and calibration history) and an RC price quote for bulk financials, with Aidas on the Lithuanian paperwork.',
   },
 ]
 
@@ -530,6 +533,11 @@ export const PROPOSED_PATH: PathStep[] = [
 ]
 
 export const ITERATION_LOG: LogEntry[] = [
+  {
+    date: '2026-08-22',
+    version: 'v9',
+    note: 'Stage-zero registry audit run. Findings: JAR open data is free via the Spinta API (~538k entities, ~226k active) but carries attributes only — name, code, legal form, NACE, address, status — no financials; bulk machine-readable financial statements are a paid RC product or via resellers, price quote deferred. The find: Sodra open data publishes free bulk MONTHLY per-employer average wages and insured headcounts — a high-frequency firm-population outcome panel that matches weather frequency and rescues OE-2 from the annual-filing lag. State-owned enterprise financials (incl. Ignitis) free and detailed from 2019. The Sventoji probe is now free end to end; registry purchase decision gated on the free-data probe working.',
+  },
   {
     date: '2026-08-22',
     version: 'v8',
