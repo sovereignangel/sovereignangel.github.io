@@ -145,6 +145,26 @@ const NYC_SPOT_LIST: KiteSpot[] = [
     favorWhen: { minKn: 14, bonus: 2 },
   },
   {
+    slug: 'sore-thumb',
+    name: 'Sore Thumb',
+    area: 'Long Island · Great South Bay',
+    // Bay side of the barrier island, at the west end of Ocean Parkway.
+    lat: 40.6256,
+    lon: -73.3222,
+    water: 'bay',
+    // The bay lies north of the launch, so a S wind blows off the barrier
+    // island — but the island is a few hundred metres wide and the mainland
+    // closes the bay 4 km north, so those days are short-fetch rather than
+    // dangerous. Kept narrow for that reason.
+    offshoreSector: [150, 210],
+    onshoreSector: [300, 60],
+    idealWind: 'wind travels south (N/NW/NE) · SW rides side-shore',
+    tagline: 'flat water, no crowd',
+    note: 'Bayside launch off Ocean Parkway between Gilgo and Oak Beach, about an hour from the city. Flat, shallow water with room to run downwind, and the classic SW day rides side-shore along the island. Park in the Sore Thumb lot; a beach permit is enforced in summer. Closer than Amityville and quieter, but less bay to play with.',
+    priority: 1,
+    favorWhen: { minKn: 14, bonus: 2 },
+  },
+  {
     slug: 'sandy-hook',
     name: 'Sandy Hook',
     area: 'New Jersey · Sandy Hook Bay',
