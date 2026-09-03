@@ -318,7 +318,10 @@ export default function RoadmapSheet() {
                 </div>
                 <p className="mt-0.5 text-[15px] leading-relaxed text-ink-muted">
                   <Meta tone="amber">Strength · </Meta>
-                  {d.strength} <Meta tone="burgundy"> Weakness · </Meta>
+                  {d.strength}
+                </p>
+                <p className="mt-0.5 text-[15px] leading-relaxed text-ink-muted">
+                  <Meta tone="burgundy">Weakness · </Meta>
                   {d.weakness}
                 </p>
               </FlatRow>
