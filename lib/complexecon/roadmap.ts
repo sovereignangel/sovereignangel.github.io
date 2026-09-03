@@ -36,7 +36,7 @@ export const GOALS: Goal[] = [
     target: 'Read the top 30 papers · reproduce the top 10',
     detail:
       'Reading makes you conversant; reproduction makes you dangerous. The ten reproductions are chosen because their core result can be rebuilt from public data or a few hundred lines of code — each one becomes a notebook in macro-signals and a talking point in the room.',
-    cadence: 'Two papers per week from September 1; one reproduction per week October through mid-December.',
+    cadence: 'Two papers per week starting this week; one reproduction per week October through mid-December.',
   },
   {
     id: 'goal-anthro',
@@ -45,7 +45,7 @@ export const GOALS: Goal[] = [
     target: 'Read the top 15 papers · reproduce 5 arguments',
     detail:
       'Anthropology is not reproduced by re-running regressions — a reproduction here means replicating the argument on a new empirical site. Two of the five (MacKenzie-Millo on performativity, Zelizer on earmarked money) replicate directly inside the Lane V paper, so goal 3 feeds goal 1.',
-    cadence: 'One paper per week from September; the five replications land inside October-November research blocks.',
+    cadence: 'One paper per week starting this week; the five replications land inside October-November research blocks.',
   },
   {
     id: 'goal-books',
@@ -69,15 +69,15 @@ export interface Phase {
 export const PHASES: Phase[] = [
   {
     id: 'p0',
-    window: 'Aug 22 – Sep 7',
+    window: 'Sep 3 – Sep 10',
     name: 'Harvest',
     detail:
-      'Distill Lanes I-VIII into five one-page briefs worth a researcher’s time. Start the PJM data sprint (auction results, load-forecast revisions, CEX shares) and the Klaipeda AIS archiver. Send the Jonas weather-data spec and the RC bulk-financials price inquiry with Aidas.',
+      'One compressed week. Distill Lanes I-VIII into five one-page briefs worth a researcher’s time. Start the PJM data sprint (auction results, load-forecast revisions, CEX shares) and the Klaipeda AIS archiver. Send the Jonas weather-data spec and the RC bulk-financials price inquiry with Aidas.',
     gate: 'Five briefs written; the two data asks sent; the archiver running.',
   },
   {
     id: 'p1',
-    window: 'Sep 8 – Sep 21',
+    window: 'Sep 11 – Sep 21',
     name: 'Review',
     detail:
       'Top-3 review with Michael Ralph plus two or three researchers — the Lafond introduction email carries the strategy map and briefs; Bilawal and the CEcon orbit round out the panel. Belgrade rehearsal race Sep 13 sits inside this window; the review is conversations, not building.',

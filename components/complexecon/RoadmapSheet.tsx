@@ -216,7 +216,7 @@ export default function RoadmapSheet() {
           {/* ─── The phases ─── */}
           <Block
             label="The Phases"
-            meta="Aug 22 → Jan 17"
+            meta="Sep 3 → Jan 17"
             open={!closedBlocks.has('blk-phases')}
             onToggle={() => toggleBlock('blk-phases')}
           >
