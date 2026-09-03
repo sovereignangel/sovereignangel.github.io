@@ -42,7 +42,9 @@ import {
   type QuestLineId,
   type Tree,
 } from '@/lib/game/trees'
-import { SOMEDAY, allUnlockStatuses, isTreeLocked, type Levels, type UnlockState } from '@/lib/game/unlocks'
+import { allUnlockStatuses, isTreeLocked, type Levels } from '@/lib/game/unlocks'
+import { STAGE_NAMES, daysToKill, ideasByStage } from '@/lib/game/ideas'
+import { CANON } from '@/lib/game/reading'
 import { isoWeekKey, monthPlanFor } from '@/lib/game/cadence'
 import { ARETE, ARETE_LINES, SPIRAL_PATH } from '@/lib/arete/brand'
 
@@ -120,6 +122,23 @@ const CSS = `
 .tg-ul .t{font-family:${ARETE.serif};font-size:14px;font-weight:600;line-height:1.25}
 .tg-ul .r{font-family:${ARETE.mono};font-size:9px;color:${ARETE.inkSoft};line-height:1.35;margin-top:1px}
 
+/* ── ideas ── */
+.tg-idea{padding:5px 0;border-bottom:1px solid ${ARETE.ruleSoft}}
+.tg-idea:last-child{border-bottom:none}
+.tg-ih{display:flex;align-items:baseline;gap:6px;margin-bottom:1px}
+.tg-ih .st{font-family:${ARETE.mono};font-size:8px;letter-spacing:.14em;text-transform:uppercase;color:${ARETE.burgundy};flex:none}
+.tg-ih .kb{margin-left:auto;font-family:${ARETE.mono};font-size:8.5px;flex:none;font-variant-numeric:tabular-nums}
+.tg-idea .c{font-size:11.5px;line-height:1.35;color:${ARETE.ink};display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+
+/* ── canon ── */
+.tg-canon{margin-bottom:7px}
+.tg-canon:last-child{margin-bottom:0}
+.tg-book{display:flex;gap:6px;align-items:baseline;padding:2.5px 0;font-size:11.5px;line-height:1.3}
+.tg-book .a{font-family:${ARETE.mono};font-size:9px;color:${ARETE.inkSoft};flex:none}
+.tg-book .b{color:${ARETE.ink};flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tg-more{font-family:${ARETE.mono};font-size:8.5px;letter-spacing:.12em;text-transform:uppercase;color:${ARETE.burgundy};text-decoration:none;border-bottom:1px solid ${ARETE.rule}}
+.tg-more:hover{border-bottom-color:${ARETE.burgundy}}
+
 /* ── cadence ── */
 .tg-wk{display:flex;gap:7px;align-items:baseline;font-size:11.5px;line-height:1.35;padding:4px 0;border-bottom:1px solid ${ARETE.ruleSoft};color:${ARETE.inkSoft}}
 .tg-wk:last-child{border-bottom:none}
@@ -157,12 +176,6 @@ const CSS = `
 }
 @media (prefers-reduced-motion:reduce){.tg *{transition:none!important}}
 `
-
-const STATE: Record<UnlockState, { c: string; label: string }> = {
-  earned: { c: ARETE.greenInk, label: 'earned' },
-  'in-reach': { c: ARETE.amberInk, label: 'in reach' },
-  locked: { c: ARETE.inkSoft, label: 'locked' },
-}
 
 function Tick() {
   return (
@@ -231,6 +244,7 @@ export function GameBoard({ today }: { today: string }) {
   const week = useMemo(() => isoWeekKey(today), [today])
   const month = useMemo(() => monthPlanFor(today), [today])
   const unlocks = useMemo(() => allUnlockStatuses(levels), [levels])
+  const ideas = useMemo(() => ideasByStage(), [])
 
   const banked = recordBanked(today)
   const cleared = LAUNCH_GATES.filter((g) => gates[g.id]).length
@@ -291,12 +305,15 @@ export function GameBoard({ today }: { today: string }) {
 
   function Group({ id }: { id: QuestLineId }) {
     const line = QUEST_LINES.find((l) => l.id === id)!
-    const trees = treesOf(id)
-    const got = trees.reduce((s, t) => s + (levels[t.id] ?? 0), 0)
+    const all = treesOf(id)
+    // A tree still sealed by another belongs on the reverse, not here: it costs
+    // height every morning and says the same thing every time.
+    const trees = all.filter((t) => !isTreeLocked(t.id, levels))
+    const got = all.reduce((s, t) => s + (levels[t.id] ?? 0), 0)
     return (
       <>
         <div className="tg-grp">
-          <b>{line.numeral}</b> {line.name} <i>{got}/{trees.length * 5}</i>
+          <b>{line.numeral}</b> {line.name} <i>{got}/{all.length * 5}</i>
         </div>
         {trees.map((t) => <TreeRow key={t.id} tree={t} />)}
       </>
@@ -323,6 +340,7 @@ export function GameBoard({ today }: { today: string }) {
           <div className="tg-stat"><dt>Rungs</dt><dd>{rungs}<i>/{TREES.length * 5}</i></dd></div>
           <div className="tg-stat"><dt>Unlocks</dt><dd>{earned}<i>/{unlocks.length}</i></dd></div>
         </dl>
+        <a className="tg-auth" href="/game/reverse" style={{ textDecoration: 'none' }}>Reverse &rarr;</a>
         {!user && (
           <button className="tg-auth" onClick={signIn} disabled={authLoading} type="button">Sign in</button>
         )}
@@ -346,10 +364,10 @@ export function GameBoard({ today }: { today: string }) {
               })}
             </div>
           </Panel>
-          <Panel title="The Edge" meta="manufacture &amp; capture" grow>
+          <Panel title="The Edge" meta="manufacture &amp; capture">
             <Group id="edge" />
           </Panel>
-          <Panel title="The Room" meta="conversion">
+          <Panel title="The Room" meta="conversion" grow>
             <Group id="room" />
           </Panel>
         </div>
@@ -359,17 +377,42 @@ export function GameBoard({ today }: { today: string }) {
           <Panel title="The Instrument" meta="body &amp; mind">
             <Group id="instrument" />
           </Panel>
-          <Panel title="Overlap" meta={`${earned} earned · ${inReach} in reach`} grow>
-            {unlocks.map(({ unlock, state, label }) => (
-              <div className="tg-ul" key={unlock.id} title={unlock.detail}>
-                <span className="tg-dot" style={{ borderColor: STATE[state].c, background: state === 'earned' ? STATE[state].c : 'transparent' }} />
-                <span className="t" style={{ color: state === 'locked' ? ARETE.inkMuted : ARETE.ink }}>{unlock.title}</span>
-                <span />
-                <span className="r" style={{ color: state === 'locked' ? ARETE.inkSoft : ARETE.burgundy }}>{label}</span>
+          <Panel title="Research ideas" meta={`${ideas.length} live · killed scores`}>
+            {ideas.map((idea) => {
+              const days = daysToKill(idea, today)
+              const urgent = days <= 45
+              return (
+                <div className="tg-idea" key={idea.id} title={idea.kill}>
+                  <div className="tg-ih">
+                    <span className="st">{STAGE_NAMES[idea.stage]}</span>
+                    <span style={{ fontFamily: ARETE.mono, fontSize: 8.5, color: ARETE.inkSoft }}>
+                      &rarr; {TREE_BY_ID[idea.tree].name}
+                    </span>
+                    <span className="kb" style={{ color: urgent ? ARETE.burgundy : ARETE.inkSoft }}>
+                      {days >= 0 ? `kills in ${days}d` : `overdue ${-days}d`}
+                    </span>
+                  </div>
+                  <div className="c">{idea.claim}</div>
+                </div>
+              )
+            })}
+          </Panel>
+
+          <Panel title="Canon" meta="next to open" grow>
+            {CANON.map((c) => (
+              <div className="tg-canon" key={c.tree}>
+                <div className="tg-grp">
+                  <b>&mdash;</b> {c.label}
+                  <i><a className="tg-more" href={c.moreHref}>{c.moreLabel}</a></i>
+                </div>
+                {c.items.slice(0, 3).map((b) => (
+                  <div className="tg-book" key={b.title} title={`${b.author}, ${b.year} — ${b.why}`}>
+                    <span className="a">{b.year}</span>
+                    <span className="b">{b.title} &middot; {b.author}</span>
+                  </div>
+                ))}
               </div>
             ))}
-            <div className="tg-grp" style={{ marginTop: 9 }}>Noted, not emphasised</div>
-            <div className="tg-next" style={{ whiteSpace: 'normal' }}>{SOMEDAY.join(' · ')}</div>
           </Panel>
         </div>
 
