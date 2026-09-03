@@ -20,10 +20,11 @@ import {
   GOALS,
   PHASES,
   WINTER,
+  type Goal,
   type ReadingItem,
 } from '@/lib/complexecon/roadmap'
 
-const BLOCK_IDS = ['blk-goals', 'blk-phases', 'blk-data', 'blk-ce', 'blk-anthro', 'blk-books']
+const BLOCK_IDS = ['blk-goals', 'blk-phases', 'blk-data']
 const DONE_KEY = 'complexecon-roadmap-done'
 
 /** Read/reproduction progress, kept in localStorage like the pathway sheet. */
@@ -60,7 +61,7 @@ function ReadingRow({
   onToggle: () => void
 }) {
   return (
-    <FlatRow>
+    <div className="border-b border-rule-light py-1.5 last:border-b-0">
       <div className="flex items-start gap-2">
         <Checkbox checked={checked} onToggle={onToggle} label={`Mark ${item.title} done`} />
         <div className="min-w-0 flex-1">
@@ -93,7 +94,34 @@ function ReadingRow({
           </p>
         </div>
       </div>
-    </FlatRow>
+    </div>
+  )
+}
+
+function ReadingList({
+  groups,
+  done,
+  toggle,
+}: {
+  groups: { heading: string; items: ReadingItem[] }[]
+  done: Set<string>
+  toggle: (id: string) => void
+}) {
+  return (
+    <div className="mt-2 border-t border-rule pt-1">
+      {groups.map(g => (
+        <div key={g.heading}>
+          {g.heading && (
+            <div className="border-b border-rule-light py-1">
+              <Meta tone="burgundy">{g.heading}</Meta>
+            </div>
+          )}
+          {g.items.map(item => (
+            <ReadingRow key={item.id} item={item} checked={done.has(item.id)} onToggle={() => toggle(item.id)} />
+          ))}
+        </div>
+      ))}
+    </div>
   )
 }
 
@@ -117,6 +145,14 @@ export default function RoadmapSheet() {
 
   const count = (items: ReadingItem[]) => items.filter(i => done.has(i.id)).length
   const allRowIds = [...PHASES.map(p => p.id), ...GOALS.map(g => g.id)]
+
+  const goalMeta = (g: Goal) => {
+    if (!loaded) return null
+    if (g.id === 'goal-ce') return <Meta>{count(CE_PAPERS)}/{CE_PAPERS.length} read</Meta>
+    if (g.id === 'goal-anthro') return <Meta>{count(ANTHRO_PAPERS)}/{ANTHRO_PAPERS.length} read</Meta>
+    if (g.id === 'goal-books') return <Meta>{count(BOOKS)}/{BOOKS.length} read</Meta>
+    return null
+  }
 
   return (
     <main className="min-h-screen text-ink" style={{ background: '#f5f1ea' }}>
@@ -183,10 +219,10 @@ export default function RoadmapSheet() {
         />
 
         <div className="space-y-3">
-          {/* ─── The four goals ─── */}
+          {/* ─── The four goals, each carrying its own program ─── */}
           <Block
             label="The Four Winter Goals"
-            meta="what walks in the door"
+            meta="each goal carries its program"
             open={!closedBlocks.has('blk-goals')}
             onToggle={() => toggleBlock('blk-goals')}
           >
@@ -202,13 +238,36 @@ export default function RoadmapSheet() {
                     <span className="text-[16px] text-ink-muted">{g.target}</span>
                   </span>
                 }
-                meta={null}
+                meta={goalMeta(g)}
               >
                 <p className="text-[16px] leading-relaxed text-ink">{g.detail}</p>
                 <p className="mt-1 text-[15px] leading-relaxed text-ink-muted">
                   <Meta tone="amber">Cadence · </Meta>
                   {g.cadence}
                 </p>
+                {g.id === 'goal-ce' && (
+                  <ReadingList
+                    groups={[
+                      { heading: 'Reproduce — the top ten', items: ceRepro },
+                      { heading: 'Read — the other twenty', items: ceRead },
+                    ]}
+                    done={done}
+                    toggle={toggle}
+                  />
+                )}
+                {g.id === 'goal-anthro' && (
+                  <ReadingList
+                    groups={[
+                      { heading: 'Replicate on a new site — the five', items: anRepro },
+                      { heading: 'Read — the other ten', items: anRead },
+                    ]}
+                    done={done}
+                    toggle={toggle}
+                  />
+                )}
+                {g.id === 'goal-books' && (
+                  <ReadingList groups={[{ heading: '', items: BOOKS }]} done={done} toggle={toggle} />
+                )}
               </Row>
             ))}
           </Block>
@@ -263,60 +322,6 @@ export default function RoadmapSheet() {
                   {d.weakness}
                 </p>
               </FlatRow>
-            ))}
-          </Block>
-
-          {/* ─── Complexity economics reading ─── */}
-          <Block
-            label="Complexity Economics — 30 Papers, 10 Reproductions"
-            meta={loaded ? `${count(CE_PAPERS)}/${CE_PAPERS.length} read` : undefined}
-            open={!closedBlocks.has('blk-ce')}
-            onToggle={() => toggleBlock('blk-ce')}
-          >
-            <FlatRow>
-              <Meta tone="burgundy">Reproduce — the top ten</Meta>
-            </FlatRow>
-            {ceRepro.map(p => (
-              <ReadingRow key={p.id} item={p} checked={done.has(p.id)} onToggle={() => toggle(p.id)} />
-            ))}
-            <FlatRow>
-              <Meta tone="burgundy">Read — the other twenty</Meta>
-            </FlatRow>
-            {ceRead.map(p => (
-              <ReadingRow key={p.id} item={p} checked={done.has(p.id)} onToggle={() => toggle(p.id)} />
-            ))}
-          </Block>
-
-          {/* ─── Anthropology & economics reading ─── */}
-          <Block
-            label="Anthropology & Economics — 15 Papers, 5 Replications"
-            meta={loaded ? `${count(ANTHRO_PAPERS)}/${ANTHRO_PAPERS.length} read` : undefined}
-            open={!closedBlocks.has('blk-anthro')}
-            onToggle={() => toggleBlock('blk-anthro')}
-          >
-            <FlatRow>
-              <Meta tone="burgundy">Replicate on a new site — the five</Meta>
-            </FlatRow>
-            {anRepro.map(p => (
-              <ReadingRow key={p.id} item={p} checked={done.has(p.id)} onToggle={() => toggle(p.id)} />
-            ))}
-            <FlatRow>
-              <Meta tone="burgundy">Read — the other ten</Meta>
-            </FlatRow>
-            {anRead.map(p => (
-              <ReadingRow key={p.id} item={p} checked={done.has(p.id)} onToggle={() => toggle(p.id)} />
-            ))}
-          </Block>
-
-          {/* ─── Books ─── */}
-          <Block
-            label="The Books"
-            meta={loaded ? `${count(BOOKS)}/${BOOKS.length} read` : undefined}
-            open={!closedBlocks.has('blk-books')}
-            onToggle={() => toggleBlock('blk-books')}
-          >
-            {BOOKS.map(b => (
-              <ReadingRow key={b.id} item={b} checked={done.has(b.id)} onToggle={() => toggle(b.id)} />
             ))}
           </Block>
         </div>
