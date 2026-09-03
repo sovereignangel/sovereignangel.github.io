@@ -172,12 +172,13 @@ export function Stat({ value, label, muted }: { value: ReactNode; label: string;
 
 /** The three tabs, shared by every sheet. */
 const TABS: { id: SheetTab; label: string; href: string }[] = [
+  { id: 'roadmap', label: 'Roadmap', href: '/complexecon/roadmap' },
   { id: 'pathway', label: 'Pathway', href: '/complexecon' },
   { id: 'research', label: 'Research', href: '/complexecon/research' },
   { id: 'strategy', label: 'Strategy', href: '/complexecon/strategy' },
 ]
 
-export type SheetTab = 'pathway' | 'research' | 'strategy'
+export type SheetTab = 'roadmap' | 'pathway' | 'research' | 'strategy'
 
 export function Masthead({
   kicker,
