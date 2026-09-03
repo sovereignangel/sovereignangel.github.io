@@ -245,6 +245,9 @@ button.lordas-chip:focus-visible { outline: 2px solid var(--lordas-accent); outl
   padding: 2px 0;
 }
 .lordas-hover-panel .k b { color: var(--lordas-ink); font-weight: 600; font-family: var(--lordas-mono); }
+/* An icon trigger carries its own affordance — the dotted rule that marks a
+   hoverable number would read as a stray underline on a column head. */
+.lordas-sheet thead .lordas-hover { border-bottom: 0; }
 .lordas-hover-panel .hd {
   font-family: var(--lordas-mono); font-size: 8.5px; letter-spacing: .14em;
   text-transform: uppercase; color: var(--lordas-faint);

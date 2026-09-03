@@ -13,7 +13,7 @@
  */
 
 import {
-  computeReadiness, matchDay, computeProgress, dedupeActivities,
+  computeReadiness, matchDay, computeProgress, dedupeActivities, paceSeconds, sportOfActivity,
   type Readiness, type SportProgress,
 } from '@/lib/ironman/adapt'
 import { computeRaceForecast, type RaceForecast } from '@/lib/ironman/forecast'
@@ -26,7 +26,7 @@ import {
 } from '@/lib/ironman/plan'
 import { loadBothAthletes, type AthleteData } from './athletes'
 import { buildPairDay, paceProfile, type PairDay, type PaceProfile } from './pair-training'
-import type { LordasPerson } from '@/lib/types'
+import type { GarminActivity, LordasPerson } from '@/lib/types'
 
 export interface ComplianceWeek {
   /** Monday of the week, or the block start for the first partial week */
@@ -37,6 +37,24 @@ export interface ComplianceWeek {
   partial: number
   missed: number
   upcoming: number
+}
+
+/**
+ * The newest swim, on both clocks — the worked example behind the swim column.
+ *
+ * A model change is only believable next to the session it changes, so the
+ * card carries the numbers rather than asserting the rule and asking to be
+ * trusted. Null until this athlete has logged a swim with a distance on it.
+ */
+export interface SwimTiming {
+  date: string
+  distanceM: number
+  elapsedSec: number
+  movingSec: number
+  /** Share of the timer that was rest, 0-1 */
+  restShare: number
+  per100Elapsed: number
+  per100Moving: number
 }
 
 export interface AthleteDetail {
@@ -50,6 +68,8 @@ export interface AthleteDetail {
   display: ReturnType<typeof goalDisplay>
   strengths: Record<Sport3, Standing>
   profile: PaceProfile
+  /** The newest swim measured both ways, so the swim column can show its work */
+  swimTiming: SwimTiming | null
   /** Race-pace anchor per discipline, and how far the goal had to be backed off */
   targets: Record<Sport3, RaceTarget>
   /** Which discipline the remaining weeks belong to, and why */
@@ -178,6 +198,29 @@ function sameCard(a: PlanSessionRow[], b: PlanSessionRow[]): boolean {
   )
 }
 
+/** The newest swim with a distance on it, measured on both clocks. */
+function swimTimingOf(activities: GarminActivity[], today: string): SwimTiming | null {
+  const swim = activities
+    .filter((a) => a.date != null && a.date <= today && sportOfActivity(a.type) === 'swim')
+    .filter((a) => (a.distanceMeters ?? 0) > 0 && (a.durationSeconds ?? 0) > 0)
+    .sort((a, b) => ((a.date as string) < (b.date as string) ? 1 : -1))[0]
+  if (!swim) return null
+
+  const distanceM = swim.distanceMeters as number
+  const elapsedSec = swim.durationSeconds as number
+  const movingSec = paceSeconds(swim)
+  const hundreds = distanceM / 100
+  return {
+    date: swim.date as string,
+    distanceM: Math.round(distanceM),
+    elapsedSec: Math.round(elapsedSec),
+    movingSec: Math.round(movingSec),
+    restShare: elapsedSec > 0 ? 1 - movingSec / elapsedSec : 0,
+    per100Elapsed: elapsedSec / hundreds,
+    per100Moving: movingSec / hundreds,
+  }
+}
+
 function detailFor(data: AthleteData, today: string, partner?: AthleteData): AthleteDetail {
   const person = data.athlete.id as AthleteId
   const goals = goalsFor(person)
@@ -225,6 +268,7 @@ function detailFor(data: AthleteData, today: string, partner?: AthleteData): Ath
     display: goalDisplay(goals),
     strengths: STRENGTHS[person] ?? STRENGTHS.lori,
     profile,
+    swimTiming: swimTimingOf(activities, today),
     targets,
     rebalance,
     progress,

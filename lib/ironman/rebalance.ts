@@ -32,7 +32,7 @@ import {
   type AthleteId, type PlanDay, type PlannedSession, type RaceGoals,
   type Sport3, type Standing,
 } from './plan'
-import { dedupeActivities, matchDay, sportOfActivity } from './adapt'
+import { dedupeActivities, matchDay, paceSeconds, sportOfActivity } from './adapt'
 import { computeRaceForecast, PACE_BOUNDS, RACE_KM, type DisciplineForecast, type ForecastOptions, type RaceForecast } from './forecast'
 import { fmtPace, raceTargets, type RaceTarget } from './pace'
 
@@ -142,7 +142,15 @@ function shiftDate(date: string, days: number): string {
   return d.toISOString().slice(0, 10)
 }
 
-/** Sessions that pass the same sanity filters the forecast uses */
+/**
+ * Sessions that pass the same sanity filters the forecast uses.
+ *
+ * Each carries two clocks and they answer different questions. `min` is the
+ * session — how much of the week it took, whether it duplicates an upcoming
+ * one. `paceMin` is the swimming, riding or running inside it, and is the only
+ * one a pace may be divided out of. On a run they are the same number; on a
+ * 20x100 set off a minute they are 64 and 44.
+ */
 function qualifying(activities: GarminActivity[], sport: Sport3, from: string, to: string) {
   const [lo, hi] = PACE_BOUNDS[sport]
   return dedupeActivities(activities)
@@ -151,9 +159,10 @@ function qualifying(activities: GarminActivity[], sport: Sport3, from: string, t
       date: a.date as string,
       km: (a.distanceMeters ?? 0) / 1000,
       min: (a.durationSeconds ?? 0) / 60,
+      paceMin: paceSeconds(a) / 60,
       name: a.name ?? null,
     }))
-    .filter((a) => a.min > 0 && (a.km === 0 || (a.min / a.km >= lo && a.min / a.km <= hi)))
+    .filter((a) => a.min > 0 && (a.km === 0 || (a.paceMin / a.km >= lo && a.paceMin / a.km <= hi)))
 }
 
 /** Planned minutes for a sport over a date range — a brick counts as its bike leg */
@@ -199,7 +208,7 @@ function gapFor(
   const paceCeiling =
     target.prescribedPaceMinKm != null ? target.prescribedPaceMinKm * COVERAGE_PACE_LIMIT : null
   const long = qualifying(activities, sport, shiftDate(asOf, -LONGEST_WINDOW_DAYS), asOf).filter(
-    (a) => paceCeiling == null || a.km === 0 || a.min / a.km <= paceCeiling
+    (a) => paceCeiling == null || a.km === 0 || a.paceMin / a.km <= paceCeiling
   )
   const longestKm = Math.round(Math.max(0, ...long.map((a) => a.km)) * 10) / 10
   const raceKm = RACE_KM[sport]

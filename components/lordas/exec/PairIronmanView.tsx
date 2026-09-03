@@ -25,13 +25,13 @@ import {
   type SheetRow,
 } from '@/components/lordas/design/primitives'
 import { Track } from '@/components/lordas/design/charts'
-import { PersonSigil, SportGlyph, TrifectaIcon } from '@/components/lordas/design/assets'
+import { InfoIcon, PersonSigil, SportGlyph, TrifectaIcon } from '@/components/lordas/design/assets'
 import { fmtRunPace, fmtSwimPace, fmtBikeSpeed, fmtPace } from '@/lib/lordas/pair-training'
 import { paceBoth } from '@/lib/ironman/pace'
 import { RACE_NYC, priorRacesFor, raceDistanceLabel, sameDistance, priorRaceDisplay, priorRaceVsGoal,
   type PriorRace } from '@/lib/ironman/plan'
 import type {
-  PairIronmanDetail, AthleteDetail, PlanAthleteDay, PlanSessionRow, LoggedSession,
+  PairIronmanDetail, AthleteDetail, PlanAthleteDay, PlanSessionRow, LoggedSession, SwimTiming,
 } from '@/lib/lordas/ironman-detail'
 import type { PairDay } from '@/lib/lordas/pair-training'
 import { freshnessOf, stampOf } from '@/lib/lordas/freshness'
@@ -113,6 +113,62 @@ function goalSplit(a: AthleteDetail, sport: Sport3): number {
 
 const probColor = (p: number | null | undefined) =>
   p == null ? C.faint : p >= 0.5 ? C.ok : p >= 0.25 ? C.warn : C.crit
+
+/**
+ * Why the swim column reads faster than the stopwatch did.
+ *
+ * Every pace on this page is now measured over moving time rather than timer
+ * time. On a run or a ride the two are the same number to within a percent. On
+ * a set of 100s off a minute a third of the timer is spent on the wall, and
+ * dividing distance by all of it said this athlete swam a third slower than
+ * they did — so the best set of the block arrived as evidence of getting worse.
+ *
+ * The note lives on the column rather than in a footer because that is where
+ * the number it explains is read, and it carries the athlete's own last swim
+ * on both clocks: a claim about a measurement is worth more beside the session
+ * that proves it than as an assertion.
+ */
+function SwimNote({ t }: { t: SwimTiming | null }) {
+  const mmss = (sec: number) => {
+    const total = Math.round(sec)
+    return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, '0')}`
+  }
+  return (
+    <Hover
+      align="right"
+      panel={
+        <>
+          <div className="hd">Swim pace · measured on moving time</div>
+          <div className="k"><span>Clock</span><b>moving, not elapsed</b></div>
+          <div className="k"><span>Rest between reps</span><b>excluded</b></div>
+          {t ? (
+            <>
+              <div className="hd" style={{ marginTop: 6 }}>
+                {new Date(`${t.date}T12:00:00`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })} · {t.distanceM}m
+              </div>
+              <div className="k">
+                <span>On the timer</span>
+                <b style={{ color: C.faint }}>{mmss(t.per100Elapsed)}/100m</b>
+              </div>
+              <div className="k">
+                <span>Swimming</span>
+                <b style={{ color: C.ok }}>{mmss(t.per100Moving)}/100m</b>
+              </div>
+              <div className="k">
+                <span>Spent on the wall</span>
+                <b>{Math.round(t.restShare * 100)}% · {mmss(t.elapsedSec - t.movingSec)}</b>
+              </div>
+            </>
+          ) : (
+            <div className="k"><span>Last swim</span><b>none logged</b></div>
+          )}
+        </>
+      }
+    >
+      <InfoIcon size={10} color={C.faint} />
+    </Hover>
+  )
+}
 
 // ── Recovery, in full, beside the session ─────────────────────────────────
 
@@ -380,6 +436,7 @@ function AthleteSheet({ a }: { a: AthleteDetail }) {
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, justifyContent: 'flex-end' }}>
               <SportGlyph sport={s} size={11} color={SPORT_COLOR[s]} />
               {SPORT_LABEL[s]}
+              {s === 'swim' && <SwimNote t={a.swimTiming} />}
             </span>
           ),
         }))}

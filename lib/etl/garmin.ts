@@ -333,6 +333,9 @@ export async function syncRecentActivities(garmin: GarminConnect, col: any, limi
         date: (a.startTimeLocal ?? '').slice(0, 10) || null,
         startTimeLocal: a.startTimeLocal ?? null,
         durationSeconds: num(a.duration) ? Math.round(a.duration) : null,
+        // Rest laps live inside `duration` on a pool swim — 3846s of timer for
+        // 2630s of swimming. The pace model wants the second number.
+        movingDurationSeconds: num(a.movingDuration) ? Math.round(a.movingDuration) : null,
         distanceMeters: num(a.distance) ? Math.round(a.distance) : null,
         calories: num(a.calories),
         averageHr: num(a.averageHR),

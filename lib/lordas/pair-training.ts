@@ -15,7 +15,7 @@
  * evidence about the other and there is nothing to correct for.
  */
 
-import { computeReadiness, adaptDay, sportOfActivity, dedupeActivities, type Readiness } from '@/lib/ironman/adapt'
+import { computeReadiness, adaptDay, sportOfActivity, dedupeActivities, paceSeconds, type Readiness } from '@/lib/ironman/adapt'
 import { computeRaceForecast } from '@/lib/ironman/forecast'
 import { computeRebalance, planDayWith, type Rebalance } from '@/lib/ironman/rebalance'
 import { fmtPace, raceTargets, zonePaceMinKm, type RaceTarget } from '@/lib/ironman/pace'
@@ -62,10 +62,12 @@ function weightedPace(acts: GarminActivity[]): { metres: number; seconds: number
   let seconds = 0
   for (const a of acts) {
     const d = a.distanceMeters ?? 0
-    const t = a.durationSeconds ?? 0
-    if (d <= 0 || t < MIN_DURATION_S) continue
+    // Session length gates what counts as a session; moving time is what the
+    // pace is then measured over. A 64-minute pool set clears the gate on its
+    // timer and contributes its 44 minutes of swimming to the average.
+    if (d <= 0 || (a.durationSeconds ?? 0) < MIN_DURATION_S) continue
     metres += d
-    seconds += t
+    seconds += paceSeconds(a)
   }
   return metres > 0 ? { metres, seconds } : null
 }

@@ -64,6 +64,36 @@ export function dedupeActivities(activities: GarminActivity[]): GarminActivity[]
   return kept
 }
 
+/**
+ * Below this share of the timer, a "moving" time is a broken record rather
+ * than a hard set. The deepest rest ratio in this file is 46%.
+ */
+const MIN_MOVING_SHARE = 0.4
+
+/**
+ * The seconds a pace should be measured over.
+ *
+ * Not the same question as "how long was the session". A 20x100 set off a
+ * minute is 64 minutes of your evening and 44 minutes of swimming, and only
+ * the second one divides into distance to give a speed. Elapsed time stays the
+ * right answer for volume, compliance and load — this is for pace alone.
+ *
+ * Swimming only, deliberately. On a run or a ride Garmin's timer already
+ * pauses, so the two clocks agree to within a percent, and what disagreement
+ * remains is as often a dropped signal as a real stop: one 55km ride in this
+ * file reports a moving time implying 73km/h. Trading a rounding error for
+ * that is a bad trade. In a pool the gap is not an artefact, it is the
+ * workout — the rest between reps is designed in, and counting it as swimming
+ * made the hardest set of the block arrive as evidence of getting slower.
+ */
+export function paceSeconds(a: GarminActivity): number {
+  const elapsed = a.durationSeconds ?? 0
+  if (sportOfActivity(a.type) !== 'swim') return elapsed
+  const moving = a.movingDurationSeconds
+  if (moving == null || moving <= 0 || moving > elapsed || moving < elapsed * MIN_MOVING_SHARE) return elapsed
+  return moving
+}
+
 // ── Readiness ─────────────────────────────────────────────────────────────
 
 export interface ReadinessFactor {

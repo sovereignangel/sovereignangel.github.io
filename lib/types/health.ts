@@ -47,6 +47,17 @@ export interface GarminActivity {
   date: string | null
   startTimeLocal: string | null
   durationSeconds: number | null
+  /**
+   * Time actually spent moving, in seconds — Garmin's `movingDuration`.
+   *
+   * Apart from `durationSeconds` exactly where a pace model needs them apart.
+   * A pool set of 20x100 off a minute is 64 minutes of timer and 44 minutes of
+   * swimming; dividing distance by the first says you swam a third slower than
+   * you did. Elapsed still measures the session — volume, compliance, load —
+   * and this measures the speed. Null on anything synced before the field was
+   * pulled, where elapsed is the only number there has ever been.
+   */
+  movingDurationSeconds: number | null
   distanceMeters: number | null
   calories: number | null
   averageHr: number | null

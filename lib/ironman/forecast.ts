@@ -33,7 +33,7 @@ import {
   goalPaceMinKm,
   type RaceGoals, type Sport3,
 } from './plan'
-import { sportOfActivity, dedupeActivities } from './adapt'
+import { sportOfActivity, dedupeActivities, paceSeconds } from './adapt'
 
 // The forecast projects fitness to the A-race in New York — race 1 on
 // Sep 13 is the rehearsal and simply feeds the model as training data.
@@ -104,7 +104,9 @@ function collectSamples(activities: GarminActivity[], sport: Sport3, asOf: strin
   for (const a of dedupeActivities(activities)) {
     if (a.date == null || a.date > asOf || sportOfActivity(a.type) !== sport) continue
     const km = (a.distanceMeters ?? 0) / 1000
-    const min = (a.durationSeconds ?? 0) / 60
+    // Moving time, not timer time: this is a capability estimate, and the rest
+    // between reps is not evidence about how fast anyone swims.
+    const min = paceSeconds(a) / 60
     if (km < MIN_KM[sport] || min <= 0) continue
     const pace = min / km
     const [lo, hi] = PACE_BOUNDS[sport]
