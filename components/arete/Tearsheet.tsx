@@ -48,7 +48,7 @@ export function SpiralMark({ size = 38, strokeWidth = 1.3 }: { size?: number; st
 const CSS = `
 .ats{background:${ARETE.cream};color:${ARETE.ink};font-family:${ARETE.serif};font-size:16px;line-height:1.6;min-height:100vh;-webkit-font-smoothing:antialiased}
 .ats *{box-sizing:border-box}
-.ats-sheet{max-width:1000px;margin:0 auto;padding:0 20px 64px}
+.ats-sheet{max-width:1000px;margin:0 auto;padding:0 20px 56px}
 
 .ats-mast{position:sticky;top:0;z-index:20;background:${ARETE.cream};border-bottom:1px solid ${ARETE.rule}}
 .ats-mast-in{max-width:1000px;margin:0 auto;padding:10px 20px 0;display:flex;align-items:center;gap:12px}
@@ -63,62 +63,66 @@ const CSS = `
 .ats-nav a:hover{color:${ARETE.burgundy};border-bottom-color:${ARETE.burgundy}}
 .ats-nav a:focus-visible{outline:2px solid ${ARETE.burgundy};outline-offset:-2px}
 
-.ats-cover{padding:40px 0 26px}
+.ats-cover{padding:28px 0 18px}
 .ats-eyebrow{font-family:${ARETE.mono};font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:${ARETE.burgundy};margin:0 0 14px}
 .ats h1{font-family:${ARETE.serif};font-weight:600;font-size:clamp(38px,7vw,60px);letter-spacing:-.015em;line-height:1;margin:0;color:${ARETE.ink};text-wrap:balance}
 .ats-tagline{font-family:${ARETE.serif};font-style:italic;font-size:clamp(17px,2.4vw,21px);color:${ARETE.burgundy};margin:10px 0 0}
-.ats-standfirst{max-width:62ch;color:${ARETE.inkMuted};font-size:16.5px;margin:18px 0 0}
+.ats-standfirst{max-width:64ch;color:${ARETE.inkMuted};font-size:16px;margin:14px 0 0}
 
-.ats-facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));border:1px solid ${ARETE.rule};background:${ARETE.paper};margin-top:26px}
-.ats-fact{padding:12px 14px 13px;border-right:1px solid ${ARETE.ruleSoft};border-top:1px solid ${ARETE.ruleSoft}}
+.ats-facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));border:1px solid ${ARETE.rule};background:${ARETE.paper};margin-top:18px}
+.ats-fact{padding:10px 12px 11px;border-right:1px solid ${ARETE.ruleSoft};border-top:1px solid ${ARETE.ruleSoft}}
 .ats-facts>.ats-fact:first-child{border-top:none}
 .ats-fact:last-child{border-right:none}
 .ats-fact dt{font-family:${ARETE.mono};font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:${ARETE.inkSoft};margin:0 0 4px}
 .ats-fact dd{margin:0;font-family:${ARETE.serif};font-size:17px;font-weight:600;color:${ARETE.ink};line-height:1.2}
 .ats-fact dd small{display:block;font-family:${ARETE.sans};font-size:11.5px;font-weight:400;color:${ARETE.inkMuted};margin-top:2px;line-height:1.35}
 
-.ats-section{padding:34px 0 4px;border-top:1px solid ${ARETE.rule};margin-top:30px;scroll-margin-top:96px}
+.ats-section{padding:22px 0 2px;border-top:1px solid ${ARETE.rule};margin-top:18px;scroll-margin-top:92px}
 .ats-sechead{display:flex;align-items:baseline;gap:12px;margin-bottom:6px;flex-wrap:wrap}
 .ats-numeral{font-family:${ARETE.mono};font-size:11px;letter-spacing:.2em;color:${ARETE.burgundy};flex:none}
 .ats h2{font-family:${ARETE.serif};font-weight:600;font-size:clamp(24px,3.4vw,31px);letter-spacing:-.01em;line-height:1.1;margin:0;color:${ARETE.ink}}
 .ats-note{font-family:${ARETE.sans};font-size:12px;color:${ARETE.inkSoft};margin-left:auto}
-.ats-intro{max-width:64ch;color:${ARETE.inkMuted};margin:10px 0 0}
+.ats-intro{max-width:66ch;color:${ARETE.inkMuted};margin:7px 0 0;font-size:15.5px}
 .ats h3{font-family:${ARETE.serif};font-weight:600;font-size:19px;margin:0;color:${ARETE.ink}}
 .ats p{margin:0 0 .9em}
 .ats p:last-child{margin-bottom:0}
 .ats strong{font-weight:600;color:${ARETE.ink}}
 .ats em{font-style:italic}
 
-.ats details{border:1px solid ${ARETE.ruleSoft};background:${ARETE.paper};margin-top:12px}
+.ats details{border:1px solid ${ARETE.ruleSoft};background:${ARETE.paper};margin-top:8px}
 .ats details[open]{border-color:${ARETE.rule}}
-.ats summary{list-style:none;cursor:pointer;padding:11px 14px;font-family:${ARETE.mono};font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:${ARETE.inkMuted};display:flex;align-items:center;gap:9px}
+.ats summary{list-style:none;cursor:pointer;padding:8px 12px;font-family:${ARETE.mono};font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:${ARETE.inkMuted};display:flex;align-items:center;gap:9px}
 .ats summary::-webkit-details-marker{display:none}
 .ats summary:hover{color:${ARETE.burgundy}}
 .ats summary:focus-visible{outline:2px solid ${ARETE.burgundy};outline-offset:-2px}
 .ats summary::before{content:"+";font-family:${ARETE.mono};font-size:13px;color:${ARETE.burgundy};width:13px;flex:none;text-align:center;line-height:1}
 .ats details[open] summary::before{content:"\\2212"}
 .ats details[open] summary{border-bottom:1px solid ${ARETE.ruleSoft};color:${ARETE.burgundy}}
-.ats-dbody{padding:16px 14px 18px}
-.ats-dbody>*+*{margin-top:12px}
+.ats-dbody{padding:12px 12px 14px}
+.ats-dbody>*+*{margin-top:9px}
 
 .ats-scroll{overflow-x:auto}
 .ats-rows{width:100%;border-collapse:collapse}
 .ats-rows th{font-family:${ARETE.mono};font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:${ARETE.inkSoft};text-align:left;font-weight:400;padding:0 12px 7px 0;border-bottom:1px solid ${ARETE.rule};white-space:nowrap}
-.ats-rows td{padding:11px 12px 11px 0;border-bottom:1px solid ${ARETE.ruleSoft};vertical-align:top;color:${ARETE.inkMuted};font-size:14.5px;line-height:1.5}
+.ats-rows td{padding:8px 12px 8px 0;border-bottom:1px solid ${ARETE.ruleSoft};vertical-align:top;color:${ARETE.inkMuted};font-size:14.5px;line-height:1.5}
 .ats-rows tr:last-child td{border-bottom:none}
 .ats-rows .k{color:${ARETE.ink};font-weight:600;font-size:15px}
 .ats-rows .art{font-family:${ARETE.mono};font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:${ARETE.inkSoft};white-space:nowrap}
 
-.ats-callout{border:1px solid ${ARETE.rule};border-left:2px solid ${ARETE.burgundy};background:${ARETE.paper};padding:16px 18px;margin-top:16px}
+.ats-callout{border:1px solid ${ARETE.rule};border-left:2px solid ${ARETE.burgundy};background:${ARETE.paper};padding:13px 15px;margin-top:12px}
 .ats-callout h3{margin-bottom:6px}
 .ats-callout p{font-family:${ARETE.sans};font-size:13.5px;line-height:1.6;color:${ARETE.inkMuted}}
 
-.ats-links{display:flex;flex-wrap:wrap;gap:7px;margin-top:14px}
+.ats-links{display:flex;flex-wrap:wrap;gap:6px;margin-top:11px}
 .ats-links a{font-family:${ARETE.mono};font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:${ARETE.inkMuted};text-decoration:none;border:1px solid ${ARETE.rule};padding:6px 10px;background:${ARETE.paper}}
 .ats-links a:hover{color:${ARETE.burgundy};border-color:${ARETE.burgundy}}
 .ats-links a:focus-visible{outline:2px solid ${ARETE.burgundy};outline-offset:2px}
 
-.ats-colophon{border-top:1px solid ${ARETE.rule};margin-top:44px;padding:26px 0 0;text-align:center}
+.ats-line{border:1px solid ${ARETE.burgundy};border-left-width:2px;background:${ARETE.paper};padding:15px 17px;margin-top:16px}
+.ats-line .lk{font-family:${ARETE.mono};font-size:9.5px;letter-spacing:.18em;text-transform:uppercase;color:${ARETE.burgundy};margin:0 0 6px}
+.ats-line .lv{font-family:${ARETE.serif};font-size:clamp(20px,3vw,27px);line-height:1.28;color:${ARETE.ink};font-weight:500;margin:0}
+
+.ats-colophon{border-top:1px solid ${ARETE.rule};margin-top:32px;padding:20px 0 0;text-align:center}
 .ats-colophon .motto{font-family:${ARETE.serif};font-style:italic;font-size:15px;color:${ARETE.inkMuted};margin:0 0 5px}
 .ats-colophon .insc{font-family:${ARETE.mono};font-size:9px;letter-spacing:.28em;text-transform:uppercase;color:${ARETE.inkSoft};margin:0}
 @media (prefers-reduced-motion:reduce){.ats *{animation:none!important;transition:none!important}}
@@ -263,6 +267,16 @@ export function DeepLinks({ links }: { links: { label: string; href: string }[] 
           {l.label}
         </a>
       ))}
+    </div>
+  )
+}
+
+/** The manifesto line — one sentence, set apart, never scrolled past. */
+export function Line({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="ats-line">
+      <p className="lk">{label}</p>
+      <p className="lv">{children}</p>
     </div>
   )
 }
