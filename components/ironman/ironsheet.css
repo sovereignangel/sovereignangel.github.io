@@ -4,15 +4,23 @@
  *
  * Those components are palette-agnostic: they read a set of CSS custom
  * properties and never hard-code a colour. Lordas defines that set in
- * espresso and navy; this defines the same set in burgundy — and here the
- * burgundy is the *fill*, not the accent. Cards are solid burgundy floating
- * on warm sand, which is the look this page had before it borrowed the
- * tearsheet grid, and the look it is going back to.
+ * espresso and navy; this defines the same set the way the kite planner
+ * reads — warm cream cards floating on sand, ink type, and burgundy as the
+ * *accent* rather than the fill.
+ *
+ * That is the correction. An earlier pass made the cards themselves solid
+ * burgundy, which forced every other decision downstream: type had to go
+ * cream, rules had to go translucent, and every status and discipline colour
+ * had to be lifted until it read on red. The page ended up as a red slab
+ * with a gold accent — burgundy everywhere except where it means something.
+ * Here burgundy is scarce, so it carries weight: headings, the live day, the
+ * tone stripe, the ticker.
  *
  * Two things change against the Lordas geometry, both below the palette:
  * the seam grid gives up its shared 1px rule so cards can separate, and
- * everything that was a square corner becomes a round one. Nothing here
- * touches Lordas — every rule is scoped to `.iron-sheet`.
+ * everything that was a square corner becomes a round one — the same soft
+ * geometry the wind board uses. Nothing here touches Lordas; every rule is
+ * scoped to `.iron-sheet`.
  *
  * The property names still carry the `--lordas-` prefix because that is
  * where they were first written. Renaming them is a mechanical sweep, not a
@@ -20,39 +28,56 @@
  */
 
 .iron-sheet {
-  /* Ground stays the warm sand the page has always sat on. The cards are
-     what turn burgundy, and they need something warm to float above. */
+  /* Ground and card are the kite planner's exact pair, so the two sections
+     read as one publication printed on the same stock. */
   --lordas-ground: #f2ecdf;
 
-  --lordas-panel: #7e262c;
-  --lordas-panel-quiet: #6d1f25;
-  --lordas-panel-raise: #90333a;
+  --lordas-panel: #fffdf7;
+  --lordas-panel-quiet: #faf5ec;
+  --lordas-panel-raise: #f7f1e6;
 
-  /* Rules inside a burgundy card are the card lightened, not a separate
-     colour — a translucent cream keeps every divider in the same family
-     whichever panel it lands on. */
-  --lordas-rule: rgba(253, 243, 236, .22);
-  --lordas-rule-soft: rgba(253, 243, 236, .13);
+  /* Warm sand rules, matching the iron-rule tokens the Tailwind side of this
+     page already draws with, so a primitive divider and a utility divider
+     land on the same colour. */
+  --lordas-rule: #dfd3c4;
+  --lordas-rule-soft: #ece3d4;
 
-  --lordas-ink: #fdf3ec;
-  --lordas-muted: #e6c6c4;
-  --lordas-faint: #c69a9b;
+  --lordas-ink: #3b2f2f;
+  --lordas-muted: #8a7c7c;
+  --lordas-faint: #c3b8b8;
 
-  /* Gold is the only accent that holds its own against this much red. */
-  --lordas-accent: #eec27e;
+  /* The main colour of the page. Everything that is meant to be read as
+     structure — headings, live markers, tone stripes — is this and nothing
+     else. */
+  --lordas-accent: #8f2d33;
 
-  /* Status colours lifted until they read on burgundy. The dark versions
-     these replace were tuned for cream and go invisible here. */
-  --lordas-ok: #8fd7b0;
-  --lordas-warn: #f2c76c;
-  --lordas-crit: #f79b81;
+  /* Status colours tuned for cream, dark enough to pass as body-weight type
+     against the card. */
+  --lordas-ok: #2d6b4a;
+  --lordas-warn: #8a6420;
+  --lordas-crit: #a8321f;
+  --lordas-crit-deep: #7d2415;
 
-  /* Discipline colours, same job. Bike cannot be burgundy on burgundy. */
-  --iron-swim: #7fc3d4;
-  --iron-bike: #f2a7ac;
-  --iron-run: #8fd7b0;
-  --iron-brick: #d9a6d2;
-  --iron-strength: #eec27e;
+  /* Disciplines. Bike is the burgundy itself — it is the centrepiece sport of
+     a 70.3 and the one colour the page is built around; the others are the
+     warm family around it. Run and strength are not listed because the sport
+     map already spends `--lordas-ok` and `--lordas-warn` on them. */
+  --iron-swim: #1f6f83;
+  --iron-bike: #8f2d33;
+  --iron-brick: #6b3a86;
+
+  /* Deep-panel tones are never invoked on this page (no field card here asks
+     for `action` or `evidence`), but the primitives may reach for them, and a
+     near-black slab would tear a hole in a cream sheet. Point them at the
+     quiet card instead. */
+  --lordas-action: var(--lordas-panel-quiet);
+  --lordas-action-quiet: var(--lordas-panel-raise);
+  --lordas-evidence: var(--lordas-panel-quiet);
+  --lordas-evidence-quiet: var(--lordas-panel-raise);
+
+  --lordas-parchment: #e8dcc4;
+  --lordas-sun: #d9a441;
+  --lordas-lens: #8a7c7c;
 
   --lordas-display: var(--font-iron-display, Georgia, 'Times New Roman', serif);
   --lordas-body: inherit;
@@ -77,30 +102,42 @@
   align-items: start;
 }
 
-/* The ticker is the one element that sits on the ground rather than inside a
-   card, so cream type would be invisible on sand. It becomes a bubble too —
-   which is also the only way it reads as part of the same page. */
+/* The ticker sits on the ground rather than inside a card, so it becomes a
+   card too — a single cream pill. It carries inline status colours (a race
+   inside three weeks turns amber), and those are tuned for cream; inverting
+   the band to solid burgundy would have swallowed them. Burgundy earns its
+   place here through the countdown type, not the fill. */
 .iron-sheet .lordas-ticker {
   background: var(--lordas-panel);
-  border: 1px solid rgba(94, 31, 36, .18);
+  border: 1px solid var(--lordas-rule);
   border-radius: 999px;
-  padding: 1px 4px;
+  padding: 1px 6px;
   margin: 0 0 4px;
-  box-shadow: 0 2px 10px rgba(94, 31, 36, .12);
+  box-shadow: 0 2px 12px rgba(94, 31, 36, .06);
   justify-content: center;
 }
-.iron-sheet .lordas-ticker-item { border-left-color: rgba(253, 243, 236, .18); }
+.iron-sheet .lordas-ticker-item { border-left-color: var(--lordas-rule-soft); }
+.iron-sheet .lordas-ticker-item .l { color: var(--lordas-muted); }
+/* The two countdowns are the fact the page exists to state. */
+.iron-sheet .lordas-ticker-item:first-child .v,
+.iron-sheet .lordas-ticker-item:nth-child(2) .v { color: var(--lordas-accent); font-weight: 500; }
 
+/* Cards: the wind board's card exactly — hairline sand border, soft warm
+   shadow, generous radius. */
 .iron-sheet .lordas-fc {
+  background: var(--lordas-panel);
   border-radius: 16px;
-  border: 1px solid rgba(94, 31, 36, .18);
+  border: 1px solid var(--lordas-rule);
   padding: 12px 14px 14px;
-  box-shadow: 0 2px 10px rgba(94, 31, 36, .12);
+  box-shadow: 0 2px 12px rgba(94, 31, 36, .06);
+  overflow: hidden;
 }
 
-/* The tone stripe is an inset left border, which a 16px radius would clip
-   into a crescent. A full-width top edge survives the curve. */
-.iron-sheet .lordas-fc { overflow: hidden; }
+/* Card headings are the accent. This is the single biggest reason the page
+   reads as burgundy without being made of it — the same move the kite board
+   makes with teal, and the same move the Armstrong section headers make. */
+.iron-sheet .lordas-fc-lede { color: var(--lordas-accent); }
+.iron-sheet .lordas-fc-head { color: var(--lordas-muted); }
 
 .iron-sheet .lordas-chip { border-radius: 999px; padding: 3px 9px; }
 .iron-sheet .lordas-empty { border-radius: 14px; }
@@ -113,21 +150,10 @@
 .iron-sheet .rounded-xl { border-radius: 16px; }
 .iron-sheet .rounded-full { border-radius: 999px; }
 
-/* Sub-panels drawn with the older Tailwind tokens sit inside a burgundy card
-   now, so a sand fill would punch a hole in it. They become the panel one
-   step lighter, the same move `panel-raise` makes. */
-.iron-sheet .bg-iron-sand,
-.iron-sheet .bg-iron-card { background: var(--lordas-panel-raise); }
-.iron-sheet .bg-iron-rule-light { background: rgba(253, 243, 236, .13); }
-.iron-sheet .border-iron-rule,
-.iron-sheet .border-iron-rule-light { border-color: var(--lordas-rule); }
-.iron-sheet .text-iron-ink { color: var(--lordas-ink); }
-.iron-sheet .text-iron-muted { color: var(--lordas-muted); }
-.iron-sheet .text-iron-faint { color: var(--lordas-faint); }
-.iron-sheet .text-iron-deep,
-.iron-sheet .text-iron-burgundy { color: var(--lordas-accent); }
-.iron-sheet .border-iron-burgundy { border-color: var(--lordas-accent); }
-.iron-sheet .bg-iron-burgundy-bg { background: rgba(238, 194, 126, .16); }
-
-.iron-sheet .lordas-fc-lede { color: var(--lordas-ink); }
-.iron-sheet .lordas-hover-panel { box-shadow: 0 6px 18px rgba(94, 31, 36, .28); }
+/* Hover panels float above a light sheet, so the lift is a soft warm shadow
+   rather than the heavy one a dark page needed. */
+.iron-sheet .lordas-hover-panel {
+  background: var(--lordas-panel);
+  border-radius: 14px;
+  box-shadow: 0 8px 24px rgba(94, 31, 36, .16);
+}

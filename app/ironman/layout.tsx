@@ -4,6 +4,20 @@ import { AuthProvider, useAuth } from '@/components/auth/AuthProvider'
 import AuthGate from '@/components/auth/AuthGate'
 import SiteFooter from '@/components/SiteFooter'
 import { CourseDivider, SportIcon } from '@/components/ironman/IronmanIcons'
+import { PLAN, RACE_NYC, daysToRace, todayLocal } from '@/lib/ironman/plan'
+
+/**
+ * Where the block calendar says he is right now. The kite masthead carries a
+ * chip naming the leg of the rotation it is showing; this is the same chip
+ * for the same reason — the phase is the one fact that changes what every
+ * number below it means, and it belongs beside the title, not buried in a
+ * card.
+ */
+function currentPhase(): string | null {
+  const today = todayLocal()
+  const day = PLAN.find(d => d.date === today) ?? [...PLAN].reverse().find(d => d.date <= today)
+  return day?.phase ?? null
+}
 
 // Blush into the same warm sand the kite planner lands on, so the two
 // sections feel like one publication with different accents.
@@ -31,6 +45,9 @@ function IronmanLayoutInner({ children }: { children: React.ReactNode }) {
     return <AuthGate />
   }
 
+  const phase = currentPhase()
+  const toNyc = daysToRace(todayLocal(), RACE_NYC.date)
+
   return (
     <div className="min-h-screen" style={{ background: IRON_BACKDROP }}>
       <header className="max-w-[1200px] mx-auto px-3 md:px-4 pt-3 md:pt-5 pb-2">
@@ -38,6 +55,15 @@ function IronmanLayoutInner({ children }: { children: React.ReactNode }) {
           <h1 className="font-serif text-[17px] md:text-[20px] font-semibold text-iron-deep whitespace-nowrap">
             Ironman <span className="text-iron-burgundy">&mdash;</span> Build
           </h1>
+          {phase && (
+            <span
+              className="hidden sm:flex items-center gap-1 font-mono text-[9px] uppercase tracking-wide text-iron-burgundy bg-iron-burgundy-bg border border-iron-burgundy/25 rounded-full px-1.5 py-0.5 shrink-0"
+              title={`Current block of the plan · New York is T−${toNyc} days away`}
+            >
+              {phase}
+              {toNyc >= 0 && <span className="text-iron-muted">&middot; T&minus;{toNyc}</span>}
+            </span>
+          )}
           <span className="hidden md:block">
             <CourseDivider />
           </span>
