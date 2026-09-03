@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from 'react'
 import {
   Block,
   Checkbox,
-  FlatRow,
   Masthead,
   Meta,
   Row,
@@ -24,7 +23,7 @@ import {
   type ReadingItem,
 } from '@/lib/complexecon/roadmap'
 
-const BLOCK_IDS = ['blk-goals', 'blk-phases', 'blk-data']
+const BLOCK_IDS = ['blk-goals', 'blk-phases']
 const DONE_KEY = 'complexecon-roadmap-done'
 
 /** Read/reproduction progress, kept in localStorage like the pathway sheet. */
@@ -108,7 +107,7 @@ function ReadingList({
   toggle: (id: string) => void
 }) {
   return (
-    <div className="mt-2 border-t border-rule pt-1">
+    <div className="mt-2 max-h-[420px] overflow-y-auto border-t border-rule pt-1 pr-1">
       {groups.map(g => (
         <div key={g.heading}>
           {g.heading && (
@@ -245,6 +244,32 @@ export default function RoadmapSheet() {
                   <Meta tone="amber">Cadence · </Meta>
                   {g.cadence}
                 </p>
+                {g.id === 'goal-paper' && (
+                  <div className="mt-2 max-h-[420px] overflow-y-auto border-t border-rule pt-1 pr-1">
+                    <div className="border-b border-rule-light py-1">
+                      <Meta tone="burgundy">Data quality by lane — what can actually be gotten</Meta>
+                    </div>
+                    {DATA_QUALITY.map(d => (
+                      <div key={d.lane} className="border-b border-rule-light py-1.5 last:border-b-0">
+                        <div className="flex flex-wrap items-baseline gap-x-2">
+                          <span className="font-mono text-[16px] font-semibold text-burgundy">{d.rank}</span>
+                          <span className="font-serif text-[18px] font-semibold text-ink">
+                            {d.lane} · {d.name}
+                          </span>
+                          <span className="font-mono text-[15px] text-ink">{d.score.toFixed(1)}/10</span>
+                        </div>
+                        <p className="mt-0.5 text-[15px] leading-relaxed text-ink-muted">
+                          <Meta tone="amber">Strength · </Meta>
+                          {d.strength}
+                        </p>
+                        <p className="mt-0.5 text-[15px] leading-relaxed text-ink-muted">
+                          <Meta tone="burgundy">Weakness · </Meta>
+                          {d.weakness}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                )}
                 {g.id === 'goal-ce' && (
                   <ReadingList
                     groups={[
@@ -300,33 +325,6 @@ export default function RoadmapSheet() {
             ))}
           </Block>
 
-          {/* ─── Data quality ranking ─── */}
-          <Block
-            label="Data Quality by Lane"
-            meta="what can actually be gotten"
-            open={!closedBlocks.has('blk-data')}
-            onToggle={() => toggleBlock('blk-data')}
-          >
-            {DATA_QUALITY.map(d => (
-              <FlatRow key={d.lane}>
-                <div className="flex flex-wrap items-baseline gap-x-2">
-                  <span className="font-mono text-[16px] font-semibold text-burgundy">{d.rank}</span>
-                  <span className="font-serif text-[18px] font-semibold text-ink">
-                    {d.lane} · {d.name}
-                  </span>
-                  <span className="font-mono text-[15px] text-ink">{d.score.toFixed(1)}/10</span>
-                </div>
-                <p className="mt-0.5 text-[15px] leading-relaxed text-ink-muted">
-                  <Meta tone="amber">Strength · </Meta>
-                  {d.strength}
-                </p>
-                <p className="mt-0.5 text-[15px] leading-relaxed text-ink-muted">
-                  <Meta tone="burgundy">Weakness · </Meta>
-                  {d.weakness}
-                </p>
-              </FlatRow>
-            ))}
-          </Block>
         </div>
 
         <footer className="mt-4 border-t border-rule pt-3 text-center">
