@@ -17,12 +17,14 @@ import {
   monthsInRange,
   resolve,
   todayLocal,
+  weekday,
   type ForkId,
   type ForkState,
   type ResolvedSegment,
   type Status,
 } from '@/lib/calendar/plan'
 import Decisions from './Decisions'
+import RouteMap from './RouteMap'
 
 const STORAGE_KEY = 'calendar-plan-v1'
 
@@ -198,7 +200,7 @@ function ForkChip({ id }: { id: ForkId }) {
 function SegmentCard({ seg }: { seg: ResolvedSegment }) {
   const hasCost = seg.lines.length > 0
   return (
-    <div className={`bg-white border rounded-sm p-3 ${seg.status === 'pending' ? 'border-amber-ink/50' : 'border-rule'}`}>
+    <div id={`seg-${seg.id}`} className={`bg-white border rounded-sm p-3 scroll-mt-3 ${seg.status === 'pending' ? 'border-amber-ink/50' : 'border-rule'}`}>
       <div className="flex flex-wrap items-center gap-1.5 mb-1">
         <span className="font-mono text-[11px] font-semibold text-ink">
           {fmtRange(seg.start, seg.end)}
@@ -235,6 +237,61 @@ function SegmentCard({ seg }: { seg: ResolvedSegment }) {
               </li>
             ))}
           </ul>
+        </div>
+      )}
+
+      {seg.plan && seg.plan.length > 0 && (
+        <div className="mb-2 overflow-x-auto">
+          <table className="w-full min-w-[820px] text-[10px]">
+            <thead>
+              <tr className="text-left font-mono text-[9px] uppercase tracking-[0.5px] text-ink-muted">
+                <th className="pb-1 pr-2 font-normal">Day</th>
+                <th className="pb-1 pr-2 font-normal">Where</th>
+                <th className="pb-1 pr-2 font-normal">Moves</th>
+                <th className="pb-1 pr-2 font-normal">Work</th>
+                <th className="pb-1 pr-2 font-normal">Kite · body</th>
+                <th className="pb-1 font-normal">Lens</th>
+              </tr>
+            </thead>
+            <tbody>
+              {seg.plan.map(d => (
+                <tr key={d.date} className="border-t border-rule-light align-top">
+                  <td className="py-1 pr-2 font-mono text-ink whitespace-nowrap">{weekday(d.date)} {fmtDate(d.date)}</td>
+                  <td className="py-1 pr-2 text-ink font-medium">{d.where}</td>
+                  <td className="py-1 pr-2 text-ink-muted">{d.move}</td>
+                  <td className="py-1 pr-2 text-ink-muted">{d.work}</td>
+                  <td className="py-1 pr-2 text-ink">{d.play}</td>
+                  <td className="py-1 text-ink-muted">{d.lens}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {seg.guides && seg.guides.length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-2">
+          {seg.guides.map(g => (
+            <div key={g.place} className="border border-rule-light rounded-sm p-2">
+              <div className="font-serif text-[12px] font-semibold text-ink mb-1">{g.place}</div>
+              <dl className="space-y-0.5">
+                {(
+                  [
+                    ['Kite', g.kite],
+                    ['Gym', g.gym],
+                    ['Vintage', g.vintage],
+                    ['Top 3', g.top3],
+                    ['Lens', g.lens],
+                  ] as [string, string][]
+                ).map(([k, v]) => (
+                  <div key={k} className="flex gap-2">
+                    <dt className="w-[46px] shrink-0 font-mono text-[9px] uppercase tracking-[0.5px] text-ink-muted pt-px">{k}</dt>
+                    <dd className="text-[10px] text-ink">{v}</dd>
+                  </div>
+                ))}
+              </dl>
+            </div>
+          ))}
         </div>
       )}
 
@@ -375,6 +432,10 @@ export default function CalendarBoard() {
 
   const scenario = useMemo(() => resolve(forks), [forks])
   const pick = (id: ForkId, option: string) => setForks(prev => ({ ...prev, [id]: option }))
+  const jumpTo = (segId: string) => {
+    const el = document.getElementById(`seg-${segId}`)
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
   const reset = () => setForks(DEFAULT_FORKS)
 
   const pendingCount = scenario.active.filter(s => s.status === 'pending').length
@@ -405,10 +466,16 @@ export default function CalendarBoard() {
         </div>
       </div>
 
-      {/* Timeline */}
-      <section className="bg-white border border-rule rounded-sm p-3">
-        <SectionTitle aside="hatched = pending · dashed = not chosen · click a dashed bar to choose it">Timeline</SectionTitle>
-        <Timeline segments={scenario.segments} onPick={pick} />
+      {/* Timeline + map */}
+      <section className="grid grid-cols-1 xl:grid-cols-[1fr_460px] gap-3">
+        <div className="bg-white border border-rule rounded-sm p-3 min-w-0">
+          <SectionTitle aside="hatched = pending · dashed = not chosen · click a dashed bar to choose it">Timeline</SectionTitle>
+          <Timeline segments={scenario.segments} onPick={pick} />
+        </div>
+        <div className="bg-white border border-rule rounded-sm p-3 min-w-0">
+          <SectionTitle aside="scroll to zoom · drag to pan · click a stop">Route</SectionTitle>
+          <RouteMap segments={scenario.segments} onSelect={jumpTo} />
+        </div>
       </section>
 
       {/* Decisions */}

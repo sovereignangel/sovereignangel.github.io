@@ -17,7 +17,7 @@
 
 export type Status = 'fixed' | 'planned' | 'pending' | 'tbd'
 
-export type ForkId = 'birthday' | 'decDest' | 'maui' | 'nye' | 'afterAD' | 'winter' | 'summer'
+export type ForkId = 'decDest' | 'maui' | 'nye' | 'afterAD' | 'winter' | 'summer'
 
 export interface CostLine {
   label: string
@@ -28,6 +28,34 @@ export interface CostLine {
   perMonth?: boolean
   /** Include this line only when another fork is (or is not) set a certain way */
   when?: { fork: ForkId; is?: string; isNot?: string }
+}
+
+/** One day of a worked itinerary */
+export interface DayPlan {
+  date: string
+  where: string
+  move: string
+  work: string
+  play: string
+  lens: string
+}
+
+/** A place, read five ways: wind, body, thrift, the obvious sights, and the complexity-economics stop */
+export interface PlaceGuide {
+  place: string
+  kite: string
+  gym: string
+  vintage: string
+  top3: string
+  lens: string
+}
+
+/** A point on the map. `date` defaults to the segment start; stops sort by it across the scenario. */
+export interface Stop {
+  name: string
+  lat: number
+  lon: number
+  date?: string
 }
 
 export interface Segment {
@@ -52,6 +80,14 @@ export interface Segment {
   followsAfterAD?: boolean
   /** Dates are a placeholder, not a plan */
   datesSoft?: boolean
+  /** Day-by-day itinerary, when one has been worked out */
+  plan?: DayPlan[]
+  /** Per-place field notes */
+  guides?: PlaceGuide[]
+  /** Map points, in travel order */
+  stops?: Stop[]
+  /** Someone else's trip: drawn hollow and unconnected on the map */
+  notMine?: boolean
 }
 
 export interface ForkOption {
@@ -95,17 +131,6 @@ const NYC_LINES: CostLine[] = [
 // ── Forks: the decisions still open ─────────────────────────────────────
 
 export const FORKS: Fork[] = [
-  {
-    id: 'birthday',
-    label: "Mom's 60th",
-    window: 'Oct 23 – 27',
-    question: 'Panama or LA?',
-    options: [
-      { id: 'panama', label: 'Panama', detail: 'a gift trip; her flight is the swing cost' },
-      { id: 'la', label: 'Los Angeles', detail: 'cheaper and simpler if family is there' },
-    ],
-    default: 'panama',
-  },
   {
     id: 'decDest',
     label: 'Nov 22 → Jan 3',
@@ -196,52 +221,44 @@ export const SEGMENTS: Segment[] = [
     place: 'Atlanta',
     status: 'fixed',
     lane: 1,
+    notMine: true,
+    stops: [{ name: 'Atlanta', lat: 33.75, lon: -84.39 }],
     summary: 'His trip, not a leg of yours. On the calendar so the week reads right; costed as zero.',
     notes: ['If you join him for any of it, add a leg here with its own lines.'],
     cost: [],
   },
 
-  // Oct 23 – 27 · Mom's 60th ------------------------------------------------
+  // Oct 23 – 27 · Mom's 60th in Panama --------------------------------------
   {
     id: 'birthday-panama',
     short: '60th · Panama',
     start: '2026-10-23',
     end: '2026-10-27',
     title: "Mom's 60th — Panama",
-    place: 'Panama City · Pacific coast or Bocas',
-    status: 'pending',
+    place: 'Panama City · a beach day on the Pacific side',
+    status: 'planned',
     lane: 0,
-    fork: { id: 'birthday', option: 'panama' },
-    summary: 'Five days around the 60th itself, which falls on Monday Oct 26.',
+    stops: [{ name: 'Panama City', lat: 8.98, lon: -79.52 }],
+    summary: 'Five days with Mom around the 60th, which falls on Monday Oct 26. "Say 23 – 27": the dates firm up when flights are booked.',
     notes: [
-      'Copa flies direct from Panama City to Guatemala City, San Pedro Sula, Managua and Belize City, so the Central America leg starts cleanly from here.',
+      "Mom's flight line assumes the US West Coast; adjust once her origin is set.",
+      'Copa flies direct from Panama City to Guatemala City on the morning of Oct 27, which is how the next leg starts.',
     ],
-    open: ['Panama or LA — this is the fork.', "Where Mom (and Grandma?) fly from; the flight line assumes the US West Coast."],
+    guides: [
+      {
+        place: 'Panama',
+        kite: 'Punta Chame, 1.5 h from the city, is a Dec – Apr spot; in late October it is a beach day with Mom, not a session.',
+        gym: 'Plenty in El Cangrejo and Costa del Este; the Cinta Costera for runs.',
+        vintage: 'A few thrift shops around Vía Argentina; otherwise the design stores in Casco.',
+        top3: 'The Canal at Miraflores or Agua Clara, Casco Viejo, the Biomuseo on the Causeway.',
+        lens: 'The 2023 – 24 Gatún drought cut Canal transits by a third and sent slot auctions into the millions: water as the slow variable behind global freight, your Lane II and the Aquarium in one place. The Biomuseo tells the isthmus closing as a phase transition; Gardi Sugdub’s 2024 relocation is climate displacement inside the Guna economy.',
+      },
+    ],
     cost: [
       { label: 'Your flight NYC → Panama City, one way', low: 250, high: 450 },
       { label: "Mom's flight, round trip", low: 400, high: 800, note: 'adjust for her home airport' },
       { label: 'Lodging, 4 nights, two rooms', low: 600, high: 1400 },
       { label: 'Birthday dinner, days out, transfers', low: 500, high: 1000 },
-    ],
-  },
-  {
-    id: 'birthday-la',
-    short: '60th · LA',
-    start: '2026-10-23',
-    end: '2026-10-27',
-    title: "Mom's 60th — Los Angeles",
-    place: 'Los Angeles',
-    status: 'pending',
-    lane: 0,
-    fork: { id: 'birthday', option: 'la' },
-    summary: 'Five days around the 60th itself, which falls on Monday Oct 26.',
-    notes: ['Nonstops from LAX to Guatemala City and Belize City for the leg after.'],
-    open: ['Panama or LA — this is the fork.', 'Staying with family or a hotel; the lodging line spans both.'],
-    cost: [
-      { label: 'Your flight NYC → LAX, one way', low: 200, high: 400 },
-      { label: 'Lodging, 4 nights', low: 0, high: 800, note: 'family, or a hotel' },
-      { label: 'Car', low: 150, high: 300 },
-      { label: 'Birthday dinner, celebration, days out', low: 500, high: 1200 },
     ],
   },
 
@@ -252,25 +269,129 @@ export const SEGMENTS: Segment[] = [
     start: '2026-10-27',
     end: '2026-11-02',
     title: 'Central America',
-    place: 'Belize · Guatemala · Honduras · Nicaragua, ideally',
+    place: 'Guatemala · Honduras · Belize · Nicaragua',
     status: 'pending',
     lane: 0,
-    summary: 'Six nights between the birthday and Costa Rica. Four countries is the wish; two is the realistic count.',
+    stops: [
+      { name: 'Antigua', lat: 14.56, lon: -90.73, date: '2026-10-27' },
+      { name: 'Copán', lat: 14.84, lon: -89.14, date: '2026-10-28' },
+      { name: 'Caye Caulker', lat: 17.74, lon: -88.03, date: '2026-10-29' },
+      { name: 'Granada', lat: 11.93, lon: -85.96, date: '2026-10-31' },
+    ],
+    summary:
+      'Six nights, four countries, a work block every morning. Plan A below does all four with one night each in Guatemala and Honduras; Plan B drops Belize for Lake Atitlán and the Chichicastenango market. Late October is the tail of the wet season, so the kite is a bonus, not the spine.',
     notes: [
-      'Land borders eat half a day each. Regional flights (TAG, Avianca, Copa) cost more and give the days back.',
-      'Pairings that work in six nights: Guatemala (Antigua, Atitlán) + Belize (cayes), or Nicaragua (Granada, Ometepe) + the Honduran Bay Islands for diving.',
-      'Managua and San Pedro Sula both have short direct flights into San José for Nov 2.',
+      'Wind: the Papagayo and trade winds set in during November. Best odds in this window are Lake Nicaragua at Granada, whose season opens in November, and Lake Atitlán’s afternoon xocomil. Belize, Roatán and Punta Chame are Dec – Apr spots. Bring harness and bar and rent at Granada or Atitlán, or carry one 12 m and a twin-tip and pay a bag fee on four flights.',
+      'Working: Central America is UTC−6. New York is two hours ahead until the clocks fall back on Nov 1, then one. A 7 – 11 am block lands 9 am – 1 pm in New York. Coworking or a Selina exists in Antigua, Caye Caulker and Granada; Copán is hotel wifi.',
+      'Body: running shoes cover Antigua’s hills, the Copán road, the length of Caye Caulker and Granada’s malecón; the lake and the Split cover swimming. Gym stops are Antigua and Granada.',
+      'Hurricane season runs to Nov 30 on the Caribbean side; keep the Belize nights refundable.',
+      'Plan B: Oct 27 Antigua · Oct 28 Atitlán with a kite try · Oct 29 Chichicastenango’s Thursday market, back to Antigua · Oct 30 Copán · Oct 31 – Nov 1 Granada · Nov 2 to San José. Belize then gets its own trip in kite season, paired with Tikal.',
     ],
     open: [
-      'Which two (or stretch the window). Four countries in six nights is one to two nights each.',
-      'Ideally is your word — this leg is soft until the pair is picked.',
+      'Plan A (all four) or Plan B (drop Belize for Atitlán and the Chichi market)?',
+      'Tropic Air San Pedro Sula → Belize City flies on set days; confirm Oct 29 before booking the Copán shuttle.',
+    ],
+    plan: [
+      {
+        date: '2026-10-27',
+        where: 'Panama City → Antigua, Guatemala',
+        move: 'Copa PTY → GUA early (2 h 15), shuttle to Antigua (1 h)',
+        work: 'Afternoon block from Impact Hub or Selina',
+        play: 'Dusk run up Cerro de la Cruz; paca hunt on 5a Calle',
+        lens: 'A capital moved by the 1773 earthquake: the hard reset of a complex city',
+      },
+      {
+        date: '2026-10-28',
+        where: 'Antigua → Copán Ruinas, Honduras',
+        move: 'Shuttle 5 – 6 h with the border; dawn departure',
+        work: 'Morning offline in the shuttle, afternoon from the hotel',
+        play: 'Ruins at 4 pm golden hour; the hot springs if there is time',
+        lens: 'Copán is the textbook Classic Maya collapse: drought, elite overbuild, a phase transition',
+      },
+      {
+        date: '2026-10-29',
+        where: 'Copán → San Pedro Sula → Caye Caulker, Belize',
+        move: 'Shuttle to SAP (3 h), Tropic Air SAP → BZE (1 h), water taxi 45 min, last one about 5:30 pm',
+        work: 'Early block before the shuttle; email from the airport',
+        play: 'Sunset swim at the Split',
+        lens: 'San Pedro Sula is the paca hub: US second-hand clothing bales as a supply chain',
+      },
+      {
+        date: '2026-10-30',
+        where: 'Caye Caulker',
+        move: 'None',
+        work: 'Full morning block',
+        play: 'Kite at Kitexplorer if the trades blow, Hol Chan snorkel if not; run the island end to end',
+        lens: 'The reef as a commons and the 2021 blue bond: a sovereign balance sheet built on a reef’s valuation',
+      },
+      {
+        date: '2026-10-31',
+        where: 'Caye Caulker → Managua → Granada, Nicaragua',
+        move: 'Water taxi, Avianca BZE → SAL → MGA (about 5 h), shuttle to Granada (1 h)',
+        work: 'Block from the Belize City airport and in the air',
+        play: 'Evening on Calle La Calzada',
+        lens: 'The canal that never was: the 2013 HKND concession moved land prices on a promise',
+      },
+      {
+        date: '2026-11-01',
+        where: 'Granada · Lake Nicaragua',
+        move: 'None. US clocks fall back; New York is now one hour ahead',
+        work: 'Block 7 – 11 am',
+        play: 'Kite at Asese on the lake, the season’s first Papagayo days; Masaya volcano lava lake at night',
+        lens: 'Lake Cocibolca as the water commons behind the canal fight; remittances near a fifth of GDP',
+      },
+      {
+        date: '2026-11-02',
+        where: 'Granada → Managua → San José',
+        move: 'Shuttle 1 h, Avianca MGA → SJO (1 h 15)',
+        work: 'Afternoon block in Costa Rica',
+        play: 'Rest',
+        lens: 'Bahía Salinas opens for kite in November; the fronts you chased start here',
+      },
+    ],
+    guides: [
+      {
+        place: 'Guatemala',
+        kite: 'Lake Atitlán off Panajachel: afternoon xocomil, a small scene, rentals to confirm ahead.',
+        gym: 'CrossFit boxes and gyms in Antigua; hill runs to Cerro de la Cruz.',
+        vintage: 'Pacas on and around 5a Calle in Antigua; the Chichicastenango market on Thursdays and Sundays.',
+        top3: 'Antigua, Lake Atitlán, Tikal.',
+        lens: 'Remittances near a fifth of GDP; Atitlán’s 2009 cyanobacteria bloom as a commons tipping point; the Maya collapse at Tikal.',
+      },
+      {
+        place: 'Honduras',
+        kite: 'Utila and Roatán’s Camp Bay, Dec – Apr; nothing near Copán.',
+        gym: 'Copán is a run-to-the-ruins town; Roatán’s West End has gyms.',
+        vintage: 'San Pedro Sula pacas, the regional hub for US second-hand bales.',
+        top3: 'Copán, Roatán, Utila (Lake Yojoa if staying inland).',
+        lens: 'Próspera on Roatán: a live charter-city experiment in competing rule sets. Copán for the collapse itself.',
+      },
+      {
+        place: 'Belize',
+        kite: 'Caye Caulker (Kitexplorer) and Ambergris, Nov – Apr; late October is light.',
+        gym: 'None on the caye; swim and run the island. Gyms in Belize City.',
+        vintage: 'Thin; not a paca country.',
+        top3: 'Caye Caulker and the reef, the Blue Hole by flyover, the ATM cave or Xunantunich.',
+        lens: 'The 2021 debt-for-nature swap: a reef priced into a sovereign balance sheet, your valuation-conventions lane in miniature.',
+      },
+      {
+        place: 'Nicaragua',
+        kite: 'Lake Nicaragua at Asese near Granada: Papagayo trades Nov – Apr, flat water, rentals on site. Best odds of the trip.',
+        gym: 'Local gyms near Parque Central; lakefront runs on the malecón.',
+        vintage: 'Pacas in the Granada market; skip Managua’s Mercado Oriental.',
+        top3: 'Granada, Ometepe, Masaya volcano at night (or León and Cerro Negro).',
+        lens: 'The HKND canal concession as a performative convention; post-2018 remittance dependence.',
+      },
     ],
     cost: [
-      { label: 'Flight in from Panama or LA', low: 200, high: 500 },
-      { label: 'Between countries: shuttles, one or two regional flights', low: 150, high: 450 },
+      { label: 'Copa Panama City → Guatemala City', low: 150, high: 280 },
+      { label: 'Tropic Air San Pedro Sula → Belize City', low: 180, high: 280 },
+      { label: 'Avianca Belize City → Managua via San Salvador', low: 250, high: 420 },
+      { label: 'Avianca Managua → San José', low: 120, high: 250 },
+      { label: 'Shuttles, water taxis, border fees', low: 150, high: 250 },
       { label: 'Lodging, 6 nights', low: 360, high: 900 },
-      { label: 'Food, guides, diving or the lake', low: 300, high: 700 },
-      { label: 'Flight to San José', low: 120, high: 300 },
+      { label: 'Food, entries, snorkel, Masaya', low: 300, high: 600 },
+      { label: 'Kite rentals, or one checked kite bag on four flights', low: 150, high: 400 },
     ],
   },
 
@@ -284,6 +405,7 @@ export const SEGMENTS: Segment[] = [
     place: 'Pacific coast · Arenal · Caribbean side',
     status: 'planned',
     lane: 0,
+    stops: [{ name: 'Costa Rica', lat: 9.93, lon: -84.08 }],
     summary: 'Two weeks. Decided in intent; nothing booked.',
     notes: [
       'Early November is the tail of the green season on the Pacific side; the Caribbean side (Puerto Viejo) is at its driest Sep–Nov.',
@@ -307,6 +429,7 @@ export const SEGMENTS: Segment[] = [
     place: 'Rio, São Paulo, Floripa, or Ceará for the wind',
     status: 'planned',
     lane: 0,
+    stops: [{ name: 'São Paulo', lat: -23.55, lon: -46.63 }],
     summary: 'One week as listed. The December fork decides whether it turns into six more.',
     notes: [
       'Ceará (Cumbuco, Jericoacoara, Preá) is in full wind season through January — the strongest case for staying.',
@@ -330,6 +453,7 @@ export const SEGMENTS: Segment[] = [
     place: 'A monthly rental — Ceará coast or Rio',
     status: 'pending',
     lane: 0,
+    stops: [{ name: 'Ceará coast', lat: -3.63, lon: -38.73 }],
     fork: { id: 'decDest', option: 'brazil' },
     summary: 'Six weeks through New Year, flying to Abu Dhabi from São Paulo on Jan 2.',
     notes: [
@@ -353,6 +477,7 @@ export const SEGMENTS: Segment[] = [
     place: 'New York',
     status: 'pending',
     lane: 0,
+    stops: [{ name: 'New York', lat: 40.71, lon: -74.01 }],
     fork: { id: 'decDest', option: 'nyc' },
     summary: 'Home for six weeks; Maui is a direct flight from here.',
     open: ['The "otherwise" — chosen only if Brazil is not extended.'],
@@ -369,6 +494,7 @@ export const SEGMENTS: Segment[] = [
     place: 'Maui',
     status: 'pending',
     lane: 1,
+    stops: [{ name: 'Maui', lat: 20.8, lon: -156.33 }],
     fork: { id: 'maui', option: 'solo' },
     summary: 'Christmas with family, then straight on toward Abu Dhabi.',
     notes: [
@@ -390,6 +516,7 @@ export const SEGMENTS: Segment[] = [
     place: 'Maui',
     status: 'pending',
     lane: 1,
+    stops: [{ name: 'Maui', lat: 20.8, lon: -156.33 }],
     fork: { id: 'maui', option: 'family' },
     summary: 'Christmas with family, bringing Mom and Grandma over.',
     notes: [
@@ -415,6 +542,7 @@ export const SEGMENTS: Segment[] = [
     place: 'Dubai · or Muscat / Ras Al Khaimah for something quieter',
     status: 'pending',
     lane: 1,
+    stops: [{ name: 'Dubai', lat: 25.2, lon: 55.27 }],
     fork: { id: 'nye', option: 'gulf' },
     summary: 'Fly in around Dec 28, see the year out on the Gulf, and roll into Abu Dhabi on Jan 2 or 3 by road.',
     notes: [
@@ -440,6 +568,7 @@ export const SEGMENTS: Segment[] = [
     place: 'Copacabana · or the Ceará coast',
     status: 'pending',
     lane: 1,
+    stops: [{ name: 'Rio', lat: -22.91, lon: -43.17 }],
     fork: { id: 'nye', option: 'brazil' },
     summary: 'Réveillon on Copacabana, in white, then São Paulo → Abu Dhabi on Jan 2.',
     notes: [
@@ -466,6 +595,7 @@ export const SEGMENTS: Segment[] = [
     place: 'Abu Dhabi',
     status: 'fixed',
     lane: 0,
+    stops: [{ name: 'Abu Dhabi', lat: 24.45, lon: 54.38 }],
     summary: 'Reimagining Economics winter school. The Lane V paper and lightning talk are due on arrival.',
     notes: ['The flight in is costed here because its origin depends on the December and NYE forks; with NYE in the Gulf it is a road transfer, costed there.'],
     open: [
@@ -489,6 +619,10 @@ export const SEGMENTS: Segment[] = [
     place: 'Muscat · Jebel Shams or Wahiba · Doha',
     status: 'pending',
     lane: 0,
+    stops: [
+      { name: 'Muscat', lat: 23.59, lon: 58.41, date: '2027-01-15' },
+      { name: 'Doha', lat: 25.29, lon: 51.53, date: '2027-01-20' },
+    ],
     fork: { id: 'afterAD', option: 'gulf1' },
     summary: 'One week fits two countries well. Five days in Oman, two in Doha, fly home from there.',
     notes: [
@@ -513,6 +647,14 @@ export const SEGMENTS: Segment[] = [
     place: 'Oman · Qatar · Bahrain · Saudi Arabia · Kuwait',
     status: 'pending',
     lane: 0,
+    stops: [
+      { name: 'Muscat', lat: 23.59, lon: 58.41, date: '2027-01-15' },
+      { name: 'AlUla', lat: 26.61, lon: 37.92, date: '2027-01-20' },
+      { name: 'Riyadh', lat: 24.71, lon: 46.68, date: '2027-01-23' },
+      { name: 'Manama', lat: 26.22, lon: 50.59, date: '2027-01-25' },
+      { name: 'Kuwait City', lat: 29.38, lon: 47.98, date: '2027-01-26' },
+      { name: 'Doha', lat: 25.29, lon: 51.53, date: '2027-01-27' },
+    ],
     fork: { id: 'afterAD', option: 'gulf2' },
     summary: 'Two weeks around the peninsula. Yemen is off the list, per Aidas, which frees the loop from the Socotra flight schedule.',
     notes: [
@@ -538,6 +680,7 @@ export const SEGMENTS: Segment[] = [
     place: 'Cambridge, MA',
     status: 'pending',
     lane: 0,
+    stops: [{ name: 'Cambridge, MA', lat: 42.37, lon: -71.11 }],
     fork: { id: 'afterAD', option: 'iap' },
     summary: 'IAP 2027 officially runs Mon Jan 4 – Fri Jan 29. Arriving Jan 16 is the second half.',
     notes: ['Many IAP activities are open to the public; for-credit subjects are not. The hook decides whether two weeks is worth the flight.'],
@@ -557,6 +700,11 @@ export const SEGMENTS: Segment[] = [
     place: 'Oman · Qatar → Cambridge, MA',
     status: 'pending',
     lane: 0,
+    stops: [
+      { name: 'Muscat', lat: 23.59, lon: 58.41, date: '2027-01-15' },
+      { name: 'Doha', lat: 25.29, lon: 51.53, date: '2027-01-20' },
+      { name: 'Cambridge, MA', lat: 42.37, lon: -71.11, date: '2027-01-23' },
+    ],
     fork: { id: 'afterAD', option: 'gulfIap' },
     summary: 'Both, thinly: Oman and Doha for a week, then fly Doha → Boston for the final week of IAP.',
     open: ['Same hook question as IAP — one week in Cambridge needs a reason.'],
@@ -580,6 +728,7 @@ export const SEGMENTS: Segment[] = [
     place: 'New York',
     status: 'pending',
     lane: 0,
+    stops: [{ name: 'New York', lat: 40.71, lon: -74.01 }],
     fork: { id: 'winter', option: 'nyc' },
     followsAfterAD: true,
     summary: 'Roughly twelve weeks. Start date follows whatever the January fork ends on.',
@@ -596,6 +745,7 @@ export const SEGMENTS: Segment[] = [
     place: 'San Juan · Condado or Dorado',
     status: 'pending',
     lane: 0,
+    stops: [{ name: 'San Juan', lat: 18.47, lon: -66.11 }],
     fork: { id: 'winter', option: 'pr' },
     followsAfterAD: true,
     summary: 'A San Juan base for the fundraise. Start date follows the January fork.',
@@ -624,6 +774,7 @@ export const SEGMENTS: Segment[] = [
     place: 'New York',
     status: 'planned',
     lane: 0,
+    stops: [{ name: 'New York', lat: 40.71, lon: -74.01 }],
     summary: 'April through June, as listed.',
     open: ['The Jul 4 departure assumes the summer fork; otherwise open-ended into July.'],
     cost: [...NYC_LINES],
@@ -639,6 +790,12 @@ export const SEGMENTS: Segment[] = [
     place: 'Palanga · Pollença · El Médano',
     status: 'pending',
     lane: 0,
+    stops: [
+      { name: 'Palanga', lat: 55.92, lon: 21.07, date: '2027-07-04' },
+      { name: 'Pollença', lat: 39.88, lon: 3.02, date: '2027-07-25' },
+      { name: 'El Médano', lat: 28.05, lon: -16.54, date: '2027-08-08' },
+      { name: 'Palanga', lat: 55.92, lon: 21.07, date: '2027-08-15' },
+    ],
     fork: { id: 'summer', option: 'lt' },
     summary: 'Two months on the Baltic with a week each on the islands.',
     notes: [
@@ -663,6 +820,10 @@ export const SEGMENTS: Segment[] = [
     place: 'Pollença · El Médano',
     status: 'pending',
     lane: 0,
+    stops: [
+      { name: 'Pollença', lat: 39.88, lon: 3.02, date: '2027-07-04' },
+      { name: 'El Médano', lat: 28.05, lon: -16.54, date: '2027-07-18' },
+    ],
     fork: { id: 'summer', option: 'islands' },
     summary: 'The islands without the Baltic: two weeks each, in peak season.',
     open: ['The fallback if Lithuania is off. Peak-season lodging is the swing cost.'],
@@ -681,6 +842,7 @@ export const SEGMENTS: Segment[] = [
     place: 'New York',
     status: 'pending',
     lane: 0,
+    stops: [{ name: 'New York', lat: 40.71, lon: -74.01 }],
     fork: { id: 'summer', option: 'islands' },
     summary: 'Back in the city for August if the summer is islands-only.',
     cost: [...NYC_LINES],
@@ -841,6 +1003,12 @@ export function optionCost(fork: ForkId, option: string, forks: ForkState): { lo
 // ── Formatting ──────────────────────────────────────────────────────────
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
+const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+
+export function weekday(iso: string): string {
+  return DAYS[(dayIndex(iso) + 4) % 7] // day 0 (1970-01-01) was a Thursday
+}
 
 export function fmtDate(iso: string, withYear = false): string {
   const [y, m, d] = iso.split('-').map(Number)
