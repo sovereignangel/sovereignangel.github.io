@@ -10,7 +10,8 @@ How they are used, in order:
 3. **Template 3 — Mobile macro wallpaper.** The whole trip on one phone lock screen.
 4. **Template 4 — Mobile day page.** One day in one city, hour by hour, as a lock screen.
 
-Block 0 is prepended to whichever template is in use. The method travels in Block 0, so any
+The operating instructions that govern how these get used live in
+[TRAVEL_LOGISTICS_SYSTEM_PROMPT.md](TRAVEL_LOGISTICS_SYSTEM_PROMPT.md). Block 0 is prepended to whichever template is in use. The method travels in Block 0, so any
 agent that gets it inherits the hard-won corrections (Modlin vs Chopin, Marymont vs West,
 cash-only gyms, 13:00-closing cafés) as rules rather than surprises.
 
