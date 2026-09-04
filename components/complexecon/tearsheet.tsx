@@ -10,6 +10,7 @@
 
 import { useEffect, useState, type ReactNode } from 'react'
 import Link from 'next/link'
+import { MEMOS } from '@/lib/complexecon/memos'
 
 export function Chevron({ open }: { open: boolean }) {
   return (
@@ -176,9 +177,10 @@ const TABS: { id: SheetTab; label: string; href: string }[] = [
   { id: 'pathway', label: 'Pathway', href: '/complexecon' },
   { id: 'research', label: 'Research', href: '/complexecon/research' },
   { id: 'strategy', label: 'Strategy', href: '/complexecon/strategy' },
+  { id: 'memos', label: 'Memos', href: '/complexecon/memos' },
 ]
 
-export type SheetTab = 'roadmap' | 'pathway' | 'research' | 'strategy'
+export type SheetTab = 'roadmap' | 'pathway' | 'research' | 'strategy' | 'memos'
 
 export function Masthead({
   kicker,
@@ -200,8 +202,51 @@ export function Masthead({
       <div className="text-right">
         <div className="font-mono text-[12px] uppercase tracking-[1.5px] text-ink-muted">{meta}</div>
         <nav className="mt-1 flex justify-end gap-3">
-          {TABS.map(t =>
-            t.id === active ? (
+          {TABS.map(t => {
+            if (t.id === 'memos') {
+              return (
+                <span key={t.id} className="group relative">
+                  {t.id === active ? (
+                    <span className="border-b-2 border-burgundy font-serif text-[19px] font-semibold text-burgundy">
+                      {t.label}
+                    </span>
+                  ) : (
+                    <Link
+                      href={t.href}
+                      className="font-serif text-[19px] text-ink-muted transition-colors hover:text-ink"
+                    >
+                      {t.label}
+                    </Link>
+                  )}
+                  <span className="absolute right-0 top-full z-20 hidden w-[360px] border border-rule bg-white pt-1 text-left shadow-sm group-focus-within:block group-hover:block">
+                    {[...MEMOS]
+                      .sort((a, b) => b.date.localeCompare(a.date))
+                      .slice(0, 6)
+                      .map(m => (
+                        <Link
+                          key={m.slug}
+                          href={`/complexecon/memos/${m.slug}`}
+                          className="block border-b border-rule-light px-3 py-1.5 hover:bg-paper"
+                        >
+                          <span className="block font-serif text-[16px] font-semibold leading-snug text-ink">
+                            {m.title}
+                          </span>
+                          <span className="font-mono text-[11px] uppercase tracking-[1px] text-ink-muted">
+                            {m.date}
+                          </span>
+                        </Link>
+                      ))}
+                    <Link
+                      href="/complexecon/memos"
+                      className="block px-3 py-1.5 font-mono text-[12px] uppercase tracking-[1px] text-burgundy hover:bg-paper"
+                    >
+                      All memos · search →
+                    </Link>
+                  </span>
+                </span>
+              )
+            }
+            return t.id === active ? (
               <span
                 key={t.id}
                 className="border-b-2 border-burgundy font-serif text-[19px] font-semibold text-burgundy"
@@ -216,8 +261,8 @@ export function Masthead({
               >
                 {t.label}
               </Link>
-            ),
-          )}
+            )
+          })}
         </nav>
       </div>
     </header>
