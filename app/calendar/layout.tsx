@@ -3,6 +3,7 @@
 import { AuthProvider, useAuth } from '@/components/auth/AuthProvider'
 import SiteFooter from '@/components/SiteFooter'
 import { DEPARTURE, dayIndex, fmtDate, todayLocal } from '@/lib/calendar/plan'
+import { CALENDAR_VIEWERS } from '@/lib/calendar/access'
 
 const BACKDROP = 'linear-gradient(180deg, #f5f1ea 0%, #faf8f4 360px)'
 
@@ -69,10 +70,11 @@ function CalendarLayoutInner({ children }: { children: React.ReactNode }) {
             </span>
           )}
           <span className="hidden md:inline text-[11px] text-ink-muted">travel, decisions, costs</span>
+          <span className="ml-auto hidden md:inline font-mono text-[10px] text-ink-faint">{user.email}</span>
           <button
             type="button"
             onClick={signOut}
-            className="ml-auto font-serif text-[10px] font-medium px-2 py-0.5 rounded-sm border border-rule text-ink-muted hover:border-ink-faint"
+            className="ml-auto md:ml-0 font-serif text-[10px] font-medium px-2 py-0.5 rounded-sm border border-rule text-ink-muted hover:border-ink-faint"
           >
             Sign out
           </button>
@@ -86,7 +88,7 @@ function CalendarLayoutInner({ children }: { children: React.ReactNode }) {
 
 export default function CalendarLayout({ children }: { children: React.ReactNode }) {
   return (
-    <AuthProvider>
+    <AuthProvider allowEmails={CALENDAR_VIEWERS}>
       <CalendarLayoutInner>{children}</CalendarLayoutInner>
     </AuthProvider>
   )

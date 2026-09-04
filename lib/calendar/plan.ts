@@ -159,7 +159,7 @@ export const FORKS: Fork[] = [
     question: 'Gulf tour, MIT IAP, or a week of each?',
     options: [
       { id: 'gulf1', label: 'Gulf, one week', detail: 'Oman + Qatar' },
-      { id: 'gulf3', label: 'Gulf loop + Socotra', detail: 'three weeks; adds Saudi, Bahrain, Kuwait' },
+      { id: 'gulf2', label: 'Gulf loop, two weeks', detail: 'adds Saudi, Bahrain, Kuwait' },
       { id: 'iap', label: 'MIT IAP', detail: 'Jan 16 – 29, the second half' },
       { id: 'gulfIap', label: 'Gulf week, then IAP', detail: "IAP's last week only" },
     ],
@@ -197,6 +197,21 @@ export const DEFAULT_FORKS: ForkState = FORKS.reduce((acc, f) => {
 // ── Segments ────────────────────────────────────────────────────────────
 
 export const SEGMENTS: Segment[] = [
+  // Oct 5 – 8 · Aidas in Atlanta ---------------------------------------------
+  {
+    id: 'aidas-atlanta',
+    short: 'Aidas · ATL',
+    start: '2026-10-05',
+    end: '2026-10-08',
+    title: 'Aidas — work trip, Atlanta',
+    place: 'Atlanta',
+    status: 'fixed',
+    lane: 1,
+    summary: 'His trip, not a leg of yours. On the calendar so the week reads right; costed as zero.',
+    notes: ['If you join him for any of it, add a leg here with its own lines.'],
+    cost: [],
+  },
+
   // Oct 23 – 27 · Mom's 60th ------------------------------------------------
   {
     id: 'birthday-panama',
@@ -511,9 +526,9 @@ export const SEGMENTS: Segment[] = [
     summary: 'One week fits two countries well. Five days in Oman, two in Doha, fly home from there.',
     notes: [
       'US passport: Oman e-visa (cheap, online); Qatar is visa-free for 30 days.',
-      'Bahrain and Kuwait are one- to two-day city stops; Saudi wants a week; Socotra is a week on its own. None of those fit in seven days.',
+      'Bahrain and Kuwait are one- to two-day city stops and Saudi wants most of a week; none of those fit in seven days.',
     ],
-    open: ['Can I travel the Gulf after — yes for two countries in a week; the six-country list needs the three-week option.'],
+    open: ['Can I travel the Gulf after — yes for two countries in a week; the five-country list needs the two-week option.'],
     cost: [
       { label: 'Regional flights AUH → MCT → DOH', low: 150, high: 400 },
       { label: 'Lodging, 7 nights', low: 500, high: 1100 },
@@ -523,29 +538,27 @@ export const SEGMENTS: Segment[] = [
     ],
   },
   {
-    id: 'gulf-3wk',
-    short: 'Gulf + Socotra',
+    id: 'gulf-2wk',
+    short: 'Gulf loop',
     start: '2027-01-15',
-    end: '2027-02-05',
-    title: 'Gulf loop + Socotra',
-    place: 'Oman · Qatar · Bahrain · Saudi Arabia · Kuwait · Socotra',
+    end: '2027-01-29',
+    title: 'Gulf loop — five countries',
+    place: 'Oman · Qatar · Bahrain · Saudi Arabia · Kuwait',
     status: 'pending',
     lane: 0,
-    fork: { id: 'afterAD', option: 'gulf3' },
-    summary: 'The whole list, three weeks. Socotra is a fixed seven-day tour that sets the dates for everything around it.',
+    fork: { id: 'afterAD', option: 'gulf2' },
+    summary: 'Two weeks around the peninsula. Yemen is off the list, per Aidas, which frees the loop from the Socotra flight schedule.',
     notes: [
-      'Socotra: the Abu Dhabi charter was suspended in January 2026. The current route is Jeddah ⇄ Socotra, roughly weekly, bookable only through a tour operator. Mainland Yemen is out (US State Dept Level 4; Socotra shares the advisory, but tours run).',
-      'Saudi e-visa for US passports is online (~$130 with insurance); Bahrain is a causeway drive from the Eastern Province; Kuwait is a day or two.',
-      'Pushes the winter block start from Jan 23 to about Feb 5.',
+      'A shape that works: Oman five days (Muscat, Jebel Shams or Wahiba), Saudi five (AlUla, Riyadh), Doha two, Bahrain one by the causeway from the Eastern Province, Kuwait one.',
+      'US passport: Oman e-visa; Qatar visa-free; Bahrain e-visa or on arrival; Saudi e-visa online (~$130 with insurance); Kuwait e-visa.',
+      'Pushes the winter block start from Jan 23 to about Jan 29.',
     ],
-    open: ['Is Socotra worth a week? It fixes the loop. Without it, two weeks covers the five mainland countries.', 'The exact Jeddah ⇄ Socotra dates for January 2027 — ask an operator now; seats are few.'],
+    open: ['Is two weeks in the Gulf worth a week of the winter block? Kuwait and Bahrain are the first to cut.'],
     cost: [
-      { label: 'Regional flights around the loop', low: 500, high: 1000 },
-      { label: 'Socotra tour, 7 days, land', low: 1500, high: 2500 },
-      { label: 'Jeddah ⇄ Socotra flight', low: 900, high: 1200 },
-      { label: 'Lodging elsewhere, 14 nights', low: 1000, high: 2400 },
-      { label: 'Food, tours', low: 800, high: 1600 },
-      { label: 'Visas, Saudi, Bahrain, Kuwait, Oman, Yemen via the tour', low: 300, high: 450 },
+      { label: 'Regional flights around the loop', low: 400, high: 800 },
+      { label: 'Lodging, 14 nights', low: 1000, high: 2400 },
+      { label: 'Food, tours, AlUla', low: 800, high: 1600 },
+      { label: 'Visas: Saudi, Bahrain, Kuwait, Oman', low: 200, high: 300 },
       { label: 'Flight home', low: 500, high: 1000 },
     ],
   },
@@ -845,8 +858,8 @@ export function resolve(forks: ForkState): Scenario {
   if (forks.nye === 'brazil' && forks.decDest === 'nyc') {
     warnings.push('NYC → Rio for NYE, then São Paulo → Abu Dhabi: two long-hauls inside a week.')
   }
-  if (forks.afterAD === 'gulf3') {
-    warnings.push('The three-week Gulf loop runs to about Feb 5, so the winter block starts two weeks later than Jan 23.')
+  if (forks.afterAD === 'gulf2') {
+    warnings.push('The two-week Gulf loop runs to about Jan 29, so the winter block starts a week later than Jan 23.')
   }
   if (forks.afterAD === 'iap' || forks.afterAD === 'gulfIap') {
     warnings.push('IAP officially runs Jan 4 – 29. Arriving mid-month is the second half, and the MIT hook is still an open question.')
