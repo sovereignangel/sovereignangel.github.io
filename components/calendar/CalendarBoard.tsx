@@ -27,6 +27,7 @@ import Decisions from './Decisions'
 import RouteMap from './RouteMap'
 
 const STORAGE_KEY = 'calendar-plan-v1'
+const ROUTE_KEY = 'calendar-route-open'
 
 // ── Status styling ──────────────────────────────────────────────────────
 // Pending is hatched everywhere it appears so an open decision never reads
@@ -402,6 +403,7 @@ function OpenQuestions({ active }: { active: ResolvedSegment[] }) {
 export default function CalendarBoard() {
   const [forks, setForks] = useState<ForkState>(DEFAULT_FORKS)
   const [loaded, setLoaded] = useState(false)
+  const [routeOpen, setRouteOpen] = useState(true)
 
   useEffect(() => {
     try {
@@ -418,8 +420,24 @@ export default function CalendarBoard() {
     } catch {
       // storage unavailable — defaults stand
     }
+    try {
+      if (localStorage.getItem(ROUTE_KEY) === 'closed') setRouteOpen(false)
+    } catch {
+      // ignore
+    }
     setLoaded(true)
   }, [])
+
+  const toggleRoute = () => {
+    setRouteOpen(open => {
+      try {
+        localStorage.setItem(ROUTE_KEY, open ? 'closed' : 'open')
+      } catch {
+        // ignore
+      }
+      return !open
+    })
+  }
 
   useEffect(() => {
     if (!loaded) return
@@ -466,16 +484,41 @@ export default function CalendarBoard() {
         </div>
       </div>
 
-      {/* Timeline + map */}
-      <section className="grid grid-cols-1 xl:grid-cols-[1fr_460px] gap-3">
+      {/* Timeline + map. The map folds into a slim strip on the right so the timeline can take the width. */}
+      <section className={`grid grid-cols-1 gap-3 ${routeOpen ? 'xl:grid-cols-[1fr_460px]' : 'xl:grid-cols-[1fr_40px]'}`}>
         <div className="bg-white border border-rule rounded-sm p-3 min-w-0">
           <SectionTitle aside="hatched = pending · dashed = not chosen · click a dashed bar to choose it">Timeline</SectionTitle>
           <Timeline segments={scenario.segments} onPick={pick} />
         </div>
-        <div className="bg-white border border-rule rounded-sm p-3 min-w-0">
-          <SectionTitle aside="scroll to zoom · drag to pan · click a stop">Route</SectionTitle>
-          <RouteMap segments={scenario.segments} onSelect={jumpTo} />
-        </div>
+        {routeOpen ? (
+          <div className="bg-white border border-rule rounded-sm p-3 min-w-0">
+            <div className="flex items-baseline justify-between mb-2 pb-1.5 border-b-2 border-rule">
+              <h2 className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy">Route</h2>
+              <span className="flex items-center gap-2">
+                <span className="hidden sm:block text-[10px] text-ink-muted">scroll to zoom · drag to pan · click a stop</span>
+                <button
+                  type="button"
+                  onClick={toggleRoute}
+                  title="Collapse the route"
+                  className="font-mono text-[10px] px-1.5 py-0.5 rounded-sm border border-rule text-ink-muted hover:border-burgundy hover:text-burgundy"
+                >
+                  ›
+                </button>
+              </span>
+            </div>
+            <RouteMap segments={scenario.segments} onSelect={jumpTo} />
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={toggleRoute}
+            title="Show the route"
+            className="bg-white border border-rule rounded-sm text-burgundy hover:bg-paper transition-colors flex items-center justify-center gap-2 xl:flex-col xl:gap-3 py-2 xl:py-3"
+          >
+            <span className="font-mono text-[10px]">‹</span>
+            <span className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] xl:[writing-mode:vertical-rl]">Route</span>
+          </button>
+        )}
       </section>
 
       {/* Decisions */}

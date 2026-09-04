@@ -600,11 +600,11 @@ export const SEGMENTS: Segment[] = [
     notes: ['The flight in is costed here because its origin depends on the December and NYE forks; with NYE in the Gulf it is a road transfer, costed there.'],
     open: [
       'End date: your list says Jan 15; the roadmap has the room running Jan 3 – 17. Verify.',
-      'Does the school cover lodging and meals? The lodging line runs from zero (covered) to a full twelve nights.',
+      'Lodging is covered by the program, you believe. Confirm, and whether meals are too; food is costed as if not.',
     ],
     cost: [
       { label: 'Flight in, one way', low: 700, high: 1900, note: 'NYC 700–1,300; São Paulo 1,000–1,600; Maui 1,200–1,900', when: { fork: 'nye', isNot: 'gulf' } },
-      { label: 'Lodging, 12 nights', low: 0, high: 2400, note: 'zero if the program covers it' },
+      { label: 'Lodging, 12 nights', low: 0, high: 0, note: 'covered by the program' },
       { label: 'Food, transport', low: 400, high: 700 },
     ],
   },
