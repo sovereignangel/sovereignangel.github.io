@@ -22,6 +22,7 @@ import {
   type ResolvedSegment,
   type Status,
 } from '@/lib/calendar/plan'
+import Decisions from './Decisions'
 
 const STORAGE_KEY = 'calendar-plan-v1'
 
@@ -57,7 +58,7 @@ function SectionTitle({ children, aside }: { children: React.ReactNode; aside?: 
   return (
     <div className="flex items-baseline justify-between mb-2 pb-1.5 border-b-2 border-rule">
       <h2 className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy">{children}</h2>
-      {aside && <span className="text-[10px] text-ink-muted">{aside}</span>}
+      {aside && <span className="hidden sm:block text-[10px] text-ink-muted text-right">{aside}</span>}
     </div>
   )
 }
@@ -182,66 +183,6 @@ function Timeline({ segments, onPick }: { segments: ResolvedSegment[]; onPick: (
   )
 }
 
-// ── Decisions ───────────────────────────────────────────────────────────
-
-function optionSubtotal(id: ForkId, option: string, forks: ForkState, leaseHeld: boolean) {
-  const s = resolve({ ...forks, [id]: option }, leaseHeld)
-  const own = s.segments.filter(seg => seg.fork?.id === id && seg.fork.option === option)
-  return {
-    low: own.reduce((a, x) => a + x.low, 0),
-    high: own.reduce((a, x) => a + x.high, 0),
-    total: { low: s.low, high: s.high },
-  }
-}
-
-function Decisions({ forks, leaseHeld, onPick }: {
-  forks: ForkState
-  leaseHeld: boolean
-  onPick: (id: ForkId, option: string) => void
-}) {
-  return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-      {FORKS.map(f => (
-        <div key={f.id} className="border border-rule rounded-sm p-3 bg-white">
-          <div className="flex items-baseline justify-between gap-2 mb-1">
-            <div className="font-serif text-[14px] font-semibold text-ink">{f.label}</div>
-            <div className="font-mono text-[9px] uppercase tracking-[0.5px] text-ink-muted">{f.window}</div>
-          </div>
-          <div className="text-[11px] text-ink-muted mb-2">{f.question}</div>
-          <div className="flex flex-col gap-1">
-            {f.options.map(o => {
-              const on = forks[f.id] === o.id
-              const c = optionSubtotal(f.id, o.id, forks, leaseHeld)
-              return (
-                <button
-                  key={o.id}
-                  type="button"
-                  onClick={() => onPick(f.id, o.id)}
-                  className={`flex items-center justify-between gap-2 text-left px-2 py-1.5 rounded-sm border transition-colors ${
-                    on
-                      ? 'bg-burgundy text-paper border-burgundy'
-                      : 'bg-transparent text-ink border-rule hover:border-ink-faint'
-                  }`}
-                >
-                  <span className="min-w-0">
-                    <span className="font-serif text-[12px] font-medium">{o.label}</span>
-                    {o.detail && (
-                      <span className={`block text-[10px] ${on ? 'text-paper/80' : 'text-ink-muted'}`}>{o.detail}</span>
-                    )}
-                  </span>
-                  <span className={`font-mono text-[10px] shrink-0 ${on ? 'text-paper' : 'text-ink'}`} title={`Scenario total with this option: ${fmtKRange(c.total.low, c.total.high)}`}>
-                    {fmtKRange(c.low, c.high)}
-                  </span>
-                </button>
-              )
-            })}
-          </div>
-        </div>
-      ))}
-    </div>
-  )
-}
-
 // ── Segment cards ───────────────────────────────────────────────────────
 
 function ForkChip({ id }: { id: ForkId }) {
@@ -342,12 +283,7 @@ function GhostRow({ seg, onPick }: { seg: ResolvedSegment; onPick: () => void })
 
 // ── Roll-ups ────────────────────────────────────────────────────────────
 
-function CostSummary({ active, lease, low, high }: {
-  active: ResolvedSegment[]
-  lease: { label: string; low: number; high: number; note?: string } | null
-  low: number
-  high: number
-}) {
+function CostSummary({ active, low, high }: { active: ResolvedSegment[]; low: number; high: number }) {
   const rows = active.filter(s => s.lines.length > 0)
   return (
     <table className="w-full text-[11px]">
@@ -370,15 +306,6 @@ function CostSummary({ active, lease, low, high }: {
             <td className="py-1 text-right font-mono text-ink whitespace-nowrap">{fmtMoney(s.high)}</td>
           </tr>
         ))}
-        {lease && (
-          <tr className="border-t border-rule-light">
-            <td className="py-1 pr-2 font-mono text-ink-muted whitespace-nowrap">Oct 23 – Dec 31</td>
-            <td className="py-1 pr-2 text-ink">{lease.label}<span className="text-ink-faint"> · {lease.note}</span></td>
-            <td className="py-1 pr-2"><span className="font-mono text-[9px] uppercase tracking-[0.5px] text-ink-muted">assumption</span></td>
-            <td className="py-1 text-right font-mono text-ink whitespace-nowrap">{fmtMoney(lease.low)}</td>
-            <td className="py-1 text-right font-mono text-ink whitespace-nowrap">{fmtMoney(lease.high)}</td>
-          </tr>
-        )}
         <tr className="border-t-2 border-rule">
           <td className="pt-1.5" colSpan={3}><span className="font-serif text-[12px] font-semibold text-ink">Scenario total, Oct 2026 → Sep 2027</span></td>
           <td className="pt-1.5 text-right font-mono font-semibold text-ink whitespace-nowrap">{fmtMoney(low)}</td>
@@ -417,21 +344,19 @@ function OpenQuestions({ active }: { active: ResolvedSegment[] }) {
 
 export default function CalendarBoard() {
   const [forks, setForks] = useState<ForkState>(DEFAULT_FORKS)
-  const [leaseHeld, setLeaseHeld] = useState(false)
   const [loaded, setLoaded] = useState(false)
 
   useEffect(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY)
       if (raw) {
-        const saved = JSON.parse(raw) as { forks?: Partial<ForkState>; leaseHeld?: boolean }
+        const saved = JSON.parse(raw) as { forks?: Partial<ForkState> }
         const next = { ...DEFAULT_FORKS }
         for (const f of FORKS) {
           const v = saved.forks?.[f.id]
           if (v && f.options.some(o => o.id === v)) next[f.id] = v
         }
         setForks(next)
-        setLeaseHeld(Boolean(saved.leaseHeld))
       }
     } catch {
       // storage unavailable — defaults stand
@@ -442,18 +367,15 @@ export default function CalendarBoard() {
   useEffect(() => {
     if (!loaded) return
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ forks, leaseHeld }))
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ forks }))
     } catch {
       // ignore
     }
-  }, [forks, leaseHeld, loaded])
+  }, [forks, loaded])
 
-  const scenario = useMemo(() => resolve(forks, leaseHeld), [forks, leaseHeld])
+  const scenario = useMemo(() => resolve(forks), [forks])
   const pick = (id: ForkId, option: string) => setForks(prev => ({ ...prev, [id]: option }))
-  const reset = () => {
-    setForks(DEFAULT_FORKS)
-    setLeaseHeld(false)
-  }
+  const reset = () => setForks(DEFAULT_FORKS)
 
   const pendingCount = scenario.active.filter(s => s.status === 'pending').length
   const openCount = scenario.active.reduce((a, s) => a + (s.open?.length ?? 0), 0)
@@ -491,51 +413,24 @@ export default function CalendarBoard() {
 
       {/* Decisions */}
       <section className="bg-white border border-rule rounded-sm p-3">
-        <SectionTitle aside="each option shows its own cost; choices persist in this browser">Decisions still open</SectionTitle>
-        <Decisions forks={forks} leaseHeld={leaseHeld} onPick={pick} />
-        {scenario.warnings.length > 0 && (
-          <ul className="mt-3 space-y-1">
-            {scenario.warnings.map((w, i) => (
-              <li key={i} className="text-[11px] text-red-ink pl-3 relative">
-                <span className="absolute left-0 top-0">!</span>
-                {w}
-              </li>
-            ))}
-          </ul>
-        )}
+        <SectionTitle aside="collapsed rows show the current choice; open one to change it">Decisions still open</SectionTitle>
+        <Decisions forks={forks} warnings={scenario.warnings} onPick={pick} />
       </section>
 
       {/* Assumptions */}
       <section className="bg-white border border-rule rounded-sm p-3">
         <SectionTitle>Cost assumptions</SectionTitle>
-        <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3 items-start">
-          <div className="text-[11px] text-ink-muted space-y-1">
-            <p>
-              All figures are rough USD estimates for one mid-range traveler: flights at typical fares for the season, lodging
-              from hostels-plus to good hotels, and daily spend that includes eating out. Nothing here is a quote.
-            </p>
-            <p>
-              NYC months are costed at {fmtMoney(NYC.rent.low)} – {NYC.rent.high.toLocaleString('en-US')} rent and{' '}
-              {fmtMoney(NYC.living.low)} – {NYC.living.high.toLocaleString('en-US')} living per month. Time away is costed on
-              its own lines. The toggle decides how the two interact.
-            </p>
-            <p>The fall of 2027 is TBD and carries no cost. The total covers Oct 23, 2026 → Sep 2, 2027.</p>
-          </div>
-          <label className={`flex items-start gap-2 border rounded-sm p-2 cursor-pointer ${leaseHeld ? 'border-burgundy bg-burgundy-bg' : 'border-rule'}`}>
-            <input
-              type="checkbox"
-              checked={leaseHeld}
-              onChange={e => setLeaseHeld(e.target.checked)}
-              className="mt-0.5 accent-[#7c2d2d]"
-            />
-            <span>
-              <span className="block font-serif text-[12px] font-semibold text-ink">I hold an NYC lease year-round</span>
-              <span className="block text-[10px] text-ink-muted max-w-[260px]">
-                Adds rent for all 14 months as one fixed line and drops it from the NYC segments, so months away show what they
-                double-pay.
-              </span>
-            </span>
-          </label>
+        <div className="text-[11px] text-ink-muted space-y-1">
+          <p>
+            All figures are rough USD estimates for one mid-range traveler: flights at typical fares for the season, lodging
+            from hostels-plus to good hotels, and daily spend that includes eating out. Nothing here is a quote.
+          </p>
+          <p>
+            NYC rent is {fmtMoney(NYC.rent.low)} a month and is owed only for months spent in the city. When you are away the
+            apartment is rented out, which covers the rent and produces no income, so months away carry no NYC line at all.
+            Living in the city is {fmtMoney(NYC.living.low)} – {NYC.living.high.toLocaleString('en-US')} a month on top.
+          </p>
+          <p>The fall of 2027 is TBD and carries no cost. The total covers Oct 23, 2026 → Sep 2, 2027.</p>
         </div>
       </section>
 
@@ -557,7 +452,7 @@ export default function CalendarBoard() {
       <section className="bg-white border border-rule rounded-sm p-3">
         <SectionTitle aside="active segments only">Cost summary</SectionTitle>
         <div className="overflow-x-auto">
-          <CostSummary active={scenario.active} lease={scenario.lease} low={scenario.low} high={scenario.high} />
+          <CostSummary active={scenario.active} low={scenario.low} high={scenario.high} />
         </div>
       </section>
 

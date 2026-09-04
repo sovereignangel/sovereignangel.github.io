@@ -26,8 +26,6 @@ export interface CostLine {
   note?: string
   /** Monthly rate, multiplied by the segment's length in months */
   perMonth?: boolean
-  /** NYC rent — dropped from segments when a lease is held year-round (it becomes one fixed line instead) */
-  nycRent?: boolean
 }
 
 export interface Segment {
@@ -73,9 +71,13 @@ export type ForkState = Record<ForkId, string>
 
 // ── Assumptions ─────────────────────────────────────────────────────────
 
-/** NYC, per month. Rent is a one-bedroom or a furnished sublet; living is food, transit, gym, going out. */
+/**
+ * NYC, per month. Rent is the actual lease, $4,620, and it is owed only for
+ * months spent in the city: when away the apartment is rented out, which
+ * covers the rent and produces no income. Living is food, transit, gym, going out.
+ */
 export const NYC = {
-  rent: { low: 3500, high: 5000 },
+  rent: { low: 4620, high: 4620 },
   living: { low: 2000, high: 3000 },
 }
 
@@ -83,11 +85,8 @@ export const RANGE_START = '2026-10-01'
 export const RANGE_END = '2027-12-31'
 export const DEPARTURE = '2026-10-23'
 
-/** Months between departure and the end of the range — the lease line when one is held year-round */
-export const LEASE_MONTHS = 14.3
-
 const NYC_LINES: CostLine[] = [
-  { label: 'Rent, per month', low: NYC.rent.low, high: NYC.rent.high, perMonth: true, nycRent: true, note: 'sublet or lease' },
+  { label: 'Rent, per month', low: NYC.rent.low, high: NYC.rent.high, perMonth: true, note: 'owed only while in the city' },
   { label: 'Living, per month', low: NYC.living.low, high: NYC.living.high, perMonth: true },
 ]
 
@@ -686,7 +685,6 @@ export interface ResolvedSegment extends Segment {
 export interface Scenario {
   segments: ResolvedSegment[]
   active: ResolvedSegment[]
-  lease: ResolvedLine | null
   low: number
   high: number
   warnings: string[]
@@ -729,7 +727,11 @@ function fmt0(n: number): string {
   return Math.round(n).toLocaleString('en-US')
 }
 
-export function resolve(forks: ForkState, leaseHeld: boolean): Scenario {
+function fmtPerMonth(low: number, high: number): string {
+  return low === high ? `${fmt0(low)}/mo` : `${fmt0(low)}–${fmt0(high)}/mo`
+}
+
+export function resolve(forks: ForkState): Scenario {
   const afterAD = SEGMENTS.find(s => s.fork?.id === 'afterAD' && s.fork.option === forks.afterAD)
   const winterStart = afterAD ? addDays(afterAD.end, 1) : '2027-01-23'
 
@@ -740,13 +742,12 @@ export function resolve(forks: ForkState, leaseHeld: boolean): Scenario {
     const months = days / 30.44
     const lines: ResolvedLine[] = []
     for (const c of seg.cost) {
-      if (c.nycRent && leaseHeld) continue
       if (c.perMonth) {
         lines.push({
           label: `${c.label.replace(', per month', '')}, ${months.toFixed(1)} mo`,
           low: Math.round((c.low * months) / 50) * 50,
           high: Math.round((c.high * months) / 50) * 50,
-          note: c.note ? `${c.note} · ${fmt0(c.low)}–${fmt0(c.high)}/mo` : `${fmt0(c.low)}–${fmt0(c.high)}/mo`,
+          note: c.note ? `${c.note} · ${fmtPerMonth(c.low, c.high)}` : fmtPerMonth(c.low, c.high),
         })
       } else {
         lines.push({ label: c.label, low: c.low, high: c.high, note: c.note })
@@ -758,17 +759,8 @@ export function resolve(forks: ForkState, leaseHeld: boolean): Scenario {
   })
 
   const active = segments.filter(s => s.active)
-  const lease: ResolvedLine | null = leaseHeld
-    ? {
-        label: `NYC lease held year-round, ${LEASE_MONTHS} mo`,
-        low: NYC.rent.low * LEASE_MONTHS,
-        high: NYC.rent.high * LEASE_MONTHS,
-        note: `${fmt0(NYC.rent.low)}–${fmt0(NYC.rent.high)}/mo, Oct 23 → Dec 31`,
-      }
-    : null
-
-  const low = active.reduce((a, s) => a + s.low, 0) + (lease?.low ?? 0)
-  const high = active.reduce((a, s) => a + s.high, 0) + (lease?.high ?? 0)
+  const low = active.reduce((a, s) => a + s.low, 0)
+  const high = active.reduce((a, s) => a + s.high, 0)
 
   const warnings: string[] = []
   if (forks.decDest === 'brazil' && forks.maui !== 'skip') {
@@ -783,16 +775,13 @@ export function resolve(forks: ForkState, leaseHeld: boolean): Scenario {
   if (forks.afterAD === 'iap' || forks.afterAD === 'gulfIap') {
     warnings.push('IAP officially runs Jan 4 – 29. Arriving mid-month is the second half, and the MIT hook is still an open question.')
   }
-  if (forks.winter === 'pr' && leaseHeld) {
-    warnings.push('With a lease held, Puerto Rico is entirely on top of NYC rent — the twelve weeks double-pay.')
-  }
 
-  return { segments, active, lease, low, high, warnings }
+  return { segments, active, low, high, warnings }
 }
 
 /** Cost of one fork option in the current scenario, holding every other fork fixed */
-export function optionCost(fork: ForkId, option: string, forks: ForkState, leaseHeld: boolean): { low: number; high: number } {
-  const s = resolve({ ...forks, [fork]: option }, leaseHeld)
+export function optionCost(fork: ForkId, option: string, forks: ForkState): { low: number; high: number } {
+  const s = resolve({ ...forks, [fork]: option })
   return { low: s.low, high: s.high }
 }
 
@@ -819,6 +808,7 @@ export function fmtMoney(n: number): string {
 
 export function fmtMoneyRange(low: number, high: number): string {
   if (low === 0 && high === 0) return '—'
+  if (low === high) return fmtMoney(low)
   return `${fmtMoney(low)} – ${fmt0(high)}`
 }
 
@@ -833,6 +823,7 @@ export function fmtK(n: number): string {
 
 export function fmtKRange(low: number, high: number): string {
   if (low === 0 && high === 0) return '—'
+  if (low === high) return fmtK(low)
   return `${fmtK(low)} – ${fmtK(high).slice(1)}`
 }
 
