@@ -17,7 +17,7 @@
 
 export type Status = 'fixed' | 'planned' | 'pending' | 'tbd'
 
-export type ForkId = 'birthday' | 'decDest' | 'oxford' | 'maui' | 'afterAD' | 'winter' | 'summer'
+export type ForkId = 'birthday' | 'decDest' | 'oxford' | 'maui' | 'nye' | 'afterAD' | 'winter' | 'summer'
 
 export interface CostLine {
   label: string
@@ -26,6 +26,8 @@ export interface CostLine {
   note?: string
   /** Monthly rate, multiplied by the segment's length in months */
   perMonth?: boolean
+  /** Include this line only when another fork is (or is not) set a certain way */
+  when?: { fork: ForkId; is?: string; isNot?: string }
 }
 
 export interface Segment {
@@ -137,6 +139,18 @@ export const FORKS: Fork[] = [
       { id: 'family', label: 'Maui + Mom & Grandma', detail: 'adds their flights' },
     ],
     default: 'skip',
+  },
+  {
+    id: 'nye',
+    label: "New Year's Eve",
+    window: 'Dec 28 – Jan 2',
+    question: 'Where for NYE — Brazil, or Dubai and the Gulf coast on the way to Abu Dhabi?',
+    options: [
+      { id: 'gulf', label: 'Dubai / Gulf coast', detail: 'that could work — your words; Abu Dhabi is then a taxi' },
+      { id: 'brazil', label: 'Brazil, Réveillon', detail: 'Copacabana, or the Ceará coast' },
+      { id: 'stay', label: 'No plan yet', detail: 'wherever the December fork puts you' },
+    ],
+    default: 'gulf',
   },
   {
     id: 'afterAD',
@@ -315,7 +329,7 @@ export const SEGMENTS: Segment[] = [
     fork: { id: 'decDest', option: 'brazil' },
     summary: 'Six weeks through New Year, flying to Abu Dhabi from São Paulo on Jan 2.',
     notes: [
-      'Lodging spikes Dec 26 – Jan 2 everywhere on the coast; book that week early or leave it before.',
+      'Lodging spikes Dec 26 – Jan 2 everywhere on the coast; the NYE fork costs that week separately.',
       'Etihad flies São Paulo → Abu Dhabi direct, about 14 hours, so the Jan 3 arrival is clean.',
       'This choice makes Maui a round-the-world detour and Oxford a 12-hour flight each way.',
     ],
@@ -323,7 +337,7 @@ export const SEGMENTS: Segment[] = [
     cost: [
       { label: 'Monthly rental, ~6 weeks', low: 1700, high: 3500 },
       { label: 'Living', low: 900, high: 1800 },
-      { label: 'Kite, transport, New Year', low: 400, high: 1000 },
+      { label: 'Kite, transport', low: 300, high: 800 },
     ],
   },
   {
@@ -409,6 +423,57 @@ export const SEGMENTS: Segment[] = [
     ],
   },
 
+  // Dec 28 – Jan 2 · New Year's Eve ---------------------------------------------
+  {
+    id: 'nye-gulf',
+    short: 'NYE Dubai',
+    start: '2026-12-28',
+    end: '2027-01-02',
+    title: "NYE — Dubai / Gulf coast",
+    place: 'Dubai · or Muscat / Ras Al Khaimah for something quieter',
+    status: 'pending',
+    lane: 1,
+    fork: { id: 'nye', option: 'gulf' },
+    summary: 'Fly in around Dec 28, see the year out on the Gulf, and roll into Abu Dhabi on Jan 2 or 3 by road.',
+    notes: [
+      'Direct flights into Dubai from both New York (Emirates, ~13 h) and São Paulo (Emirates, ~15 h), so this works with either December choice.',
+      'Dubai hotels spike hard over NYE; Muscat and Ras Al Khaimah are calmer and cheaper, and Musandam’s fjords are a day away.',
+      'The Abu Dhabi flight-in line disappears when this is chosen — it is costed here instead.',
+    ],
+    open: ['Maybe, in your words. Dubai proper, or the quieter coast?'],
+    cost: [
+      { label: 'Flight in, one way', low: 700, high: 1500, note: 'NYC 700–1,200; São Paulo 900–1,500' },
+      { label: 'Lodging, 5 nights over NYE', low: 900, high: 2500 },
+      { label: 'NYE night: dinner, a vantage point, a party', low: 150, high: 600 },
+      { label: 'Food, transport', low: 300, high: 600 },
+      { label: 'Road transfer to Abu Dhabi', low: 20, high: 60 },
+    ],
+  },
+  {
+    id: 'nye-brazil',
+    short: 'NYE Rio',
+    start: '2026-12-28',
+    end: '2027-01-02',
+    title: 'NYE — Brazil, Réveillon',
+    place: 'Copacabana · or the Ceará coast',
+    status: 'pending',
+    lane: 1,
+    fork: { id: 'nye', option: 'brazil' },
+    summary: 'Réveillon on Copacabana, in white, then São Paulo → Abu Dhabi on Jan 2.',
+    notes: [
+      'Rio lodging Dec 28 – Jan 2 runs at its highest rates of the year; book early or stay on the Ceará coast where the wind is.',
+      'If December is already Brazil, only the premium and a domestic hop are new. From NYC it is two long-hauls in a week.',
+    ],
+    open: ['An option, in your words. Rio for the spectacle, or the coast where you would already be?'],
+    cost: [
+      { label: 'Flight NYC → Rio, one way', low: 600, high: 1000, when: { fork: 'decDest', is: 'nyc' } },
+      { label: 'Domestic hop to Rio, if on the Ceará coast', low: 150, high: 350, when: { fork: 'decDest', is: 'brazil' } },
+      { label: 'Lodging, 5 nights, Réveillon rates', low: 750, high: 2000 },
+      { label: 'Réveillon night: Copacabana, dinner, party', low: 150, high: 500 },
+      { label: 'Food, transport', low: 250, high: 500 },
+    ],
+  },
+
   // Jan 3 – 15 · Abu Dhabi ------------------------------------------------------
   {
     id: 'abu-dhabi',
@@ -420,13 +485,13 @@ export const SEGMENTS: Segment[] = [
     status: 'fixed',
     lane: 0,
     summary: 'Reimagining Economics winter school. The Lane V paper and lightning talk are due on arrival.',
-    notes: ['The flight in is costed here because its origin depends on the December fork.'],
+    notes: ['The flight in is costed here because its origin depends on the December and NYE forks; with NYE in the Gulf it is a road transfer, costed there.'],
     open: [
       'End date: your list says Jan 15; the roadmap has the room running Jan 3 – 17. Verify.',
       'Does the school cover lodging and meals? The lodging line runs from zero (covered) to a full twelve nights.',
     ],
     cost: [
-      { label: 'Flight in, one way', low: 700, high: 1900, note: 'NYC 700–1,300; São Paulo 1,000–1,600; Maui 1,200–1,900' },
+      { label: 'Flight in, one way', low: 700, high: 1900, note: 'NYC 700–1,300; São Paulo 1,000–1,600; Maui 1,200–1,900', when: { fork: 'nye', isNot: 'gulf' } },
       { label: 'Lodging, 12 nights', low: 0, high: 2400, note: 'zero if the program covers it' },
       { label: 'Food, transport', low: 400, high: 700 },
     ],
@@ -742,6 +807,11 @@ export function resolve(forks: ForkState): Scenario {
     const months = days / 30.44
     const lines: ResolvedLine[] = []
     for (const c of seg.cost) {
+      if (c.when) {
+        const v = forks[c.when.fork]
+        if (c.when.is !== undefined && v !== c.when.is) continue
+        if (c.when.isNot !== undefined && v === c.when.isNot) continue
+      }
       if (c.perMonth) {
         lines.push({
           label: `${c.label.replace(', per month', '')}, ${months.toFixed(1)} mo`,
@@ -768,6 +838,12 @@ export function resolve(forks: ForkState): Scenario {
   }
   if (forks.decDest === 'brazil' && forks.oxford === 'include') {
     warnings.push('Oxford from Brazil is a twelve-hour flight each way (São Paulo – London); from NYC it is seven.')
+  }
+  if (forks.nye === 'gulf' && forks.maui !== 'skip') {
+    warnings.push('Maui on Dec 27 to Dubai by Dec 28 is about twenty hours of flying; it works, but Christmas and NYE land on opposite sides of the planet.')
+  }
+  if (forks.nye === 'brazil' && forks.decDest === 'nyc') {
+    warnings.push('NYC → Rio for NYE, then São Paulo → Abu Dhabi: two long-hauls inside a week.')
   }
   if (forks.afterAD === 'gulf3') {
     warnings.push('The three-week Gulf loop runs to about Feb 5, so the winter block starts two weeks later than Jan 23.')
