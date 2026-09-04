@@ -42,3 +42,4 @@ app/finance/data/*
 
 # travel planning renders (PDF/PNG/HTML are outputs, not sources)
 scripts/travel/out/
+__pycache__/
