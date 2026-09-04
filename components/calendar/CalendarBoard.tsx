@@ -1,0 +1,576 @@
+'use client'
+
+import { useEffect, useMemo, useState } from 'react'
+import {
+  DEFAULT_FORKS,
+  FORKS,
+  NYC,
+  RANGE_END,
+  RANGE_START,
+  SEGMENTS,
+  dayIndex,
+  fmtDate,
+  fmtKRange,
+  fmtMoney,
+  fmtMoneyRange,
+  fmtRange,
+  monthsInRange,
+  resolve,
+  todayLocal,
+  type ForkId,
+  type ForkState,
+  type ResolvedSegment,
+  type Status,
+} from '@/lib/calendar/plan'
+
+const STORAGE_KEY = 'calendar-plan-v1'
+
+// ── Status styling ──────────────────────────────────────────────────────
+// Pending is hatched everywhere it appears so an open decision never reads
+// as settled at a glance.
+
+const PENDING_HATCH =
+  'repeating-linear-gradient(135deg, #8a6d2f 0px, #8a6d2f 3px, #c2a36a 3px, #c2a36a 6px)'
+
+const STATUS: Record<Status, { label: string; badge: string; barClass: string; barStyle?: React.CSSProperties }> = {
+  fixed: { label: 'Fixed', badge: 'bg-burgundy text-paper border-burgundy', barClass: 'bg-burgundy' },
+  planned: { label: 'Planned', badge: 'bg-green-ink text-paper border-green-ink', barClass: 'bg-green-ink' },
+  pending: {
+    label: 'Pending',
+    badge: 'bg-amber-ink text-paper border-amber-ink',
+    barClass: '',
+    barStyle: { backgroundImage: PENDING_HATCH },
+  },
+  tbd: { label: 'TBD', badge: 'bg-transparent text-ink-muted border-ink-faint border-dashed', barClass: 'bg-ink-faint/50' },
+}
+
+function StatusBadge({ status }: { status: Status }) {
+  const s = STATUS[status]
+  return (
+    <span className={`font-mono text-[9px] uppercase tracking-[0.5px] px-1.5 py-0.5 rounded-sm border ${s.badge}`}>
+      {s.label}
+    </span>
+  )
+}
+
+function SectionTitle({ children, aside }: { children: React.ReactNode; aside?: React.ReactNode }) {
+  return (
+    <div className="flex items-baseline justify-between mb-2 pb-1.5 border-b-2 border-rule">
+      <h2 className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy">{children}</h2>
+      {aside && <span className="text-[10px] text-ink-muted">{aside}</span>}
+    </div>
+  )
+}
+
+// ── Timeline strip ──────────────────────────────────────────────────────
+
+function packLanes(segs: ResolvedSegment[]): ResolvedSegment[][] {
+  const lanes: ResolvedSegment[][] = []
+  const sorted = [...segs].sort((a, b) => dayIndex(a.start) - dayIndex(b.start))
+  for (const s of sorted) {
+    const si = dayIndex(s.start)
+    let placed = false
+    for (const lane of lanes) {
+      const last = lane[lane.length - 1]
+      if (dayIndex(last.end) < si) {
+        lane.push(s)
+        placed = true
+        break
+      }
+    }
+    if (!placed) lanes.push([s])
+  }
+  return lanes
+}
+
+function Bar({ seg, total, startIdx, ghost, onPick }: {
+  seg: ResolvedSegment
+  total: number
+  startIdx: number
+  ghost?: boolean
+  onPick?: () => void
+}) {
+  const left = ((dayIndex(seg.start) - startIdx) / total) * 100
+  const width = (seg.days / total) * 100
+  const s = STATUS[seg.status]
+  const label = width > 2.2 ? seg.short ?? seg.title : ''
+  const title = `${seg.title} · ${fmtRange(seg.start, seg.end)} · ${seg.days} days · ${fmtKRange(seg.low, seg.high)}`
+  const cls = ghost
+    ? 'bg-transparent border border-dashed border-ink-muted/60 text-ink-muted hover:border-burgundy hover:text-burgundy'
+    : `${s.barClass} text-paper`
+  return (
+    <button
+      type="button"
+      onClick={onPick}
+      title={title}
+      style={{ left: `${left}%`, width: `${width}%`, ...(ghost ? {} : s.barStyle) }}
+      className={`absolute top-0.5 h-[22px] rounded-sm px-1.5 overflow-hidden whitespace-nowrap text-left font-mono text-[9px] uppercase tracking-[0.3px] leading-[20px] ${cls} ${onPick ? 'cursor-pointer' : 'cursor-default'}`}
+    >
+      {seg.status === 'pending' && !ghost ? <span className="bg-amber-ink/90 px-1 rounded-sm">{label}</span> : label}
+    </button>
+  )
+}
+
+function Timeline({ segments, onPick }: { segments: ResolvedSegment[]; onPick: (id: ForkId, option: string) => void }) {
+  const months = useMemo(() => monthsInRange(), [])
+  const startIdx = dayIndex(RANGE_START)
+  const total = dayIndex(RANGE_END) - startIdx + 1
+  const today = todayLocal()
+  const todayPct = ((dayIndex(today) - startIdx) / total) * 100
+
+  const path = segments.filter(s => s.active && s.lane === 0)
+  const trips = segments.filter(s => s.active && s.lane === 1)
+  const ghosts = packLanes(segments.filter(s => !s.active))
+
+  const rows: { label: string; segs: ResolvedSegment[]; ghost: boolean }[] = [
+    { label: 'Path', segs: path, ghost: false },
+    ...(trips.length > 0 ? [{ label: 'Trips', segs: trips, ghost: false }] : []),
+    ...ghosts.map((segs, i) => ({ label: i === 0 ? 'Not chosen' : '', segs, ghost: true })),
+  ]
+
+  return (
+    <div className="overflow-x-auto -mx-3 px-3">
+      <div className="min-w-[1400px]">
+        <div className="flex ml-[72px] border-b border-rule">
+          {months.map(m => (
+            <div
+              key={m.start}
+              style={{ flex: m.days }}
+              className="font-mono text-[9px] uppercase tracking-[0.5px] text-ink-muted border-l border-rule-light pl-1 py-1"
+            >
+              {m.label}
+            </div>
+          ))}
+        </div>
+        <div className="relative">
+          {rows.map((row, i) => (
+            <div key={i} className="flex items-stretch border-b border-rule-light last:border-b-0">
+              <div className="w-[72px] shrink-0 font-mono text-[9px] uppercase tracking-[0.5px] text-ink-muted leading-[28px]">
+                {row.label}
+              </div>
+              <div className="relative flex-1 h-7">
+                {months.map(m => (
+                  <div
+                    key={m.start}
+                    style={{ left: `${((dayIndex(m.start) - startIdx) / total) * 100}%` }}
+                    className="absolute top-0 bottom-0 border-l border-rule-light"
+                  />
+                ))}
+                {row.segs.map(seg => (
+                  <Bar
+                    key={seg.id}
+                    seg={seg}
+                    total={total}
+                    startIdx={startIdx}
+                    ghost={row.ghost}
+                    onPick={seg.fork && row.ghost ? () => onPick(seg.fork!.id, seg.fork!.option) : undefined}
+                  />
+                ))}
+              </div>
+            </div>
+          ))}
+          {todayPct >= 0 && todayPct <= 100 && (
+            <div
+              style={{ left: `calc(72px + (100% - 72px) * ${(todayPct / 100).toFixed(4)})` }}
+              className="absolute top-0 bottom-0 border-l-2 border-burgundy/70 pointer-events-none"
+              title={`Today · ${fmtDate(today)}`}
+            />
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ── Decisions ───────────────────────────────────────────────────────────
+
+function optionSubtotal(id: ForkId, option: string, forks: ForkState, leaseHeld: boolean) {
+  const s = resolve({ ...forks, [id]: option }, leaseHeld)
+  const own = s.segments.filter(seg => seg.fork?.id === id && seg.fork.option === option)
+  return {
+    low: own.reduce((a, x) => a + x.low, 0),
+    high: own.reduce((a, x) => a + x.high, 0),
+    total: { low: s.low, high: s.high },
+  }
+}
+
+function Decisions({ forks, leaseHeld, onPick }: {
+  forks: ForkState
+  leaseHeld: boolean
+  onPick: (id: ForkId, option: string) => void
+}) {
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+      {FORKS.map(f => (
+        <div key={f.id} className="border border-rule rounded-sm p-3 bg-white">
+          <div className="flex items-baseline justify-between gap-2 mb-1">
+            <div className="font-serif text-[14px] font-semibold text-ink">{f.label}</div>
+            <div className="font-mono text-[9px] uppercase tracking-[0.5px] text-ink-muted">{f.window}</div>
+          </div>
+          <div className="text-[11px] text-ink-muted mb-2">{f.question}</div>
+          <div className="flex flex-col gap-1">
+            {f.options.map(o => {
+              const on = forks[f.id] === o.id
+              const c = optionSubtotal(f.id, o.id, forks, leaseHeld)
+              return (
+                <button
+                  key={o.id}
+                  type="button"
+                  onClick={() => onPick(f.id, o.id)}
+                  className={`flex items-center justify-between gap-2 text-left px-2 py-1.5 rounded-sm border transition-colors ${
+                    on
+                      ? 'bg-burgundy text-paper border-burgundy'
+                      : 'bg-transparent text-ink border-rule hover:border-ink-faint'
+                  }`}
+                >
+                  <span className="min-w-0">
+                    <span className="font-serif text-[12px] font-medium">{o.label}</span>
+                    {o.detail && (
+                      <span className={`block text-[10px] ${on ? 'text-paper/80' : 'text-ink-muted'}`}>{o.detail}</span>
+                    )}
+                  </span>
+                  <span className={`font-mono text-[10px] shrink-0 ${on ? 'text-paper' : 'text-ink'}`} title={`Scenario total with this option: ${fmtKRange(c.total.low, c.total.high)}`}>
+                    {fmtKRange(c.low, c.high)}
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+// ── Segment cards ───────────────────────────────────────────────────────
+
+function ForkChip({ id }: { id: ForkId }) {
+  const f = FORKS.find(x => x.id === id)
+  if (!f) return null
+  return (
+    <span className="font-mono text-[9px] uppercase tracking-[0.5px] px-1.5 py-0.5 rounded-sm border border-rule text-ink-muted">
+      fork · {f.label}
+    </span>
+  )
+}
+
+function SegmentCard({ seg }: { seg: ResolvedSegment }) {
+  const hasCost = seg.lines.length > 0
+  return (
+    <div className={`bg-white border rounded-sm p-3 ${seg.status === 'pending' ? 'border-amber-ink/50' : 'border-rule'}`}>
+      <div className="flex flex-wrap items-center gap-1.5 mb-1">
+        <span className="font-mono text-[11px] font-semibold text-ink">
+          {fmtRange(seg.start, seg.end)}
+        </span>
+        <span className="font-mono text-[10px] text-ink-muted">· {seg.days} days{seg.datesSoft ? ' · placeholder dates' : ''}</span>
+        <span className="ml-auto flex items-center gap-1.5">
+          {seg.fork && <ForkChip id={seg.fork.id} />}
+          <StatusBadge status={seg.status} />
+        </span>
+      </div>
+      <div className="font-serif text-[16px] font-semibold text-ink leading-tight">{seg.title}</div>
+      <div className="text-[11px] text-ink-muted mb-2">{seg.place}</div>
+      <p className="text-[12px] text-ink mb-2">{seg.summary}</p>
+
+      {seg.notes && seg.notes.length > 0 && (
+        <ul className="mb-2 space-y-1">
+          {seg.notes.map((n, i) => (
+            <li key={i} className="text-[11px] text-ink-muted pl-3 relative">
+              <span className="absolute left-0 top-0 text-ink-faint">·</span>
+              {n}
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {seg.open && seg.open.length > 0 && (
+        <div className="mb-2 border border-amber-ink/40 rounded-sm p-2" style={{ background: 'rgba(138, 109, 47, 0.06)' }}>
+          <div className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-amber-ink mb-1">Still open</div>
+          <ul className="space-y-1">
+            {seg.open.map((o, i) => (
+              <li key={i} className="text-[11px] text-ink pl-3 relative">
+                <span className="absolute left-0 top-0 text-amber-ink">?</span>
+                {o}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {hasCost && (
+        <table className="w-full text-[11px]">
+          <tbody>
+            {seg.lines.map((l, i) => (
+              <tr key={i} className="border-t border-rule-light">
+                <td className="py-1 pr-2 text-ink-muted">
+                  {l.label}
+                  {l.note && <span className="text-ink-faint"> · {l.note}</span>}
+                </td>
+                <td className="py-1 text-right font-mono text-ink whitespace-nowrap">{fmtMoneyRange(l.low, l.high)}</td>
+              </tr>
+            ))}
+            <tr className="border-t border-rule">
+              <td className="pt-1 font-semibold text-ink">Estimate</td>
+              <td className="pt-1 text-right font-mono font-semibold text-ink whitespace-nowrap">{fmtMoneyRange(seg.low, seg.high)}</td>
+            </tr>
+          </tbody>
+        </table>
+      )}
+    </div>
+  )
+}
+
+function GhostRow({ seg, onPick }: { seg: ResolvedSegment; onPick: () => void }) {
+  return (
+    <div className="flex flex-wrap items-center gap-2 border border-dashed border-rule rounded-sm px-3 py-1.5 text-ink-muted">
+      <span className="font-mono text-[10px]">{fmtRange(seg.start, seg.end)}</span>
+      <span className="font-serif text-[12px]">{seg.title}</span>
+      <span className="font-mono text-[10px]">{fmtKRange(seg.low, seg.high)}</span>
+      <span className="ml-auto flex items-center gap-1.5">
+        <span className="font-mono text-[9px] uppercase tracking-[0.5px]">not chosen</span>
+        <button
+          type="button"
+          onClick={onPick}
+          className="font-serif text-[10px] font-medium px-2 py-0.5 rounded-sm border border-rule text-ink-muted hover:border-burgundy hover:text-burgundy"
+        >
+          Choose
+        </button>
+      </span>
+    </div>
+  )
+}
+
+// ── Roll-ups ────────────────────────────────────────────────────────────
+
+function CostSummary({ active, lease, low, high }: {
+  active: ResolvedSegment[]
+  lease: { label: string; low: number; high: number; note?: string } | null
+  low: number
+  high: number
+}) {
+  const rows = active.filter(s => s.lines.length > 0)
+  return (
+    <table className="w-full text-[11px]">
+      <thead>
+        <tr className="text-left font-mono text-[9px] uppercase tracking-[0.5px] text-ink-muted">
+          <th className="pb-1 font-normal">Dates</th>
+          <th className="pb-1 font-normal">Segment</th>
+          <th className="pb-1 font-normal">Status</th>
+          <th className="pb-1 font-normal text-right">Low</th>
+          <th className="pb-1 font-normal text-right">High</th>
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map(s => (
+          <tr key={s.id} className="border-t border-rule-light">
+            <td className="py-1 pr-2 font-mono text-ink-muted whitespace-nowrap">{fmtRange(s.start, s.end)}</td>
+            <td className="py-1 pr-2 text-ink">{s.title}</td>
+            <td className="py-1 pr-2"><StatusBadge status={s.status} /></td>
+            <td className="py-1 text-right font-mono text-ink whitespace-nowrap">{fmtMoney(s.low)}</td>
+            <td className="py-1 text-right font-mono text-ink whitespace-nowrap">{fmtMoney(s.high)}</td>
+          </tr>
+        ))}
+        {lease && (
+          <tr className="border-t border-rule-light">
+            <td className="py-1 pr-2 font-mono text-ink-muted whitespace-nowrap">Oct 23 – Dec 31</td>
+            <td className="py-1 pr-2 text-ink">{lease.label}<span className="text-ink-faint"> · {lease.note}</span></td>
+            <td className="py-1 pr-2"><span className="font-mono text-[9px] uppercase tracking-[0.5px] text-ink-muted">assumption</span></td>
+            <td className="py-1 text-right font-mono text-ink whitespace-nowrap">{fmtMoney(lease.low)}</td>
+            <td className="py-1 text-right font-mono text-ink whitespace-nowrap">{fmtMoney(lease.high)}</td>
+          </tr>
+        )}
+        <tr className="border-t-2 border-rule">
+          <td className="pt-1.5" colSpan={3}><span className="font-serif text-[12px] font-semibold text-ink">Scenario total, Oct 2026 → Sep 2027</span></td>
+          <td className="pt-1.5 text-right font-mono font-semibold text-ink whitespace-nowrap">{fmtMoney(low)}</td>
+          <td className="pt-1.5 text-right font-mono font-semibold text-ink whitespace-nowrap">{fmtMoney(high)}</td>
+        </tr>
+      </tbody>
+    </table>
+  )
+}
+
+function OpenQuestions({ active }: { active: ResolvedSegment[] }) {
+  const withOpen = active.filter(s => s.open && s.open.length > 0)
+  return (
+    <div className="space-y-2">
+      {withOpen.map(s => (
+        <div key={s.id} className="flex gap-3">
+          <div className="w-[120px] shrink-0">
+            <div className="font-mono text-[10px] text-ink-muted">{fmtRange(s.start, s.end)}</div>
+            <div className="font-serif text-[12px] font-medium text-ink leading-tight">{s.title}</div>
+          </div>
+          <ul className="flex-1 space-y-0.5">
+            {s.open!.map((o, i) => (
+              <li key={i} className="text-[11px] text-ink pl-3 relative">
+                <span className="absolute left-0 top-0 text-amber-ink">?</span>
+                {o}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+// ── Board ───────────────────────────────────────────────────────────────
+
+export default function CalendarBoard() {
+  const [forks, setForks] = useState<ForkState>(DEFAULT_FORKS)
+  const [leaseHeld, setLeaseHeld] = useState(false)
+  const [loaded, setLoaded] = useState(false)
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY)
+      if (raw) {
+        const saved = JSON.parse(raw) as { forks?: Partial<ForkState>; leaseHeld?: boolean }
+        const next = { ...DEFAULT_FORKS }
+        for (const f of FORKS) {
+          const v = saved.forks?.[f.id]
+          if (v && f.options.some(o => o.id === v)) next[f.id] = v
+        }
+        setForks(next)
+        setLeaseHeld(Boolean(saved.leaseHeld))
+      }
+    } catch {
+      // storage unavailable — defaults stand
+    }
+    setLoaded(true)
+  }, [])
+
+  useEffect(() => {
+    if (!loaded) return
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ forks, leaseHeld }))
+    } catch {
+      // ignore
+    }
+  }, [forks, leaseHeld, loaded])
+
+  const scenario = useMemo(() => resolve(forks, leaseHeld), [forks, leaseHeld])
+  const pick = (id: ForkId, option: string) => setForks(prev => ({ ...prev, [id]: option }))
+  const reset = () => {
+    setForks(DEFAULT_FORKS)
+    setLeaseHeld(false)
+  }
+
+  const pendingCount = scenario.active.filter(s => s.status === 'pending').length
+  const openCount = scenario.active.reduce((a, s) => a + (s.open?.length ?? 0), 0)
+
+  return (
+    <div className="space-y-4">
+      {/* Legend + headline */}
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+        <div className="flex items-center gap-1.5">
+          {(['fixed', 'planned', 'pending', 'tbd'] as Status[]).map(s => (
+            <StatusBadge key={s} status={s} />
+          ))}
+        </div>
+        <div className="text-[11px] text-ink-muted">
+          {pendingCount} pending segments · {openCount} open questions · {FORKS.length} forks
+        </div>
+        <div className="ml-auto flex items-center gap-3">
+          <span className="text-[11px] text-ink-muted">Scenario</span>
+          <span className="font-mono text-[13px] font-semibold text-ink">{fmtKRange(scenario.low, scenario.high)}</span>
+          <button
+            type="button"
+            onClick={reset}
+            className="font-serif text-[10px] font-medium px-2 py-0.5 rounded-sm border border-rule text-ink-muted hover:border-ink-faint"
+          >
+            Reset
+          </button>
+        </div>
+      </div>
+
+      {/* Timeline */}
+      <section className="bg-white border border-rule rounded-sm p-3">
+        <SectionTitle aside="hatched = pending · dashed = not chosen · click a dashed bar to choose it">Timeline</SectionTitle>
+        <Timeline segments={scenario.segments} onPick={pick} />
+      </section>
+
+      {/* Decisions */}
+      <section className="bg-white border border-rule rounded-sm p-3">
+        <SectionTitle aside="each option shows its own cost; choices persist in this browser">Decisions still open</SectionTitle>
+        <Decisions forks={forks} leaseHeld={leaseHeld} onPick={pick} />
+        {scenario.warnings.length > 0 && (
+          <ul className="mt-3 space-y-1">
+            {scenario.warnings.map((w, i) => (
+              <li key={i} className="text-[11px] text-red-ink pl-3 relative">
+                <span className="absolute left-0 top-0">!</span>
+                {w}
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      {/* Assumptions */}
+      <section className="bg-white border border-rule rounded-sm p-3">
+        <SectionTitle>Cost assumptions</SectionTitle>
+        <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3 items-start">
+          <div className="text-[11px] text-ink-muted space-y-1">
+            <p>
+              All figures are rough USD estimates for one mid-range traveler: flights at typical fares for the season, lodging
+              from hostels-plus to good hotels, and daily spend that includes eating out. Nothing here is a quote.
+            </p>
+            <p>
+              NYC months are costed at {fmtMoney(NYC.rent.low)} – {NYC.rent.high.toLocaleString('en-US')} rent and{' '}
+              {fmtMoney(NYC.living.low)} – {NYC.living.high.toLocaleString('en-US')} living per month. Time away is costed on
+              its own lines. The toggle decides how the two interact.
+            </p>
+            <p>The fall of 2027 is TBD and carries no cost. The total covers Oct 23, 2026 → Sep 2, 2027.</p>
+          </div>
+          <label className={`flex items-start gap-2 border rounded-sm p-2 cursor-pointer ${leaseHeld ? 'border-burgundy bg-burgundy-bg' : 'border-rule'}`}>
+            <input
+              type="checkbox"
+              checked={leaseHeld}
+              onChange={e => setLeaseHeld(e.target.checked)}
+              className="mt-0.5 accent-[#7c2d2d]"
+            />
+            <span>
+              <span className="block font-serif text-[12px] font-semibold text-ink">I hold an NYC lease year-round</span>
+              <span className="block text-[10px] text-ink-muted max-w-[260px]">
+                Adds rent for all 14 months as one fixed line and drops it from the NYC segments, so months away show what they
+                double-pay.
+              </span>
+            </span>
+          </label>
+        </div>
+      </section>
+
+      {/* Segments */}
+      <section>
+        <SectionTitle aside="in date order · alternatives not chosen collapse to a line">Segments</SectionTitle>
+        <div className="space-y-2">
+          {scenario.segments.map(seg =>
+            seg.active ? (
+              <SegmentCard key={seg.id} seg={seg} />
+            ) : (
+              <GhostRow key={seg.id} seg={seg} onPick={() => pick(seg.fork!.id, seg.fork!.option)} />
+            )
+          )}
+        </div>
+      </section>
+
+      {/* Cost summary */}
+      <section className="bg-white border border-rule rounded-sm p-3">
+        <SectionTitle aside="active segments only">Cost summary</SectionTitle>
+        <div className="overflow-x-auto">
+          <CostSummary active={scenario.active} lease={scenario.lease} low={scenario.low} high={scenario.high} />
+        </div>
+      </section>
+
+      {/* Open questions */}
+      <section className="bg-white border border-rule rounded-sm p-3">
+        <SectionTitle aside="everything you said you were not sure about, in one place">Still open</SectionTitle>
+        <OpenQuestions active={scenario.active} />
+      </section>
+
+      <p className="text-[10px] text-ink-faint">
+        Dates, statuses and estimates live in lib/calendar/plan.ts. Resolve a fork or move a date there; this page derives the
+        rest. {SEGMENTS.length} segments on file.
+      </p>
+    </div>
+  )
+}
