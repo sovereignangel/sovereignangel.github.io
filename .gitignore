@@ -39,3 +39,6 @@ connection-insights/
 # Finance — statements, ledgers and tax documents stay local, never committed
 app/finance/data/*
 !app/finance/data/README.md
+
+# travel planning renders (PDF/PNG/HTML are outputs, not sources)
+scripts/travel/out/

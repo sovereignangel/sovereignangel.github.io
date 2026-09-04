@@ -1,0 +1,918 @@
+{
+ "origin": "Panama City",
+ "destination": "Costa Rica",
+ "subtitle": "Tue Oct 27 → Mon Nov 2, 2026 · GT · HN · BZ · NI, El Salvador excluded · work 12:00–20:00 · sleep 23:00–07:00 · macro plan v1, 2026-09-04",
+ "inputs": {
+  "anchor": "Costa Rica by Mon Nov 2. Earliest/latest arrival not yet stated — assumed latest = Nov 2 evening, earliest = Nov 1 evening. If Nov 3 is acceptable, Nicaragua gains a full day for ~$60 (see quiet part). Mom in Panama Oct 23–27 is the fixed people-anchor before this leg.",
+  "work": "12:00–20:00 local (UTC−6). New York is +2h until the US clocks fall back on Nov 1, then +1h. No calls in transit. Coworking: Impact Hub Antigua; Caye Caulker and Granada are café/hotel wifi — book AC rooms with desks for call days.",
+  "sleep": "23:00–07:00 nominal. Plans A and B each carry ONE seat night (Linea Dorada luxury class, reclining, two drivers, ~8.5h) — the only overnight leg that exists in the region. Plan C carries none.",
+  "must-hit": "Guatemala, Honduras, Belize, Nicaragua, then Costa Rica. Kite where it blows (late Oct is pre-season everywhere; Lake Nicaragua at Granada is the best odds). Lens: complexity economics.",
+  "luggage": "Kite: harness + bar only, rent at Asese (Granada) and Atitlán; a full kite bag costs a fee on 4 flights and 3 of them are Cessnas with weight limits. Running shoes, swim kit. ≤3 luggage touches per day.",
+  "weather": "Normals, not forecasts (pull the forecast the week before): Antigua 24/14 · Copán 28/17 · San Pedro Sula 31/22 · Caye Caulker 30/25 · Flores 31/22 · Granada 32/23 · San José 25/17. No city above 33°, so the 12–20 block holds. October is the wettest month; hurricane season to Nov 30 on the Caribbean side.",
+  "money": "Cheap default computed first; upgrades priced as deltas. Advance fares vary 2x, so every number is a range."
+ },
+ "hard_blocks": [
+  "El Salvador excluded. Every Guatemala/Belize → Nicaragua flight connects airside in San Salvador (Avianca). If \"excluded\" includes airside transit, the only alternative is Copa via Panama City: +$150–250 and +3h per leg. Decide this before booking.",
+  "No overnight bus exists Managua → San José or Honduras → Nicaragua: the Peñas Blancas and Las Manos borders close at night (Peñas Blancas 06:00–22:00, Sundays 20:00). The region has exactly one overnight leg: Guatemala City ↔ Flores.",
+  "Nicaragua: online pre-registration form at solicitudes.migob.gob.ni, filed about a week ahead, plus a US$10–13 tourist card in cash at entry. Passport valid 6 months.",
+  "Belize land exit BZ$40 (US$20) cash at Benque Viejo; no fee entering Guatemala by land. CA-4 (GT, HN, NI, SV) is one 90-day zone; Belize is outside it, so re-entering Guatemala from Belize is a fresh stamp.",
+  "Hedman Alas San Pedro Sula → Copán runs only Sun / Thu / Fri at 11:00. Saturdays and Mondays fall to Casasola local buses (3–4h, US$6–10)."
+ ],
+ "verified": [
+  "Verified by search: Copa CM358 PTY 10:25 → GUA 11:39 daily · Linea Dorada GUA → Flores 06:30 / 10:00 / 20:00 / 22:00, ~9h · Fuente del Norte Flores → Belize City 06:00 daily · Hedman Alas SAP → Copán 11:00 → 14:00 Sun/Thu/Fri only · Antigua → Copán shuttles 03:30–05:00, 5–6h, $50, daily · Tica Bus Managua → San José 06:00 → 17:00 and 08:30 → 15:45, $37–42 · Tropic Air SAP → BZE 08:45 → 09:45, 3 flights a week · Tikal Q150, sunset slot +Q100 with mandatory guide · Belize land exit BZ$40 · Nicaragua form + tourist card · Avianca GUA → MGA from $185.",
+  "NOT verified (italic in the tables, confirm before booking): which three days Tropic Air flies SAP → BZE and the return BZE → SAP time · whether Tropic Air still flies Flores → Belize City · Linea Dorada Flores → Guatemala City night departure (21:00 or 22:00) · Belize City → Flores departure (sources say 09:30, 10:30 or 13:30) · Copán → SAP Hedman Alas times (aggregator says 05:30–16:00, roughly every two hours) · Avianca times GUA → SAL → MGA and BZE → SAL → MGA · an earlier Copa rotation PTY → GUA (CM380 / CM496)."
+ ],
+ "plans": [
+  {
+   "id": "A",
+   "name": "North first: Tikal by night bus, then fly south",
+   "tagline": "dominated — Nicaragua becomes an airport hotel",
+   "masthead": {
+    "dates": "Oct 27 – Nov 2",
+    "countries": "GT · BZ · HN · NI",
+    "seat": 1,
+    "berth": 0,
+    "beds": 5,
+    "cost": "$1,370 – 2,300",
+    "constraint": "two dead work days at the end, Nicaragua ~0h"
+   },
+   "legs": [
+    {
+     "day": "Tue 27",
+     "from": "Panama City",
+     "to": "Antigua",
+     "note": "Copa CM358, shuttle from GUA",
+     "dep": "10:25",
+     "mode": "Copa → GUA 11:39 · shuttle 1h15",
+     "dur": "2h15 + 1h15",
+     "arr": "13:15",
+     "cost": "$165 – 315",
+     "night": [
+      {
+       "kind": "bed",
+       "text": "bed ~$40–70"
+      }
+     ],
+     "work": [
+      {
+       "kind": "work",
+       "text": "13:30–20 WORK"
+      }
+     ],
+     "adv": [
+      {
+       "kind": "adv",
+       "text": "3h ADV"
+      },
+      {
+       "kind": "wx",
+       "text": "24°/14°"
+      }
+     ],
+     "warn": "an earlier Copa rotation (CM380 / CM496) would give Antigua the morning — confirm"
+    },
+    {
+     "day": "Wed 28",
+     "from": "Antigua",
+     "to": "Flores",
+     "note": "night bus from Guatemala City, Zona 1",
+     "dep": "22:00",
+     "mode": "taxi to Linea Dorada 20:30 · luxury class",
+     "dur": "8h30",
+     "arr": "06:30",
+     "cost": "$45 – 70",
+     "night": [
+      {
+       "kind": "seat",
+       "text": "SEAT 8.5h"
+      }
+     ],
+     "work": [
+      {
+       "kind": "work",
+       "text": "12–20 WORK"
+      }
+     ],
+     "adv": [
+      {
+       "kind": "adv",
+       "text": "5h ADV"
+      },
+      {
+       "kind": "wx",
+       "text": "24°/14°"
+      }
+     ],
+     "warn": "Zona 1 at night: taxi door to door; the 20:00 bus would eat the work block"
+    },
+    {
+     "day": "Thu 29",
+     "from": "Flores",
+     "to": "Tikal · Flores",
+     "note": "Tikal 08:00 tour, work from the hotel after",
+     "dep": "08:00",
+     "mode": "shuttle to Tikal 1h15 · tour to 13:00",
+     "dur": "5h in park",
+     "arr": "14:00",
+     "cost": "$60 – 100",
+     "night": [
+      {
+       "kind": "bed",
+       "text": "bed ~$30–60"
+      }
+     ],
+     "work": [
+      {
+       "kind": "work",
+       "text": "14–20 WORK"
+      }
+     ],
+     "adv": [
+      {
+       "kind": "adv",
+       "text": "5h ADV"
+      },
+      {
+       "kind": "wx",
+       "text": "31°/22°"
+      }
+     ],
+     "warn": "post-seat-night fatigue on the one big Maya day"
+    },
+    {
+     "day": "Fri 30",
+     "from": "Flores",
+     "to": "Caye Caulker",
+     "note": "Fuente del Norte, then the 12:00 water taxi",
+     "dep": "06:00",
+     "mode": "bus → Belize City 11:00 · water taxi 45m",
+     "dur": "5h + 45m",
+     "arr": "12:45",
+     "cost": "$45 – 60",
+     "night": [
+      {
+       "kind": "bed",
+       "text": "bed ~$60–120"
+      }
+     ],
+     "work": [
+      {
+       "kind": "work",
+       "text": "13–20 WORK"
+      }
+     ],
+     "adv": [
+      {
+       "kind": "adv",
+       "text": "3h ADV"
+      },
+      {
+       "kind": "wx",
+       "text": "30°/25°"
+      }
+     ],
+     "warn": "Belize exit BZ$40 cash; the bus can run late and the 12:00 taxi is the one that saves the block"
+    },
+    {
+     "day": "Sat 31",
+     "from": "Caye Caulker",
+     "to": "Copán",
+     "note": "Tropic Air, then a Saturday local bus",
+     "dep": "07:00",
+     "mode": "water taxi · Tropic BZE → SAP ~10:15 · Casasola 3–4h",
+     "dur": "~9h door to door",
+     "arr": "~16:00",
+     "cost": "$240 – 350",
+     "night": [
+      {
+       "kind": "bed",
+       "text": "bed ~$30–60"
+      }
+     ],
+     "work": [],
+     "adv": [
+      {
+       "kind": "adv",
+       "text": "4h ADV"
+      },
+      {
+       "kind": "wx",
+       "text": "28°/17°"
+      }
+     ],
+     "warn": "BZE → SAP time is an inference from the 08:45 rotation — confirm; Hedman Alas does not run Saturdays"
+    },
+    {
+     "day": "Sun 1",
+     "from": "Copán",
+     "to": "Managua",
+     "note": "ruins 08–11, Hedman Alas, Avianca via SAL",
+     "dep": "12:00",
+     "mode": "bus → SAP 15:00 · Avianca SAP → SAL → MGA",
+     "dur": "3h + ~5h",
+     "arr": "~22:00",
+     "cost": "$220 – 380",
+     "night": [
+      {
+       "kind": "bed",
+       "text": "bed ~$40–70"
+      }
+     ],
+     "work": [],
+     "adv": [
+      {
+       "kind": "adv",
+       "text": "3h ADV"
+      },
+      {
+       "kind": "wx",
+       "text": "32°/23°"
+      }
+     ],
+     "warn": "Avianca times unverified; airside in El Salvador; Nicaragua form must be filed a week before"
+    },
+    {
+     "day": "Mon 2",
+     "from": "Managua",
+     "to": "San José",
+     "note": "Avianca, arrive before noon",
+     "dep": "~10:00",
+     "mode": "Avianca MGA → SJO",
+     "dur": "1h15",
+     "arr": "~11:30",
+     "cost": "$120 – 250",
+     "night": [],
+     "work": [],
+     "adv": [
+      {
+       "kind": "adv",
+       "text": "0h ADV"
+      },
+      {
+       "kind": "wx",
+       "text": "25°/17°"
+      }
+     ],
+     "warn": "Nicaragua = one airport hotel; the plan is dominated"
+    }
+   ],
+   "breaks": [
+    "SPOF: the Belize → San Pedro Sula flight on a Saturday, then a local bus to Copán. If Tropic does not fly Saturdays the whole southern half collapses into flights via SAL.",
+    "The Honduras → Nicaragua day has no good move: no direct flight, no overnight bus, a border that closes at night.",
+    "Two consecutive dead work days (Sat, Sun) at the end of the week, then a Monday in transit."
+   ],
+   "metrics": {
+    "work blocks": "4 of 6 intact (Sat, Sun dead)",
+    "free hours": "~23h on the ground · Nicaragua 0",
+    "transit split": "night 8.5h · day ~27h",
+    "nights": "seat 1 · berth 0 · bed 5",
+    "best day": "Thu — Tikal morning, Flores afternoon"
+   }
+  },
+  {
+   "id": "B",
+   "name": "The loop: Copán early, Belize by the 08:45 flight, Tikal at sunset, night bus back, fly to Granada",
+   "tagline": "1 seat night, Tikal included, Nicaragua thin",
+   "masthead": {
+    "dates": "Oct 27 – Nov 2",
+    "countries": "GT · HN · BZ · GT · NI",
+    "seat": 1,
+    "berth": 0,
+    "beds": 5,
+    "cost": "$1,490 – 2,540",
+    "constraint": "Friday Tropic Air + an unverified Flores night departure"
+   },
+   "legs": [
+    {
+     "day": "Tue 27",
+     "from": "Panama City",
+     "to": "Antigua",
+     "note": "Copa CM358, shuttle from GUA",
+     "dep": "10:25",
+     "mode": "Copa → GUA 11:39 · shuttle 1h15",
+     "dur": "2h15 + 1h15",
+     "arr": "13:15",
+     "cost": "$165 – 315",
+     "night": [
+      {
+       "kind": "bed",
+       "text": "bed ~$40–70"
+      }
+     ],
+     "work": [
+      {
+       "kind": "work",
+       "text": "13:30–20 WORK"
+      }
+     ],
+     "adv": [
+      {
+       "kind": "adv",
+       "text": "3h ADV"
+      },
+      {
+       "kind": "wx",
+       "text": "24°/14°"
+      }
+     ],
+     "warn": "an earlier Copa rotation would give Antigua the morning — confirm"
+    },
+    {
+     "day": "Wed 28",
+     "from": "Antigua",
+     "to": "Copán",
+     "note": "shared shuttle, border at El Florido",
+     "dep": "04:00",
+     "mode": "shuttle 5–6h incl. border",
+     "dur": "6h",
+     "arr": "~10:00",
+     "cost": "$50",
+     "night": [
+      {
+       "kind": "bed",
+       "text": "bed ~$30–60"
+      }
+     ],
+     "work": [
+      {
+       "kind": "work",
+       "text": "12–20 WORK"
+      }
+     ],
+     "adv": [
+      {
+       "kind": "adv",
+       "text": "4h ADV"
+      },
+      {
+       "kind": "wx",
+       "text": "28°/17°"
+      }
+     ],
+     "warn": "transit sits entirely before the block; AC rooms are rarer in Copán — book one"
+    },
+    {
+     "day": "Thu 29",
+     "from": "Copán",
+     "to": "San Pedro Sula",
+     "note": "ruins 08–11, then Hedman Alas to the airport city",
+     "dep": "12:00",
+     "mode": "Hedman Alas → SAP Boulevard del Sur",
+     "dur": "3h",
+     "arr": "15:00",
+     "cost": "$20 – 30",
+     "night": [
+      {
+       "kind": "bed",
+       "text": "bed ~$45–80"
+      }
+     ],
+     "work": [
+      {
+       "kind": "work",
+       "text": "15:30–20 WORK"
+      }
+     ],
+     "adv": [
+      {
+       "kind": "adv",
+       "text": "4h ADV"
+      },
+      {
+       "kind": "wx",
+       "text": "31°/22°"
+      }
+     ],
+     "warn": "Copán → SAP times are from an aggregator (05:30 – 16:00, ~2-hourly) — confirm at the terminal the day before"
+    },
+    {
+     "day": "Fri 30",
+     "from": "San Pedro Sula",
+     "to": "Caye Caulker",
+     "note": "Tropic Air Cessna, then the 10:30 water taxi",
+     "dep": "08:45",
+     "mode": "Tropic → BZE 09:45 · taxi · water taxi 45m",
+     "dur": "1h + 1h30",
+     "arr": "11:15",
+     "cost": "$245 – 340",
+     "night": [
+      {
+       "kind": "bed",
+       "text": "bed ~$60–120"
+      }
+     ],
+     "work": [
+      {
+       "kind": "work",
+       "text": "12–20 WORK"
+      }
+     ],
+     "adv": [
+      {
+       "kind": "adv",
+       "text": "3h ADV"
+      },
+      {
+       "kind": "wx",
+       "text": "30°/25°"
+      }
+     ],
+     "warn": "SPOF: Tropic flies this 3 days a week and the days are unverified — book it first"
+    },
+    {
+     "day": "Sat 31",
+     "from": "Caye Caulker",
+     "to": "Flores · Tikal",
+     "note": "water taxi 08:00, Fuente del Norte 10:30, Tikal sunset slot",
+     "dep": "10:30",
+     "mode": "bus → Flores ~15:00 · car to Tikal 16:00–20:00",
+     "dur": "4h30 + 4h",
+     "arr": "21:30",
+     "cost": "$140 – 200",
+     "night": [
+      {
+       "kind": "seat",
+       "text": "SEAT 8.5h"
+      }
+     ],
+     "work": [],
+     "adv": [
+      {
+       "kind": "adv",
+       "text": "6h ADV"
+      },
+      {
+       "kind": "wx",
+       "text": "31°/22°"
+      }
+     ],
+     "warn": "the 10:30 departure and the 22:00 Flores → GUA night bus are both unverified; if the bus is 21:00, Tikal becomes a 14:30–17:30 regular ticket"
+    },
+    {
+     "day": "Sun 1",
+     "from": "Guatemala City",
+     "to": "Granada",
+     "note": "off the night bus 06:30, Avianca via SAL, shuttle",
+     "dep": "~09:00",
+     "mode": "Avianca GUA → SAL → MGA ~13:30 · shuttle 1h15",
+     "dur": "~4h30 + 1h15",
+     "arr": "~15:00",
+     "cost": "$230 – 410",
+     "night": [
+      {
+       "kind": "bed",
+       "text": "bed ~$40–80"
+      }
+     ],
+     "work": [
+      {
+       "kind": "work",
+       "text": "15:30–20 WORK"
+      }
+     ],
+     "adv": [
+      {
+       "kind": "adv",
+       "text": "4h ADV"
+      },
+      {
+       "kind": "wx",
+       "text": "32°/23°"
+      }
+     ],
+     "warn": "airside in El Salvador; the shower before the block is load-bearing after a seat night"
+    },
+    {
+     "day": "Mon 2",
+     "from": "Granada",
+     "to": "San José",
+     "note": "Asese kite window 06–10, then fly",
+     "dep": "~13:30",
+     "mode": "shuttle → MGA · Avianca MGA → SJO",
+     "dur": "1h15 + 1h15",
+     "arr": "~15:00",
+     "cost": "$180 – 340",
+     "night": [],
+     "work": [],
+     "adv": [
+      {
+       "kind": "adv",
+       "text": "4h ADV"
+      },
+      {
+       "kind": "wx",
+       "text": "25°/17°"
+      }
+     ],
+     "warn": "Tica Bus at 06:00 is $40 but kills the kite morning; the flight is the $80–210 upgrade"
+    }
+   ],
+   "breaks": [
+    "SPOF: Tropic Air SAP → BZE must operate on Friday Oct 30. Verify the three weekly days before booking anything else; if Friday is out, the whole loop shifts one day and Tikal drops.",
+    "Second failure: the Flores → Guatemala City night bus time. At 22:00 the sunset slot fits; at 21:00 it does not; if it does not run, this is a bed in Flores and a 06:30 flight from Flores to GUA instead (+$90–140).",
+    "Third: the Belize City → Flores departure (09:30 / 10:30 / 13:30 in different sources). At 13:30 Tikal is gone and the day is a bus."
+   ],
+   "metrics": {
+    "work blocks": "3 full · 2 thin (Thu 4.5h, Sun 4.5h) · 1 dead (Sat)",
+    "free hours": "~28h on the ground · Nicaragua ~8",
+    "transit split": "night 8.5h · day ~24h",
+    "nights": "seat 1 · berth 0 · bed 5",
+    "best day": "Sat — Caye Caulker dawn, Tikal at sunset"
+   }
+  },
+  {
+   "id": "C",
+   "name": "No seat nights: Copán early, Belize by the 08:45 flight, fly to Granada, two Granada mornings",
+   "tagline": "the energy plan — no Tikal",
+   "masthead": {
+    "dates": "Oct 27 – Nov 2",
+    "countries": "GT · HN · BZ · NI",
+    "seat": 0,
+    "berth": 0,
+    "beds": 6,
+    "cost": "$1,400 – 2,530",
+    "constraint": "Friday Tropic Air; Nicaragua gets a real day"
+   },
+   "legs": [
+    {
+     "day": "Tue 27",
+     "from": "Panama City",
+     "to": "Antigua",
+     "note": "Copa CM358, shuttle from GUA",
+     "dep": "10:25",
+     "mode": "Copa → GUA 11:39 · shuttle 1h15",
+     "dur": "2h15 + 1h15",
+     "arr": "13:15",
+     "cost": "$165 – 315",
+     "night": [
+      {
+       "kind": "bed",
+       "text": "bed ~$40–70"
+      }
+     ],
+     "work": [
+      {
+       "kind": "work",
+       "text": "13:30–20 WORK"
+      }
+     ],
+     "adv": [
+      {
+       "kind": "adv",
+       "text": "3h ADV"
+      },
+      {
+       "kind": "wx",
+       "text": "24°/14°"
+      }
+     ],
+     "warn": "an earlier Copa rotation would give Antigua the morning — confirm"
+    },
+    {
+     "day": "Wed 28",
+     "from": "Antigua",
+     "to": "Copán",
+     "note": "shared shuttle, border at El Florido",
+     "dep": "04:00",
+     "mode": "shuttle 5–6h incl. border",
+     "dur": "6h",
+     "arr": "~10:00",
+     "cost": "$50",
+     "night": [
+      {
+       "kind": "bed",
+       "text": "bed ~$30–60"
+      }
+     ],
+     "work": [
+      {
+       "kind": "work",
+       "text": "12–20 WORK"
+      }
+     ],
+     "adv": [
+      {
+       "kind": "adv",
+       "text": "4h ADV"
+      },
+      {
+       "kind": "wx",
+       "text": "28°/17°"
+      }
+     ],
+     "warn": "book an AC room with a desk"
+    },
+    {
+     "day": "Thu 29",
+     "from": "Copán",
+     "to": "San Pedro Sula",
+     "note": "ruins 08–11, then Hedman Alas",
+     "dep": "12:00",
+     "mode": "Hedman Alas → SAP",
+     "dur": "3h",
+     "arr": "15:00",
+     "cost": "$20 – 30",
+     "night": [
+      {
+       "kind": "bed",
+       "text": "bed ~$45–80"
+      }
+     ],
+     "work": [
+      {
+       "kind": "work",
+       "text": "15:30–20 WORK"
+      }
+     ],
+     "adv": [
+      {
+       "kind": "adv",
+       "text": "4h ADV"
+      },
+      {
+       "kind": "wx",
+       "text": "31°/22°"
+      }
+     ],
+     "warn": "Copán → SAP times unverified (aggregator)"
+    },
+    {
+     "day": "Fri 30",
+     "from": "San Pedro Sula",
+     "to": "Caye Caulker",
+     "note": "Tropic Air Cessna, 10:30 water taxi",
+     "dep": "08:45",
+     "mode": "Tropic → BZE 09:45 · taxi · water taxi",
+     "dur": "1h + 1h30",
+     "arr": "11:15",
+     "cost": "$245 – 340",
+     "night": [
+      {
+       "kind": "bed",
+       "text": "bed ~$60–120"
+      }
+     ],
+     "work": [
+      {
+       "kind": "work",
+       "text": "12–20 WORK"
+      }
+     ],
+     "adv": [
+      {
+       "kind": "adv",
+       "text": "3h ADV"
+      },
+      {
+       "kind": "wx",
+       "text": "30°/25°"
+      }
+     ],
+     "warn": "SPOF: Tropic Air operating days unverified — book it first"
+    },
+    {
+     "day": "Sat 31",
+     "from": "Caye Caulker",
+     "to": "Granada",
+     "note": "dawn on the caye, then Avianca via SAL",
+     "dep": "~12:30",
+     "mode": "water taxi 09:30 · Avianca BZE → SAL → MGA · shuttle",
+     "dur": "~5h + 1h15",
+     "arr": "~19:30",
+     "cost": "$310 – 510",
+     "night": [
+      {
+       "kind": "bed",
+       "text": "bed ~$40–80"
+      }
+     ],
+     "work": [],
+     "adv": [
+      {
+       "kind": "adv",
+       "text": "3h ADV"
+      },
+      {
+       "kind": "wx",
+       "text": "32°/23°"
+      }
+     ],
+     "warn": "Avianca times unverified; airside in El Salvador; the block is dead either way"
+    },
+    {
+     "day": "Sun 1",
+     "from": "Granada",
+     "to": "Granada",
+     "note": "Asese kite 07–10, work, Masaya lava after 20:00",
+     "dep": "—",
+     "mode": "no transit",
+     "dur": "—",
+     "arr": "—",
+     "cost": "$60 – 160",
+     "night": [
+      {
+       "kind": "bed",
+       "text": "bed ~$40–80"
+      }
+     ],
+     "work": [
+      {
+       "kind": "work",
+       "text": "12–20 WORK"
+      }
+     ],
+     "adv": [
+      {
+       "kind": "adv",
+       "text": "6h ADV"
+      },
+      {
+       "kind": "wx",
+       "text": "32°/23°"
+      }
+     ],
+     "warn": "Masaya night tours leave ~17:30; going after the block means a private car"
+    },
+    {
+     "day": "Mon 2",
+     "from": "Granada",
+     "to": "San José",
+     "note": "second Asese window 06–10, then fly",
+     "dep": "~13:30",
+     "mode": "shuttle → MGA · Avianca MGA → SJO",
+     "dur": "1h15 + 1h15",
+     "arr": "~15:00",
+     "cost": "$180 – 340",
+     "night": [],
+     "work": [],
+     "adv": [
+      {
+       "kind": "adv",
+       "text": "4h ADV"
+      },
+      {
+       "kind": "wx",
+       "text": "25°/17°"
+      }
+     ],
+     "warn": "Tica Bus 06:00 is $40 but kills the morning"
+    }
+   ],
+   "breaks": [
+    "SPOF: Tropic Air SAP → BZE on Friday Oct 30 — same as Plan B; verify first. Fallback: ruins Wed 28 after the 10:00 shuttle arrival, Hedman Alas 16:00 to SAP, fly Thu 29, and Caye Caulker gains a day.",
+    "Second: the Saturday Belize → Managua connection through San Salvador. A missed connection lands you in Managua at midnight with the Sunday block intact only if you sleep by the airport.",
+    "Third: Nicaragua paperwork — the online form a week ahead. Without it the border queue is the day."
+   ],
+   "metrics": {
+    "work blocks": "4 full · 1 thin (Thu 4.5h) · 1 dead (Sat)",
+    "free hours": "~27h on the ground · Nicaragua ~14",
+    "transit split": "night 0 · day ~20h",
+    "nights": "seat 0 · berth 0 · bed 6",
+    "best day": "Sun — Asese kite, a full block, the volcano"
+   }
+  }
+ ],
+ "head_to_head": {
+  "rows": [
+   {
+    "label": "Must-hits (GT / HN / BZ / NI)",
+    "cells": [
+     "4 / 4, Nicaragua nominal",
+     "4 / 4",
+     "4 / 4"
+    ],
+    "best": 2,
+    "worst": 0
+   },
+   {
+    "label": "Tikal",
+    "cells": [
+     "morning, rested? no",
+     "sunset slot, unverified timing",
+     "no — Copán carries the Maya stop"
+    ],
+    "best": 0
+   },
+   {
+    "label": "Seat nights",
+    "cells": [
+     "1",
+     "1",
+     "0"
+    ],
+    "best": 2
+   },
+   {
+    "label": "Paid beds",
+    "cells": [
+     "5",
+     "5",
+     "6"
+    ],
+    "worst": 2
+   },
+   {
+    "label": "Work blocks intact (of 6)",
+    "cells": [
+     "4 full",
+     "3 full + 2 thin",
+     "4 full + 1 thin"
+    ],
+    "best": 2,
+    "worst": 1
+   },
+   {
+    "label": "Free hours on the ground",
+    "cells": [
+     "~23h",
+     "~28h",
+     "~27h"
+    ],
+    "best": 1,
+    "worst": 0
+   },
+   {
+    "label": "Nicaragua free hours",
+    "cells": [
+     "0",
+     "~8",
+     "~14"
+    ],
+    "best": 2,
+    "worst": 0
+   },
+   {
+    "label": "Kite windows",
+    "cells": [
+     "Caye Caulker dawn (off-season)",
+     "Caye Caulker dawn + 1 Asese morning",
+     "2 Asese mornings"
+    ],
+    "best": 2,
+    "worst": 0
+   },
+   {
+    "label": "Best single day",
+    "cells": [
+     "Thu: Tikal am, Flores pm",
+     "Sat: caye dawn, Tikal sunset",
+     "Sun: Asese, full block, Masaya"
+    ]
+   },
+   {
+    "label": "Slack at the deadline",
+    "cells": [
+     "arrive SJO ~11:30 Nov 2",
+     "arrive ~15:00 Nov 2",
+     "arrive ~15:00 Nov 2"
+    ],
+    "best": 0
+   },
+   {
+    "label": "Unverified legs that decide the plan",
+    "cells": [
+     "2",
+     "3",
+     "2"
+    ],
+    "worst": 1
+   },
+   {
+    "label": "Cost range",
+    "cells": [
+     "$1,370 – 2,300",
+     "$1,490 – 2,540",
+     "$1,400 – 2,530"
+    ],
+    "best": 0
+   }
+  ]
+ },
+ "quiet_part": [
+  "The night bus does not save money on this corridor. Plan B versus Plan C is about $90 apart and the seat night buys Tikal, not dollars. Flying every leg is the cheap-enough default here; overland purity would cost you Nicaragua.",
+  "Flying everything (Plan C) is $735–1,250 in fares for four legs. That is the trip. Choose it as one.",
+  "Nov 2 as a hard date is what starves Nicaragua. Sliding Costa Rica to Nov 3 buys a full Granada day (kite morning + intact work block) for one more bed, $40–80, and nothing else changes.",
+  "The El Salvador rule is silently touched twice (airside at SAL on the Managua flights). Routing via Panama instead is +$150–250 and +3h per leg. Say which you mean.",
+  "Tikal and a real Nicaragua do not both fit in six nights with the work block intact. Copán is the Maya-collapse stop in every plan; Tikal belongs to a later Belize + Flores trip in kite season."
+ ],
+ "hybrid": {
+  "title": "Plan C, plus four targeted moves",
+  "items": [
+   "Book Tropic Air SAP → BZE first, for Fri Oct 30. It is the single point of failure in B and C. If Friday is not an operating day, shift the Copán block: shuttle Antigua → Copán Tue 27 afternoon is impossible (shuttles leave 03:30–05:00), so instead do Copán ruins Wed 28 after the 10:00 arrival, work 14–20, Hedman Alas 16:00 → SAP, and fly Thu 29 — Caye Caulker gains a day.",
+   "Granada: an AC room with a desk for Nov 1 (+$20–40 over the cheap bed). That block is the only full work day in Nicaragua; protect it.",
+   "Kite: rent at Asese both Granada mornings (US$50–80 a session, ~40% odds of the first Papagayo days). Skip the kite bag; it costs ~$100–150 in fees across four flights and two Cessna weight limits.",
+   "Nov 2: fly MGA → SJO in the afternoon ($120–250) rather than the 06:00 Tica Bus ($40). The $80–210 buys the last Granada kite window and six daylight hours.",
+   "If you want the seat night and Tikal anyway, take Plan B and verify two things before anything else: the Flores night-bus departure and the Belize City → Flores departure. Both are unverified and both decide whether Tikal is a sunset or a drive-by."
+  ]
+ },
+ "notes": [
+  "Cash map: Guatemala Q (≈7.7/$), Honduras L (≈25/$), Belize BZ$ pegged 2:1 and USD taken everywhere, Nicaragua C$ (≈36/$) with USD widely taken, Costa Rica ₡. Pull local cash from bank ATMs on a debit card; decline DCC. Border fees are cash: BZ$40 out of Belize, US$10–13 into Nicaragua.",
+  "Stations, exact: Linea Dorada Guatemala City = 16 Calle 10-55, Zona 1 (taxi door to door at night). Belize City buses to Flores leave from the Marine Terminal on North Front Street, the same building as the Caye Caulker water taxi. Hedman Alas SAP = Boulevard del Sur, not the Gran Central. Tica Bus Managua = Barrio Martha Quezada.",
+  "Timezone: all five countries UTC−6, no DST. US clocks fall back Sun Nov 1 03:00: New York goes from +2h to +1h mid-trip; move the Nov 1–2 call slots accordingly.",
+  "Luggage: three Cessna legs (Tropic Air) and small shuttles. One carry-on plus a daypack keeps every day at ≤3 touches; the Copán shuttle and the night bus both take bags underneath.",
+  "Kite odds, honestly: Caye Caulker and Roatán are Dec–Apr spots; Lake Atitlán blows afternoons but is not on any of these routes; Lake Nicaragua at Granada opens in November. Two Granada mornings are the trip’s kite. Bahía Salinas, Costa Rica, opens the same week you arrive.",
+  "Recovery: Plan B’s seat night lands at 06:30 in Guatemala City with a flight at ~09:00 and a hotel at 15:00 — book the Granada room for early check-in and take the shower before the work block, not after.",
+  "Practice frameworks: pre-register the Tropic Air outcome (forecast: 70% Friday operates) before you look it up; pre-mortem the Nov 1 SAL connection (missed connection = Managua at midnight, Granada block dead); one micro-ask a day — the Copán guide about the 9th-century drought, the Asese instructor about when the Papagayo actually turned on last year."
+ ],
+ "footer": "Estimates as ranges · italics = unverified, confirm before booking · recompute beds / seat nights / totals after every edit · rendered with scripts/travel/macro_plan.py"
+}
