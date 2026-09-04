@@ -35,3 +35,7 @@ connection-insights/
 
 # Local incremental-build cache
 *.tsbuildinfo
+
+# Finance — statements, ledgers and tax documents stay local, never committed
+app/finance/data/*
+!app/finance/data/README.md
