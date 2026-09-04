@@ -17,7 +17,7 @@
 
 export type Status = 'fixed' | 'planned' | 'pending' | 'tbd'
 
-export type ForkId = 'birthday' | 'decDest' | 'oxford' | 'maui' | 'nye' | 'afterAD' | 'winter' | 'summer'
+export type ForkId = 'birthday' | 'decDest' | 'maui' | 'nye' | 'afterAD' | 'winter' | 'summer'
 
 export interface CostLine {
   label: string
@@ -116,17 +116,6 @@ export const FORKS: Fork[] = [
       { id: 'nyc', label: 'Back to NYC', detail: 'the "otherwise" in your note' },
     ],
     default: 'nyc',
-  },
-  {
-    id: 'oxford',
-    label: 'Oxford in December',
-    window: 'early – mid Dec',
-    question: 'The roadmap has you presenting the draft at Oxford. Is that a trip?',
-    options: [
-      { id: 'include', label: 'Yes, go', detail: 'from the CEcon roadmap, not your list' },
-      { id: 'skip', label: 'Not a trip' },
-    ],
-    default: 'include',
   },
   {
     id: 'maui',
@@ -346,9 +335,9 @@ export const SEGMENTS: Segment[] = [
     notes: [
       'Lodging spikes Dec 26 – Jan 2 everywhere on the coast; the NYE fork costs that week separately.',
       'Etihad flies São Paulo → Abu Dhabi direct, about 14 hours, so the Jan 3 arrival is clean.',
-      'This choice makes Maui a round-the-world detour and Oxford a 12-hour flight each way.',
+      'This choice makes Maui a round-the-world detour.',
     ],
-    open: ['Maybe, in your words. Decides Maui and the Oxford routing.'],
+    open: ['Maybe, in your words. Decides Maui and NYE.'],
     cost: [
       { label: 'Monthly rental, ~6 weeks', low: 1700, high: 3500 },
       { label: 'Living', low: 900, high: 1800 },
@@ -365,31 +354,9 @@ export const SEGMENTS: Segment[] = [
     status: 'pending',
     lane: 0,
     fork: { id: 'decDest', option: 'nyc' },
-    summary: 'Home for six weeks; Oxford and Maui are each a direct flight from here.',
+    summary: 'Home for six weeks; Maui is a direct flight from here.',
     open: ['The "otherwise" — chosen only if Brazil is not extended.'],
     cost: [{ label: 'Flight Brazil → NYC', low: 450, high: 900 }, ...NYC_LINES],
-  },
-
-  // December · Oxford (from the roadmap) --------------------------------------
-  {
-    id: 'oxford',
-    short: 'Oxford',
-    start: '2026-12-07',
-    end: '2026-12-12',
-    title: 'Oxford — present the draft',
-    place: 'Oxford · Smith School',
-    status: 'pending',
-    lane: 1,
-    fork: { id: 'oxford', option: 'include' },
-    datesSoft: true,
-    summary: 'Not on your list. The CEcon roadmap has the paper draft due Dec 5 and presented in person at Oxford, with supervisor meetings.',
-    notes: ['Dates here are a placeholder in the week after the draft is due.'],
-    open: ['Is it a trip, and when? Pin the dates once Lafond replies.'],
-    cost: [
-      { label: 'Flight, round trip', low: 450, high: 1200, note: 'JFK–LHR 450–800; GRU–LHR 800–1,200' },
-      { label: 'Lodging, 5 nights', low: 600, high: 1000 },
-      { label: 'Trains, food', low: 250, high: 450 },
-    ],
   },
 
   // Dec 23 – 27 · Maui ---------------------------------------------------------
@@ -848,9 +815,6 @@ export function resolve(forks: ForkState): Scenario {
   const warnings: string[] = []
   if (forks.decDest === 'brazil' && forks.maui !== 'skip') {
     warnings.push('Brazil → Maui → Abu Dhabi is a round-the-world routing across Christmas week. Costed, but this is the case you flagged as not making sense.')
-  }
-  if (forks.decDest === 'brazil' && forks.oxford === 'include') {
-    warnings.push('Oxford from Brazil is a twelve-hour flight each way (São Paulo – London); from NYC it is seven.')
   }
   if (forks.nye === 'gulf' && forks.maui !== 'skip') {
     warnings.push('Maui on Dec 27 to Dubai by Dec 28 is about twenty hours of flying; it works, but Christmas and NYE land on opposite sides of the planet.')
