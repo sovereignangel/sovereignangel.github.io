@@ -53,6 +53,49 @@ export interface LogEntry {
   note: string
 }
 
+// Deep dive beneath a lane: the transmission chain link by link, what is already
+// on the public record, how the causal claim is identified, the nearest prior
+// work and what it leaves open, the dated plan, and how the lane dies.
+export interface ChainLink {
+  step: string
+  state: string
+  convention: string
+}
+
+export interface KnownFact {
+  fact: string
+  source: string
+  asOf: string
+}
+
+export interface PriorWork {
+  cite: string
+  did: string
+  gap: string
+}
+
+export interface OpenQuestion {
+  question: string
+  matters: string
+}
+
+export interface PlanStep {
+  window: string
+  deliverable: string
+  gate: string
+}
+
+export interface LaneDeepDive {
+  chain: ChainLink[]
+  facts: KnownFact[]
+  identification: string
+  priorWork: PriorWork[]
+  openQuestions: OpenQuestion[]
+  plan: PlanStep[]
+  failureModes: string[]
+  crossLane: string
+}
+
 export const RESEARCH_FRAMING = {
   title: 'Climate, Grids, Balance Sheets',
   question:
@@ -86,6 +129,12 @@ export const MARKETS = [
     driver: 'Heat · Sea',
     gap: 'Most-studied grid in the world; marine-layer solar error and correlated heat domes still under-modeled',
   },
+  {
+    id: 'pjm',
+    name: 'PJM · 13 states + DC',
+    driver: 'Cognition · Load',
+    gap: 'The best-covered capacity market on earth; the forecast-to-price loop and the incidence by income decile are still unwritten',
+  },
 ]
 
 export const LANES: ResearchLane[] = [
@@ -99,7 +148,7 @@ export const LANES: ResearchLane[] = [
     thesis:
       'In a small, wind-heavy, newly resynchronized bidding zone, wind forecast error is the dominant driver of intraday and imbalance price spikes — and forecast disagreement between models (GFS vs ECMWF ensemble spread) is a measurable early-warning state variable for tail events. The kite wind brief already computes the front half of this signal.',
     whyOpen:
-      'Baltic power has essentially no independent English-language researcher. In February 2025 the three Baltic states desynchronized from the Russian-controlled BRELL ring and joined the Continental European grid — a once-in-history change in network topology whose market consequences (balancing costs, price coupling, frequency-reserve procurement) remain largely unwritten. Physical presence in Palanga through late September is a live edge: the wind being forecast is observable out the window.',
+      'Baltic power has essentially no independent English-language researcher. On 8 February 2025 the three Baltic states desynchronized from the Russian-controlled BRELL ring, and on 9 February synchronized with the Continental European grid — a once-in-history change in network topology whose market consequences (balancing costs, price coupling, frequency-reserve procurement) remain largely unwritten. Physical presence in Palanga through late September is a live edge: the wind being forecast is observable out the window.',
     mechanism:
       'A grid topology change is literal network rewiring — the cleanest natural experiment in network economics available anywhere right now. Imbalance prices are an emergent property of correlated forecast errors across a small zone: when every producer misses in the same direction, the system state jumps rather than averages out. Fat tails from synchronized error, not from any single actor.',
     hypotheses: [
@@ -118,14 +167,20 @@ export const LANES: ResearchLane[] = [
       {
         id: 'LT-3',
         claim:
-          'The Baltic offshore buildout will raise, not lower, price volatility for years — capacity is arriving faster than the transmission and storage that would absorb it, so cannibalization and negative-price hours lead the smoothing.',
-        test: 'Cross-sectional check against zones further along the same curve (Denmark, northern Germany): volatility and negative-price frequency vs wind penetration, controlling for interconnection ratio.',
+          'The Lithuanian buildout raises price volatility before it lowers it — and the driver is onshore wind and solar, not offshore. Wind and solar passed 6 GW in early 2026 against a peak load near 2 GW, offshore has slipped toward 2030 after two failed tenders, and 3.7 GW of batteries sit in letters of intent: negative-price hours and cannibalization lead, and the smoothing arrives with storage, datable from the battery commissioning schedule.',
+        test: 'Negative-price frequency and intraday-minus-day-ahead volatility in LT by month against wind-plus-solar capacity and cumulative batteries commissioned; cross-sectional check against Denmark and northern Germany at matched penetration, controlling for interconnection ratio; falsified if volatility falls with penetration before storage arrives.',
       },
       {
         id: 'LT-4',
         claim:
           'In hours when gas sets the uniform clearing price, wind owners collect inframarginal rents financed through the bills of households in some of the EU’s most energy-poor member states — and the post-BRELL security premium is likewise socialized onto ratepayers by convention. The rent transfer is calculable, and it lands on the inequality frame directly.',
         test: 'Reconstruct hourly inframarginal rents for LT wind from ENTSO-E prices and a merit-order proxy; join spike frequency to EU-SILC energy-poverty indicators across the Baltics; headline number is euros transferred per household per year under the clearing convention.',
+      },
+      {
+        id: 'LT-5',
+        claim:
+          'Who pays for wind forecast error is a convention. The 15-minute single imbalance price, the balance-responsibility exemptions, and the historical treatment of supported producers’ balancing as a public-service cost decide whether the error lands on the wind owner, the balance responsible party, or every consumer through the VIAP levy and the transmission tariff — and each rule change since the Baltic balancing market opened in February 2025 is a datable break in who paid.',
+        test: 'Reconstruct the imbalance cost of LT wind by settlement period — imbalance volume times imbalance-minus-day-ahead price — from ENTSO-E and the Baltic transparency dashboard; split by balance-responsibility regime and by PSO coverage; join to household counts. Headline: euros per household per year of forecast error socialized under each regime.',
       },
     ],
     data: [
@@ -134,6 +189,8 @@ export const LANES: ResearchLane[] = [
       { name: 'Litgrid', url: 'https://www.litgrid.eu', note: 'TSO data — balancing, interconnectors, desync documentation' },
       { name: 'Open-Meteo', url: 'https://open-meteo.com', note: 'free GFS / ECMWF / ICON ensembles + historical forecast archive — same stack as the kite brief' },
       { name: 'Eurostat EU-SILC', url: 'https://ec.europa.eu/eurostat/web/income-and-living-conditions', note: 'energy-poverty indicators by country and year — the inequality join for LT-4' },
+      { name: 'Baltic Transparency Dashboard', url: 'https://baltic.transparency-dashboard.eu', note: 'the three Baltic TSOs’ joint publication — imbalance prices, aFRR and mFRR balancing energy prices and activations for EE, LV, LT; the LT-5 source if ENTSO-E imbalance data is thin' },
+      { name: 'Open-Meteo Historical Forecast API', url: 'https://open-meteo.com/en/docs/historical-forecast-api', note: 'archived deterministic runs — IFS since 2017, GFS since 2021, ICON since 2022 — at 100 m hub height; ensemble spread is not archived, so the daily logger starts now' },
     ],
     armstrongAngle:
       'A paper-traded day-ahead vs intraday spread signal conditioned on forecast dispersion. Even without market access, a timestamped forecast-and-outcome log is a track-record artifact — the Armstrong pattern of a live book as empirical evidence, applied to power.',
@@ -290,7 +347,7 @@ export const LANES: ResearchLane[] = [
     thesis:
       'The Abu Dhabi paper. AI datacenter load does not distribute its own costs — the conventions of capacity procurement do. Utilities’ load forecasts set PJM’s reliability requirement, the requirement sets the capacity price, and the price lands on household bills through tariff design. The forecast is a performative convention: the model writes the price, again. This is the cost ledger of the original SFI lane — “who accumulates when cognition is free” was the gains ledger; this is who pays.',
     whyOpen:
-      'The facts are public and dramatic: PJM’s capacity price rose from about $29 to $270 per MW-day for 2025-26, the market monitor attributed 63% of the increase to datacenters — roughly $9.3 billion recovered from customers — and prices remain elevated in 2026. The incidence question has been raised as law and policy (Peskoe & Martin, Harvard Electricity Law Initiative, 2025) and as journalism. Nobody has written the complexity version: the reflexive forecast-to-price loop, the distribution by income decile, or the counterfactual conventions.',
+      'The facts are public and dramatic. PJM’s capacity price went from $28.92 to $269.92 per MW-day for 2025/26, and the market monitor attributed 63% of the increase — about $9.3 billion — to data centers. The next three auctions all cleared at the cap: $329.17 for 2026/27, $333.44 for 2027/28 (6,623 MW short of the reliability requirement), and the cap again in July 2026 for 2028/29. Four auctions, $63.6 billion, of which the monitor attributes $29.4 billion (46%) to data centers. The incidence question has been raised as law (Peskoe & Martin, Harvard Electricity Law Initiative, 2025), as advocacy (Synapse for the DC People’s Counsel, Maryland OPC, Union of Concerned Scientists), and as policy — the White House and thirteen governors’ principles of January 2026, PJM’s board letter a day later, FERC’s June 2026 show-cause orders to every RTO. Nobody has written the complexity version: the reflexive forecast-to-price loop, the distribution by income decile, or the conventions compared as parameters.',
     mechanism:
       'A feedback loop with a convention at its center. Speculative interconnection requests and utility pipeline counting inflate load forecasts; forecasts raise the procurement target; the auction clears higher; bills rise; the rise is socialized across a customer class whose budget shares differ by decile. Change the convention — who bears forecast risk, how large loads are tariffed — and the same electrons produce a different distribution. Conventions as parameters of a system that generates inequality.',
     hypotheses: [
@@ -304,29 +361,40 @@ export const LANES: ResearchLane[] = [
         id: 'PJ-2',
         claim:
           'Reflexivity: a measurable share of the capacity-price increase was written by load-forecast revisions rather than by realized load — the forecast convention, not the electrons, moved the price.',
-        test: 'Decompose the 2024-25 price change into reliability-requirement changes driven by PJM load-forecast revisions vs supply-side drivers (retirements, accreditation methodology) vs realized peak load; the forecast-driven share is the estimate. Pre-register the decomposition before pulling results.',
+        test: 'Decompose the 2024/25-to-2028/29 changes in reliability requirement and clearing outcome across PJM load-forecast revisions, accreditation methodology, retirements and RMR exclusion, and realized peak. Two constraints fixed in advance: the price is censored at the cap in three of four auctions, so the decomposition runs in megawatts of shortfall and unconstrained shadow price, not dollars per MW-day; and the IMM’s partial counterfactuals interact — its 2025/26 attributions sum to roughly $18 billion against a $12.5 billion increase — so the method is an order-averaged Shapley decomposition, with the forecast-written share as the Shapley value of the forecast revision. Pre-register before pulling results.',
       },
       {
         id: 'PJ-3',
         claim:
           'Counterfactual conventions: under alternative cost-allocation rules — large-load tariffs, datacenters bearing forecast risk, price collars — the same load produces materially different household burdens; the dollars shifted per household is a property of the rule, not the demand.',
-        test: 'A calibrated procurement-and-allocation model (simple first, agent-based if time allows) run under the status quo and three alternative conventions already proposed in practice; output is dollars shifted per household per year under each. The Farmer-grade section: conventions as system parameters.',
+        test: 'A calibrated procurement-and-allocation model (simple first, agent-based if time allows) run under the status quo and three conventions now being adopted in practice — minimum-demand large-load tariffs, causation-based allocation to the LSEs whose data centers are uncommitted, and bring-your-own-generation with curtailment; output is dollars shifted per household per year under each. The Farmer-grade section: conventions as system parameters.',
+      },
+      {
+        id: 'PJ-4',
+        claim:
+          'Conventions move forecasts. Utilities in states that adopted minimum-demand large-load tariffs — AEP Ohio in 2025, Dominion’s GS-5 approved November 2025 — revise their large-load adjustments down more in the 2026 and 2027 forecast vintages than utilities in states without one; the vetting rule, not realized demand, changes the number that sets the price.',
+        test: 'Panel of utility-level large-load adjustments from PJM’s per-utility forecast documentation across the 2024-2027 vintages, joined to tariff adoption dates from the E3/Halcyon catalogue; difference-in-differences on the revision; the January 2027 vintage is the out-of-sample test and lands during the winter school.',
       },
     ],
     data: [
-      { name: 'PJM capacity market results', url: 'https://www.pjm.com/markets-and-operations/rpm', note: 'Base Residual Auction results and parameters by delivery year and zone' },
+      { name: 'PJM capacity market results', url: 'https://www.pjm.com/markets-and-operations/rpm', note: 'Base Residual Auction results, planning parameters (reliability requirement, reserve margin, forecast peak, demand curve) and aggregate supply curves by delivery year and zone — the Shapley inputs' },
       { name: 'PJM load forecast reports', url: 'https://www.pjm.com/planning/resource-adequacy-planning/load-forecast-dev-process', note: 'annual forecasts and revisions — the performative object' },
       { name: 'Monitoring Analytics (IMM)', url: 'https://www.monitoringanalytics.com', note: 'State of the Market reports; the 63% datacenter attribution' },
       { name: 'EIA-861', url: 'https://www.eia.gov/electricity/data/eia861/', note: 'retail sales and revenue by utility and customer class' },
       { name: 'BLS Consumer Expenditure Survey', url: 'https://www.bls.gov/cex/', note: 'electricity spend by income decile — the incidence join' },
       { name: 'Peskoe & Martin 2025', url: 'http://eelp.law.harvard.edu/wp-content/uploads/2025/03/Harvard-ELI-Extracting-Profits-from-the-Public.pdf', note: 'the legal account of the cost shift — nearest prior work' },
+      { name: 'Who Pays for Data Centers', url: 'https://whopaysfordatacenters.com', note: 'independent tracker of auction results, IMM attributions, state bills and tariffs, every claim linked to a primary source' },
+      { name: 'Synapse for DC OPC 2025', url: 'https://opc-dc.gov/wp-content/uploads/2025/05/PJM-Capacity-Market-Report-FINAL-OPC-Synapse.pdf', note: 'drivers with IMM magnitudes and a worked LDA-to-bill method — the §1 template' },
+      { name: 'UCS transmission brief', url: 'https://www.ucs.org/sites/default/files/2025-09/PJM%20Data%20Center%20Issue%20Brief%20-%20Sep%202025.pdf', note: 'the second ledger — $4.36 billion of 2024 data-center transmission socialized across seven states' },
+      { name: 'E3 / Halcyon large-load tariffs', url: 'https://www.ethree.com/wp-content/uploads/2026/05/E3_Large-Load-Tariff-Whitepaper-1.pdf', note: '23 states’ tariffs and terms as of May 2026 — the treatment dates for PJ-4' },
+      { name: 'FERC RM26-4', url: 'https://www.ferc.gov/rm26-4', note: 'large-load interconnection docket; the June 2026 show-cause orders to all six RTOs' },
     ],
     armstrongAngle:
       'Research capital first. A separate one-page trade memo maps the findings to who captures the capacity windfall — independent power producers with PJM exposure vs regulated utilities vs hyperscalers — without shaping the research.',
     quantSkill:
       'Incidence analysis, price decomposition, calibrated procurement modelling — and the discipline of a pre-registered decomposition on a politically charged question.',
     firstProbe:
-      'Two-week data sprint before the Ironman: pull auction results, load-forecast revisions, and CEX budget shares; one chart of forecast revisions against capacity prices; the §1 incidence skeleton. Michael drafts the conventions-as-institutions theory section in parallel.',
+      'Two-week data sprint between the two races (September 14-25): auction results and planning parameters back to 2020/21, the IMM analyses, load-forecast vintages 2022-2026, EIA-861 and CEX budget shares; one chart of forecast vintages against capacity prices; the §1 incidence skeleton. Michael drafts the conventions-as-institutions theory section in parallel.',
   },
   {
     id: 'lane-generator',
@@ -359,6 +427,30 @@ export const LANES: ResearchLane[] = [
         claim:
           'The Lopez de Prado result: strategies trained on the ABM’s causal synthetic paths generalize to real out-of-sample data better than strategies trained on historical bootstraps — simulation with causal structure as the cure for backtest overfitting.',
         test: 'Identical strategy-search protocols on (a) historical bootstrap and (b) ABM-generated paths; compare out-of-sample decay. The deflated-Sharpe framework scores both; presentable at an ADIA Lab symposium.',
+      },
+      {
+        id: 'GEN-4',
+        claim:
+          'The alpha-decay duel: Lopez de Prado says strategies decay because they were overfit artifacts; Farmer says they decay because capital crowds the species and competition eats the alpha. In equities the theories are indistinguishable — in observable markets they are not. Where participant behavior is broadcast, decay follows measurable crowding dynamics, not just discovery events.',
+        test: 'Track strategy-species capital (from AIS behavior clusters or power-market participation) against the decay curves of the associated signals; the ecological model must explain decay timing that the overfitting model attributes to chance. Adjudicating between the two professors’ theories is the paper.',
+      },
+      {
+        id: 'GEN-5',
+        claim:
+          'Structural breaks are endogenous: ADIA Lab’s own challenge treats breaks as statistical events to be detected; Farmer’s endogenous-dynamics program says they are produced by slow observable variables. In the LT zone and the tanker market, breaks in price dynamics are preceded by measurable shifts in participant composition — and a composition-aware detector beats purely statistical ones.',
+        test: 'Benchmark statistical break detectors against composition-augmented ones on archived power and AIS data; pre-register the composition variables. The mechanism handed to the detection problem.',
+      },
+      {
+        id: 'GEN-6',
+        claim:
+          'The causal ground-truth benchmark: causal-discovery algorithms cannot be validated on financial data because no market’s true causal graph is known — except electricity, where the DAG is substantially physics plus published auction rules. Power markets can serve as the first ground-truth scorecard for causal discovery in market data.',
+        test: 'Run PC, LiNGAM, and Granger-family algorithms on LT-zone data; score recovered graphs against the known physical-institutional DAG; publish the benchmark as an open dataset. Infrastructure for Lopez de Prado’s causal program, built from Farmer’s fruit fly.',
+      },
+      {
+        id: 'GEN-7',
+        claim:
+          'Species diversification beats correlation diversification: HRP clusters return correlations, but correlations spike precisely when crowded strategy species deleverage together — the moment HRP’s clusters betray it. Portfolios diversified across behaviorally inferred species carry lower crowding-crash exposure.',
+        test: 'Build species clusters from observed behavior (AQ-1 machinery) and compare drawdown profiles of species-diversified vs HRP portfolios through crowding episodes; a friendly amendment to the field’s most-used construction tool.',
       },
     ],
     data: [
@@ -500,7 +592,11 @@ export const INEQUALITY_BRIDGE = {
     },
     {
       title: 'Lithuania · The Marginal Price',
-      body: 'The Baltics rank among the EU’s most energy-poor member states. Every hour gas sets the uniform clearing price, wind owners collect inframarginal rents financed through those households’ bills — and the post-BRELL security premium is socialized the same way. LT-4 computes the transfer.',
+      body: 'The Baltics rank among the EU’s most energy-poor member states. Every hour gas sets the uniform clearing price, wind owners collect inframarginal rents financed through those households’ bills — and the post-BRELL security premium is socialized the same way. LT-4 computes the transfer; LT-5 adds the imbalance channel — who pays when the wind forecast is wrong.',
+    },
+    {
+      title: 'The Forecast',
+      body: 'Lanes I and V are one claim in two grids. A forecast inside a market rule is a distributive institution: in Lithuania the wind forecast error becomes a 15-minute imbalance and the balancing convention decides who pays it; in PJM the load forecast becomes a reliability requirement and the allocation convention decides who pays for the megawatts — $63.6 billion across four capped auctions, 46% attributed to data centers. LT-5 and PJ-2 are the same measurement.',
     },
     {
       title: 'The Join',
@@ -551,17 +647,17 @@ export const SCORECARD: ScorecardRow[] = [
 
 export const PROPOSED_PATH: PathStep[] = [
   {
-    window: 'Weeks 1-19 · parallel track',
+    window: 'Sep 14 → Jan 3 · parallel track',
     label: 'The Abu Dhabi paper — Who Pays for Cognition (Lane V)',
     detail:
-      'Data sprint before September 26; §1 incidence drafted in October; §2 reflexivity decomposition and §3 counterfactual model in November; full draft to Lafond and the Oxford meetings in December; paper plus lightning talk in hand for January 3. Michael Ralph co-authors the theory section; Lori owns data and model.',
+      'Data sprint between the two races (September 14-25); §1 incidence in October; §2 Shapley decomposition and §3 conventions model in November, with PJ-4 on the 2026 vintage; full draft to Lafond and the Oxford meetings in December; paper plus lightning talk in hand for January 3, and PJM’s 2027 forecast vintage on January 14 as the promised out-of-sample update. Michael Ralph co-authors the theory section; Lori owns data and model. Dated plan in the Lane V deep dive.',
     gate: 'A defensible headline number by end of October or the paper narrows to §1 plus §2. The gains ledger — valuation conventions — is the second paper of the same program, not a competing one.',
   },
   {
-    window: 'Weeks 1-3',
+    window: 'Sep 3-22 · before leaving Palanga',
     label: 'Lane I probe — while still in Palanga',
     detail:
-      'ENTSO-E + Open-Meteo pipeline into macro-signals; test LT-1; publish "The Grid After BRELL" as the first Baltic power post. The location edge expires around September 23 — this goes first.',
+      'ENTSO-E + Open-Meteo pipeline into macro-signals; pre-registered LT-1; LT-2 with LV and EE as comparisons; the LT-5 imbalance ledger; publish "The Grid After BRELL" before the flight out on the 23rd. The location edge expires with the flight — this goes first. Dated plan in the Lane I deep dive.',
     gate: 'Commit if forecast dispersion measurably predicts spike days; park if the LT zone is too coupled to neighbors for a local signal to exist.',
   },
   {
@@ -587,6 +683,16 @@ export const PROPOSED_PATH: PathStep[] = [
 ]
 
 export const ITERATION_LOG: LogEntry[] = [
+  {
+    date: '2026-09-04',
+    version: 'v11',
+    note: 'Lane VI deepened for the two-professor alignment (Farmer x Lopez de Prado): GEN-4 the alpha-decay duel (overfitting vs crowding, adjudicated in observable markets), GEN-5 endogenous structural breaks (a mechanism for ADIA’s own detection challenge), GEN-6 the causal ground-truth benchmark (electricity as the only market with a known DAG — an open validation scorecard for causal discovery), GEN-7 species diversification vs HRP. The design principle: find where the two professors give competing explanations of the same phenomenon, or where one’s program needs an instrument only the other’s can supply.',
+  },
+  {
+    date: '2026-09-03',
+    version: 'v11',
+    note: 'Deep dives added beneath Lanes I and V — the chain link by link, what is already on the record, identification, nearest prior work, open questions, dated plans, failure modes. Facts verified against primary sources: four PJM auctions at or near the cap ($63.6 billion, 46% attributed to data centers by the IMM), the 28 April 2026 collar extension, the January 2026 White House-governors principles and PJM board letter, FERC’s June 2026 show-cause orders, 23 states with large-load tariffs; Baltic desync 8-9 February 2025, balancing capacity market 4 February, PICASSO 15 April, Lithuania at 2.3 GW wind and 2.8 GW solar, two failed offshore tenders, energy poverty 18.0% against 9.2% EU. Consequences: LT-3 rewritten from offshore to onshore-plus-storage; LT-5 added (who pays for wind forecast error); PJ-2 rewritten for censoring at the cap and non-additive IMM counterfactuals (Shapley); PJ-4 added (conventions move forecasts, difference-in-differences on tariff adoption); PJM added to the markets; “The Forecast” card joins the bridge — Lanes I and V are one claim in two grids.',
+  },
   {
     date: '2026-08-22',
     version: 'v10',
@@ -638,3 +744,399 @@ export const ITERATION_LOG: LogEntry[] = [
     note: 'Initial four lanes drafted from the Power 2026 conversation: wind/Lithuania, water/Brazil, heat-and-sea/NYC+California, and the cross-market transmission ledger. Lane I set to probing on location edge; scorecard and 12-week path proposed. Open question: whether Lane III earns research status or stays market-fluency reading.',
   },
 ]
+
+// Deep dives, keyed by lane id. Only the probing lanes carry one — a lane earns
+// its deep dive when it is being worked, not when it is being imagined.
+export const DEEP_DIVES: Record<string, LaneDeepDive> = {
+  'lane-wind-lt': {
+    chain: [
+      {
+        step: 'Wind field',
+        state:
+          '100 m wind over the Baltic coast and the Zemaitija ridge, where most of Lithuania’s 2.3 GW of onshore turbines stand; observed by LHMT stations, ERA5, and the Sventoji series out the window.',
+        convention: 'None. This is the only link with no rule in it.',
+      },
+      {
+        step: 'Forecast',
+        state:
+          'GFS, ICON and ECMWF IFS 100 m wind, archived deterministically since 2017-2022; the day-ahead nomination every producer and balance responsible party submits is a bet on one of them.',
+        convention:
+          'Which model, which run, which hedge — the nomination rule is a private convention, and dispersion between the public models is the observable proxy for how uncertain those bets were.',
+      },
+      {
+        step: 'Day-ahead price',
+        state:
+          'Nord Pool LT zone, cleared in the single day-ahead coupling; 15-minute products since 1 October 2025, hourly before.',
+        convention:
+          'Uniform marginal pricing: when gas sets the price, every inframarginal wind megawatt-hour collects the gas price. LT-4 lives here.',
+      },
+      {
+        step: 'Forecast error → imbalance',
+        state:
+          'Realized minus nominated wind per 15-minute imbalance settlement period, priced at the Baltic imbalance price — since 2025 derived from MARI (mFRR, joined October 2024) and PICASSO (aFRR, joined 15 April 2025) activations.',
+        convention:
+          'Who is balance responsible, single versus dual imbalance pricing, and who is exempt: renewable energy communities carry no balancing responsibility, and supported producers’ balancing has historically been a public-service cost. LT-5 lives here.',
+      },
+      {
+        step: 'Reserves',
+        state:
+          'FCR, aFRR and mFRR capacity bought daily on the Baltic Balancing Capacity Market since 4 February 2025 — the reserves the Baltics used to borrow from the BRELL ring.',
+        convention:
+          'Recovered through the transmission tariff on every consumer; Litgrid’s own estimate was under 12 euros per household per year. The security premium is socialized by design.',
+      },
+      {
+        step: 'Household bill',
+        state:
+          'Energy plus network tariff plus the VIAP public-service levy — set to zero for households in 2024, but a live policy dial.',
+        convention:
+          'Incidence: 18.0% of Lithuanians could not keep their home adequately warm in 2024, third-worst in the EU behind Bulgaria and Greece at 19.0%, against 3.6% in Estonia and 9.2% EU-wide. The same wind lands on very different budgets.',
+      },
+    ],
+    facts: [
+      {
+        fact: 'Baltic desynchronization from BRELL: disconnected 8 February 2025, synchronized with Continental Europe 9 February 2025; the isolated-operation test in between restricted commercial trade with Sweden and Poland.',
+        source: 'Litgrid; FREE Network policy brief',
+        asOf: '2025-03',
+      },
+      {
+        fact: 'Average daily LT wholesale quotes rose 49.9% in the days after 9 February 2025 — confounded by the trade restrictions and the Estlink 2 outage running since 25 December 2024. LT-2 must not confuse the week with the regime.',
+        source: 'FREE Network, 2025-03-03',
+        asOf: '2025-03',
+      },
+      {
+        fact: 'Baltic Balancing Capacity Market live 4 February 2025 with FCR and mFRR; aFRR added 15 April 2025 when Elering connected to PICASSO; Baltic TSOs on MARI since October 2024; imbalance settlement period 15 minutes.',
+        source: 'Elering, AST, Litgrid balancing roadmap',
+        asOf: '2025-04',
+      },
+      {
+        fact: 'Lithuania ended 2025 with 2,343 MW of wind and 2,786 MW of solar; wind and solar passed 6 GW in early 2026 against a peak load near 2 GW. Renewables were 68% of domestic generation in 2025.',
+        source: 'Litgrid via CEEnergyNews',
+        asOf: '2026-01',
+      },
+      {
+        fact: 'Letters of intent on the grid: 3.2 GW more onshore wind, 3.8 GW solar, 3.7 GW batteries. Storage is arriving in the same wave as the generation, not after it.',
+        source: 'Litgrid',
+        asOf: '2026-01',
+      },
+      {
+        fact: 'Offshore has slipped: the first 700 MW (Ignitis, after buying out Ocean Winds’ 49%) targets about 2030; the second 700 MW tender failed in 2024 and again in late 2025 after a single bid.',
+        source: 'Maritime Executive; Renewables Now',
+        asOf: '2025-12',
+      },
+      {
+        fact: 'Open-Meteo’s historical forecast archive holds deterministic runs only — ECMWF IFS since 2017, GFS since March 2021, ICON since November 2022 — at 100 m hub height. Ensemble spread is not archived; it has to be logged from today.',
+        source: 'Open-Meteo Historical Forecast API docs',
+        asOf: '2026-09',
+      },
+      {
+        fact: 'Energy poverty, 2024: Lithuania 18.0% unable to keep home adequately warm, Estonia 3.6%, EU 9.2%; Bulgaria and Greece 19.0%.',
+        source: 'Eurostat EU-SILC release, 2026-02-02',
+        asOf: '2026-02',
+      },
+    ],
+    identification:
+      'LT-1 is a conditional-tails claim, so the test is quantile regression of the intraday-minus-day-ahead spread (and of the imbalance-minus-day-ahead spread) on multi-model dispersion, with the spike threshold fixed at the 95th percentile before any regression runs. Controls: load, TTF gas, hour and season, and interconnector availability — NordBalt, LitPol and Estlink 2 outages are exogenous shifts in how coupled the zone is. The threat is that dispersion proxies for frontal weather regimes that spike prices on their own; dispersion has to add explanatory power beyond forecast level and a regime dummy. LT-2 is an event study whose event is dirty: the balancing market opened 4 February, the desync ran 8-9 February, and Estlink 2 was already out. The clean move is to use LV and EE as within-Baltic comparisons for the coupling coefficients and to date the break by regime-switching rather than by assumption. LT-5 is accounting, not inference: imbalance volume times imbalance-minus-day-ahead price, summed by settlement period and split by who was balance responsible under each rule set.',
+    priorWork: [
+      {
+        cite: 'Hirth & Ziegenhagen (2015), Balancing power and variable renewables: three links',
+        did: 'Showed German balancing reserve needs fell as wind grew, because forecasts, market design and pooling improved together.',
+        gap: 'Germany, hourly, pre-15-minute; nothing on a small zone whose topology changed.',
+      },
+      {
+        cite: 'Kiesel & Paraschiv (2017), Econometric analysis of 15-minute intraday electricity prices',
+        did: 'Wind and solar forecast errors move German intraday prices asymmetrically and nonlinearly.',
+        gap: 'Forecast error, not forecast disagreement; the dispersion state variable is untested anywhere.',
+      },
+      {
+        cite: 'Koch & Hirth (2019), Short-term electricity trading for system balancing',
+        did: 'Intraday trading absorbs most German forecast error before it reaches imbalance.',
+        gap: 'Whether a thin Baltic intraday market absorbs error the same way is exactly the open question.',
+      },
+      {
+        cite: 'Gianfreda, Parisio & Pelagatti (2018), A review of balancing costs in Italy before and after RES introduction',
+        did: 'Quantified balancing costs per zone as renewables entered — the nearest cost-ledger precedent.',
+        gap: 'No distributive incidence; who paid is never asked.',
+      },
+      {
+        cite: 'FREE Network policy brief (March 2025), Energy security at a cost',
+        did: 'The only English write-up of the post-BRELL price jump so far.',
+        gap: 'Descriptive, a few weeks of data, no identification.',
+      },
+    ],
+    openQuestions: [
+      {
+        question: 'Which model do Baltic balance responsible parties actually forecast with?',
+        matters: 'Dispersion is only a proxy for private uncertainty if the public models are the ones being used; a conversation with Ignitis Renewables or a Lithuanian aggregator settles it.',
+      },
+      {
+        question: 'Is the LT imbalance price complete at 15-minute resolution on ENTSO-E, or only on the Baltic dashboard?',
+        matters: 'Decides whether LT-5 runs on the workhorse API or needs a second scraper; check on day one.',
+      },
+      {
+        question: 'What share of Lithuanian wind sits under PSO-covered balancing versus self-balanced portfolios, by year?',
+        matters: 'This is the split LT-5 measures; without it the imbalance cost cannot be assigned to a payer.',
+      },
+      {
+        question: 'Does a local LT signal exist at all, or does coupling with LV, EE and SE4 wash it out?',
+        matters: 'The park gate for the whole lane; the interconnector-outage days are the natural test.',
+      },
+      {
+        question: 'Does the 1 October 2025 move to 15-minute day-ahead products break the spread series?',
+        matters: 'Spreads must be computed at consistent granularity — aggregate to hourly across the break, or split the sample.',
+      },
+    ],
+    plan: [
+      {
+        window: 'Sep 3-7',
+        deliverable:
+          'A power module in macro-signals: entsoe-py pull of LT day-ahead, load, wind generation and imbalance prices from January 2023; Nord Pool intraday; Open-Meteo historical GFS, ICON and IFS 100 m wind at four coastal grid points. Start the daily ensemble-spread logger.',
+        gate: 'Every series lands with a row count and a gap map before any analysis runs.',
+      },
+      {
+        window: 'Sep 8-12',
+        deliverable: 'Pre-registration note, dated and committed: spike threshold, regression spec, controls. Then the LT-1 notebook.',
+        gate: 'Does model disagreement predict spike days beyond forecast level and regime?',
+      },
+      {
+        window: 'Sep 14-20',
+        deliverable: 'LT-2 event study with LV and EE comparisons; LT-5 imbalance-cost ledger by settlement period and rule regime.',
+        gate: 'A datable break that survives controls, or an honest null.',
+      },
+      {
+        window: 'Sep 20-22',
+        deliverable: '“The Grid After BRELL” — the first Baltic power post, published before the flight out of Palanga on the 23rd.',
+        gate: 'One chart, one number, one falsifiable claim.',
+      },
+      {
+        window: 'Oct onward',
+        deliverable:
+          'Lane I becomes a maintained paper-trade log — the dispersion-conditioned spread signal, timestamped daily — while Lane V takes the writing time.',
+        gate: 'Commit when the log has 60 days; the location edge is gone, the data edge stays.',
+      },
+    ],
+    failureModes: [
+      'The zone is too coupled: on normal days the LT price is a Nordic-Baltic price and the local wind signal is noise. The interconnector-outage days tell us quickly.',
+      'Coastal wind is too fine for 25 km GFS: dispersion between models is a resolution artifact, not uncertainty. Mitigation is IFS at 9 km and the LHMT stations as truth.',
+      'The desync week is unidentifiable: three interventions in six days. Then LT-2 becomes descriptive and the lane leans on LT-1 and LT-5.',
+      'Imbalance data has holes across the February 2025 transition, and LT-5 loses exactly the months it needs.',
+    ],
+    crossLane:
+      'Wind and cognition are the same paper in two grids. A forecast sits inside a market rule in both: in Lithuania the wind forecast becomes an imbalance and the balancing convention decides who pays for the error; in PJM the load forecast becomes a reliability requirement and the allocation convention decides who pays for the megawatts. Lane V is the paper; Lane I is where the same claim is watched every fifteen minutes.',
+  },
+  'lane-cognition-pjm': {
+    chain: [
+      {
+        step: 'Cognition demand',
+        state:
+          'Hyperscaler capex arriving as interconnection requests to utilities — speculative, duplicated across candidate sites, and until 2026 requiring no financial commitment to be counted.',
+        convention:
+          'What counts as load. PJM’s 16 January 2026 board letter defines a large-load addition as 50 MW or more at one point of interconnection and orders third-party verification and state review; the White House and governors’ principles ask for an executed service agreement or collateral before a megawatt enters the forecast.',
+      },
+      {
+        step: 'Load forecast',
+        state:
+          'Utility large-load adjustments folded into PJM’s Long-Term Load Forecast. The January 2026 vintage: large loads add 35.1 GW between 2026 and 2031 against 34.6 GW total growth — more than all of it — and 78% of growth through 2046; summer peak from 160 GW in 2025 to 253 GW in 2046.',
+        convention:
+          'The forecast method itself. Stricter vetting in the 2026 cycle cut the summer 2028 peak by 4.4 GW (2.6%) with no change in the electrons; the number is a property of the vetting rule.',
+      },
+      {
+        step: 'Reliability requirement',
+        state:
+          'Forecast peak times the installed reserve margin, adjusted by ELCC accreditation, drawn as the demand curve the auction clears against. The 2028/29 forecast peak was about 2,000 MW above the 2027/28 one.',
+        convention:
+          'Accreditation and curve shape. The move to marginal ELCC cut gas combined-cycle ratings from 96% to 80% and fixed-tilt solar from 30% to 9% between 2024/25 and 2025/26 — the IMM put that alone at $4.4 billion of revenue.',
+      },
+      {
+        step: 'Auction price',
+        state:
+          'Uniform clearing price per locational deliverability area, paid to every cleared megawatt including plants built decades ago. Four consecutive results: $269.92, $329.17, $333.44, and the cap again in July 2026; total costs $14.7, $16.1, $16.4 and $16.4 billion.',
+        convention:
+          'Uniform pricing and the collar. The $175-$325 collar, extended by FERC on 28 April 2026 through the 2029/30 auction, is a political convention on what the price may say. Three of four auctions are censored at the cap — the price has stopped carrying information and the shortfall in megawatts carries it instead (6,623 MW short in 2027/28).',
+      },
+      {
+        step: 'Allocation to load',
+        state:
+          'Capacity cost billed to load-serving entities by peak-load contribution, then to retail through default-service auctions in restructured states (PA, MD, NJ, OH, IL, DE, DC) and through riders in vertically integrated ones (VA, WV, KY) — different clocks for the same shock.',
+        convention:
+          'Peak-load contribution, not causation. The January 2026 principles propose assigning costs to LSEs with new data centers that have neither self-procured capacity nor agreed to be curtailable — a causation rule that does not yet exist in the tariff. A parallel ledger runs through transmission: $4.36 billion of 2024 local projects for data centers in seven states, 95% rolled into general rates.',
+      },
+      {
+        step: 'Household bill',
+        state:
+          'Pepco DC residential bills up $10 a month (9%) from June 2025 on the 2025/26 result alone; Maryland zones up 10% (Pepco) to 24% (Allegheny); PPL up $6.48 a month; the BGE and Dominion zones cleared at $466.35 and $444.26 in 2025/26.',
+        convention:
+          'Incidence by decile. The capacity charge is per kilowatt-hour, and electricity is a far larger budget share at the bottom of the distribution; the BLS Consumer Expenditure Survey converts dollars per household into percent of income by decile — the number nobody has published.',
+      },
+    ],
+    facts: [
+      {
+        fact: '2025/26 BRA (July 2024): $269.92/MW-day RTO from $28.92; $14.7 billion total from $2.2 billion; BGE $466.35 and Dominion $444.26. IMM: data centers 63%, about $9.3 billion.',
+        source: 'PJM BRA report; Monitoring Analytics',
+        asOf: '2024-09',
+      },
+      {
+        fact: 'The IMM’s partial counterfactuals for 2025/26 do not add up — ELCC accreditation +$4.4 billion (+49.1%), RMR exclusion of Brandon Shores and Wagner +$4.3 billion (+41.2%), data centers +$9.3 billion — roughly $18 billion of causes for a $12.5 billion increase. The attribution problem is a nonlinear interaction on a steep supply curve.',
+        source: 'Synapse for DC OPC, 2025-04-25, citing IMM Part A',
+        asOf: '2025-04',
+      },
+      {
+        fact: '2026/27 BRA (July 2025): cleared at the cap, $329.17/MW-day, $16.1 billion.',
+        source: 'PJM',
+        asOf: '2025-07',
+      },
+      {
+        fact: '2027/28 BRA (17 December 2025): $333.44/MW-day, $16.4 billion, 134,479 MW procured, 6,623 MW short of the reliability requirement. IMM: $6.5 billion (40%) from data centers, $6.2 billion of it from data centers not yet built; three-auction cumulative $21.3 billion of $47.2 billion (45%).',
+        source: 'PJM; Monitoring Analytics via Utility Dive',
+        asOf: '2026-02',
+      },
+      {
+        fact: '2028/29 BRA (July 2026): at the cap for the third consecutive time, about $16.4 billion. IMM: about $6.3 billion (38%); four-auction cumulative $29.4 billion of $63.6 billion (46%) — which implies upward revisions to earlier auctions that must be reconciled from the IMM reports directly.',
+        source: 'Sierra Club; Who Pays for Data Centers tracker',
+        asOf: '2026-07',
+      },
+      {
+        fact: 'FERC approved the collar extension on 28 April 2026: cap about $325/MW-day, floor $175, for the auctions closing 7 July 2026 and 15 December 2026. The collar was estimated to have cut costs by $13.1 billion across its first two auctions.',
+        source: 'FERC; PJM; APPA',
+        asOf: '2026-04',
+      },
+      {
+        fact: 'White House and governors’ statement of principles, 15 January 2026: extend the collar; a backstop procurement starting by September 2026 with 15-year price certainty; allocate its costs to LSEs with new data centers that have not self-procured or agreed to curtail; verifiable financial commitment before load enters the forecast.',
+        source: 'Latham & Watkins summary',
+        asOf: '2026-01',
+      },
+      {
+        fact: 'PJM board decisional letter, 16 January 2026: 50 MW large-load definition; an Expedited Interconnection Track for bring-your-own-generation by August 2026; connect-and-manage with curtailment ahead of pre-emergency demand response by end-2026; cost allocation to LSEs short from load growth; backstop acceleration.',
+        source: 'PJM',
+        asOf: '2026-01',
+      },
+      {
+        fact: 'FERC show-cause orders to all six RTOs and ISOs, 18 June 2026 (RM26-4): justify or rewrite large-load interconnection rules within 60 days. The DOE directive of October 2025 defined large loads at 20 MW.',
+        source: 'FERC',
+        asOf: '2026-06',
+      },
+      {
+        fact: '23 states had approved at least one large-load tariff by May 2026, seven more pending. AEP Ohio (PUCO, 2025): 85% minimum demand charge, 12-year terms, 25 MW threshold. Dominion GS-5 (Virginia SCC, November 2025, effective January 2027): minimum demand, 14-year terms, four-year ramp.',
+        source: 'E3/Halcyon whitepaper, 2026-05; EEI list, 2026-08',
+        asOf: '2026-08',
+      },
+      {
+        fact: 'Ratepayers in seven PJM states paid about $4.36 billion in 2024 for 130 local transmission projects serving data centers; only six were paid by the requesting customer. Virginia just under $2 billion, Ohio $1.3 billion, Pennsylvania $492 million.',
+        source: 'Union of Concerned Scientists, 2025-09',
+        asOf: '2025-09',
+      },
+      {
+        fact: '2026 load forecast (14 January 2026): summer peak growth 3.6% a year to about 222 GW by 2036; a near-term cut of 4.4 GW for summer 2028 after stricter data-center vetting, 0.7 points of it from large loads. Jefferies read the cut as delays, not weakness.',
+        source: 'PJM 2026 Load Forecast Report; Utility Dive',
+        asOf: '2026-01',
+      },
+    ],
+    identification:
+      '§1 (PJ-1) is accounting with a pre-registered chain: attributable dollars by LDA from the IMM counterfactuals, residential share from EIA-861 sales, pass-through timing from default-service and rider filings in three zones (Dominion, BGE, Pepco DC) rather than the whole RTO, then budget shares by income decile from the CEX. Report a range across the IMM’s low and high attributions, never a point. §2 (PJ-2) has to respect two facts: the price is censored at the cap in three of four auctions, so the decomposition runs in megawatts of shortfall and unconstrained shadow price, not dollars per MW-day; and the IMM’s partial counterfactuals interact, so the method is a Shapley (order-averaged) decomposition over forecast revision, accreditation, retirements and RMR exclusion, using PJM’s published planning parameters and aggregate supply curves. The forecast-written share is the Shapley value of the forecast revision. §3 (PJ-3) is a calibrated model, but the conventions are no longer hypothetical: minimum-demand tariffs, causation-based allocation and bring-your-own-generation are being adopted on different dates in different states, so PJ-4 tests the model’s first-order prediction — that the vetting rule moves the forecast — on the 2026 and 2027 vintages.',
+    priorWork: [
+      {
+        cite: 'Peskoe & Martin (Harvard ELI, March 2025), Extracting Profits from the Public',
+        did: 'The legal account: how utility ratemaking and PJM cost allocation let data-center costs flow to captive customers.',
+        gap: 'No dollars by decile, no forecast loop — the law without the ledger.',
+      },
+      {
+        cite: 'Monitoring Analytics, analyses of each BRA (2024-2026)',
+        did: 'The counterfactual attributions — 63%, 40%, 38% — by re-clearing the auction without forecasted data-center load.',
+        gap: 'Partial counterfactuals that do not sum; RTO-level; stops at the wholesale bill.',
+      },
+      {
+        cite: 'Synapse for DC OPC (25 April 2025), Drivers of PJM’s Capacity Market Price Surge',
+        did: 'Four named drivers with IMM magnitudes and a worked residential bill impact for one LDA — the nearest method precedent for §1.',
+        gap: 'One jurisdiction, the average customer, no distribution.',
+      },
+      {
+        cite: 'Maryland OPC (14 August 2024), Bill and Rate Impacts',
+        did: 'Zone-by-zone Maryland bill impacts of 2025/26 — 10% to 24%.',
+        gap: 'The average customer again; the incidence question is not asked.',
+      },
+      {
+        cite: 'Union of Concerned Scientists (September 2025), Connection Costs Loophole',
+        did: 'Tallied $4.36 billion of 2024 data-center transmission rolled into general rates across seven states.',
+        gap: 'A second ledger the capacity work has never joined to the first.',
+      },
+      {
+        cite: 'E3 / Halcyon (May 2026), Large Load Tariff Whitepaper',
+        did: 'Catalogued 23 states’ large-load tariffs and their terms.',
+        gap: 'The cross-state variation exists as a table, not as an identification strategy.',
+      },
+      {
+        cite: 'MacKenzie (2006), An Engine, Not a Camera',
+        did: 'The performativity thesis: models make the prices they claim to describe.',
+        gap: 'Never applied to a load forecast that sets a procurement target.',
+      },
+    ],
+    openQuestions: [
+      {
+        question: 'Can the IMM’s per-auction attributions be reconciled with its cumulative figures?',
+        matters: 'The 2027/28 and 2028/29 numbers imply upward revisions to earlier auctions; §1 needs one consistent series before anything is divided by a household.',
+      },
+      {
+        question: 'How much of the price is information once three auctions clear at the cap?',
+        matters: 'If the answer is none, §2 lives in megawatts and shadow prices, and the paper says so on page one.',
+      },
+      {
+        question: 'What is the pass-through lag by state and supply type — default service, rider, competitive supplier?',
+        matters: 'Decides which delivery year of costs lands in which bill year; get it wrong and the incidence is off by a year.',
+      },
+      {
+        question: 'Does the ledger include transmission?',
+        matters: 'Adding the $4.4 billion a year roughly doubles the per-household number in Virginia; show both and say which is the headline.',
+      },
+      {
+        question: 'How much forecast load is still speculative after the 2026 vetting rule?',
+        matters: 'PJ-2’s upper bound; the 2027 vintage lands on 14 January 2027, mid-winter-school, and can be promised as the update.',
+      },
+      {
+        question: 'Who captures the windfall — independent power producers, regulated utilities, or hyperscalers through co-location?',
+        matters: 'Kept in the separate trade memo; it must not steer the incidence section.',
+      },
+    ],
+    plan: [
+      {
+        window: 'Sep 14-25 · between the races',
+        deliverable:
+          'Data sprint: BRA reports and planning parameters 2020/21-2028/29; every IMM auction analysis; load-forecast vintages 2022-2026 as a panel; EIA-861 2019-2024; CEX 2023-2024 decile tables; the four bill-impact reports; the E3 tariff catalogue. One chart: forecast vintages against clearing prices.',
+        gate: 'The IMM series reconciles, or the discrepancy is documented as the first footnote.',
+      },
+      {
+        window: 'Oct 1-31',
+        deliverable: '§1 incidence for three zones and the RTO: dollars per household per year and percent of income by decile, as a range.',
+        gate: 'A defensible headline number by 31 October, or the paper narrows to §1 plus §2.',
+      },
+      {
+        window: 'Nov 1-15',
+        deliverable: '§2 reflexivity: Shapley decomposition in megawatts across forecast revision, accreditation, retirements, RMR; the forecast-written share with bounds.',
+        gate: 'The forecast term is distinguishable from accreditation; if not, report the joint term honestly.',
+      },
+      {
+        window: 'Nov 15-30',
+        deliverable:
+          '§3 calibrated procurement-and-allocation model under the status quo, minimum-demand tariffs, causation allocation and bring-your-own-generation; PJ-4 first pass on the 2026 vintage by state tariff status.',
+        gate: 'Dollars shifted per household per year under each rule, with each rule dated to where it is already law.',
+      },
+      {
+        window: 'Dec',
+        deliverable: 'Full draft to Lafond and the Oxford meetings; Michael’s conventions-as-institutions section merged; lightning talk cut.',
+        gate: 'Paper in hand for 3 January.',
+      },
+      {
+        window: 'Jan 14, 2027',
+        deliverable: 'PJM’s 2027 load forecast lands during the winter school — the out-of-sample test of PJ-4, promised in the talk.',
+        gate: 'Update the paper before it goes to a journal.',
+      },
+    ],
+    failureModes: [
+      'Derivative: the IMM has already attributed, and the paper reads as a summary. Answer: decile incidence and dated convention counterfactuals are new, the Shapley reconciliation is new — say what is new on page one.',
+      'Censoring kills §2: at the cap, forecast and accreditation are jointly unidentified in price. The answer is megawatts, and if that fails, §2 becomes a bound.',
+      'Pass-through heterogeneity swamps the signal at RTO level. Three zones done properly beat thirteen states done badly.',
+      'Political heat: every number will be read as taking a side. Pre-registration, ranges, and the trade memo kept outside the paper.',
+      'The forecast is right: the data centers get built and the speculative load was real. Then the forecast-written share is small and the paper says the conventions, not the forecast error, did the distributing — which is still the thesis.',
+    ],
+    crossLane:
+      'The mirror of Lane I. In PJM the object is a load forecast that becomes a procurement target; in Lithuania it is a wind forecast whose error becomes an imbalance. Both are forecasts inside market rules, and in both the rule — not the weather, not the chips — decides who pays. This is the sentence the Abu Dhabi talk opens with, and Lane I is its live exhibit.',
+  },
+}
