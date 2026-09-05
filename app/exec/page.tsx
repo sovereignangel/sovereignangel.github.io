@@ -18,6 +18,8 @@ import {
 import { ExecIronmanLive, ExecDrills } from '@/components/exec/ExecLive'
 import { ExecToday, type PipedLane } from '@/components/exec/ExecToday'
 import { ExecCampaign } from '@/components/exec/ExecCampaign'
+import { ExecGoals } from '@/components/exec/ExecGoals'
+import { ExecBlocks } from '@/components/exec/ExecBlocks'
 import { SpotIcon, WaveDivider } from '@/components/wind/WindIcons'
 import { SportIcon, CourseDivider } from '@/components/ironman/IronmanIcons'
 
@@ -419,14 +421,18 @@ export default async function ExecPage() {
               <CourseDivider className="w-10 h-2 text-iron-burgundy shrink-0" />
             </span>
             <span className="hidden lg:inline text-[10px] text-surf-muted">
-              Five lanes &middot; practice, kite, training, the paper, the fund
+              Three goals &middot; five lanes &middot; six hours
             </span>
             <span className="ml-auto font-mono text-[9px] md:text-[10px] text-surf-muted whitespace-nowrap">
               {generatedAt} LT
             </span>
           </header>
 
+          <ExecGoals date={today} />
+
           <ExecToday date={today} kite={kiteLane(windToday)} ironman={ironmanLane(planToday, slotToday)} />
+
+          <ExecBlocks date={today} />
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 items-start">
             {/* Each column stacks a body lane over a campaign lane, so a rest day or a
@@ -471,7 +477,8 @@ export default async function ExecPage() {
             in Palanga time. The paper and the fund run on dated blocks with an ordered ladder inside: the block
             sets the deadline, the ladder sets the order, and an unfinished unit stays at the head of the queue
             rather than disappearing off a calendar. The day turns over at Palanga midnight, in an open tab as well
-            as on a fresh load.
+            as on a fresh load. The six hours are counted in pomodoros rather than timed, and they are a floor —
+            what happens outside them is deliberately not tracked.
           </p>
         </div>
       </main>

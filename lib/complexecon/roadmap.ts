@@ -60,7 +60,11 @@ export const GOALS: Goal[] = [
 
 export interface Phase {
   id: string
+  /** Human label, e.g. "Sep 3 – Sep 10". */
   window: string
+  /** ISO bounds, inclusive — so /exec can resolve which phase is live today. */
+  start: string
+  end: string
   name: string
   detail: string
   gate: string
@@ -70,6 +74,8 @@ export const PHASES: Phase[] = [
   {
     id: 'p0',
     window: 'Sep 3 – Sep 10',
+    start: '2026-09-03',
+    end: '2026-09-10',
     name: 'Harvest',
     detail:
       'One compressed week. Distill Lanes I-VIII into five one-page briefs worth a researcher’s time. Start the PJM data sprint (auction results, load-forecast revisions, CEX shares) and the Klaipeda AIS archiver. Send the Jonas weather-data spec and the RC bulk-financials price inquiry with Aidas.',
@@ -78,6 +84,8 @@ export const PHASES: Phase[] = [
   {
     id: 'p1',
     window: 'Sep 11 – Sep 21',
+    start: '2026-09-11',
+    end: '2026-09-21',
     name: 'Review',
     detail:
       'Top-3 review with Michael Ralph plus two or three researchers — the Lafond introduction email carries the strategy map and briefs; Bilawal and the CEcon orbit round out the panel. Belgrade rehearsal race Sep 13 sits inside this window; the review is conversations, not building.',
@@ -86,6 +94,8 @@ export const PHASES: Phase[] = [
   {
     id: 'race',
     window: 'Sep 22 – Sep 28',
+    start: '2026-09-22',
+    end: '2026-09-28',
     name: 'Race week',
     detail: 'NYC Ironman, September 26. Protected. Reading only — no research, no building.',
     gate: 'Cross the line.',
@@ -93,6 +103,8 @@ export const PHASES: Phase[] = [
   {
     id: 'p2',
     window: 'Sep 29 – Nov 15',
+    start: '2026-09-29',
+    end: '2026-11-15',
     name: 'Research',
     detail:
       'The data period. October: section 1 (incidence — the headline number). November: section 2 (the reflexivity decomposition) and section 3 (the counterfactual-conventions model). Reproductions run one per week alongside; Michael drafts the theory section in parallel.',
@@ -101,6 +113,8 @@ export const PHASES: Phase[] = [
   {
     id: 'p3',
     window: 'Nov 16 – Dec 13',
+    start: '2026-11-16',
+    end: '2026-12-13',
     name: 'Write',
     detail:
       'Full draft by December 5; to Michael and Lafond for reading. The Oxford trip presents the draft in person — supervisor meetings double as the toughest review the paper will get before the room. Title finalized.',
@@ -109,6 +123,8 @@ export const PHASES: Phase[] = [
   {
     id: 'p4',
     window: 'Dec 14 – Jan 2',
+    start: '2026-12-14',
+    end: '2027-01-02',
     name: 'Stage',
     detail:
       'The deck: a lightning talk and a 15-minute version of the paper, rehearsed out loud. Final paper December 20; printed copies; reading program closed out; Graeber packed for the flight.',
@@ -117,6 +133,8 @@ export const PHASES: Phase[] = [
   {
     id: 'room',
     window: 'Jan 3 – Jan 17',
+    start: '2027-01-03',
+    end: '2027-01-17',
     name: 'The Room',
     detail: 'SFI · ADIA Lab · Khalifa University, Abu Dhabi. Two residential weeks. The four goals walk in the door with you.',
     gate: 'Leave with collaborators, not just contacts.',
@@ -241,3 +259,11 @@ export const BOOKS: ReadingItem[] = [
   { id: 'bk-arthur', title: 'Complexity and the Economy', authors: 'Arthur', year: 2015, note: 'November. The foundations, from the founder.' },
   { id: 'bk-graeber', title: 'Debt: The First 5,000 Years', authors: 'Graeber', year: 2011, note: 'December. The anthropologists’ badge of citizenship; travels to Abu Dhabi.' },
 ]
+
+/** The phase today sits in — or the next one, in a gap between phases. */
+export function currentPhase(today: string): Phase {
+  const live = PHASES.find((p) => today >= p.start && today <= p.end)
+  if (live) return live
+  const next = PHASES.find((p) => today < p.start)
+  return next ?? PHASES[PHASES.length - 1]
+}

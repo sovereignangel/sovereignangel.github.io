@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useRef } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 import dynamic from 'next/dynamic'
 import { useReadingSession } from '@/hooks/useReadingSession'
 import ReaderSidebar from './ReaderSidebar'
@@ -20,13 +20,20 @@ export interface ReaderSource {
 interface ReaderOverlayProps {
   source: ReaderSource
   onClose: () => void
+  /** Jump here on open (e.g. a search hit), overriding the saved position once. */
+  initialPage?: number
+  /** Local corpus slug — enables whole-book retrieval in the Ask panel. */
+  bookSlug?: string
 }
 
 type HighlightColor = 'burgundy' | 'green' | 'amber'
 
-export default function ReaderOverlay({ source, onClose }: ReaderOverlayProps) {
-  // Blob URLs (uploaded PDFs) and data URLs don't need proxying
-  const needsProxy = !source.sourceUrl.startsWith('blob:') && !source.sourceUrl.startsWith('data:')
+export default function ReaderOverlay({ source, onClose, initialPage, bookSlug }: ReaderOverlayProps) {
+  // Blob URLs (uploads), data URLs and same-origin paths (local books) don't need proxying
+  const needsProxy =
+    !source.sourceUrl.startsWith('blob:') &&
+    !source.sourceUrl.startsWith('data:') &&
+    !source.sourceUrl.startsWith('/')
   const proxyUrl = needsProxy
     ? `/api/archive-proxy?url=${encodeURIComponent(source.sourceUrl)}`
     : source.sourceUrl
@@ -57,6 +64,15 @@ export default function ReaderOverlay({ source, onClose }: ReaderOverlayProps) {
   const popupRef = useRef<HTMLDivElement>(null)
 
   const currentPage = session?.currentPage || 1
+
+  // Honour initialPage exactly once, after the saved session resolves.
+  const jumpedRef = useRef(false)
+  useEffect(() => {
+    if (jumpedRef.current || loading || !initialPage) return
+    jumpedRef.current = true
+    if (initialPage !== currentPage) setPage(initialPage)
+  }, [loading, initialPage, currentPage, setPage])
+
   const highlights = session?.highlights || []
   const notes = session?.notes || []
   const questions = session?.questions || []
@@ -191,6 +207,8 @@ export default function ReaderOverlay({ source, onClose }: ReaderOverlayProps) {
                 questions={questions}
                 documentTitle={source.title}
                 currentPageText={currentPageText}
+                currentPage={currentPage}
+                bookSlug={bookSlug}
                 onJumpToPage={setPage}
                 onRemoveHighlight={removeHighlight}
                 onUpdateHighlightNote={updateHighlightNote}

@@ -19,3 +19,14 @@ export interface GameProgressDoc {
   goals?: Record<string, boolean>
   updatedAt?: Timestamp
 }
+
+/**
+ * A day's focus blocks, at users/{uid}/focus_days/{date}. Pomodoros completed
+ * per block id — the count, not a timer, because what matters at the end of
+ * the day is how many landed, not when they started.
+ */
+export interface FocusDayDoc {
+  date: string
+  pomodoros?: Record<string, number>
+  updatedAt?: import('firebase/firestore').Timestamp
+}

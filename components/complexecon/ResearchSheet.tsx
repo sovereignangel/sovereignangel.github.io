@@ -14,6 +14,7 @@ import {
   useSheetState,
 } from '@/components/complexecon/tearsheet'
 import {
+  DEEP_DIVES,
   INEQUALITY_BRIDGE,
   ITERATION_LOG,
   LANES,
@@ -22,6 +23,7 @@ import {
   RESEARCH_FRAMING,
   SCORECARD,
   SCORECARD_LANES,
+  type LaneDeepDive,
   type LaneStatus,
   type ResearchLane,
 } from '@/lib/complexecon/research'
@@ -63,6 +65,145 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   )
 }
 
+function SubHead({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="mb-1 mt-2.5 font-serif text-[15px] font-semibold uppercase tracking-[1px] text-burgundy first:mt-0">
+      {children}
+    </div>
+  )
+}
+
+function DeepDive({
+  laneId,
+  deep,
+  open,
+  onToggle,
+}: {
+  laneId: string
+  deep: LaneDeepDive
+  open: (id: string) => boolean
+  onToggle: (id: string) => void
+}) {
+  const rowId = `${laneId}-deep`
+  return (
+    <div className="mt-2 border-t border-rule-light pt-1.5">
+      <Row
+        open={open(rowId)}
+        onToggle={() => onToggle(rowId)}
+        head={
+          <span className="font-serif text-[17px] font-semibold text-ink">
+            Deeper · the chain, the record, the plan
+          </span>
+        }
+        meta={
+          <Meta>
+            {deep.chain.length} links · {deep.facts.length} facts · {deep.plan.length} steps
+          </Meta>
+        }
+      >
+        <SubHead>The chain</SubHead>
+        <ol className="space-y-1.5 border-l border-rule pl-3">
+          {deep.chain.map((link, i) => (
+            <li key={link.step}>
+              <p className="text-[16px] leading-relaxed text-ink">
+                <span className="mr-2 font-mono text-[13px] text-burgundy">{String(i + 1).padStart(2, '0')}</span>
+                <span className="font-semibold">{link.step}</span>
+                <span className="text-ink-muted"> · </span>
+                <span className="text-ink-light">{link.state}</span>
+              </p>
+              <p className="pl-7 text-[15px] leading-relaxed text-ink-muted">
+                <Meta tone="amber">Convention · </Meta>
+                {link.convention}
+              </p>
+            </li>
+          ))}
+        </ol>
+
+        <SubHead>What is already on the record</SubHead>
+        <ul className="grid grid-cols-1 gap-x-6 gap-y-1 md:grid-cols-2">
+          {deep.facts.map(f => (
+            <li key={f.fact} className="text-[15px] leading-relaxed text-ink-light">
+              {f.fact}{' '}
+              <span className="whitespace-nowrap font-mono text-[11px] uppercase tracking-[0.5px] text-ink-muted">
+                {f.source} · {f.asOf}
+              </span>
+            </li>
+          ))}
+        </ul>
+
+        <SubHead>Identification</SubHead>
+        <p className="text-[16px] leading-relaxed text-ink-light">{deep.identification}</p>
+
+        <SubHead>Nearest prior work</SubHead>
+        <ul className="space-y-1">
+          {deep.priorWork.map(w => (
+            <li key={w.cite} className="text-[15px] leading-relaxed">
+              <span className="font-semibold text-ink">{w.cite}.</span> <span className="text-ink-light">{w.did}</span>{' '}
+              <Meta tone="amber">Gap · </Meta>
+              <span className="text-ink-muted">{w.gap}</span>
+            </li>
+          ))}
+        </ul>
+
+        <SubHead>Open questions</SubHead>
+        {deep.openQuestions.map((q, i) => {
+          const qId = `${laneId}-q-${i}`
+          return (
+            <Row
+              key={qId}
+              open={open(qId)}
+              onToggle={() => onToggle(qId)}
+              head={<span className="text-[16px] font-semibold leading-snug text-ink">{q.question}</span>}
+              meta={<Meta>Why it matters</Meta>}
+            >
+              <Field label="Why it matters">{q.matters}</Field>
+            </Row>
+          )
+        })}
+
+        <SubHead>The plan</SubHead>
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[560px] border-collapse">
+            <thead>
+              <tr className="border-b border-rule">
+                <th className="px-2 py-1 text-left font-mono text-[12px] uppercase tracking-[0.5px] text-ink-muted">Window</th>
+                <th className="px-2 py-1 text-left font-mono text-[12px] uppercase tracking-[0.5px] text-ink-muted">Deliverable</th>
+                <th className="px-2 py-1 text-left font-mono text-[12px] uppercase tracking-[0.5px] text-ink-muted">Gate</th>
+              </tr>
+            </thead>
+            <tbody>
+              {deep.plan.map(step => (
+                <tr key={step.window} className="border-b border-rule-light align-top last:border-b-0">
+                  <td className="whitespace-nowrap px-2 py-1.5 font-mono text-[13px] text-burgundy">{step.window}</td>
+                  <td className="px-2 py-1.5 text-[15px] leading-relaxed text-ink">{step.deliverable}</td>
+                  <td className="px-2 py-1.5 text-[14px] leading-relaxed text-amber-ink">{step.gate}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <SubHead>How this dies</SubHead>
+        <ul className="space-y-0.5">
+          {deep.failureModes.map(f => (
+            <li key={f} className="flex gap-2 text-[15px] leading-relaxed text-ink-light">
+              <span className="shrink-0 text-red-ink">×</span>
+              <span>{f}</span>
+            </li>
+          ))}
+        </ul>
+
+        <div className="mt-2.5 border border-rule bg-cream px-2.5 py-1.5">
+          <p className="text-[16px] leading-relaxed text-ink">
+            <Meta tone="amber">The twin lane · </Meta>
+            {deep.crossLane}
+          </p>
+        </div>
+      </Row>
+    </div>
+  )
+}
+
 function LaneBody({
   lane,
   open,
@@ -72,6 +213,7 @@ function LaneBody({
   open: (id: string) => boolean
   onToggle: (id: string) => void
 }) {
+  const deep = DEEP_DIVES[lane.id]
   return (
     <>
       <p className="mb-2 text-[17px] leading-relaxed text-ink">{lane.thesis}</p>
@@ -132,6 +274,8 @@ function LaneBody({
           {lane.firstProbe}
         </p>
       </div>
+
+      {deep && <DeepDive laneId={lane.id} deep={deep} open={open} onToggle={onToggle} />}
     </>
   )
 }
@@ -148,6 +292,10 @@ export default function ResearchSheet() {
       ...MARKETS.map(m => m.id),
       ...LANES.map(l => l.id),
       ...LANES.flatMap(l => l.hypotheses.map(h => h.id)),
+      ...LANES.flatMap(l => {
+        const deep = DEEP_DIVES[l.id]
+        return deep ? [`${l.id}-deep`, ...deep.openQuestions.map((_, i) => `${l.id}-q-${i}`)] : []
+      }),
       ...INEQUALITY_BRIDGE.cards.map(c => c.title),
       ...PROPOSED_PATH.map(s => s.label),
     ],
@@ -259,7 +407,7 @@ export default function ResearchSheet() {
 
           <Block
             label="The Lanes"
-            meta={`I–V · ${committed} committed · ${probing} probing`}
+            meta={`I–${LANES[LANES.length - 1].numeral} · ${committed} committed · ${probing} probing`}
             open={!closedBlocks.has('blk-lanes')}
             onToggle={() => toggleBlock('blk-lanes')}
           >

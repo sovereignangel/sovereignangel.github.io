@@ -43,3 +43,9 @@ app/finance/data/*
 # travel planning renders (PDF/PNG/HTML are outputs, not sources)
 scripts/travel/out/
 __pycache__/
+
+# local book library — copyrighted PDFs and their extracted text.
+# The corpus is local-first: never committed, never deployed.
+# Rebuild with: node scripts/books/extract.mjs
+app/books/*.pdf
+data/books/

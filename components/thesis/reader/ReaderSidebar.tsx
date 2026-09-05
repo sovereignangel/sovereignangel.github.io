@@ -12,6 +12,10 @@ interface ReaderSidebarProps {
   questions: ReadingQA[]
   documentTitle: string
   currentPageText: string
+  /** Current PDF page — sent with book-wide questions so "here" resolves. */
+  currentPage?: number
+  /** Local corpus slug. When set, Ask searches the whole book, not just this page. */
+  bookSlug?: string
   onJumpToPage: (page: number) => void
   onRemoveHighlight: (id: string) => void
   onUpdateHighlightNote: (id: string, note: string) => void
@@ -25,6 +29,8 @@ export default function ReaderSidebar({
   questions,
   documentTitle,
   currentPageText,
+  currentPage,
+  bookSlug,
   onJumpToPage,
   onRemoveHighlight,
   onUpdateHighlightNote,
@@ -49,15 +55,26 @@ export default function ReaderSidebar({
     setAskingAI(true)
 
     try {
-      const res = await authFetch('/api/reader/ask', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          question: questionInput.trim(),
-          context: currentPageText,
-          documentTitle,
-        }),
-      })
+      // Local books retrieve across the whole volume; everything else sees this page only.
+      const res = bookSlug
+        ? await authFetch('/api/books/ask', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              question: questionInput.trim(),
+              slug: bookSlug,
+              page: currentPage,
+            }),
+          })
+        : await authFetch('/api/reader/ask', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              question: questionInput.trim(),
+              context: currentPageText,
+              documentTitle,
+            }),
+          })
 
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Failed')
@@ -66,6 +83,7 @@ export default function ReaderSidebar({
         question: questionInput.trim(),
         answer: data.answer,
         contextSnippet: currentPageText.slice(0, 200),
+        pageNumber: bookSlug ? currentPage : undefined,
       })
       setQuestionInput('')
     } catch (err) {
@@ -229,7 +247,7 @@ export default function ReaderSidebar({
               <input
                 value={questionInput}
                 onChange={e => setQuestionInput(e.target.value)}
-                placeholder="Ask about this page..."
+                placeholder={bookSlug ? "Ask about this book..." : "Ask about this page..."}
                 className="flex-1 text-[10px] border border-rule rounded-sm px-2 py-1 bg-paper text-ink"
                 onKeyDown={e => e.key === 'Enter' && handleAskQuestion()}
                 disabled={askingAI}
@@ -243,7 +261,9 @@ export default function ReaderSidebar({
               </button>
             </div>
             <div className="text-[8px] text-ink-faint">
-              AI reads the current page context to answer your questions
+              {bookSlug
+                ? 'Searches the whole book, answers with page citations'
+                : 'AI reads the current page context to answer your questions'}
             </div>
 
             {questions.length === 0 ? (
