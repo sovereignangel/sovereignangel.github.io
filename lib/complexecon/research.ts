@@ -197,7 +197,7 @@ export const LANES: ResearchLane[] = [
     quantSkill:
       'Extreme value theory, ensemble meteorology, regime-switching and structural-break econometrics — the tail-risk toolkit, learned on data with genuinely fat tails.',
     firstProbe:
-      'Two weeks: pull 18 months of ENTSO-E LT prices plus the Open-Meteo forecast archive into macro-signals; one notebook answering "does model disagreement predict spike days?"; publish as the first post of a Baltic power series — "The Grid After BRELL."',
+      'Two weeks: pull 18 months of ENTSO-E LT prices plus the Open-Meteo forecast archive into variant-perception; one notebook answering "does model disagreement predict spike days?"; publish as the first post of a Baltic power series — "The Grid After BRELL."',
   },
   {
     id: 'lane-water-br',
@@ -561,7 +561,7 @@ export const LANES: ResearchLane[] = [
         id: 'AQ-4',
         claim:
           'The Klaipeda pulse (the immediate probe): daily AIS port calls at Klaipeda form a free, daily index of Lithuanian trade that leads the monthly Sodra employment panel and complements Lane VII — and coastal weather measurably moves port throughput.',
-        test: 'One archiver running from macro-signals from today; port-call index vs Sodra monthly aggregates and Statistics Lithuania trade data; weather sensitivity of daily throughput.',
+        test: 'One archiver running from variant-perception from today; port-call index vs Sodra monthly aggregates and Statistics Lithuania trade data; weather sensitivity of daily throughput.',
       },
     ],
     data: [
@@ -577,7 +577,7 @@ export const LANES: ResearchLane[] = [
     quantSkill:
       'Trajectory data engineering at scale, behavioral clustering, marine meteorology, freight-market mechanics — plus the discipline of running a live archiver, the first dataset the program collects rather than downloads.',
     firstProbe:
-      'AQ-4, this month: an afternoon to stand up the Klaipeda AIS archiver in macro-signals and let it run. The full aquarium is a sibling design to Lane VI, sequenced after Abu Dhabi — the archive quietly accumulating in the meantime is the point.',
+      'AQ-4, this month: an afternoon to stand up the Klaipeda AIS archiver in variant-perception and let it run. The full aquarium is a sibling design to Lane VI, sequenced after Abu Dhabi — the archive quietly accumulating in the meantime is the point.',
   },
 ]
 
@@ -657,7 +657,7 @@ export const PROPOSED_PATH: PathStep[] = [
     window: 'Sep 3-22 · before leaving Palanga',
     label: 'Lane I probe — while still in Palanga',
     detail:
-      'ENTSO-E + Open-Meteo pipeline into macro-signals; pre-registered LT-1; LT-2 with LV and EE as comparisons; the LT-5 imbalance ledger; publish "The Grid After BRELL" before the flight out on the 23rd. The location edge expires with the flight — this goes first. Dated plan in the Lane I deep dive.',
+      'ENTSO-E + Open-Meteo pipeline into variant-perception; pre-registered LT-1; LT-2 with LV and EE as comparisons; the LT-5 imbalance ledger; publish "The Grid After BRELL" before the flight out on the 23rd. The location edge expires with the flight — this goes first. Dated plan in the Lane I deep dive.',
     gate: 'Commit if forecast dispersion measurably predicts spike days; park if the LT zone is too coupled to neighbors for a local signal to exist.',
   },
   {
@@ -889,7 +889,7 @@ export const DEEP_DIVES: Record<string, LaneDeepDive> = {
       {
         window: 'Sep 3-7',
         deliverable:
-          'A power module in macro-signals: entsoe-py pull of LT day-ahead, load, wind generation and imbalance prices from January 2023; Nord Pool intraday; Open-Meteo historical GFS, ICON and IFS 100 m wind at four coastal grid points. Start the daily ensemble-spread logger.',
+          'A power module in variant-perception: entsoe-py pull of LT day-ahead, load, wind generation and imbalance prices from January 2023; Nord Pool intraday; Open-Meteo historical GFS, ICON and IFS 100 m wind at four coastal grid points. Start the daily ensemble-spread logger.',
         gate: 'Every series lands with a row count and a gap map before any analysis runs.',
       },
       {

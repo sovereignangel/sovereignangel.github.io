@@ -35,7 +35,7 @@ export const GOALS: Goal[] = [
     name: 'Speak complexity economics',
     target: 'Read the top 30 papers · reproduce the top 10',
     detail:
-      'Reading makes you conversant; reproduction makes you dangerous. The ten reproductions are chosen because their core result can be rebuilt from public data or a few hundred lines of code — each one becomes a notebook in macro-signals and a talking point in the room.',
+      'Reading makes you conversant; reproduction makes you dangerous. The ten reproductions are chosen because their core result can be rebuilt from public data or a few hundred lines of code — each one becomes a notebook in variant-perception and a talking point in the room.',
     cadence: 'Two papers per week starting this week; one reproduction per week October through mid-December.',
   },
   {
