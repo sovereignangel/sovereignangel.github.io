@@ -1,0 +1,322 @@
+{
+ "title": "Kite spots — Belize to Costa Rica",
+ "subtitle": "ranked for Oct 27 – Nov 15, 2026 and for the year · five countries · odds are estimates from published season data, not forecasts · 2026-09-05",
+ "window": "Oct 27 – Nov 15",
+ "method": "Five criteria, in order: (1) wind probability inside the window, from each spot’s published season and monthly averages; (2) water and launch — flat, shallow, onshore scores above gusty, boat-start or offshore; (3) a school or rental on site, because the plan is harness-and-bar only; (4) access from the route in hours and transfers; (5) fit with the 12:00–20:00 work block, so afternoon-only thermals lose points. Odds bands: high ≥70%, medium 40–70%, low 15–40%, none <15%. Late October is the tail of the wet season everywhere; the Papagayo and Caribbean trades switch on through November.",
+ "rank_window": [
+  {
+   "spot": "Bahía Salinas — Playa Copal / Papaturro, Costa Rica",
+   "why": "season opens the week you arrive; November averages 17 kn, ~90% of days ride Nov–May; schools rent full kits; you are there Nov 2–15"
+  },
+  {
+   "spot": "Lake Atitlán, Guatemala",
+   "why": "xocomil thermal 8–17 kn from noon; one source calls Oct–Dec the best season; boat starts with the school; collides with the work block and sits 3 h off the route"
+  },
+  {
+   "spot": "Ometepe — Playa Santo Domingo, Nicaragua",
+   "why": "windy Nov–Jul, 15–25 kn; two schools; sandy shallow launch; costs a ferry day but the ferry port is on the way to the Costa Rica border"
+  },
+  {
+   "spot": "Lake Nicaragua at Granada, Nicaragua",
+   "why": "same trades, 15–23 kn gusty when on; the season’s first days fall on Nov 1–2; no Granada-based rental verified"
+  },
+  {
+   "spot": "Little Corn Island, Nicaragua",
+   "why": "Nov–Feb 15–25 kn and a school on the east beach, but it is a Managua flight plus a panga — two days you do not have"
+  },
+  {
+   "spot": "Caye Caulker, Belize",
+   "why": "flat reef lagoon and a school, but the caye’s own season is Feb–Jul; late October is light"
+  },
+  {
+   "spot": "Lake Arenal, Costa Rica",
+   "why": "Dec–May 20–30 kn side-on, gusty; November is the shoulder and the main operator opens for the dry season — confirm"
+  }
+ ],
+ "rank_year": [
+  {
+   "spot": "Bahía Salinas, Costa Rica",
+   "why": "~90% of days Nov–May, 22–23 kn Dec–Feb, Papagayo side-onshore into a bay; the region’s benchmark"
+  },
+  {
+   "spot": "Camp Bay / Paya Bay, Roatán, Honduras",
+   "why": "E trades 15–30 kn daily Feb–Aug, 25+ days a month in summer, reef waves outside and shelter inside; school with rescue boat Dec–Sep"
+  },
+  {
+   "spot": "Little Corn Island, Nicaragua",
+   "why": "Nov–Jul, 15–25 kn Nov–Feb, warm Caribbean water, small scene"
+  },
+  {
+   "spot": "Ometepe, Nicaragua",
+   "why": "Nov–Jul, 15–25 kn, fresh flat shallow water under two volcanoes, two schools"
+  },
+  {
+   "spot": "Caye Caulker, Belize",
+   "why": "Feb–Jul 12–20 kn, best Feb and Jun; shallow flat water right off the island"
+  },
+  {
+   "spot": "Lake Arenal, Costa Rica",
+   "why": "Dec–May 20–30 kn, high-wind lake, gusts off the hills"
+  },
+  {
+   "spot": "Lake Atitlán, Guatemala",
+   "why": "thermal 8–17 kn afternoons in the dry season; the most beautiful launch on the list, not the windiest"
+  },
+  {
+   "spot": "Ambergris Caye, Belize",
+   "why": "Jan–Apr; more scene than wind"
+  },
+  {
+   "spot": "Utila, Honduras",
+   "why": "Dec–Apr trades at Chepes Beach; a diving island that also kites"
+  },
+  {
+   "spot": "Placencia / Hopkins, Belize",
+   "why": "mainland; Apr–May best"
+  }
+ ],
+ "spots": [
+  {
+   "spot": "Bahía Salinas",
+   "country": "Costa Rica",
+   "where": "Playa Copal · Papaturro · Coyotera, Guanacaste",
+   "wind": "Papagayo trades, side-onshore into the bay. Season early Nov → end May, plus July; ~90% of days. Monthly averages: Nov 17 · Dec 22 · Jan 23 · Feb 23 · Mar 19 · Apr 17 · May 16 kn. Blows through the day, strongest midday.",
+   "water": "Bay with chop, sandy launches; Copal is the school beach, Papaturro flatter; strong gusts on the big days.",
+   "odds": {
+    "level": "high",
+    "text": "HIGH · ~85%",
+    "note": "you are here Nov 2–15; November is a 12 m month, rising weekly"
+   },
+   "school": "Several schools at Copal and Papaturro rent full kits (~$50–80 a session, ~$250–350 a week; confirm) and teach.",
+   "access": "15–20 km from the Peñas Blancas border; 1 h from Liberia; 5 h from San José. From Granada it is closer by land than by air.",
+   "verdict": "The trip’s kite. Base here first, not last."
+  },
+  {
+   "spot": "Lake Atitlán",
+   "country": "Guatemala",
+   "where": "Panajachel · Santa Catarina Palopó · Isla de los Gatos",
+   "wind": "The xocomil: a thermal that builds noon–16:00, 8–17 kn, generally south; dry season Nov–Apr, and one operator rates Oct–Dec best. Can raise 1–2 m chop.",
+   "water": "Deep caldera lake, boat starts with the school, cold-ish fresh water, wind lines with holes.",
+   "odds": {
+    "level": "medium",
+    "text": "MEDIUM · ~55%",
+    "note": "in season on your dates, but it blows 12–16 — inside the work block"
+   },
+   "school": "Kite School Guatemala and iKiteGt run lessons on Atitlán (and Amatitlán); rentals through them, boat included.",
+   "access": "3 h shuttle from Antigua. Not on the Plan C route; the Plan B alternate day.",
+   "verdict": "A Plan B day, not a Plan C stop. Beautiful, light, afternoon-only."
+  },
+  {
+   "spot": "Ometepe",
+   "country": "Nicaragua",
+   "where": "Playa Santo Domingo, Lake Nicaragua",
+   "wind": "NE trades across the lake, windy Nov → end Jul, 15–25 kn; best Dec–Mar and mid-Jun–Jul. Steady rather than gusty on the beach.",
+   "water": "Sandy beach, shallow fresh water, onshore, volcano backdrop. The friendliest launch in Nicaragua.",
+   "odds": {
+    "level": "medium",
+    "text": "MEDIUM · ~50%",
+    "note": "the season opens in November; Nov 1 is week one"
+   },
+   "school": "Two schools: Ometepe Kite Center and Kitesurf Ometepe (private lessons, rental).",
+   "access": "Granada → San Jorge 1 h, ferry 1 h, then 40 min to Santo Domingo. San Jorge is on the road to the Costa Rica border.",
+   "verdict": "Nicaragua’s reliable kite. Costs a ferry day; pays it back on the way to the border."
+  },
+  {
+   "spot": "Lake Nicaragua at Granada",
+   "country": "Nicaragua",
+   "where": "west shore south of the city, near the isletas",
+   "wind": "Same NE trades, 15–23 kn average when on, gusty, max ~34 kn; season Nov–Apr, best Dec–Mar. Year-round direction NE.",
+   "water": "Brown fresh water, chop, onshore on the west shore; launches are informal.",
+   "odds": {
+    "level": "medium",
+    "text": "MEDIUM · ~40%",
+    "note": "first Papagayo days of the season; a coin flip each morning"
+   },
+   "school": "kitesurfnicaragua.org runs lake lessons from Granada or Ometepe in the wet season; no Granada-based rental verified — confirm before counting on it.",
+   "access": "Walkable from town. Zero transit cost, which is why it is in Plan C.",
+   "verdict": "Worth a morning if a rental exists; otherwise a run on the malecón."
+  },
+  {
+   "spot": "Little Corn Island",
+   "country": "Nicaragua",
+   "where": "east beach",
+   "wind": "Windy season Nov → end Jul; Nov–Feb 15–25 kn (N turning NE in Jan); Mar–May 12–20; Jun–Sep 10–18; a lull in May.",
+   "water": "Warm Caribbean water, reef, the east beach launch by the school.",
+   "odds": {
+    "level": "medium",
+    "text": "MEDIUM · ~60%",
+    "note": "wind is likely; the island is two days away"
+   },
+   "school": "kitesurfnicaragua.org and Wingsurf Corn Islands, kite and wing, on the east beach.",
+   "access": "Managua → Big Corn by La Costeña ~1.5 h, then a 30-min panga. Not reachable inside this window.",
+   "verdict": "A separate trip. The best Caribbean kite in Nicaragua."
+  },
+  {
+   "spot": "Caye Caulker",
+   "country": "Belize",
+   "where": "the Split and the lee shore",
+   "wind": "Steady 12–20 kn Feb–Jul, best Feb and Jun; Dec–Jun averages 15–18 kn, 20+ in the mornings; summer 10–16. The country-wide dry season is Nov–Apr, but the caye’s own reliable window starts in February.",
+   "water": "Shallow, flat, turquoise water straight off the island inside the barrier reef — the best water on this list.",
+   "odds": {
+    "level": "low",
+    "text": "LOW · ~25%",
+    "note": "late October is the wet-season tail; light unless a front pushes through"
+   },
+   "school": "A kite school on the island (Kitexplorer) and Velento rentals; low-season hours to confirm.",
+   "access": "You are here Oct 30–31 anyway.",
+   "verdict": "A swim with a kite bag nearby. If it blows, the school is a two-minute walk."
+  },
+  {
+   "spot": "Lake Arenal",
+   "country": "Costa Rica",
+   "where": "Tilawa · Tronadora, north shore",
+   "wind": "Dry-season high-wind lake: Dec → May, 20–30 kn side-onshore, gusty off the hills.",
+   "water": "Fresh water, chop, some swell on the big days; mountain gusts.",
+   "odds": {
+    "level": "low",
+    "text": "LOW · ~30%",
+    "note": "November is the shoulder; the main operator opens for the dry season — confirm the date"
+   },
+   "school": "Tico Wind runs the windsurf/kite center in season.",
+   "access": "3 h from Liberia, 3.5 h from San José; on the way from Guanacaste to the volcano.",
+   "verdict": "December’s spot. Pass through Nov 8–12 only if Salinas is already delivering."
+  },
+  {
+   "spot": "Camp Bay / Paya Bay",
+   "country": "Honduras",
+   "where": "east end of Roatán",
+   "wind": "E trades 15–30 kn daily Feb → end Aug; Apr–May strongest (30+ days), Jun–Aug the most consistent (25+ days, 18–25 kn). Wind switches ESE→ENE around noon and builds after 15:00.",
+   "water": "Roatán’s largest natural beach: sheltered water inside, waves on the reef; Pigeon Cay for advanced riders.",
+   "odds": {
+    "level": "none",
+    "text": "NONE · ~15%",
+    "note": "off-season and the school is closed Oct–Nov"
+   },
+   "school": "Kitesurf Roatán: beach assistants and a rescue boat, open December → September.",
+   "access": "A flight from San Pedro Sula; not on the route.",
+   "verdict": "Honduras’ best kite, in a month it does not blow. Not this trip."
+  },
+  {
+   "spot": "Utila",
+   "country": "Honduras",
+   "where": "Chepes Beach · Little Bight · Rocky Point",
+   "wind": "E trades Dec → Apr; shallow sheltered turquoise water.",
+   "water": "Sheltered lagoon, sandy; small island, small scene.",
+   "odds": {
+    "level": "low",
+    "text": "LOW · ~15%",
+    "note": "off-season"
+   },
+   "school": "Kitesurf & Flyboard Utila; a Facebook-scale operation — confirm it is active.",
+   "access": "Ferry from La Ceiba or flight from SAP; not on the route.",
+   "verdict": "Diving island that also kites. Not this trip."
+  },
+  {
+   "spot": "Ambergris Caye — San Pedro",
+   "country": "Belize",
+   "where": "inside the reef, north of town",
+   "wind": "Season Jan → Apr with the dry-season trades.",
+   "water": "Reef-protected flat water; busier than Caye Caulker.",
+   "odds": {
+    "level": "low",
+    "text": "LOW · ~20%",
+    "note": "off-season"
+   },
+   "school": "Shops and instructors in San Pedro.",
+   "access": "Water taxi from Belize City; Caye Caulker is the better base for the same water.",
+   "verdict": "Skip; Caye Caulker has the same lagoon with less town."
+  },
+  {
+   "spot": "Placencia · Hopkins",
+   "country": "Belize",
+   "where": "mainland peninsula and Garifuna coast",
+   "wind": "Apr–May the best months for wind sports on this coast; dry-season trades Nov–Apr at 15–25 kn on paper.",
+   "water": "Long sandy peninsula, open water, less reef shelter than the cayes.",
+   "odds": {
+    "level": "low",
+    "text": "LOW · ~15%",
+    "note": "off-season, and off the route"
+   },
+   "school": "Placencia has the mainland’s kite operators; seasonal.",
+   "access": "A day’s bus from Belize City or the Placencia water taxi.",
+   "verdict": "Not this trip."
+  },
+  {
+   "spot": "Lake Amatitlán",
+   "country": "Guatemala",
+   "where": "25 km south of Guatemala City",
+   "wind": "Light, stable thermal; used by the Guatemala school for teaching.",
+   "water": "Warm crater lake; heavily polluted — the reason it is a lesson venue, not a destination.",
+   "odds": {
+    "level": "low",
+    "text": "LOW · ~25%",
+    "note": "close to the airport, light wind, dirty water"
+   },
+   "school": "Kite School Guatemala teaches here as well as on Atitlán.",
+   "access": "45 min from the airport.",
+   "verdict": "Only if a rested afternoon appears between the flight and Antigua. Unlikely."
+  },
+  {
+   "spot": "Popoyo · Guasacate",
+   "country": "Nicaragua",
+   "where": "Pacific coast, Tola",
+   "wind": "The Papagayo blows offshore here, which is what makes the surf glassy; kiting exists at Guasacate and Astillero on side-shore days in season.",
+   "water": "Surf beaches; offshore wind means a kite goes to sea.",
+   "odds": {
+    "level": "none",
+    "text": "NONE · ~10%",
+    "note": "a surf spot with a kite footnote"
+   },
+   "school": "Surf camps; no dedicated kite school verified.",
+   "access": "2 h from Granada.",
+   "verdict": "Bring the surfboard, not the kite."
+  }
+ ],
+ "countries": [
+  {
+   "country": "Costa Rica",
+   "call": "The only high-odds wind in the window. Bahía Salinas opens in early November at ~17 kn averages and climbs to 22–23 by December; Lake Arenal follows from December. You land in the country on Nov 2 and stay to Nov 15 — that is the trip’s kite block, and the reason to arrive at Salinas rather than San José."
+  },
+  {
+   "country": "Nicaragua",
+   "call": "Season opens the week you are there. Ometepe’s Santo Domingo is the reliable, schooled, sandy option; Granada’s lakeshore is the zero-transit option with no verified rental. Little Corn is the best Caribbean wind in the country and two days out of reach."
+  },
+  {
+   "country": "Guatemala",
+   "call": "One real spot, Lake Atitlán, thermal and afternoon-only, in season on your dates. It costs three hours off the route and the middle of the work block. A Plan B day."
+  },
+  {
+   "country": "Belize",
+   "call": "The best flat water on the list and the wrong month. Caye Caulker’s own window is February to July. Swim, snorkel, run the island; kite if a front arrives."
+  },
+  {
+   "country": "Honduras",
+   "call": "Camp Bay on Roatán is the region’s second-best spot for the year and blows February to August; the school is closed in October and November. Copán, where the route actually goes, has no wind at all."
+  }
+ ],
+ "route": [
+  "Re-derive the Nov 2 leg: Bahía Salinas is 15–20 km from the Peñas Blancas border. Granada → Rivas → border → La Cruz is 3–4 h by road with the crossing; the MGA → SJO flight ($120–250) lands you five hours from the wind. Go by land, arrive at Playa Copal by early afternoon Nov 2, and let San José wait. Border 06:00–22:00 (Sundays to 20:00); Nov 2 is a Monday.",
+  "If Nicaragua kiting matters, swap the second Granada night for Ometepe: Granada Oct 31 → San Jorge ferry Nov 1 → Santo Domingo (two schools, sandy launch) → back to San Jorge Nov 2, which is already on the road to the border. Odds rise from ~40% to ~50% and the launch is far safer; the cost is one ferry and a 40-min road, ~$25–40.",
+  "Belize stays a swim. Keep the Caye Caulker morning as snorkel and run; check the school on arrival and ride only if the trades show.",
+  "Guatemala: Atitlán only in Plan B, and only by moving that day’s work block to 16:00–24:00 or accepting a dead block. Not worth it against a Copán morning unless the forecast the week before shows 15+ kn.",
+  "Gear: harness, bar, and a leash. Rent at Copal or Papaturro for the fortnight (a weekly rate beats sessions after day four); rent on Ometepe by the hour. Leave the quiver; four flights, three of them Cessnas.",
+  "Pre-register the forecast: 70% that Salinas delivers a ridable day within the first three days (Nov 2–4); 40% that Granada does on Nov 1; 20% that Caye Caulker does on Oct 31. Score them on arrival."
+ ],
+ "verify": [
+  "A Granada-based kite rental in early November — none verified; the lake school operates from Granada or Ometepe on request.",
+  "Tico Wind (Lake Arenal) opening date for the 2026–27 season.",
+  "Bahía Salinas school rental prices and weekly rates; whether Papaturro or Copal has the lighter-wind beginner-friendly launch on 12 m days.",
+  "The Rivas → La Cruz / Bahía Salinas transfer on Nov 2: Tica Bus to Liberia, a colectivo from the border, or a private car (~$40–60).",
+  "Caye Caulker school hours in late October (low season).",
+  "Ometepe ferry times from San Jorge on Nov 1 and back on Nov 2 (roughly hourly by day; the last boats are mid-afternoon)."
+ ],
+ "sources": [
+  "Bahía Salinas: kiteforum.com/kitesurf/spot/Bahia_Salinas___Playa_Copalde · blog.bstoked.net/locations/complete-guide-kitesurfing-costa-rica · rove.me/to/costa-rica/kiteboarding-and-windsurfing · unplug-kitesurf.com/spots/bahia-salinas-playa-copal-costa-rica",
+  "Lake Arenal: kiteforum.com/kitesurf/spot/lake_arenal · ticowind.com · kiteguide.com/north-america/costarica/lake-arenal",
+  "Lake Atitlán / Amatitlán: kiteforum.com/kitesurf/spot/Lago_Atitlan___Isla_de_los_Gatos2a · atitlangt.com (xocomil) · globalkitespots.com/…/guatemala · booksurfcamps.com (Lake Atitlan kitesurfing) · Kite School Guatemala, iKiteGt",
+  "Nicaragua: kitesurfnicaragua.org/spots and /wind · kitejungle.com/kite-places/nicaragua · globalkitespots.com/…/nicaragua · unplug-kitesurf.com/destinations/nicaragua · kite-and-windsurfing-guide.com (Granada, Popoyo) · kitesurfculture.com (Little Corn east beach)",
+  "Belize: kiteforum.com (Caye Caulker; Ambergris Caye) · rove.me/to/belize/windsurfing-and-kitesurfing · globalkitespots.com/…/belize · unplug-kitesurf.com/destinations/belize · velentorentals.com",
+  "Honduras: kitesurfroatan.com/weather-conditions and /archives/103 · campbaylodgeroatan.com (best time) · iksurfmag.com travel guide Roatán · kiteforum.com (Paya Bay) · letskite.ch (Utila Chepes Beach) · unplug-kitesurf.com (Utila Little Bight)"
+ ],
+ "footer": "Odds are estimates from season data · italics and “confirm” mark what is unverified · rendered with scripts/travel/spots_sheet.py · v1 2026-09-05"
+}

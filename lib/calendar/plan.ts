@@ -84,6 +84,8 @@ export interface Segment {
   plan?: DayPlan[]
   /** Per-place field notes */
   guides?: PlaceGuide[]
+  /** Documents attached to the segment; embed renders the PDF inside the card on request */
+  docs?: { label: string; href: string; embed?: boolean }[]
   /** Map points, in travel order */
   stops?: Stop[]
   /** Someone else's trip: drawn hollow and unconnected on the map */
@@ -272,6 +274,10 @@ export const SEGMENTS: Segment[] = [
     place: 'Guatemala · Honduras · Belize · Nicaragua',
     status: 'pending',
     lane: 0,
+    docs: [
+      { label: 'Kite spots — Belize to Costa Rica, ranked for Oct 27 – Nov 15 (PDF)', href: '/docs/travel/central-america-kite-spots.pdf', embed: true },
+      { label: 'Macro plan v1 — Plans A / B / C, Oct 27 – Nov 2 (PDF)', href: '/docs/travel/central-america-macro-plan-v1.pdf', embed: true },
+    ],
     stops: [
       { name: 'Antigua', lat: 14.56, lon: -90.73, date: '2026-10-27' },
       { name: 'Copán', lat: 14.84, lon: -89.14, date: '2026-10-28' },
@@ -405,6 +411,7 @@ export const SEGMENTS: Segment[] = [
     place: 'Pacific coast · Arenal · Caribbean side',
     status: 'planned',
     lane: 0,
+    docs: [{ label: 'Kite spots — Belize to Costa Rica, ranked for Oct 27 – Nov 15 (PDF)', href: '/docs/travel/central-america-kite-spots.pdf', embed: true }],
     stops: [{ name: 'Costa Rica', lat: 9.93, lon: -84.08 }],
     summary: 'Two weeks. Decided in intent; nothing booked.',
     notes: [

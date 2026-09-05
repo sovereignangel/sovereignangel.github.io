@@ -198,6 +198,44 @@ function ForkChip({ id }: { id: ForkId }) {
   )
 }
 
+function DocViewer({ doc }: { doc: { label: string; href: string; embed?: boolean } }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <div className="border border-rule-light rounded-sm">
+      <div className="flex items-center gap-2 px-2 py-1.5">
+        <svg viewBox="0 0 12 12" className="w-3 h-3 shrink-0 text-burgundy" aria-hidden="true">
+          <path d="M3 1.5h4l2.5 2.5v6.5H3z M7 1.5V4h2.5" fill="none" stroke="currentColor" strokeWidth="1" strokeLinejoin="round" />
+        </svg>
+        <a href={doc.href} target="_blank" rel="noopener" className="text-[11px] text-ink hover:text-burgundy underline decoration-rule underline-offset-2">
+          {doc.label}
+        </a>
+        <span className="ml-auto flex items-center gap-1">
+          {doc.embed && (
+            <button
+              type="button"
+              onClick={() => setOpen(o => !o)}
+              className="font-serif text-[10px] font-medium px-2 py-0.5 rounded-sm border border-rule text-ink-muted hover:border-burgundy hover:text-burgundy"
+            >
+              {open ? 'Hide' : 'View here'}
+            </button>
+          )}
+          <a
+            href={doc.href}
+            target="_blank"
+            rel="noopener"
+            className="font-serif text-[10px] font-medium px-2 py-0.5 rounded-sm border border-rule text-ink-muted hover:border-burgundy hover:text-burgundy"
+          >
+            Open
+          </a>
+        </span>
+      </div>
+      {open && (
+        <iframe src={`${doc.href}#view=FitH`} title={doc.label} className="w-full h-[70vh] min-h-[480px] border-t border-rule-light bg-white" />
+      )}
+    </div>
+  )
+}
+
 function SegmentCard({ seg }: { seg: ResolvedSegment }) {
   const hasCost = seg.lines.length > 0
   return (
@@ -238,6 +276,14 @@ function SegmentCard({ seg }: { seg: ResolvedSegment }) {
               </li>
             ))}
           </ul>
+        </div>
+      )}
+
+      {seg.docs && seg.docs.length > 0 && (
+        <div className="mb-2 space-y-1">
+          {seg.docs.map(d => (
+            <DocViewer key={d.href} doc={d} />
+          ))}
         </div>
       )}
 
