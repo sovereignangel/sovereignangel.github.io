@@ -22,8 +22,8 @@ export function middleware(request: NextRequest) {
     return NextResponse.rewrite(url)
   }
 
-  // armstrong.aretetec.com (and legacy armstrong.arete.com) → /armstrong
-  if (host === 'armstrong.aretetec.com' || host === 'armstrong.arete.com') {
+  // armstrong.arete.com → rewrite to /armstrong
+  if (host === 'armstrong.arete.com') {
     const url = request.nextUrl.clone()
     url.pathname = `/armstrong${url.pathname === '/' ? '' : url.pathname}`
     return NextResponse.rewrite(url)
