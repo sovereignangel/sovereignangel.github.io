@@ -204,6 +204,44 @@ function DeepDive({
   )
 }
 
+const PIPELINE_ORDER: LaneStatus[] = ['candidate', 'probing', 'committed', 'parked']
+const PIPELINE_NOTE: Record<LaneStatus, string> = {
+  candidate: 'an idea with a pre-registered test, waiting its turn',
+  probing: 'actively under test — a kill gate is live',
+  committed: 'holds a position and a paragraph',
+  parked: 'deliberately not pursued — the map stays honest',
+}
+
+function PipelineBoard() {
+  return (
+    <div className="grid grid-cols-1 gap-2 p-2 sm:grid-cols-2 lg:grid-cols-4">
+      {PIPELINE_ORDER.map(st => {
+        const lanes = LANES.filter(l => l.status === st)
+        return (
+          <div key={st} className="rounded-sm border border-rule-light bg-white p-2">
+            <div className="mb-1 flex items-baseline justify-between gap-2">
+              <span className={`rounded-sm border px-1.5 py-0.5 font-mono text-[12px] uppercase tracking-[0.5px] ${STATUS_CLASS[st]}`}>
+                {STATUS_LABEL[st]}
+              </span>
+              <Meta>{lanes.length}</Meta>
+            </div>
+            <p className="mb-1.5 text-[13px] italic leading-snug text-ink-faint">{PIPELINE_NOTE[st]}</p>
+            {lanes.length === 0 && <p className="text-[14px] text-ink-faint">—</p>}
+            {lanes.map(l => (
+              <div key={l.id} className="border-t border-rule-light py-1 first:border-t-0">
+                <span className="font-serif text-[15px] font-semibold text-ink">
+                  {l.numeral} · {l.name}
+                </span>
+                <span className="block font-mono text-[11px] uppercase tracking-[0.5px] text-ink-muted">{l.market}</span>
+              </div>
+            ))}
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
 function LaneBody({
   lane,
   open,
@@ -385,6 +423,10 @@ export default function ResearchSheet() {
         />
 
         <div className="mb-3 space-y-3">
+          <Block label="The Pipeline" meta="idea -> probe -> established, gated">
+            <PipelineBoard />
+          </Block>
+
           <Block
             label="The Premise"
             meta="Framing"
