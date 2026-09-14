@@ -31,6 +31,8 @@ export interface ReadingStint {
   scope: string
   window: string
   effort: string
+  /** The job the book is being brought in to do. Shared vocabulary with the queue. */
+  jobToBeDone: string
   /** Why this book sits at this position, rather than earlier or later. */
   why: string
   /** In the pathway's idiom — the single question held open while reading. */
@@ -72,6 +74,7 @@ export const READING_ORDER: ReadingStint[] = [
     order: 1,
     title: 'The Gift',
     author: 'Marcel Mauss',
+    jobToBeDone: 'Find the obligation inside a price',
     scope: 'Whole — p.11 to p.105. Everything after p.106 is endnotes; consult, do not read.',
     window: 'Sep 8 – Sep 25 · Palanga, around the taper',
     effort: '~95 pages · three sittings',
@@ -134,6 +137,7 @@ export const READING_ORDER: ReadingStint[] = [
     order: 2,
     title: 'Complexity and the Economy',
     author: 'W. Brian Arthur',
+    jobToBeDone: 'Speak the room’s dialect',
     scope: 'Seven of twelve chapters. Four for the framework, three for the market machinery. The technology sequence is skimmed.',
     window: 'Sep 28 – Oct 22 · NYC, the clear block before Panama',
     effort: '~120 pages of the 241 · four weeks at a chapter or two a week',
@@ -208,6 +212,7 @@ export const READING_ORDER: ReadingStint[] = [
     order: 3,
     title: 'Advances in Active Portfolio Management',
     author: 'Richard C. Grinold & Ronald N. Kahn',
+    jobToBeDone: 'State the edge in checkable machinery',
     scope: 'Never cover to cover. A six-chapter spine, then chapters drawn by question. Roughly 200 of 937 pages.',
     window: 'Nov 2 – Dec 20 · Costa Rica and Brazil, the settled weeks',
     effort: 'Spine ~120 pages, then on demand · the long stretch before Abu Dhabi',
