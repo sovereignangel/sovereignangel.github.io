@@ -15,6 +15,9 @@ const navItems = [
   { href: '/thesis/boardroom', label: 'The Machine', symbol: 'J' },
   { href: '/thesis/finances', label: 'Finances', symbol: '$' },
   { href: '/thesis/wikis', label: 'Wikis', symbol: 'L2' },
+  // Outside /thesis, but this is the nav actually used — an unlinked route is
+  // an invisible one, and the shelf was reachable only by typing the URL.
+  { href: '/books', label: 'Books', symbol: '§' },
 ]
 
 function ScoreValue({ label, value, color, arrow, arrowColor }: {
