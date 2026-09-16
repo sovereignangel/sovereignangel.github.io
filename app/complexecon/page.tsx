@@ -39,6 +39,8 @@ import {
   type LanePillar,
   type LibraryItem,
   type LibraryTopic,
+  type ShelfLane,
+  SHELF_LANE_LABEL,
   type SourceKind,
 } from '@/lib/complexecon/pathway'
 
@@ -213,16 +215,21 @@ function BookRow({
       indent
       lead={<Checkbox checked={checked} onToggle={onToggle} label={`Mark ${item.title} read`} />}
       head={
-        <span className="flex flex-wrap items-baseline gap-x-2">
-          <span
-            className={`font-serif text-[18px] font-semibold ${
-              checked ? 'text-ink-muted line-through decoration-ink-faint' : 'text-ink'
-            }`}
-          >
-            {item.title}
+        <span className="flex flex-col gap-px">
+          <span className="font-mono text-[12px] uppercase tracking-[0.5px] text-burgundy">
+            {item.jobToBeDone}
           </span>
-          <span className="text-[14px] text-ink-muted">
-            {item.author}, {item.year}
+          <span className="flex flex-wrap items-baseline gap-x-2">
+            <span
+              className={`font-serif text-[18px] font-semibold ${
+                checked ? 'text-ink-muted line-through decoration-ink-faint' : 'text-ink'
+              }`}
+            >
+              {item.title}
+            </span>
+            <span className="text-[14px] text-ink-muted">
+              {item.author}, {item.year}
+            </span>
           </span>
         </span>
       }
@@ -307,7 +314,14 @@ function ComplexEconInner() {
 
   const allMilestoneIds = useMemo(() => STAGES.flatMap(s => s.milestones.map(m => m.id)), [])
   const allBookIds = useMemo(() => LIBRARY.flatMap(t => t.items.map(i => i.id)), [])
-  const spineIds = useMemo(() => LIBRARY.flatMap(t => t.items.filter(i => i.tier === 'spine').map(i => i.id)), [])
+  // The meters answer "am I ready for Abu Dhabi", so off-lane shelves stay out
+  // of the denominator — counting them would make the meter read low forever.
+  const laneTopics = useMemo(() => LIBRARY.filter(t => (t.lane ?? 'sfi') === 'sfi'), [])
+  const laneBookIds = useMemo(() => laneTopics.flatMap(t => t.items.map(i => i.id)), [laneTopics])
+  const spineIds = useMemo(
+    () => laneTopics.flatMap(t => t.items.filter(i => i.tier === 'spine').map(i => i.id)),
+    [laneTopics],
+  )
   const [shelfLeft, shelfRight] = useMemo(() => splitColumns(LIBRARY, t => t.items.length + 1), [])
 
   const allRowIds = useMemo(
@@ -359,7 +373,7 @@ function ComplexEconInner() {
   }, [])
 
   const milestonesDone = allMilestoneIds.filter(id => done.has(id)).length
-  const booksDone = allBookIds.filter(id => done.has(id)).length
+  const booksDone = laneBookIds.filter(id => done.has(id)).length
   const spineDone = spineIds.filter(id => done.has(id)).length
   const memoCount = Object.values(notes).filter(t => t.trim()).length
 
@@ -375,9 +389,14 @@ function ComplexEconInner() {
           <span className="font-serif text-[15px] font-semibold uppercase tracking-[1px] text-burgundy">
             {topic.name}
           </span>
-          <Meta>
-            {topic.items.filter(i => done.has(i.id)).length}/{topic.items.length}
-          </Meta>
+          <span className="flex items-center gap-1">
+            {(topic.lane ?? 'sfi') !== 'sfi' && (
+              <Meta tone="amber">{SHELF_LANE_LABEL[topic.lane as ShelfLane]}</Meta>
+            )}
+            <Meta>
+              {topic.items.filter(i => done.has(i.id)).length}/{topic.items.length}
+            </Meta>
+          </span>
         </div>
         {topic.items.map(item => (
           <BookRow
@@ -437,7 +456,7 @@ function ComplexEconInner() {
                 value={
                   <>
                     {loaded ? booksDone : '·'}
-                    <span className="text-ink-faint">/{allBookIds.length}</span>
+                    <span className="text-ink-faint">/{laneBookIds.length}</span>
                   </>
                 }
                 label="Library"
@@ -568,7 +587,7 @@ function ComplexEconInner() {
           </Block>
           <Block
             label="The Library"
-            meta={`§ · ${loaded ? booksDone : '·'}/${allBookIds.length}`}
+            meta={`§ · ${loaded ? booksDone : '·'}/${laneBookIds.length}`}
             open={!closedBlocks.has('blk-library')}
             onToggle={() => toggleBlock('blk-library')}
           >

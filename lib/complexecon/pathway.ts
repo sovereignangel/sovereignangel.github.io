@@ -47,16 +47,36 @@ export interface LibraryItem {
   year: string
   kind: 'book' | 'paper'
   tier: BookTier
+  /**
+   * The job the item is brought in to do, stated as work rather than subject.
+   * The organising unit of the shelf: two items against the same job are
+   * redundant however different they read, and a job with no item is the gap.
+   */
+  jobToBeDone: string
   note: string
   /** Direct PDF that opens in the in-site reader (highlights + notes stored per user). */
   readerUrl?: string
   sources: BookSource[]
 }
 
+/**
+ * Which argument a topic serves. The shelf carries more than one lane, and
+ * only the SFI lane counts toward the Abu Dhabi progress meters — an off-lane
+ * shelf that inflated the denominator would make the meter lie.
+ */
+export type ShelfLane = 'sfi' | 'shocks'
+
+export const SHELF_LANE_LABEL: Record<ShelfLane, string> = {
+  sfi: 'Lane paper · Abu Dhabi',
+  shocks: 'Shock to share price',
+}
+
 export interface LibraryTopic {
   id: string
   name: string
   rationale: string
+  /** Defaults to 'sfi' when absent. */
+  lane?: ShelfLane
   items: LibraryItem[]
 }
 
@@ -307,6 +327,7 @@ export const LIBRARY: LibraryTopic[] = [
         year: '2014',
         kind: 'book',
         tier: 'foundation',
+        jobToBeDone: 'Speak the room’s dialect',
         note: 'The founding statement: increasing returns, non-equilibrium, the El Farol problem. Arthur is SFI royalty — his framing is the house dialect.',
         readerUrl: 'https://sites.santafe.edu/~wbarthur/Papers/Comp.Econ.SFI.pdf',
         sources: [
@@ -329,6 +350,7 @@ export const LIBRARY: LibraryTopic[] = [
         year: '2024',
         kind: 'book',
         tier: 'foundation',
+        jobToBeDone: 'State the programme as prediction',
         note: 'The current statement of complexity economics as a predictive program. Farmer is the bridge to the Oxford work and the CEcon collaboration.',
         sources: [
           {
@@ -345,6 +367,7 @@ export const LIBRARY: LibraryTopic[] = [
         year: '2006',
         kind: 'book',
         tier: 'reference',
+        jobToBeDone: 'Map the field quickly',
         note: 'The accessible synthesis. Skim for the map of the field; the primary sources above carry the weight.',
         sources: [
           {
@@ -361,6 +384,7 @@ export const LIBRARY: LibraryTopic[] = [
         year: '1996',
         kind: 'book',
         tier: 'spine',
+        jobToBeDone: 'Build the agent model',
         note: 'Sugarscape: emergent wealth distributions from identical agents. The replication in Stage I comes from chapter II.',
         sources: [
           {
@@ -382,6 +406,7 @@ export const LIBRARY: LibraryTopic[] = [
         year: '2009',
         kind: 'book',
         tier: 'reference',
+        jobToBeDone: 'Patch the complexity-science gaps',
         note: 'General complexity-science grounding — information, computation, evolution. Read where the SFI coursework feels thin.',
         sources: [
           {
@@ -406,6 +431,7 @@ export const LIBRARY: LibraryTopic[] = [
         year: '1944',
         kind: 'book',
         tier: 'spine',
+        jobToBeDone: 'Ground markets as instituted',
         note: 'Embeddedness — the shared vocabulary of the entire workshop. Markets as instituted processes, not natural facts.',
         readerUrl:
           'https://archive.org/download/the-great-transformation_202605/The%20great%20transformation.pdf',
@@ -424,6 +450,7 @@ export const LIBRARY: LibraryTopic[] = [
         year: '1925',
         kind: 'book',
         tier: 'spine',
+        jobToBeDone: 'Find the obligation inside a price',
         note: 'Short, foundational. Exchange as social obligation — the deep background to every claim about what a transaction is.',
         readerUrl: 'https://archive.org/download/the-gift-marcel-mauss/The%20Gift%20-%20Marcel%20Mauss.pdf',
         sources: [
@@ -441,6 +468,7 @@ export const LIBRARY: LibraryTopic[] = [
         year: '2011',
         kind: 'book',
         tier: 'spine',
+        jobToBeDone: 'Trace credit back before money',
         note: 'Contested by economists, but the lingua franca. A position on it will be expected — agreement optional, engagement mandatory.',
         readerUrl:
           'https://archive.org/download/debt-the-first-5000-years/Debt-The_First_5000_Years.pdf',
@@ -459,6 +487,7 @@ export const LIBRARY: LibraryTopic[] = [
         year: '2009',
         kind: 'book',
         tier: 'spine',
+        jobToBeDone: 'See the desk as a culture',
         note: 'Shareholder value enacted rather than discovered. The closest existing work to the lane — the one to critique in detail.',
         sources: [
           {
@@ -488,6 +517,7 @@ export const LIBRARY: LibraryTopic[] = [
         year: '2006',
         kind: 'book',
         tier: 'spine',
+        jobToBeDone: 'Prove the model makes the market',
         note: 'How Black-Scholes made the world it described. The load-bearing text of the lane.',
         sources: [
           {
@@ -509,6 +539,7 @@ export const LIBRARY: LibraryTopic[] = [
         year: '1998',
         kind: 'paper',
         tier: 'spine',
+        jobToBeDone: 'Name performativity precisely',
         note: 'The theoretical statement of performativity — economics performs the economy.',
         sources: [
           {
@@ -525,6 +556,7 @@ export const LIBRARY: LibraryTopic[] = [
         year: '2004',
         kind: 'paper',
         tier: 'spine',
+        jobToBeDone: 'Watch arbitrage being made',
         note: 'Reflexive modeling inside a trading room. The micro-mechanism, observed ethnographically.',
         sources: [
           {
@@ -541,6 +573,7 @@ export const LIBRARY: LibraryTopic[] = [
         year: '2014',
         kind: 'book',
         tier: 'reference',
+        jobToBeDone: 'Treat valuation as an act',
         note: 'Valuation as performance across settings — a second pass at the lane once the spine is absorbed.',
         sources: [
           {
@@ -565,6 +598,7 @@ export const LIBRARY: LibraryTopic[] = [
         year: '2019',
         kind: 'paper',
         tier: 'spine',
+        jobToBeDone: 'Fix the averaging error',
         note: 'Nature Physics. Time averages diverge from ensemble averages under multiplicative dynamics — inequality without psychology. The highest-leverage single tool in the lane.',
         sources: [
           {
@@ -586,6 +620,7 @@ export const LIBRARY: LibraryTopic[] = [
         year: '2001',
         kind: 'paper',
         tier: 'spine',
+        jobToBeDone: 'Get the empirical target',
         note: 'Science. The canonical firm-level distribution fact, plus the ABM program that generates it. Assumed knowledge in the room.',
         readerUrl: 'https://www.brookings.edu/wp-content/uploads/2016/06/firms.pdf',
         sources: [
@@ -608,6 +643,7 @@ export const LIBRARY: LibraryTopic[] = [
         year: '2013',
         kind: 'book',
         tier: 'reference',
+        jobToBeDone: 'Anchor the distribution claim',
         note: 'The empirical backdrop every inequality conversation assumes. Know r > g, the data, and the standard critiques.',
         sources: [
           {
@@ -624,6 +660,7 @@ export const LIBRARY: LibraryTopic[] = [
         year: '2017',
         kind: 'book',
         tier: 'reference',
+        jobToBeDone: 'Test what actually levels',
         note: 'The long-run history: what has actually compressed inequality. Useful counterweight to purely generative accounts.',
         sources: [
           {
@@ -648,6 +685,7 @@ export const LIBRARY: LibraryTopic[] = [
         year: '2011',
         kind: 'book',
         tier: 'foundation',
+        jobToBeDone: 'Make value a convention',
         note: 'The French conventions school, directly on point: value is not measured by markets but constituted by them.',
         sources: [
           {
@@ -664,11 +702,29 @@ export const LIBRARY: LibraryTopic[] = [
         year: '2016',
         kind: 'book',
         tier: 'foundation',
+        jobToBeDone: 'Price the imagined future',
         note: 'Fictional expectations as the engine of capitalist dynamics — DCF as an instrument of imagination. Very close to the lane.',
         sources: [
           {
             label: 'Harvard UP',
             url: 'https://www.hup.harvard.edu/books/9780674088825',
+            kind: 'buy',
+          },
+        ],
+      },
+      {
+        id: 'lib-grinold-kahn',
+        title: 'Advances in Active Portfolio Management',
+        author: 'Richard C. Grinold & Ronald N. Kahn',
+        year: '2019',
+        kind: 'book',
+        tier: 'foundation',
+        jobToBeDone: 'State the edge in checkable machinery',
+        note: 'The fundamental law, the transfer coefficient, and fees as a convention that distributes. The credential nobody else in the room has \u2014 almost none of them trade. Read against Orlean: the same claim in machinery a practitioner can check.',
+        sources: [
+          {
+            label: 'McGraw Hill',
+            url: 'https://www.mhprofessional.com/advances-in-active-portfolio-management-new-developments-in-quantitative-investing-9781260453713-usa',
             kind: 'buy',
           },
         ],
@@ -680,12 +736,146 @@ export const LIBRARY: LibraryTopic[] = [
         year: '1991',
         kind: 'book',
         tier: 'reference',
+        jobToBeDone: 'Adjudicate rival worths',
         note: 'Orders of worth — the theoretical deep end of conventions theory. Enter only if the room pulls the conversation there.',
         sources: [
           {
             label: 'Borrow on archive.org',
             url: 'https://archive.org/details/onjustificatione0000bolt',
             kind: 'borrow',
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'shocks',
+    name: 'Shock to Share Price',
+    lane: 'shocks',
+    rationale:
+      'A second lane, deliberately kept off the Abu Dhabi meters. The job is turning an event into a position: mechanism, then structure, then sourcing, then valuation, then instrument. Mauboussin first because he reframes the rest — once you are forecasting the revision to expectations rather than the fundamental, every book below is read for what it says about revisions. Doganis last, because sector substrate is only worth loading once you know which variable you are solving for.',
+    items: [
+      {
+        id: 'lib-mauboussin-expectations',
+        title: 'Expectations Investing',
+        author: 'Michael Mauboussin & Alfred Rappaport',
+        year: '2021',
+        kind: 'book',
+        tier: 'spine',
+        jobToBeDone: 'Link a shock to a share price',
+        note: 'Reverse-engineers what the price already implies, so you forecast the revision, not the fundamental. The direct answer to the question, and the reason it sits first.',
+        sources: [
+          {
+            label: 'Columbia UP',
+            url: 'https://cup.columbia.edu/book/expectations-investing/9780231203043',
+            kind: 'buy',
+          },
+        ],
+      },
+      {
+        id: 'lib-sonkin-johnson',
+        title: 'Pitch the Perfect Investment',
+        author: 'Paul Sonkin & Paul Johnson',
+        year: '2017',
+        kind: 'book',
+        tier: 'foundation',
+        jobToBeDone: 'Build and structure the thesis',
+        note: 'The variant-perception framework: why your view differs from the price-implied consensus, and why the market will come to it. Pairs with Mauboussin — he supplies the gap, this supplies the argument for closing it.',
+        sources: [
+          {
+            label: 'Wiley',
+            url: 'https://www.wiley.com/en-us/Pitch+the+Perfect+Investment-p-9781119051787',
+            kind: 'buy',
+          },
+        ],
+      },
+      {
+        id: 'lib-blas-farchy',
+        title: 'The World for Sale',
+        author: 'Javier Blas & Jack Farchy',
+        year: '2021',
+        kind: 'book',
+        tier: 'foundation',
+        jobToBeDone: 'Find the shocks early',
+        note: 'Physical commodity flows and chokepoints; how traders read tanker routes before equities move. The sourcing half — useless without a mechanism, and the mechanism is slow without it.',
+        sources: [
+          {
+            label: 'Oxford UP',
+            url: 'https://global.oup.com/academic/product/the-world-for-sale-9780197651537',
+            kind: 'buy',
+          },
+        ],
+      },
+      {
+        id: 'lib-damodaran-dark-side',
+        title: 'The Dark Side of Valuation',
+        author: 'Aswath Damodaran',
+        year: '2018',
+        kind: 'book',
+        tier: 'spine',
+        jobToBeDone: 'Value the damaged company',
+        note: 'Cyclicals, distress, negative earnings — exactly the airBaltic situation. The one book on this lane whose author posts the spreadsheets free.',
+        sources: [
+          {
+            label: 'Author page, NYU Stern',
+            url: 'https://pages.stern.nyu.edu/~adamodar/',
+            kind: 'web',
+          },
+          {
+            label: 'Pearson',
+            url: 'https://www.pearson.com/en-us/subject-catalog/p/dark-side-of-valuation-the/P200000009470',
+            kind: 'buy',
+          },
+        ],
+      },
+      {
+        id: 'lib-moyer-distressed',
+        title: 'Distressed Debt Analysis',
+        author: 'Stephen Moyer',
+        year: '2004',
+        kind: 'book',
+        tier: 'spine',
+        jobToBeDone: 'Trade the Chapter 11',
+        note: 'Capital structure, who gets wiped, where the asymmetry sits. The airBaltic trade is in the debt, not the equity — this is the book that says why.',
+        sources: [
+          {
+            label: 'J. Ross Publishing',
+            url: 'https://www.jrosspub.com/distressed-debt-analysis.html',
+            kind: 'buy',
+          },
+        ],
+      },
+      {
+        id: 'lib-greenblatt',
+        title: 'You Can Be a Stock Market Genius',
+        author: 'Joel Greenblatt',
+        year: '1997',
+        kind: 'book',
+        tier: 'foundation',
+        jobToBeDone: 'Special situations scouting',
+        note: 'Spinoffs, bankruptcies, restructurings — the original alpha-scouting text despite the awful title.',
+        sources: [
+          {
+            label: 'Borrow on archive.org',
+            url: 'https://archive.org/details/youcanbestockmar0000gree',
+            kind: 'borrow',
+          },
+        ],
+      },
+      {
+        id: 'lib-doganis',
+        title: 'Flying Off Course',
+        author: 'Rigas Doganis',
+        year: '2019',
+        kind: 'book',
+        tier: 'reference',
+        jobToBeDone: 'Sector substrate',
+        note: 'Airline economics: fuel hedging, load factors, lessor structures. Boring, necessary, and read last on purpose — substrate without a question is trivia.',
+        sources: [
+          {
+            label: 'Routledge',
+            url: 'https://www.routledge.com/Flying-Off-Course-Airline-Economics-and-Marketing/Doganis/p/book/9781138224254',
+            kind: 'buy',
           },
         ],
       },

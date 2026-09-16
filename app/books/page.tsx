@@ -6,6 +6,7 @@ import { useAuth } from '@/components/auth/AuthProvider'
 import { authFetch } from '@/lib/auth-fetch'
 import BookSearch from '@/components/books/BookSearch'
 import StintCard from '@/components/books/StintCard'
+import FullListView from '@/components/books/FullListView'
 import { READING_ORDER, ORDER_ARGUMENT, SCHEDULE } from '@/lib/books/reading-order'
 import type { BookMeta } from '@/lib/books/types'
 import type { ReaderSource } from '@/components/thesis/reader/ReaderOverlay'
@@ -13,7 +14,7 @@ import type { ReaderSource } from '@/components/thesis/reader/ReaderOverlay'
 const ReaderOverlay = dynamic(() => import('@/components/thesis/reader/ReaderOverlay'), { ssr: false })
 
 type ActiveBook = { source: ReaderSource; slug: string; page?: number } | null
-type Tab = 'order' | 'search'
+type Tab = 'order' | 'list' | 'search'
 
 export default function BooksPage() {
   const { user, signIn, loading: authLoading } = useAuth()
@@ -89,13 +90,13 @@ export default function BooksPage() {
       <div className="mb-4">
         <h1 className="font-serif text-[22px] font-bold text-ink">Books</h1>
         <p className="text-[11px] text-ink-muted">
-          Three volumes, sequenced against Abu Dhabi — January 3, 2027
+          Three volumes sequenced against Abu Dhabi — January 3, 2027. The full list, by job, under The List.
         </p>
       </div>
 
       {/* Tabs */}
       <div className="flex gap-4 border-b border-rule pb-2 mb-4">
-        {(['order', 'search'] as Tab[]).map(t => (
+        {(['order', 'list', 'search'] as Tab[]).map(t => (
           <button
             key={t}
             onClick={() => setTab(t)}
@@ -105,14 +106,14 @@ export default function BooksPage() {
                 : 'text-ink-muted hover:text-ink'
             }`}
           >
-            {t === 'order' ? 'The Order' : 'Search'}
+            {t === 'order' ? 'The Order' : t === 'list' ? 'The List' : 'Search'}
           </button>
         ))}
       </div>
 
-      {loading && <div className="text-[11px] text-ink-muted py-8 text-center">Loading the shelf...</div>}
+      {loading && tab !== 'list' && <div className="text-[11px] text-ink-muted py-8 text-center">Loading the shelf...</div>}
 
-      {!loading && books.length === 0 && (
+      {!loading && tab !== 'list' && books.length === 0 && (
         <div className="bg-white border border-amber-ink/20 rounded-sm p-3 mb-4">
           <div className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-amber-ink mb-1">
             Corpus not on this host
@@ -124,6 +125,8 @@ export default function BooksPage() {
           </p>
         </div>
       )}
+
+      {tab === 'list' && <FullListView />}
 
       {tab === 'search' && !loading && books.length > 0 && (
         <BookSearch onOpenHit={(slug, page) => openBook(slug, page)} />
