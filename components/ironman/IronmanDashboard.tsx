@@ -6,6 +6,7 @@ import { getGarminWindow, getGarminRollups } from '@/lib/firestore'
 import type { GarminMetrics, GarminActivity } from '@/lib/types'
 import { PLAN, RACE, RACE_NYC, GOALS, BASELINE, goalSplits, goalDisplay, daysToRace, todayLocal,
   priorRaceAtDistance, priorRaceDisplay, priorRaceVsGoal, KM_PER_MILE,
+  eliteFor,
   type PlanDay, type Sport } from '@/lib/ironman/plan'
 import { computeRebalance, type SportNeed } from '@/lib/ironman/rebalance'
 import { fmtPace as fmtRacePace } from '@/lib/ironman/pace'
@@ -19,6 +20,7 @@ import {
   type DayStatus,
 } from '@/lib/ironman/adapt'
 import { SportIcon, FinishFlag } from '@/components/ironman/IronmanIcons'
+import { eliteSheetRow } from '@/components/ironman/EliteBenchmark'
 import {
   Seam, FieldCard, Sub, Row, Rows, Foot, Chip, Hover, Ticker, Disclosure, Tearsheet,
   type SheetRow,
@@ -481,6 +483,9 @@ function RaceSheet({ activities, metrics, today }: {
   // transitions and pacing decisions included. It belongs among the targets
   // rather than in a table of its own, so it reads as one more row.
   const raced = useMemo(() => priorRaceAtDistance(RACE_NYC, 'lori'), [])
+  // The front of the field on the same course, as the scale the goal and the
+  // projection are read against. Women's winner — the category being raced.
+  const elite = useMemo(() => eliteFor('lori', RACE_NYC), [])
 
   const goalPaceMinKm = (s: S3) =>
     s === 'swim' ? (show.swimSecPer100m * 10) / 60 : s === 'bike' ? 60 / show.bikeKmh : show.runMinPerKm
@@ -499,6 +504,7 @@ function RaceSheet({ activities, metrics, today }: {
     p == null ? 'var(--lordas-faint)' : p >= 0.5 ? 'var(--lordas-ok)' : p >= 0.25 ? 'var(--lordas-warn)' : 'var(--lordas-crit)'
 
   const rows: SheetRow[] = [
+    ...(elite ? [eliteSheetRow(elite, (s) => goalSplitMin(s) * 60)] : []),
     { label: 'Goal Total', cells: SPORTS3.map((s) => splitOf(goalSplitMin(s))) },
     ...(raced
       ? [

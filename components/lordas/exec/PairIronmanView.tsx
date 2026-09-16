@@ -29,7 +29,8 @@ import { InfoIcon, PersonSigil, SportGlyph, TrifectaIcon } from '@/components/lo
 import { fmtRunPace, fmtSwimPace, fmtBikeSpeed, fmtPace } from '@/lib/lordas/pair-training'
 import { paceBoth } from '@/lib/ironman/pace'
 import { RACE_NYC, priorRacesFor, raceDistanceLabel, sameDistance, priorRaceDisplay, priorRaceVsGoal,
-  type PriorRace } from '@/lib/ironman/plan'
+  eliteFor, type PriorRace } from '@/lib/ironman/plan'
+import { eliteSheetRow } from '@/components/ironman/EliteBenchmark'
 import type {
   PairIronmanDetail, AthleteDetail, PlanAthleteDay, PlanSessionRow, LoggedSession, SwimTiming,
 } from '@/lib/lordas/ironman-detail'
@@ -309,7 +310,12 @@ function AthleteSheet({ a }: { a: AthleteDetail }) {
   })
   const cols = SPORTS.map(bySport)
 
+  // The winner of this athlete's own category on the same course — the scale
+  // the goal and the projection below it are read against.
+  const elite = eliteFor(a.person as 'lori' | 'aidas', RACE_NYC)
+
   const rows: SheetRow[] = [
+    ...(elite ? [eliteSheetRow(elite, (s) => goalSplit(a, s) * 60)] : []),
     {
       label: 'Goal Total',
       cells: SPORTS.map((s) => hm(goalSplit(a, s))),

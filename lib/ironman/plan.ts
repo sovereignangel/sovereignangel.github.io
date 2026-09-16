@@ -91,6 +91,44 @@ export interface PriorRace {
 export const PRIOR_RACES: PriorRace[] = [
   {
     athlete: 'lori',
+    name: 'MTS Ironman 70.3 Belgrade',
+    date: '2026-09-13',
+    location: 'Ada Ciganlija, Belgrade',
+    swimKm: 1.9,
+    // Both computers measured the bike 2.4% over the advertised 88.1km. Each
+    // athlete's own recorded distance is carried, because speed is what the
+    // leg is read on and the watch is what produced it.
+    bikeKm: 90.22,
+    runKm: 21.1,
+    // Leg boundaries are device-derived, not chip. The swim/T1 boundary is the
+    // exit ramp detected in the trace — the watch kept the swim timer running
+    // for 5:44 after she left the water, so the raw file's 51:01 swim and 1:54
+    // T1 are one number in the wrong cell. The correction moves time between
+    // two legs and invents none: swim+T1 is identical either way.
+    swimSec: 45 * 60 + 21, //            45:21
+    t1Sec: 7 * 60 + 34, //                7:34
+    bikeSec: 3 * 3600 + 25 * 60 + 45, // 3:25:45
+    t2Sec: 10 * 60 + 38, //              10:38
+    runSec: 2 * 3600 + 22 * 60 + 56, //  2:22:56
+    totalSec: 6 * 3600 + 51 * 60 + 42, // 6:51:42 official
+  },
+  {
+    athlete: 'aidas',
+    name: 'MTS Ironman 70.3 Belgrade',
+    date: '2026-09-13',
+    location: 'Ada Ciganlija, Belgrade',
+    swimKm: 1.9,
+    bikeKm: 90.75,
+    runKm: 21.1,
+    swimSec: 50 * 60 + 38, //            50:38
+    t1Sec: 9 * 60 + 25, //                9:25
+    bikeSec: 2 * 3600 + 48 * 60 + 26, // 2:48:26
+    t2Sec: 3 * 60 + 54, //                3:54
+    runSec: 2 * 3600 + 2 * 60 + 3, //    2:02:03
+    totalSec: 5 * 3600 + 53 * 60 + 53, // 5:53:53 official
+  },
+  {
+    athlete: 'lori',
     name: 'Ocean Lava Montenegro',
     date: '2023-05-14',
     location: 'Kotor, Montenegro',
@@ -678,4 +716,113 @@ export function daysToRace(today: string, raceDate?: string): number {
 /** Local date string in the athlete's timezone (Palanga) */
 export function todayLocal(): string {
   return new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Vilnius' }).format(new Date())
+}
+
+/**
+ * The winners.
+ *
+ * A goal split says what the athlete is aiming at; a prior race says what the
+ * body has already done. Neither says what the distance costs at the front of
+ * the field. The elite line is the third reference point — the same course,
+ * the same day, the same water and wind, raced by the fastest person in the
+ * category. It is not a target. It is the scale the other two rows are read
+ * against: a swim that is 2x the winner's and a bike that is 1.2x say
+ * immediately where the race is actually being lost.
+ *
+ * Stored leg by leg in raw seconds, exactly like PriorRace, so the same
+ * formatters and the same gap arithmetic apply without a second code path.
+ */
+export interface EliteResult {
+  race: string
+  date: string
+  location: string
+  /** Which category this result won */
+  category: 'men' | 'women'
+  name: string
+  swimKm: number
+  bikeKm: number
+  runKm: number
+  swimSec: number
+  t1Sec: number
+  bikeSec: number
+  t2Sec: number
+  runSec: number
+  totalSec: number
+}
+
+const HALF = { swimKm: 1.9, bikeKm: 90, runKm: 21.1 }
+
+export const ELITE_RESULTS: EliteResult[] = [
+  {
+    race: 'Ironman 70.3 Belgrade',
+    date: '2026-09-13',
+    location: 'Belgrade',
+    category: 'men',
+    name: 'Corentin Sandeau',
+    ...HALF,
+    swimSec: 26 * 60 + 39, //             26:39
+    t1Sec: 3 * 60 + 58, //                 3:58
+    bikeSec: 2 * 3600 + 6 * 60 + 25, //  2:06:25
+    t2Sec: 2 * 60 + 4, //                  2:04
+    runSec: 1 * 3600 + 16 * 60 + 36, //  1:16:36
+    totalSec: 3 * 3600 + 55 * 60 + 40, // 3:55:40
+  },
+  {
+    race: 'Ironman 70.3 Belgrade',
+    date: '2026-09-13',
+    location: 'Belgrade',
+    category: 'women',
+    name: 'Sara Durazzi',
+    ...HALF,
+    swimSec: 26 * 60 + 13, //             26:13
+    t1Sec: 4 * 60 + 9, //                  4:09
+    bikeSec: 2 * 3600 + 29 * 60 + 40, // 2:29:40
+    t2Sec: 2 * 60 + 52, //                 2:52
+    runSec: 1 * 3600 + 28 * 60 + 40, //  1:28:40
+    totalSec: 4 * 3600 + 31 * 60 + 31, // 4:31:31
+  },
+]
+
+/** Which category an athlete is measured against */
+export const ATHLETE_CATEGORY: Record<AthleteId, 'men' | 'women'> = {
+  lori: 'women',
+  aidas: 'men',
+}
+
+/**
+ * The winning result for a category at the same distance as `race`, most
+ * recent first. Distance is matched with the same 5% total-kilometre rule that
+ * compares prior races, so a course measured at 90.2km still counts as a half.
+ */
+export function eliteResult(
+  category: 'men' | 'women',
+  race: { swimKm: number; bikeKm: number; runKm: number } = HALF
+): EliteResult | undefined {
+  return [...ELITE_RESULTS]
+    .sort((a, b) => b.date.localeCompare(a.date))
+    .find((e) => e.category === category && sameDistance(e, race))
+}
+
+/** The winner Lori or Aidas is read against */
+export function eliteFor(
+  athlete: AthleteId,
+  race: { swimKm: number; bikeKm: number; runKm: number } = HALF
+): EliteResult | undefined {
+  return eliteResult(ATHLETE_CATEGORY[athlete], race)
+}
+
+/** Elite splits said the way each discipline is normally spoken about */
+export function eliteDisplay(e: EliteResult) {
+  return {
+    swimSecPer100m: e.swimSec / (e.swimKm * 10),
+    bikeKmh: e.bikeKm / (e.bikeSec / 3600),
+    runMinPerKm: e.runSec / 60 / e.runKm,
+    transitionSec: e.t1Sec + e.t2Sec,
+  }
+}
+
+/** How many times the winner's split a given time is. 1.0 = level with them. */
+export function eliteRatio(sec: number | null | undefined, eliteSec: number): number | null {
+  if (sec == null || !Number.isFinite(sec) || eliteSec <= 0) return null
+  return sec / eliteSec
 }

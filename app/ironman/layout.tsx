@@ -4,7 +4,48 @@ import { AuthProvider, useAuth } from '@/components/auth/AuthProvider'
 import AuthGate from '@/components/auth/AuthGate'
 import SiteFooter from '@/components/SiteFooter'
 import { CourseDivider, SportIcon } from '@/components/ironman/IronmanIcons'
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import { PLAN, RACE_NYC, daysToRace, todayLocal } from '@/lib/ironman/plan'
+
+/**
+ * Two questions, two tabs.
+ *
+ * Training answers "what do I do today, and is the body fit to do it" — it is
+ * forward-looking and it changes every morning. Performance answers "what did
+ * the last race actually say" — it is backward-looking and it changes only
+ * when a race happens. They share a header because they are one campaign, and
+ * they are separate pages because mixing a plan with a post-mortem makes both
+ * harder to read.
+ */
+const TABS = [
+  { href: '/ironman', label: 'Training' },
+  { href: '/ironman/performance', label: 'Performance' },
+] as const
+
+function IronmanTabs() {
+  const pathname = usePathname()
+  return (
+    <nav className="flex items-center gap-4 border-b border-iron-rule mt-2">
+      {TABS.map((t) => {
+        const active = t.href === '/ironman' ? pathname === '/ironman' : pathname.startsWith(t.href)
+        return (
+          <Link
+            key={t.href}
+            href={t.href}
+            className={`font-serif text-[14px] md:text-[15px] pb-1.5 -mb-px border-b-2 transition-colors ${
+              active
+                ? 'text-iron-burgundy font-semibold border-iron-burgundy'
+                : 'text-iron-muted border-transparent hover:text-iron-deep'
+            }`}
+          >
+            {t.label}
+          </Link>
+        )
+      })}
+    </nav>
+  )
+}
 
 /**
  * Where the block calendar says he is right now. The kite masthead carries a
@@ -76,6 +117,7 @@ function IronmanLayoutInner({ children }: { children: React.ReactNode }) {
             ))}
           </span>
         </div>
+        <IronmanTabs />
       </header>
       <main className="max-w-[1200px] mx-auto px-3 md:px-4 pb-6">{children}</main>
       <SiteFooter />
