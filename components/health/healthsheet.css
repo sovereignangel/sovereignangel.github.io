@@ -1,0 +1,142 @@
+/*
+ * The health page, hosting the shared field-card primitives.
+ *
+ * Those components are palette-agnostic: they read a set of CSS custom
+ * properties and never hard-code a colour. Lordas defines that set in navy
+ * and espresso; the Ironman sheet defines it in cream and burgundy. This is
+ * deliberately the same cream and the same burgundy as the Ironman sheet,
+ * because the two pages describe one body — training load on one, the inputs
+ * and the bloodwork on the other. Two palettes would imply two subjects.
+ *
+ * What differs is the accent family below the burgundy. Ironman spends its
+ * secondary colours on disciplines; this spends them on evidence quality,
+ * which is the axis that actually sorts a supplement stack. Strong, moderate
+ * and thin are the three colours the page is built around, and they are the
+ * green, gold and faint neutral already in the token set — deliberately not a
+ * red, because thin evidence is a bet, not an error.
+ *
+ * The property names still carry the `--lordas-` prefix because that is where
+ * they were first written. Every rule here is scoped to `.health-sheet`.
+ */
+
+.health-sheet {
+  --lordas-ground: #f2ecdf;
+
+  --lordas-panel: #fffdf7;
+  --lordas-panel-quiet: #faf5ec;
+  --lordas-panel-raise: #f7f1e6;
+
+  --lordas-rule: #dfd3c4;
+  --lordas-rule-soft: #ece3d4;
+
+  --lordas-ink: #3b2f2f;
+  --lordas-muted: #8a7c7c;
+  --lordas-faint: #c3b8b8;
+
+  --lordas-accent: #8f2d33;
+  --lordas-accent-deep: #5e1f24;
+
+  --lordas-ok: #2d6b4a;
+  --lordas-warn: #8a6420;
+  --lordas-crit: #a8321f;
+  --lordas-crit-deep: #7d2415;
+
+  --lordas-sun: #8f2d33;
+  --lordas-lens: #1f6f83;
+
+  --lordas-action: #fffdf7;
+  --lordas-action-quiet: #faf5ec;
+  --lordas-evidence: #fffdf7;
+  --lordas-evidence-quiet: #faf5ec;
+
+  --lordas-display: var(--font-serif, Georgia, 'Times New Roman', serif);
+  --lordas-body: var(--font-sans, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif);
+  --lordas-mono: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+}
+
+/* Cards separate rather than share a seam rule, matching the Ironman sheet. */
+.health-sheet .lordas-seam { gap: 10px; background: transparent; border: 0; }
+.health-sheet .lordas-fc { border-radius: 12px; border: 1px solid var(--lordas-rule); }
+
+/* The checklist. A supplement row is a button, and has to read as one without
+   becoming a form — the tap target is the whole row, the state is the mark. */
+.health-sheet .dose {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  width: 100%;
+  text-align: left;
+  padding: 6px 7px;
+  border: 1px solid var(--lordas-rule-soft);
+  border-radius: 8px;
+  background: var(--lordas-panel);
+  cursor: pointer;
+  transition: border-color 120ms ease, background 120ms ease;
+}
+.health-sheet .dose:hover { border-color: var(--lordas-faint); }
+.health-sheet .dose[data-on='true'] {
+  background: rgba(45, 107, 74, 0.07);
+  border-color: rgba(45, 107, 74, 0.3);
+}
+
+.health-sheet .dose-mark {
+  flex: 0 0 auto;
+  width: 15px;
+  height: 15px;
+  margin-top: 1px;
+  border-radius: 4px;
+  border: 1.5px solid var(--lordas-faint);
+  display: grid;
+  place-items: center;
+  color: transparent;
+}
+.health-sheet .dose[data-on='true'] .dose-mark {
+  border-color: var(--lordas-ok);
+  background: var(--lordas-ok);
+  color: #fffdf7;
+}
+
+.health-sheet .dose-name {
+  font-family: var(--lordas-body);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--lordas-ink);
+  line-height: 1.25;
+}
+.health-sheet .dose[data-on='true'] .dose-name { color: var(--lordas-muted); }
+.health-sheet .dose-job {
+  font-family: var(--lordas-body);
+  font-size: 10px;
+  color: var(--lordas-muted);
+  line-height: 1.3;
+}
+
+/* Evidence pips: three marks, filled to the tier. Reads at a glance in a
+   table where a word would have to be re-read on every row. */
+.health-sheet .pips { display: inline-flex; gap: 2px; vertical-align: middle; }
+.health-sheet .pip { width: 4px; height: 9px; border-radius: 1px; background: var(--lordas-rule); }
+.health-sheet .pip[data-on='true'] { background: currentColor; }
+
+.health-sheet .stack-table { width: 100%; border-collapse: collapse; }
+.health-sheet .stack-table th {
+  font-family: var(--lordas-body);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--lordas-muted);
+  font-weight: 600;
+  text-align: left;
+  padding: 0 8px 5px 0;
+  border-bottom: 1px solid var(--lordas-rule);
+  white-space: nowrap;
+}
+.health-sheet .stack-table td {
+  font-family: var(--lordas-body);
+  font-size: 11px;
+  color: var(--lordas-ink);
+  padding: 6px 8px 6px 0;
+  border-bottom: 1px solid var(--lordas-rule-soft);
+  vertical-align: top;
+}
+.health-sheet .stack-table tr:last-child td { border-bottom: 0; }
+.health-sheet .stack-table td.dim { color: var(--lordas-muted); font-size: 10px; line-height: 1.4; }
