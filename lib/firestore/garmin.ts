@@ -7,7 +7,14 @@ import { localDateString } from '../date-utils'
 // per dashboard load instead of ~4,500. Returns null if not yet built.
 export async function getGarminRollups(
   uid: string
-): Promise<{ metrics: GarminMetrics[]; activities: GarminActivity[]; updatedAt: Date | null } | null> {
+): Promise<{
+  metrics: GarminMetrics[]
+  activities: GarminActivity[]
+  /** When this cache was last rebuilt */
+  updatedAt: Date | null
+  /** When the watch last actually delivered — the number a freshness label wants */
+  feedSyncedAt: Date | null
+} | null> {
   const [mSnap, aSnap] = await Promise.all([
     getDoc(doc(db, 'users', uid, 'garmin_rollups', 'metrics')),
     getDoc(doc(db, 'users', uid, 'garmin_rollups', 'activities')),
@@ -15,6 +22,10 @@ export async function getGarminRollups(
   if (!mSnap.exists() || !aSnap.exists()) return null
 
   const updatedAt = aSnap.data().updatedAt?.toDate?.() ?? mSnap.data().updatedAt?.toDate?.() ?? null
+  // The rebuild runs whether or not the Garmin call succeeded, so the rebuild
+  // time is not evidence the feed moved. Null on rollups written before this
+  // field existed; callers fall back to updatedAt.
+  const feedSyncedAt = aSnap.data().feedSyncedAt?.toDate?.() ?? mSnap.data().feedSyncedAt?.toDate?.() ?? null
 
   const mCols = JSON.parse(mSnap.data().json)
   const metrics: GarminMetrics[] = mCols.date.map((date: string, i: number) => {
@@ -35,7 +46,7 @@ export async function getGarminRollups(
     return row as unknown as GarminActivity
   })
 
-  return { metrics, activities, updatedAt }
+  return { metrics, activities, updatedAt, feedSyncedAt }
 }
 
 export async function getAllGarminActivities(uid: string): Promise<GarminActivity[]> {

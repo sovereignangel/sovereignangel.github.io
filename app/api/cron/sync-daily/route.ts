@@ -36,6 +36,29 @@ function localDate(offsetDays = 0): string {
 export const runtime = 'nodejs'
 export const maxDuration = 300 // 5 minutes max (Vercel limit)
 
+/**
+ * Rebuild the dashboard rollup cache from the freshly synced data.
+ *
+ * Every dashboard reads the rollup in preference to the live collections, so a
+ * sync that does not rebuild it writes documents no page will ever display —
+ * the data moves and the screen does not. That made a manual trigger look like
+ * a no-op, which is why this runs on both entry points rather than only the
+ * scheduled one.
+ */
+async function rebuildRollups() {
+  try {
+    const uid = process.env.FIREBASE_UID
+    if (!uid) {
+      console.warn('Garmin rollup rebuild skipped: FIREBASE_UID is not set')
+      return
+    }
+    const { buildGarminRollups } = await import('@/lib/etl/garmin-rollup')
+    await buildGarminRollups(uid)
+  } catch (e) {
+    console.warn('Garmin rollup rebuild failed:', (e as Error).message)
+  }
+}
+
 export async function GET(request: NextRequest) {
   // Verify this is a legitimate cron request
   const authHeader = request.headers.get('authorization')
@@ -56,16 +79,7 @@ export async function GET(request: NextRequest) {
     // Also sync yesterday to catch overnight metrics (sleep, HRV)
     const yesterdayResult = await syncAllData(localDate(-1))
 
-    // Rebuild the dashboard rollup cache from the freshly synced data
-    try {
-      const uid = process.env.FIREBASE_UID
-      if (uid) {
-        const { buildGarminRollups } = await import('@/lib/etl/garmin-rollup')
-        await buildGarminRollups(uid)
-      }
-    } catch (e) {
-      console.warn('Garmin rollup rebuild failed:', (e as Error).message)
-    }
+    await rebuildRollups()
 
     const todaySuccess = Object.values(todayResult.results).filter(Boolean).length
     const yesterdaySuccess = Object.values(yesterdayResult.results).filter(Boolean).length
@@ -123,6 +137,7 @@ export async function POST(request: NextRequest) {
     console.log(`🔧 Manual sync triggered for ${date || 'yesterday'}`)
 
     const result = await syncAllData(date)
+    await rebuildRollups()
 
     const successCount = Object.values(result.results).filter(Boolean).length
 

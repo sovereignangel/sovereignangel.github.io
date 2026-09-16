@@ -695,7 +695,11 @@ export default function IronmanDashboard() {
         if (rollup && rollup.metrics.length > 0) {
           setMetrics(rollup.metrics)
           setActivities(rollup.activities)
-          setLastSync(rollup.updatedAt)
+          // The feed's own timestamp, not the cache's. The rollup is rebuilt
+          // after every sync attempt, successful or not, so its build time
+          // will happily read "2 min ago" over data that stopped moving days
+          // ago. Older rollups predate the field and fall back to it.
+          setLastSync(rollup.feedSyncedAt ?? rollup.updatedAt)
           return
         }
         loadWindow()

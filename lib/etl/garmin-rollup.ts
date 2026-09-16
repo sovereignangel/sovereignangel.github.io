@@ -20,6 +20,12 @@ const METRIC_FIELDS = [
 
 const ACTIVITY_FIELDS = [
   'activityId', 'name', 'type', 'date', 'startTimeLocal', 'durationSeconds',
+  // Moving time, kept apart from elapsed exactly where a pace model needs
+  // them apart. Omitting it here meant the rollup path fell back to elapsed
+  // time and reported slower swim paces than the window path did for the
+  // same session — the same page disagreeing with itself depending on
+  // whether the cache happened to exist.
+  'movingDurationSeconds',
   'distanceMeters', 'calories', 'averageHr', 'maxHr', 'averageSpeed',
   'elevationGain', 'aerobicTrainingEffect', 'anaerobicTrainingEffect',
   'trainingLoad', 'vo2max', 'locationName',
@@ -28,12 +34,23 @@ const ACTIVITY_FIELDS = [
 export async function buildGarminRollups(uid: string) {
   const userRef = adminDb.collection('users').doc(uid)
 
+  // When the watch last actually delivered, as distinct from when this cache
+  // was last rebuilt. The rebuild runs whether or not the Garmin call
+  // succeeded, so `updatedAt` alone will happily report "2 min ago" over data
+  // that stopped moving days earlier. The dashboards want the feed.
+  let feedSyncedAt = null
+  const noteSync = (v) => {
+    const d = v?.toDate?.()
+    if (d instanceof Date && (feedSyncedAt === null || d > feedSyncedAt)) feedSyncedAt = d
+  }
+
   const mSnap = await userRef.collection('garmin_metrics').orderBy('date', 'asc').get()
   const mCols: Record<string, any[]> = { date: [] }
   for (const f of METRIC_FIELDS) mCols[f] = []
   for (const doc of mSnap.docs) {
     const d = doc.data()
     mCols.date.push(d.date)
+    noteSync(d.syncedAt)
     for (const f of METRIC_FIELDS) mCols[f].push(d[f] ?? null)
   }
 
@@ -42,6 +59,7 @@ export async function buildGarminRollups(uid: string) {
   for (const f of ACTIVITY_FIELDS) aCols[f] = []
   for (const doc of aSnap.docs) {
     const d = doc.data()
+    noteSync(d.syncedAt)
     for (const f of ACTIVITY_FIELDS) aCols[f].push(d[f] ?? null)
   }
 
@@ -49,13 +67,15 @@ export async function buildGarminRollups(uid: string) {
     json: JSON.stringify(mCols),
     count: mSnap.size,
     updatedAt: FieldValue.serverTimestamp(),
+    feedSyncedAt,
   })
   await userRef.collection('garmin_rollups').doc('activities').set({
     json: JSON.stringify(aCols),
     count: aSnap.size,
     updatedAt: FieldValue.serverTimestamp(),
+    feedSyncedAt,
   })
 
-  console.log(`Garmin rollups rebuilt: ${mSnap.size} days, ${aSnap.size} activities`)
-  return { metricDays: mSnap.size, activityCount: aSnap.size }
+  console.log(`Garmin rollups rebuilt: ${mSnap.size} days, ${aSnap.size} activities, feed ${feedSyncedAt?.toISOString() ?? 'unknown'}`)
+  return { metricDays: mSnap.size, activityCount: aSnap.size, feedSyncedAt }
 }
