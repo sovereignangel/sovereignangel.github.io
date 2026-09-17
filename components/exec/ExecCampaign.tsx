@@ -110,6 +110,55 @@ function UnitRow({
   )
 }
 
+/** The block's finished units, folded away but reachable — this is where an undo lives. */
+function DoneUnits({
+  units,
+  open,
+  onOpen,
+  color,
+  busy,
+  onToggle,
+}: {
+  units: CampaignUnit[]
+  open: boolean
+  onOpen: () => void
+  color: string
+  busy: string | null
+  onToggle: (unitId: string) => void
+}) {
+  if (units.length === 0) return null
+  return (
+    <div className="pt-1.5 mt-1.5 border-t" style={{ borderColor: LANE_INK.ruleLight }}>
+      <button
+        onClick={onOpen}
+        aria-expanded={open}
+        className="font-mono text-[10px] uppercase tracking-[0.3px]"
+        style={{ color: LANE_INK.muted }}
+      >
+        {open ? 'hide' : 'show'} {units.length} done in this block
+      </button>
+      {open && (
+        <div className="space-y-1.5 mt-1.5">
+          {units.map((unit) => (
+            <UnitRow
+              key={unit.id}
+              unit={unit}
+              first={false}
+              done
+              color={color}
+              busy={busy === unit.id}
+              onToggle={() => onToggle(unit.id)}
+            />
+          ))}
+          <div className="text-[10px]" style={{ color: LANE_INK.faint }}>
+            Tap a box to put a unit back on the ladder.
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 export function ExecCampaign({ id, laneId, date: serverDate }: { id: CampaignId; laneId: LaneId; date: string }) {
   const date = useExecDate(serverDate)
   const { user, signIn, loading: authLoading } = useAuth()
@@ -119,6 +168,7 @@ export function ExecCampaign({ id, laneId, date: serverDate }: { id: CampaignId;
   const [progress, setProgress] = useState<CampaignProgressDoc | null>(null)
   const [deskDone, setDeskDone] = useState(false)
   const [busy, setBusy] = useState<string | null>(null)
+  const [showDone, setShowDone] = useState(false)
 
   const load = useCallback(async () => {
     if (!user) return
@@ -160,6 +210,15 @@ export function ExecCampaign({ id, laneId, date: serverDate }: { id: CampaignId;
     }
   }, [user, id, date, deskDone])
 
+  // The ladder only offers open units, so a ticked one leaves the card and takes
+  // its own undo with it. Keep the block's finished units addressable — a
+  // mis-tick is the most likely thing to happen to a row of checkboxes on a
+  // phone, and it should not need a trip to the roadmap to put right.
+  const blockDone = useMemo(
+    () => (order.block?.units || []).filter((u) => doneIds.has(u.id)),
+    [order.block, doneIds]
+  )
+
   const { block, pace, phase } = order
   const deskDue = ritualDueOn(campaign, date)
   const blockLength = block ? daysInclusive(block.start, block.end) : 0
@@ -174,11 +233,11 @@ export function ExecCampaign({ id, laneId, date: serverDate }: { id: CampaignId;
           {campaign.name}
         </span>
         <a
-          href={campaign.href}
-          className="inline-flex items-center gap-1 font-serif text-[10px] font-medium px-2 py-1 rounded-full border bg-transparent transition-colors"
+          href={`/exec/ladder/${campaign.id}`}
+          className="inline-flex items-center gap-1 font-serif text-[10px] font-medium px-2 py-1 rounded-full border bg-transparent transition-colors ml-auto"
           style={{ color: LANE_INK.muted, borderColor: LANE_INK.rule }}
         >
-          Detail
+          Full ladder
           <svg width="9" height="9" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.3" aria-hidden="true">
             <path d="M2 5h6M5.5 2.5L8 5 5.5 7.5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
@@ -312,6 +371,7 @@ export function ExecCampaign({ id, laneId, date: serverDate }: { id: CampaignId;
       ) : order.units.length === 0 ? (
         <div className="text-[10px] py-1" style={{ color: LANE_INK.muted }}>
           Every unit checked. {order.overall.done} of {order.overall.total} across the campaign.
+          <DoneUnits units={blockDone} open={showDone} onOpen={() => setShowDone((v) => !v)} color={lane.color} busy={busy} onToggle={(uid) => void toggleUnit(uid)} />
         </div>
       ) : (
         <div className="space-y-1.5 pt-1.5 border-t" style={{ borderColor: LANE_INK.ruleLight }}>
@@ -334,6 +394,7 @@ export function ExecCampaign({ id, laneId, date: serverDate }: { id: CampaignId;
           <div className="text-[10px] pt-0.5" style={{ color: LANE_INK.faint }}>
             {order.overall.done} of {order.overall.total} units across the whole campaign
           </div>
+          <DoneUnits units={blockDone} open={showDone} onOpen={() => setShowDone((v) => !v)} color={lane.color} busy={busy} onToggle={(uid) => void toggleUnit(uid)} />
         </div>
       )}
     </div>

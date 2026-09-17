@@ -359,7 +359,7 @@ export const TRIP_GOALS: TripGoal[] = [
     unit: 'h',
     headline: '12h base, 20h if every day goes to five',
     detail:
-      'Three hours a day is the commitment (17:00–20:00). Five is the day you traded the afternoon block for wind. Every hour has its own job.',
+      'Three hours a day is the commitment (17:00–20:00). Five is the day you traded the afternoon block for wind. Twenty here is five NYC weeks of water in four days — that is what the block is for.',
   },
   {
     id: 'ironman',
@@ -368,7 +368,8 @@ export const TRIP_GOALS: TripGoal[] = [
     target: 4,
     unit: '×',
     headline: 'An hour a day, straight off the water',
-    detail: 'Run or swim per the Ironman tab, 20:00–21:00 in the dusk. No bike until the 22nd.',
+    detail:
+      'Run or swim per the Ironman tab, 20:00–21:00 in the dusk. No bike until the 22nd. Four hours here plus the hours either side of the block is how the standing six a week gets made.',
   },
   {
     id: 'dave',

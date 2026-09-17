@@ -88,7 +88,13 @@ export interface FocusSlot {
   blockId: string
   /** 1-4 within the block. */
   index: number
-  /** Short label for a cell too narrow for words — "R2", "D1·3". */
+  /**
+   * Short label for a cell too narrow for words — "R2", "D1·3".
+   *
+   * The separator is not decoration. A one-character prefix takes the index
+   * straight ("R2"), but "D1" plus slot 1 concatenates into "D11", which reads
+   * as eleven rather than as the first half hour of the first deep block.
+   */
   short: string
 }
 
@@ -100,12 +106,16 @@ const SHORT_PREFIX: Record<string, string> = {
   'deep-2': 'D2',
 }
 
+function shortLabel(prefix: string, index: number): string {
+  return prefix.length > 1 ? `${prefix}\u00b7${index}` : `${prefix}${index}`
+}
+
 export const SLOTS: FocusSlot[] = BLOCKS.flatMap((block) =>
   Array.from({ length: SLOTS_PER_BLOCK }, (_, i) => ({
     id: `${block.id}-${i + 1}`,
     blockId: block.id,
     index: i + 1,
-    short: `${SHORT_PREFIX[block.id] ?? block.id}${SLOTS_PER_BLOCK > 1 ? i + 1 : ''}`,
+    short: shortLabel(SHORT_PREFIX[block.id] ?? block.id, i + 1),
   }))
 )
 

@@ -74,3 +74,24 @@ export function trainedOn(activities: GarminActivity[] | null, date: string): bo
   if (!activities) return false
   return onDate(activities, date).some((a) => TRAINING_TYPES.has(a.type))
 }
+
+/**
+ * Hours per date, by kind, from what the watch recorded.
+ *
+ * Elapsed duration rather than moving time: this counts volume and compliance,
+ * not speed, and a pool set off the clock is still an hour you turned up for.
+ */
+export function hoursByDate(
+  activities: GarminActivity[] | null,
+  kind: 'training' | 'kite'
+): Record<string, number> {
+  const set = kind === 'kite' ? KITE_TYPES : TRAINING_TYPES
+  const out: Record<string, number> = {}
+  for (const a of activities || []) {
+    if (!set.has(a.type)) continue
+    const date = a.date || a.startTimeLocal?.slice(0, 10)
+    if (!date || !a.durationSeconds) continue
+    out[date] = (out[date] || 0) + a.durationSeconds / 3600
+  }
+  return out
+}
