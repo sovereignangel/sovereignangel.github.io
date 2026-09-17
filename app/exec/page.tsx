@@ -20,7 +20,6 @@ import { ExecToday, type PipedLane } from '@/components/exec/ExecToday'
 import { ExecCampaign } from '@/components/exec/ExecCampaign'
 import { ExecGoals } from '@/components/exec/ExecGoals'
 import { ExecBlocks } from '@/components/exec/ExecBlocks'
-import { ExecSvencele } from '@/components/exec/ExecSvencele'
 import { tripIsLive } from '@/lib/exec/svencele'
 import { SpotIcon, WaveDivider } from '@/components/wind/WindIcons'
 import { SportIcon, CourseDivider } from '@/components/ironman/IronmanIcons'
@@ -420,14 +419,20 @@ export default async function ExecPage() {
             <span className="hidden lg:inline text-[10px] text-surf-muted">
               Three goals &middot; five lanes &middot; six hours
             </span>
+            {tripIsLive(today) && (
+              <a
+                href="/exec/svencele"
+                className="font-serif text-[10px] font-medium px-2 py-1 rounded-full border bg-transparent transition-colors text-surf-deep border-surf-teal/40 hover:bg-surf-teal hover:text-white whitespace-nowrap"
+              >
+                Svencele tearsheet
+              </a>
+            )}
             <span className="ml-auto font-mono text-[9px] md:text-[10px] text-surf-muted whitespace-nowrap">
               {generatedAt} LT
             </span>
           </header>
 
           <ExecGoals date={today} />
-
-          {tripIsLive(today) && <ExecSvencele date={today} />}
 
           <ExecToday date={today} kite={kiteLane(windToday)} ironman={ironmanLane(planToday, slotToday)} />
 
