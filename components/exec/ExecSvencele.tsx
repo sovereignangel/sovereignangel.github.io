@@ -40,7 +40,6 @@ import {
   TRIP_DAYS,
   TRIP_LANE_COLOR,
   TRIP_LANE_LABEL,
-  TRIP_MEETINGS,
   bankFor,
   dayStanding,
   debrief,
@@ -515,7 +514,7 @@ export function ExecSvencele({
       </div>
 
       {/* Block goals */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 mb-2.5">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 mb-2.5">
         {standings.map(({ goal, done: banked, pct, paceNeeded }) => {
           const color = TRIP_LANE_COLOR[goal.lane]
           const met = banked >= goal.target
@@ -737,11 +736,10 @@ export function ExecSvencele({
         })}
       </div>
 
-      {/* The hour after, and Dave */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-2">
+      {/* The hour after the water */}
+      <div className="grid grid-cols-1 gap-2 mb-2">
         {[
           { key: tripKey(active.date, IRONMAN_HOUR.id), lane: 'ironman' as TripLane, label: `${IRONMAN_HOUR.window} · ${IRONMAN_HOUR.label}`, detail: IRONMAN_HOUR.detail },
-          ...TRIP_MEETINGS.map((m) => ({ key: tripKey(null, m.id), lane: 'dave' as TripLane, label: m.label, detail: m.detail })),
         ].map((item) => {
           const on = ticks.has(item.key)
           const c = TRIP_LANE_COLOR[item.lane]

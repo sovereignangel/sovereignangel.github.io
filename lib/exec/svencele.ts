@@ -31,7 +31,7 @@ export const LIGHT = {
   note: 'Sunset 19:57, last rider off at 20:12 — about 30 minutes of usable light past sunset. Water closes ~20:10.',
 } as const
 
-export type TripLane = 'complexecon' | 'armstrong' | 'alamo' | 'kite' | 'ironman' | 'dave' | 'open'
+export type TripLane = 'complexecon' | 'armstrong' | 'alamo' | 'kite' | 'ironman' | 'open'
 
 export const TRIP_LANE_COLOR: Record<TripLane, string> = {
   complexecon: '#2d4a6f',
@@ -39,21 +39,19 @@ export const TRIP_LANE_COLOR: Record<TripLane, string> = {
   alamo: '#8c2d2d',
   kite: '#1a8a8f',
   ironman: '#8f2d33',
-  dave: '#6b4a72',
   open: '#7d8a86',
 }
 
 export const TRIP_LANE_LABEL: Record<TripLane, string> = {
   complexecon: 'CEcon',
   armstrong: 'Armstrong',
-  alamo: 'Alamo Bernal',
+  alamo: 'AB paper',
   kite: 'Kite',
   ironman: 'Ironman',
-  dave: 'Dave',
   open: 'Open',
 }
 
-/** Lanes a desk block can be traded into. Kite and Dave are not desk work. */
+/** Lanes a desk block can be traded into. Kite and the evening run are not desk work. */
 export const DESK_LANES: TripLane[] = ['complexecon', 'armstrong', 'alamo', 'open']
 
 // ── The day's fixed windows ───────────────────────────────────────────────
@@ -221,12 +219,12 @@ export const TRIP_DAYS: TripDay[] = [
   {
     date: '2026-09-20',
     label: 'Sun 20 Sep',
-    theme: 'Sunday — the Alamo Bernal paper feedback goes back, whatever else happens.',
+    theme: 'Sunday — the paper feedback goes back, in one block, and the rest of the day is yours.',
     kiteIntent: 'Weak side, to the same count as the good side. Boring on purpose.',
     override: {
       slotId: 's3',
       lane: 'alamo',
-      why: 'The one dated commitment of the block takes a real block, not the gap after dinner.',
+      why: 'One block, two hours, and it is done. Feedback that takes four hours has stopped being feedback and started being a rewrite of their paper.',
     },
   },
   {
@@ -241,20 +239,6 @@ export const TRIP_DAY_BY_DATE: Record<string, TripDay> = TRIP_DAYS.reduce(
   (acc, d) => ({ ...acc, [d.date]: d }),
   {} as Record<string, TripDay>
 )
-
-/** The two Dave sessions. Dateless on purpose — his week moves, the commitment does not. */
-export const TRIP_MEETINGS = [
-  {
-    id: 'dave-1',
-    label: 'Dave I — tooling',
-    detail: 'Gear and setup audit. Leave with the tooling upgraded, not with a list of what to buy later.',
-  },
-  {
-    id: 'dave-2',
-    label: 'Dave II — plans',
-    detail: 'The next block of progression in his words, and the rates view argued out loud. Written down before you leave.',
-  },
-]
 
 // ── Stored state ──────────────────────────────────────────────────────────
 
@@ -276,7 +260,10 @@ export const tripKey = (date: string | null, itemId: string) => `${date ?? 'trip
 
 /** The lane a block is actually in today: traded, else the day's override, else the default. */
 export function laneFor(date: string, slot: DeskSlot, state: SlotState | undefined): TripLane {
-  if (state?.lane) return state.lane
+  // A lane stored before it was retired (the paper, the meetings) is no longer a
+  // lane. Fall back to Open rather than rendering a block with no colour and no
+  // name — the hours were still worked.
+  if (state?.lane) return DESK_LANES.includes(state.lane) ? state.lane : 'open'
   const ov = TRIP_DAY_BY_DATE[date]?.override
   if (ov && ov.slotId === slot.id) return ov.lane
   return slot.defaultLane
@@ -362,6 +349,16 @@ export const TRIP_GOALS: TripGoal[] = [
       'Three hours a day is the commitment (17:00–20:00). Five is the day you traded the afternoon block for wind. Twenty here is five NYC weeks of water in four days — that is what the block is for.',
   },
   {
+    id: 'alamo',
+    lane: 'alamo',
+    label: 'AB paper',
+    target: 1,
+    unit: '×',
+    headline: 'Feedback returned Sunday, in one block',
+    detail:
+      'Two hours is the cap, not the estimate. The block’s one external commitment, and the one most likely to quietly eat a day.',
+  },
+  {
     id: 'ironman',
     lane: 'ironman',
     label: 'Ironman',
@@ -370,24 +367,6 @@ export const TRIP_GOALS: TripGoal[] = [
     headline: 'An hour a day, straight off the water',
     detail:
       'Run or swim per the Ironman tab, 20:00–21:00 in the dusk. No bike until the 22nd. Four hours here plus the hours either side of the block is how the standing six a week gets made.',
-  },
-  {
-    id: 'dave',
-    lane: 'dave',
-    label: 'Dave',
-    target: 2,
-    unit: '×',
-    headline: 'Two sessions: tooling upgraded, plans set',
-    detail: 'One on the gear and the setup, one on the next block of progression and the rates view.',
-  },
-  {
-    id: 'alamo',
-    lane: 'alamo',
-    label: 'AB paper',
-    target: 1,
-    unit: '×',
-    headline: 'Feedback returned Sunday',
-    detail: 'The block’s one dated external commitment.',
   },
 ]
 
@@ -426,12 +405,10 @@ export function tripStandings(
       )
     } else if (goal.lane === 'ironman') {
       done = TRIP_DAYS.filter((d) => ticks.has(tripKey(d.date, IRONMAN_HOUR.id))).length
-    } else if (goal.lane === 'dave') {
-      done = TRIP_MEETINGS.filter((m) => ticks.has(tripKey(null, m.id))).length
     } else if (goal.unit === 'h') {
       done = deskHoursFor(goal.lane)
     } else {
-      // A count goal served by desk blocks — the AB paper.
+      // A count goal served by desk blocks — one block sat is the whole target.
       done = Math.min(goal.target, deskHoursFor(goal.lane) > 0 ? 1 : 0)
     }
     const remaining = Math.max(0, goal.target - done)
@@ -550,7 +527,7 @@ export const GOAL_BANK: BankUnit[] = [
     id: 'ab-1',
     lane: 'alamo',
     goal: 'Paper feedback, returned',
-    kpi: 'Comments back to the authors: the three things that would change a reader’s mind, ranked, and one paragraph on what the paper is actually claiming versus what it shows.',
+    kpi: 'Comments back to the authors inside two hours: the three things that would change a reader’s mind, ranked, and one paragraph on what the paper claims versus what it shows. At the two-hour mark you send what you have.',
   },
 ]
 
@@ -611,6 +588,19 @@ export function debrief(
     lines.push({ tone: 'good', text: `${day.kiteHours} hours on the water, base session complete.` })
   } else if (day.kiteHours > 0) {
     lines.push({ tone: 'flat', text: `${day.kiteHours} of ${KITE_BASE_HOURS} base kite hours. Wind, light, or the day got away — say which in the block notes.` })
+  }
+
+  // The one commitment with someone else's clock on it, and the one most able
+  // to take a whole day if nobody says stop.
+  const paperH = DESK_SLOTS.reduce((sum, slot) => {
+    const st = slots[tripKey(date, slot.id)]
+    return sum + (st?.done && laneFor(date, slot, st) === 'alamo' ? slot.hours : 0)
+  }, 0)
+  if (paperH > 2) {
+    lines.push({
+      tone: 'warn',
+      text: `The paper took ${h(paperH)} against a two-hour cap. That is a block borrowed from your own work — note what it bought.`,
+    })
   }
 
   if (!day.ironman) {
