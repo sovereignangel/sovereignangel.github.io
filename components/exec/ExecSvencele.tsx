@@ -56,6 +56,10 @@ import {
   type TripLane,
 } from '@/lib/exec/svencele'
 import { useExecDate } from './useExecDate'
+import { ExecDrills } from './ExecLive'
+import { SpotIcon } from '@/components/wind/WindIcons'
+import { precipLabel } from '@/lib/kite/lithuania-spots'
+import { fmtWindow, type ExecWindDay, type SpotStatus } from '@/lib/exec/windows'
 
 const INK = '#2b3a3f'
 const MUTED = '#7d8a86'
@@ -65,6 +69,22 @@ const GOOD = '#2d6b4a'
 const WARN = '#8a6420'
 
 const fmtH = (n: number) => (n % 1 === 0 ? `${n}h` : `${n.toFixed(1)}h`)
+
+/** One block day's forecast, computed on the server so the tab renders instantly. */
+export interface SvenceleWind {
+  date: string
+  day: ExecWindDay
+  statuses: SpotStatus[]
+}
+
+type Tab = 'block' | 'kite'
+
+const SPOT_STATE_COLOR: Record<SpotStatus['state'], string> = {
+  rideable: '#1a8a8f',
+  possible: '#8a6420',
+  hazard: '#c94f35',
+  flat: '#b8c2bc',
+}
 
 const inputStyle = {
   color: INK,
@@ -267,11 +287,147 @@ function DeskBlock({
 
 // ── The sheet ─────────────────────────────────────────────────────────────
 
-export function ExecSvencele({ date: serverDate }: { date: string }) {
+
+// ── The kite tab ──────────────────────────────────────────────────────────
+// The water half of the block, on its own so neither half has to be scrolled
+// past to reach the other. The forecast is the server's; the hour goals and the
+// block matrix are the sheet's; the drills come from the mastery ladder, which
+// already knows what you are working on and should not be restated here.
+
+function WindCard({ entry }: { entry: SvenceleWind | undefined }) {
+  if (!entry) {
+    return (
+      <div className="border rounded-lg p-2" style={{ borderColor: RULE }}>
+        <div className="text-[10px]" style={{ color: MUTED }}>
+          Beyond the forecast horizon — the models do not reach this day yet.
+        </div>
+      </div>
+    )
+  }
+  const p = entry.day.pick
+  const c = TRIP_LANE_COLOR.kite
+  const home = p?.spotSlug === 'svencele'
+  return (
+    <div className="border rounded-lg p-2" style={{ borderColor: p ? c + '55' : RULE, backgroundColor: p ? c + '0d' : 'transparent' }}>
+      {p ? (
+        <>
+          <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
+            <span style={{ color: c }} className="inline-flex shrink-0"><SpotIcon slug={p.spotSlug} className="w-3.5 h-3.5" /></span>
+            <span className="text-[11px] font-semibold" style={{ color: INK }}>{p.spotName}</span>
+            <span className="text-[10px]" style={{ color: MUTED }}>&middot; {p.area}</span>
+            {!home && (
+              <span className="font-mono text-[9px] uppercase px-1 py-px rounded-sm border" style={{ color: WARN, borderColor: WARN + '55' }}>
+                not the lagoon
+              </span>
+            )}
+          </div>
+          <div className="font-mono text-[11px] font-semibold" style={{ color: INK }}>
+            {fmtWindow(p.startHour, p.endHour)} &middot; {p.avgKn} kn
+            <span style={{ color: MUTED, fontWeight: 500 }}> &middot; gusts {p.gustKn} &middot; {p.dirLabel} &middot; {p.kiteSize}</span>
+          </div>
+          {p.possible && (
+            <div className="text-[10px]" style={{ color: WARN }}>possible — EU model only, recheck closer to the hour</div>
+          )}
+          {p.drizzleMm !== undefined && (
+            <div className="text-[10px]" style={{ color: MUTED }}>
+              {precipLabel(p.drizzleMm)} in the window (~{p.drizzleMm}mm/h) — still kiteable
+            </div>
+          )}
+          {!home && (
+            <div className="text-[10px] mt-0.5" style={{ color: MUTED }}>
+              The forecast prefers another spot today. The hours below do not move — the spot does.
+            </div>
+          )}
+        </>
+      ) : (
+        <div className="text-[10px]" style={{ color: MUTED }}>
+          No rideable window on the models. The hours are still yours: trade them back to the desk, or go and get a
+          light-wind session in and call it hour one.
+        </div>
+      )}
+      <div className="flex flex-wrap gap-x-3 gap-y-1 mt-1.5 pt-1.5 border-t" style={{ borderColor: RULE }}>
+        {entry.statuses.map((s) => (
+          <span key={s.spotSlug} className="inline-flex items-center gap-1">
+            <span style={{ color: SPOT_STATE_COLOR[s.state] }} className="inline-flex shrink-0"><SpotIcon slug={s.spotSlug} className="w-3 h-3" /></span>
+            <span className="font-mono text-[10px] font-medium" style={{ color: INK }}>{s.spotName}</span>
+            <span className="font-mono text-[10px]" style={{ color: SPOT_STATE_COLOR[s.state] }}>{s.label}</span>
+          </span>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+/** Every hour of the block at once — where the twenty either accumulated or did not. */
+function HoursMatrix({ ticks, activeDate, onPick }: { ticks: ReadonlySet<string>; activeDate: string; onPick: (date: string) => void }) {
+  const c = TRIP_LANE_COLOR.kite
+  const total = TRIP_DAYS.reduce((s, d) => s + KITE_HOURS.filter((h) => ticks.has(tripKey(d.date, h.id))).length, 0)
+  return (
+    <div className="border rounded-lg p-2" style={{ borderColor: RULE }}>
+      <div className="flex items-baseline gap-2 mb-1.5">
+        <span className="font-mono text-[9px] uppercase tracking-[0.4px] font-semibold" style={{ color: c }}>
+          The twenty
+        </span>
+        <span className="ml-auto font-mono text-[10px] font-semibold tabular-nums" style={{ color: total >= 20 ? GOOD : INK }}>
+          {total}<span style={{ fontSize: 9, color: FAINT }}>/20h</span>
+        </span>
+      </div>
+      <div className="flex flex-col gap-1">
+        {TRIP_DAYS.map((d) => {
+          const n = KITE_HOURS.filter((h) => ticks.has(tripKey(d.date, h.id))).length
+          return (
+            <button
+              key={d.date}
+              type="button"
+              onClick={() => onPick(d.date)}
+              className="flex items-center gap-1.5 text-left"
+            >
+              <span
+                className="font-mono text-[10px] w-[64px] shrink-0"
+                style={{ color: d.date === activeDate ? INK : MUTED, fontWeight: d.date === activeDate ? 600 : 400 }}
+              >
+                {d.label.slice(0, 6)}
+              </span>
+              <span className="flex gap-1 flex-1">
+                {KITE_HOURS.map((h) => {
+                  const on = ticks.has(tripKey(d.date, h.id))
+                  return (
+                    <span
+                      key={h.id}
+                      className="flex-1 h-[10px] rounded-sm border"
+                      style={{ borderColor: on ? c : h.base ? FAINT : FAINT + '66', backgroundColor: on ? c : 'transparent' }}
+                    />
+                  )
+                })}
+              </span>
+              <span className="font-mono text-[10px] tabular-nums w-[28px] text-right shrink-0" style={{ color: n >= KITE_BASE_HOURS ? GOOD : MUTED }}>
+                {n}h
+              </span>
+            </button>
+          )
+        })}
+      </div>
+      <div className="text-[10px] mt-1" style={{ color: FAINT }}>
+        Three solid cells is the day you committed to; five is the day you traded a desk block for wind.
+      </div>
+    </div>
+  )
+}
+
+export function ExecSvencele({
+  date: serverDate,
+  wind = [],
+  windError = false,
+}: {
+  date: string
+  wind?: SvenceleWind[]
+  windError?: boolean
+}) {
   const date = useExecDate(serverDate)
   const { user, signIn, loading: authLoading } = useAuth()
   const [doc, setDocState] = useState<TripProgressDoc>({})
   const [picked, setPicked] = useState<string | null>(null)
+  const [tab, setTab] = useState<Tab>('block')
 
   const load = useCallback(async () => {
     if (!user) return setDocState({})
@@ -442,28 +598,42 @@ export function ExecSvencele({ date: serverDate }: { date: string }) {
         )}
       </div>
 
-      {/* The four exchangeable blocks */}
-      <div className="text-[10px] mb-1" style={{ color: MUTED }}>
-        Four two-hour blocks. The clock is fixed by the light; the lane inside it is yours to trade &mdash; tap a lane
-        chip to move a block, and the goal bars above follow the trade.
-      </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-2">
-        {DESK_SLOTS.map((slot) => {
-          const key = tripKey(active.date, slot.id)
+      {/* Tabs — the desk half and the water half, neither scrolled past to reach the other */}
+      <div className="flex gap-1 mb-2 border-b pb-1.5" style={{ borderColor: RULE }}>
+        {([['block', 'The block'], ['kite', 'Kite']] as [Tab, string][]).map(([id, label]) => {
+          const on = tab === id
+          const c = id === 'kite' ? TRIP_LANE_COLOR.kite : INK
           return (
-            <DeskBlock
-              key={key}
-              date={active.date}
-              slot={slot}
-              state={slots[key]}
-              disabled={disabled}
-              onPatch={(patch) => void patchSlot(key, patch)}
-            />
+            <button
+              key={id}
+              type="button"
+              onClick={() => setTab(id)}
+              aria-pressed={on}
+              className="font-serif text-[12px] font-medium px-2 py-1 rounded-md border transition-colors"
+              style={{ color: on ? '#fffdf7' : c, backgroundColor: on ? c : 'transparent', borderColor: on ? c : RULE }}
+            >
+              {label}
+              {id === 'kite' && (
+                <span className="font-mono ml-1 tabular-nums" style={{ fontSize: 9, color: on ? FAINT : MUTED }}>
+                  {kiteCount}/{KITE_MAX_HOURS}h
+                </span>
+              )}
+            </button>
           )
         })}
       </div>
 
-      {/* Water */}
+      {tab === 'kite' ? (
+        <div className="flex flex-col gap-2">
+          {windError && (
+            <div className="text-[10px]" style={{ color: WARN }}>Forecast service unreachable — refresh in a minute.</div>
+          )}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 items-start">
+            <WindCard entry={wind.find((w) => w.date === active.date)} />
+            <HoursMatrix ticks={ticks} activeDate={active.date} onPick={setPicked} />
+          </div>
+
+      {/* The five hours */}
       <div className="border rounded-lg p-2 mb-2" style={{ borderColor: RULE }}>
         <div className="flex items-baseline gap-2 flex-wrap mb-1.5">
           <span className="font-serif text-[12px] font-semibold" style={{ color: TRIP_LANE_COLOR.kite }}>
@@ -513,6 +683,58 @@ export function ExecSvencele({ date: serverDate }: { date: string }) {
             )
           })}
         </div>
+      </div>
+
+
+          <div className="border rounded-lg p-2" style={{ borderColor: RULE }}>
+            <div className="font-mono text-[9px] uppercase tracking-[0.4px] font-semibold mb-1.5" style={{ color: TRIP_LANE_COLOR.kite }}>
+              The arc
+            </div>
+            <div className="flex flex-col gap-1">
+              {TRIP_DAYS.map((d) => (
+                <button key={d.date} type="button" onClick={() => setPicked(d.date)} className="text-left">
+                  <span className="text-[10px] font-semibold" style={{ color: d.date === active.date ? INK : MUTED }}>
+                    {d.label}
+                  </span>
+                  <span className="text-[10px] leading-snug" style={{ color: MUTED }}> — {d.kiteIntent}</span>
+                </button>
+              ))}
+            </div>
+            <p className="text-[10px] leading-snug mt-1" style={{ color: FAINT }}>
+              Four days is enough for exactly one skill to move. The arc spends them on that rather than on four
+              different good intentions.
+            </p>
+          </div>
+
+          <div className="border rounded-lg p-2" style={{ borderColor: RULE }}>
+            <div className="font-mono text-[9px] uppercase tracking-[0.4px] font-semibold mb-1.5" style={{ color: TRIP_LANE_COLOR.kite }}>
+              Top 3 drills &middot; from the mastery ladder
+            </div>
+            <ExecDrills />
+          </div>
+        </div>
+      ) : (
+        <>
+
+      {/* The four exchangeable blocks */}
+      <div className="text-[10px] mb-1" style={{ color: MUTED }}>
+        Four two-hour blocks. The clock is fixed by the light; the lane inside it is yours to trade &mdash; tap a lane
+        chip to move a block, and the goal bars above follow the trade.
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-2">
+        {DESK_SLOTS.map((slot) => {
+          const key = tripKey(active.date, slot.id)
+          return (
+            <DeskBlock
+              key={key}
+              date={active.date}
+              slot={slot}
+              state={slots[key]}
+              disabled={disabled}
+              onPatch={(patch) => void patchSlot(key, patch)}
+            />
+          )
+        })}
       </div>
 
       {/* The hour after, and Dave */}
@@ -591,6 +813,9 @@ export function ExecSvencele({ date: serverDate }: { date: string }) {
           </div>
         )}
       </div>
+
+        </>
+      )}
 
       {!user && (
         <div className="flex items-center gap-2 mt-2">

@@ -2,9 +2,10 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { AuthProvider } from '@/components/auth/AuthProvider'
 import { todayLocal } from '@/lib/ironman/plan'
-import { TIMEZONE } from '@/lib/exec/windows'
-import { ExecSvencele } from '@/components/exec/ExecSvencele'
-import { SVENCELE_END, SVENCELE_START, tripIsLive } from '@/lib/exec/svencele'
+import { fetchAllSpots, weekSessions, weekPossibles, type SpotForecast } from '@/lib/kite/lithuania-spots'
+import { TIMEZONE, buildExecWindDay, spotStatuses } from '@/lib/exec/windows'
+import { ExecSvencele, type SvenceleWind } from '@/components/exec/ExecSvencele'
+import { SVENCELE_END, SVENCELE_START, TRIP_DAYS, tripIsLive } from '@/lib/exec/svencele'
 import { WaveDivider } from '@/components/wind/WindIcons'
 
 export const metadata: Metadata = {
@@ -16,9 +17,27 @@ export const metadata: Metadata = {
 // across midnight, and the client half (useExecDate) handles an already-open tab.
 export const revalidate = 60
 
-export default function SvenceleePage() {
+export default async function SvenceleePage() {
   const today = todayLocal()
   const live = tripIsLive(today)
+
+  // The wind for the four block days, computed once on the server. Beyond the
+  // forecast horizon a day simply has no entry — the tab says so rather than
+  // drawing an empty card that looks like a flat day.
+  let forecasts: SpotForecast[] = []
+  let windError = false
+  try {
+    forecasts = await fetchAllSpots()
+  } catch {
+    windError = true
+  }
+  const sessions = forecasts.length ? weekSessions(forecasts) : []
+  const possibles = forecasts.length ? weekPossibles(forecasts) : []
+  const wind: SvenceleWind[] = TRIP_DAYS.map((d) => ({
+    date: d.date,
+    day: buildExecWindDay(d.date, sessions, possibles),
+    statuses: spotStatuses(d.date, forecasts),
+  }))
 
   const generatedAt = new Date().toLocaleString('en-GB', {
     timeZone: TIMEZONE,
@@ -49,7 +68,7 @@ export default function SvenceleePage() {
 
           {/* The sheet keeps its own state either way; outside the block it simply
               reads as a record of what the four days were. */}
-          <ExecSvencele date={today} />
+          <ExecSvencele date={today} wind={wind} windError={windError} />
 
           {!live && (
             <p className="text-[10px] text-surf-muted mb-3">
