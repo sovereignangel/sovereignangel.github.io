@@ -1,34 +1,59 @@
 'use client'
 
 /**
- * The Svencele tearsheet — five days, six goals, one ladder per day.
+ * The Svencele tearsheet — four days, four exchangeable blocks a day.
  *
- * /exec answers what today is; this answers what these five days are. The
+ * /exec answers what today is; this answers what these four days are. The
  * block is short enough that the usual daily-orders machinery is too loose for
- * it: the wind windows are already committed, so the desk hours around them
- * are fixed in advance rather than negotiated each morning.
+ * it: the clock windows are fixed by the light and the wind, so the only real
+ * decision each morning is which lane each two-hour block is spent in and what
+ * has to come out of it.
  *
- * Ticking an item banks its hours against its lane's goal. Nothing here is
- * timed — the same reason the six hours are counted in pomodoros rather than
- * clocked. The sheet disappears on its own the day after the block ends.
+ * Three rules the UI enforces rather than suggests:
+ *   1. Any block can be traded into any lane. The clock is fixed, the content
+ *      is not — a windy afternoon buys kite hours 1 and 2 at the cost of a
+ *      desk block, and the sheet should show that trade, not hide it.
+ *   2. A block carries a goal and a KPI written before it starts. The debrief
+ *      counts the blocks that do not, because that is the failure mode.
+ *   3. The day ends in a review that is computed, not felt: hours against the
+ *      floor, KPIs hit against missed, and every block goal measured against
+ *      the pace it needs for the four days to land.
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useAuth } from '@/components/auth/AuthProvider'
-import { getTripProgress, setTripItem } from '@/lib/firestore/svencele'
+import { getTripProgress, setTripItem, setTripSlot, setTripDebrief } from '@/lib/firestore/svencele'
 import type { TripProgressDoc } from '@/lib/types/svencele'
 import {
+  DAILY_FLOOR_H,
+  DAILY_STRETCH_H,
+  DESK_LANES,
+  DESK_SCHEDULED_H,
+  DESK_SLOTS,
+  IRONMAN_HOUR,
+  KITE_BASE_HOURS,
+  KITE_HOURS,
+  KITE_MAX_HOURS,
+  LIGHT,
   SVENCELE_END,
   SVENCELE_START,
   TRIP_DAYS,
   TRIP_LANE_COLOR,
   TRIP_LANE_LABEL,
   TRIP_MEETINGS,
+  bankFor,
+  dayStanding,
+  debrief,
+  kiteWindow,
+  laneFor,
+  tomorrowReadiness,
   tripDayNumber,
   tripKey,
   tripStandings,
+  type DeskSlot,
+  type SlotState,
   type TripDay,
-  type TripItem,
+  type TripLane,
 } from '@/lib/exec/svencele'
 import { useExecDate } from './useExecDate'
 
@@ -37,106 +62,267 @@ const MUTED = '#7d8a86'
 const FAINT = '#b8c2bc'
 const RULE = '#e4dccb'
 const GOOD = '#2d6b4a'
+const WARN = '#8a6420'
 
-function fmtAmount(n: number, unit: 'h' | '×'): string {
-  return unit === 'h' ? `${n % 1 === 0 ? n : n.toFixed(1)}h` : String(n)
+const fmtH = (n: number) => (n % 1 === 0 ? `${n}h` : `${n.toFixed(1)}h`)
+
+const inputStyle = {
+  color: INK,
+  borderColor: RULE,
+  backgroundColor: '#fffdf7',
 }
 
-function Tick({
-  item,
-  checked,
+/** A text field that keeps its own draft and commits when you leave it. */
+function Field({
+  value,
+  placeholder,
   disabled,
-  onToggle,
+  rows = 2,
+  onCommit,
 }: {
-  item: TripItem
-  checked: boolean
+  value: string
+  placeholder: string
   disabled: boolean
-  onToggle: () => void
+  rows?: number
+  onCommit: (next: string) => void
 }) {
-  const color = TRIP_LANE_COLOR[item.lane]
+  const [draft, setDraft] = useState(value)
+  useEffect(() => setDraft(value), [value])
   return (
-    <button
-      type="button"
+    <textarea
+      rows={rows}
+      value={draft}
       disabled={disabled}
-      onClick={onToggle}
-      aria-pressed={checked}
-      className="w-full text-left border rounded-lg p-2 transition-colors disabled:cursor-default"
-      style={{
-        borderColor: checked ? color + '55' : RULE,
-        backgroundColor: checked ? color + '0d' : 'transparent',
-      }}
-    >
-      <div className="flex items-baseline gap-2 flex-wrap">
-        <span
-          className="w-[12px] h-[12px] rounded-sm border shrink-0 self-center"
-          style={{ borderColor: checked ? color : FAINT, backgroundColor: checked ? color : 'transparent' }}
-          aria-hidden="true"
-        />
-        {item.window && (
-          <span className="font-mono text-[10px] font-semibold tabular-nums shrink-0" style={{ color: INK }}>
-            {item.window}
-          </span>
-        )}
-        <span className="text-[11px] font-semibold" style={{ color: INK }}>
-          {item.label}
-        </span>
-        <span
-          className="font-mono text-[9px] uppercase tracking-[0.3px] px-1 py-px rounded-sm border ml-auto shrink-0"
-          style={{ color, borderColor: color + '33', backgroundColor: color + '0d' }}
-        >
-          {TRIP_LANE_LABEL[item.lane]}
-          {item.hours > 0 && ` · ${item.hours}h`}
-        </span>
-      </div>
-      <p className="text-[10px] leading-snug mt-1" style={{ color: MUTED }}>
-        {item.detail}
-      </p>
-    </button>
+      placeholder={placeholder}
+      onChange={(e) => setDraft(e.target.value)}
+      onBlur={() => { if (draft !== value) onCommit(draft) }}
+      className="w-full text-[10px] leading-snug border rounded-md px-1.5 py-1 resize-y disabled:opacity-60 focus:outline-none"
+      style={inputStyle}
+    />
   )
 }
+
+// ── One desk block ────────────────────────────────────────────────────────
+
+function DeskBlock({
+  date,
+  slot,
+  state,
+  disabled,
+  onPatch,
+}: {
+  date: string
+  slot: DeskSlot
+  state: SlotState | undefined
+  disabled: boolean
+  onPatch: (patch: Partial<SlotState>) => void
+}) {
+  const [showBank, setShowBank] = useState(false)
+  const lane = laneFor(date, slot, state)
+  const color = TRIP_LANE_COLOR[lane]
+  const done = !!state?.done
+  const planned = !!state?.goal?.trim()
+
+  return (
+    <div
+      className="border rounded-lg p-2"
+      style={{ borderColor: done ? color + '55' : planned ? RULE : FAINT + '80', backgroundColor: done ? color + '0d' : 'transparent' }}
+    >
+      <div className="flex items-baseline gap-2 flex-wrap mb-1.5">
+        <span className="font-mono text-[10px] font-semibold tabular-nums" style={{ color: INK }}>
+          {slot.window}
+        </span>
+        <span className="font-mono text-[9px] uppercase tracking-[0.4px]" style={{ color: MUTED }}>
+          {slot.label} &middot; {slot.hours}h
+        </span>
+        <button
+          type="button"
+          disabled={disabled}
+          onClick={() => onPatch({ done: !done })}
+          className="ml-auto font-serif text-[10px] font-medium px-2 py-0.5 rounded-md border transition-colors disabled:opacity-50"
+          style={{
+            color: done ? '#fffdf7' : INK,
+            backgroundColor: done ? color : 'transparent',
+            borderColor: done ? color : FAINT,
+          }}
+        >
+          {done ? 'Banked' : 'Bank 2h'}
+        </button>
+      </div>
+
+      {/* The trade. Any block, any lane. */}
+      <div className="flex gap-1 flex-wrap mb-1.5">
+        {DESK_LANES.map((l) => {
+          const on = l === lane
+          const c = TRIP_LANE_COLOR[l]
+          return (
+            <button
+              key={l}
+              type="button"
+              disabled={disabled}
+              onClick={() => onPatch({ lane: l })}
+              className="font-mono text-[9px] uppercase tracking-[0.3px] px-1.5 py-0.5 rounded-sm border transition-colors disabled:opacity-50"
+              style={{
+                color: on ? '#fffdf7' : c,
+                backgroundColor: on ? c : c + '0d',
+                borderColor: on ? c : c + '33',
+              }}
+            >
+              {TRIP_LANE_LABEL[l]}
+            </button>
+          )
+        })}
+        <button
+          type="button"
+          onClick={() => setShowBank((v) => !v)}
+          className="font-mono text-[9px] uppercase tracking-[0.3px] px-1.5 py-0.5 rounded-sm border ml-auto"
+          style={{ color: MUTED, borderColor: RULE }}
+        >
+          {showBank ? 'close' : 'ladder'}
+        </button>
+      </div>
+
+      {showBank && (
+        <div className="border rounded-md p-1.5 mb-1.5" style={{ borderColor: RULE }}>
+          <div className="text-[10px] mb-1" style={{ color: MUTED }}>
+            {TRIP_LANE_LABEL[lane]} ladder &mdash; take them in order; an unfinished unit stays at the head of the queue.
+          </div>
+          <div className="flex flex-col gap-1">
+            {bankFor(lane).map((u) => (
+              <button
+                key={u.id}
+                type="button"
+                disabled={disabled}
+                onClick={() => { onPatch({ goal: u.goal, kpi: u.kpi }); setShowBank(false) }}
+                className="text-left border rounded-md px-1.5 py-1 transition-colors disabled:opacity-50"
+                style={{ borderColor: RULE }}
+              >
+                <div className="text-[10px] font-semibold" style={{ color: INK }}>{u.goal}</div>
+                <div className="text-[10px] leading-snug" style={{ color: MUTED }}>{u.kpi}</div>
+              </button>
+            ))}
+            {bankFor(lane).length === 0 && (
+              <div className="text-[10px]" style={{ color: MUTED }}>Nothing prewritten for this lane — write the goal yourself.</div>
+            )}
+          </div>
+        </div>
+      )}
+
+      <div className="flex flex-col gap-1">
+        <Field
+          value={state?.goal ?? ''}
+          disabled={disabled}
+          rows={1}
+          placeholder="Goal — the one outcome of these two hours"
+          onCommit={(v) => onPatch({ goal: v })}
+        />
+        <Field
+          value={state?.kpi ?? ''}
+          disabled={disabled}
+          rows={2}
+          placeholder="KPI — how you will know it happened, in a number or an artefact"
+          onCommit={(v) => onPatch({ kpi: v })}
+        />
+      </div>
+
+      {done && (
+        <div className="mt-1.5 pt-1.5 border-t" style={{ borderColor: RULE }}>
+          <div className="flex items-center gap-1 mb-1">
+            <span className="text-[10px]" style={{ color: MUTED }}>KPI</span>
+            {([true, false] as const).map((v) => {
+              const on = state?.hit === v
+              const c = v ? GOOD : WARN
+              return (
+                <button
+                  key={String(v)}
+                  type="button"
+                  disabled={disabled}
+                  onClick={() => onPatch({ hit: on ? undefined : v })}
+                  className="font-mono text-[9px] uppercase px-1.5 py-0.5 rounded-sm border disabled:opacity-50"
+                  style={{ color: on ? '#fffdf7' : c, backgroundColor: on ? c : 'transparent', borderColor: c + (on ? '' : '55') }}
+                >
+                  {v ? 'hit' : 'missed'}
+                </button>
+              )
+            })}
+          </div>
+          <Field
+            value={state?.result ?? ''}
+            disabled={disabled}
+            rows={2}
+            placeholder="What actually came out of it — the number, the artefact, or why not"
+            onCommit={(v) => onPatch({ result: v })}
+          />
+        </div>
+      )}
+
+      {!planned && !done && (
+        <p className="text-[10px] mt-1" style={{ color: WARN }}>
+          No goal written. {slot.note}
+        </p>
+      )}
+    </div>
+  )
+}
+
+// ── The sheet ─────────────────────────────────────────────────────────────
 
 export function ExecSvencele({ date: serverDate }: { date: string }) {
   const date = useExecDate(serverDate)
   const { user, signIn, loading: authLoading } = useAuth()
-  const [done, setDone] = useState<ReadonlySet<string>>(new Set())
-  const [busy, setBusy] = useState<string | null>(null)
-
-  // Which day the sheet is showing. Follows the clock unless you have clicked
-  // another day — planning tomorrow at 21:00 is the normal use of this thing.
+  const [doc, setDocState] = useState<TripProgressDoc>({})
   const [picked, setPicked] = useState<string | null>(null)
 
   const load = useCallback(async () => {
-    if (!user) return setDone(new Set())
-    const p = await getTripProgress(user.uid).catch(() => ({}) as TripProgressDoc)
-    setDone(new Set(Object.keys(p.items || {})))
+    if (!user) return setDocState({})
+    setDocState(await getTripProgress(user.uid).catch(() => ({}) as TripProgressDoc))
   }, [user])
   useEffect(() => { void load() }, [load])
 
-  const toggle = useCallback(
+  const slots = useMemo(() => doc.slots || {}, [doc])
+  const ticks = useMemo(() => new Set(Object.keys(doc.items || {})), [doc])
+
+  // Optimistic on both stores: a tick or a typed goal that waits on a round
+  // trip to appear makes the sheet feel broken on a phone at the beach.
+  const patchSlot = useCallback(
+    async (key: string, patch: Partial<SlotState>) => {
+      if (!user) return
+      setDocState((prev) => {
+        const next = { ...(prev.slots?.[key] || {}), ...patch } as SlotState
+        for (const [k, v] of Object.entries(patch)) {
+          if (v === '' || v === undefined) delete (next as Record<string, unknown>)[k]
+        }
+        return { ...prev, slots: { ...(prev.slots || {}), [key]: next } }
+      })
+      try {
+        await setTripSlot(user.uid, key, patch)
+      } catch {
+        await load()
+      }
+    },
+    [user, load]
+  )
+
+  const toggleTick = useCallback(
     async (key: string) => {
       if (!user) return
-      const next = !done.has(key)
-      setBusy(key)
-      // Optimistic: the tick is the whole interaction, and waiting a round trip
-      // to see it land makes the sheet feel broken on a phone.
-      setDone((prev) => {
-        const s = new Set(prev)
-        if (next) s.add(key)
-        else s.delete(key)
-        return s
+      const next = !ticks.has(key)
+      setDocState((prev) => {
+        const items = { ...(prev.items || {}) }
+        if (next) items[key] = true
+        else delete items[key]
+        return { ...prev, items }
       })
       try {
         await setTripItem(user.uid, key, next)
       } catch {
         await load()
-      } finally {
-        setBusy(null)
       }
     },
-    [user, done, load]
+    [user, ticks, load]
   )
 
-  const standings = useMemo(() => tripStandings(done), [done])
+  const standings = useMemo(() => tripStandings(slots, ticks, date), [slots, ticks, date])
   const dayNo = tripDayNumber(date)
 
   const active: TripDay =
@@ -144,49 +330,63 @@ export function ExecSvencele({ date: serverDate }: { date: string }) {
     TRIP_DAYS.find((d) => d.date === date) ??
     (date > SVENCELE_END ? TRIP_DAYS[TRIP_DAYS.length - 1] : TRIP_DAYS[0])
 
-  const dayDone = (d: TripDay) => d.items.filter((i) => done.has(tripKey(d.date, i.id))).length
+  const day = useMemo(() => dayStanding(active.date, slots, ticks), [active.date, slots, ticks])
+  const lines = useMemo(() => debrief(active.date, slots, ticks, standings), [active.date, slots, ticks, standings])
+  const tomorrow = useMemo(() => tomorrowReadiness(active.date, slots), [active.date, slots])
+
+  const kiteCount = KITE_HOURS.filter((hh) => ticks.has(tripKey(active.date, hh.id))).length
+  const disabled = !user
 
   return (
     <section
       className="border rounded-xl p-2.5 md:p-3 mb-3"
       style={{ borderColor: RULE, backgroundColor: '#fffdf7', boxShadow: '0 2px 12px rgba(13,92,99,0.05)' }}
     >
-      <div className="flex items-baseline gap-2 mb-2 flex-wrap">
+      <div className="flex items-baseline gap-2 mb-1.5 flex-wrap">
         <span className="font-serif text-[14px] md:text-[15px] font-semibold" style={{ color: INK }}>
           Svencele <span style={{ color: TRIP_LANE_COLOR.kite }}>&mdash;</span> Tearsheet
         </span>
         <span className="font-mono text-[10px]" style={{ color: MUTED }}>
-          17&ndash;21 Sep &middot; 20h on the water &middot; waist-deep flat
+          18&ndash;21 Sep &middot; {DAILY_FLOOR_H}h floor / {DAILY_STRETCH_H}h stretch &middot; {DESK_SCHEDULED_H}h scheduled
         </span>
         <span className="ml-auto font-mono text-[10px] tabular-nums" style={{ color: dayNo ? INK : MUTED }}>
-          {dayNo ? `day ${dayNo} of ${TRIP_DAYS.length}` : date < SVENCELE_START ? 'not started' : 'block closed'}
+          {dayNo ? `day ${dayNo} of ${TRIP_DAYS.length}` : date < SVENCELE_START ? 'eve — set Friday' : 'block closed'}
         </span>
       </div>
 
-      {/* Goals — the whole block at a glance, in the order they were set. */}
+      <div className="text-[10px] mb-2" style={{ color: MUTED }}>
+        {LIGHT.note}
+      </div>
+
+      {/* Block goals */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 mb-2.5">
-        {standings.map(({ goal, done: banked, scheduled, pct }) => {
+        {standings.map(({ goal, done: banked, pct, paceNeeded }) => {
           const color = TRIP_LANE_COLOR[goal.lane]
           const met = banked >= goal.target
-          // Scheduled below target is a planning error worth seeing early.
-          const short = scheduled < goal.target
           return (
-            <div key={goal.id} className="border rounded-lg p-2" style={{ borderColor: met ? color + '55' : RULE, backgroundColor: met ? color + '0d' : 'transparent' }}>
+            <div
+              key={goal.id}
+              className="border rounded-lg p-2"
+              style={{ borderColor: met ? color + '55' : RULE, backgroundColor: met ? color + '0d' : 'transparent' }}
+            >
               <div className="flex items-baseline gap-1.5 mb-1">
                 <span className="font-mono text-[9px] uppercase tracking-[0.4px] font-semibold" style={{ color }}>
                   {goal.label}
                 </span>
                 <span className="ml-auto font-mono text-[10px] font-semibold tabular-nums" style={{ color: met ? GOOD : INK }}>
-                  {fmtAmount(banked, goal.unit)}
-                  <span style={{ fontSize: 9, color: FAINT }}>/{fmtAmount(goal.target, goal.unit)}</span>
+                  {goal.unit === 'h' ? fmtH(banked) : banked}
+                  <span style={{ fontSize: 9, color: FAINT }}>/{goal.unit === 'h' ? fmtH(goal.target) : goal.target}</span>
                 </span>
               </div>
               <div className="h-[4px] rounded-sm mb-1" style={{ backgroundColor: RULE }}>
                 <div className="h-full rounded-sm" style={{ width: `${Math.round(pct * 100)}%`, backgroundColor: met ? GOOD : color }} />
               </div>
-              <p className="text-[10px] leading-snug" style={{ color: MUTED }}>
+              <div className="text-[10px] font-semibold leading-snug" style={{ color: INK }}>{goal.headline}</div>
+              <p className="text-[10px] leading-snug mt-0.5" style={{ color: MUTED }}>
                 {goal.detail}
-                {short && <span style={{ color: '#8a6420' }}> Sheet only schedules {fmtAmount(scheduled, goal.unit)}.</span>}
+                {paceNeeded !== null && (
+                  <span style={{ color: FAINT }}> Pace: {goal.unit === 'h' ? `${fmtH(paceNeeded)}/day` : `${Math.ceil(paceNeeded)} more`}.</span>
+                )}
               </p>
             </div>
           )
@@ -196,10 +396,9 @@ export function ExecSvencele({ date: serverDate }: { date: string }) {
       {/* Day rail */}
       <div className="flex gap-1 mb-2 flex-wrap">
         {TRIP_DAYS.map((d) => {
+          const st = dayStanding(d.date, slots, ticks)
           const isActive = d.date === active.date
           const isToday = d.date === date
-          const n = dayDone(d)
-          const full = n === d.items.length
           return (
             <button
               key={d.date}
@@ -213,59 +412,184 @@ export function ExecSvencele({ date: serverDate }: { date: string }) {
               }}
             >
               {d.label}
-              <span className="font-mono ml-1 tabular-nums" style={{ fontSize: 9, color: isActive ? FAINT : full ? GOOD : MUTED }}>
-                {n}/{d.items.length}
+              <span
+                className="font-mono ml-1 tabular-nums"
+                style={{ fontSize: 9, color: isActive ? FAINT : st.hours >= DAILY_FLOOR_H ? GOOD : MUTED }}
+              >
+                {fmtH(st.hours)} &middot; {st.kiteHours}k
               </span>
             </button>
           )
         })}
       </div>
 
-      {/* The picked day */}
+      {/* Day header */}
       <div className="border rounded-lg p-2 mb-2" style={{ borderColor: RULE }}>
-        <div className="text-[11px] font-semibold mb-0.5" style={{ color: INK }}>
-          {active.theme}
+        <div className="flex items-baseline gap-2 flex-wrap mb-0.5">
+          <span className="text-[11px] font-semibold" style={{ color: INK }}>{active.theme}</span>
+          <span className="ml-auto font-mono text-[10px] tabular-nums" style={{ color: day.hours >= DAILY_FLOOR_H ? GOOD : INK }}>
+            {fmtH(day.hours)}<span style={{ fontSize: 9, color: FAINT }}>/{DAILY_FLOOR_H}h</span>
+          </span>
         </div>
         <div className="text-[10px] leading-snug" style={{ color: MUTED }}>
           <span style={{ color: TRIP_LANE_COLOR.kite }}>water goal &middot; </span>
           {active.kiteIntent}
         </div>
+        {active.override && (
+          <div className="text-[10px] leading-snug mt-0.5" style={{ color: TRIP_LANE_COLOR[active.override.lane] }}>
+            {active.override.why}
+          </div>
+        )}
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-        {active.items.map((item) => {
-          const key = tripKey(active.date, item.id)
+      {/* The four exchangeable blocks */}
+      <div className="text-[10px] mb-1" style={{ color: MUTED }}>
+        Four two-hour blocks. The clock is fixed by the light; the lane inside it is yours to trade &mdash; tap a lane
+        chip to move a block, and the goal bars above follow the trade.
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-2">
+        {DESK_SLOTS.map((slot) => {
+          const key = tripKey(active.date, slot.id)
           return (
-            <Tick
+            <DeskBlock
               key={key}
-              item={item}
-              checked={done.has(key)}
-              disabled={!user || busy === key}
-              onToggle={() => void toggle(key)}
+              date={active.date}
+              slot={slot}
+              state={slots[key]}
+              disabled={disabled}
+              onPatch={(patch) => void patchSlot(key, patch)}
             />
           )
         })}
       </div>
 
-      {/* Dave — dateless on purpose */}
-      <div className="mt-2 pt-2 border-t" style={{ borderColor: RULE }}>
-        <div className="text-[10px] mb-1.5" style={{ color: MUTED }}>
-          Two sessions with Dave, any day of the block &mdash; the dates move with his week, the commitment does not.
+      {/* Water */}
+      <div className="border rounded-lg p-2 mb-2" style={{ borderColor: RULE }}>
+        <div className="flex items-baseline gap-2 flex-wrap mb-1.5">
+          <span className="font-serif text-[12px] font-semibold" style={{ color: TRIP_LANE_COLOR.kite }}>
+            Kite &mdash; {kiteWindow(Math.max(KITE_BASE_HOURS, kiteCount))}
+          </span>
+          <span className="font-mono text-[10px]" style={{ color: MUTED }}>
+            {KITE_BASE_HOURS}h base &middot; {KITE_MAX_HOURS}h if you trade the afternoon block
+          </span>
+          <span className="ml-auto font-mono text-[10px] tabular-nums" style={{ color: kiteCount >= KITE_BASE_HOURS ? GOOD : INK }}>
+            {kiteCount}<span style={{ fontSize: 9, color: FAINT }}>/{KITE_MAX_HOURS}h</span>
+          </span>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-          {TRIP_MEETINGS.map((item) => {
-            const key = tripKey(null, item.id)
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+          {KITE_HOURS.map((hr) => {
+            const key = tripKey(active.date, hr.id)
+            const on = ticks.has(key)
+            const c = TRIP_LANE_COLOR.kite
             return (
-              <Tick
+              <button
                 key={key}
-                item={item}
-                checked={done.has(key)}
-                disabled={!user || busy === key}
-                onToggle={() => void toggle(key)}
-              />
+                type="button"
+                disabled={disabled}
+                onClick={() => void toggleTick(key)}
+                aria-pressed={on}
+                className="text-left border rounded-md p-1.5 transition-colors disabled:cursor-default"
+                style={{
+                  borderColor: on ? c + '55' : hr.base ? RULE : FAINT + '66',
+                  backgroundColor: on ? c + '0d' : 'transparent',
+                }}
+              >
+                <div className="flex items-baseline gap-1.5">
+                  <span
+                    className="w-[11px] h-[11px] rounded-sm border shrink-0 self-center"
+                    style={{ borderColor: on ? c : FAINT, backgroundColor: on ? c : 'transparent' }}
+                    aria-hidden="true"
+                  />
+                  <span className="text-[10px] font-semibold" style={{ color: INK }}>{hr.label}</span>
+                  {!hr.base && (
+                    <span className="font-mono text-[9px] uppercase px-1 py-px rounded-sm border ml-auto" style={{ color: MUTED, borderColor: RULE }}>
+                      traded
+                    </span>
+                  )}
+                </div>
+                <div className="text-[10px] font-semibold mt-0.5" style={{ color: c }}>{hr.goal}</div>
+                <p className="text-[10px] leading-snug" style={{ color: MUTED }}>{hr.detail}</p>
+              </button>
             )
           })}
         </div>
+      </div>
+
+      {/* The hour after, and Dave */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-2">
+        {[
+          { key: tripKey(active.date, IRONMAN_HOUR.id), lane: 'ironman' as TripLane, label: `${IRONMAN_HOUR.window} · ${IRONMAN_HOUR.label}`, detail: IRONMAN_HOUR.detail },
+          ...TRIP_MEETINGS.map((m) => ({ key: tripKey(null, m.id), lane: 'dave' as TripLane, label: m.label, detail: m.detail })),
+        ].map((item) => {
+          const on = ticks.has(item.key)
+          const c = TRIP_LANE_COLOR[item.lane]
+          return (
+            <button
+              key={item.key}
+              type="button"
+              disabled={disabled}
+              onClick={() => void toggleTick(item.key)}
+              aria-pressed={on}
+              className="text-left border rounded-lg p-2 transition-colors disabled:cursor-default"
+              style={{ borderColor: on ? c + '55' : RULE, backgroundColor: on ? c + '0d' : 'transparent' }}
+            >
+              <div className="flex items-baseline gap-1.5">
+                <span
+                  className="w-[11px] h-[11px] rounded-sm border shrink-0 self-center"
+                  style={{ borderColor: on ? c : FAINT, backgroundColor: on ? c : 'transparent' }}
+                  aria-hidden="true"
+                />
+                <span className="text-[10px] font-semibold" style={{ color: INK }}>{item.label}</span>
+              </div>
+              <p className="text-[10px] leading-snug mt-0.5" style={{ color: MUTED }}>{item.detail}</p>
+            </button>
+          )
+        })}
+      </div>
+
+      {/* Debrief */}
+      <div className="border rounded-lg p-2" style={{ borderColor: RULE }}>
+        <div className="flex items-baseline gap-2 flex-wrap mb-1.5">
+          <span className="font-serif text-[12px] font-semibold" style={{ color: INK }}>Debrief</span>
+          <span className="font-mono text-[10px]" style={{ color: MUTED }}>
+            computed from what you ticked, not from how the day felt
+          </span>
+        </div>
+        <ul className="flex flex-col gap-0.5 mb-2">
+          {lines.map((l, i) => (
+            <li key={i} className="text-[10px] leading-snug flex gap-1.5" style={{ color: l.tone === 'warn' ? WARN : l.tone === 'good' ? GOOD : MUTED }}>
+              <span aria-hidden="true">&middot;</span>
+              <span>{l.text}</span>
+            </li>
+          ))}
+        </ul>
+        <Field
+          value={doc.debriefs?.[active.date] ?? ''}
+          disabled={disabled}
+          rows={2}
+          placeholder="In your own words — what moved, what did not, and the one thing tomorrow inherits"
+          onCommit={(v) => {
+            if (!user) return
+            setDocState((prev) => ({ ...prev, debriefs: { ...(prev.debriefs || {}), [active.date]: v } }))
+            void setTripDebrief(user.uid, active.date, v).catch(() => void load())
+          }}
+        />
+        {tomorrow && (
+          <div className="flex items-baseline gap-2 flex-wrap mt-1.5 pt-1.5 border-t" style={{ borderColor: RULE }}>
+            <span className="text-[10px]" style={{ color: tomorrow.planned === tomorrow.total ? GOOD : WARN }}>
+              Tomorrow: {tomorrow.planned} of {tomorrow.total} blocks have a goal written.
+              {tomorrow.planned < tomorrow.total && ' Set them tonight — a block decided at 07:00 is a block already half spent.'}
+            </span>
+            <button
+              type="button"
+              onClick={() => setPicked(tomorrow.date)}
+              className="font-serif text-[10px] font-medium px-2 py-0.5 rounded-md border ml-auto"
+              style={{ color: INK, borderColor: FAINT }}
+            >
+              Set tomorrow
+            </button>
+          </div>
+        )}
       </div>
 
       {!user && (
