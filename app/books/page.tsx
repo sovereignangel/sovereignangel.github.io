@@ -7,14 +7,17 @@ import { authFetch } from '@/lib/auth-fetch'
 import BookSearch from '@/components/books/BookSearch'
 import StintCard from '@/components/books/StintCard'
 import FullListView from '@/components/books/FullListView'
+import BookNotes from '@/components/books/BookNotes'
 import { READING_ORDER, ORDER_ARGUMENT, SCHEDULE } from '@/lib/books/reading-order'
 import type { BookMeta } from '@/lib/books/types'
 import type { ReaderSource } from '@/components/thesis/reader/ReaderOverlay'
 
 const ReaderOverlay = dynamic(() => import('@/components/thesis/reader/ReaderOverlay'), { ssr: false })
 
+const SHELF_SLUGS = READING_ORDER.map(s => s.slug)
+
 type ActiveBook = { source: ReaderSource; slug: string; page?: number } | null
-type Tab = 'order' | 'list' | 'search'
+type Tab = 'order' | 'list' | 'search' | 'notes'
 
 export default function BooksPage() {
   const { user, signIn, loading: authLoading } = useAuth()
@@ -96,7 +99,7 @@ export default function BooksPage() {
 
       {/* Tabs */}
       <div className="flex gap-4 border-b border-rule pb-2 mb-4">
-        {(['order', 'list', 'search'] as Tab[]).map(t => (
+        {(['order', 'list', 'search', 'notes'] as Tab[]).map(t => (
           <button
             key={t}
             onClick={() => setTab(t)}
@@ -106,7 +109,7 @@ export default function BooksPage() {
                 : 'text-ink-muted hover:text-ink'
             }`}
           >
-            {t === 'order' ? 'The Order' : t === 'list' ? 'The List' : 'Search'}
+            {t === 'order' ? 'The Order' : t === 'list' ? 'The List' : t === 'search' ? 'Search' : 'Notes'}
           </button>
         ))}
       </div>
@@ -130,6 +133,10 @@ export default function BooksPage() {
 
       {tab === 'search' && !loading && books.length > 0 && (
         <BookSearch onOpenHit={(slug, page) => openBook(slug, page)} />
+      )}
+
+      {tab === 'notes' && !loading && (
+        <BookNotes slugs={SHELF_SLUGS} onOpen={openBook} />
       )}
 
       {tab === 'order' && (
