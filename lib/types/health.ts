@@ -69,6 +69,15 @@ export interface GarminActivity {
   trainingLoad: number | null
   vo2max: number | null
   locationName: string | null
+  /**
+   * This activity's Garmin-configured HR zone 1 and zone 2 floors, bpm.
+   * Fetched per-activity rather than once per athlete because Garmin
+   * recalculates zones as max HR estimates change, so an activity from three
+   * months ago is scored against the zones that applied then. Null when the
+   * activity has no HR data (no strap) or the zones lookup failed.
+   */
+  hrZone1Floor: number | null
+  hrZone2Floor: number | null
   source: string
   syncedAt: Timestamp
 }

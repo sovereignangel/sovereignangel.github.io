@@ -12,7 +12,7 @@ import { PLAN, RACE, type PlanDay, type PlannedSession, type Sport } from './pla
 
 // ── Sport matching ────────────────────────────────────────────────────────
 
-const SPORT_TYPES: Record<Exclude<Sport, 'rest'>, string[]> = {
+export const SPORT_TYPES: Record<Exclude<Sport, 'rest'>, string[]> = {
   run: ['running', 'treadmill_running', 'track_running', 'trail_running'],
   bike: ['cycling', 'road_biking', 'virtual_ride', 'indoor_cycling', 'mountain_biking', 'gravel_cycling'],
   swim: ['lap_swimming', 'open_water_swimming'],

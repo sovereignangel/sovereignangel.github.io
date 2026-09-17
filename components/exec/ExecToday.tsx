@@ -1,7 +1,7 @@
 'use client'
 
 /**
- * The today band — five lanes, one row, one line each.
+ * The today band — five lanes, one row of the tear sheet.
  *
  * This is the part of /exec that answers "am I done today" without scrolling.
  * Three lanes are answered by hand (tantra, cecon, armstrong) and two are
@@ -106,55 +106,57 @@ function Tick() {
   )
 }
 
+/**
+ * One lane, one line. The headline truncates rather than wrapping: on a tear
+ * sheet a lane that grows a second line pushes every other lane down, and the
+ * whole point of the band is that its height never changes. The full text is
+ * on the title attribute and, properly, at the other end of the link.
+ */
 function LaneCell({ lane, state }: { lane: Lane; state: LaneState }) {
   const live = state.due && !state.done
   return (
     <div
-      className="border rounded-lg p-2 flex flex-col gap-1 min-w-0"
+      className="border rounded-lg pl-2 pr-1.5 py-1 flex items-center gap-1.5 min-w-0"
+      title={state.sub ? `${state.headline} — ${state.sub}` : state.headline}
       style={{
         borderColor: live ? lane.border : LANE_INK.ruleLight,
         backgroundColor: state.done ? lane.bg : LANE_INK.card,
         opacity: state.due ? 1 : 0.62,
       }}
     >
-      <div className="flex items-center justify-between gap-1.5">
+      <div className="min-w-0 flex-1">
         <a
           href={state.href}
-          className="font-mono text-[10px] uppercase tracking-[0.4px] font-semibold truncate hover:underline"
+          className="font-mono text-[9px] uppercase tracking-[0.4px] font-semibold block truncate hover:underline"
           style={{ color: lane.color }}
         >
           {lane.label}
         </a>
-        <Check
-          on={state.done}
-          onClick={state.onToggle}
-          busy={state.busy}
-          color={lane.color}
-          label={`${lane.label} — ${state.done ? 'mark not done' : 'mark done'}`}
-        />
-      </div>
-      <div className="text-[11px] font-semibold leading-snug break-words" style={{ color: LANE_INK.ink }}>
-        {state.headline}
-      </div>
-      {state.sub && (
-        <div className="text-[10px] leading-snug break-words" style={{ color: LANE_INK.muted }}>
-          {state.sub}
+        <div className="text-[10px] font-semibold leading-snug truncate" style={{ color: LANE_INK.ink }}>
+          {state.headline}
         </div>
-      )}
+      </div>
+      <Check
+        on={state.done}
+        onClick={state.onToggle}
+        busy={state.busy}
+        color={lane.color}
+        label={`${lane.label} — ${state.done ? 'mark not done' : 'mark done'}`}
+      />
     </div>
   )
 }
 
 function BandShell({ children, right }: { children: React.ReactNode; right?: React.ReactNode }) {
   return (
-    <section className="border rounded-xl p-2.5 md:p-3 mb-3" style={{ borderColor: LANE_INK.rule, backgroundColor: LANE_INK.card, boxShadow: '0 2px 12px rgba(13,92,99,0.05)' }}>
-      <div className="flex items-center justify-between gap-2 mb-2">
-        <span className="font-serif text-[14px] md:text-[15px] font-semibold" style={{ color: LANE_INK.ink }}>
+    <section className="border rounded-xl px-2.5 py-2 md:px-3 mb-3" style={{ borderColor: LANE_INK.rule, backgroundColor: LANE_INK.card, boxShadow: '0 2px 12px rgba(13,92,99,0.05)' }}>
+      <div className="flex items-center gap-2">
+        <span className="font-serif text-[14px] md:text-[15px] font-semibold shrink-0" style={{ color: LANE_INK.ink }}>
           Today
         </span>
+        <div className="flex-1 min-w-0">{children}</div>
         {right}
       </div>
-      {children}
     </section>
   )
 }
@@ -328,7 +330,7 @@ export function ExecToday({ date: serverDate, kite, ironman }: ExecTodayProps) {
       right={
         counter ? (
           <span
-            className="font-mono text-[13px] font-semibold"
+            className="font-mono text-[13px] font-semibold shrink-0 tabular-nums"
             style={{ color: doneCount === due.length && due.length > 0 ? LANE_INK.good : LANE_INK.muted }}
           >
             {counter}
@@ -337,15 +339,15 @@ export function ExecToday({ date: serverDate, kite, ironman }: ExecTodayProps) {
           <button
             onClick={signIn}
             disabled={authLoading}
-            className="font-serif text-[10px] font-medium px-2 py-1 rounded-md border bg-transparent transition-colors disabled:opacity-50"
+            className="font-serif text-[10px] font-medium px-2 py-1 rounded-md border bg-transparent transition-colors disabled:opacity-50 shrink-0"
             style={{ color: LANE_INK.ink, borderColor: LANE_INK.faint }}
           >
-            Sign in to check off
+            Sign in
           </button>
         )
       }
     >
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-1.5">
         {LANES.map((lane) => (
           <LaneCell key={lane.id} lane={lane} state={states[lane.id]} />
         ))}

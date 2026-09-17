@@ -5,13 +5,16 @@
  *
  * Model, per discipline:
  * 1. Take recent activities of that sport, filter out short efforts and
- *    data glitches.
+ *    data glitches. On the bike, also drop rides below Zone 1.5 effort (a
+ *    recovery spin proves nothing about race pace) and credit climbing as
+ *    flat-equivalent distance (the race course is flat; training isn't).
  * 2. Convert each to a race-distance-equivalent pace via Riegel scaling
  *    (a 10km run pace understates half-marathon pace; scale by
  *    (raceDist/actDist)^(k-1)).
- * 3. Recency-weight (14-day half-life) and fit a weighted linear trend of
- *    adjusted pace over time; project it to race day with clamps so a hot
- *    week can't promise miracles (max 8% total improvement).
+ * 3. Keep only the fastest slice of those samples (TOP_FRACTION), recency-
+ *    weight them (14-day half-life), and fit a weighted linear trend over
+ *    time; project it to race day with clamps so a hot week can't promise
+ *    miracles (max 8% total improvement).
  * 4. Probability = normal CDF of the gap between goal pace and projected
  *    pace, with variance from the observed session-to-session spread,
  *    inflated by how far out race day still is.
@@ -19,12 +22,20 @@
  *    probabilities by at most +/-4 points — chronic under-recovery lowers
  *    the forecast even when paces look good.
  *
- * Every logged session counts as evidence about the person who logged it, at
- * full weight. An earlier version discounted sessions the two athletes trained
- * on the same day, on the theory that riding together means riding at the
- * slower one's tempo. It does not: these two start together and ride their own
- * speeds, which is why one 26 August ride reads 96.8km at 23.5km/h and the
- * other 183.2km at 30.2km/h. Nothing here now cares who else was out.
+ * Every logged session counts as evidence about the person who logged it, but
+ * not at equal weight: the PLAN prescribes Z1/Z2 recovery and endurance work
+ * deliberately below race effort, and a session ridden easy on purpose is
+ * evidence about compliance, not capability. Averaging it in with race-effort
+ * work pulls "current pace" toward "average training pace," which understates
+ * anyone training polarized. Step 3's top-slice keeps this a capability
+ * estimate — what the fastest recent sessions show is sustainable — rather
+ * than a volume-weighted average of every intensity that got logged.
+ *
+ * An earlier version discounted sessions the two athletes trained on the same
+ * day, on the theory that riding together means riding at the slower one's
+ * tempo. It does not: these two start together and ride their own speeds,
+ * which is why one 26 August ride reads 96.8km at 23.5km/h and the other
+ * 183.2km at 30.2km/h. Nothing here cares who else was out.
  */
 
 import type { GarminActivity, GarminMetrics } from '@/lib/types'
@@ -76,6 +87,11 @@ const MIN_KM: Record<Sport3, number> = { run: 3, bike: 15, swim: 0.4 }
 export const PACE_BOUNDS: Record<Sport3, [number, number]> = { run: [3, 10], bike: [1.2, 4.5], swim: [15, 50] }
 const HALF_LIFE_DAYS = 14
 const LOOKBACK_DAYS = 56
+// How much of the lookback window actually measures capability rather than
+// planned-easy compliance. Floored at 3 samples so an athlete with only a
+// handful of qualifying sessions isn't scored off a single lucky one.
+const TOP_FRACTION = 0.4
+const MIN_TOP_SAMPLES = 3
 
 export const RACE_KM: Record<Sport3, number> = { swim: RACE.swimKm, bike: RACE.bikeKm, run: RACE.runKm }
 
@@ -103,11 +119,27 @@ function collectSamples(activities: GarminActivity[], sport: Sport3, asOf: strin
   const samples: Sample[] = []
   for (const a of dedupeActivities(activities)) {
     if (a.date == null || a.date > asOf || sportOfActivity(a.type) !== sport) continue
-    const km = (a.distanceMeters ?? 0) / 1000
+    const kmRaw = (a.distanceMeters ?? 0) / 1000
     // Moving time, not timer time: this is a capability estimate, and the rest
     // between reps is not evidence about how fast anyone swims.
     const min = paceSeconds(a) / 60
-    if (km < MIN_KM[sport] || min <= 0) continue
+    if (kmRaw < MIN_KM[sport] || min <= 0) continue
+    // A recovery-effort ride is not evidence of race pace even once it clears
+    // the distance gate — a headwind day ridden easy reads exactly like a hard
+    // day ridden into the wind unless effort is checked. Zone 1.5 (the
+    // midpoint of this activity's own Zone 1 and Zone 2 floors, so it tracks
+    // this athlete's zones as Garmin recalculates them) is the cutoff; below
+    // it, the sample says nothing about capability and is dropped rather than
+    // averaged in.
+    if (sport === 'bike' && a.averageHr != null && a.hrZone1Floor != null && a.hrZone2Floor != null) {
+      const zone15Floor = (a.hrZone1Floor + a.hrZone2Floor) / 2
+      if (a.averageHr < zone15Floor) continue
+    }
+    // The race is flat; training isn't. Climbing costs time a flat km never
+    // would, so a hilly ride's raw speed understates flat capability — credit
+    // the climbing as though it had bought extra flat distance instead, at
+    // the standard randonneuring rule of 100m of gain per flat km.
+    const km = sport === 'bike' ? kmRaw + (a.elevationGain ?? 0) / 100 : kmRaw
     const pace = min / km
     const [lo, hi] = PACE_BOUNDS[sport]
     if (pace < lo || pace > hi) continue
@@ -149,18 +181,24 @@ function forecastDiscipline(
     }
   }
 
-  const wSum = samples.reduce((s, x) => s + x.weight, 0)
-  const wMean = samples.reduce((s, x) => s + x.pace * x.weight, 0) / wSum
+  // Capability, not compliance: keep only the fastest slice of samples, so
+  // deliberately-easy Z1/Z2 sessions don't drag the estimate toward average
+  // training pace. See file header.
+  const topCount = Math.min(n, Math.max(MIN_TOP_SAMPLES, Math.ceil(n * TOP_FRACTION)))
+  const top = [...samples].sort((a, b) => a.pace - b.pace).slice(0, topCount)
+
+  const wSum = top.reduce((s, x) => s + x.weight, 0)
+  const wMean = top.reduce((s, x) => s + x.pace * x.weight, 0) / wSum
 
   // Weighted linear trend of pace vs time (x = -ageDays, so slope < 0 = improving)
   const daysToRace = Math.max(0, daysBetween(asOf, TARGET_DATE))
-  const dateSpread = Math.max(...samples.map((x) => x.ageDays)) - Math.min(...samples.map((x) => x.ageDays))
+  const dateSpread = Math.max(...top.map((x) => x.ageDays)) - Math.min(...top.map((x) => x.ageDays))
   let projected = wMean
-  if (n >= 4 && dateSpread >= 7) {
-    const xMean = samples.reduce((s, x) => s + -x.ageDays * x.weight, 0) / wSum
+  if (top.length >= 4 && dateSpread >= 7) {
+    const xMean = top.reduce((s, x) => s + -x.ageDays * x.weight, 0) / wSum
     let sxx = 0
     let sxy = 0
-    for (const x of samples) {
+    for (const x of top) {
       const dx = -x.ageDays - xMean
       sxx += x.weight * dx * dx
       sxy += x.weight * dx * (x.pace - wMean)
@@ -173,11 +211,16 @@ function forecastDiscipline(
   // A hot fortnight can't promise miracles; a rough one isn't destiny either
   projected = clamp(projected, wMean * 0.92, wMean * 1.03)
 
-  // Spread of adjusted paces around the weighted mean, floored, inflated by
-  // forecast horizon (further out = less certain)
-  const variance = samples.reduce((s, x) => s + x.weight * (x.pace - wMean) ** 2, 0) / wSum
+  // Spread around the weighted mean, floored, inflated by forecast horizon
+  // (further out = less certain). Measured against *all* collected samples,
+  // not just the top slice: if the window is all easy volume with no recent
+  // hard effort, that gap between typical and best pace is real uncertainty
+  // about whether capability transfers to race day, not noise to discard —
+  // a top-slice-only variance would read as false confidence instead.
+  const fullWSum = samples.reduce((s, x) => s + x.weight, 0)
+  const variance = samples.reduce((s, x) => s + x.weight * (x.pace - wMean) ** 2, 0) / fullWSum
   let sigma = Math.sqrt(variance)
-  sigma = Math.max(sigma, projected * (n < 3 ? 0.06 : 0.025))
+  sigma = Math.max(sigma, projected * (top.length < 3 ? 0.06 : 0.025))
   sigma *= 1 + daysToRace / 90
 
   // The one case where the number is not a logged session: the swim seed.

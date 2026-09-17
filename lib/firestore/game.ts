@@ -50,7 +50,7 @@ export const setMonthGoal = (uid: string, goalId: string, on: boolean) => setFla
 // standing, this is one document per day. Mixing them would make a doc that
 // grows without bound.
 
-import type { FocusDayDoc } from '../types/game'
+import type { FocusDayDoc, FocusDayReview } from '../types/game'
 
 const focusRef = (uid: string, date: string) => doc(db, 'users', uid, 'focus_days', date)
 
@@ -75,4 +75,35 @@ export async function setBlockPomodoros(
     },
     { merge: true }
   )
+}
+
+/**
+ * One half-hour slot's line. Blank clears the slot rather than storing an
+ * empty string, so a mistyped-then-cleared slot leaves no trace.
+ */
+export async function setSlotNote(
+  uid: string,
+  date: string,
+  slotId: string,
+  text: string
+): Promise<void> {
+  const trimmed = text.trim()
+  await setDoc(
+    focusRef(uid, date),
+    {
+      date,
+      slots: { [slotId]: trimmed ? trimmed : deleteField() },
+      updatedAt: serverTimestamp(),
+    },
+    { merge: true }
+  )
+}
+
+/** Store the end-of-day read. Overwrites wholesale — a re-score replaces. */
+export async function setFocusDayReview(
+  uid: string,
+  date: string,
+  review: FocusDayReview
+): Promise<void> {
+  await setDoc(focusRef(uid, date), { date, review, updatedAt: serverTimestamp() }, { merge: true })
 }

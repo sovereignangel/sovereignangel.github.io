@@ -20,6 +20,8 @@ import { ExecToday, type PipedLane } from '@/components/exec/ExecToday'
 import { ExecCampaign } from '@/components/exec/ExecCampaign'
 import { ExecGoals } from '@/components/exec/ExecGoals'
 import { ExecBlocks } from '@/components/exec/ExecBlocks'
+import { ExecSvencele } from '@/components/exec/ExecSvencele'
+import { tripIsLive } from '@/lib/exec/svencele'
 import { SpotIcon, WaveDivider } from '@/components/wind/WindIcons'
 import { SportIcon, CourseDivider } from '@/components/ironman/IronmanIcons'
 
@@ -112,15 +114,6 @@ const SPOT_STATE_COLOR: Record<SpotStatus['state'], string> = {
   flat: 'text-surf-faint',
 }
 
-function fmtDate(date: string): string {
-  return new Date(date + 'T12:00:00').toLocaleDateString('en-GB', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'short',
-    timeZone: TIMEZONE,
-  })
-}
-
 function SportChip({ sport }: { sport: Sport }) {
   const color = SPORT_COLOR[sport]
   return (
@@ -204,78 +197,78 @@ function kiteEventUrl(day: ExecWindDay, block: { startHour: number; endHour: num
 /** Every spot's standing, in the same words /wind uses — so one order never looks like a contradiction. */
 function SpotLedger({ statuses, theme }: { statuses: SpotStatus[]; theme: Theme }) {
   return (
-    <div className={`mt-1.5 pt-1.5 border-t ${theme.rule}`}>
-      <div className={`text-[10px] ${theme.muted} mb-1`}>All four spots, same call as the forecast grid</div>
-      <div className="flex flex-wrap gap-x-3 gap-y-1">
-        {statuses.map((s) => (
-          <span key={s.spotSlug} className="inline-flex items-center gap-1">
-            <SpotIcon slug={s.spotSlug} className={`w-3 h-3 shrink-0 ${SPOT_STATE_COLOR[s.state]}`} />
-            <span className={`font-mono text-[10px] font-medium ${theme.ink}`}>{s.spotName}</span>
-            <span className={`font-mono text-[10px] ${SPOT_STATE_COLOR[s.state]}`}>{s.label}</span>
-          </span>
-        ))}
-      </div>
+    <div className="flex flex-wrap gap-x-2.5 gap-y-0.5">
+      {statuses.map((s) => (
+        <span key={s.spotSlug} className="inline-flex items-center gap-1">
+          <SpotIcon slug={s.spotSlug} className={`w-3 h-3 shrink-0 ${SPOT_STATE_COLOR[s.state]}`} />
+          <span className={`font-mono text-[10px] font-medium ${theme.ink}`}>{s.spotName}</span>
+          <span className={`font-mono text-[10px] ${SPOT_STATE_COLOR[s.state]}`}>{s.label}</span>
+        </span>
+      ))}
     </div>
   )
 }
 
+/**
+ * Today or tomorrow's window, in two lines.
+ *
+ * The qualifiers that used to get their own lines — a possible window, drizzle
+ * in the hour, the day's note — ride along as one muted clause, because on a
+ * tear sheet a caveat that costs a line costs it every day, including the days
+ * there is no caveat.
+ */
 function KiteDay({
   label,
   day,
-  statuses,
   theme,
 }: {
   label: string
   day: ExecWindDay
-  statuses: SpotStatus[]
   theme: Theme
 }) {
+  const p = day.pick
+  const caveats = p
+    ? [
+        p.possible ? 'EU model only — recheck' : null,
+        p.drizzleMm !== undefined ? `${precipLabel(p.drizzleMm)} ~${p.drizzleMm}mm/h — still kiteable` : null,
+        day.note || null,
+      ].filter(Boolean)
+    : []
   return (
-    <div className={`border rounded-lg p-2.5 ${day.pick ? theme.panelLive : theme.panel}`}>
-      <div className="flex items-baseline gap-2 mb-1.5">
-        <span className={`text-[11px] font-semibold ${theme.ink}`}>{label}</span>
-        <span className={`font-mono text-[9px] ${theme.muted}`}>{fmtDate(day.date)}</span>
-        {day.weekend && (
-          <span className={`font-mono text-[9px] uppercase px-1.5 py-0.5 rounded-md border ${theme.panel} ${theme.muted}`}>
-            weekend · 2h x 2
-          </span>
+    <div className={`border rounded-lg px-2 py-1.5 ${p ? theme.panelLive : theme.panel}`}>
+      <div className="flex items-baseline gap-1.5 flex-wrap">
+        <span className={`text-[11px] font-semibold shrink-0 ${theme.ink}`}>{label}</span>
+        {p ? (
+          <>
+            <SpotIcon slug={p.spotSlug} className={`w-3.5 h-3.5 shrink-0 self-center ${theme.accent}`} />
+            <span className={`text-[11px] font-semibold ${theme.ink}`}>{p.spotName}</span>
+            <span className={`font-mono text-[11px] font-semibold ml-auto ${theme.ink}`}>
+              {fmtWindow(p.startHour, p.endHour)} &middot; {p.avgKn} kn
+            </span>
+          </>
+        ) : (
+          <span className={`text-[10px] ${theme.muted}`}>No rideable window — train, study, recover.</span>
         )}
       </div>
-      {day.pick ? (
-        <>
-          <div className={`flex items-center gap-1.5 text-[11px] ${theme.ink} mb-0.5`}>
-            <SpotIcon slug={day.pick.spotSlug} className={`w-3.5 h-3.5 shrink-0 ${theme.accent}`} />
-            <span className="font-semibold">{day.pick.spotName}</span>
-            <span className={theme.muted}>· {day.pick.area}</span>
-          </div>
-          <div className={`font-mono text-[11px] font-semibold ${theme.ink} mb-0.5`}>
-            {fmtWindow(day.pick.startHour, day.pick.endHour)} · {day.pick.avgKn} kn
-            <span className={`font-medium ${theme.muted}`}> · gusts {day.pick.gustKn} · {day.pick.dirLabel} · {day.pick.kiteSize}</span>
-          </div>
-          {day.pick.possible && (
-            <div className="text-[10px] text-surf-sun-ink mb-1">possible — EU model only, recheck closer to the hour</div>
-          )}
-          {day.pick.drizzleMm !== undefined && (
-            <div className={`text-[10px] ${theme.muted} mb-1`}>
-              {precipLabel(day.pick.drizzleMm)} in the window (~{day.pick.drizzleMm}mm/h) — still kiteable, ride through it
-            </div>
-          )}
-          {day.note && <div className={`text-[10px] ${theme.muted} mb-1.5`}>{day.note}</div>}
-          <div className="flex flex-wrap gap-1.5 mt-1.5">
-            {day.blocks.map((b, i) => (
-              <CalendarButton
-                key={i}
-                theme={theme}
-                href={kiteEventUrl(day, b)}
-                label={`${fmtWindow(b.startHour, b.endHour)} at ${b.spotName}`}
-              />
-            ))}
-          </div>
-        </>
-      ) : (
-        <div className={`text-[10px] ${theme.muted} py-1`}>No rideable window — train, study, recover.</div>
+      {p && (
+        <div className={`font-mono text-[10px] ${theme.muted} truncate`}>
+          gusts {p.gustKn} &middot; {p.dirLabel} &middot; {p.kiteSize}
+          {day.weekend ? ' · weekend 2h x 2' : ''}
+          {caveats.length > 0 ? ` · ${caveats.join(' · ')}` : ''}
+        </div>
       )}
-      <SpotLedger statuses={statuses} theme={theme} />
+      {p && day.blocks.length > 0 && (
+        <div className="flex flex-wrap gap-1 mt-1">
+          {day.blocks.map((b, i) => (
+            <CalendarButton
+              key={i}
+              theme={theme}
+              href={kiteEventUrl(day, b)}
+              label={`${fmtWindow(b.startHour, b.endHour)} at ${b.spotName}`}
+            />
+          ))}
+        </div>
+      )}
     </div>
   )
 }
@@ -298,52 +291,54 @@ function ironmanEventUrl(day: PlanDay, slot: IronmanSlot): string {
   })
 }
 
+/**
+ * Today or tomorrow's session, one line each.
+ *
+ * The prescription paragraph under every session is gone from here — it is on
+ * the title attribute and in full at /ironman. What /exec has to answer is
+ * what is on today and when it starts; what the intervals are is a question
+ * you ask once you are out of the door.
+ */
 function IronmanDay({ label, day, slot, theme }: { label: string; day: PlanDay | undefined; slot: IronmanSlot | null; theme: Theme }) {
   if (!day) {
     return (
-      <div className={`border rounded-lg p-2.5 ${theme.panel}`}>
-        <div className={`text-[11px] font-semibold ${theme.ink} mb-1`}>{label}</div>
-        <div className={`text-[10px] ${theme.muted} py-1`}>No session on the plan.</div>
+      <div className={`border rounded-lg px-2 py-1.5 ${theme.panel}`}>
+        <span className={`text-[11px] font-semibold ${theme.ink}`}>{label}</span>
+        <span className={`text-[10px] ml-1.5 ${theme.muted}`}>No session on the plan.</span>
       </div>
     )
   }
   const working = day.sessions.some((s) => s.sport !== 'rest')
   return (
-    <div className={`border rounded-lg p-2.5 ${working ? theme.panelLive : theme.panel}`}>
-      <div className="flex items-baseline gap-2 mb-1.5 flex-wrap">
-        <span className={`text-[11px] font-semibold ${theme.ink}`}>{label}</span>
-        <span className={`font-mono text-[9px] ${theme.muted}`}>{fmtDate(day.date)}</span>
-        <span className={`font-mono text-[9px] uppercase px-1.5 py-0.5 rounded-md border ${theme.panel} ${theme.muted}`}>
-          {day.phase}
-        </span>
+    <div className={`border rounded-lg px-2 py-1.5 ${working ? theme.panelLive : theme.panel}`}>
+      <div className="flex items-baseline gap-1.5 flex-wrap">
+        <span className={`text-[11px] font-semibold shrink-0 ${theme.ink}`}>{label}</span>
+        <span className={`font-mono text-[9px] uppercase ${theme.muted}`}>{day.phase}</span>
+        {slot && (
+          <span className={`font-mono text-[11px] font-semibold ml-auto ${theme.ink}`}>
+            {fmtHourMin(slot.startMin)}&ndash;{fmtHourMin(slot.endMin)}
+            {slot.moved && <span className={`font-normal ${theme.muted}`}> &middot; moved</span>}
+          </span>
+        )}
       </div>
-      <div className="space-y-1.5 mb-1.5">
+      <div className="space-y-0.5 mt-1">
         {day.sessions.map((s, i) => (
-          <div key={i}>
-            <div className="flex items-center gap-2 flex-wrap">
-              <SportChip sport={s.sport} />
-              <span className={`text-[11px] font-semibold ${theme.ink}`}>{s.title}</span>
-              {s.durationMin > 0 && (
-                <span className={`font-mono text-[10px] ${theme.muted} ml-auto shrink-0`}>
-                  {s.durationMin}min{s.distanceKm ? ` · ${s.distanceKm}km` : ''}
-                  {s.zone !== '-' ? ` · ${s.zone}` : ''}
-                </span>
-              )}
-            </div>
-            <p className={`text-[10px] ${theme.muted} leading-relaxed`}>{s.detail}</p>
+          <div key={i} className="flex items-center gap-1.5 flex-wrap" title={s.detail}>
+            <SportChip sport={s.sport} />
+            <span className={`text-[11px] font-semibold truncate ${theme.ink}`}>{s.title}</span>
+            {s.durationMin > 0 && (
+              <span className={`font-mono text-[10px] ml-auto shrink-0 ${theme.muted}`}>
+                {s.durationMin}min{s.distanceKm ? ` · ${s.distanceKm}km` : ''}
+                {s.zone !== '-' ? ` · ${s.zone}` : ''}
+              </span>
+            )}
           </div>
         ))}
       </div>
-      {slot ? (
-        <div className="flex items-center gap-2 flex-wrap mt-1.5">
-          <span className={`font-mono text-[10px] font-medium ${theme.ink}`}>
-            {fmtHourMin(slot.startMin)}–{fmtHourMin(slot.endMin)}
-          </span>
-          {slot.moved && <span className={`text-[10px] ${theme.muted}`}>moved after the kite window</span>}
+      {slot && (
+        <div className="mt-1">
           <CalendarButton theme={theme} href={ironmanEventUrl(day, slot)} label="Add to calendar" />
         </div>
-      ) : (
-        <div className={`text-[10px] ${theme.muted}`}>Rest day — nothing to schedule.</div>
       )}
     </div>
   )
@@ -394,8 +389,10 @@ export default async function ExecPage() {
 
   const windToday = buildExecWindDay(today, sessions, possibles)
   const windTomorrow = buildExecWindDay(tomorrow, sessions, possibles)
+  // Only today's ledger is rendered: tomorrow's pick is on the card already,
+  // and a second four-spot row costs a line every day to settle a question
+  // that is not yet live.
   const statusToday = spotStatuses(today, forecasts)
-  const statusTomorrow = spotStatuses(tomorrow, forecasts)
   const planToday = getPlanDay(today)
   const planTomorrow = getPlanDay(tomorrow)
   const slotToday = planToday ? ironmanSlot(planToday, windToday.blocks) : null
@@ -430,55 +427,64 @@ export default async function ExecPage() {
 
           <ExecGoals date={today} />
 
+          {tripIsLive(today) && <ExecSvencele date={today} />}
+
           <ExecToday date={today} kite={kiteLane(windToday)} ironman={ironmanLane(planToday, slotToday)} />
 
           <ExecBlocks date={today} />
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 items-start">
-            {/* Each column stacks a body lane over a campaign lane, so a rest day or a
-                flat sea on one side never leaves a hole beside a full one. */}
-            <div className="flex flex-col gap-3">
+          {/* Two rows of two: the body lanes, then the campaign lanes. A tear
+              sheet is read across as much as down — kite beside ironman is the
+              morning, cecon beside armstrong is the desk. */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 items-start mb-3">
             <Card title="Kite — Wind Windows" theme={SURF} right={<DetailLink href="/wind" theme={SURF} />}>
               {windError && (
-                <div className="text-[10px] text-surf-coral mb-2">Forecast service unreachable — refresh in a minute.</div>
+                <div className="text-[10px] text-surf-coral mb-1.5">Forecast service unreachable — refresh in a minute.</div>
               )}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-2.5 mb-2.5">
-                <KiteDay label="Today" day={windToday} statuses={statusToday} theme={SURF} />
-                <KiteDay label="Tomorrow" day={windTomorrow} statuses={statusTomorrow} theme={SURF} />
+              <div className="space-y-1.5 mb-1.5">
+                <KiteDay label="Today" day={windToday} theme={SURF} />
+                <KiteDay label="Tomorrow" day={windTomorrow} theme={SURF} />
               </div>
-              <div className={`pt-2 border-t ${SURF.rule}`}>
-                <div className="font-serif text-[12px] font-semibold text-surf-deep mb-1.5">Top 3 Drills</div>
+              <div className={`pt-1.5 mb-1.5 border-t ${SURF.rule}`}>
+                <SpotLedger statuses={statusToday} theme={SURF} />
+              </div>
+              <div className={`pt-1.5 border-t ${SURF.rule}`}>
+                <div className="font-serif text-[12px] font-semibold text-surf-deep mb-1">Top 3 Drills</div>
                 <ExecDrills />
               </div>
             </Card>
 
-            <ExecCampaign id="complexecon" laneId="complexecon" date={today} />
-            </div>
-
-            <div className="flex flex-col gap-3">
             <Card title="Ironman — Training" theme={IRON} right={<DetailLink href="/ironman" theme={IRON} />}>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-2.5 mb-2.5">
+              <div className="space-y-1.5 mb-1.5">
                 <IronmanDay label="Today" day={planToday} slot={slotToday} theme={IRON} />
                 <IronmanDay label="Tomorrow" day={planTomorrow} slot={slotTomorrow} theme={IRON} />
               </div>
-              <div className={`pt-2 border-t ${IRON.rule}`}>
-                <div className="font-serif text-[12px] font-semibold text-iron-deep mb-1.5">Goal Odds — NYC Sep 26</div>
+              <div className={`pt-1.5 border-t ${IRON.rule}`}>
+                <div className="font-serif text-[12px] font-semibold text-iron-deep mb-1">Goal Odds — NYC Sep 26</div>
                 <ExecIronmanLive today={today} />
               </div>
             </Card>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 items-start">
+            <ExecCampaign id="complexecon" laneId="complexecon" date={today} />
             <ExecCampaign id="armstrong" laneId="armstrong" date={today} />
-            </div>
           </div>
 
           <p className="text-[10px] text-surf-muted mt-3">
             Wind from Open-Meteo (GFS + EU blend), cached half an hour. A spot the primary model calls offshore,
             over your gust cap, or rained out is never recommended, even when the second model finds a window there.
             Training slots default to 07:00 and step aside when the wind window claims the morning. Calendar events land
-            in Palanga time. The paper and the fund run on dated blocks with an ordered ladder inside: the block
-            sets the deadline, the ladder sets the order, and an unfinished unit stays at the head of the queue
-            rather than disappearing off a calendar. The day turns over at Palanga midnight, in an open tab as well
-            as on a fresh load. The six hours are counted in pomodoros rather than timed, and they are a floor —
-            what happens outside them is deliberately not tracked.
+            in Palanga time. Goal odds are a capability estimate, not an average: only the fastest recent slice of
+            sessions is fitted, rides below Zone 1.5 are dropped as compliance rather than capability, and climbing is
+            credited as flat-equivalent distance — while the spread that scores the probability is measured against
+            every session, so a window of easy volume reads as uncertainty rather than confidence. The paper and the
+            fund run on dated blocks with an ordered ladder inside: the block sets the deadline, the ladder sets the
+            order, and an unfinished unit stays at the head of the queue rather than disappearing off a calendar. The
+            day turns over at Palanga midnight, in an open tab as well as on a fresh load. The six hours are counted in
+            pomodoros rather than timed, and they are a floor — what happens outside them is deliberately not tracked.
+            The twelve half-hour lines are written as the day runs, not recalled at the end of it, and the end-of-day
+            read scores them against the three goals rather than against the twelve.
           </p>
         </div>
       </main>

@@ -66,3 +66,66 @@ export function hoursFrom(counts: Record<string, number>): number {
     return sum + (done / b.pomodoros) * b.hours
   }, 0)
 }
+
+// ── The half-hour log ─────────────────────────────────────────────────────
+/**
+ * Twelve half-hour slots, four to each two-hour block.
+ *
+ * The pomodoros answer "did the six hours land." These answer "what did they
+ * buy" — one line per half hour, written as it happens rather than
+ * reconstructed at night, because a day recalled at 22:00 is a day rewritten
+ * to look better than it was.
+ *
+ * Slots carry no clock time. The blocks were never pinned to hours (the wind
+ * moves the morning, and a session moved is not a session skipped), so a slot
+ * labelled 09:30 would be wrong most days. It is the Nth half hour of the
+ * block, and the block is the thing with a shape.
+ */
+
+export interface FocusSlot {
+  /** `<blockId>-<n>`, stable across a block's label changing. */
+  id: string
+  blockId: string
+  /** 1-4 within the block. */
+  index: number
+  /** Short label for a cell too narrow for words — "R2", "D1·3". */
+  short: string
+}
+
+export const SLOTS_PER_BLOCK = 4
+
+const SHORT_PREFIX: Record<string, string> = {
+  research: 'R',
+  'deep-1': 'D1',
+  'deep-2': 'D2',
+}
+
+export const SLOTS: FocusSlot[] = BLOCKS.flatMap((block) =>
+  Array.from({ length: SLOTS_PER_BLOCK }, (_, i) => ({
+    id: `${block.id}-${i + 1}`,
+    blockId: block.id,
+    index: i + 1,
+    short: `${SHORT_PREFIX[block.id] ?? block.id}${SLOTS_PER_BLOCK > 1 ? i + 1 : ''}`,
+  }))
+)
+
+export const TOTAL_SLOTS = SLOTS.length
+
+/** Slots with something written in them. */
+export function filledSlots(slots: Record<string, string> | undefined): number {
+  if (!slots) return 0
+  return SLOTS.filter((s) => (slots[s.id] || '').trim().length > 0).length
+}
+
+/** The day's log in block order, as `{ short, text }` — what the reviewer reads. */
+export function logLines(
+  slots: Record<string, string> | undefined
+): Array<{ slot: FocusSlot; block: FocusBlock; text: string }> {
+  if (!slots) return []
+  const byId = new Map(BLOCKS.map((b) => [b.id, b]))
+  return SLOTS.flatMap((slot) => {
+    const text = (slots[slot.id] || '').trim()
+    const block = byId.get(slot.blockId)
+    return text && block ? [{ slot, block, text }] : []
+  })
+}

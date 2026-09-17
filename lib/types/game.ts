@@ -28,5 +28,41 @@ export interface GameProgressDoc {
 export interface FocusDayDoc {
   date: string
   pomodoros?: Record<string, number>
+  /**
+   * What actually got done, half hour by half hour — slot id → one line.
+   *
+   * The pomodoro count says six hours landed; this says what they bought.
+   * Twelve slots to a day, four to each two-hour block, keyed `<blockId>-<n>`
+   * so a slot always carries which block it belonged to. An empty or cleared
+   * slot is deleted rather than stored blank — a day with two entries should
+   * be a document with two entries.
+   */
+  slots?: Record<string, string>
+  /** The end-of-day read on the log. Absent until it is asked for. */
+  review?: FocusDayReview
   updatedAt?: import('firebase/firestore').Timestamp
+}
+
+/**
+ * The end-of-day verdict on a day's log — generated, not typed.
+ *
+ * Scored against the three broad goals rather than against the twelve slots:
+ * a full day of banked hours that moved none of the three is the failure this
+ * is meant to catch, and a half-empty day that moved one is not.
+ */
+export interface FocusDayReview {
+  /** One sentence on what the day actually bought. */
+  verdict: string
+  /** 0-10. How much of the day's output compounds rather than evaporates. */
+  leverage: number
+  /** One line on why the leverage score is what it is. */
+  leverageNote: string
+  /** Per-goal movement, goal id → what moved it (or that nothing did). */
+  goals: Array<{ id: string; name: string; moved: boolean; note: string }>
+  /** The single change that would most raise tomorrow's leverage. */
+  tomorrow: string
+  /** ISO timestamp the review was generated. */
+  generatedAt: string
+  /** Model that wrote it, for when a verdict reads oddly months later. */
+  model?: string
 }

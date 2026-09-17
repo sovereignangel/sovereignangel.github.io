@@ -9,9 +9,32 @@ import { GarminConnect } from 'garmin-connect'
 import { adminDb } from '@/lib/firebase-admin'
 import { FieldValue } from 'firebase-admin/firestore'
 import type { GarminMetrics } from '@/lib/types/health'
+import { SPORT_TYPES } from '@/lib/ironman/adapt'
 
 const GC_API = 'https://connectapi.garmin.com'
 const TOKEN_DOC = 'system/garmin_tokens'
+
+/**
+ * This activity's Garmin-configured HR zone 1 and zone 2 floors, bpm.
+ *
+ * Only fetched for bike activities — the one place the pace model currently
+ * needs them, to tell a Zone 2 ride from a recovery spin that happens to
+ * clear the distance gate. One extra request per bike activity; null on
+ * anything without HR data or where the lookup fails, which the pace model
+ * already treats as "can't gate this one, keep it."
+ */
+async function fetchHrZoneFloors(
+  garmin: any,
+  activityId: number
+): Promise<{ hrZone1Floor: number | null; hrZone2Floor: number | null }> {
+  try {
+    const zones = await garmin.get<any>(`${GC_API}/activity-service/activity/${activityId}/hrTimeInZones`)
+    const floor = (n: number) => zones?.find((z: any) => z.zoneNumber === n)?.zoneLowBoundary ?? null
+    return { hrZone1Floor: floor(1), hrZone2Floor: floor(2) }
+  } catch {
+    return { hrZone1Floor: null, hrZone2Floor: null }
+  }
+}
 
 // ─── Token Persistence ──────────────────────────────────────────────────
 
@@ -323,8 +346,15 @@ export async function syncRecentActivities(garmin: GarminConnect, col: any, limi
   )
   if (!Array.isArray(acts)) return
 
+  const bikeTypes = new Set(SPORT_TYPES.bike)
+
   for (const a of acts) {
     if (!a.activityId) continue
+    // Only rides need zone floors, and only rides with HR to gate against.
+    const zones =
+      bikeTypes.has(a.activityType?.typeKey) && num(a.averageHR) != null
+        ? await fetchHrZoneFloors(garmin, a.activityId)
+        : { hrZone1Floor: null, hrZone2Floor: null }
     await col.doc(String(a.activityId)).set(
       {
         activityId: a.activityId,
@@ -347,6 +377,8 @@ export async function syncRecentActivities(garmin: GarminConnect, col: any, limi
         trainingLoad: num(a.activityTrainingLoad),
         vo2max: num(a.vO2MaxValue),
         locationName: a.locationName ?? null,
+        hrZone1Floor: zones.hrZone1Floor,
+        hrZone2Floor: zones.hrZone2Floor,
         source: 'garmin',
         syncedAt: FieldValue.serverTimestamp(),
       },
