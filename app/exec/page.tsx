@@ -446,27 +446,34 @@ export default async function ExecPage() {
               {windError && (
                 <div className="text-[10px] text-surf-coral mb-1.5">Forecast service unreachable — refresh in a minute.</div>
               )}
-              <div className="space-y-1.5 mb-1.5">
-                <KiteDay label="Today" day={windToday} theme={SURF} />
-                <KiteDay label="Tomorrow" day={windTomorrow} theme={SURF} />
-              </div>
-              <div className={`pt-1.5 mb-1.5 border-t ${SURF.rule}`}>
-                <SpotLedger statuses={statusToday} theme={SURF} />
-              </div>
-              <div className={`pt-1.5 border-t ${SURF.rule}`}>
-                <div className="font-serif text-[12px] font-semibold text-surf-deep mb-1">Top 3 Drills</div>
-                <ExecDrills />
+              {/* Days left, ladder right. The windows are narrow text and the
+                  drills are wide text; stacked, the card was twice as tall as it
+                  needed to be and the drills fell below the fold. */}
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-x-3 gap-y-1.5">
+                <div className="md:col-span-5 space-y-1.5">
+                  <KiteDay label="Today" day={windToday} theme={SURF} />
+                  <KiteDay label="Tomorrow" day={windTomorrow} theme={SURF} />
+                  <div className={`pt-1.5 border-t ${SURF.rule}`}>
+                    <SpotLedger statuses={statusToday} theme={SURF} />
+                  </div>
+                </div>
+                <div className={`md:col-span-7 pt-1.5 md:pt-0 border-t md:border-t-0 md:border-l md:pl-3 ${SURF.rule}`}>
+                  <div className="font-serif text-[12px] font-semibold text-surf-deep mb-1">Top 3 Drills</div>
+                  <ExecDrills />
+                </div>
               </div>
             </Card>
 
             <Card title="Ironman — Training" theme={IRON} right={<DetailLink href="/ironman" theme={IRON} />}>
-              <div className="space-y-1.5 mb-1.5">
-                <IronmanDay label="Today" day={planToday} slot={slotToday} theme={IRON} />
-                <IronmanDay label="Tomorrow" day={planTomorrow} slot={slotTomorrow} theme={IRON} />
-              </div>
-              <div className={`pt-1.5 border-t ${IRON.rule}`}>
-                <div className="font-serif text-[12px] font-semibold text-iron-deep mb-1">Goal Odds — NYC Sep 26</div>
-                <ExecIronmanLive today={today} />
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-x-3 gap-y-1.5">
+                <div className="md:col-span-5 space-y-1.5">
+                  <IronmanDay label="Today" day={planToday} slot={slotToday} theme={IRON} />
+                  <IronmanDay label="Tomorrow" day={planTomorrow} slot={slotTomorrow} theme={IRON} />
+                </div>
+                <div className={`md:col-span-7 pt-1.5 md:pt-0 border-t md:border-t-0 md:border-l md:pl-3 ${IRON.rule}`}>
+                  <div className="font-serif text-[12px] font-semibold text-iron-deep mb-1">Goal Odds — NYC Sep 26</div>
+                  <ExecIronmanLive today={today} />
+                </div>
               </div>
             </Card>
           </div>
