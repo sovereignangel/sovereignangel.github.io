@@ -140,7 +140,7 @@ export function ExecGoals({ date: serverDate }: { date: string }) {
             <div>
               <Meter label="Ironman · 7d" done={athlete.trainH} target={athlete.trainTarget} accent={goal.accent} />
               <Meter label={`Water · ${athlete.windowLabel}`} done={athlete.waterH} target={athlete.waterTarget} accent={goal.accent} />
-              <div className="text-[10px] leading-snug mt-1" style={{ color: FAINT }}>
+              <div className="hidden sm:block text-[10px] leading-snug mt-1" style={{ color: FAINT }}>
                 Recorded, not ticked — Garmin and the session log.
               </div>
             </div>

@@ -69,6 +69,17 @@ const WARN = '#8a6420'
 
 const fmtH = (n: number) => (n % 1 === 0 ? `${n}h` : `${n.toFixed(1)}h`)
 
+/** The hour in Palanga, ticked every minute. The debrief is a local-time ritual. */
+function useLocalHour(): number {
+  const read = () => Number(new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Vilnius', hour: '2-digit', hour12: false }).format(new Date()))
+  const [hour, setHour] = useState(read)
+  useEffect(() => {
+    const id = setInterval(() => setHour(read()), 60_000)
+    return () => clearInterval(id)
+  }, [])
+  return hour
+}
+
 /** One block day's forecast, computed on the server so the tab renders instantly. */
 export interface SvenceleWind {
   date: string
@@ -427,6 +438,7 @@ export function ExecSvencele({
   const [doc, setDocState] = useState<TripProgressDoc>({})
   const [picked, setPicked] = useState<string | null>(null)
   const [tab, setTab] = useState<Tab>('block')
+  const hour = useLocalHour()
 
   const load = useCallback(async () => {
     if (!user) return setDocState({})
@@ -490,6 +502,15 @@ export function ExecSvencele({
   const tomorrow = useMemo(() => tomorrowReadiness(active.date, slots), [active.date, slots])
 
   const kiteCount = KITE_HOURS.filter((hh) => ticks.has(tripKey(active.date, hh.id))).length
+
+  // Open and lit from 22:00 on the day you are actually living, folded away the
+  // rest of the time — and on a day you are only planning, where a debrief of
+  // hours nobody has worked yet is noise.
+  const debriefHour = hour >= 22 && active.date === date
+  const warnings = lines.filter((l) => l.tone === 'warn').length
+  const [debriefOpen, setDebriefOpen] = useState<boolean | null>(null)
+  const showDebrief = debriefOpen ?? debriefHour
+  const setShowDebrief = (fn: (v: boolean) => boolean) => setDebriefOpen(fn(showDebrief))
   const disabled = !user
 
   return (
@@ -514,7 +535,7 @@ export function ExecSvencele({
       </div>
 
       {/* Block goals */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 mb-2.5">
+      <div className="grid grid-cols-3 gap-1.5 sm:gap-2 mb-2.5">
         {standings.map(({ goal, done: banked, pct, paceNeeded }) => {
           const color = TRIP_LANE_COLOR[goal.lane]
           const met = banked >= goal.target
@@ -581,7 +602,7 @@ export function ExecSvencele({
       {/* Day header */}
       <div className="border rounded-lg p-2 mb-2" style={{ borderColor: RULE }}>
         <div className="flex items-baseline gap-2 flex-wrap mb-0.5">
-          <span className="text-[11px] font-semibold" style={{ color: INK }}>{active.theme}</span>
+          <span className="text-[11px] font-semibold" style={{ color: INK }}>{active.label}</span>
           <span className="ml-auto font-mono text-[10px] tabular-nums" style={{ color: day.hours >= DAILY_FLOOR_H ? GOOD : INK }}>
             {fmtH(day.hours)}<span style={{ fontSize: 9, color: FAINT }}>/{DAILY_FLOOR_H}h</span>
           </span>
@@ -767,14 +788,32 @@ export function ExecSvencele({
         })}
       </div>
 
-      {/* Debrief */}
-      <div className="border rounded-lg p-2" style={{ borderColor: RULE }}>
-        <div className="flex items-baseline gap-2 flex-wrap mb-1.5">
+      {/* Debrief — folded away through the day, open and lit from 22:00 */}
+      <div
+        className="border rounded-lg p-2"
+        style={{ borderColor: debriefHour ? TRIP_LANE_COLOR.complexecon + '66' : RULE, backgroundColor: debriefHour ? TRIP_LANE_COLOR.complexecon + '08' : 'transparent' }}
+      >
+        <button
+          type="button"
+          onClick={() => setShowDebrief((v) => !v)}
+          aria-expanded={showDebrief}
+          className="w-full flex items-baseline gap-2 flex-wrap text-left"
+        >
           <span className="font-serif text-[12px] font-semibold" style={{ color: INK }}>Debrief</span>
+          {debriefHour && (
+            <span className="font-mono text-[9px] uppercase px-1 py-px rounded-sm border" style={{ color: TRIP_LANE_COLOR.complexecon, borderColor: TRIP_LANE_COLOR.complexecon + '55' }}>
+              due now
+            </span>
+          )}
           <span className="font-mono text-[10px]" style={{ color: MUTED }}>
-            computed from what you ticked, not from how the day felt
+            {warnings > 0 ? `${warnings} to answer for` : 'clean'}
           </span>
-        </div>
+          <span className="ml-auto font-mono text-[10px]" style={{ color: MUTED }}>
+            {showDebrief ? 'hide' : 'show'}
+          </span>
+        </button>
+        {showDebrief && (
+        <>
         <ul className="flex flex-col gap-0.5 mb-2">
           {lines.map((l, i) => (
             <li key={i} className="text-[10px] leading-snug flex gap-1.5" style={{ color: l.tone === 'warn' ? WARN : l.tone === 'good' ? GOOD : MUTED }}>
@@ -809,6 +848,8 @@ export function ExecSvencele({
               Set tomorrow
             </button>
           </div>
+        )}
+        </>
         )}
       </div>
 

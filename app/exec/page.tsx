@@ -483,8 +483,15 @@ export default async function ExecPage() {
             <ExecCampaign id="armstrong" laneId="armstrong" date={today} />
           </div>
 
-          <p className="text-[10px] text-surf-muted mt-3">
-            Wind from Open-Meteo (GFS + EU blend), cached half an hour. A spot the primary model calls offshore,
+          {/* The method note. True, and read once — on a phone it was a screen of
+              text between you and the bottom of the page every single day. */}
+          <details className="mt-3 group">
+            <summary className="text-[10px] text-surf-muted cursor-pointer list-none marker:hidden">
+              <span className="underline decoration-surf-rule underline-offset-2">How this page works</span>
+              <span className="ml-1 text-surf-faint group-open:hidden">&mdash; wind, slots, pace, midnight</span>
+            </summary>
+            <p className="text-[10px] text-surf-muted mt-1.5">
+              Wind from Open-Meteo (GFS + EU blend), cached half an hour. A spot the primary model calls offshore,
             over your gust cap, or rained out is never recommended, even when the second model finds a window there.
             Training slots default to 07:00 and step aside when the wind window claims the morning. Calendar events land
             in Palanga time. Goal odds are a capability estimate, not an average: only the fastest recent slice of
@@ -497,7 +504,8 @@ export default async function ExecPage() {
             pomodoros rather than timed, and they are a floor — what happens outside them is deliberately not tracked.
             The twelve half-hour lines are written as the day runs, not recalled at the end of it, and the end-of-day
             read scores them against the three goals rather than against the twelve.
-          </p>
+            </p>
+          </details>
         </div>
       </main>
     </AuthProvider>

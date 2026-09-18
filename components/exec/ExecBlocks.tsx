@@ -74,7 +74,7 @@ function ReviewPanel({ review }: { review: FocusDayReview }) {
           {review.leverageNote}
         </p>
       )}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-1.5 mb-1.5">
+      <div className="grid grid-cols-3 gap-1.5 mb-1.5">
         {review.goals.map((g) => (
           <div
             key={g.id}

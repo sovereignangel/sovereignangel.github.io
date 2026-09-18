@@ -347,7 +347,7 @@ export function ExecToday({ date: serverDate, kite, ironman }: ExecTodayProps) {
         )
       }
     >
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-1.5">
+      <div className="grid grid-cols-3 lg:grid-cols-5 gap-1.5">
         {LANES.map((lane) => (
           <LaneCell key={lane.id} lane={lane} state={states[lane.id]} />
         ))}
