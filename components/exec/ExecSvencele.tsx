@@ -535,7 +535,10 @@ export function ExecSvencele({
       </div>
 
       {/* Block goals */}
-      <div className="grid grid-cols-3 gap-1.5 sm:gap-2 mb-2.5">
+      {/* Three to a row on a phone, all five in one row on a desktop — the block
+          goals are read against each other, and a row that wraps reads as two
+          lists. */}
+      <div className="grid grid-cols-3 lg:grid-cols-5 gap-1.5 sm:gap-2 mb-2.5">
         {standings.map(({ goal, done: banked, pct, paceNeeded }) => {
           const color = TRIP_LANE_COLOR[goal.lane]
           const met = banked >= goal.target
