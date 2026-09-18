@@ -100,7 +100,10 @@ export function ExecGoals({ date: serverDate }: { date: string }) {
   }, [date, activities, manualKite])
 
   return (
-    <section className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-2.5">
+    // Four across at every width — the strip is the horizon, and a horizon that
+    // wraps onto a second row stops reading as one. On a phone that is about
+    // 90px a card, so the card stacks rather than truncates.
+    <section className="grid grid-cols-4 gap-1.5 sm:gap-2 mb-2.5">
       {standings.map(({ goal, daysLeft, phase, gate }) => (
         <a
           key={goal.id}
@@ -109,7 +112,7 @@ export function ExecGoals({ date: serverDate }: { date: string }) {
           className="border rounded-xl px-2 py-1.5 block min-w-0 transition-colors hover:border-current"
           style={{ borderColor: RULE, backgroundColor: '#fffdf7', color: goal.accent }}
         >
-          <div className="flex items-baseline gap-1.5 min-w-0">
+          <div className="flex items-baseline gap-1.5 min-w-0 flex-wrap sm:flex-nowrap">
             <span
               className="font-mono text-[9px] uppercase tracking-[0.4px] font-semibold shrink-0"
               style={{ color: goal.accent }}
@@ -118,20 +121,26 @@ export function ExecGoals({ date: serverDate }: { date: string }) {
             </span>
             {goal.mode === 'maintain' && (
               <span
-                className="font-mono text-[8px] uppercase px-1 py-px rounded-sm border shrink-0"
+                className="hidden sm:inline font-mono text-[8px] uppercase px-1 py-px rounded-sm border shrink-0"
                 style={{ color: MUTED, borderColor: FAINT }}
               >
                 maintain
               </span>
             )}
-            <span className="text-[11px] font-semibold truncate" style={{ color: INK }}>
-              {goal.target}
-            </span>
             <span
-              className="ml-auto font-mono text-[9px] tabular-nums shrink-0"
+              className="font-mono text-[9px] tabular-nums shrink-0 sm:order-last sm:ml-auto"
               style={{ color: daysLeft !== null && daysLeft < 120 ? goal.accent : MUTED }}
             >
               {daysLeft === null ? goal.deadlineLabel : monthsLabel(daysLeft)}
+            </span>
+            {/* Two lines on a narrow card, one on a wide one — the target is the
+                substance of the goal and truncating it to "Consistent prog…"
+                leaves the card saying nothing. */}
+            <span
+              className="text-[11px] font-semibold leading-snug w-full sm:w-auto sm:truncate line-clamp-2 sm:line-clamp-none"
+              style={{ color: INK }}
+            >
+              {goal.target}
             </span>
           </div>
 
