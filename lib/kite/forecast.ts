@@ -21,7 +21,9 @@ const MAX_WIND_KN = 30
 const MAX_GUST_KN = 36
 const LIGHT_WIND_KN = 9 // below this the hour is dead calm for kiting
 
-const DAY_START_HOUR = 8
+// The ridable day runs sunrise to sunset. These only apply when Open-Meteo
+// gives no sun times for a day (it always does for the 7-day horizon).
+const FALLBACK_START_HOUR = 8
 const FALLBACK_END_HOUR = 20
 const MAX_END_HOUR = 21
 
@@ -67,8 +69,32 @@ export const HOUR_CELL_COLOR: Record<HourCategory, string> = {
   strong: '#c94f35',
   offshore: '#1f3a45',
 }
-export const STRIP_START = 8
-export const STRIP_END = 21 // exclusive
+/** Fallback strip span when nothing has been analysed yet */
+const DEFAULT_STRIP: HourRange = { start: FALLBACK_START_HOUR, end: FALLBACK_END_HOUR }
+
+export interface HourRange {
+  start: number
+  end: number // exclusive
+}
+
+/**
+ * The hour span the strips and axis draw for a set of forecasts: the earliest
+ * sunrise hour to the latest sunset hour across every day shown, so every
+ * strip in a board shares one axis. Readings stored before days carried a
+ * start hour fall back to 08:00.
+ */
+export function stripRange(forecasts: SpotForecast[]): HourRange {
+  let start = Infinity
+  let end = -Infinity
+  for (const f of forecasts) {
+    for (const d of f.days) {
+      start = Math.min(start, d.startHour ?? FALLBACK_START_HOUR)
+      end = Math.max(end, d.endHour)
+    }
+  }
+  if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) return DEFAULT_STRIP
+  return { start, end }
+}
 
 export interface KiteWindow {
   startHour: number
@@ -89,6 +115,8 @@ export interface DayAnalysis {
   window: KiteWindow | null
   peakSpeedKn: number
   hours: HourForecast[] // daylight hours only, in order
+  /** First ridable hour: the hour nearest that day's sunrise */
+  startHour: number
   endHour: number // session cutoff (sunset-capped)
   note: string
   /** Window per the ICON-based EU blend — a second opinion when models disagree */
@@ -185,16 +213,29 @@ function findBestWindow(daylight: HourForecast[], spot: KiteSpot): KiteWindow | 
   return best
 }
 
+/** "HH:MM" rounded to the nearest whole hour; the fallback when unparseable. */
+function nearestHour(clock: string, fallback: number): number {
+  const h = parseInt(clock.slice(0, 2), 10)
+  const m = parseInt(clock.slice(3, 5), 10)
+  if (!Number.isFinite(h)) return fallback
+  return (h + (Number.isFinite(m) && m >= 30 ? 1 : 0)) % 24
+}
+
 export function analyzeDay(
   date: string,
   allHours: HourForecast[],
   spot: KiteSpot,
-  sunset: string | null
+  sunset: string | null,
+  sunrise: string | null = null
 ): DayAnalysis {
+  // Start at the hour nearest sunrise: 06:58 opens the 07:00 cell, 06:20 the
+  // 06:00 one. Nobody is rigged before first light, so a cell that is dark
+  // for most of its hour would only read as a dead hour on the strip.
+  const startHour = sunrise ? nearestHour(sunrise, FALLBACK_START_HOUR) : FALLBACK_START_HOUR
   // Include the sunset hour itself: sunset 20:59 means the 20:00-21:00 hour is ridable
   const sunsetHour = sunset ? parseInt(sunset.slice(0, 2), 10) : null
   const endHour = sunsetHour ? Math.min(MAX_END_HOUR, sunsetHour + 1) : FALLBACK_END_HOUR
-  const daylight = allHours.filter(h => h.hour >= DAY_START_HOUR && h.hour < endHour)
+  const daylight = allHours.filter(h => h.hour >= startHour && h.hour < endHour)
   const peakSpeedKn = Math.round(Math.max(0, ...daylight.map(h => h.speedKn)))
   const window = findBestWindow(daylight, spot)
 
@@ -205,6 +246,7 @@ export function analyzeDay(
       window,
       peakSpeedKn,
       hours: daylight,
+      startHour,
       endHour,
       note: `${window.avgSpeedKn} kn ${window.directionLabel} — kite ${kiteSizeHint(window.avgSpeedKn)}${window.drizzleMm ? ` · ${precipLabel(window.drizzleMm)} ${window.drizzleMm}mm/h, still kiteable` : ''}`,
     }
@@ -214,7 +256,7 @@ export function analyzeDay(
   const count = (c: HourCategory) => categories.filter(x => x === c).length
 
   if (count('offshore') >= 2 && count('offshore') >= count('strong')) {
-    return { date, verdict: 'offshore', window: null, peakSpeedKn, hours: daylight, endHour, note: 'offshore wind — do not ride here' }
+    return { date, verdict: 'offshore', window: null, peakSpeedKn, hours: daylight, startHour, endHour, note: 'offshore wind — do not ride here' }
   }
   if (count('strong') >= 2) {
     const peakGustKn = Math.round(Math.max(0, ...daylight.map(h => h.gustKn)))
@@ -222,16 +264,16 @@ export function analyzeDay(
       peakSpeedKn > MAX_WIND_KN
         ? `above your ${MAX_WIND_KN} kn cap (peak ${peakSpeedKn} kn, gusts ${peakGustKn})`
         : `gusts above your ${MAX_GUST_KN} kn cap (wind ${peakSpeedKn} kn, gusts to ${peakGustKn})`
-    return { date, verdict: 'strong', window: null, peakSpeedKn, hours: daylight, endHour, note }
+    return { date, verdict: 'strong', window: null, peakSpeedKn, hours: daylight, startHour, endHour, note }
   }
   const rainyCount = daylight.filter(isRainyHour).length
   if (rainyCount >= Math.max(3, Math.floor(daylight.length / 2))) {
-    return { date, verdict: 'rain', window: null, peakSpeedKn, hours: daylight, endHour, note: `rain most of the day (peak wind ${peakSpeedKn} kn) — no kiting` }
+    return { date, verdict: 'rain', window: null, peakSpeedKn, hours: daylight, startHour, endHour, note: `rain most of the day (peak wind ${peakSpeedKn} kn) — no kiting` }
   }
   if (count('light') >= 2 || count('ideal') === 1) {
-    return { date, verdict: 'light', window: null, peakSpeedKn, hours: daylight, endHour, note: `no 2h window in your 12-30 kn range (peak ${peakSpeedKn} kn) — big-kite drills only` }
+    return { date, verdict: 'light', window: null, peakSpeedKn, hours: daylight, startHour, endHour, note: `no 2h window in your 12-30 kn range (peak ${peakSpeedKn} kn) — big-kite drills only` }
   }
-  return { date, verdict: 'calm', window: null, peakSpeedKn, hours: daylight, endHour, note: `no wind (peak ${peakSpeedKn} kn)` }
+  return { date, verdict: 'calm', window: null, peakSpeedKn, hours: daylight, startHour, endHour, note: `no wind (peak ${peakSpeedKn} kn)` }
 }
 
 interface OpenMeteoResponse {
@@ -245,6 +287,7 @@ interface OpenMeteoResponse {
   }
   daily: {
     time: string[]
+    sunrise: string[]
     sunset: string[]
   }
 }
@@ -300,7 +343,7 @@ export async function fetchSpotForecast(spot: KiteSpot, timezone: string): Promi
   // best-match blend (ICON in Europe, HRRR/NAM over North America) as a
   // cross-check when the models disagree.
   const [gfsRes, blendRes] = await Promise.all([
-    fetch(`${base}&daily=sunset&models=gfs_seamless`, { next: { revalidate: 1800 } }),
+    fetch(`${base}&daily=sunrise,sunset&models=gfs_seamless`, { next: { revalidate: 1800 } }),
     fetch(base, { next: { revalidate: 1800 } }),
   ])
   if (!gfsRes.ok) throw new Error(`Open-Meteo request failed for ${spot.name}: ${gfsRes.status}`)
@@ -308,15 +351,20 @@ export async function fetchSpotForecast(spot: KiteSpot, timezone: string): Promi
 
   const hoursByDate = parseHours(data)
 
+  const sunriseByDate = new Map<string, string>()
   const sunsetByDate = new Map<string, string>()
   data.daily.time.forEach((date, i) => {
+    const sunrise = data.daily.sunrise?.[i]
     const sunset = data.daily.sunset[i]
+    if (sunrise) sunriseByDate.set(date, sunrise.split('T')[1] ?? '')
     if (sunset) sunsetByDate.set(date, sunset.split('T')[1] ?? '')
   })
+  const analyze = (date: string, hours: HourForecast[]) =>
+    analyzeDay(date, hours, spot, sunsetByDate.get(date) ?? null, sunriseByDate.get(date) ?? null)
 
   const days = Array.from(hoursByDate.entries())
     .sort(([a], [b]) => a.localeCompare(b))
-    .map(([date, hours]) => analyzeDay(date, hours, spot, sunsetByDate.get(date) ?? null))
+    .map(([date, hours]) => analyze(date, hours))
 
   // Attach the blend second opinion; the page surfaces it when GFS has no window
   if (blendRes.ok) {
@@ -325,9 +373,7 @@ export async function fetchSpotForecast(spot: KiteSpot, timezone: string): Promi
       const blendHoursByDate = parseHours(blendData)
       for (const day of days) {
         const blendHours = blendHoursByDate.get(day.date)
-        day.altWindow = blendHours
-          ? analyzeDay(day.date, blendHours, spot, sunsetByDate.get(day.date) ?? null).window
-          : null
+        day.altWindow = blendHours ? analyze(day.date, blendHours).window : null
       }
     } catch {
       // The second model is a bonus signal — ignore failures

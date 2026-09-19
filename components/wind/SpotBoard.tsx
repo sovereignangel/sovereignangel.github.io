@@ -17,9 +17,9 @@ import { Fragment, useMemo, useState } from 'react'
 import {
   directionLabel,
   kiteSizeHint,
-  STRIP_START,
-  STRIP_END,
+  stripRange,
   type DayAnalysis,
+  type HourRange,
   type KiteSpot,
   type SpotForecast,
 } from '@/lib/kite/forecast'
@@ -34,11 +34,11 @@ export const VISIBLE_SPOTS = 4
 /** A column past this is not more readable, just wider. */
 const MAX_COLUMN_PX = 400
 
-function HourAxis() {
+function HourAxis({ range }: { range: HourRange }) {
   return (
     <div className="flex gap-px">
-      {Array.from({ length: STRIP_END - STRIP_START }, (_, i) => {
-        const hour = STRIP_START + i
+      {Array.from({ length: range.end - range.start }, (_, i) => {
+        const hour = range.start + i
         return (
           <div key={hour} className="flex-1 min-w-[4px] text-center font-mono text-[8px] text-surf-muted leading-none">
             {hour % 2 === 0 ? hour : ''}
@@ -49,7 +49,19 @@ function HourAxis() {
   )
 }
 
-function MatrixCell({ day, spot, nowHour, tz }: { day: DayAnalysis; spot: KiteSpot; nowHour?: number; tz: string }) {
+function MatrixCell({
+  day,
+  spot,
+  nowHour,
+  tz,
+  range,
+}: {
+  day: DayAnalysis
+  spot: KiteSpot
+  nowHour?: number
+  tz: string
+  range: HourRange
+}) {
   let line: JSX.Element
   if (day.window) {
     line = (
@@ -79,7 +91,7 @@ function MatrixCell({ day, spot, nowHour, tz }: { day: DayAnalysis; spot: KiteSp
       title={`${fmtDay(day.date, tz)} — ${spot.name}: ${day.note}.${altNote}`}
     >
       <div className="font-mono text-[9px] md:text-[10px] leading-tight mb-0.5">{line}</div>
-      <HourStrip day={day} spot={spot} nowHour={nowHour} />
+      <HourStrip day={day} spot={spot} nowHour={nowHour} range={range} />
     </div>
   )
 }
@@ -96,6 +108,9 @@ function SpotMatrix({
   tz: string
 }) {
   const dates = forecasts[0].days.map(d => d.date)
+  // Sunrise to sunset, widened to the earliest and latest across the board so
+  // every strip lines up under one axis
+  const range = useMemo(() => stripRange(forecasts), [forecasts])
   // A floor per column so the grid scrolls rather than crushes on a narrow
   // screen, and a ceiling so a two-spot region centres instead of stretching.
   const minWidth = Math.max(480, forecasts.length * 132 + 48)
@@ -149,7 +164,7 @@ function SpotMatrix({
         <div className={`pt-1 pr-1 text-right font-mono text-[8px] text-surf-muted self-end ${stick}`}>h</div>
         {forecasts.map(f => (
           <div key={`axis-${f.spot.slug}`} className="pt-1 self-end">
-            <HourAxis />
+            <HourAxis range={range} />
           </div>
         ))}
         {dates.map((date, i) => (
@@ -162,7 +177,7 @@ function SpotMatrix({
             {forecasts.map(f => {
               const day = f.days.find(d => d.date === date)
               return day ? (
-                <MatrixCell key={f.spot.slug} day={day} spot={f.spot} nowHour={i === 0 ? nowHour : undefined} tz={tz} />
+                <MatrixCell key={f.spot.slug} day={day} spot={f.spot} nowHour={i === 0 ? nowHour : undefined} tz={tz} range={range} />
               ) : (
                 <div key={f.spot.slug} className="border-b border-surf-rule-light" />
               )

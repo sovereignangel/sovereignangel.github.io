@@ -8,9 +8,8 @@ import {
   isRainyHour,
   precipLabel,
   HOUR_CELL_COLOR,
-  STRIP_START,
-  STRIP_END,
   type DayAnalysis,
+  type HourRange,
   type KiteSpot,
 } from '@/lib/kite/lithuania-spots'
 
@@ -20,9 +19,19 @@ export function rainStripes(light: boolean): string {
   return `repeating-linear-gradient(135deg, ${c} 0px, ${c} 1.5px, transparent 1.5px, transparent 4.5px)`
 }
 
-const N = STRIP_END - STRIP_START
-
-export function HourStrip({ day, spot, nowHour }: { day: DayAnalysis; spot: KiteSpot; nowHour?: number }) {
+export function HourStrip({
+  day,
+  spot,
+  nowHour,
+  range,
+}: {
+  day: DayAnalysis
+  spot: KiteSpot
+  nowHour?: number
+  /** The board's shared axis: earliest sunrise to latest sunset across the days shown */
+  range: HourRange
+}) {
+  const N = range.end - range.start
   const [selected, setSelected] = useState<number | null>(null)
   const ref = useRef<HTMLDivElement>(null)
 
@@ -38,8 +47,9 @@ export function HourStrip({ day, spot, nowHour }: { day: DayAnalysis; spot: Kite
 
   const byHour = new Map(day.hours.map(h => [h.hour, h]))
   const sel = selected !== null ? byHour.get(selected) : undefined
+  const selBeforeSunrise = selected !== null && selected < day.startHour
   const selAfterSunset = selected !== null && (selected >= day.endHour || !byHour.has(selected))
-  const idx = selected !== null ? selected - STRIP_START : 0
+  const idx = selected !== null ? selected - range.start : 0
   const popPos =
     idx < 2
       ? { left: 0 }
@@ -54,9 +64,9 @@ export function HourStrip({ day, spot, nowHour }: { day: DayAnalysis; spot: Kite
           className="absolute bottom-full mb-1 z-20 rounded-md bg-surf-navy text-white px-2 py-1 shadow-lg whitespace-nowrap pointer-events-none"
           style={popPos}
         >
-          {selAfterSunset ? (
+          {selBeforeSunrise || selAfterSunset ? (
             <div className="font-mono text-[10px]">
-              {String(selected).padStart(2, '0')}:00 &middot; after sunset
+              {String(selected).padStart(2, '0')}:00 &middot; {selBeforeSunrise ? 'before sunrise' : 'after sunset'}
             </div>
           ) : sel ? (
             <>
@@ -79,7 +89,7 @@ export function HourStrip({ day, spot, nowHour }: { day: DayAnalysis; spot: Kite
       )}
       <div className="flex gap-px h-3.5 md:h-4 rounded-full overflow-hidden">
         {Array.from({ length: N }, (_, i) => {
-          const hour = STRIP_START + i
+          const hour = range.start + i
           const h = byHour.get(hour)
           const isSelected = hour === selected
           const ring = isSelected
@@ -87,14 +97,15 @@ export function HourStrip({ day, spot, nowHour }: { day: DayAnalysis; spot: Kite
             : hour === nowHour
               ? { boxShadow: 'inset 0 0 0 1.5px #2b3a3f' }
               : undefined
-          if (!h || hour >= day.endHour) {
+          if (!h || hour < day.startHour || hour >= day.endHour) {
+            const dark = hour < day.startHour ? 'before sunrise' : 'after sunset'
             return (
               <button
                 key={hour}
                 onClick={() => setSelected(s => (s === hour ? null : hour))}
                 className="flex-1 min-w-[4px] cursor-pointer"
                 style={{ backgroundColor: 'rgba(31, 58, 69, 0.05)', ...ring }}
-                aria-label={`${String(hour).padStart(2, '0')}:00, after sunset`}
+                aria-label={`${String(hour).padStart(2, '0')}:00, ${dark}`}
               />
             )
           }

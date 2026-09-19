@@ -170,7 +170,7 @@ function Legend({ hasRail }: { hasRail: boolean }) {
         </span>
       ))}
       <span className="hidden md:inline text-[9px] text-surf-faint">
-        strips run 08:00 to sunset · hover for details
+        strips run sunrise to sunset · hover for details
         {hasRail && ' · the week band above reads across every spot, shown or benched'}
       </span>
     </div>

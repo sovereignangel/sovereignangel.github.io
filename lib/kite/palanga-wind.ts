@@ -15,9 +15,10 @@ const PALANGA_LAT = 55.9175
 const PALANGA_LON = 21.0686
 const TIMEZONE = 'Europe/Vilnius'
 
-// Session-viable hours (local): from morning until that day's sunset
-// (Palanga sunset is ~22:10 in July, ~19:15 by late September)
-const DAY_START_HOUR = 8
+// Session-viable hours (local): from that day's sunrise until its sunset
+// (Palanga runs ~04:40-22:10 in July, ~07:00-19:15 by late September).
+// The fallbacks only apply when Open-Meteo returns no sun times.
+const FALLBACK_START_HOUR = 8
 const FALLBACK_END_HOUR = 21
 const MAX_END_HOUR = 22
 
@@ -63,6 +64,7 @@ interface OpenMeteoResponse {
   }
   daily: {
     time: string[]
+    sunrise: string[]
     sunset: string[]
   }
 }
@@ -97,8 +99,12 @@ function isRideableHour(h: HourForecast): boolean {
 }
 
 /** Find the best contiguous rideable window of >= 2 hours (best = highest mean wind). */
-export function findBestWindow(hours: HourForecast[], endHour: number = FALLBACK_END_HOUR): KiteWindow | null {
-  const daylight = hours.filter(h => h.hour >= DAY_START_HOUR && h.hour < endHour)
+export function findBestWindow(
+  hours: HourForecast[],
+  endHour: number = FALLBACK_END_HOUR,
+  startHour: number = FALLBACK_START_HOUR
+): KiteWindow | null {
+  const daylight = hours.filter(h => h.hour >= startHour && h.hour < endHour)
   let best: KiteWindow | null = null
 
   let run: HourForecast[] = []
@@ -132,13 +138,28 @@ export function findBestWindow(hours: HourForecast[], endHour: number = FALLBACK
   return best
 }
 
-export function analyzeDay(date: string, hours: HourForecast[], sunset: string | null = null): DayAnalysis {
-  // Ride until sunset (capped at 22:00); e.g. July sunset 22:11 -> hours through 21:00 count
+/** "HH:MM" rounded to the nearest whole hour; the fallback when unparseable. */
+function nearestHour(clock: string, fallback: number): number {
+  const h = parseInt(clock.slice(0, 2), 10)
+  const m = parseInt(clock.slice(3, 5), 10)
+  if (!Number.isFinite(h)) return fallback
+  return (h + (Number.isFinite(m) && m >= 30 ? 1 : 0)) % 24
+}
+
+export function analyzeDay(
+  date: string,
+  hours: HourForecast[],
+  sunset: string | null = null,
+  sunrise: string | null = null
+): DayAnalysis {
+  // Start at the hour nearest sunrise (06:58 -> 07:00); ride until sunset
+  // (capped at 22:00), e.g. July sunset 22:11 -> hours through 21:00 count
+  const startHour = sunrise ? nearestHour(sunrise, FALLBACK_START_HOUR) : FALLBACK_START_HOUR
   const sunsetHour = sunset ? parseInt(sunset.slice(0, 2), 10) : null
   const endHour = sunsetHour ? Math.min(MAX_END_HOUR, sunsetHour) : FALLBACK_END_HOUR
-  const daylight = hours.filter(h => h.hour >= DAY_START_HOUR && h.hour < endHour)
+  const daylight = hours.filter(h => h.hour >= startHour && h.hour < endHour)
   const peakSpeedKn = Math.round(Math.max(0, ...daylight.map(h => h.speedKn)))
-  const window = findBestWindow(hours, endHour)
+  const window = findBestWindow(hours, endHour, startHour)
 
   if (window) {
     const verdict: DayVerdict = window.avgSpeedKn >= 14 ? 'good' : 'marginal'
@@ -160,13 +181,14 @@ export function analyzeDay(date: string, hours: HourForecast[], sunset: string |
 
 export interface PalangaForecast {
   hoursByDate: Map<string, HourForecast[]>
+  sunriseByDate: Map<string, string> // HH:MM local
   sunsetByDate: Map<string, string> // HH:MM local
 }
 
 export async function fetchPalangaForecast(): Promise<PalangaForecast> {
   const url =
     `https://api.open-meteo.com/v1/forecast?latitude=${PALANGA_LAT}&longitude=${PALANGA_LON}` +
-    `&hourly=wind_speed_10m,wind_gusts_10m,wind_direction_10m&daily=sunset` +
+    `&hourly=wind_speed_10m,wind_gusts_10m,wind_direction_10m&daily=sunrise,sunset` +
     `&wind_speed_unit=kn&timezone=${encodeURIComponent(TIMEZONE)}&forecast_days=8`
 
   const res = await fetch(url, { cache: 'no-store' })
@@ -189,20 +211,25 @@ export async function fetchPalangaForecast(): Promise<PalangaForecast> {
     hoursByDate.set(date, list)
   })
 
+  const sunriseByDate = new Map<string, string>()
   const sunsetByDate = new Map<string, string>()
   data.daily.time.forEach((date, i) => {
+    const sunrise = data.daily.sunrise?.[i]
     const sunset = data.daily.sunset[i]
+    if (sunrise) sunriseByDate.set(date, sunrise.split('T')[1] ?? '')
     if (sunset) sunsetByDate.set(date, sunset.split('T')[1] ?? '')
   })
 
-  return { hoursByDate, sunsetByDate }
+  return { hoursByDate, sunriseByDate, sunsetByDate }
 }
 
 export async function analyzePalangaWeek(): Promise<DayAnalysis[]> {
-  const { hoursByDate, sunsetByDate } = await fetchPalangaForecast()
+  const { hoursByDate, sunriseByDate, sunsetByDate } = await fetchPalangaForecast()
   return Array.from(hoursByDate.entries())
     .sort(([a], [b]) => a.localeCompare(b))
-    .map(([date, hours]) => analyzeDay(date, hours, sunsetByDate.get(date) ?? null))
+    .map(([date, hours]) =>
+      analyzeDay(date, hours, sunsetByDate.get(date) ?? null, sunriseByDate.get(date) ?? null)
+    )
 }
 
 function fmtDay(date: string): string {
