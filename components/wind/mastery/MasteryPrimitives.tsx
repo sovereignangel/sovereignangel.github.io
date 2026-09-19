@@ -94,17 +94,25 @@ export function MilestoneRow({
   progress,
   gloss,
   onToggle,
+  readOnly = false,
 }: {
   milestone: PathMilestone
   met: boolean
   progress: string | null
   gloss: boolean
   onToggle: (checked: boolean) => void
+  /** Public view: the ladder is readable, the ticks are not yours to move */
+  readOnly?: boolean
 }) {
+  // Two separate things: whether the milestone tracks itself from logged
+  // sessions (which earns the badge), and whether this viewer may move the
+  // tick. The public view may not, so its rows carry no dead buttons — but a
+  // hand-ticked rung must not start claiming it is automatic.
   const auto = milestone.kind === 'auto'
+  const interactive = !auto && !readOnly
   return (
     <div className="flex items-start gap-2 py-1.5 border-b border-surf-rule-light last:border-b-0">
-      {auto ? (
+      {!interactive ? (
         <span className="mt-0.5">
           <CheckMark met={met} />
         </span>

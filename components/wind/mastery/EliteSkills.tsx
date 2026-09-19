@@ -28,6 +28,7 @@ interface Props {
   targetSkill: string | null
   onToggleMilestone: (id: string, checked: boolean) => void
   onSetTarget: (skillId: string | null) => void
+  readOnly?: boolean
 }
 
 function TargetMark({ on }: { on: boolean }) {
@@ -48,6 +49,7 @@ function SkillCard({
   isTarget,
   onToggleMilestone,
   onSetTarget,
+  readOnly = false,
 }: {
   status: EliteSkillStatus
   gloss: boolean
@@ -56,6 +58,7 @@ function SkillCard({
   isTarget: boolean
   onToggleMilestone: (id: string, checked: boolean) => void
   onSetTarget: (skillId: string | null) => void
+  readOnly?: boolean
 }) {
   const [open, setOpen] = useState(false)
   const skill: EliteSkill = status.skill
@@ -114,6 +117,7 @@ function SkillCard({
         </div>
 
         <div className="flex items-center gap-2 mt-2">
+          {!readOnly && (
           <button
             onClick={() => onSetTarget(isTarget ? null : skill.id)}
             className={`flex items-center gap-1 font-serif text-[10px] font-medium px-2 py-1 rounded-full border transition-colors cursor-pointer ${
@@ -130,6 +134,13 @@ function SkillCard({
             <TargetMark on={isTarget} />
             {isTarget ? 'Targeting — click to clear' : 'Aim drills here'}
           </button>
+          )}
+          {readOnly && isTarget && (
+            <span className="flex items-center gap-1 font-serif text-[10px] font-medium px-2 py-1 rounded-full border bg-surf-teal text-white border-surf-teal">
+              <TargetMark on />
+              Targeting
+            </span>
+          )}
           <button
             onClick={() => setOpen(o => !o)}
             className="ml-auto flex items-center gap-1 text-[10px] text-surf-muted hover:text-surf-deep cursor-pointer"
@@ -180,6 +191,7 @@ function SkillCard({
                     progress={autoProgressLabel(rung, stats)}
                     gloss={gloss}
                     onToggle={checked => onToggleMilestone(rung.id, checked)}
+                    readOnly={readOnly}
                   />
                 ))}
               </div>
@@ -198,6 +210,7 @@ export function EliteSkills({
   targetSkill,
   onToggleMilestone,
   onSetTarget,
+  readOnly = false,
 }: Props) {
   const statuses = ELITE_SKILLS.map(s => computeEliteStatus(s, stats, milestones))
 
@@ -220,6 +233,7 @@ export function EliteSkills({
             isTarget={targetSkill === status.skill.id}
             onToggleMilestone={onToggleMilestone}
             onSetTarget={onSetTarget}
+            readOnly={readOnly}
           />
         ))}
       </div>

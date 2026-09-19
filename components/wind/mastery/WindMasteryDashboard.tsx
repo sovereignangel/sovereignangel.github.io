@@ -43,7 +43,10 @@ import { EliteSkills } from './EliteSkills'
 import { CheckMark, Chevron, GlossedText, LevelMeter, MilestoneRow } from './MasteryPrimitives'
 
 interface Props {
-  uid: string
+  /** The signed-in rider, or null for the public read-only view */
+  uid: string | null
+  /** Offered in place of the write controls when nobody is signed in */
+  onSignIn?: () => void
 }
 
 function PathRow({
@@ -52,12 +55,14 @@ function PathRow({
   milestones,
   gloss,
   onToggle,
+  readOnly,
 }: {
   path: MasteryPath
   stats: ReturnType<typeof computeKiteStats>
   milestones: Record<string, boolean>
   gloss: boolean
   onToggle: (id: string, checked: boolean) => void
+  readOnly: boolean
 }) {
   const [open, setOpen] = useState(false)
   const status = computePathStatus(path, stats, milestones)
@@ -123,6 +128,7 @@ function PathRow({
                   progress={autoProgressLabel(m, stats)}
                   gloss={gloss}
                   onToggle={checked => onToggle(m.id, checked)}
+                  readOnly={readOnly}
                 />
               ))}
             </div>
@@ -133,7 +139,11 @@ function PathRow({
   )
 }
 
-export function WindMasteryDashboard({ uid }: Props) {
+export function WindMasteryDashboard({ uid, onSignIn }: Props) {
+  // Signed out is a first-class state here, not a locked door: the logbook
+  // reads through a server route that holds the credentials, and every write
+  // control below simply is not rendered.
+  const readOnly = !uid
   const [sessions, setSessions] = useState<KiteSession[]>([])
   const [garminSessions, setGarminSessions] = useState<KiteSession[]>([])
   const [milestones, setMilestones] = useState<Record<string, boolean>>({})
@@ -149,15 +159,25 @@ export function WindMasteryDashboard({ uid }: Props) {
   // real state, even if that state is "it did not load".
   const load = useCallback(async () => {
     try {
-      const [s, g, p] = await Promise.all([
-        getKiteSessions(uid),
-        getGarminKiteSessions(uid).catch(() => [] as KiteSession[]),
-        getKiteProgress(uid),
-      ])
-      setSessions(s)
-      setGarminSessions(g)
-      setMilestones(p.milestones || {})
-      setTargetSkill(p.targetSkill ?? null)
+      if (uid) {
+        const [s, g, p] = await Promise.all([
+          getKiteSessions(uid),
+          getGarminKiteSessions(uid).catch(() => [] as KiteSession[]),
+          getKiteProgress(uid),
+        ])
+        setSessions(s)
+        setGarminSessions(g)
+        setMilestones(p.milestones || {})
+        setTargetSkill(p.targetSkill ?? null)
+      } else {
+        const res = await fetch('/api/wind/mastery')
+        if (!res.ok) throw new Error(`logbook ${res.status}`)
+        const d = await res.json()
+        setSessions(d.sessions ?? [])
+        setGarminSessions(d.garminSessions ?? [])
+        setMilestones(d.milestones ?? {})
+        setTargetSkill(d.targetSkill ?? null)
+      }
       setLoadError(false)
     } catch {
       setLoadError(true)
@@ -201,21 +221,25 @@ export function WindMasteryDashboard({ uid }: Props) {
   )
 
   const handleToggle = async (id: string, checked: boolean) => {
+    if (!uid) return
     setMilestones(prev => ({ ...prev, [id]: checked }))
     await setKiteMilestone(uid, id, checked)
   }
 
   const handleSetTarget = async (skillId: string | null) => {
+    if (!uid) return
     setTargetSkill(skillId)
     await setKiteTargetSkill(uid, skillId)
   }
 
   const handleAdd = async (session: Omit<KiteSession, 'id' | 'createdAt'>) => {
+    if (!uid) return
     await addKiteSession(uid, session)
     await load()
   }
 
   const handleDelete = async (sessionId: string) => {
+    if (!uid) return
     await deleteKiteSession(uid, sessionId)
     setSessions(prev => prev.filter(s => s.id !== sessionId))
   }
@@ -294,12 +318,22 @@ export function WindMasteryDashboard({ uid }: Props) {
               <div className="text-[9px] text-surf-muted mt-0.5">{t.label}</div>
             </div>
           ))}
-          <button
-            onClick={() => setModalOpen(true)}
-            className="ml-auto font-serif text-[11px] font-medium px-3 py-1.5 rounded-full border bg-surf-teal text-white border-surf-teal hover:bg-surf-deep cursor-pointer"
-          >
-            Log Session
-          </button>
+          {readOnly ? (
+            <button
+              onClick={onSignIn}
+              className="ml-auto font-serif text-[11px] font-medium px-3 py-1.5 rounded-full border bg-transparent text-surf-muted border-surf-rule hover:text-surf-deep hover:border-surf-teal/50 cursor-pointer transition-colors"
+              title="Sign in to log sessions and tick off drills"
+            >
+              Sign in to log
+            </button>
+          ) : (
+            <button
+              onClick={() => setModalOpen(true)}
+              className="ml-auto font-serif text-[11px] font-medium px-3 py-1.5 rounded-full border bg-surf-teal text-white border-surf-teal hover:bg-surf-deep cursor-pointer"
+            >
+              Log Session
+            </button>
+          )}
         </div>
         {beltOpen && (
           <div className="mt-2 pt-1 border-t border-surf-rule-light grid grid-cols-1 md:grid-cols-2 gap-x-5">
@@ -391,7 +425,8 @@ export function WindMasteryDashboard({ uid }: Props) {
           Garmin autosync: {garminSessions.length === 0
             ? 'no kite activities yet — record kiting on the watch and they land here after the daily sync'
             : `${garminSessions.length} kite ${garminSessions.length === 1 ? 'activity' : 'activities'} counted`}
-          {' '}&middot; a manual log on the same date wins &middot; Surfr bests (height, airtime) go in via Log Session
+          {' '}&middot; a manual log on the same date wins
+          {!readOnly && ' · Surfr bests (height, airtime) go in via Log Session'}
         </div>
       </div>
 
@@ -404,13 +439,15 @@ export function WindMasteryDashboard({ uid }: Props) {
               <span className="text-[10px] font-sans font-normal text-surf-muted">
                 &mdash; aimed at {targeted.name}; work the ladder in order, top card first
               </span>
-              <button
-                onClick={() => handleSetTarget(null)}
-                className="font-serif text-[10px] font-medium px-2 py-0.5 rounded-full border border-surf-teal bg-surf-teal text-white cursor-pointer hover:bg-surf-deep hover:border-surf-deep transition-colors"
-                title="Hand the drills back to normal path progression"
-              >
-                clear target
-              </button>
+              {!readOnly && (
+                <button
+                  onClick={() => handleSetTarget(null)}
+                  className="font-serif text-[10px] font-medium px-2 py-0.5 rounded-full border border-surf-teal bg-surf-teal text-white cursor-pointer hover:bg-surf-deep hover:border-surf-deep transition-colors"
+                  title="Hand the drills back to normal path progression"
+                >
+                  clear target
+                </button>
+              )}
             </>
           ) : (
             <span className="text-[10px] font-sans font-normal text-surf-muted">
@@ -437,6 +474,8 @@ export function WindMasteryDashboard({ uid }: Props) {
                   </span>
                   {auto ? (
                     <span className="font-mono text-[9px] px-1 py-px rounded-sm bg-surf-sun-bg text-surf-sun-ink">{progress}</span>
+                  ) : readOnly ? (
+                    <CheckMark met={met} />
                   ) : (
                     <button onClick={() => handleToggle(n.milestone.id, !met)} className="cursor-pointer" aria-label={`Check off ${n.milestone.label}`}>
                       <CheckMark met={met} />
@@ -498,6 +537,7 @@ export function WindMasteryDashboard({ uid }: Props) {
                     progress={autoProgressLabel(m, stats)}
                     gloss={glossEnabled}
                     onToggle={checked => handleToggle(m.id, checked)}
+                    readOnly={readOnly}
                   />
                 ))}
               </div>
@@ -511,6 +551,7 @@ export function WindMasteryDashboard({ uid }: Props) {
               milestones={milestones}
               gloss={glossEnabled}
               onToggle={handleToggle}
+              readOnly={readOnly}
             />
           ))}
         </div>
@@ -522,6 +563,7 @@ export function WindMasteryDashboard({ uid }: Props) {
         milestones={milestones}
         gloss={glossEnabled}
         targetSkill={targetSkill}
+        readOnly={readOnly}
         onToggleMilestone={handleToggle}
         onSetTarget={handleSetTarget}
       />
@@ -594,6 +636,7 @@ export function WindMasteryDashboard({ uid }: Props) {
         </section>
       )}
 
+      {!readOnly && (
       <SessionModal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
@@ -601,6 +644,7 @@ export function WindMasteryDashboard({ uid }: Props) {
         onAdd={handleAdd}
         onDelete={handleDelete}
       />
+      )}
     </div>
   )
 }

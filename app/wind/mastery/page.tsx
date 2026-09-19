@@ -19,42 +19,32 @@ function WaveDivider() {
 }
 
 /**
- * The sign-in card, inline under the masthead.
+ * The one line that explains the public view.
  *
- * The shared AuthGate is a whole-page gate: it centres itself in its own
- * min-h-screen, which every other gated route gets away with because the gate
- * IS the page there. Dropped inside this page's frame it stacked a second
- * viewport under the header, so a phone opened the tab to a screen of empty
- * cream with the card below the fold — the tab read as broken. It also wore
- * the Thesis Engine masthead, which says nothing about kiting.
+ * The logbook used to be gated outright, which meant checking your own hours
+ * on a phone cost a Google sign-in. Reading now goes through a server route,
+ * so the page shows the belts and drills to anyone; signing in is only what
+ * turns the write controls back on.
  */
-function SignInCard() {
-  const { signIn, error, loading } = useAuth()
-
+function PublicNote({ error, onSignIn }: { error: string | null; onSignIn: () => void }) {
   return (
-    <div className="bg-surf-card border border-surf-rule rounded-xl p-4 md:p-5 max-w-sm shadow-[0_2px_12px_rgba(13,92,99,0.06)]">
-      <div className="font-serif text-[15px] font-semibold text-surf-deep">Your logbook</div>
-      <p className="text-[11px] text-surf-muted leading-snug mt-1">
-        Belts, drills and hours on water, kept per rider. Sign in to see yours &mdash; logged
-        sessions and Garmin kite activities aggregate automatically.
-      </p>
-      <button
-        onClick={signIn}
-        disabled={loading}
-        className="mt-3 w-full font-serif text-[13px] font-medium px-4 py-2.5 rounded-full border bg-surf-teal text-white border-surf-teal hover:bg-surf-deep disabled:opacity-50 cursor-pointer transition-colors"
-      >
-        {loading ? 'Loading...' : 'Sign in with Google'}
-      </button>
-      {error && <p className="mt-2 text-[10px] text-surf-navy leading-snug">{error}</p>}
-      <p className="mt-2 text-[9px] text-surf-muted">
-        The forecast tabs are open to everyone; only the logbook is gated.
-      </p>
+    <div className="mb-2">
+      <div className="flex items-center gap-2 flex-wrap text-[10px] text-surf-muted">
+        <span>Read-only view &mdash; sign in to log sessions and tick off drills.</span>
+        <button
+          onClick={onSignIn}
+          className="font-serif text-[10px] font-medium px-2 py-0.5 rounded-full border border-surf-rule text-surf-muted hover:text-surf-deep hover:border-surf-teal/50 cursor-pointer transition-colors"
+        >
+          Sign in
+        </button>
+      </div>
+      {error && <p className="text-[10px] text-surf-navy mt-1">{error}</p>}
     </div>
   )
 }
 
 function MasteryInner() {
-  const { user, loading } = useAuth()
+  const { user, loading, signIn, error } = useAuth()
 
   return (
     <main className="min-h-screen" style={{ background: 'linear-gradient(180deg, #e7f0ea 0%, #f2ecdf 320px)' }}>
@@ -80,10 +70,11 @@ function MasteryInner() {
               <div key={i} className="h-16 bg-surf-card border border-surf-rule rounded-xl animate-pulse" />
             ))}
           </div>
-        ) : !user ? (
-          <SignInCard />
         ) : (
-          <WindMasteryDashboard uid={user.uid} />
+          <>
+            {!user && <PublicNote error={error} onSignIn={signIn} />}
+            <WindMasteryDashboard uid={user?.uid ?? null} onSignIn={signIn} />
+          </>
         )}
       </div>
     </main>
