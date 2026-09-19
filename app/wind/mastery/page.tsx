@@ -1,7 +1,6 @@
 'use client'
 
 import { AuthProvider, useAuth } from '@/components/auth/AuthProvider'
-import AuthGate from '@/components/auth/AuthGate'
 import { WindTabs } from '@/components/wind/WindTabs'
 import { WindMasteryDashboard } from '@/components/wind/mastery/WindMasteryDashboard'
 
@@ -16,6 +15,41 @@ function WaveDivider() {
         strokeLinecap="round"
       />
     </svg>
+  )
+}
+
+/**
+ * The sign-in card, inline under the masthead.
+ *
+ * The shared AuthGate is a whole-page gate: it centres itself in its own
+ * min-h-screen, which every other gated route gets away with because the gate
+ * IS the page there. Dropped inside this page's frame it stacked a second
+ * viewport under the header, so a phone opened the tab to a screen of empty
+ * cream with the card below the fold — the tab read as broken. It also wore
+ * the Thesis Engine masthead, which says nothing about kiting.
+ */
+function SignInCard() {
+  const { signIn, error, loading } = useAuth()
+
+  return (
+    <div className="bg-surf-card border border-surf-rule rounded-xl p-4 md:p-5 max-w-sm shadow-[0_2px_12px_rgba(13,92,99,0.06)]">
+      <div className="font-serif text-[15px] font-semibold text-surf-deep">Your logbook</div>
+      <p className="text-[11px] text-surf-muted leading-snug mt-1">
+        Belts, drills and hours on water, kept per rider. Sign in to see yours &mdash; logged
+        sessions and Garmin kite activities aggregate automatically.
+      </p>
+      <button
+        onClick={signIn}
+        disabled={loading}
+        className="mt-3 w-full font-serif text-[13px] font-medium px-4 py-2.5 rounded-full border bg-surf-teal text-white border-surf-teal hover:bg-surf-deep disabled:opacity-50 cursor-pointer transition-colors"
+      >
+        {loading ? 'Loading...' : 'Sign in with Google'}
+      </button>
+      {error && <p className="mt-2 text-[10px] text-surf-navy leading-snug">{error}</p>}
+      <p className="mt-2 text-[9px] text-surf-muted">
+        The forecast tabs are open to everyone; only the logbook is gated.
+      </p>
+    </div>
   )
 }
 
@@ -47,7 +81,7 @@ function MasteryInner() {
             ))}
           </div>
         ) : !user ? (
-          <AuthGate />
+          <SignInCard />
         ) : (
           <WindMasteryDashboard uid={user.uid} />
         )}

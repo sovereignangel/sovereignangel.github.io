@@ -139,21 +139,31 @@ export function WindMasteryDashboard({ uid }: Props) {
   const [milestones, setMilestones] = useState<Record<string, boolean>>({})
   const [targetSkill, setTargetSkill] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(false)
   const [modalOpen, setModalOpen] = useState(false)
   const [foundationOpen, setFoundationOpen] = useState(false)
   const [beltOpen, setBeltOpen] = useState(false)
 
+  // A rejected read used to leave `loading` true forever, so a dropped phone
+  // connection showed pulsing skeletons and nothing else. Always land on a
+  // real state, even if that state is "it did not load".
   const load = useCallback(async () => {
-    const [s, g, p] = await Promise.all([
-      getKiteSessions(uid),
-      getGarminKiteSessions(uid).catch(() => [] as KiteSession[]),
-      getKiteProgress(uid),
-    ])
-    setSessions(s)
-    setGarminSessions(g)
-    setMilestones(p.milestones || {})
-    setTargetSkill(p.targetSkill ?? null)
-    setLoading(false)
+    try {
+      const [s, g, p] = await Promise.all([
+        getKiteSessions(uid),
+        getGarminKiteSessions(uid).catch(() => [] as KiteSession[]),
+        getKiteProgress(uid),
+      ])
+      setSessions(s)
+      setGarminSessions(g)
+      setMilestones(p.milestones || {})
+      setTargetSkill(p.targetSkill ?? null)
+      setLoadError(false)
+    } catch {
+      setLoadError(true)
+    } finally {
+      setLoading(false)
+    }
   }, [uid])
 
   useEffect(() => {
@@ -223,6 +233,26 @@ export function WindMasteryDashboard({ uid }: Props) {
         {[1, 2, 3, 4].map(i => (
           <div key={i} className="h-16 bg-surf-card border border-surf-rule rounded-xl animate-pulse" />
         ))}
+      </div>
+    )
+  }
+
+  if (loadError) {
+    return (
+      <div className="bg-surf-card border border-surf-rule rounded-xl p-4 max-w-sm">
+        <div className="font-serif text-[14px] font-semibold text-surf-deep">Logbook did not load</div>
+        <p className="text-[11px] text-surf-muted leading-snug mt-1">
+          The connection dropped before your sessions came back. Nothing is lost.
+        </p>
+        <button
+          onClick={() => {
+            setLoading(true)
+            load()
+          }}
+          className="mt-3 font-serif text-[12px] font-medium px-3 py-1.5 rounded-full border bg-surf-teal text-white border-surf-teal hover:bg-surf-deep cursor-pointer"
+        >
+          Try again
+        </button>
       </div>
     )
   }
