@@ -1,5 +1,5 @@
 /**
- * The five lanes of the day, and the one accent each of them wears.
+ * The six lanes of the day, and the one accent each of them wears.
  *
  * Colours are explicit hex rather than Tailwind classes because the today
  * band renders every lane through the same component — the same reason
@@ -8,7 +8,7 @@
  * than another, and none of them is the alert colour.
  */
 
-export type LaneId = 'tantra' | 'kite' | 'ironman' | 'complexecon' | 'armstrong'
+export type LaneId = 'tantra' | 'kite' | 'ironman' | 'intake' | 'complexecon' | 'armstrong'
 
 export interface Lane {
   id: LaneId
@@ -29,6 +29,7 @@ export const LANES: Lane[] = [
   { id: 'tantra',      label: 'Tantra',    href: '/tantra',               color: '#6b4a72', bg: wash('#6b4a72', '0d'), border: wash('#6b4a72', '40') },
   { id: 'kite',        label: 'Kite',      href: '/wind',                 color: '#1a8a8f', bg: wash('#1a8a8f', '0d'), border: wash('#1a8a8f', '40') },
   { id: 'ironman',     label: 'Ironman',   href: '/ironman',              color: '#8f2d33', bg: wash('#8f2d33', '0d'), border: wash('#8f2d33', '40') },
+  { id: 'intake',      label: 'Intake',    href: '/exec/news',            color: '#2d6b4a', bg: wash('#2d6b4a', '0d'), border: wash('#2d6b4a', '40') },
   { id: 'complexecon', label: 'CEcon',     href: '/complexecon/research', color: '#2d4a6f', bg: wash('#2d4a6f', '0d'), border: wash('#2d4a6f', '40') },
   { id: 'armstrong',   label: 'Armstrong', href: '/armstrong',            color: '#7a5a2e', bg: wash('#7a5a2e', '0d'), border: wash('#7a5a2e', '40') },
 ]

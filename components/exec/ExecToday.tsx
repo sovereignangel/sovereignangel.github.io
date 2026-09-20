@@ -1,13 +1,19 @@
 'use client'
 
 /**
- * The today band — five lanes, one row of the tear sheet.
+ * The today band — six lanes, one row of the tear sheet.
  *
  * This is the part of /exec that answers "am I done today" without scrolling.
  * Three lanes are answered by hand (tantra, cecon, armstrong) and two are
  * answered by the watch (kite, ironman): a lane that Garmin can settle is
  * never given a checkbox, because a check you can tick without doing the work
  * is a check that stops meaning anything.
+ *
+ * Intake is the sixth, and it is answered on its own page rather than here.
+ * Three acts — scan, long read, paper — cannot honestly collapse into one
+ * checkbox, and the takeaway each one demands has nowhere to live in a band
+ * this size. So the cell states which act is outstanding and links to
+ * /exec/news, where the queue and the ledger are.
  *
  * The counter reads done / DUE, not done / 5. A rest day and a flat sea are
  * not failures, so neither one is in the denominator.
@@ -16,6 +22,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useAuth } from '@/components/auth/AuthProvider'
 import { getTantraConfig, getTantraCheckins, setTantraCheckin, removeTantraCheckin } from '@/lib/firestore/tantra'
+import { getIntakeItems, getIntakeDay } from '@/lib/firestore/intake'
+import { intakeStanding, intakeHeadline } from '@/lib/exec/intake'
+import type { IntakeDayDoc, IntakeItem } from '@/lib/types/intake'
 import { getCampaignProgress, setCampaignUnit, getRitualDay, setRitualDay } from '@/lib/firestore/campaigns'
 import type { CampaignProgressDoc } from '@/lib/types'
 import { activeCycle, type ActiveCycle } from '@/lib/tantra/cycle'
@@ -114,16 +123,55 @@ function Tick() {
  */
 function LaneCell({ lane, state }: { lane: Lane; state: LaneState }) {
   const live = state.due && !state.done
+  const style = {
+    borderColor: live ? lane.border : LANE_INK.ruleLight,
+    backgroundColor: state.done ? lane.bg : LANE_INK.card,
+    opacity: state.due ? 1 : 0.62,
+  }
+  const title = state.sub ? `${state.headline} — ${state.sub}` : state.headline
+  const body = (
+    <>
+      <div className="min-w-0 flex-1">
+        <span
+          className="font-mono text-[9px] uppercase tracking-[0.4px] font-semibold block truncate"
+          style={{ color: lane.color }}
+        >
+          {lane.label}
+        </span>
+        <div className="text-[10px] font-semibold leading-snug truncate" style={{ color: LANE_INK.ink }}>
+          {state.headline}
+        </div>
+      </div>
+      <Check
+        on={state.done}
+        onClick={state.onToggle}
+        busy={state.busy}
+        color={lane.color}
+        label={`${lane.label} — ${state.done ? 'mark not done' : 'mark done'}`}
+      />
+    </>
+  )
+
+  // A lane with no checkbox has nothing to click inside it, so the whole cell
+  // becomes the link — a one-line cell with a link the width of its label is
+  // a target you have to aim at. Where there IS a checkbox, the cell cannot be
+  // an anchor (a button inside a link is both a bad target and invalid), so
+  // only the label carries the href.
+  if (!state.onToggle) {
+    return (
+      <a
+        href={state.href}
+        title={title}
+        className="border rounded-lg pl-2 pr-1.5 py-1 flex items-center gap-1.5 min-w-0 transition-colors hover:border-current"
+        style={style}
+      >
+        {body}
+      </a>
+    )
+  }
+
   return (
-    <div
-      className="border rounded-lg pl-2 pr-1.5 py-1 flex items-center gap-1.5 min-w-0"
-      title={state.sub ? `${state.headline} — ${state.sub}` : state.headline}
-      style={{
-        borderColor: live ? lane.border : LANE_INK.ruleLight,
-        backgroundColor: state.done ? lane.bg : LANE_INK.card,
-        opacity: state.due ? 1 : 0.62,
-      }}
-    >
+    <div className="border rounded-lg pl-2 pr-1.5 py-1 flex items-center gap-1.5 min-w-0" title={title} style={style}>
       <div className="min-w-0 flex-1">
         <a
           href={state.href}
@@ -174,23 +222,29 @@ export function ExecToday({ date: serverDate, kite, ironman }: ExecTodayProps) {
   const [tantraToday, setTantraToday] = useState(false)
   const [progress, setProgress] = useState<Partial<Record<CampaignId, CampaignProgressDoc>>>({})
   const [deskDone, setDeskDone] = useState(false)
+  const [intakeItems, setIntakeItems] = useState<IntakeItem[]>([])
+  const [intakeDay, setIntakeDay] = useState<IntakeDayDoc | null>(null)
   const [loaded, setLoaded] = useState(false)
   const [busy, setBusy] = useState<LaneId | null>(null)
 
   const load = useCallback(async () => {
     if (!user) return
-    const [config, checkins, cecon, arm, desk] = await Promise.all([
+    const [config, checkins, cecon, arm, desk, intake, intakeDoc] = await Promise.all([
       getTantraConfig(user.uid).catch(() => null),
       getTantraCheckins(user.uid).catch(() => []),
       getCampaignProgress(user.uid, 'complexecon').catch(() => ({} as CampaignProgressDoc)),
       getCampaignProgress(user.uid, 'armstrong').catch(() => ({} as CampaignProgressDoc)),
       getRitualDay(user.uid, 'armstrong', date).catch(() => null),
+      getIntakeItems(user.uid).catch(() => [] as IntakeItem[]),
+      getIntakeDay(user.uid, date).catch(() => null),
     ])
     const dates = new Set(checkins.map((c) => c.date))
     setCycle(activeCycle(config?.cycles, date, dates))
     setTantraToday(dates.has(date))
     setProgress({ complexecon: cecon, armstrong: arm })
     setDeskDone(Boolean(desk?.done))
+    setIntakeItems(intake)
+    setIntakeDay(intakeDoc)
     setLoaded(true)
   }, [user, date])
 
@@ -254,6 +308,11 @@ export function ExecToday({ date: serverDate, kite, ironman }: ExecTodayProps) {
 
   // ── Lane states ─────────────────────────────────────────────────────────
 
+  const intake = useMemo(
+    () => intakeStanding(intakeItems, date, Boolean(intakeDay?.newsScanned)),
+    [intakeItems, date, intakeDay]
+  )
+
   const states = useMemo<Record<LaneId, LaneState>>(() => {
     const ceOrder = orders.complexecon
     const armOrder = orders.armstrong
@@ -285,6 +344,15 @@ export function ExecToday({ date: serverDate, kite, ironman }: ExecTodayProps) {
         sub: ironman.sub,
         href: '/ironman',
       },
+      intake: {
+        // Always due: the three acts are a standing order, not a schedule.
+        // Settled on /exec/news, so no checkbox here — see the note above.
+        due: true,
+        done: intake.doneCount === intake.total,
+        headline: intakeHeadline(intake),
+        sub: `${intake.doneCount}/${intake.total} in · ${intake.backlogTotal} queued`,
+        href: '/exec/news',
+      },
       complexecon: {
         due: Boolean(ceUnit),
         done: completedOn(progress.complexecon?.units as UnitDoneMap, date),
@@ -314,7 +382,7 @@ export function ExecToday({ date: serverDate, kite, ironman }: ExecTodayProps) {
         href: '/armstrong',
       },
     }
-  }, [orders, cycle, tantraToday, kite, ironman, activities, date, progress, deskDone, busy, user, toggleTantra, toggleUnit, toggleDesk])
+  }, [orders, cycle, tantraToday, kite, ironman, activities, date, progress, deskDone, busy, user, intake, toggleTantra, toggleUnit, toggleDesk])
 
   const due = LANES.filter((l) => states[l.id].due)
   const doneCount = due.filter((l) => states[l.id].done).length
@@ -347,7 +415,7 @@ export function ExecToday({ date: serverDate, kite, ironman }: ExecTodayProps) {
         )
       }
     >
-      <div className="grid grid-cols-3 lg:grid-cols-5 gap-1.5">
+      <div className="grid grid-cols-3 lg:grid-cols-6 gap-1.5">
         {LANES.map((lane) => (
           <LaneCell key={lane.id} lane={lane} state={states[lane.id]} />
         ))}
