@@ -21,6 +21,7 @@ import { ExecCampaign } from '@/components/exec/ExecCampaign'
 import { ExecGoals } from '@/components/exec/ExecGoals'
 import { ExecBlocks } from '@/components/exec/ExecBlocks'
 import { tripIsLive } from '@/lib/exec/svencele'
+import { buildFeed, relativeAge, type SubjectColumn } from '@/lib/exec/feed'
 import { SpotIcon, WaveDivider } from '@/components/wind/WindIcons'
 import { SportIcon, CourseDivider } from '@/components/ironman/IronmanIcons'
 
@@ -343,6 +344,48 @@ function IronmanDay({ label, day, slot, theme }: { label: string; day: PlanDay |
   )
 }
 
+// ── Feed column ───────────────────────────────────────────────────────────
+// Five subjects side by side, four items each. The column head carries the
+// angle rather than the source list: the point of the card is to answer "what
+// is worth reading now" in one downward glance, and a reader who wants to know
+// where a line came from can read the byline under it.
+
+function FeedColumn({ column, theme }: { column: SubjectColumn; theme: Theme }) {
+  return (
+    <div className="min-w-0">
+      <div className={`font-serif text-[12px] font-semibold mb-0.5 ${theme.title}`}>{column.subject.title}</div>
+      <div className={`text-[10px] leading-snug mb-1.5 pb-1.5 border-b ${theme.faint} ${theme.rule}`}>
+        {column.subject.angle}
+      </div>
+      {column.items.length === 0 ? (
+        <div className={`text-[10px] ${theme.faint}`}>Nothing new today.</div>
+      ) : (
+        <div className="space-y-1.5">
+          {column.items.map((item) => (
+            <div key={item.link}>
+              <a
+                href={item.link}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`block text-[11px] leading-snug hover:underline decoration-1 underline-offset-2 ${theme.ink}`}
+              >
+                {item.title}
+              </a>
+              <div className={`font-mono text-[9px] uppercase tracking-[0.3px] mt-0.5 ${theme.muted}`}>
+                {item.source}
+                {relativeAge(item.published) && <span className={theme.faint}> · {relativeAge(item.published)}</span>}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+      {column.failed.length > 0 && (
+        <div className={`text-[9px] mt-1.5 ${theme.faint}`}>{column.failed.join(', ')} unreachable</div>
+      )}
+    </div>
+  )
+}
+
 // ── Piped lanes for the today band ────────────────────────────────────────
 // The band gets a flattened one-line version of what the cards below already
 // render. Building it here rather than in the client keeps a single source:
@@ -379,6 +422,15 @@ export default async function ExecPage() {
     forecasts = await fetchAllSpots()
   } catch {
     windError = true
+  }
+
+  // Never allowed to take the page down with it — a reading list is the least
+  // load-bearing thing here, and the wind and the training plan are not.
+  let feed: SubjectColumn[] = []
+  try {
+    feed = await buildFeed()
+  } catch {
+    feed = []
   }
 
   const today = todayLocal()
@@ -478,10 +530,27 @@ export default async function ExecPage() {
             </Card>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 items-start">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 items-start mb-3">
             <ExecCampaign id="complexecon" laneId="complexecon" date={today} />
             <ExecCampaign id="armstrong" laneId="armstrong" date={today} />
           </div>
+
+          {/* The feed. Last on the page on purpose: it is the only card here
+              that is input rather than output, and it reads after the day has
+              been set rather than instead of setting it. */}
+          {feed.length > 0 && (
+            <Card
+              title="Feed — Five Subjects"
+              theme={SURF}
+              right={<DetailLink href="/books" theme={SURF} />}
+            >
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-x-3 gap-y-3">
+                {feed.map((column) => (
+                  <FeedColumn key={column.subject.id} column={column} theme={SURF} />
+                ))}
+              </div>
+            </Card>
+          )}
 
           {/* The method note. True, and read once — on a phone it was a screen of
               text between you and the bottom of the page every single day. */}

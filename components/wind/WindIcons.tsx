@@ -145,7 +145,56 @@ const SPOT_PATHS: Record<string, React.ReactNode> = {
       <path d="M20 9 q1.5-1.5 2 0" />
     </>
   ),
+
+  // ─── Cape Town ──────────────────────────────────────────────
+  // Kite Beach — the twin-tip, flat on the sand
+  'kite-beach': (
+    <>
+      <path d="M3.5 14 q8.5-5 17 0 q-8.5 5-17 0 Z" />
+      <path d="M9 12.4 q1.4-1.3 2.8 0 M13 12.4 q1.4-1.3 2.8 0" />
+    </>
+  ),
+  // Big Bay — Table Mountain over the bay it looks across
+  'big-bay': (
+    <>
+      <path d="M2.5 15 L7 8.5 H17 L21.5 15" />
+      <path d="M2 19 q3-2 6 0 t6 0 t6 0" />
+    </>
+  ),
+  // Sunset Beach — the sun going down on the water
+  'sunset-beach': (
+    <>
+      <path d="M8 14 a4 4 0 0 1 8 0" />
+      <path d="M2 14 h4 M18 14 h4" />
+      <path d="M12 5.5 v2 M7 8 l1.4 1.4 M17 8 l-1.4 1.4" />
+      <path d="M2 18.5 q3-2 6 0 t6 0 t6 0" />
+    </>
+  ),
+  // Melkbosstrand — open-ocean swell, bigger water on the same wind
+  melkbos: (
+    <>
+      <path d="M2 15.5 q5-9 11-5 t9 2" />
+      <path d="M2 20 q4-2 8 0 t8 0 t4 0" />
+    </>
+  ),
+  // Langebaan — dead-flat lagoon: a sun and its unbroken reflection
+  langebaan: (
+    <>
+      <circle cx="12" cy="8" r="3" />
+      <path d="M2.5 13 h19" />
+      <path d="M9.5 16 h5 M8 18.5 h8 M10 21 h4" />
+    </>
+  ),
+  // Muizenberg — the Victorian bathing boxes on the sand
+  muizenberg: (
+    <>
+      <path d="M3 20 V13.5 L6.5 10.5 L10 13.5 V20 Z" />
+      <path d="M13 20 V13.5 L16.5 10.5 L20 13.5 V20 Z" />
+      <path d="M2 20.5 h20" />
+    </>
+  ),
 }
+
 
 export function SpotIcon({ slug, className }: { slug: string; className?: string }) {
   const marks = SPOT_PATHS[slug]

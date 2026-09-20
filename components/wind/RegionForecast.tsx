@@ -147,6 +147,22 @@ function WeekBand({
   )
 }
 
+/**
+ * The one habit of the local wind that a seven-day table cannot show.
+ *
+ * A coast where the wind doubles between lunch and sunset is not planned from
+ * a daily figure, so the note sits above the board on every screen rather
+ * than in the masthead, which drops its tagline below xl.
+ */
+function LocalNote({ note }: { note: string }) {
+  return (
+    <div className="border-l-2 border-surf-teal/40 pl-2 mb-2">
+      <div className="font-mono text-[9px] uppercase tracking-wide text-surf-teal">On this coast</div>
+      <p className="text-[10px] text-surf-muted leading-snug">{note}</p>
+    </div>
+  )
+}
+
 function Legend({ hasRail }: { hasRail: boolean }) {
   const rainSwatch =
     'repeating-linear-gradient(135deg, rgba(255,255,255,0.55) 0px, rgba(255,255,255,0.55) 1.5px, transparent 1.5px, transparent 4.5px)'
@@ -206,8 +222,14 @@ function Masthead({
   return (
     <div className="flex items-center gap-2 md:gap-3 mb-2">
       <div className="flex items-center gap-2 md:gap-3 min-w-0">
+        {/* A fifth coast left the full title with nothing but "Wind —" on a
+            phone. The prefix is the half that repeats on every page, so it is
+            the half that goes: a narrow screen gets the coast's own name. */}
         <h1 className="font-serif text-[17px] md:text-[20px] font-semibold text-surf-deep whitespace-nowrap truncate">
-          Wind <span className="text-surf-teal">&mdash;</span> {region.name}
+          <span className="hidden sm:inline">
+            Wind <span className="text-surf-teal">&mdash;</span>{' '}
+          </span>
+          {region.name}
         </h1>
         <span
           className="hidden sm:flex items-center gap-1 font-mono text-[9px] uppercase tracking-wide text-surf-teal bg-surf-teal-bg border border-surf-teal/25 rounded-full px-1.5 py-0.5 shrink-0"
@@ -327,6 +349,7 @@ export async function RegionForecast({ regionId }: { regionId: RegionId }) {
         }
         tz={region.timezone}
       />
+      {region.note && <LocalNote note={region.note} />}
       <SpotBoard forecasts={forecasts} live={live} nowHour={nowHour} tz={region.timezone} />
       <div className="mt-1.5">
         <Legend hasRail={hasRail} />

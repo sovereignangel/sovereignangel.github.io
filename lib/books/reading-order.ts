@@ -344,3 +344,126 @@ export const SCHEDULE: { window: string; place: string; work: string; constraint
     constraint: 'Fixed.',
   },
 ]
+
+/**
+ * The rest of the long shelf — research and long-form media.
+ *
+ * The three volumes above are the spine, but a spine is not a shelf. Two kinds
+ * of thing were falling through: papers, which are the unit the winter school
+ * actually argues in, and long-form media — courses and lecture series — which
+ * are the only efficient way to install a whole apparatus that no single book
+ * covers.
+ *
+ * They sit apart from READING_ORDER rather than inside it because they are not
+ * sequenced. The books answer "what next"; these answer "what do I reach for
+ * when the question is X". Nothing here has a window attached, deliberately —
+ * dating them would turn a reference shelf into another queue to fall behind.
+ *
+ * Every link was fetched and confirmed to resolve. SSRN-hosted work is absent
+ * because SSRN blocks non-browser requests, and a link that cannot be checked
+ * is a link that will rot unnoticed.
+ */
+
+export type LongFormKind = 'paper' | 'course'
+
+export interface LongFormItem {
+  id: string
+  kind: LongFormKind
+  title: string
+  author: string
+  year: string
+  url: string
+  /** Which of the five daily subjects this deepens. Shared vocabulary with lib/exec/feed.ts. */
+  subject: 'value' | 'macro' | 'ai' | 'systems' | 'capital'
+  /** What it is for — the same jobToBeDone idiom the stints use. */
+  jobToBeDone: string
+  /** Why it is on the shelf rather than in the feed. */
+  why: string
+}
+
+export const LONG_FORM: LongFormItem[] = [
+  {
+    id: 'lf-farmer-geanakoplos',
+    kind: 'paper',
+    title: 'The virtues and vices of equilibrium and the future of financial economics',
+    author: 'J. Doyne Farmer & John Geanakoplos',
+    year: '2008',
+    url: 'https://arxiv.org/abs/0803.2996',
+    subject: 'value',
+    jobToBeDone: 'Know what Farmer already thinks before pitching him',
+    why:
+      'The single highest-leverage paper on the shelf for the Abu Dhabi lane, because it is the co-author of the room stating exactly where he thinks equilibrium reasoning earns its keep and where it does not. Read it as the boundary condition on the Lane paper: an argument that lands inside these vices is a contribution, one that ignores them is a restatement.',
+  },
+  {
+    id: 'lf-bouchaud',
+    kind: 'paper',
+    title: 'Economics needs a scientific revolution',
+    author: 'Jean-Philippe Bouchaud',
+    year: '2008',
+    url: 'https://arxiv.org/abs/0810.5306',
+    subject: 'value',
+    jobToBeDone: 'Borrow the practitioner-physicist register',
+    why:
+      'Two pages, written by someone who runs a fund and trained as a physicist — the exact hybrid position the Lane paper is arguing from. Worth reading less for the claim, which is familiar, than for the tone: how to say the field is wrong without sounding like an outsider who has not traded.',
+  },
+  {
+    id: 'lf-peters-ergodicity',
+    kind: 'paper',
+    title: 'The ergodicity problem in economics',
+    author: 'Ole Peters',
+    year: '2019',
+    url: 'https://www.nature.com/articles/s41567-019-0732-0',
+    subject: 'systems',
+    jobToBeDone: 'Separate the time average from the ensemble average, permanently',
+    why:
+      'The cleanest statement of the distinction that most quietly breaks portfolio reasoning: what happens to one book over time is not what happens to many books at once. Directly load-bearing for how Armstrong sizes, and the reason the fund and the paper are the same argument rather than two jobs.',
+  },
+  {
+    id: 'lf-peters-lectures',
+    kind: 'course',
+    title: 'Ergodicity Economics — lecture notes',
+    author: 'Ole Peters & Alexander Adamou, London Mathematical Laboratory',
+    year: 'ongoing',
+    url: 'https://ergodicityeconomics.com/lecture-notes/',
+    subject: 'systems',
+    jobToBeDone: 'Do the maths behind the paper, not just hold the idea',
+    why:
+      'The paper above converts easily into a slogan that is repeated without the derivation. These notes are the antidote: worked, sequential, and finite. This is where the physics-and-maths lane earns its place rather than being general self-improvement.',
+  },
+  {
+    id: 'lf-mehrling',
+    kind: 'course',
+    title: 'Economics of Money and Banking',
+    author: 'Perry Mehrling, Columbia',
+    year: 'ongoing',
+    url: 'https://www.coursera.org/learn/money-banking',
+    subject: 'macro',
+    jobToBeDone: 'Read the plumbing without a desk to learn it on',
+    why:
+      'The money view, taught properly and for free. The macro column of the feed assumes this apparatus and never teaches it — Tooze and Alphaville are both written for people who already have it. This is the one long-form item whose absence makes a daily habit less useful rather than more.',
+  },
+  {
+    id: 'lf-complexity-explorer',
+    kind: 'course',
+    title: 'Introduction to Complexity',
+    author: 'Melanie Mitchell, SFI Complexity Explorer',
+    year: 'ongoing',
+    url: 'https://www.complexityexplorer.org/courses/172-introduction-to-complexity',
+    subject: 'value',
+    jobToBeDone: 'Install the room’s shared undergraduate layer',
+    why:
+      'Arthur gives the dialect; this gives the substrate underneath it that everyone at SFI is assumed to have and nobody will explain in seminar. Skippable if Arthur reads easily, and the honest test of that is whether the chapter-by-chapter positions come out specific or vague.',
+  },
+  {
+    id: 'lf-sfi-working-papers',
+    kind: 'paper',
+    title: 'SFI Working Papers',
+    author: 'Santa Fe Institute',
+    year: 'ongoing',
+    url: 'https://www.santafe.edu/research/results/working-papers',
+    subject: 'value',
+    jobToBeDone: 'See the room’s work before it is published',
+    why:
+      'Not a document but a standing source, and the only one on this shelf rather than in the feed — working papers are checked when a question is live, not sampled daily. Going in with a specific reference to unpublished work is worth more than having read every book on the list.',
+  },
+]

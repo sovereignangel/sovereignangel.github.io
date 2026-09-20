@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { KITE_REGIONS } from '@/lib/kite/regions'
 import { SeasonIcon } from './WindIcons'
 
-export type WindTabId = 'lithuania' | 'nyc' | 'brazil' | 'mastery'
+export type WindTabId = 'lithuania' | 'nyc' | 'brazil' | 'capetown' | 'mastery'
 
 /** Which leg of the rotation the calendar says he is on right now. */
 function currentRegionId(): string {

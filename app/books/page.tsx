@@ -8,7 +8,7 @@ import BookSearch from '@/components/books/BookSearch'
 import StintCard from '@/components/books/StintCard'
 import FullListView from '@/components/books/FullListView'
 import BookNotes from '@/components/books/BookNotes'
-import { READING_ORDER, ORDER_ARGUMENT, SCHEDULE } from '@/lib/books/reading-order'
+import { READING_ORDER, ORDER_ARGUMENT, SCHEDULE, LONG_FORM } from '@/lib/books/reading-order'
 import type { BookMeta } from '@/lib/books/types'
 import type { ReaderSource } from '@/components/thesis/reader/ReaderOverlay'
 
@@ -166,6 +166,36 @@ export default function BooksPage() {
                 onOpen={openBook}
               />
             ))}
+          </div>
+
+          {/* Research and long-form. Below the stints because it is a shelf,
+              not a queue — reached for by question, never worked through. */}
+          <div className="bg-white border border-rule rounded-sm p-3 mt-3">
+            <div className="font-serif text-[13px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-2 pb-1.5 border-b-2 border-rule">
+              Research &amp; long form
+            </div>
+            <div className="space-y-2.5">
+              {LONG_FORM.map(item => (
+                <div key={item.id} className="pb-2.5 border-b border-rule-light last:border-0 last:pb-0">
+                  <div className="flex items-baseline gap-1.5 flex-wrap mb-0.5">
+                    <span className="font-mono text-[8px] uppercase px-1.5 py-0.5 rounded-sm border bg-burgundy-bg text-burgundy border-burgundy/20 shrink-0">
+                      {item.kind}
+                    </span>
+                    <a
+                      href={item.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[11px] font-semibold text-ink hover:text-burgundy transition-colors"
+                    >
+                      {item.title}
+                    </a>
+                    <span className="text-[10px] text-ink-muted">{item.author} &middot; {item.year}</span>
+                  </div>
+                  <div className="text-[10px] text-ink-muted mb-0.5">{item.jobToBeDone}</div>
+                  <p className="text-[11px] text-ink-muted leading-relaxed">{item.why}</p>
+                </div>
+              ))}
+            </div>
           </div>
 
           {/* Schedule */}

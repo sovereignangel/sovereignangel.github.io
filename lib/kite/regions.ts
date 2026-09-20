@@ -5,6 +5,12 @@
  *   Lithuania  summer        Baltic coast and the Curonian Lagoon
  *   NYC        fall & spring Sandy Hook and Plumb Beach
  *   Brazil     winter        the Ceara downwinder coast, Fortaleza to Atins
+ *   Cape Town  winter        Table Bay under the Cape Doctor
+ *
+ * Two legs share the winter: Brazil and Cape Town are both places to be in
+ * January, and which one a given January belongs to is a travel decision, not
+ * a forecast one. The season label marks the rider's winter, never the
+ * hemisphere's — Cape Town in January is high summer where it stands.
  *
  * The rider's rules do not change with the region: 12-30 kn, gusts under 36,
  * onshore or cross only, a two-hour window minimum. Only the geography moves.
@@ -12,7 +18,7 @@
 
 import type { KiteSpot } from './forecast'
 
-export type RegionId = 'lithuania' | 'nyc' | 'brazil'
+export type RegionId = 'lithuania' | 'nyc' | 'brazil' | 'capetown'
 export type SeasonId = 'summer' | 'shoulder' | 'winter'
 
 export interface KiteRegion {
@@ -33,6 +39,13 @@ export interface KiteRegion {
   /** Suffix shown next to the generated-at clock */
   clockLabel: string
   tagline: string
+  /**
+   * One piece of local knowledge that changes how you read the forecast here
+   * — the diurnal habit of the wind, usually. Shown under the week band on
+   * every screen, because a coast whose wind doubles between lunch and sunset
+   * cannot be planned from a daily average.
+   */
+  note?: string
   spots: KiteSpot[]
 }
 
@@ -323,6 +336,109 @@ const BRAZIL_SPOT_LIST: KiteSpot[] = [
   }),
 ]
 
+
+// ─── Cape Town · the rider's winter, their summer ─────────────
+// The Cape Doctor is a SE that runs up the Table Bay coast rather than into
+// it: the shoreline from Milnerton to Melkbos faces roughly west, the wind
+// arrives off Table Mountain to the south, and what reaches the beach is
+// cross-shore. That is why the offshore sectors below are cut at ESE — a
+// wind from due east really is blowing off the Cape Flats and out to sea,
+// while the SE that everybody rides is not.
+//
+// Sector bearings are read off the coastline, not off a local's briefing.
+// They are right about the shape of each spot and should still be checked
+// against someone who rides there before trusting them on a big day.
+
+const CAPETOWN_SPOT_LIST: KiteSpot[] = [
+  {
+    slug: 'kite-beach',
+    name: 'Kite Beach',
+    area: 'Table View · Table Bay',
+    lat: -33.8225,
+    lon: 18.473,
+    water: 'ocean',
+    offshoreSector: [30, 110],
+    onshoreSector: [200, 330],
+    idealWind: 'wind travels northwest (SE Cape Doctor)',
+    tagline: 'the daily driver',
+    note: 'Wide sandy launch, flatter inside the bank, chop and swell outside. E wind is offshore across the Flats — never ride it.',
+    priority: 4,
+    favorWhen: { maxKn: 24, bonus: 2 },
+  },
+  {
+    slug: 'big-bay',
+    name: 'Big Bay',
+    area: 'Bloubergstrand · Table Bay',
+    lat: -33.794,
+    lon: 18.456,
+    water: 'ocean',
+    offshoreSector: [30, 110],
+    onshoreSector: [200, 330],
+    idealWind: 'wind travels northwest (SE Cape Doctor)',
+    tagline: 'the postcard · King of the Air water',
+    note: 'Waves and a shore break, Table Mountain straight down the line. Wants power — it is the jumping spot, not the cruising one.',
+    priority: 3,
+    favorWhen: { minKn: 20, bonus: 3 },
+  },
+  {
+    slug: 'sunset-beach',
+    name: 'Sunset Beach',
+    area: 'Milnerton · Table Bay',
+    lat: -33.853,
+    lon: 18.479,
+    water: 'ocean',
+    offshoreSector: [30, 110],
+    onshoreSector: [200, 330],
+    idealWind: 'wind travels northwest (SE Cape Doctor)',
+    tagline: 'closest to town · after-work session',
+    note: 'The short drive when the Doctor only comes up late. Punchier and gustier than Table View, less room downwind.',
+    priority: 2,
+  },
+  {
+    slug: 'melkbos',
+    name: 'Melkbosstrand',
+    area: 'north of Blouberg',
+    lat: -33.726,
+    lon: 18.44,
+    water: 'ocean',
+    offshoreSector: [30, 110],
+    onshoreSector: [200, 330],
+    idealWind: 'wind travels northwest (SE Cape Doctor)',
+    tagline: 'emptier, cleaner swell',
+    note: 'Twenty minutes further north and a fraction of the crowd. More open ocean, so bigger water on the same wind.',
+    priority: 0,
+  },
+  {
+    slug: 'langebaan',
+    name: 'Langebaan',
+    area: 'lagoon · 120 km north',
+    lat: -33.087,
+    lon: 18.033,
+    water: 'lagoon',
+    offshoreSector: [40, 145],
+    onshoreSector: [200, 320],
+    idealWind: 'wind travels north (S/SSW summer southerly)',
+    tagline: 'flat water worth the drive',
+    note: 'Turquoise lagoon, waist deep, no swell at all — the freestyle and foiling day. Runs on the S/SW, not the SE.',
+    priority: -5,
+    favorWhen: { minKn: 16, bonus: 4 },
+  },
+  {
+    slug: 'muizenberg',
+    name: 'Muizenberg',
+    area: 'False Bay · the warm side',
+    lat: -34.108,
+    lon: 18.47,
+    water: 'bay',
+    offshoreSector: [300, 30],
+    onshoreSector: [120, 220],
+    idealWind: 'wind travels northwest (SE onshore across False Bay)',
+    tagline: 'warm water · other side of the mountain',
+    note: 'False Bay runs several degrees warmer and takes the SE straight onshore. Shares the water with surfers — stay off the corner.',
+    priority: -3,
+  },
+]
+
 export const KITE_REGIONS: KiteRegion[] = [
   {
     id: 'lithuania',
@@ -369,6 +485,22 @@ export const KITE_REGIONS: KiteRegion[] = [
     tagline: 'E/ESE trades every day · 450 km of downwind coast',
     spots: BRAZIL_SPOT_LIST,
   },
+  {
+    id: 'capetown',
+    name: 'Cape Town',
+    short: 'Cape Town',
+    abbr: 'CPT',
+    href: '/wind/capetown',
+    season: 'winter',
+    seasonLabel: 'winter',
+    months: 'Nov – Mar',
+    activeMonths: [11, 12, 1, 2, 3],
+    timezone: 'Africa/Johannesburg',
+    clockLabel: 'SAST',
+    tagline: 'the Cape Doctor · soft at noon, hardest at sundown',
+    note: 'The Doctor comes up gentle and builds all afternoon: the strongest wind of the day is the last of it, well into the evening. Plan the session late, and size the kite for what the wind becomes rather than what it is at launch.',
+    spots: CAPETOWN_SPOT_LIST,
+  },
 ]
 
 export function getRegion(id: RegionId): KiteRegion {
@@ -377,4 +509,4 @@ export function getRegion(id: RegionId): KiteRegion {
   return region
 }
 
-export { LITHUANIA_SPOT_LIST, NYC_SPOT_LIST, BRAZIL_SPOT_LIST }
+export { LITHUANIA_SPOT_LIST, NYC_SPOT_LIST, BRAZIL_SPOT_LIST, CAPETOWN_SPOT_LIST }
