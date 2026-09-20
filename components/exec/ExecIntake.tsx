@@ -3,9 +3,13 @@
 /**
  * The intake surface — what goes in, and what it left behind.
  *
- * Three columns of standing at the top, the queue in the middle, the ledger
- * at the bottom. The queue is the point: something is always waiting, so
- * "nothing to read" never becomes a reason to open a feed and scroll.
+ * Three columns of standing at the top, then the ledger, then the queue.
+ * The ledger sits above the pile on purpose: what you took from yesterday is
+ * context for choosing today, and a queue of forty is a wall to read past if
+ * it comes first. The queue is still the point — something is always waiting,
+ * so "nothing to read" never becomes a reason to open a feed and scroll — but
+ * it is the thing you descend into, so it scrolls inside its own box rather
+ * than pushing the ledger off the screen.
  *
  * Marking something done demands a takeaway. It is the one piece of friction
  * kept on purpose — an item ticked without a sentence is an item you cannot
@@ -36,6 +40,31 @@ const RULE = '#e4dccb'
 const CARD = '#fffdf7'
 const GOOD = '#2d6b4a'
 const ALERT = '#c94f35'
+
+/**
+ * The date axis, as windows rather than a picker.
+ *
+ * A pile is searched by "what came in today" and "what has been rotting",
+ * never by an exact calendar day — the download's date is an accident of when
+ * a cron ran, not a thing anyone remembers. Two presets and an all, and the
+ * free-text box still matches a raw YYYY-MM-DD for the rare exact case.
+ */
+type WhenFilter = 'all' | 'today' | 'week' | 'stale'
+
+function withinWhen(item: IntakeItem, today: string, when: WhenFilter): boolean {
+  if (when === 'all') return true
+  const age = waitingDays(item, today)
+  if (when === 'today') return item.addedOn === today
+  if (when === 'week') return age <= 7
+  return age > 7
+}
+
+const WHEN_LABEL: Record<WhenFilter, string> = {
+  all: 'Any time',
+  today: 'Today',
+  week: 'Past week',
+  stale: 'Over a week',
+}
 
 function Tick() {
   return (
@@ -172,6 +201,9 @@ export function ExecIntake({ date: serverDate }: { date: string }) {
   const [err, setErr] = useState<string | null>(null)
   const [note, setNote] = useState('')
   const [filter, setFilter] = useState<IntakeKind | 'all'>('all')
+  const [search, setSearch] = useState('')
+  const [source, setSource] = useState('all')
+  const [when, setWhen] = useState<WhenFilter>('all')
 
   const load = useCallback(async () => {
     if (!user) return
@@ -190,11 +222,29 @@ export function ExecIntake({ date: serverDate }: { date: string }) {
     [items, date, day]
   )
 
+  /** Every source currently represented in the pile — the theme axis. */
+  const sources = useMemo(() => {
+    const seen = new Set<string>()
+    for (const k of standing.kinds) for (const i of k.backlog) if (i.source) seen.add(i.source)
+    return [...seen].sort()
+  }, [standing])
+
   const queue = useMemo(() => {
     const all = standing.kinds.flatMap((k) => (filter === 'all' || filter === k.spec.id ? k.backlog : []))
+    const q = search.trim().toLowerCase()
+    const matched = all.filter((i) => {
+      if (source !== 'all' && i.source !== source) return false
+      if (!withinWhen(i, date, when)) return false
+      if (!q) return true
+      // Title, blurb and source together: searching "arXiv" or "Stratechery"
+      // should find the things from there without a second control.
+      return `${i.title} ${i.blurb || ''} ${i.source} ${i.addedOn}`.toLowerCase().includes(q)
+    })
     // Oldest first across kinds, so the queue reads as one debt rather than three.
-    return all.sort((a, b) => (a.addedOn || '').localeCompare(b.addedOn || ''))
-  }, [standing, filter])
+    return matched.sort((a, b) => (a.addedOn || '').localeCompare(b.addedOn || ''))
+  }, [standing, filter, search, source, when, date])
+
+  const filtered = queue.length !== standing.backlogTotal
 
   /** The ledger, newest day first — only what was actually consumed. */
   const ledger = useMemo(() => {
@@ -401,65 +451,6 @@ export function ExecIntake({ date: serverDate }: { date: string }) {
         ))}
       </section>
 
-      {/* The queue. */}
-      <section className="border rounded-xl px-2.5 py-2" style={{ borderColor: RULE, backgroundColor: CARD }}>
-        <div className="flex items-center gap-2 flex-wrap mb-2">
-          <span className="font-serif text-[15px] font-semibold" style={{ color: INK }}>The queue</span>
-          <span className="font-mono text-[10px]" style={{ color: MUTED }}>
-            {standing.backlogTotal} waiting &middot; oldest first
-          </span>
-          <span className="flex items-center gap-1 ml-auto">
-            {(['all', ...INTAKE_KINDS.map((k) => k.id)] as const).map((f) => (
-              <button
-                key={f}
-                type="button"
-                onClick={() => setFilter(f as IntakeKind | 'all')}
-                className="font-serif text-[10px] font-medium px-2 py-1 rounded-md border bg-transparent transition-colors"
-                style={
-                  filter === f
-                    ? { color: CARD, backgroundColor: INK, borderColor: INK }
-                    : { color: MUTED, borderColor: FAINT }
-                }
-              >
-                {f === 'all' ? 'All' : KIND_BY_ID[f as IntakeKind].label}
-              </button>
-            ))}
-            <Btn tone="solid" onClick={() => void pull()} disabled={pulling}>
-              {pulling ? 'Pulling…' : 'Pull the download'}
-            </Btn>
-          </span>
-        </div>
-
-        {msg && <div className="text-[10px] mb-1.5" style={{ color: GOOD }}>{msg}</div>}
-        {err && <div className="text-[10px] mb-1.5" style={{ color: ALERT }}>{err}</div>}
-
-        {items === null ? (
-          <div className="h-16 rounded-lg animate-pulse" style={{ backgroundColor: RULE }} />
-        ) : queue.length === 0 ? (
-          <p className="text-[10px] py-2" style={{ color: MUTED }}>
-            Queue empty — pull the download and there will be something waiting tomorrow.
-          </p>
-        ) : (
-          <div className="space-y-1.5">
-            {queue.slice(0, 40).map((item) => (
-              <QueueRow
-                key={item.id}
-                item={item}
-                today={date}
-                onDone={markDone}
-                onSkip={skip}
-                busy={busy === item.id}
-              />
-            ))}
-            {queue.length > 40 && (
-              <p className="text-[10px] pt-1" style={{ color: FAINT }}>
-                {queue.length - 40} more waiting — clear some before pulling again.
-              </p>
-            )}
-          </div>
-        )}
-      </section>
-
       {/* The ledger. */}
       <section className="border rounded-xl px-2.5 py-2" style={{ borderColor: RULE, backgroundColor: CARD }}>
         <div className="flex items-baseline gap-2 flex-wrap mb-2">
@@ -525,6 +516,124 @@ export function ExecIntake({ date: serverDate }: { date: string }) {
                   })}
                 </div>
               </div>
+            ))}
+          </div>
+        )}
+      </section>
+
+      {/* The queue. */}
+      <section className="border rounded-xl px-2.5 py-2" style={{ borderColor: RULE, backgroundColor: CARD }}>
+        <div className="flex items-center gap-2 flex-wrap mb-1.5">
+          <span className="font-serif text-[15px] font-semibold" style={{ color: INK }}>The queue</span>
+          <span className="font-mono text-[10px]" style={{ color: MUTED }}>
+            {filtered ? `${queue.length} of ${standing.backlogTotal}` : `${standing.backlogTotal} waiting`} &middot; oldest first
+          </span>
+          <Btn tone="solid" onClick={() => void pull()} disabled={pulling}>
+            {pulling ? 'Pulling…' : 'Pull the download'}
+          </Btn>
+        </div>
+
+        {/* Search, kind, source, age — one row of controls over the pile. */}
+        <div className="flex items-center gap-1.5 flex-wrap mb-2">
+          <span className="relative flex-1 min-w-[160px]">
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search titles, abstracts, sources…"
+              className="w-full border rounded-md pl-2 pr-6 py-1 text-[11px] bg-transparent outline-none"
+              style={{ borderColor: RULE, color: INK }}
+            />
+            {search && (
+              <button
+                type="button"
+                onClick={() => setSearch('')}
+                aria-label="Clear the search"
+                className="absolute right-1 top-1/2 -translate-y-1/2 font-mono text-[11px] px-1"
+                style={{ color: FAINT }}
+              >
+                &times;
+              </button>
+            )}
+          </span>
+
+          {(['all', ...INTAKE_KINDS.map((k) => k.id)] as const).map((f) => (
+            <button
+              key={f}
+              type="button"
+              onClick={() => setFilter(f as IntakeKind | 'all')}
+              className="font-serif text-[10px] font-medium px-2 py-1 rounded-md border bg-transparent transition-colors shrink-0"
+              style={
+                filter === f
+                  ? { color: CARD, backgroundColor: INK, borderColor: INK }
+                  : { color: MUTED, borderColor: FAINT }
+              }
+            >
+              {f === 'all' ? 'All' : KIND_BY_ID[f as IntakeKind].label}
+            </button>
+          ))}
+
+          <select
+            value={source}
+            onChange={(e) => setSource(e.target.value)}
+            aria-label="Filter by source"
+            className="font-serif text-[10px] px-1.5 py-1 rounded-md border bg-transparent outline-none shrink-0"
+            style={{ borderColor: FAINT, color: source === 'all' ? MUTED : INK }}
+          >
+            <option value="all">Every source</option>
+            {sources.map((sname) => (
+              <option key={sname} value={sname}>{sname}</option>
+            ))}
+          </select>
+
+          <select
+            value={when}
+            onChange={(e) => setWhen(e.target.value as WhenFilter)}
+            aria-label="Filter by when it arrived"
+            className="font-serif text-[10px] px-1.5 py-1 rounded-md border bg-transparent outline-none shrink-0"
+            style={{ borderColor: FAINT, color: when === 'all' ? MUTED : INK }}
+          >
+            {(Object.keys(WHEN_LABEL) as WhenFilter[]).map((w) => (
+              <option key={w} value={w}>{WHEN_LABEL[w]}</option>
+            ))}
+          </select>
+
+          {filtered && (
+            <button
+              type="button"
+              onClick={() => { setSearch(''); setFilter('all'); setSource('all'); setWhen('all') }}
+              className="font-mono text-[9px] px-1 shrink-0 hover:underline"
+              style={{ color: FAINT }}
+            >
+              clear
+            </button>
+          )}
+        </div>
+
+        {msg && <div className="text-[10px] mb-1.5" style={{ color: GOOD }}>{msg}</div>}
+        {err && <div className="text-[10px] mb-1.5" style={{ color: ALERT }}>{err}</div>}
+
+        {items === null ? (
+          <div className="h-16 rounded-lg animate-pulse" style={{ backgroundColor: RULE }} />
+        ) : queue.length === 0 ? (
+          <p className="text-[10px] py-2" style={{ color: MUTED }}>
+            {standing.backlogTotal === 0
+              ? 'Queue empty — pull the download and there will be something waiting tomorrow.'
+              : 'Nothing matches those filters.'}
+          </p>
+        ) : (
+          // Scrolls in its own box: the pile is meant to be deeper than a day,
+          // and a list that grows without bound would push the ledger and the
+          // three acts off the top of the page every time a pull lands.
+          <div className="space-y-1.5 overflow-y-auto pr-1" style={{ maxHeight: '58vh' }}>
+            {queue.map((item) => (
+              <QueueRow
+                key={item.id}
+                item={item}
+                today={date}
+                onDone={markDone}
+                onSkip={skip}
+                busy={busy === item.id}
+              />
             ))}
           </div>
         )}

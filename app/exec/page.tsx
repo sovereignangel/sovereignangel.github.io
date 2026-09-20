@@ -21,7 +21,8 @@ import { ExecCampaign } from '@/components/exec/ExecCampaign'
 import { ExecGoals } from '@/components/exec/ExecGoals'
 import { ExecBlocks } from '@/components/exec/ExecBlocks'
 import { tripIsLive } from '@/lib/exec/svencele'
-import { buildFeed, relativeAge, type SubjectColumn } from '@/lib/exec/feed'
+import { buildFeed, SUBJECTS, relativeAge, type SubjectColumn, type FeedItem } from '@/lib/exec/feed'
+import { getSurfaced } from '@/lib/exec/feed-store'
 import { SpotIcon, WaveDivider } from '@/components/wind/WindIcons'
 import { SportIcon, CourseDivider } from '@/components/ironman/IronmanIcons'
 
@@ -344,6 +345,33 @@ function IronmanDay({ label, day, slot, theme }: { label: string; day: PlanDay |
   )
 }
 
+// ── Stored ranking ────────────────────────────────────────────────────────
+// Rows written by the daily run, regrouped into the same column shape the live
+// builder produces — so the card does not care which path filled it.
+
+async function storedFeed(day: string): Promise<SubjectColumn[]> {
+  const uid = process.env.TRANSCRIPT_WEBHOOK_UID || process.env.FIREBASE_UID
+  if (!uid) return []
+  const rows = await getSurfaced(uid, day)
+  if (rows.length === 0) return []
+  return SUBJECTS.map((subject) => ({
+    subject,
+    items: rows
+      .filter((r) => r.subject === subject.id && !r.read)
+      .map<FeedItem>((r) => ({
+        title: r.title,
+        link: r.link,
+        source: r.source,
+        subject: r.subject,
+        published: r.publishedAt,
+        score: r.score ?? undefined,
+        reason: r.reason ?? undefined,
+      })),
+    failed: [],
+    scored: true,
+  }))
+}
+
 // ── Feed column ───────────────────────────────────────────────────────────
 // Five subjects side by side, four items each. The column head carries the
 // angle rather than the source list: the point of the card is to answer "what
@@ -360,7 +388,7 @@ function FeedColumn({ column, theme }: { column: SubjectColumn; theme: Theme }) 
       {column.items.length === 0 ? (
         <div className={`text-[10px] ${theme.faint}`}>Nothing new today.</div>
       ) : (
-        <div className="space-y-1.5">
+        <div className="space-y-2">
           {column.items.map((item) => (
             <div key={item.link}>
               <a
@@ -371,6 +399,9 @@ function FeedColumn({ column, theme }: { column: SubjectColumn; theme: Theme }) 
               >
                 {item.title}
               </a>
+              {item.reason && (
+                <div className={`text-[10px] leading-snug mt-0.5 ${theme.muted}`}>{item.reason}</div>
+              )}
               <div className={`font-mono text-[9px] uppercase tracking-[0.3px] mt-0.5 ${theme.muted}`}>
                 {item.source}
                 {relativeAge(item.published) && <span className={theme.faint}> · {relativeAge(item.published)}</span>}
@@ -379,8 +410,12 @@ function FeedColumn({ column, theme }: { column: SubjectColumn; theme: Theme }) 
           ))}
         </div>
       )}
-      {column.failed.length > 0 && (
-        <div className={`text-[9px] mt-1.5 ${theme.faint}`}>{column.failed.join(', ')} unreachable</div>
+      {(column.failed.length > 0 || !column.scored) && (
+        <div className={`text-[9px] mt-1.5 ${theme.faint}`}>
+          {column.failed.length > 0 && <>{column.failed.join(', ')} unreachable</>}
+          {column.failed.length > 0 && !column.scored && ' · '}
+          {!column.scored && 'unranked — newest first'}
+        </div>
       )}
     </div>
   )
@@ -424,16 +459,22 @@ export default async function ExecPage() {
     windError = true
   }
 
+
+  const today = todayLocal()
+
   // Never allowed to take the page down with it — a reading list is the least
   // load-bearing thing here, and the wind and the training plan are not.
+  //
+  // The stored ranking wins when the daily run has written one: it is ranked by
+  // judgement rather than by recency, and it is the same set the backlog knows
+  // about. Live fetching is the fallback for a day the run has not happened.
   let feed: SubjectColumn[] = []
   try {
-    feed = await buildFeed()
+    feed = await storedFeed(today)
+    if (feed.length === 0) feed = await buildFeed()
   } catch {
     feed = []
   }
-
-  const today = todayLocal()
   const tomorrow = addDaysISO(today, 1)
   const sessions = forecasts.length ? weekSessions(forecasts) : []
   const possibles = forecasts.length ? weekPossibles(forecasts) : []
@@ -542,7 +583,17 @@ export default async function ExecPage() {
             <Card
               title="Feed — Five Subjects"
               theme={SURF}
-              right={<DetailLink href="/books" theme={SURF} />}
+              right={
+                <span className="flex items-center gap-1">
+                  <a
+                    href="/exec/backlog"
+                    className={`inline-flex items-center gap-1 font-serif text-[10px] font-medium px-2 py-1 rounded-full border bg-transparent transition-colors ${SURF.link}`}
+                  >
+                    Backlog
+                  </a>
+                  <DetailLink href="/books" theme={SURF} />
+                </span>
+              }
             >
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-x-3 gap-y-3">
                 {feed.map((column) => (

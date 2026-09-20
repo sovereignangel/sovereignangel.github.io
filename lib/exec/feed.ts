@@ -30,6 +30,8 @@
  */
 
 import Parser from 'rss-parser'
+import { unstable_cache } from 'next/cache'
+import { callLLM } from '@/lib/llm'
 
 export type SubjectId = 'value' | 'macro' | 'ai' | 'systems' | 'capital'
 
@@ -56,6 +58,10 @@ export interface FeedItem {
   subject: SubjectId
   /** Epoch ms, or null when the feed omits a usable date. */
   published: number | null
+  /** 0-100 relevance to the value question. Undefined when scoring was skipped. */
+  score?: number
+  /** One line on why it earned the slot. Shown under the byline. */
+  reason?: string
 }
 
 export interface SubjectColumn {
@@ -63,6 +69,8 @@ export interface SubjectColumn {
   items: FeedItem[]
   /** Sources that failed this render — shown quietly rather than swallowed. */
   failed: string[]
+  /** False when the model was unreachable and the column fell back to recency. */
+  scored: boolean
 }
 
 const ARXIV = (code: string) => `https://export.arxiv.org/rss/${code}`
@@ -132,15 +140,20 @@ function isArxiv(url: string): boolean {
 }
 
 /**
- * Fetched through the Next data cache rather than parser.parseURL, so a page
- * render every sixty seconds does not mean a feed fetch every sixty seconds.
- * Half an hour is well inside the cadence of everything in the list.
+ * Fetched raw, then cached as parsed items rather than as the response body.
+ *
+ * The obvious shape — fetch with `next: { revalidate }` — fails on one of the
+ * sources here: the 2Bobs archive is a 2.1 MB document of 250 episodes, over
+ * Next's 2 MB fetch-cache ceiling, so it silently refuses to cache and the page
+ * re-downloads two megabytes on every render. Caching the parsed slice instead
+ * stores a few hundred bytes and works the same for every feed regardless of
+ * how much history it carries.
  */
-async function fetchSource(src: FeedSource, subject: SubjectId): Promise<FeedItem[] | null> {
+async function fetchSourceUncached(src: FeedSource, subject: SubjectId): Promise<FeedItem[] | null> {
   try {
     const res = await fetch(src.url, {
       headers: { 'user-agent': 'Mozilla/5.0 (compatible; exec-feed/1.0)' },
-      next: { revalidate: 1800 },
+      cache: 'no-store',
     })
     if (!res.ok) return null
     const xml = await res.text()
@@ -164,6 +177,12 @@ async function fetchSource(src: FeedSource, subject: SubjectId): Promise<FeedIte
     return null
   }
 }
+
+const fetchSource = unstable_cache(
+  fetchSourceUncached,
+  ['exec-feed-source'],
+  { revalidate: 1800 },
+)
 
 /**
  * Interleave by source before truncating, so one prolific feed cannot take the
@@ -189,7 +208,117 @@ function interleave(bySource: FeedItem[][], limit: number): FeedItem[] {
   return out
 }
 
-/** One column per subject. Never throws: a dead feed costs its own slot only. */
+/**
+ * The standing brief the model scores against.
+ *
+ * Deliberately narrow. A generic "is this interesting to a smart person"
+ * prompt returns the feed unfiltered, because everything in these sources is
+ * interesting to a smart person — that is why they were chosen. The filter only
+ * does work if it is asking a question most good writing fails.
+ */
+const VALUE_QUESTION = `You are filtering a daily reading list for one reader.
+
+WHO: managing partner of a small systematic hedge fund (Armstrong). Also writing a
+paper for the Santa Fe Institute winter school on complexity economics, January 2027.
+His lane is valuation conventions as distributive institutions.
+
+THE ONE QUESTION everything is read against: how is value determined by an
+individual and then made to stick by a society — and who does that arrangement pay?
+
+He has three jobs: generate returns, raise capital, keep the shop running. An item
+earns a slot by teaching something about the mechanism above, or by being directly
+usable in one of those three jobs.
+
+Score HARSHLY. These sources are all reputable, so "well written and about the right
+field" is not enough and must score below 50. Reserve 70+ for items that would change
+a position, a paper argument, or a conversation with an allocator.
+
+Score 0-25 and say so plainly for: institutional announcements, book reviews, press
+releases, staff news, link roundups, open threads, conference notices, obituaries,
+and general-interest science or history with no mechanism he could use.`
+
+interface ScoredLine {
+  i: number
+  score: number
+  reason: string
+}
+
+/**
+ * One call per subject rather than one per item. Two reasons: it is roughly a
+ * tenth of the cost, and — more importantly — the model sees the candidates side
+ * by side, so it ranks comparatively instead of grading each item against an
+ * imagined absolute. Comparative is what is actually wanted here: the job is to
+ * pick the best four of twelve, not to decide whether each is good.
+ */
+async function scoreCandidates(
+  subject: Subject,
+  candidates: FeedItem[],
+): Promise<ScoredLine[] | null> {
+  if (candidates.length === 0) return []
+  const list = candidates
+    .map((c, i) => `${i}. [${c.source}] ${c.title}`)
+    .join('\n')
+
+  const prompt = `${VALUE_QUESTION}
+
+SUBJECT COLUMN: ${subject.title} — ${subject.angle}
+
+CANDIDATES:
+${list}
+
+For every candidate return a score 0-100 and a reason of at most 12 words, written
+to the reader in second person, saying what he would get from it. For a low score the
+reason should say why it does not belong, just as briefly.
+
+Return ONLY a JSON array, no markdown fences:
+[{"i":0,"score":72,"reason":"Prices the compute buildout you are short"},{"i":1,"score":15,"reason":"Institutional book review, no mechanism"}]`
+
+  try {
+    const text = await callLLM(prompt, { temperature: 0.2, maxTokens: 2000 })
+    const cleaned = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()
+    const start = cleaned.indexOf('[')
+    const end = cleaned.lastIndexOf(']')
+    if (start === -1 || end === -1) return null
+    const parsed = JSON.parse(cleaned.slice(start, end + 1)) as ScoredLine[]
+    if (!Array.isArray(parsed)) return null
+    return parsed.filter(
+      (line) =>
+        typeof line?.i === 'number' &&
+        typeof line?.score === 'number' &&
+        line.i >= 0 &&
+        line.i < candidates.length,
+    )
+  } catch {
+    return null
+  }
+}
+
+/** Below this an item is not worth a line on the page. */
+const SCORE_FLOOR = 45
+
+/** No single source may take more than this many of a column's slots. */
+const MAX_PER_SOURCE = 2
+
+/**
+ * Cached on the candidate set rather than on the clock. The feed fetches sit
+ * behind a half-hour cache, so the candidate list is stable across renders and
+ * the key changes exactly when there is something new to score — which means a
+ * page refresh costs nothing and a new post is scored once.
+ */
+const cachedScore = unstable_cache(
+  async (subjectId: SubjectId, _key: string, candidates: FeedItem[]) => {
+    const subject = SUBJECTS.find((s) => s.id === subjectId)!
+    return scoreCandidates(subject, candidates)
+  },
+  ['exec-feed-score'],
+  { revalidate: 1800 },
+)
+
+/**
+ * One column per subject. Never throws: a dead feed costs its own slot, and a
+ * dead model costs the ranking but not the column — it falls back to recency,
+ * which is what this did before scoring existed.
+ */
 export async function buildFeed(perSubject = 4): Promise<SubjectColumn[]> {
   return Promise.all(
     SUBJECTS.map(async (subject) => {
@@ -208,9 +337,73 @@ export async function buildFeed(perSubject = 4): Promise<SubjectColumn[]> {
         if (items.length === 0 && !isArxiv(src.url)) failed.push(src.name)
         bySource.push(items)
       })
-      return { subject, items: interleave(bySource, perSubject), failed }
+
+      // Interleave first so the scoring pool itself is source-diverse — a pool
+      // that is nine-tenths Marginal Revolution can only be ranked into a
+      // Marginal Revolution column however good the model is.
+      const candidates = interleave(bySource, perSubject * 3)
+      const key = candidates.map((c) => c.link).join('|')
+      const scores = await cachedScore(subject.id, key, candidates).catch(() => null)
+
+      if (!scores) {
+        return { subject, items: candidates.slice(0, perSubject), failed, scored: false }
+      }
+
+      const ranked = scores
+        .map((line) => ({ ...candidates[line.i], score: line.score, reason: line.reason }))
+        .filter((item) => item.score >= SCORE_FLOOR)
+        .sort((a, b) => b.score - a.score)
+
+      const perSource = new Map<string, number>()
+      const items: FeedItem[] = []
+      for (const item of ranked) {
+        if (items.length >= perSubject) break
+        const used = perSource.get(item.source) ?? 0
+        if (used >= MAX_PER_SOURCE) continue
+        perSource.set(item.source, used + 1)
+        items.push(item)
+      }
+      return { subject, items, failed, scored: true }
     }),
   )
+}
+
+
+/** The day key the /exec page uses, so a card is written where the page looks. */
+export const TIMEZONE_DAY = (d = new Date()): string =>
+  new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Vilnius' }).format(d)
+
+/**
+ * Every source's current items, flat and de-duplicated.
+ *
+ * The ranking endpoint needs the same candidate set the card is built from, but
+ * without the column shaping — it is filing an archive, not laying out four
+ * slots. Sharing this with buildFeed keeps the two from drifting apart, which
+ * would show up as backlog rows for items the card never had.
+ */
+export async function buildCandidates(): Promise<{ items: FeedItem[]; unreachable: string[] }> {
+  const unreachable: string[] = []
+  const items: FeedItem[] = []
+  const seen = new Set<string>()
+
+  for (const subject of SUBJECTS) {
+    const results = await Promise.all(
+      subject.sources.map((src) => fetchSource(src, subject.id)),
+    )
+    results.forEach((got, i) => {
+      const src = subject.sources[i]
+      if (got === null) {
+        unreachable.push(src.name)
+        return
+      }
+      for (const item of got) {
+        if (seen.has(item.link)) continue
+        seen.add(item.link)
+        items.push(item)
+      }
+    })
+  }
+  return { items, unreachable }
 }
 
 /** "3d" / "6h" / "now" — compact enough for a column that is mostly title. */
