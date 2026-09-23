@@ -267,7 +267,9 @@ export function priorRaceVsGoal(r: PriorRace, goals: RaceGoals = GOALS) {
     swim: r.swimSec - goals.swimMinutes * 60,
     bike: r.bikeSec - goals.bikeMinutes * 60,
     run: r.runSec - goals.runMinutes * 60,
-    transitions: r.t1Sec + r.t2Sec - goals.transitionMinutes * 60,
+    t1: r.t1Sec - goals.t1Minutes * 60,
+    t2: r.t2Sec - goals.t2Minutes * 60,
+    transitions: r.t1Sec + r.t2Sec - transitionMinutes(goals) * 60,
     total: r.totalSec - goalSplits(goals).total * 60,
   }
 }
@@ -289,20 +291,27 @@ export interface RaceGoals {
   swimMinutes: number
   bikeMinutes: number
   runMinutes: number
-  transitionMinutes: number
+  /** T1, swim-to-bike */
+  t1Minutes: number
+  /** T2, bike-to-run */
+  t2Minutes: number
 }
 
 /**
  * Two athletes, two targets — and deliberately not the same shape. Aidas
- * gives up ten minutes in the water and takes twenty-six back on the bike,
+ * gives up fifteen minutes in the water and takes eight back on the bike,
  * which is exactly what the strength profile below says should happen. A
  * single shared number would ask each of them to train the other's race.
+ *
+ * Lori's set moved up on 2026-09-23: 35 minutes, 20.0mph, 8:15/mile, with
+ * transitions cut to T1 4 + T2 3. These are stretch targets she set herself,
+ * not projections — the forecast is where the gap to them gets measured.
  */
 export const ATHLETE_GOALS: Record<AthleteId, RaceGoals> = {
-  // 40min swim, 18.0mph bike, 9:00/mile run — 5:52 total
-  lori: { swimMinutes: 40, bikeMinutes: 186.4, runMinutes: 118, transitionMinutes: 8 },
+  // 35min swim (1:50/100m), 20.0mph bike, 8:15/mile run, T1 4 + T2 3 — 5:18 total
+  lori: { swimMinutes: 35, bikeMinutes: 167.8, runMinutes: 108.2, t1Minutes: 4, t2Minutes: 3 },
   // 50min swim, 2:40 bike, 2:00 run — 5:38 total
-  aidas: { swimMinutes: 50, bikeMinutes: 160, runMinutes: 120, transitionMinutes: 8 },
+  aidas: { swimMinutes: 50, bikeMinutes: 160, runMinutes: 120, t1Minutes: 4, t2Minutes: 4 },
 }
 
 /** Lori's targets are the default wherever the solo dashboard asks for "the" goal */
@@ -312,10 +321,20 @@ export function goalsFor(person: AthleteId): RaceGoals {
   return ATHLETE_GOALS[person] ?? ATHLETE_GOALS.lori
 }
 
+/**
+ * T1 + T2. The two are trained and lost separately — a slow T1 is a wetsuit
+ * and a mount line, a slow T2 is shoes and legs — but the finish time only
+ * ever sees their sum, so everything downstream of the clock calls this.
+ */
+export function transitionMinutes(goals: RaceGoals = GOALS): number {
+  return goals.t1Minutes + goals.t2Minutes
+}
+
 /** Goal splits in minutes, and the finish they add up to */
 export function goalSplits(goals: RaceGoals = GOALS) {
-  const { swimMinutes: swim, bikeMinutes: bike, runMinutes: run, transitionMinutes: transitions } = goals
-  return { swim, bike, run, transitions, total: swim + bike + run + transitions }
+  const { swimMinutes: swim, bikeMinutes: bike, runMinutes: run, t1Minutes: t1, t2Minutes: t2 } = goals
+  const transitions = t1 + t2
+  return { swim, bike, run, t1, t2, transitions, total: swim + bike + run + transitions }
 }
 
 /** The same targets said the way each discipline is normally spoken about */

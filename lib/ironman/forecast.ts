@@ -41,7 +41,7 @@
 import type { GarminActivity, GarminMetrics } from '@/lib/types'
 import {
   RACE, RACE_NYC, GOALS, BASELINE,
-  goalPaceMinKm,
+  goalPaceMinKm, transitionMinutes,
   type RaceGoals, type Sport3,
 } from './plan'
 import { sportOfActivity, dedupeActivities, paceSeconds } from './adapt'
@@ -307,7 +307,7 @@ export function computeRaceForecast(
 
   const splits = disciplines.map((d) => d.projectedSplitMin)
   const forecastTotalMin = splits.every((s): s is number => s != null)
-    ? splits.reduce((a, b) => a + b, 0) + goals.transitionMinutes
+    ? splits.reduce((a, b) => a + b, 0) + transitionMinutes(goals)
     : null
 
   return { asOf, disciplines, allThree, forecastTotalMin, recoveryAdj }

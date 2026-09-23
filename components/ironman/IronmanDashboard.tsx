@@ -628,7 +628,8 @@ function RaceSheet({ activities, metrics, today }: {
               <div className="k"><span>Target</span><b>{splitOf(splits.total)}</b></div>
               <div className="k"><span>Projected</span><b>{splitOf(forecast.forecastTotalMin)}</b></div>
               <div className="k"><span>All three goals</span><b>{pctOf(forecast.allThree)}</b></div>
-              <div className="k"><span>Transitions</span><b>{splitOf(GOALS.transitionMinutes)}</b></div>
+              <div className="k"><span>T1 · swim to bike</span><b>{splitOf(splits.t1)}</b></div>
+              <div className="k"><span>T2 · bike to run</span><b>{splitOf(splits.t2)}</b></div>
             </>
           }
         >

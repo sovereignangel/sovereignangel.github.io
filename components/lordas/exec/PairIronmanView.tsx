@@ -424,7 +424,8 @@ function AthleteSheet({ a }: { a: AthleteDetail }) {
               <div className="k"><span>Target</span><b>{hm(a.splits.total)}</b></div>
               <div className="k"><span>Projected</span><b>{hm(a.forecast.forecastTotalMin)}</b></div>
               <div className="k"><span>All three goals</span><b>{pct(a.forecast.allThree)}</b></div>
-              <div className="k"><span>Transitions</span><b>{hm(a.goals.transitionMinutes)}</b></div>
+              <div className="k"><span>T1 · swim to bike</span><b>{hm(a.splits.t1)}</b></div>
+              <div className="k"><span>T2 · bike to run</span><b>{hm(a.splits.t2)}</b></div>
             </>
           }
         >
