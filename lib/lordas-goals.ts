@@ -14,7 +14,57 @@ import type {
   LordasWeek,
 } from '@/lib/types'
 
-export const LORDAS_CAMPAIGN_ID = 'summer-2026'
+/**
+ * The campaigns, in order. A campaign is a dated period with its own charter
+ * and its own KPIs; it is declared here rather than created in the UI because
+ * a period nobody agreed on in advance is a period that gets extended until
+ * it was met. Adding one is a one-line edit, and its Firestore doc
+ * (`campaign_<id>`) is written lazily on the first mutation.
+ *
+ * Summer ran on feel and closed on 31 August. September and October are
+ * months, deliberately: a goal you cannot check on in four weeks is a goal
+ * you find out about too late.
+ */
+export interface LordasCampaignDef {
+  id: string
+  name: string
+  startDate: string // YYYY-MM-DD, inclusive
+  endDate: string // YYYY-MM-DD, inclusive
+}
+
+export const LORDAS_CAMPAIGNS: LordasCampaignDef[] = [
+  { id: 'summer-2026', name: 'Summer Campaign', startDate: '2026-06-01', endDate: '2026-08-31' },
+  { id: 'september-2026', name: 'September', startDate: '2026-09-01', endDate: '2026-09-30' },
+  { id: 'october-2026', name: 'October', startDate: '2026-10-01', endDate: '2026-10-31' },
+]
+
+export function campaignDef(id: string): LordasCampaignDef | undefined {
+  return LORDAS_CAMPAIGNS.find((c) => c.id === id)
+}
+
+/**
+ * The campaign today falls inside. Between campaigns — or past the last one —
+ * it is the most recent one that has started, so the sprint always has
+ * milestones to commit against rather than going blank on a gap day.
+ */
+export function activeCampaignId(today: string = localDateString(new Date())): string {
+  const current = LORDAS_CAMPAIGNS.find((c) => c.startDate <= today && today <= c.endDate)
+  if (current) return current.id
+  const started = LORDAS_CAMPAIGNS.filter((c) => c.startDate <= today)
+  if (started.length > 0) return started[started.length - 1].id
+  return LORDAS_CAMPAIGNS[0].id
+}
+
+/** The campaign after the given one, if the registry has one. */
+export function nextCampaignDef(id: string): LordasCampaignDef | undefined {
+  const i = LORDAS_CAMPAIGNS.findIndex((c) => c.id === id)
+  return i === -1 ? undefined : LORDAS_CAMPAIGNS[i + 1]
+}
+
+export function isCampaignClosed(def: LordasCampaignDef, today: string = localDateString(new Date())): boolean {
+  return def.endDate < today
+}
+
 
 export const GOAL_OWNERS: LordasGoalOwner[] = ['lori', 'aidas', 'relationship']
 
@@ -59,17 +109,13 @@ export const DEFAULT_NORTH_STARS: Record<LordasGoalOwner, Omit<LordasNorthStar, 
   },
 }
 
-export const EMPTY_CAMPAIGN: LordasCampaign = {
-  id: LORDAS_CAMPAIGN_ID,
-  name: 'Summer Campaign',
-  startDate: '2026-06-01',
-  endDate: '2026-08-31',
-  charters: {},
-  milestones: [],
-  updatedAt: 0,
+/** A campaign nobody has written to yet — the registry entry, and nothing in it. */
+export function emptyCampaign(id: string): LordasCampaign {
+  const def = campaignDef(id) ?? LORDAS_CAMPAIGNS[0]
+  return { ...def, charters: {}, milestones: [], updatedAt: 0 }
 }
 
-export const MAX_MILESTONES_PER_OWNER = 5
+export const MAX_MILESTONES_PER_OWNER = 8
 export const MAX_COMMITMENTS_PER_OWNER = 3
 
 export function partnerOf(p: LordasPerson): LordasPerson {
@@ -143,4 +189,78 @@ export function weekEndDate(weekStart: string): string {
   const end = new Date(y, m - 1, d)
   end.setDate(end.getDate() + 6)
   return localDateString(end)
+}
+
+// ---------------------------------------------------------------------------
+// Retrospective — everything below is derived, never stored
+// ---------------------------------------------------------------------------
+
+/**
+ * A campaign's milestones, scored. Dropped milestones are counted but kept out
+ * of the rate: a goal you consciously abandoned is a decision, not a miss, and
+ * folding it into the denominator punishes the honest act of dropping it.
+ */
+export interface OwnerScore {
+  owner: LordasGoalOwner
+  done: number
+  missed: number
+  dropped: number
+  /** done / (done + missed), or null when nothing was left standing */
+  rate: number | null
+}
+
+export function scoreCampaign(campaign: LordasCampaign): Record<LordasGoalOwner, OwnerScore> {
+  const out = {} as Record<LordasGoalOwner, OwnerScore>
+  for (const owner of GOAL_OWNERS) {
+    const mine = campaign.milestones.filter((m) => m.person === owner)
+    const done = mine.filter((m) => m.status === 'done').length
+    const dropped = mine.filter((m) => m.status === 'dropped').length
+    const missed = mine.length - done - dropped
+    out[owner] = { owner, done, missed, dropped, rate: done + missed > 0 ? done / (done + missed) : null }
+  }
+  return out
+}
+
+/** The weeks whose Monday falls inside a campaign's dates. */
+export function weeksInCampaign(weeks: LordasWeek[], def: LordasCampaignDef): LordasWeek[] {
+  return weeks.filter((w) => w.weekStart >= def.startDate && w.weekStart <= def.endDate)
+}
+
+/**
+ * What the weekly sprint actually delivered across a campaign. `kept` scores
+ * partials at a half, the same way `hitRate` does week to week, so the
+ * campaign number and the weekly ones cannot tell different stories.
+ */
+export interface OwnerSprintStats {
+  owner: LordasGoalOwner
+  made: number
+  kept: number
+  rate: number | null
+  weeksWithCommitments: number
+}
+
+export function sprintStats(
+  weeks: LordasWeek[],
+  def: LordasCampaignDef
+): { weeks: number; bothReviewed: number; byOwner: Record<LordasGoalOwner, OwnerSprintStats> } {
+  const inRange = weeksInCampaign(weeks, def)
+  const byOwner = {} as Record<LordasGoalOwner, OwnerSprintStats>
+  for (const owner of GOAL_OWNERS) {
+    let made = 0
+    let kept = 0
+    let weeksWith = 0
+    for (const w of inRange) {
+      const mine = w.commitments.filter((c) => c.person === owner)
+      if (mine.length === 0) continue
+      weeksWith++
+      made += mine.length
+      kept += mine.reduce((sum, c) => sum + (c.status === 'done' ? 1 : c.status === 'partial' ? 0.5 : 0), 0)
+    }
+    byOwner[owner] = { owner, made, kept, rate: made > 0 ? kept / made : null, weeksWithCommitments: weeksWith }
+  }
+  return {
+    weeks: inRange.length,
+    bothReviewed: inRange.filter((w) => w.reviews.lori && w.reviews.aidas).length,
+    byOwner,
+  }
 }

@@ -1,8 +1,9 @@
 /**
  * Types for the Lordas goals & accountability system.
- * Hierarchy: North Star (identity statement) -> Summer Campaign charter
- * (overarching seasonal goal) -> milestones (season KPIs) -> Weekly Sprint
- * (partner-locked commitments with success criteria).
+ * Hierarchy: North Star (identity statement) -> Campaign charter (the
+ * overarching goal for one dated period) -> milestones (campaign KPIs) ->
+ * Weekly Sprint (partner-locked commitments with success criteria). A
+ * finished campaign closes with a retrospective.
  * Goals are owned by 'lori', 'aidas', or 'relationship' (shared).
  */
 
@@ -41,6 +42,8 @@ export interface LordasMilestone {
   category?: LordasGoalCategory
   status: LordasMilestoneStatus
   sortOrder: number
+  /** Id of the milestone in the previous campaign this one was carried from */
+  carriedFrom?: string
   createdAt: number
   updatedAt: number
 }
@@ -54,6 +57,36 @@ export interface LordasCharter {
   updatedBy: LordasPerson
 }
 
+/**
+ * One owner's written verdict on a finished campaign. Kept as three separate
+ * fields rather than one box because the third one is the only one that
+ * changes behaviour — what worked and what didn't are history, what carries
+ * is a commitment — and a single box lets it go unwritten.
+ */
+export interface LordasRetroReflection {
+  owner: LordasGoalOwner
+  worked: string
+  didnt: string
+  carries: string
+  updatedAt: number
+  updatedBy: LordasPerson
+}
+
+/**
+ * The closing statement on a campaign. Scores are not stored — they are
+ * derived from the milestones, which are the record — so nothing here can
+ * disagree with the board above it. What is stored is what only a person can
+ * supply: the reflections, and which milestones are being carried forward.
+ */
+export interface LordasRetro {
+  reflections: Partial<Record<LordasGoalOwner, LordasRetroReflection>>
+  /** Milestone ids marked to roll into the next campaign */
+  carryForward: string[]
+  /** Campaign ids this retro's carry-forward has already been copied into */
+  carriedInto?: string[]
+  updatedAt: number
+}
+
 export interface LordasCampaign {
   id: string // e.g. 'summer-2026'
   name: string
@@ -61,6 +94,7 @@ export interface LordasCampaign {
   endDate: string // YYYY-MM-DD
   charters?: Partial<Record<LordasGoalOwner, LordasCharter>>
   milestones: LordasMilestone[]
+  retro?: LordasRetro
   updatedAt: number
 }
 
@@ -107,7 +141,10 @@ export interface LordasWeek {
 
 export interface LordasGoalsData {
   northStars: Partial<Record<LordasGoalOwner, LordasNorthStar>>
-  campaign: LordasCampaign
+  /** Every campaign in the registry, oldest first, hydrated or empty */
+  campaigns: LordasCampaign[]
+  /** The one containing today — what the weekly sprint commits against */
+  activeCampaignId: string
   currentWeek: LordasWeek | null
   nextWeek: LordasWeek | null
   weekHistory: LordasWeek[]

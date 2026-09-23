@@ -7,11 +7,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import {
   DEFAULT_NORTH_STARS,
-  EMPTY_CAMPAIGN,
-  LORDAS_CAMPAIGN_ID,
+  LORDAS_CAMPAIGNS,
+  activeCampaignId,
   currentWeekStart,
+  emptyCampaign,
   nextWeekStart,
 } from '@/lib/lordas-goals'
+import type { LordasCampaign } from '@/lib/types'
 import type { LordasGoalsData, LordasNorthStar, LordasWeek } from '@/lib/types'
 
 export const runtime = 'nodejs'
@@ -39,7 +41,7 @@ export async function GET(request: NextRequest) {
     const userRef = db.collection('users').doc(uid)
 
     // Fetch all data in parallel
-    const [convsSnap, themesSnap, valuesSnap, snapshotsSnap, summerPlanSnap, adventureSessionSnap, northStarsSnap, campaignSnap, weeksSnap] = await Promise.all([
+    const [convsSnap, themesSnap, valuesSnap, snapshotsSnap, summerPlanSnap, adventureSessionSnap, northStarsSnap, campaignSnaps, weeksSnap] = await Promise.all([
       userRef.collection('relationship_conversations').orderBy('date', 'desc').limit(50).get(),
       userRef.collection('relationship_themes').get(),
       userRef.collection('relationship_values').get(),
@@ -47,7 +49,9 @@ export async function GET(request: NextRequest) {
       userRef.collection('summer_plans').orderBy('createdAt', 'desc').limit(1).get(),
       userRef.collection('adventure_sessions').limit(1).get(),
       userRef.collection('lordas_goals').doc('north_stars').get(),
-      userRef.collection('lordas_goals').doc(`campaign_${LORDAS_CAMPAIGN_ID}`).get(),
+      // One get per registered campaign rather than a collection read: the
+      // same doc holds the north stars, so a scan would have to filter anyway.
+      Promise.all(LORDAS_CAMPAIGNS.map((c) => userRef.collection('lordas_goals').doc(`campaign_${c.id}`).get())),
       // No orderBy: descending __name__ needs a composite index; the
       // collection is one doc per week, so sort in code instead.
       userRef.collection('lordas_weeks').get(),
@@ -75,9 +79,14 @@ export async function GET(request: NextRequest) {
       relationship:
         (storedNorthStars?.relationship as LordasNorthStar) || { ...DEFAULT_NORTH_STARS.relationship, updatedAt: 0, updatedBy: 'lori' },
     }
-    const campaign = campaignSnap.exists
-      ? { charters: {}, ...(campaignSnap.data() as LordasGoalsData['campaign']) }
-      : EMPTY_CAMPAIGN
+    // The registry is the source of truth for a campaign's name and dates —
+    // the stored doc only ever contributes what was written into it, so
+    // editing a date in code is enough to move it.
+    const campaigns: LordasCampaign[] = LORDAS_CAMPAIGNS.map((def, i) => {
+      const snap = campaignSnaps[i]
+      if (!snap.exists) return emptyCampaign(def.id)
+      return { ...emptyCampaign(def.id), ...(snap.data() as LordasCampaign), ...def }
+    })
 
     const thisWeek = currentWeekStart()
     const comingWeek = nextWeekStart()
@@ -86,7 +95,8 @@ export async function GET(request: NextRequest) {
       .sort((a, b) => b.weekStart.localeCompare(a.weekStart))
     const goals: LordasGoalsData = {
       northStars,
-      campaign,
+      campaigns,
+      activeCampaignId: activeCampaignId(),
       currentWeek: weeks.find(w => w.weekStart === thisWeek) || null,
       nextWeek: weeks.find(w => w.weekStart === comingWeek) || null,
       weekHistory: weeks.filter(w => w.weekStart < thisWeek).slice(0, 26),

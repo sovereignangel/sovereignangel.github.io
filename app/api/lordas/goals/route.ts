@@ -11,13 +11,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import {
   DEFAULT_NORTH_STARS,
-  EMPTY_CAMPAIGN,
   GOAL_CATEGORIES,
   GOAL_OWNERS,
-  LORDAS_CAMPAIGN_ID,
   MAX_COMMITMENTS_PER_OWNER,
   MAX_MILESTONES_PER_OWNER,
+  activeCampaignId,
+  campaignDef,
   currentWeekStart,
+  emptyCampaign,
+  nextCampaignDef,
   nextWeekStart,
   partnerOf,
   proposerOf,
@@ -31,6 +33,7 @@ import type {
   LordasMilestone,
   LordasMilestoneStatus,
   LordasPerson,
+  LordasRetro,
   LordasWeek,
 } from '@/lib/types'
 
@@ -118,16 +121,117 @@ export async function POST(request: NextRequest) {
     }
 
     // ------------------------------------------------------------------
-    // Campaign — overarching summer goal (charter) + milestones (KPIs)
+    // Campaign — the overarching goal (charter), its milestones (KPIs), and
+    // the retrospective that closes it out
     // ------------------------------------------------------------------
-    if (action === 'setCampaignCharter' || action === 'upsertMilestone' || action === 'deleteMilestone') {
-      const docRef = userRef.collection('lordas_goals').doc(`campaign_${LORDAS_CAMPAIGN_ID}`)
+    // ------------------------------------------------------------------
+    // Carry forward — copy the marked milestones into the next campaign
+    // ------------------------------------------------------------------
+    if (action === 'carryForwardMilestones') {
+      const fromId = body.campaignId
+      const fromDef = campaignDef(fromId)
+      if (!fromDef) return bad('Unknown campaign')
+      const toDef = nextCampaignDef(fromId)
+      if (!toDef) return bad('No campaign after this one to carry into')
+
+      const fromRef = userRef.collection('lordas_goals').doc(`campaign_${fromId}`)
+      const toRef = userRef.collection('lordas_goals').doc(`campaign_${toDef.id}`)
+      const [fromSnap, toSnap] = await Promise.all([fromRef.get(), toRef.get()])
+      if (!fromSnap.exists) return bad('Nothing to carry forward', 404)
+
+      const from: LordasCampaign = { ...emptyCampaign(fromId), ...(fromSnap.data() as LordasCampaign) }
+      const to: LordasCampaign = toSnap.exists
+        ? { ...emptyCampaign(toDef.id), ...(toSnap.data() as LordasCampaign) }
+        : emptyCampaign(toDef.id)
+      const picks = (from.retro?.carryForward || [])
+        .map(id => from.milestones.find(m => m.id === id))
+        .filter((m): m is LordasMilestone => !!m)
+      if (picks.length === 0) return bad('No milestones are marked to carry forward')
+
+      // Carried milestones are copies, not moves: the finished campaign keeps
+      // its own record intact, and the new one starts them fresh at on-track
+      // with the achieved value as the new starting point.
+      const carried: LordasMilestone[] = []
+      const skipped: string[] = []
+      for (const m of picks) {
+        const already = to.milestones.some(x => x.carriedFrom === m.id)
+        const room = to.milestones.filter(x => x.person === m.person && x.status !== 'dropped').length
+          + carried.filter(x => x.person === m.person).length
+        if (already || room >= MAX_MILESTONES_PER_OWNER) {
+          skipped.push(m.title)
+          continue
+        }
+        carried.push({
+          ...m,
+          id: newId(),
+          carriedFrom: m.id,
+          status: 'on-track',
+          sortOrder: to.milestones.filter(x => x.person === m.person).length + carried.filter(x => x.person === m.person).length,
+          createdAt: now,
+          updatedAt: now,
+        })
+      }
+
+      if (carried.length > 0) {
+        await toRef.set(cleanUndefined({ ...to, milestones: [...to.milestones, ...carried], updatedAt: now }))
+      }
+      const carriedInto = Array.from(new Set([...(from.retro?.carriedInto || []), toDef.id]))
+      await fromRef.set(
+        cleanUndefined({ ...from, retro: { reflections: {}, carryForward: [], ...(from.retro || {}), carriedInto, updatedAt: now } })
+      )
+      return NextResponse.json({ success: true, carried: carried.length, skipped })
+    }
+
+    const campaignActions = [
+      'setCampaignCharter',
+      'upsertMilestone',
+      'deleteMilestone',
+      'setRetroReflection',
+      'toggleCarryForward',
+    ]
+    if (campaignActions.includes(action)) {
+      // Unstated campaign means the one today falls in. A stated one must be
+      // in the registry: an id nobody declared would write a doc the dashboard
+      // never reads back.
+      const campaignId = body.campaignId || activeCampaignId()
+      if (!campaignDef(campaignId)) return bad('Unknown campaign')
+
+      const docRef = userRef.collection('lordas_goals').doc(`campaign_${campaignId}`)
       const snap = await docRef.get()
       const campaign: LordasCampaign = snap.exists
-        ? { charters: {}, ...(snap.data() as LordasCampaign) }
-        : { ...EMPTY_CAMPAIGN }
+        ? { ...emptyCampaign(campaignId), ...(snap.data() as LordasCampaign) }
+        : emptyCampaign(campaignId)
       let milestones = [...campaign.milestones]
       const charters = { ...(campaign.charters || {}) }
+      const retro: LordasRetro = {
+        reflections: {},
+        carryForward: [],
+        updatedAt: 0,
+        ...(campaign.retro || {}),
+      }
+
+      if (action === 'setRetroReflection') {
+        const owner = asOwner(body.owner, person)
+        if (!owner) return bad('Invalid owner')
+        const worked = (body.worked || '').trim()
+        const didnt = (body.didnt || '').trim()
+        const carries = (body.carries || '').trim()
+        if (!worked && !didnt && !carries) {
+          delete retro.reflections[owner]
+        } else {
+          retro.reflections[owner] = { owner, worked, didnt, carries, updatedAt: now, updatedBy: person }
+        }
+        retro.updatedAt = now
+      }
+
+      if (action === 'toggleCarryForward') {
+        const { milestoneId } = body
+        if (!milestones.some((m) => m.id === milestoneId)) return bad('Milestone not found', 404)
+        retro.carryForward = retro.carryForward.includes(milestoneId)
+          ? retro.carryForward.filter((id) => id !== milestoneId)
+          : [...retro.carryForward, milestoneId]
+        retro.updatedAt = now
+      }
 
       if (action === 'setCampaignCharter') {
         const owner = asOwner(body.owner, person)
@@ -149,6 +253,9 @@ export async function POST(request: NextRequest) {
       if (action === 'deleteMilestone') {
         const { milestoneId } = body
         milestones = milestones.filter(m => m.id !== milestoneId)
+        // A carry-forward pick pointing at a milestone that no longer exists
+        // would silently drop out of the copy, so clear it here instead.
+        retro.carryForward = retro.carryForward.filter(id => id !== milestoneId)
       }
 
       if (action === 'upsertMilestone') {
@@ -195,7 +302,7 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      await docRef.set(cleanUndefined({ ...campaign, charters, milestones, updatedAt: now }))
+      await docRef.set(cleanUndefined({ ...campaign, charters, milestones, retro, updatedAt: now }))
       return NextResponse.json({ success: true })
     }
 

@@ -123,14 +123,14 @@ function OwnerColumn({
         </p>
       </div>
 
-      {/* Overarching summer goal (charter) */}
+      {/* The overarching goal for this campaign (charter) */}
       {editingCharter ? (
         <div className="mb-3 rounded-sm border p-2 lordas-surface space-y-1.5" style={{ borderColor: accent }}>
           <textarea
             value={charterStatement}
             onChange={(e) => setCharterStatement(e.target.value)}
             rows={3}
-            placeholder="The overarching summer goal — one sentence, falsifiable"
+            placeholder="The overarching goal for this campaign — one sentence, falsifiable"
             className="w-full text-[12px] lordas-display rounded-sm border p-1.5"
             style={{ borderColor: RULE, color: INK }}
             autoFocus
@@ -176,7 +176,7 @@ function OwnerColumn({
               setCharterDone(charter.doneLooksLike)
               setEditingCharter(true)
             }}
-            title="Edit summer goal"
+            title="Edit the campaign goal"
             className="absolute top-0 right-0 p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
             style={{ color: MUTED }}
           >
@@ -195,7 +195,7 @@ function OwnerColumn({
           className="mb-3 w-full rounded-sm border border-dashed py-2 text-[10px] uppercase tracking-[0.5px] font-semibold"
           style={{ borderColor: RULE, color: accent }}
         >
-          Set the overarching summer goal
+          Set the overarching goal
         </button>
       )}
 
