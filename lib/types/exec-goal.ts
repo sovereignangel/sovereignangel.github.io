@@ -32,6 +32,7 @@ export type ExecActivityKind =
   | 'goal_called'
   | 'goal_retagged'
   | 'goal_retyped'
+  | 'goal_edited'
   | 'goal_deleted'
   | 'pomodoro'
   | 'slot_note'

@@ -239,6 +239,7 @@ export function ExecGoalLog({ date: serverDate }: { date: string }) {
   const [noting, setNoting] = useState<{ id: string; status: ExecGoalStatus } | null>(null)
   const [note, setNote] = useState('')
   const [minute, setMinute] = useState(nowMin)
+  const [editing, setEditing] = useState<{ id: string; text: string; start: string } | null>(null)
   const [reviewSlot, setReviewSlot] = useState<HTMLDivElement | null>(null)
 
   // The check-in prompt depends on the clock, so the panel ticks once a minute.
@@ -361,6 +362,22 @@ export function ExecGoalLog({ date: serverDate }: { date: string }) {
     setGoals((gs) => gs.map((g) => (g.id === id ? { ...g, goalIds } : g)))
     await updateExecGoal(user.uid, id, { goalIds })
     await logExecActivity(user.uid, { date, kind: 'goal_retagged', ref: id, goalIds, detail: {} })
+  }
+
+  const saveEdit = async () => {
+    if (!user || !editing || !editing.text.trim()) return
+    const { id, text, start } = editing
+    const g = goals.find((x) => x.id === id)
+    setEditing(null)
+    setGoals((gs) => gs.map((x) => (x.id === id ? { ...x, text: text.trim(), start } : x)))
+    await updateExecGoal(user.uid, id, { text: text.trim(), start })
+    await logExecActivity(user.uid, {
+      date,
+      kind: 'goal_edited',
+      ref: id,
+      goalIds: g?.goalIds || [],
+      detail: { from: { text: g?.text || '', start: g?.start || null }, to: { text: text.trim(), start } },
+    })
   }
 
   const retype = async (id: string, kind: BlockKind) => {
@@ -527,7 +544,44 @@ export function ExecGoalLog({ date: serverDate }: { date: string }) {
               >
                 {kind === 'research' ? 'R' : 'DW'}
               </button>
-              <span className="text-[11px] min-w-0" style={{ color: INK }}>{g.text}</span>
+              {editing?.id === g.id ? (
+                <form
+                  className="flex gap-1 min-w-0 flex-1"
+                  onSubmit={(e) => {
+                    e.preventDefault()
+                    void saveEdit()
+                  }}
+                >
+                  <input
+                    type="time"
+                    value={editing.start}
+                    onChange={(e) => setEditing({ ...editing, start: e.target.value })}
+                    className="font-mono text-[10px] px-1 py-0.5 rounded-sm border bg-white shrink-0"
+                    style={{ borderColor: RULE, color: INK }}
+                  />
+                  <input
+                    autoFocus
+                    value={editing.text}
+                    onChange={(e) => setEditing({ ...editing, text: e.target.value })}
+                    onKeyDown={(e) => { if (e.key === 'Escape') setEditing(null) }}
+                    className="flex-1 min-w-0 text-[11px] px-1.5 py-0.5 rounded-sm border bg-white outline-none"
+                    style={{ borderColor: RULE, color: INK }}
+                  />
+                  <button type="submit" className="font-mono text-[9px] px-1.5 rounded-sm border shrink-0" style={{ borderColor: INK, color: INK }}>
+                    Save
+                  </button>
+                </form>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setEditing({ id: g.id, text: g.text, start: g.start || nextHalfHour() })}
+                  title="Click to edit"
+                  className="text-[11px] min-w-0 text-left hover:underline decoration-dotted"
+                  style={{ color: INK }}
+                >
+                  {g.text}
+                </button>
+              )}
               <span className="flex-1 self-center">
                 <GoalTags ids={g.goalIds || []} onChange={(ids) => void retag(g.id, ids)} />
               </span>
