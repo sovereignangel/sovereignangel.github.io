@@ -15,6 +15,8 @@ export interface ExecGoalEntry {
   kind?: 'research' | 'deep'
   /** HH:MM local start of the block. */
   start?: string
+  /** Broad goals this block serves (lib/exec/goals.ts ids) — one or several. */
+  goalIds?: string[]
   /** Block length in hours — two, the size of a block. */
   hours?: number
   status: ExecGoalStatus

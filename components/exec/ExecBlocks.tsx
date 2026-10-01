@@ -108,7 +108,20 @@ function ReviewPanel({ review }: { review: FocusDayReview }) {
 
 // ── Component ─────────────────────────────────────────────────────────────
 
-export function ExecBlocks({ date: serverDate }: { date: string }) {
+/**
+ * `embedded` drops the card chrome so the blocks sit inside the block-goals
+ * panel. `scoreKey` changes whenever something outside this component that the
+ * review reads (a goal called done or missed) changes, and re-scores the day.
+ */
+export function ExecBlocks({
+  date: serverDate,
+  embedded = false,
+  scoreKey = '',
+}: {
+  date: string
+  embedded?: boolean
+  scoreKey?: string
+}) {
   const date = useExecDate(serverDate)
   const { user, signIn, loading: authLoading } = useAuth()
   const [day, setDay] = useState<FocusDayDoc | null>(null)
@@ -118,6 +131,8 @@ export function ExecBlocks({ date: serverDate }: { date: string }) {
   const [scoring, setScoring] = useState(false)
   const [scoreError, setScoreError] = useState<string | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  // Bumped on every local change; together with scoreKey it drives the auto-score.
+  const [edits, setEdits] = useState(0)
 
   const load = useCallback(async () => {
     if (!user) return
@@ -140,6 +155,7 @@ export function ExecBlocks({ date: serverDate }: { date: string }) {
       try {
         await setBlockPomodoros(user.uid, date, blockId, n)
         await load()
+        setEdits((e) => e + 1)
       } finally {
         setBusy(null)
       }
@@ -163,12 +179,13 @@ export function ExecBlocks({ date: serverDate }: { date: string }) {
     try {
       await setSlotNote(user.uid, date, slotId, text)
       await load()
+      setEdits((e) => e + 1)
     } catch {
       await load()
     }
   }, [user, date, editing, draft, load])
 
-  const score = useCallback(async () => {
+  const score = useCallback(async (auto = false) => {
     if (!user) return
     setScoring(true)
     setScoreError(null)
@@ -179,8 +196,10 @@ export function ExecBlocks({ date: serverDate }: { date: string }) {
         body: JSON.stringify({ date }),
       })
       const json = await res.json().catch(() => ({}))
+      // Nothing to score yet is not an error when the score fired on its own.
+      if (auto && res.status === 400) return
       if (!res.ok) throw new Error(json?.error || 'Review failed')
-      setDay((d) => (d ? { ...d, review: json.review } : d))
+      setDay((d) => ({ ...(d || { date }), review: json.review }) as FocusDayDoc)
     } catch (e) {
       setScoreError(e instanceof Error ? e.message : 'Review failed')
     } finally {
@@ -188,19 +207,40 @@ export function ExecBlocks({ date: serverDate }: { date: string }) {
     }
   }, [user, date])
 
+  // The day scores itself: a few seconds after the last pip, line, or verdict,
+  // so a burst of clicks costs one review rather than one each.
+  const lastKey = useRef<string | null>(null)
+  useEffect(() => {
+    const key = `${edits}|${scoreKey}`
+    if (lastKey.current === null) {
+      lastKey.current = key
+      return
+    }
+    if (lastKey.current === key) return
+    lastKey.current = key
+    const t = setTimeout(() => void score(true), 2500)
+    return () => clearTimeout(t)
+  }, [edits, scoreKey, score])
+
   const editingSlot = SLOTS.find((s) => s.id === editing)
   const editingBlock = editingSlot ? BLOCKS.find((b) => b.id === editingSlot.blockId) : undefined
 
   return (
     <section
-      className="border rounded-xl px-2.5 py-2 md:px-3 mb-3"
-      style={{ borderColor: RULE, backgroundColor: '#fffdf7', boxShadow: '0 2px 12px rgba(13,92,99,0.05)' }}
+      className={embedded ? 'mt-2 pt-2 border-t' : 'border rounded-xl px-2.5 py-2 md:px-3 mb-3'}
+      style={
+        embedded
+          ? { borderColor: RULE }
+          : { borderColor: RULE, backgroundColor: '#fffdf7', boxShadow: '0 2px 12px rgba(13,92,99,0.05)' }
+      }
     >
       {/* One line: title, the three pip groups, the counters, the button. */}
       <div className="flex items-center gap-x-3 gap-y-1.5 flex-wrap">
-        <span className="font-serif text-[14px] md:text-[15px] font-semibold shrink-0" style={{ color: INK }}>
-          The six hours
-        </span>
+        {!embedded && (
+          <span className="font-serif text-[14px] md:text-[15px] font-semibold shrink-0" style={{ color: INK }}>
+            The six hours
+          </span>
+        )}
 
         <div className="flex items-center gap-2.5 flex-wrap">
           {BLOCKS.map((block) => {
@@ -244,12 +284,12 @@ export function ExecBlocks({ date: serverDate }: { date: string }) {
             <button
               type="button"
               onClick={() => void score()}
-              disabled={scoring || logged === 0}
+              disabled={scoring}
               className="font-serif text-[10px] font-medium px-2 py-1 rounded-md border bg-transparent transition-colors disabled:opacity-40"
               style={{ color: INK, borderColor: FAINT }}
-              title={logged === 0 ? 'Log a half hour or two first' : 'Score the day against the three goals'}
+              title="The day scores itself as you go — this forces a fresh read"
             >
-              {scoring ? 'Scoring…' : day?.review ? 'Re-score' : 'Score the day'}
+              {scoring ? 'Scoring…' : day?.review ? 'Re-score' : 'Score now'}
             </button>
           )}
         </span>

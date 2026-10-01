@@ -21,7 +21,6 @@ import { ExecToday, type PipedLane } from '@/components/exec/ExecToday'
 import { ExecCampaign } from '@/components/exec/ExecCampaign'
 import { ExecGoals } from '@/components/exec/ExecGoals'
 import { ExecGoalLog } from '@/components/exec/ExecGoalLog'
-import { ExecBlocks } from '@/components/exec/ExecBlocks'
 import { tripIsLive } from '@/lib/exec/svencele'
 import { buildFeed, SUBJECTS, relativeAge, type SubjectColumn, type FeedItem } from '@/lib/exec/feed'
 import { getSurfaced } from '@/lib/exec/feed-store'
@@ -250,7 +249,7 @@ function KiteDay({
             </span>
           </>
         ) : (
-          <span className={`text-[10px] ${theme.muted}`}>No rideable window — train, study, recover.</span>
+          <span className={`text-[10px] ${theme.muted}`}>No rideable window</span>
         )}
       </div>
       {p && (
@@ -429,7 +428,7 @@ function FeedColumn({ column, theme }: { column: SubjectColumn; theme: Theme }) 
 // if the band and the card ever disagree it is a bug in this projection.
 
 function kiteLane(day: ExecWindDay): PipedLane {
-  if (!day.pick) return { headline: 'No rideable window', sub: 'train, study, recover', due: false }
+  if (!day.pick) return { headline: 'No rideable window', due: false }
   const b = day.blocks[0]
   return {
     headline: `${b ? fmtWindow(b.startHour, b.endHour) : fmtWindow(day.pick.startHour, day.pick.endHour)} · ${day.pick.spotName}`,
@@ -483,6 +482,13 @@ export default async function ExecPage() {
 
   const windToday = buildExecWindDay(today, sessions, possibles)
   const windTomorrow = buildExecWindDay(tomorrow, sessions, possibles)
+  // The first rideable day after tomorrow, within the forecast week.
+  let windNext: { date: string; day: ExecWindDay } | null = null
+  for (let i = 2; i <= 7 && !windNext; i++) {
+    const d = addDaysISO(today, i)
+    const day = buildExecWindDay(d, sessions, possibles)
+    if (day.pick) windNext = { date: d, day }
+  }
   // Only today's ledger is rendered: tomorrow's pick is on the card already,
   // and a second four-spot row costs a line every day to settle a question
   // that is not yet live.
@@ -533,8 +539,6 @@ export default async function ExecPage() {
 
           <ExecToday date={today} kite={kiteLane(windToday)} ironman={ironmanLane(planToday, slotToday)} />
 
-          <ExecBlocks date={today} />
-
           {/* Two rows of two: the body lanes, then the campaign lanes. A tear
               sheet is read across as much as down — kite beside ironman is the
               morning, cecon beside armstrong is the desk. */}
@@ -550,6 +554,15 @@ export default async function ExecPage() {
                 <div className="md:col-span-5 space-y-1.5">
                   <KiteDay label="Today" day={windToday} theme={SURF} />
                   <KiteDay label="Tomorrow" day={windTomorrow} theme={SURF} />
+                  {windNext ? (
+                    <KiteDay
+                      label={`Next · ${new Date(windNext.date + 'T12:00:00Z').toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' })}`}
+                      day={windNext.day}
+                      theme={SURF}
+                    />
+                  ) : (
+                    <div className={`text-[10px] ${SURF.muted}`}>No rideable window in the forecast week after tomorrow.</div>
+                  )}
                   <div className={`pt-1.5 border-t ${SURF.rule}`}>
                     <SpotLedger statuses={statusToday} theme={SURF} />
                   </div>

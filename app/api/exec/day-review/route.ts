@@ -31,7 +31,8 @@ function buildPrompt(
   date: string,
   lines: ReturnType<typeof logLines>,
   hours: number,
-  standings: ReturnType<typeof goalStandings>
+  standings: ReturnType<typeof goalStandings>,
+  blockGoals: Array<{ text: string; kind?: string; start?: string; status: string; note?: string; goalIds?: string[] }>
 ): string {
   const log = lines
     .map((l) => `- [${l.block.label} · slot ${l.slot.index}] ${l.text}`)
@@ -57,8 +58,16 @@ SLOTS LOGGED: ${lines.length} of ${TOTAL_SLOTS}
 THE THREE GOALS:
 ${goals}
 
+TODAY'S BLOCK GOALS (set in the morning, each one two hours, called done / missed / still open):
+${blockGoals.length ? blockGoals.map((g) => `- [${g.start || '--:--'} · ${g.kind === 'research' ? 'Research' : 'Deep work'}] ${g.text}${g.goalIds?.length ? ` {serves: ${g.goalIds.join(', ')}}` : ''} -> ${g.status.toUpperCase()}${g.note ? ` (${g.note})` : ''}`).join('\n') : '(none set)'}
+
 THE LOG (each line is one half hour):
-${log}
+${log || '(nothing logged yet)'}
+
+A block tagged {serves: ...} counts toward those goal ids — use the tags when
+judging which of the broad goals moved; a block can serve more than one.
+A block goal called DONE is the strongest evidence of output; MISSED counts
+against the day. Open goals are not yet judged — neither credit nor penalty.
 
 Judge the day on leverage, not effort. Leverage means output that compounds — a
 written artefact, a reproducible result, a relationship advanced, a decision
@@ -112,15 +121,20 @@ export async function POST(request: NextRequest) {
   const day = (snap.exists ? snap.data() : null) as FocusDayDoc | null
 
   const lines = logLines(day?.slots)
-  if (lines.length === 0) {
+  const goalSnap = await adminDb.collection(`users/${auth.uid}/exec_goals`).where('setOn', '==', date).get()
+  const blockGoals = goalSnap.docs
+    .map((d) => d.data() as { text: string; kind?: string; start?: string; status: string; note?: string; goalIds?: string[] })
+    .sort((a, b) => (a.start || '').localeCompare(b.start || ''))
+  const pomos = Object.values(day?.pomodoros || {}).reduce((s, n) => s + (n || 0), 0)
+  if (lines.length === 0 && pomos === 0 && !blockGoals.some((g) => g.status !== 'open')) {
     return NextResponse.json(
-      { error: 'Nothing logged for that day — write a slot or two first.' },
+      { error: 'Nothing to score yet — bank a pomodoro, log a half hour, or call a goal.' },
       { status: 400 }
     )
   }
 
   const standings = goalStandings(date)
-  const prompt = buildPrompt(date, lines, hoursFrom(day?.pomodoros || {}), standings)
+  const prompt = buildPrompt(date, lines, hoursFrom(day?.pomodoros || {}), standings, blockGoals)
 
   let parsed: Record<string, unknown> | null = null
   try {

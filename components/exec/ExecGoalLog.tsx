@@ -18,7 +18,9 @@ import { useAuth } from '@/components/auth/AuthProvider'
 import { getExecGoals, addExecGoal, updateExecGoal, deleteExecGoal } from '@/lib/firestore/exec-goals'
 import type { ExecGoalEntry, ExecGoalStatus } from '@/lib/types'
 import { BLOCKS, TOTAL_HOURS, type BlockKind } from '@/lib/exec/blocks'
+import { BROAD_GOALS } from '@/lib/exec/goals'
 import { useExecDate } from './useExecDate'
+import { ExecBlocks } from './ExecBlocks'
 
 const INK = '#2b3a3f'
 const MUTED = '#7d8a86'
@@ -77,22 +79,53 @@ function KindToggle({ kind, onChange }: { kind: BlockKind; onChange: (k: BlockKi
   )
 }
 
+/** Tag a block against the broad goals it serves — any number of them. */
+function GoalTags({ ids, onChange, compact = false }: { ids: string[]; onChange?: (ids: string[]) => void; compact?: boolean }) {
+  const list = onChange ? BROAD_GOALS : BROAD_GOALS.filter((g) => ids.includes(g.id))
+  if (!list.length) return null
+  return (
+    <div className="flex gap-1 flex-wrap shrink-0">
+      {list.map((g) => {
+        const on = ids.includes(g.id)
+        return (
+          <button
+            key={g.id}
+            type="button"
+            disabled={!onChange}
+            onClick={() => onChange?.(on ? ids.filter((x) => x !== g.id) : [...ids, g.id])}
+            title={g.target}
+            className="font-mono text-[8px] uppercase px-1 py-px rounded-sm border disabled:cursor-default"
+            style={{
+              borderColor: on ? g.accent : RULE,
+              backgroundColor: on ? g.accent + '14' : 'transparent',
+              color: on ? g.accent : FAINT,
+            }}
+          >
+            {compact ? g.name.split(' ')[0] : g.name}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
 interface Draft {
   text: string
   kind: BlockKind
   start: string
+  goalIds: string[]
 }
 
 const dayPlan = (): Draft[] => {
   const first = toMin(nextHalfHour())
-  return BLOCKS.map((b, i) => ({ text: '', kind: b.kind, start: fromMin(first + i * BLOCK_H * 60) }))
+  return BLOCKS.map((b, i) => ({ text: '', kind: b.kind, start: fromMin(first + i * BLOCK_H * 60), goalIds: [] as string[] }))
 }
 
 export function ExecGoalLog({ date: serverDate }: { date: string }) {
   const date = useExecDate(serverDate)
   const { user } = useAuth()
   const [goals, setGoals] = useState<ExecGoalEntry[]>([])
-  const [draft, setDraft] = useState<Draft>({ text: '', kind: 'deep', start: nextHalfHour() })
+  const [draft, setDraft] = useState<Draft>({ text: '', kind: 'deep', start: nextHalfHour(), goalIds: [] })
   const [focused, setFocused] = useState(false)
   const [plan, setPlan] = useState<Draft[] | null>(null)
   const [showAll, setShowAll] = useState(false)
@@ -134,6 +167,12 @@ export function ExecGoalLog({ date: serverDate }: { date: string }) {
     [goals]
   )
   const hit = judged.filter((g) => g.status === 'done').length
+  // What the day review reads from this panel: today's goals and their verdicts.
+  const scoreKey = goals
+    .filter((g) => g.setOn === date)
+    .map((g) => `${g.id}:${g.status}:${g.note}:${(g.goalIds || []).join(',')}`)
+    .sort()
+    .join('|')
   const todayH = goals.filter((g) => g.setOn === date).reduce((s, g) => s + (g.hours ?? BLOCK_H), 0)
 
   const save = async (drafts: Draft[]) => {
@@ -147,6 +186,7 @@ export function ExecGoalLog({ date: serverDate }: { date: string }) {
           setOn: date,
           kind: d.kind,
           start: d.start,
+          goalIds: d.goalIds,
           hours: BLOCK_H,
           status: 'open',
           resolvedOn: null,
@@ -160,7 +200,7 @@ export function ExecGoalLog({ date: serverDate }: { date: string }) {
   const addOne = async () => {
     if (!draft.text.trim()) return
     const d = draft
-    setDraft({ text: '', kind: d.kind, start: fromMin(toMin(d.start) + BLOCK_H * 60) })
+    setDraft({ text: '', kind: d.kind, start: fromMin(toMin(d.start) + BLOCK_H * 60), goalIds: d.goalIds })
     await save([d])
   }
 
@@ -182,6 +222,12 @@ export function ExecGoalLog({ date: serverDate }: { date: string }) {
     setNoting(null)
     setNote('')
     void load()
+  }
+
+  const retag = async (id: string, goalIds: string[]) => {
+    if (!user) return
+    setGoals((gs) => gs.map((g) => (g.id === id ? { ...g, goalIds } : g)))
+    await updateExecGoal(user.uid, id, { goalIds })
   }
 
   const remove = async (id: string) => {
@@ -217,7 +263,7 @@ export function ExecGoalLog({ date: serverDate }: { date: string }) {
             The whole day — three two-hour blocks. Leave a row blank to skip it.
           </div>
           {plan.map((row, i) => (
-            <div key={i} className="flex gap-1.5 mb-1 flex-wrap sm:flex-nowrap">
+            <div key={i} className="flex gap-1.5 mb-1.5 flex-wrap">
               <input
                 type="time"
                 value={row.start}
@@ -234,6 +280,10 @@ export function ExecGoalLog({ date: serverDate }: { date: string }) {
                 className={`${inputCls} flex-1 min-w-0`}
                 style={{ borderColor: RULE, color: INK }}
               />
+              <div className="w-full flex items-center gap-1.5">
+                <span className="font-mono text-[9px] shrink-0" style={{ color: FAINT }}>serves</span>
+                <GoalTags ids={row.goalIds} onChange={(ids) => setPlan(plan.map((r, j) => (j === i ? { ...r, goalIds: ids } : r)))} />
+              </div>
             </div>
           ))}
           <div className="flex gap-1.5">
@@ -288,6 +338,10 @@ export function ExecGoalLog({ date: serverDate }: { date: string }) {
             >
               Set
             </button>
+          </div>
+          <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+            <span className="font-mono text-[9px] shrink-0" style={{ color: FAINT }}>serves</span>
+            <GoalTags ids={draft.goalIds} onChange={(ids) => setDraft({ ...draft, goalIds: ids })} />
           </div>
           {focused && (
             <button
@@ -356,6 +410,10 @@ export function ExecGoalLog({ date: serverDate }: { date: string }) {
                 ×
               </button>
             </div>
+            <div className="flex items-center gap-1.5 mt-0.5">
+              <span className="font-mono text-[9px] shrink-0" style={{ color: FAINT }}>serves</span>
+              <GoalTags ids={g.goalIds || []} onChange={(ids) => void retag(g.id, ids)} compact />
+            </div>
             {noting?.id === g.id && (
               <form
                 className="flex gap-1.5 mt-1"
@@ -405,6 +463,7 @@ export function ExecGoalLog({ date: serverDate }: { date: string }) {
               {g.kind === 'research' ? 'R' : 'DW'}
             </span>
           )}
+          <GoalTags ids={g.goalIds || []} compact />
           <span className="text-[10px] flex-1 min-w-0 truncate" style={{ color: MUTED }} title={g.note || undefined}>
             {g.text}
             {g.note && <span style={{ color: FAINT }}> — {g.note}</span>}
@@ -423,6 +482,8 @@ export function ExecGoalLog({ date: serverDate }: { date: string }) {
           {showAll ? 'show fewer' : `show all ${judged.length}`}
         </button>
       )}
+
+      <ExecBlocks date={serverDate} embedded scoreKey={scoreKey} />
     </section>
   )
 }
