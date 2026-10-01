@@ -132,6 +132,22 @@ export function HourStrip({
           )
         })}
       </div>
+      {/* Gusts, desktop only — one number under each hour cell */}
+      <div className="hidden md:flex gap-px mt-px" aria-hidden="true">
+        {Array.from({ length: N }, (_, i) => {
+          const hour = range.start + i
+          const h = byHour.get(hour)
+          const lit = h && hour >= day.startHour && hour < day.endHour
+          return (
+            <span
+              key={hour}
+              className="flex-1 min-w-[4px] text-center font-mono text-[8px] leading-none text-surf-muted"
+            >
+              {lit ? Math.round(h.gustKn) : ''}
+            </span>
+          )
+        })}
+      </div>
     </div>
   )
 }
