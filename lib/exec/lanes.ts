@@ -51,3 +51,13 @@ export const LANE_INK = {
   warn: '#8a6420',
   alert: '#c94f35',
 } as const
+
+/** Which broad goals (lib/exec/goals.ts) each lane serves — how Today and the goals meet. */
+export const LANE_GOALS: Record<LaneId, string[]> = {
+  tantra: [],
+  kite: ['athlete'],
+  ironman: ['athlete'],
+  intake: [],
+  complexecon: ['cecon'],
+  armstrong: ['armstrong'],
+}

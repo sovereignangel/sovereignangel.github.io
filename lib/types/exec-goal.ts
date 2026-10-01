@@ -26,3 +26,27 @@ export interface ExecGoalEntry {
   note: string
   createdAt?: Timestamp
 }
+
+export type ExecActivityKind =
+  | 'goal_set'
+  | 'goal_called'
+  | 'goal_retagged'
+  | 'goal_deleted'
+  | 'pomodoro'
+  | 'slot_note'
+  | 'lane_toggle'
+
+/** One action on /exec, mapped to the broad goals it served. users/{uid}/exec_activity/{id} */
+export interface ExecActivity {
+  id: string
+  /** YYYY-MM-DD, the exec day it happened on. */
+  date: string
+  kind: ExecActivityKind
+  /** What it touched — a goal id, block id, slot id, or lane id. */
+  ref: string
+  /** Broad goal ids (lib/exec/goals.ts) it counts toward. */
+  goalIds: string[]
+  /** Kind-specific payload: status, note, count, text. */
+  detail: Record<string, unknown>
+  at?: Timestamp
+}

@@ -33,6 +33,7 @@ import {
   hoursFrom,
 } from '@/lib/exec/blocks'
 import { useExecDate } from './useExecDate'
+import { logExecActivity } from '@/lib/firestore/exec-activity'
 
 const RESEARCH = '#2d4a6f'
 const DEEP = '#7c2d2d'
@@ -117,10 +118,13 @@ export function ExecBlocks({
   date: serverDate,
   embedded = false,
   scoreKey = '',
+  activeGoalIds = [],
 }: {
   date: string
   embedded?: boolean
   scoreKey?: string
+  /** Broad goals the block on the clock serves — what each pip and line is credited to. */
+  activeGoalIds?: string[]
 }) {
   const date = useExecDate(serverDate)
   const { user, signIn, loading: authLoading } = useAuth()
@@ -154,13 +158,14 @@ export function ExecBlocks({
       setBusy(blockId)
       try {
         await setBlockPomodoros(user.uid, date, blockId, n)
+        await logExecActivity(user.uid, { date, kind: 'pomodoro', ref: blockId, goalIds: activeGoalIds, detail: { count: n } })
         await load()
         setEdits((e) => e + 1)
       } finally {
         setBusy(null)
       }
     },
-    [user, date, load]
+    [user, date, load, activeGoalIds]
   )
 
   const openSlot = useCallback((slotId: string) => {
@@ -178,12 +183,13 @@ export function ExecBlocks({
     setDay((d) => (d ? { ...d, slots: { ...(d.slots || {}), [slotId]: text.trim() } } : d))
     try {
       await setSlotNote(user.uid, date, slotId, text)
+      await logExecActivity(user.uid, { date, kind: 'slot_note', ref: slotId, goalIds: activeGoalIds, detail: { text: text.trim() } })
       await load()
       setEdits((e) => e + 1)
     } catch {
       await load()
     }
-  }, [user, date, editing, draft, load])
+  }, [user, date, editing, draft, load, activeGoalIds])
 
   const score = useCallback(async (auto = false) => {
     if (!user) return

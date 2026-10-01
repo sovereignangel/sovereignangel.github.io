@@ -16,6 +16,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useAuth } from '@/components/auth/AuthProvider'
 import { getExecGoals, addExecGoal, updateExecGoal, deleteExecGoal } from '@/lib/firestore/exec-goals'
+import { logExecActivity } from '@/lib/firestore/exec-activity'
 import type { ExecGoalEntry, ExecGoalStatus } from '@/lib/types'
 import { BLOCKS, TOTAL_HOURS, type BlockKind } from '@/lib/exec/blocks'
 import { BROAD_GOALS } from '@/lib/exec/goals'
@@ -173,6 +174,15 @@ export function ExecGoalLog({ date: serverDate }: { date: string }) {
     .map((g) => `${g.id}:${g.status}:${g.note}:${(g.goalIds || []).join(',')}`)
     .sort()
     .join('|')
+  // The block goal on the clock right now — pomodoros and half-hour lines are
+  // credited to whatever it serves. Failing that, the latest one already started.
+  const activeGoalIds = useMemo(() => {
+    const todays = goals.filter((g) => g.setOn === date && g.start)
+    const live = todays.find((g) => minute >= toMin(g.start!) && minute < toMin(g.start!) + (g.hours ?? BLOCK_H) * 60)
+    if (live) return live.goalIds || []
+    const started = todays.filter((g) => toMin(g.start!) <= minute).sort((a, b) => b.start!.localeCompare(a.start!))
+    return started[0]?.goalIds || []
+  }, [goals, date, minute])
   const todayH = goals.filter((g) => g.setOn === date).reduce((s, g) => s + (g.hours ?? BLOCK_H), 0)
 
   const save = async (drafts: Draft[]) => {
@@ -180,8 +190,8 @@ export function ExecGoalLog({ date: serverDate }: { date: string }) {
     const real = drafts.filter((d) => d.text.trim())
     if (!real.length) return
     await Promise.all(
-      real.map((d) =>
-        addExecGoal(user.uid, {
+      real.map(async (d) => {
+        const id = await addExecGoal(user.uid, {
           text: d.text.trim(),
           setOn: date,
           kind: d.kind,
@@ -192,7 +202,14 @@ export function ExecGoalLog({ date: serverDate }: { date: string }) {
           resolvedOn: null,
           note: '',
         })
-      )
+        await logExecActivity(user.uid, {
+          date,
+          kind: 'goal_set',
+          ref: id,
+          goalIds: d.goalIds,
+          detail: { text: d.text.trim(), kind: d.kind, start: d.start, hours: BLOCK_H },
+        })
+      })
     )
     void load()
   }
@@ -219,6 +236,14 @@ export function ExecGoalLog({ date: serverDate }: { date: string }) {
       resolvedOn: status === 'open' ? null : date,
       note: status === 'open' ? '' : why.trim(),
     })
+    const g = goals.find((x) => x.id === id)
+    await logExecActivity(user.uid, {
+      date,
+      kind: 'goal_called',
+      ref: id,
+      goalIds: g?.goalIds || [],
+      detail: { status, note: why.trim(), text: g?.text || '', kind: g?.kind || null },
+    })
     setNoting(null)
     setNote('')
     void load()
@@ -228,11 +253,14 @@ export function ExecGoalLog({ date: serverDate }: { date: string }) {
     if (!user) return
     setGoals((gs) => gs.map((g) => (g.id === id ? { ...g, goalIds } : g)))
     await updateExecGoal(user.uid, id, { goalIds })
+    await logExecActivity(user.uid, { date, kind: 'goal_retagged', ref: id, goalIds, detail: {} })
   }
 
   const remove = async (id: string) => {
     if (!user) return
+    const g = goals.find((x) => x.id === id)
     await deleteExecGoal(user.uid, id)
+    await logExecActivity(user.uid, { date, kind: 'goal_deleted', ref: id, goalIds: g?.goalIds || [], detail: { text: g?.text || '' } })
     void load()
   }
 
@@ -483,7 +511,7 @@ export function ExecGoalLog({ date: serverDate }: { date: string }) {
         </button>
       )}
 
-      <ExecBlocks date={serverDate} embedded scoreKey={scoreKey} />
+      <ExecBlocks date={serverDate} embedded scoreKey={scoreKey} activeGoalIds={activeGoalIds} />
     </section>
   )
 }

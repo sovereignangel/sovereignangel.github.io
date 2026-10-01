@@ -29,7 +29,10 @@ import { getCampaignProgress, setCampaignUnit, getRitualDay, setRitualDay } from
 import type { CampaignProgressDoc } from '@/lib/types'
 import { activeCycle, type ActiveCycle } from '@/lib/tantra/cycle'
 import { CAMPAIGNS, campaignOrder, ritualDueOn, type CampaignId, type CampaignOrder } from '@/lib/campaign'
-import { LANES, LANE_INK, type Lane, type LaneId } from '@/lib/exec/lanes'
+import { LANES, LANE_INK, LANE_GOALS, type Lane, type LaneId } from '@/lib/exec/lanes'
+import { getExecGoals } from '@/lib/firestore/exec-goals'
+import { logExecActivity, EXEC_ACTIVITY_EVENT } from '@/lib/firestore/exec-activity'
+import type { ExecGoalEntry } from '@/lib/types'
 import { useGarminData, kitedOn, trainedOn } from './useGarminData'
 import { useExecDate } from './useExecDate'
 
@@ -226,10 +229,11 @@ export function ExecToday({ date: serverDate, kite, ironman }: ExecTodayProps) {
   const [intakeDay, setIntakeDay] = useState<IntakeDayDoc | null>(null)
   const [loaded, setLoaded] = useState(false)
   const [busy, setBusy] = useState<LaneId | null>(null)
+  const [blockGoals, setBlockGoals] = useState<ExecGoalEntry[]>([])
 
   const load = useCallback(async () => {
     if (!user) return
-    const [config, checkins, cecon, arm, desk, intake, intakeDoc] = await Promise.all([
+    const [config, checkins, cecon, arm, desk, intake, intakeDoc, goals] = await Promise.all([
       getTantraConfig(user.uid).catch(() => null),
       getTantraCheckins(user.uid).catch(() => []),
       getCampaignProgress(user.uid, 'complexecon').catch(() => ({} as CampaignProgressDoc)),
@@ -237,7 +241,9 @@ export function ExecToday({ date: serverDate, kite, ironman }: ExecTodayProps) {
       getRitualDay(user.uid, 'armstrong', date).catch(() => null),
       getIntakeItems(user.uid).catch(() => [] as IntakeItem[]),
       getIntakeDay(user.uid, date).catch(() => null),
+      getExecGoals(user.uid).catch(() => [] as ExecGoalEntry[]),
     ])
+    setBlockGoals(goals.filter((g) => g.setOn === date))
     const dates = new Set(checkins.map((c) => c.date))
     setCycle(activeCycle(config?.cycles, date, dates))
     setTantraToday(dates.has(date))
@@ -249,6 +255,32 @@ export function ExecToday({ date: serverDate, kite, ironman }: ExecTodayProps) {
   }, [user, date])
 
   useEffect(() => { void load() }, [load])
+
+  // Anything logged elsewhere on /exec (a block goal called, a pip banked) can
+  // change a lane, so the band reloads on every activity event.
+  useEffect(() => {
+    const on = () => void load()
+    window.addEventListener(EXEC_ACTIVITY_EVENT, on)
+    return () => window.removeEventListener(EXEC_ACTIVITY_EVENT, on)
+  }, [load])
+
+  /** Block goals called done today, per lane, through the goals each lane serves. */
+  const blocksDone = useMemo(() => {
+    const out = {} as Record<LaneId, number>
+    for (const lane of LANES) {
+      const ids = LANE_GOALS[lane.id]
+      out[lane.id] = blockGoals.filter((g) => g.status === 'done' && (g.goalIds || []).some((x) => ids.includes(x))).length
+    }
+    return out
+  }, [blockGoals])
+
+  const logToggle = useCallback(
+    (laneId: LaneId, done: boolean, detail: Record<string, unknown> = {}) => {
+      if (!user) return
+      void logExecActivity(user.uid, { date, kind: 'lane_toggle', ref: laneId, goalIds: LANE_GOALS[laneId], detail: { done, ...detail } })
+    },
+    [user, date]
+  )
 
   const doneIds = useMemo(() => {
     const of = (id: CampaignId) => new Set(Object.keys(progress[id]?.units || {}))
@@ -273,10 +305,11 @@ export function ExecToday({ date: serverDate, kite, ironman }: ExecTodayProps) {
       if (tantraToday) await removeTantraCheckin(user.uid, date)
       else await setTantraCheckin(user.uid, date, new Date())
       setTantraToday(!tantraToday)
+      logToggle('tantra', !tantraToday)
     } finally {
       setBusy(null)
     }
-  }, [user, date, tantraToday])
+  }, [user, date, tantraToday, logToggle])
 
   const toggleUnit = useCallback(
     async (id: CampaignId, laneId: LaneId) => {
@@ -287,12 +320,12 @@ export function ExecToday({ date: serverDate, kite, ironman }: ExecTodayProps) {
       setBusy(laneId)
       try {
         await setCampaignUnit(user.uid, id, unit.id, !already)
-        await load()
+        logToggle(laneId, !already, { unit: unit.id })
       } finally {
         setBusy(null)
       }
     },
-    [user, orders, doneIds, load]
+    [user, orders, doneIds, logToggle]
   )
 
   const toggleDesk = useCallback(async () => {
@@ -301,10 +334,11 @@ export function ExecToday({ date: serverDate, kite, ironman }: ExecTodayProps) {
     try {
       await setRitualDay(user.uid, 'armstrong', date, !deskDone)
       setDeskDone(!deskDone)
+      logToggle('armstrong', !deskDone, { desk: true })
     } finally {
       setBusy(null)
     }
-  }, [user, date, deskDone])
+  }, [user, date, deskDone, logToggle])
 
   // ── Lane states ─────────────────────────────────────────────────────────
 
@@ -355,7 +389,7 @@ export function ExecToday({ date: serverDate, kite, ironman }: ExecTodayProps) {
       },
       complexecon: {
         due: Boolean(ceUnit),
-        done: completedOn(progress.complexecon?.units as UnitDoneMap, date),
+        done: completedOn(progress.complexecon?.units as UnitDoneMap, date) || blocksDone.complexecon > 0,
         headline: ceUnit ? `${ceUnit.code} · ${ceUnit.label}` : 'Campaign complete',
         sub: ceOrder.block
           ? `${ceOrder.block.numeral} · ${ceOrder.block.name} — ${ceOrder.pace.unitsLeft} left, ${ceOrder.pace.daysLeft}d`
@@ -366,7 +400,7 @@ export function ExecToday({ date: serverDate, kite, ironman }: ExecTodayProps) {
       },
       armstrong: {
         due: deskDue || Boolean(armUnit),
-        done: deskDue ? deskDone : completedOn(progress.armstrong?.units as UnitDoneMap, date),
+        done: (deskDue ? deskDone : completedOn(progress.armstrong?.units as UnitDoneMap, date)) || blocksDone.armstrong > 0,
         // On a market day the desk pass is the order and the build unit is the
         // follow-on; on a weekend there is no desk, so the unit is the order.
         headline: deskDue
@@ -382,10 +416,21 @@ export function ExecToday({ date: serverDate, kite, ironman }: ExecTodayProps) {
         href: '/armstrong',
       },
     }
-  }, [orders, cycle, tantraToday, kite, ironman, activities, date, progress, deskDone, busy, user, intake, toggleTantra, toggleUnit, toggleDesk])
+  }, [orders, cycle, tantraToday, kite, ironman, activities, date, progress, deskDone, busy, user, intake, toggleTantra, toggleUnit, toggleDesk, blocksDone])
 
-  const due = LANES.filter((l) => states[l.id].due)
-  const doneCount = due.filter((l) => states[l.id].done).length
+  // Block goals called done show on the lanes they serve. Kite and Ironman stay
+  // settled by Garmin alone — a block can say it served them, not that it happened.
+  const shown = useMemo(() => {
+    const out = { ...states }
+    for (const lane of LANES) {
+      const n = blocksDone[lane.id]
+      if (n > 0) out[lane.id] = { ...out[lane.id], sub: `${n} block${n > 1 ? 's' : ''} done${out[lane.id].sub ? ` · ${out[lane.id].sub}` : ''}` }
+    }
+    return out
+  }, [states, blocksDone])
+
+  const due = LANES.filter((l) => shown[l.id].due)
+  const doneCount = due.filter((l) => shown[l.id].done).length
 
   const counter = user && loaded
     ? `${doneCount} / ${due.length}`
@@ -417,7 +462,7 @@ export function ExecToday({ date: serverDate, kite, ironman }: ExecTodayProps) {
     >
       <div className="grid grid-cols-3 lg:grid-cols-6 gap-1.5">
         {LANES.map((lane) => (
-          <LaneCell key={lane.id} lane={lane} state={states[lane.id]} />
+          <LaneCell key={lane.id} lane={lane} state={shown[lane.id]} />
         ))}
       </div>
     </BandShell>
