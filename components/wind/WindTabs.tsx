@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { KITE_REGIONS, currentRegion } from '@/lib/kite/regions'
 import { SeasonIcon } from './WindIcons'
 
-export type WindTabId = 'lithuania' | 'nyc' | 'brazil' | 'capetown' | 'mastery'
+export type WindTabId = 'lithuania' | 'nyc' | 'brazil' | 'capetown' | 'mastery' | 'physics'
 
 const PILL = 'font-serif text-[11px] md:text-[12px] font-medium px-2 md:px-2.5 py-1 rounded-full border transition-colors flex items-center gap-1'
 const ON = 'bg-surf-teal text-white border-surf-teal'
@@ -36,6 +36,9 @@ export function WindTabs({ active }: { active: WindTabId }) {
       <span className="w-px h-4 bg-surf-rule mx-0.5 shrink-0" aria-hidden="true" />
       <Link href="/wind/mastery" className={`${PILL} ${active === 'mastery' ? ON : OFF}`}>
         Mastery
+      </Link>
+      <Link href="/wind/physics" className={`${PILL} ${active === 'physics' ? ON : OFF}`}>
+        Physics
       </Link>
     </nav>
   )
