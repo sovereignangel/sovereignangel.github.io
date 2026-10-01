@@ -1,3 +1,4 @@
+import { HOME_TIMEZONE } from '@/lib/kite/regions'
 /**
  * Daily Sync Cron Job
  * Syncs Garmin, Calendar, Chess, Stripe, GitHub for today and yesterday.
@@ -25,7 +26,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { syncAllData } from '@/lib/etl/sync-all'
 
 /** The athlete is in Palanga; the server is wherever Vercel put it. */
-const TIMEZONE = 'Europe/Vilnius'
+const TIMEZONE = HOME_TIMEZONE
 
 function localDate(offsetDays = 0): string {
   const d = new Date()

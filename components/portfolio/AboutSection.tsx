@@ -104,7 +104,7 @@ export default function AboutSection() {
         <Link
           href="/wind"
           aria-label="Kiteboarding — wind forecast"
-          title="Wind — kite forecast for the Lithuanian coast"
+          title="Wind — kite forecast for home water"
           className="text-[#333] hover:text-[#1a8a8f] transition-colors duration-200"
         >
           <svg

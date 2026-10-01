@@ -1,21 +1,15 @@
 import Link from 'next/link'
-import { KITE_REGIONS } from '@/lib/kite/regions'
+import { KITE_REGIONS, currentRegion } from '@/lib/kite/regions'
 import { SeasonIcon } from './WindIcons'
 
 export type WindTabId = 'lithuania' | 'nyc' | 'brazil' | 'capetown' | 'mastery'
-
-/** Which leg of the rotation the calendar says he is on right now. */
-function currentRegionId(): string {
-  const month = new Date().getMonth() + 1
-  return KITE_REGIONS.find(r => r.activeMonths.includes(month))?.id ?? 'lithuania'
-}
 
 const PILL = 'font-serif text-[11px] md:text-[12px] font-medium px-2 md:px-2.5 py-1 rounded-full border transition-colors flex items-center gap-1'
 const ON = 'bg-surf-teal text-white border-surf-teal'
 const OFF = 'bg-transparent text-surf-muted border-surf-rule hover:text-surf-deep hover:border-surf-teal/50'
 
 export function WindTabs({ active }: { active: WindTabId }) {
-  const now = currentRegionId()
+  const now = currentRegion().id
   return (
     <nav className="flex items-center gap-1" aria-label="Wind sections">
       {KITE_REGIONS.map(region => {

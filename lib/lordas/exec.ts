@@ -11,12 +11,13 @@
  */
 
 import {
-  fetchAllSpots,
+  fetchSpots,
   weekSessions,
   weekPossibles,
   precipLabel,
   type SpotForecast,
 } from '@/lib/kite/lithuania-spots'
+import { currentRegion } from '@/lib/kite/regions'
 import { daysToRace, todayLocal, RACE, RACE_NYC } from '@/lib/ironman/plan'
 import {
   addDaysISO,
@@ -77,7 +78,7 @@ export async function buildLordasOrders(
   now: Date = new Date()
 ): Promise<LordasOrders> {
   const [forecastResult, athletes] = await Promise.all([
-    fetchAllSpots().catch(() => null),
+    fetchSpots(currentRegion().spots, currentRegion().timezone).catch(() => null),
     loadBothAthletes(),
   ])
 

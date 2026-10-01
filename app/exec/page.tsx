@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { AuthProvider } from '@/components/auth/AuthProvider'
-import { fetchAllSpots, weekSessions, weekPossibles, precipLabel, type SpotForecast } from '@/lib/kite/lithuania-spots'
+import { currentRegion } from '@/lib/kite/regions'
+import { fetchSpots, weekSessions, weekPossibles, precipLabel, type SpotForecast } from '@/lib/kite/lithuania-spots'
 import { getPlanDay, todayLocal, type PlanDay, type Sport } from '@/lib/ironman/plan'
 import {
   addDaysISO,
@@ -19,6 +20,7 @@ import { ExecIronmanLive, ExecDrills } from '@/components/exec/ExecLive'
 import { ExecToday, type PipedLane } from '@/components/exec/ExecToday'
 import { ExecCampaign } from '@/components/exec/ExecCampaign'
 import { ExecGoals } from '@/components/exec/ExecGoals'
+import { ExecGoalLog } from '@/components/exec/ExecGoalLog'
 import { ExecBlocks } from '@/components/exec/ExecBlocks'
 import { tripIsLive } from '@/lib/exec/svencele'
 import { buildFeed, SUBJECTS, relativeAge, type SubjectColumn, type FeedItem } from '@/lib/exec/feed'
@@ -454,7 +456,7 @@ export default async function ExecPage() {
   let forecasts: SpotForecast[] = []
   let windError = false
   try {
-    forecasts = await fetchAllSpots()
+    forecasts = await fetchSpots(currentRegion().spots, currentRegion().timezone)
   } catch {
     windError = true
   }
@@ -526,6 +528,8 @@ export default async function ExecPage() {
           </header>
 
           <ExecGoals date={today} />
+
+          <ExecGoalLog date={today} />
 
           <ExecToday date={today} kite={kiteLane(windToday)} ironman={ironmanLane(planToday, slotToday)} />
 

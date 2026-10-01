@@ -1,3 +1,4 @@
+import { HOME_TIMEZONE } from '@/lib/kite/regions'
 /**
  * Ironman Training Plan — race config + day-by-day base plan.
  *
@@ -734,7 +735,7 @@ export function daysToRace(today: string, raceDate?: string): number {
 
 /** Local date string in the athlete's timezone (Palanga) */
 export function todayLocal(): string {
-  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Vilnius' }).format(new Date())
+  return new Intl.DateTimeFormat('en-CA', { timeZone: HOME_TIMEZONE }).format(new Date())
 }
 
 /**

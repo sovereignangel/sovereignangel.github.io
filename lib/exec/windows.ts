@@ -12,11 +12,12 @@
  *   the workout moves to right after the last kite block.
  */
 
+import { HOME_TIMEZONE } from '@/lib/kite/regions'
 import type { SessionPick, SpotForecast } from '@/lib/kite/lithuania-spots'
 import { kiteSizeHint } from '@/lib/kite/lithuania-spots'
 import type { PlanDay } from '@/lib/ironman/plan'
 
-export const TIMEZONE = 'Europe/Vilnius'
+export const TIMEZONE = HOME_TIMEZONE
 
 export interface KiteBlock {
   startHour: number

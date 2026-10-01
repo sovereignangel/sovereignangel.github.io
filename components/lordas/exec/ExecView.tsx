@@ -23,11 +23,12 @@ import { PersonSigil, SportGlyph, KiteIcon, WindIcon, FlatIcon, CalendarIcon } f
 import { WIND_URL } from '@/components/lordas/design/Nav'
 import { gcalUrl, fmtWindow, type ExecWindDay, type SpotStatus } from '@/lib/exec/windows'
 import { precipLabel } from '@/lib/kite/lithuania-spots'
+import { HOME_TIMEZONE } from '@/lib/kite/regions'
 import type { LordasOrders, LordasWindDay } from '@/lib/lordas/exec'
 import type { AthletePrescription, PairDay } from '@/lib/lordas/pair-training'
 import { freshnessOf, stampOf } from '@/lib/lordas/freshness'
 
-const TZ = 'Europe/Vilnius'
+const TZ = HOME_TIMEZONE
 
 /** A feed that stopped uploading looks exactly like a rest day unless said. */
 const FEED_TONE = { fresh: 'none', aging: 'warn', stale: 'crit', never: 'crit', unreadable: 'crit' } as const
@@ -336,7 +337,7 @@ export default function ExecView() {
       <p style={{ fontSize: 11, color: C.faint, lineHeight: 1.55, marginTop: 18 }}>
         A spot the primary model calls offshore, over the gust cap, or rained out is never recommended, even when the
         second model finds a window there. Readiness comes from each person&apos;s own Garmin; pace targets from each
-        person&apos;s own distance-weighted work over the last six weeks. Calendar events land in Palanga time.
+        person&apos;s own distance-weighted work over the last six weeks. Calendar events land in local time.
         {data.feedRefreshedAt && (
           <> Garmin last refreshed {stampOf(data.feedRefreshedAt)} LT, {feed.label} — every readiness number and
           pace target above is computed from that pull, not from live data.</>

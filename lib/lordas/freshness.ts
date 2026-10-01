@@ -1,3 +1,4 @@
+import { HOME_TIMEZONE } from '@/lib/kite/regions'
 /**
  * How old a feed is, said the way a person would say it.
  *
@@ -57,7 +58,7 @@ export function stampOf(iso: string | null | undefined): string | null {
   const d = new Date(iso)
   if (isNaN(d.getTime())) return null
   return new Intl.DateTimeFormat('en-GB', {
-    timeZone: 'Europe/Vilnius',
+    timeZone: HOME_TIMEZONE,
     day: '2-digit',
     month: 'short',
     hour: '2-digit',

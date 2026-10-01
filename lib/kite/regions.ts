@@ -445,11 +445,11 @@ export const KITE_REGIONS: KiteRegion[] = [
     name: 'Baltic Coast',
     short: 'Lithuania',
     abbr: 'LT',
-    href: '/wind',
+    href: '/wind/baltic',
     season: 'summer',
     seasonLabel: 'summer',
-    months: 'Jun – Sep',
-    activeMonths: [6, 7, 8, 9],
+    months: 'Jun – Aug',
+    activeMonths: [6, 7, 8],
     timezone: 'Europe/Vilnius',
     clockLabel: 'LT',
     tagline: '12–30 kn · gusts under 36 · onshore or cross only',
@@ -463,8 +463,8 @@ export const KITE_REGIONS: KiteRegion[] = [
     href: '/wind/nyc',
     season: 'shoulder',
     seasonLabel: 'fall & spring',
-    months: 'Oct – Nov · Mar – May',
-    activeMonths: [3, 4, 5, 10, 11],
+    months: 'Sep – Nov · Mar – May',
+    activeMonths: [3, 4, 5, 9, 10, 11],
     timezone: 'America/New_York',
     clockLabel: 'ET',
     tagline: 'post-frontal NW · the strongest wind of the rotation',
@@ -478,8 +478,8 @@ export const KITE_REGIONS: KiteRegion[] = [
     href: '/wind/brazil',
     season: 'winter',
     seasonLabel: 'winter',
-    months: 'Dec – Feb',
-    activeMonths: [12, 1, 2],
+    months: 'Jul – Dec (peak Aug – Nov)',
+    activeMonths: [],
     timezone: 'America/Fortaleza',
     clockLabel: 'BRT',
     tagline: 'E/ESE trades every day · 450 km of downwind coast',
@@ -494,7 +494,7 @@ export const KITE_REGIONS: KiteRegion[] = [
     season: 'winter',
     seasonLabel: 'winter',
     months: 'Nov – Mar',
-    activeMonths: [11, 12, 1, 2, 3],
+    activeMonths: [12, 1, 2],
     timezone: 'Africa/Johannesburg',
     clockLabel: 'SAST',
     tagline: 'the Cape Doctor · soft at noon, hardest at sundown',
@@ -502,6 +502,25 @@ export const KITE_REGIONS: KiteRegion[] = [
     spots: CAPETOWN_SPOT_LIST,
   },
 ]
+
+/**
+ * Where home is right now. When set, this region is the default everywhere —
+ * /wind lands on it, and /exec, Lordas, Ironman and the crons read their spots
+ * and clock from it. Set to null to fall back to the seasonal calendar.
+ */
+export const LOCKED_REGION: RegionId | null = 'nyc'
+
+/** The leg of the rotation we are on: the locked region, else the calendar.
+ *  Brazil is off-rotation (its Aug–Nov peak collides with NYC), so the
+ *  calendar never picks it. */
+export function currentRegion(date = new Date()): KiteRegion {
+  if (LOCKED_REGION) return getRegion(LOCKED_REGION)
+  const month = date.getMonth() + 1
+  return KITE_REGIONS.find(r => r.activeMonths.includes(month)) ?? KITE_REGIONS[0]
+}
+
+/** Timezone of the default region — the day boundary for every daily surface. */
+export const HOME_TIMEZONE: string = currentRegion().timezone
 
 export function getRegion(id: RegionId): KiteRegion {
   const region = KITE_REGIONS.find(r => r.id === id)

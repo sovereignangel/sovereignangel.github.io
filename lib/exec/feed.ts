@@ -1,3 +1,4 @@
+import { HOME_TIMEZONE } from '@/lib/kite/regions'
 /**
  * The daily feed — five subjects, one question.
  *
@@ -371,7 +372,7 @@ export async function buildFeed(perSubject = 4): Promise<SubjectColumn[]> {
 
 /** The day key the /exec page uses, so a card is written where the page looks. */
 export const TIMEZONE_DAY = (d = new Date()): string =>
-  new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Vilnius' }).format(d)
+  new Intl.DateTimeFormat('en-CA', { timeZone: HOME_TIMEZONE }).format(d)
 
 /**
  * Every source's current items, flat and de-duplicated.

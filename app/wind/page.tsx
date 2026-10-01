@@ -1,13 +1,9 @@
-import type { Metadata } from 'next'
-import { RegionForecast } from '@/components/wind/RegionForecast'
+import { redirect } from 'next/navigation'
+import { currentRegion } from '@/lib/kite/regions'
 
-export const metadata: Metadata = {
-  title: 'Wind — Baltic Coast',
-  description: 'Kite wind planner for Sventoji, Svencele, Nida and Liepaja — 12-30 kn windows',
-}
+export const dynamic = 'force-dynamic'
 
-export const revalidate = 300
-
+/** /wind lands on whichever leg of the rotation the calendar is on. */
 export default function WindPage() {
-  return <RegionForecast regionId="lithuania" />
+  redirect(currentRegion().href)
 }
