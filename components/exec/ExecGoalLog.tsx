@@ -363,6 +363,14 @@ export function ExecGoalLog({ date: serverDate }: { date: string }) {
     await logExecActivity(user.uid, { date, kind: 'goal_retagged', ref: id, goalIds, detail: {} })
   }
 
+  const retype = async (id: string, kind: BlockKind) => {
+    if (!user) return
+    const g = goals.find((x) => x.id === id)
+    setGoals((gs) => gs.map((x) => (x.id === id ? { ...x, kind } : x)))
+    await updateExecGoal(user.uid, id, { kind })
+    await logExecActivity(user.uid, { date, kind: 'goal_retyped', ref: id, goalIds: g?.goalIds || [], detail: { kind } })
+  }
+
   const remove = async (id: string) => {
     if (!user) return
     const g = goals.find((x) => x.id === id)
@@ -510,12 +518,15 @@ export function ExecGoalLog({ date: serverDate }: { date: string }) {
                   {g.start}–{end}
                 </span>
               )}
-              <span
+              <button
+                type="button"
+                onClick={() => void retype(g.id, kind === 'research' ? 'deep' : 'research')}
+                title={`${kind === 'research' ? 'Research' : 'Deep work'} — click to switch`}
                 className="font-mono text-[8px] uppercase px-1 py-px rounded-sm border shrink-0"
                 style={{ color: kindColor(kind), borderColor: kindColor(kind) }}
               >
                 {kind === 'research' ? 'R' : 'DW'}
-              </span>
+              </button>
               <span className="text-[11px] min-w-0" style={{ color: INK }}>{g.text}</span>
               <span className="flex-1 self-center">
                 <GoalTags ids={g.goalIds || []} onChange={(ids) => void retag(g.id, ids)} />
