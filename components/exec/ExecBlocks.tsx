@@ -18,6 +18,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { useAuth } from '@/components/auth/AuthProvider'
 import { authFetch } from '@/lib/auth-fetch'
 import { getFocusDay, setBlockPomodoros, setSlotNote } from '@/lib/firestore/game'
@@ -119,7 +120,10 @@ export function ExecBlocks({
   embedded = false,
   scoreKey = '',
   activeGoalIds = [],
+  reviewSlot = null,
 }: {
+  /** Embedded: where the full review renders, below the panel rather than in its header row. */
+  reviewSlot?: HTMLElement | null
   date: string
   embedded?: boolean
   scoreKey?: string
@@ -230,6 +234,67 @@ export function ExecBlocks({
 
   const editingSlot = SLOTS.find((s) => s.id === editing)
   const editingBlock = editingSlot ? BLOCKS.find((b) => b.id === editingSlot.blockId) : undefined
+
+  // Embedded, the pips and the score are one strip in the block-goals header;
+  // the half-hour cells are gone and the full review drops below the panel.
+  if (embedded) {
+    return (
+      <>
+        <div className="flex items-center gap-2.5 flex-wrap">
+          {BLOCKS.map((block) => {
+            const color = blockColor(block.kind)
+            const n = Math.min(block.pomodoros, Math.max(0, counts[block.id] ?? 0))
+            return (
+              <span key={block.id} className="inline-flex items-center gap-1" title={block.detail}>
+                <span className="font-mono text-[9px] uppercase tracking-[0.4px] font-semibold" style={{ color }}>
+                  {block.label}
+                </span>
+                <span className="inline-flex gap-[3px]">
+                  {Array.from({ length: block.pomodoros }, (_, i) => i + 1).map((i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      disabled={!user || busy === block.id}
+                      onClick={() => void setPomos(block.id, n === i ? i - 1 : i)}
+                      aria-label={`${block.label} — bank ${i} of ${block.pomodoros} pomodoros`}
+                      title={`${i * POMODORO_MIN} minutes`}
+                      className="w-[13px] h-[13px] rounded-sm border transition-colors disabled:cursor-default"
+                      style={{ borderColor: i <= n ? color : FAINT, backgroundColor: i <= n ? color : 'transparent' }}
+                    />
+                  ))}
+                </span>
+              </span>
+            )
+          })}
+        </div>
+        <span className="font-mono text-[11px] font-semibold tabular-nums" style={{ color: pomosDone === TOTAL_POMODOROS ? GOOD : INK }}>
+          {banked.toFixed(1)}<span style={{ fontSize: 10, color: FAINT }}>/{TOTAL_HOURS}h</span>
+        </span>
+        <button
+          type="button"
+          onClick={() => void score()}
+          disabled={scoring || !user}
+          title={day?.review ? `${day.review.verdict} — click to re-score` : 'The day scores itself as you go'}
+          className="font-mono text-[10px] tabular-nums disabled:cursor-default"
+          style={{ color: day?.review ? leverageColor(day.review.leverage) : FAINT }}
+        >
+          {scoring ? 'scoring…' : day?.review ? (
+            <>
+              <span className="text-[11px] font-semibold">{day.review.leverage}</span>/10 leverage
+            </>
+          ) : 'unscored'}
+        </button>
+        {reviewSlot &&
+          createPortal(
+            <>
+              {scoreError && <div className="text-[10px] mt-1.5" style={{ color: ALERT }}>{scoreError}</div>}
+              {day?.review && <ReviewPanel review={day.review} />}
+            </>,
+            reviewSlot
+          )}
+      </>
+    )
+  }
 
   return (
     <section

@@ -133,6 +133,7 @@ export function ExecGoalLog({ date: serverDate }: { date: string }) {
   const [noting, setNoting] = useState<{ id: string; status: ExecGoalStatus } | null>(null)
   const [note, setNote] = useState('')
   const [minute, setMinute] = useState(nowMin)
+  const [reviewSlot, setReviewSlot] = useState<HTMLDivElement | null>(null)
 
   // The check-in prompt depends on the clock, so the panel ticks once a minute.
   useEffect(() => {
@@ -271,10 +272,11 @@ export function ExecGoalLog({ date: serverDate }: { date: string }) {
 
   return (
     <section className="border rounded-xl px-3 py-2 mb-2.5" style={{ borderColor: RULE, backgroundColor: '#fffdf7' }}>
-      <div className="flex items-baseline gap-2 mb-1.5">
+      <div className="flex items-center gap-x-2.5 gap-y-1 mb-1.5 flex-wrap">
         <span className="font-mono text-[9px] uppercase tracking-[0.4px] font-semibold" style={{ color: INK }}>
           Block goals · called
         </span>
+        <ExecBlocks date={serverDate} embedded scoreKey={scoreKey} activeGoalIds={activeGoalIds} reviewSlot={reviewSlot} />
         <span className="font-mono text-[10px] tabular-nums" style={{ color: todayH >= TOTAL_HOURS ? GOOD : MUTED }}>
           {todayH}h/{TOTAL_HOURS}h planned today
         </span>
@@ -511,7 +513,7 @@ export function ExecGoalLog({ date: serverDate }: { date: string }) {
         </button>
       )}
 
-      <ExecBlocks date={serverDate} embedded scoreKey={scoreKey} activeGoalIds={activeGoalIds} />
+      <div ref={setReviewSlot} />
     </section>
   )
 }
