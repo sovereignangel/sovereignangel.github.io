@@ -80,33 +80,139 @@ function KindToggle({ kind, onChange }: { kind: BlockKind; onChange: (k: BlockKi
   )
 }
 
-/** Tag a block against the broad goals it serves — any number of them. */
-function GoalTags({ ids, onChange, compact = false }: { ids: string[]; onChange?: (ids: string[]) => void; compact?: boolean }) {
-  const list = onChange ? BROAD_GOALS : BROAD_GOALS.filter((g) => ids.includes(g.id))
-  if (!list.length) return null
+/** The four broad goals as dots — colour and a glyph, so a tag costs one circle of width. */
+const GOAL_DOT: Record<string, { color: string; icon: React.ReactNode }> = {
+  athlete: {
+    color: '#1a8a8f',
+    // Runner
+    icon: (
+      <>
+        <circle cx="7.6" cy="2.4" r="1.2" fill="currentColor" stroke="none" />
+        <path d="M6.6 4.6 5.4 7.4l2 1.4-.6 2.6M5.4 7.4 3.6 9.6M6.6 4.6l2 1.4 1.6-.4M6.6 4.6 4.6 5.2l-1 1.4" />
+      </>
+    ),
+  },
+  armstrong: {
+    color: '#7c2d2d',
+    // Leap — an arc launching off a line
+    icon: (
+      <>
+        <path d="M2 10.4h2.4" />
+        <path d="M3.4 10.4C4 5 8 3 10.2 4" />
+        <path d="M8.4 3.2 10.4 4 9.6 6" />
+      </>
+    ),
+  },
+  alamo: {
+    color: '#2d5f3f',
+    // Dividend — a coin paying out
+    icon: (
+      <>
+        <circle cx="5.2" cy="5.2" r="2.8" />
+        <path d="M5.2 3.9v2.6" />
+        <path d="M8.2 8.2 10.4 10.4M10.4 8.4v2h-2" />
+      </>
+    ),
+  },
+  cecon: {
+    color: '#1f3350',
+    // Mind — a head in profile with a spark inside
+    icon: (
+      <>
+        <path d="M4 10.6V9c-1.3-.8-2-2.1-2-3.6C2 3.2 3.8 1.6 6 1.6s4 1.6 4 3.6l1 1.8H10v1.6c0 .6-.4 1-1 1H7.6v1" />
+        <path d="M5.4 4.2 6.2 5.4l-1 .6.8 1.2" />
+      </>
+    ),
+  },
+}
+
+function GoalDot({ id, size = 16 }: { id: string | null; size?: number }) {
+  const g = id ? GOAL_DOT[id] : null
+  if (!g) {
+    return (
+      <span
+        className="inline-block rounded-full border border-dashed shrink-0"
+        style={{ width: size, height: size, borderColor: FAINT }}
+      />
+    )
+  }
   return (
-    <div className="flex gap-1 flex-wrap shrink-0">
-      {list.map((g) => {
-        const on = ids.includes(g.id)
-        return (
-          <button
-            key={g.id}
-            type="button"
-            disabled={!onChange}
-            onClick={() => onChange?.(on ? ids.filter((x) => x !== g.id) : [...ids, g.id])}
-            title={g.target}
-            className="font-mono text-[8px] uppercase px-1 py-px rounded-sm border disabled:cursor-default"
-            style={{
-              borderColor: on ? g.accent : RULE,
-              backgroundColor: on ? g.accent + '14' : 'transparent',
-              color: on ? g.accent : FAINT,
-            }}
-          >
-            {compact ? g.name.split(' ')[0] : g.name}
-          </button>
-        )
-      })}
-    </div>
+    <span
+      className="inline-flex items-center justify-center rounded-full shrink-0"
+      style={{ width: size, height: size, backgroundColor: g.color, color: '#fffdf7' }}
+    >
+      <svg
+        width={size * 0.72}
+        height={size * 0.72}
+        viewBox="0 0 12 12"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+      >
+        {g.icon}
+      </svg>
+    </span>
+  )
+}
+
+/**
+ * The goals a block serves, as dots beside its title.
+ *
+ * Clicking a dot cycles it to the next goal not already chosen, and past the
+ * last one it clears. The dotted empty circle adds another goal, so a block
+ * that serves two shows two dots and the empty one after them. Untagged, the
+ * empty circle is all there is.
+ */
+function GoalTags({ ids, onChange }: { ids: string[]; onChange?: (ids: string[]) => void }) {
+  const order = BROAD_GOALS.map((g) => g.id as string)
+  const name = (id: string) => BROAD_GOALS.find((g) => g.id === id)?.name ?? id
+  const nextFree = (from: string | null, taken: string[]) => {
+    const start = from ? order.indexOf(from) + 1 : 0
+    for (let i = start; i < order.length; i++) if (!taken.includes(order[i])) return order[i]
+    return null
+  }
+  if (!onChange) {
+    return ids.length ? (
+      <span className="inline-flex gap-0.5 shrink-0">
+        {ids.map((id) => (
+          <span key={id} title={name(id)}><GoalDot id={id} size={14} /></span>
+        ))}
+      </span>
+    ) : null
+  }
+  const canAdd = ids.length < order.length
+  return (
+    <span className="inline-flex items-center gap-0.5 shrink-0">
+      {ids.map((id, i) => (
+        <button
+          key={id}
+          type="button"
+          title={`${name(id)} — click to cycle`}
+          onClick={() => {
+            const others = ids.filter((_, j) => j !== i)
+            const next = nextFree(id, others)
+            onChange(next ? ids.map((x, j) => (j === i ? next : x)) : others)
+          }}
+        >
+          <GoalDot id={id} />
+        </button>
+      ))}
+      {canAdd && (
+        <button
+          type="button"
+          title="Tag a goal this block serves — click to cycle"
+          onClick={() => {
+            const next = nextFree(null, ids)
+            if (next) onChange([...ids, next])
+          }}
+        >
+          <GoalDot id={null} />
+        </button>
+      )}
+    </span>
   )
 }
 
@@ -293,7 +399,7 @@ export function ExecGoalLog({ date: serverDate }: { date: string }) {
             The whole day — three two-hour blocks. Leave a row blank to skip it.
           </div>
           {plan.map((row, i) => (
-            <div key={i} className="flex gap-1.5 mb-1.5 flex-wrap">
+            <div key={i} className="flex gap-1.5 mb-1 flex-wrap sm:flex-nowrap">
               <input
                 type="time"
                 value={row.start}
@@ -310,10 +416,9 @@ export function ExecGoalLog({ date: serverDate }: { date: string }) {
                 className={`${inputCls} flex-1 min-w-0`}
                 style={{ borderColor: RULE, color: INK }}
               />
-              <div className="w-full flex items-center gap-1.5">
-                <span className="font-mono text-[9px] shrink-0" style={{ color: FAINT }}>serves</span>
+              <span className="self-center">
                 <GoalTags ids={row.goalIds} onChange={(ids) => setPlan(plan.map((r, j) => (j === i ? { ...r, goalIds: ids } : r)))} />
-              </div>
+              </span>
             </div>
           ))}
           <div className="flex gap-1.5">
@@ -360,6 +465,9 @@ export function ExecGoalLog({ date: serverDate }: { date: string }) {
               className={`${inputCls} flex-1 min-w-0`}
               style={{ borderColor: RULE, color: INK }}
             />
+            <span className="self-center">
+              <GoalTags ids={draft.goalIds} onChange={(ids) => setDraft({ ...draft, goalIds: ids })} />
+            </span>
             <button
               type="submit"
               disabled={!draft.text.trim()}
@@ -368,10 +476,6 @@ export function ExecGoalLog({ date: serverDate }: { date: string }) {
             >
               Set
             </button>
-          </div>
-          <div className="flex items-center gap-1.5 mt-1 flex-wrap">
-            <span className="font-mono text-[9px] shrink-0" style={{ color: FAINT }}>serves</span>
-            <GoalTags ids={draft.goalIds} onChange={(ids) => setDraft({ ...draft, goalIds: ids })} />
           </div>
           {focused && (
             <button
@@ -412,7 +516,10 @@ export function ExecGoalLog({ date: serverDate }: { date: string }) {
               >
                 {kind === 'research' ? 'R' : 'DW'}
               </span>
-              <span className="text-[11px] flex-1 min-w-0" style={{ color: INK }}>{g.text}</span>
+              <span className="text-[11px] min-w-0" style={{ color: INK }}>{g.text}</span>
+              <span className="flex-1 self-center">
+                <GoalTags ids={g.goalIds || []} onChange={(ids) => void retag(g.id, ids)} />
+              </span>
               {due ? (
                 <span className="font-mono text-[9px] font-semibold shrink-0" style={{ color: WARN }}>
                   {g.setOn < date ? `from ${short(g.setOn)} · ` : ''}time&apos;s up — accomplished?
@@ -439,10 +546,6 @@ export function ExecGoalLog({ date: serverDate }: { date: string }) {
               <button onClick={() => void remove(g.id)} title="Delete" className="text-[11px] shrink-0" style={{ color: FAINT }}>
                 ×
               </button>
-            </div>
-            <div className="flex items-center gap-1.5 mt-0.5">
-              <span className="font-mono text-[9px] shrink-0" style={{ color: FAINT }}>serves</span>
-              <GoalTags ids={g.goalIds || []} onChange={(ids) => void retag(g.id, ids)} compact />
             </div>
             {noting?.id === g.id && (
               <form
@@ -493,11 +596,11 @@ export function ExecGoalLog({ date: serverDate }: { date: string }) {
               {g.kind === 'research' ? 'R' : 'DW'}
             </span>
           )}
-          <GoalTags ids={g.goalIds || []} compact />
           <span className="text-[10px] flex-1 min-w-0 truncate" style={{ color: MUTED }} title={g.note || undefined}>
             {g.text}
             {g.note && <span style={{ color: FAINT }}> — {g.note}</span>}
           </span>
+          <GoalTags ids={g.goalIds || []} />
           {g.resolvedOn && (
             <span className="font-mono text-[9px] tabular-nums shrink-0" style={{ color: FAINT }}>{short(g.resolvedOn)}</span>
           )}
