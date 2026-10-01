@@ -300,7 +300,9 @@ function parseHours(data: OpenMeteoResponse): Map<string, HourForecast[]> {
       time,
       hour: parseInt(clock.slice(0, 2), 10),
       speedKn: data.hourly.wind_speed_10m[i],
-      gustKn: data.hourly.wind_gusts_10m[i],
+      // GFS computes gusts separately and undershoots in stable air over water;
+      // a gust below the mean wind is not physical, so floor it at the mean.
+      gustKn: Math.max(data.hourly.wind_gusts_10m[i], data.hourly.wind_speed_10m[i]),
       directionDeg: data.hourly.wind_direction_10m[i],
       precipMm: data.hourly.precipitation?.[i] ?? 0,
       precipProb: data.hourly.precipitation_probability?.[i] ?? null,
