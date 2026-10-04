@@ -376,6 +376,13 @@ export async function syncRecentActivities(garmin: GarminConnect, col: any, limi
         anaerobicTrainingEffect: num(a.anaerobicTrainingEffect),
         trainingLoad: num(a.activityTrainingLoad),
         vo2max: num(a.vO2MaxValue),
+        // Power (power-meter pedals). best20MinPower × 0.95 ≈ FTP.
+        averagePower: num(a.avgPower),
+        normalizedPower: num(a.normPower),
+        maxPower: num(a.maxPower),
+        best20MinPower: num(a.max20MinPower),
+        trainingStressScore: num(a.trainingStressScore),
+        intensityFactor: num(a.intensityFactor),
         locationName: a.locationName ?? null,
         hrZone1Floor: zones.hrZone1Floor,
         hrZone2Floor: zones.hrZone2Floor,
