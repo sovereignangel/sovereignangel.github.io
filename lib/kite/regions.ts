@@ -178,6 +178,23 @@ const NYC_SPOT_LIST: KiteSpot[] = [
     favorWhen: { minKn: 14, bonus: 2 },
   },
   {
+    slug: 'tobay',
+    name: 'Tobay Beach',
+    area: 'Long Island · Atlantic side',
+    // Just off the beach, so the forecast reads open ocean.
+    lat: 40.605,
+    lon: -73.43,
+    water: 'ocean',
+    // South-facing ocean beach on the barrier island, between Jones Beach and
+    // Gilgo. N winds blow off the island straight out to sea.
+    offshoreSector: [300, 60],
+    onshoreSector: [100, 260],
+    idealWind: 'wind travels north (S/SW/SE onshore)',
+    tagline: 'open ocean, town beach',
+    note: 'Town of Oyster Bay beach on Ocean Parkway, about an hour from the city and ten minutes past Jones Beach. Real ocean: shore break and waves, not flat water. A Town beach rather than a State Park, so it is not under the Jones Beach and Robert Moses ban, but check the Town rules and lifeguard season before you launch. N/NW is straight offshore into open Atlantic: never.',
+    favorWhen: { minKn: 16, bonus: 1 },
+  },
+  {
     slug: 'sandy-hook',
     name: 'Sandy Hook',
     area: 'New Jersey · Sandy Hook Bay',
