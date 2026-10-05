@@ -4,10 +4,12 @@ import { useEffect, useMemo, useState } from 'react'
 import { useAuth } from '@/components/auth/AuthProvider'
 import { getGarminWindow, getGarminRollups } from '@/lib/firestore'
 import type { GarminMetrics, GarminActivity } from '@/lib/types'
-import { PLAN, RACE, RACE_NYC, GOALS, BASELINE, goalSplits, goalDisplay, daysToRace, todayLocal,
+import { RACE, RACE_NYC, GOALS, BASELINE, goalSplits, goalDisplay, daysToRace, todayLocal,
   priorRaceAtDistance, priorRaceDisplay, priorRaceVsGoal, KM_PER_MILE,
-  eliteFor,
-  type PlanDay, type Sport } from '@/lib/ironman/plan'
+  eliteFor, planRange, planPosition,
+  type PlanDay, type Sport, type TargetRace } from '@/lib/ironman/plan'
+import { addDays } from '@/lib/ironman/cycle'
+import { useIronmanTarget } from '@/components/ironman/useIronmanTarget'
 import { computeRebalance, type SportNeed } from '@/lib/ironman/rebalance'
 import { fmtPace as fmtRacePace } from '@/lib/ironman/pace'
 import { computeRaceForecast, type DisciplineForecast } from '@/lib/ironman/forecast'
@@ -208,12 +210,9 @@ function TodayPanel({ today, readiness, dayStatus, bare }: { today: string; read
   const adaptation = useMemo(() => (day ? adaptDay(day, readiness) : null), [day, readiness])
 
   if (!day || !adaptation) {
-    const past = today > RACE_NYC.date
     return (
       <Shell bare={bare} title="Today">
-        <div className="text-[11px] text-iron-muted py-4">
-          {past ? 'Both races are behind you. Recover well.' : 'No session planned for today.'}
-        </div>
+        <div className="text-[11px] text-iron-muted py-4">No session planned for today.</div>
       </Shell>
     )
   }
@@ -272,24 +271,23 @@ function TodayPanel({ today, readiness, dayStatus, bare }: { today: string; read
 
 function PlanCalendar({ days, today, bare }: { days: DayStatus[]; today: string; bare?: boolean }) {
   const [expanded, setExpanded] = useState<string | null>(null)
+  // Consecutive runs, not a map by name: the rolling plan repeats Base, Build,
+  // Load and Absorb every block, and each repeat is its own stretch.
   const phases = useMemo(() => {
-    const order: string[] = []
-    const map = new Map<string, DayStatus[]>()
+    const runs: { phase: string; days: DayStatus[] }[] = []
     days.forEach((d) => {
-      if (!map.has(d.day.phase)) {
-        map.set(d.day.phase, [])
-        order.push(d.day.phase)
-      }
-      map.get(d.day.phase)!.push(d)
+      const last = runs[runs.length - 1]
+      if (last && last.phase === d.day.phase) last.days.push(d)
+      else runs.push({ phase: d.day.phase, days: [d] })
     })
-    return order.map((phase) => ({ phase, days: map.get(phase)! }))
+    return runs
   }, [days])
 
   return (
-    <Shell bare={bare} title="The Plan — Two Start Lines">
+    <Shell bare={bare} title="The Plan">
       <div className="space-y-4">
         {phases.map(({ phase, days: phaseDays }) => (
-          <div key={phase}>
+          <div key={phaseDays[0].day.date}>
             <div className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-iron-burgundy mb-1.5">
               {phase}
               <span className="font-mono text-[9px] text-iron-muted normal-case tracking-normal ml-2">
@@ -394,6 +392,99 @@ function PlanCalendar({ days, today, bare }: { days: DayStatus[]; today: string;
   )
 }
 
+// ── Next race ─────────────────────────────────────────────────────────────
+
+const BLOCK_NOTE: Record<string, string> = {
+  Recover: 'Post-race recovery. Short, easy, no intensity until the first block starts.',
+  Base: 'Week 1 of 4 — aerobic volume, tempo instead of race effort.',
+  Build: 'Week 2 of 4 — race-effort intervals come in.',
+  Load: 'Week 3 of 4 — the biggest week: longest sessions, brick run, race-pace finish.',
+  Absorb: 'Week 4 of 4 — volume drops 40% so the last three weeks turn into fitness.',
+  Peak: 'Three weeks out — the last big week before the taper.',
+  Taper: 'Two weeks out — volume down, intensity kept.',
+  'Race week': 'Openers only. Sleep, food and logistics are the training now.',
+}
+
+/**
+ * Picks the day of the next race. Until one is set the plan keeps cycling
+ * blocks; once it is, the three weeks before it become Peak, Taper and Race
+ * week, and the day after it the cycle starts over.
+ */
+function NextRaceCard({ today, target, onSave }: {
+  today: string; target: TargetRace | null; onSave: (t: TargetRace | null) => Promise<void>
+}) {
+  const [date, setDate] = useState(target?.date ?? '')
+  const [name, setName] = useState(target?.name ?? '')
+  const [saving, setSaving] = useState(false)
+  const [err, setErr] = useState<string | null>(null)
+  useEffect(() => {
+    setDate(target?.date ?? '')
+    setName(target?.name ?? '')
+  }, [target])
+
+  const pos = planPosition(today, target)
+  const todayPhase = planRange(today, today, target)[0]?.phase
+  const out = target ? daysToRace(today, target.date) : null
+  const dirty = date !== (target?.date ?? '') || name !== (target?.name ?? '')
+  const tooSoon = date !== '' && daysToRace(today, date) < 21
+
+  const submit = async (next: TargetRace | null) => {
+    setSaving(true)
+    setErr(null)
+    try {
+      await onSave(next)
+    } catch (e) {
+      setErr((e as Error).message)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const input = 'font-mono text-[11px] text-iron-ink bg-iron-card border border-iron-rule rounded-md px-2 py-1 focus:outline-none focus:border-iron-burgundy'
+
+  return (
+    <FieldCard
+      label="Next race"
+      meta={target && out != null && out >= 0 ? `T−${out} · ${fmtDate(target.date)}` : 'not picked'}
+    >
+      <div className="flex flex-wrap items-center gap-2 mb-2">
+        <input type="date" value={date} min={addDays(today, 1)} onChange={(e) => setDate(e.target.value)} className={input} aria-label="Race date" />
+        <input type="text" value={name} placeholder="Race name (optional)" onChange={(e) => setName(e.target.value)} className={`${input} flex-1 min-w-[160px]`} aria-label="Race name" />
+        <button
+          type="button"
+          disabled={!dirty || !date || saving}
+          onClick={() => submit({ date, name: name.trim() || undefined })}
+          className="font-mono text-[10px] uppercase px-2.5 py-1 rounded-md border bg-iron-burgundy text-iron-card border-iron-burgundy disabled:opacity-40"
+        >
+          {saving ? 'Saving' : 'Set race'}
+        </button>
+        {target && (
+          <button
+            type="button"
+            disabled={saving}
+            onClick={() => submit(null)}
+            className="font-mono text-[10px] uppercase px-2.5 py-1 rounded-md border bg-transparent text-iron-muted border-iron-rule hover:border-iron-faint"
+          >
+            Clear
+          </button>
+        )}
+      </div>
+      {tooSoon && dirty && (
+        <Sub>Less than three weeks out — the plan goes straight into taper and skips the peak week.</Sub>
+      )}
+      {err && <Sub>Could not save: {err}</Sub>}
+      <Sub>
+        {todayPhase ? `${todayPhase}${pos?.block ? ` · block ${pos.block}` : ''} — ${BLOCK_NOTE[todayPhase] ?? ''}` : ''}
+      </Sub>
+      <Sub>
+        {target
+          ? 'Blocks cycle Base → Build → Load → Absorb until three weeks out, then Peak → Taper → Race week. After the race: two weeks of recovery and the cycle starts again.'
+          : 'No race yet, so the plan cycles four-week blocks — Base → Build → Load → Absorb — each 5% bigger than the last. Pick a date and the three weeks before it become Peak → Taper → Race week.'}
+      </Sub>
+    </FieldCard>
+  )
+}
+
 // ── Main ──────────────────────────────────────────────────────────────────
 
 const SPORTS3 = ['swim', 'bike', 'run'] as const
@@ -469,12 +560,15 @@ function gap(sec: number): { text: string; color: string } {
   }
 }
 
-function RaceSheet({ activities, metrics, today }: {
-  activities: GarminActivity[]; metrics: GarminMetrics[]; today: string
+function RaceSheet({ activities, metrics, today, target }: {
+  activities: GarminActivity[]; metrics: GarminMetrics[]; today: string; target: TargetRace | null
 }) {
-  const forecast = useMemo(() => computeRaceForecast(activities, metrics, today), [activities, metrics, today])
+  const forecast = useMemo(
+    () => computeRaceForecast(activities, metrics, today, { raceDate: target?.date }),
+    [activities, metrics, today, target]
+  )
   const rebalance = useMemo(() => computeRebalance(activities, metrics, today, 'lori'), [activities, metrics, today])
-  const progress = useMemo(() => computeProgress(activities, today), [activities, today])
+  const progress = useMemo(() => computeProgress(activities, today, target), [activities, today, target])
   const targets = useMemo(() => raceTargets(forecast, GOALS), [forecast])
   const profile = useMemo(() => paceProfile(activities, today), [activities, today])
   const splits = useMemo(() => goalSplits(), [])
@@ -709,16 +803,26 @@ export default function IronmanDashboard() {
   }, [user])
 
   const today = todayLocal()
+  const { target, save: saveTarget } = useIronmanTarget()
   const countdown1 = daysToRace(today, RACE.date)
   const countdown2 = daysToRace(today, RACE_NYC.date)
+  const countdownNext = target ? daysToRace(today, target.date) : null
 
   const readiness = useMemo(
     () => computeReadiness(metrics ?? [], activities, today),
     [metrics, activities, today]
   )
+  // The plan has no end date now, so the calendar is a window: the past week
+  // for what was done, four weeks ahead, stretched to the race if it is close.
+  const planWindow = useMemo(() => {
+    const from = addDays(today, -7)
+    let to = addDays(today, 28)
+    if (target && target.date > to && daysToRace(today, target.date) <= 84) to = target.date
+    return { from, to }
+  }, [today, target])
   const dayStatuses = useMemo(
-    () => PLAN.map((d: PlanDay) => matchDay(d, activities, today)),
-    [activities, today]
+    () => planRange(planWindow.from, planWindow.to, target).map((d: PlanDay) => matchDay(d, activities, today)),
+    [activities, today, planWindow, target]
   )
   const todayStatus = dayStatuses.find((d) => d.day.date === today) ?? null
 
@@ -740,10 +844,19 @@ export default function IronmanDashboard() {
       <Ticker
         items={[
           ...(countdown1 >= 0 ? [{ label: 'Belgrade', value: `T−${countdown1} · ${fmtDate(RACE.date)}` }] : []),
+          ...(countdown2 >= 0
+            ? [{
+                label: 'New York',
+                value: `T−${countdown2} · ${fmtDate(RACE_NYC.date)}`,
+                color: countdown2 <= 21 ? 'var(--lordas-warn)' : undefined,
+              }]
+            : []),
           {
-            label: 'New York',
-            value: `T−${countdown2 >= 0 ? countdown2 : 0} · ${fmtDate(RACE_NYC.date)}`,
-            color: countdown2 <= 21 ? 'var(--lordas-warn)' : undefined,
+            label: target?.name || 'Next race',
+            value: target && countdownNext != null && countdownNext >= 0
+              ? `T−${countdownNext} · ${fmtDate(target.date)}`
+              : 'not picked',
+            color: countdownNext != null && countdownNext >= 0 && countdownNext <= 21 ? 'var(--lordas-warn)' : undefined,
           },
           { label: 'Distance', value: `${RACE.swimKm} / ${RACE.bikeKm} / ${RACE.runKm} km` },
           { label: 'Garmin', value: feedLabel },
@@ -754,7 +867,7 @@ export default function IronmanDashboard() {
       <Seam cols={3}>
         <FieldCard span={2} label={`Today · ${fmtDate(today)}`} meta={todayStatus?.day.phase} tone="accent">
           <TodayPanel today={today} readiness={readiness} dayStatus={todayStatus} bare />
-          <Disclosure summary="Full plan" meta={`${PLAN.length} days · Belgrade to New York`}>
+          <Disclosure summary="Full plan" meta={`${fmtDate(planWindow.from)} – ${fmtDate(planWindow.to)}`}>
             <div style={{ maxHeight: 300, overflowY: 'auto' }}>
               <PlanCalendar days={dayStatuses} today={today} bare />
             </div>
@@ -805,7 +918,11 @@ export default function IronmanDashboard() {
       </Seam>
 
       <Seam cols={1}>
-        <RaceSheet activities={activities} metrics={metrics ?? []} today={today} />
+        <NextRaceCard today={today} target={target} onSave={saveTarget} />
+      </Seam>
+
+      <Seam cols={1}>
+        <RaceSheet activities={activities} metrics={metrics ?? []} today={today} target={target} />
       </Seam>
     </div>
   )

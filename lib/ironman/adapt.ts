@@ -8,7 +8,7 @@
  */
 
 import type { GarminMetrics, GarminActivity } from '@/lib/types'
-import { PLAN, RACE, type PlanDay, type PlannedSession, type Sport } from './plan'
+import { RACE, planRange, blockStart, isRaceDay, type PlanDay, type PlannedSession, type Sport, type TargetRace } from './plan'
 
 // ── Sport matching ────────────────────────────────────────────────────────
 
@@ -268,10 +268,9 @@ export interface Adaptation {
 }
 
 export function adaptDay(day: PlanDay, readiness: Readiness): Adaptation {
-  const isRaceDay = day.phase === 'Race 1' || day.phase === 'Race 2'
   const isRest = day.sessions.every((x) => x.sport === 'rest')
 
-  if (isRaceDay) {
+  if (isRaceDay(day)) {
     return {
       level: 'as-planned',
       headline: 'Race day — execute the plan',
@@ -362,15 +361,17 @@ export interface SportProgress {
   raceKm: number
 }
 
-export function computeProgress(activities: GarminActivity[], today: string): SportProgress[] {
-  const start = PLAN[0].date
+/** Volume over the current block — the printed plan, or the rolling block `today` sits in */
+export function computeProgress(activities: GarminActivity[], today: string, target?: TargetRace | null): SportProgress[] {
+  const start = blockStart(today, target)
+  const planned = planRange(start, today, target)
   const inBlock = activities.filter((a) => a.date != null && a.date >= start && a.date <= today)
 
   return (['swim', 'bike', 'run'] as const).map((sport) => {
     const acts = inBlock.filter((a) => sportOfActivity(a.type) === sport)
     const actualKm = Math.round(acts.reduce((s2, a) => s2 + (a.distanceMeters ?? 0), 0) / 100) / 10
     const longestKm = Math.round(Math.max(0, ...acts.map((a) => a.distanceMeters ?? 0)) / 100) / 10
-    const plannedKm = PLAN.filter((d) => d.date <= today)
+    const plannedKm = planned
       .flatMap((d) => d.sessions)
       .filter((x) => x.sport === sport || (x.sport === 'brick' && sport === 'bike'))
       .reduce((s2, x) => s2 + (x.distanceKm ?? 0), 0)

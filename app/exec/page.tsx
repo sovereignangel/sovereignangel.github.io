@@ -3,6 +3,7 @@ import { AuthProvider } from '@/components/auth/AuthProvider'
 import { currentRegion } from '@/lib/kite/regions'
 import { fetchSpots, weekSessions, weekPossibles, precipLabel, type SpotForecast } from '@/lib/kite/lithuania-spots'
 import { getPlanDay, todayLocal, type PlanDay, type Sport } from '@/lib/ironman/plan'
+import { getIronmanTargetAdmin } from '@/lib/ironman/target-admin'
 import {
   addDaysISO,
   buildExecWindDay,
@@ -493,8 +494,9 @@ export default async function ExecPage() {
   // and a second four-spot row costs a line every day to settle a question
   // that is not yet live.
   const statusToday = spotStatuses(today, forecasts)
-  const planToday = getPlanDay(today)
-  const planTomorrow = getPlanDay(tomorrow)
+  const raceTarget = await getIronmanTargetAdmin(process.env.TRANSCRIPT_WEBHOOK_UID || process.env.FIREBASE_UID)
+  const planToday = getPlanDay(today, raceTarget)
+  const planTomorrow = getPlanDay(tomorrow, raceTarget)
   const slotToday = planToday ? ironmanSlot(planToday, windToday.blocks) : null
   const slotTomorrow = planTomorrow ? ironmanSlot(planTomorrow, windTomorrow.blocks) : null
 

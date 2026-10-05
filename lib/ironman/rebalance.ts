@@ -28,7 +28,7 @@
 
 import type { GarminActivity } from '@/lib/types'
 import {
-  PLAN, RACE, GOALS, STRENGTHS, getPlanDay, goalSplits,
+  RACE, GOALS, STRENGTHS, getPlanDay, planRange, isRaceDay, goalSplits,
   type AthleteId, type PlanDay, type PlannedSession, type RaceGoals,
   type Sport3, type Standing,
 } from './plan'
@@ -167,7 +167,7 @@ function qualifying(activities: GarminActivity[], sport: Sport3, from: string, t
 
 /** Planned minutes for a sport over a date range — a brick counts as its bike leg */
 function plannedMinutes(sport: Sport3, from: string, to: string): number {
-  return PLAN.filter((d) => d.date >= from && d.date <= to)
+  return planRange(from, to)
     .flatMap((d) => d.sessions)
     .filter((x) => x.sport === sport || (x.sport === 'brick' && sport === 'bike'))
     .reduce((sum, x) => sum + x.durationMin, 0)
@@ -283,8 +283,8 @@ function movesFor(
 
   // Today counts. A recalibration that only ever edits tomorrow reverts to the
   // printed session the morning it was supposed to change anything.
-  for (const day of PLAN.filter((d) => d.date >= asOf && d.date <= horizon)) {
-    if (day.phase === 'Race 1' || day.phase === 'Race 2') continue
+  for (const day of planRange(asOf, horizon)) {
+    if (isRaceDay(day)) continue
     let changed = false
     const after = day.sessions.map((session) => {
       if (session.durationMin < 150) return session
@@ -383,7 +383,7 @@ function movesFor(
 /** Planned sessions from the last few days that never happened, and what did */
 function displacedNotes(activities: GarminActivity[], asOf: string): string[] {
   const notes: string[] = []
-  for (const day of PLAN.filter((d) => d.date < asOf && d.date >= shiftDate(asOf, -3))) {
+  for (const day of planRange(shiftDate(asOf, -3), shiftDate(asOf, -1))) {
     const status = matchDay(day, activities, asOf)
     const missed = status.sessions.filter((s) => s.status === 'missed' && s.session.sport !== 'rest')
     if (missed.length === 0) continue

@@ -6,7 +6,8 @@ import SiteFooter from '@/components/SiteFooter'
 import { CourseDivider, SportIcon } from '@/components/ironman/IronmanIcons'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { PLAN, RACE_NYC, daysToRace, todayLocal } from '@/lib/ironman/plan'
+import { getPlanDay, daysToRace, todayLocal, type TargetRace } from '@/lib/ironman/plan'
+import { useIronmanTarget } from '@/components/ironman/useIronmanTarget'
 
 /**
  * Two questions, two tabs.
@@ -54,10 +55,8 @@ function IronmanTabs() {
  * number below it means, and it belongs beside the title, not buried in a
  * card.
  */
-function currentPhase(): string | null {
-  const today = todayLocal()
-  const day = PLAN.find(d => d.date === today) ?? [...PLAN].reverse().find(d => d.date <= today)
-  return day?.phase ?? null
+function currentPhase(target: TargetRace | null): string | null {
+  return getPlanDay(todayLocal(), target)?.phase ?? null
 }
 
 // Blush into the same warm sand the kite planner lands on, so the two
@@ -66,6 +65,7 @@ const IRON_BACKDROP = 'linear-gradient(180deg, #f4e7e5 0%, #f2ecdf 320px)'
 
 function IronmanLayoutInner({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth()
+  const { target } = useIronmanTarget()
 
   if (loading) {
     return (
@@ -86,8 +86,8 @@ function IronmanLayoutInner({ children }: { children: React.ReactNode }) {
     return <AuthGate />
   }
 
-  const phase = currentPhase()
-  const toNyc = daysToRace(todayLocal(), RACE_NYC.date)
+  const phase = currentPhase(target)
+  const toRace = target ? daysToRace(todayLocal(), target.date) : -1
 
   return (
     <div className="min-h-screen" style={{ background: IRON_BACKDROP }}>
@@ -99,17 +99,17 @@ function IronmanLayoutInner({ children }: { children: React.ReactNode }) {
           {phase && (
             <span
               className="hidden sm:flex items-center gap-1 font-mono text-[9px] uppercase tracking-wide text-iron-burgundy bg-iron-burgundy-bg border border-iron-burgundy/25 rounded-full px-1.5 py-0.5 shrink-0"
-              title={`Current block of the plan · New York is T−${toNyc} days away`}
+              title={toRace >= 0 ? `Current block of the plan · ${target?.name || 'next race'} is T−${toRace} days away` : 'Current block of the plan · no race picked yet'}
             >
               {phase}
-              {toNyc >= 0 && <span className="text-iron-muted">&middot; T&minus;{toNyc}</span>}
+              {toRace >= 0 && <span className="text-iron-muted">&middot; T&minus;{toRace}</span>}
             </span>
           )}
           <span className="hidden md:block">
             <CourseDivider />
           </span>
           <span className="hidden lg:inline text-[10px] text-iron-muted">
-            Belgrade Sep 13 &middot; peak in New York Sep 26 &middot; the plan adapts to Garmin daily
+            Belgrade Sep 13 &middot; New York Sep 26 &middot; rolling blocks to the next start &middot; the plan adapts to Garmin daily
           </span>
           <span className="ml-auto flex items-center gap-2 shrink-0">
             {(['swim', 'bike', 'run'] as const).map(sport => (

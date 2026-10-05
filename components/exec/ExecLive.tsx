@@ -16,6 +16,7 @@ import { useGarminData } from './useGarminData'
 import { useExecDate } from './useExecDate'
 import { getKiteSessions, getGarminKiteSessions, getKiteProgress } from '@/lib/firestore/kite-sessions'
 import { getPlanDay, type Sport } from '@/lib/ironman/plan'
+import { useIronmanTarget } from '@/components/ironman/useIronmanTarget'
 import { SportIcon } from '@/components/ironman/IronmanIcons'
 import { computeRaceForecast, paceForProbability, type DisciplineForecast } from '@/lib/ironman/forecast'
 import { computeReadiness, adaptDay } from '@/lib/ironman/adapt'
@@ -89,17 +90,18 @@ const SPORT_COLOR: Record<string, string> = { swim: '#2d5f6b', bike: '#8f2d33', 
 export function ExecIronmanLive({ today: serverToday }: { today: string }) {
   const today = useExecDate(serverToday)
   const { user, metrics, activities } = useGarminData()
+  const { target } = useIronmanTarget()
 
   const forecast = useMemo(
-    () => (metrics && activities ? computeRaceForecast(activities, metrics, today) : null),
-    [metrics, activities, today]
+    () => (metrics && activities ? computeRaceForecast(activities, metrics, today, { raceDate: target?.date }) : null),
+    [metrics, activities, today, target]
   )
   const adaptation = useMemo(() => {
     if (!metrics || !activities) return null
-    const day = getPlanDay(today)
+    const day = getPlanDay(today, target)
     if (!day) return null
     return adaptDay(day, computeReadiness(metrics, activities, today))
-  }, [metrics, activities, today])
+  }, [metrics, activities, today, target])
 
   if (!user) return <SignInInline tone="iron" label="Goal odds and readiness need your Garmin data." />
   if (!forecast) return <Pulse h="h-24" tone="iron" />

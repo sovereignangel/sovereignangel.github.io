@@ -1,4 +1,5 @@
 import { HOME_TIMEZONE } from '@/lib/kite/regions'
+import { cycleDay, cyclePosition, addDays, type CyclePosition } from './cycle'
 /**
  * Ironman Training Plan — race config + day-by-day base plan.
  *
@@ -26,7 +27,10 @@ export interface PlannedSession {
 
 export interface PlanDay {
   date: string // YYYY-MM-DD
-  phase: 'Build 1' | 'Build 2' | 'Peak' | 'Taper' | 'Race 1' | 'Recover' | 'Sharpen' | 'Taper 2' | 'Race 2'
+  phase:
+    | 'Build 1' | 'Build 2' | 'Peak' | 'Taper' | 'Race 1' | 'Recover' | 'Sharpen' | 'Taper 2' | 'Race 2'
+    // the rolling plan after New York — see lib/ironman/cycle.ts
+    | 'Base' | 'Build' | 'Load' | 'Absorb' | 'Race week' | 'Race'
   focus: string
   sessions: PlannedSession[]
 }
@@ -55,6 +59,17 @@ export const RACE_NYC = {
 }
 
 export const RACES = [RACE, RACE_NYC] as const
+
+/**
+ * The next race, once it is picked. Stored in Firestore
+ * (users/{uid}/ironman/target) and set from the training page; until then the
+ * plan cycles Base → Build → Load → Absorb blocks with no end date. Assumed
+ * to be a 70.3.
+ */
+export interface TargetRace {
+  date: string // YYYY-MM-DD
+  name?: string
+}
 
 /** The next race still ahead of `today` (falls back to the last one) */
 export function nextRace(today: string) {
@@ -722,8 +737,43 @@ export const PLAN: PlanDay[] = [
   },
 ]
 
-export function getPlanDay(date: string): PlanDay | undefined {
-  return PLAN.find((d) => d.date === date)
+const PLAN_END = PLAN[PLAN.length - 1].date
+const RACE_DATES = RACES.map((r) => r.date)
+
+/**
+ * The plan for any date: the printed Belgrade → New York block through
+ * Sep 26, the rolling cycle after it. Pass the picked target race so the
+ * weeks before it bend into Peak / Taper / Race week.
+ */
+export function getPlanDay(date: string, target?: TargetRace | null): PlanDay | undefined {
+  if (date <= PLAN_END) return PLAN.find((d) => d.date === date)
+  return cycleDay(date, RACE_DATES, target ?? null)
+}
+
+/** Every plan day from `from` to `to`, inclusive */
+export function planRange(from: string, to: string, target?: TargetRace | null): PlanDay[] {
+  const days: PlanDay[] = []
+  for (let d = from; d <= to; d = addDays(d, 1)) {
+    const day = getPlanDay(d, target)
+    if (day) days.push(day)
+  }
+  return days
+}
+
+/** Where `date` sits in the rolling cycle; null while the printed plan is running */
+export function planPosition(date: string, target?: TargetRace | null): CyclePosition | null {
+  if (date <= PLAN_END) return null
+  const anchors = target && target.date < date ? [...RACE_DATES, target.date] : RACE_DATES
+  return cyclePosition(date, anchors)
+}
+
+/** First day of the block `date` falls in — the window block volume is counted over */
+export function blockStart(date: string, target?: TargetRace | null): string {
+  return planPosition(date, target)?.blockStart ?? PLAN[0].date
+}
+
+export function isRaceDay(day: PlanDay): boolean {
+  return day.phase === 'Race 1' || day.phase === 'Race 2' || day.phase === 'Race'
 }
 
 /** Days from `today` to a race date — defaults to the next race still ahead */

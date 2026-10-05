@@ -71,6 +71,8 @@ export interface DisciplineForecast {
 /** Whose goals to score the projection against. */
 export interface ForecastOptions {
   goals?: RaceGoals
+  /** Date the projection targets — the picked next race; New York otherwise */
+  raceDate?: string
 }
 
 export interface RaceForecast {
@@ -191,7 +193,7 @@ function forecastDiscipline(
   const wMean = top.reduce((s, x) => s + x.pace * x.weight, 0) / wSum
 
   // Weighted linear trend of pace vs time (x = -ageDays, so slope < 0 = improving)
-  const daysToRace = Math.max(0, daysBetween(asOf, TARGET_DATE))
+  const daysToRace = Math.max(0, daysBetween(asOf, opts.raceDate ?? TARGET_DATE))
   const dateSpread = Math.max(...top.map((x) => x.ageDays)) - Math.min(...top.map((x) => x.ageDays))
   let projected = wMean
   if (top.length >= 4 && dateSpread >= 7) {

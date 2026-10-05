@@ -13,7 +13,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { adminDb } from '@/lib/firebase-admin'
 import { sendToInbox } from '@/lib/inbox/client'
-import { getPlanDay, daysToRace, todayLocal, nextRace } from '@/lib/ironman/plan'
+import { getPlanDay, daysToRace, todayLocal, planPosition } from '@/lib/ironman/plan'
+import { getIronmanTargetAdmin } from '@/lib/ironman/target-admin'
 import { computeReadiness, adaptDay, matchDay } from '@/lib/ironman/adapt'
 import type { GarminMetrics, GarminActivity } from '@/lib/types'
 
@@ -33,26 +34,30 @@ export async function GET(request: NextRequest) {
 
   try {
     const today = todayLocal()
-    const countdown = daysToRace(today)
 
-    if (countdown < 0) {
-      return NextResponse.json({ success: true, skipped: 'race is over' })
-    }
-
-    const [metricsSnap, activitiesSnap] = await Promise.all([
+    // The picked next race, if any — same doc the training page writes.
+    const [target, metricsSnap, activitiesSnap] = await Promise.all([
+      getIronmanTargetAdmin(uid),
       adminDb.collection('users').doc(uid).collection('garmin_metrics')
         .orderBy('date', 'desc').limit(35).get(),
       adminDb.collection('users').doc(uid).collection('garmin_activities')
         .orderBy('date', 'desc').limit(60).get(),
     ])
+    const countdown = target ? daysToRace(today, target.date) : null
     const metrics = metricsSnap.docs.map((d) => d.data() as GarminMetrics)
     const activities = activitiesSnap.docs.map((d) => d.data() as GarminActivity)
 
     const readiness = computeReadiness(metrics, activities, today)
-    const day = getPlanDay(today)
+    const day = getPlanDay(today, target)
+    const pos = planPosition(today, target)
 
     const lines: string[] = []
-    lines.push(`IRONMAN — ${countdown} day${countdown === 1 ? '' : 's'} to ${nextRace(today).name}`)
+    if (target && countdown != null && countdown >= 0) {
+      lines.push(`IRONMAN — ${countdown} day${countdown === 1 ? '' : 's'} to ${target.name || 'the next 70.3'}`)
+    } else {
+      const where = pos?.block ? `block ${pos.block}, week ${pos.week}/4` : day?.phase ?? 'rolling plan'
+      lines.push(`IRONMAN — ${where} · no race picked yet`)
+    }
     lines.push('')
 
     if (readiness.score !== null) {
@@ -86,7 +91,7 @@ export async function GET(request: NextRequest) {
       const yesterday = new Date(today + 'T00:00:00Z')
       yesterday.setUTCDate(yesterday.getUTCDate() - 1)
       const yDate = yesterday.toISOString().slice(0, 10)
-      const yPlan = getPlanDay(yDate)
+      const yPlan = getPlanDay(yDate, target)
       if (yPlan) {
         const yStatus = matchDay(yPlan, activities, today)
         const done = yStatus.sessions.filter((m) => m.status === 'done' || m.status === 'partial')
