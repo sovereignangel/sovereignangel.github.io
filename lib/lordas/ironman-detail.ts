@@ -21,9 +21,10 @@ import { computeRebalance, type Rebalance } from '@/lib/ironman/rebalance'
 import { raceTargets, type RaceTarget } from '@/lib/ironman/pace'
 import {
   PLAN, RACE, RACE_NYC, STRENGTHS,
-  daysToRace, goalsFor, goalSplits, goalDisplay, todayLocal,
-  type AthleteId, type PlannedSession, type RaceGoals, type Sport3, type Standing,
+  daysToRace, goalsFor, goalSplits, goalDisplay, todayLocal, planRange,
+  type AthleteId, type PlanDay, type TargetRace, type PlannedSession, type RaceGoals, type Sport3, type Standing,
 } from '@/lib/ironman/plan'
+import { getIronmanTargetAdmin } from '@/lib/ironman/target-admin'
 import { loadBothAthletes, type AthleteData } from './athletes'
 import { buildPairDay, paceProfile, type PairDay, type PaceProfile } from './pair-training'
 import type { GarminActivity, LordasPerson } from '@/lib/types'
@@ -221,14 +222,14 @@ function swimTimingOf(activities: GarminActivity[], today: string): SwimTiming |
   }
 }
 
-function detailFor(data: AthleteData, today: string, partner?: AthleteData): AthleteDetail {
+function detailFor(data: AthleteData, today: string, target: TargetRace | null, partner?: AthleteData): AthleteDetail {
   const person = data.athlete.id as AthleteId
   const goals = goalsFor(person)
   const activities = dedupeActivities(data.activities)
   const readiness = computeReadiness(data.metrics, activities, today)
   const profile = paceProfile(activities, today)
-  const progress = computeProgress(activities, today)
-  const opts = { goals }
+  const progress = computeProgress(activities, today, target)
+  const opts = { goals, raceDate: target?.date }
   const forecast = computeRaceForecast(activities, data.metrics, today, opts)
   const targets = raceTargets(forecast, goals)
   const rebalance = computeRebalance(activities, data.metrics, today, person, opts)
@@ -237,7 +238,7 @@ function detailFor(data: AthleteData, today: string, partner?: AthleteData): Ath
   const weekMap = new Map<string, ComplianceWeek>()
   let extras = 0
 
-  for (const day of PLAN.filter((d) => d.date <= today)) {
+  for (const day of planRange(PLAN[0].date, today, target)) {
     const status = matchDay(day, activities, today)
     extras += status.extras.length
     const wk = mondayOf(day.date)
@@ -283,7 +284,10 @@ function detailFor(data: AthleteData, today: string, partner?: AthleteData): Ath
 }
 
 export async function buildPairIronmanDetail(date: string = todayLocal()): Promise<PairIronmanDetail> {
-  const athletes = await loadBothAthletes()
+  const [athletes, target] = await Promise.all([
+    loadBothAthletes(),
+    getIronmanTargetAdmin(process.env.FIREBASE_UID),
+  ])
   const refreshes = athletes.map((a) => a.lastRefresh).filter(Boolean) as string[]
   const next = shiftDate(date, 1)
 
@@ -292,16 +296,23 @@ export async function buildPairIronmanDetail(date: string = todayLocal()): Promi
   // doc and yesterday-relative load, and the recalibration looks at the five
   // days before the day it is editing — so a 100km ride today is already in
   // both by the time it asks about tomorrow.
-  const today = buildPairDay(date, athletes)
-  const tomorrow = buildPairDay(next, athletes)
-  const details = athletes.map((a, i) => detailFor(a, date, athletes[1 - i]))
+  const today = buildPairDay(date, athletes, target)
+  const tomorrow = buildPairDay(next, athletes, target)
+  const details = athletes.map((a, i) => detailFor(a, date, target, athletes[1 - i]))
+
+  // The printed block ended in New York; past it the plan rolls on, so the
+  // table runs from the block's first day to four weeks ahead — stretched to
+  // the picked race when it is close, the same window the training page uses.
+  let horizon = shiftDate(date, 28)
+  if (target && target.date > horizon && daysToRace(date, target.date) <= 84) horizon = target.date
+  const planDays: PlanDay[] = planRange(PLAN[0].date, horizon, target)
 
   // Statuses are matched per athlete against the same printed day, so a row
   // shows who did it and who did not without re-deriving the plan twice.
   const matched = athletes.map((a) => ({
     person: a.athlete.id as string,
     days: new Map(
-      PLAN.map((d) => [
+      planDays.map((d) => [
         d.date,
         matchDay(d, dedupeActivities(a.activities), date),
       ])
@@ -339,7 +350,7 @@ export async function buildPairIronmanDetail(date: string = todayLocal()): Promi
     overrides.set(d.person, own)
   }
 
-  const plan: PlanDayRow[] = PLAN.map((d) => {
+  const plan: PlanDayRow[] = planDays.map((d) => {
     const printed = d.sessions.map(sessionRow)
     return {
       date: d.date,

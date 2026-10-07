@@ -22,7 +22,7 @@ import { fmtPace, raceTargets, zonePaceMinKm, type RaceTarget } from '@/lib/iron
 import {
   STRENGTHS, getPlanDay,
   goalsFor,
-  type AthleteId, type PlanDay, type PlannedSession, type RaceGoals,
+  type AthleteId, type PlanDay, type PlannedSession, type RaceGoals, type TargetRace,
   type Sport, type Sport3, type Zone,
 } from '@/lib/ironman/plan'
 import type { GarminActivity, LordasPerson } from '@/lib/types'
@@ -283,12 +283,12 @@ function paceDivergence(
   return `${head} Same lane and same set, different send-offs — nobody should be waiting on the wall.`
 }
 
-export function buildPairDay(date: string, athletes: AthleteData[]): PairDay {
+export function buildPairDay(date: string, athletes: AthleteData[], target?: TargetRace | null): PairDay {
   const prescriptions = athletes.map((a) => prescribe(a, date))
   // The printed plan is the shared backbone. Each athlete's card may have been
   // recalibrated away from it in a different direction, so the pair view shows
   // what was printed and names the divergence rather than picking a winner.
-  const printed = getPlanDay(date)
+  const printed = getPlanDay(date, target)
   const working = prescriptions.filter((p) => p.totalMin > 0)
   const restDay =
     prescriptions.length > 0
