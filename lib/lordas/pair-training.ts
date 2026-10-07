@@ -165,7 +165,7 @@ function prescribe(data: AthleteData, date: string): AthletePrescription {
   // The printed plan first, then anything the rebalance moved, then readiness.
   // Order matters: readiness should shrink the session you actually need, not
   // the one the calendar happened to print.
-  const day: PlanDay | undefined = planDayWith(date, rebalance.moves)
+  const day: PlanDay | undefined = planDayWith(date, rebalance.moves, person)
 
   const base = {
     person: data.athlete.id,
@@ -194,7 +194,7 @@ function prescribe(data: AthleteData, date: string): AthletePrescription {
   }
 
   const adaptation = adaptDay(day, readiness)
-  const printed = new Map((planDayWith(date, [])?.sessions ?? []).map((s) => [s.title, s]))
+  const printed = new Map((planDayWith(date, [], person)?.sessions ?? []).map((s) => [s.title, s]))
   const sessions: PrescribedSession[] = adaptation.sessions.map((s) => {
     const original = printed.get(s.title)
     return {
@@ -288,7 +288,11 @@ export function buildPairDay(date: string, athletes: AthleteData[], target?: Tar
   // The printed plan is the shared backbone. Each athlete's card may have been
   // recalibrated away from it in a different direction, so the pair view shows
   // what was printed and names the divergence rather than picking a winner.
-  const printed = getPlanDay(date, target)
+  const printed = getPlanDay(date, target, 'aidas')
+  // From Oct 5 Lori trains her own fixed week, so two different cards can be
+  // the plan rather than the recalibration.
+  const ownCard = (p: AthletePrescription) =>
+    (getPlanDay(date, target, p.person as AthleteId)?.sessions ?? []).map((s) => s.title).join(' + ')
   const working = prescriptions.filter((p) => p.totalMin > 0)
   const restDay =
     prescriptions.length > 0
@@ -313,9 +317,12 @@ export function buildPairDay(date: string, athletes: AthleteData[], target?: Tar
     const [a, b] = prescriptions
 
     if (!sameCard) {
+      const ownWeeks = ownCard(a) !== ownCard(b)
       divergence.push(
         `Different cards today — ${a.name}: ${cardOf(a) || 'recovery'}. ${b.name}: ${cardOf(b) || 'recovery'}. ` +
-          'The recalibration moved each of you off the printed session for different reasons.'
+          (ownWeeks
+            ? 'You are on different weeks — Lori trains her own fixed structure.'
+            : 'The recalibration moved each of you off the printed session for different reasons.')
       )
     }
 

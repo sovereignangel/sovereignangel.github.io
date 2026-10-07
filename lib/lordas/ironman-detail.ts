@@ -238,7 +238,7 @@ function detailFor(data: AthleteData, today: string, target: TargetRace | null, 
   const weekMap = new Map<string, ComplianceWeek>()
   let extras = 0
 
-  for (const day of planRange(PLAN[0].date, today, target)) {
+  for (const day of planRange(PLAN[0].date, today, target, person)) {
     const status = matchDay(day, activities, today)
     extras += status.extras.length
     const wk = mondayOf(day.date)
@@ -305,16 +305,23 @@ export async function buildPairIronmanDetail(date: string = todayLocal()): Promi
   // the picked race when it is close, the same window the training page uses.
   let horizon = shiftDate(date, 28)
   if (target && target.date > horizon && daysToRace(date, target.date) <= 84) horizon = target.date
-  const planDays: PlanDay[] = planRange(PLAN[0].date, horizon, target)
+  // The shared rows are the rolling plan Aidas trains. From Oct 5 Lori trains
+  // her own fixed week, so each athlete is matched against their own day and
+  // Lori's line carries her card wherever it differs from the shared row.
+  const planDays: PlanDay[] = planRange(PLAN[0].date, horizon, target, 'aidas')
+  const ownDays = new Map(
+    athletes.map((a) => [
+      a.athlete.id as string,
+      new Map(planRange(PLAN[0].date, horizon, target, a.athlete.id as AthleteId).map((d) => [d.date, d])),
+    ])
+  )
 
-  // Statuses are matched per athlete against the same printed day, so a row
-  // shows who did it and who did not without re-deriving the plan twice.
   const matched = athletes.map((a) => ({
     person: a.athlete.id as string,
     days: new Map(
       planDays.map((d) => [
         d.date,
-        matchDay(d, dedupeActivities(a.activities), date),
+        matchDay(ownDays.get(a.athlete.id)?.get(d.date) ?? d, dedupeActivities(a.activities), date),
       ])
     ),
   }))
@@ -327,6 +334,12 @@ export async function buildPairIronmanDetail(date: string = todayLocal()): Promi
   const overrides = new Map<string, Map<string, { sessions: PlanSessionRow[]; note: string }>>()
   for (const d of details) {
     const own = new Map<string, { sessions: PlanSessionRow[]; note: string }>()
+    for (const shared of planDays) {
+      const mine = ownDays.get(d.person)?.get(shared.date)
+      if (mine && mine !== shared && !sameCard(mine.sessions.map(sessionRow), shared.sessions.map(sessionRow))) {
+        own.set(shared.date, { sessions: mine.sessions.map(sessionRow), note: `${d.name}'s own week` })
+      }
+    }
     for (const mv of d.rebalance.moves) {
       own.set(mv.date, {
         sessions: mv.after.map(sessionRow),

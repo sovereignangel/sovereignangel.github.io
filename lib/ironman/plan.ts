@@ -1,5 +1,6 @@
 import { HOME_TIMEZONE } from '@/lib/kite/regions'
-import { cycleDay, cyclePosition, addDays, type CyclePosition } from './cycle'
+import { cycleDay, cyclePosition, addDays, daysBetween, type CyclePosition } from './cycle'
+import { LORI_WEEK_FROM, loriWeekDay, loriWeekPosition } from './lori-week'
 /**
  * Ironman Training Plan — race config + day-by-day base plan.
  *
@@ -741,35 +742,54 @@ const PLAN_END = PLAN[PLAN.length - 1].date
 const RACE_DATES = RACES.map((r) => r.date)
 
 /**
+ * Whether Lori's own fixed week (lib/ironman/lori-week.ts) owns this date.
+ * It does from LORI_WEEK_FROM on, except around a race: the three weeks
+ * before a picked race and the two weeks after any race still come from the
+ * rolling cycle's Peak / Taper / Race week and recovery.
+ */
+function loriWeekOwns(date: string, target: TargetRace | null): boolean {
+  if (date < LORI_WEEK_FROM) return false
+  if (target && target.date >= date && daysBetween(date, target.date) <= 20) return false
+  if (target && target.date < date && target.date >= LORI_WEEK_FROM && daysBetween(target.date, date) <= 14) return false
+  return true
+}
+
+/**
  * The plan for any date: the printed Belgrade → New York block through
  * Sep 26, the rolling cycle after it. Pass the picked target race so the
  * weeks before it bend into Peak / Taper / Race week.
+ *
+ * Lori and Aidas share the printed block and then part ways: from Oct 5 Lori
+ * trains her own fixed week, Aidas keeps the rolling cycle. Every surface
+ * that is only Lori's leaves `athlete` at its default.
  */
-export function getPlanDay(date: string, target?: TargetRace | null): PlanDay | undefined {
+export function getPlanDay(date: string, target?: TargetRace | null, athlete: AthleteId = 'lori'): PlanDay | undefined {
   if (date <= PLAN_END) return PLAN.find((d) => d.date === date)
+  if (athlete === 'lori' && loriWeekOwns(date, target ?? null)) return loriWeekDay(date)
   return cycleDay(date, RACE_DATES, target ?? null)
 }
 
 /** Every plan day from `from` to `to`, inclusive */
-export function planRange(from: string, to: string, target?: TargetRace | null): PlanDay[] {
+export function planRange(from: string, to: string, target?: TargetRace | null, athlete: AthleteId = 'lori'): PlanDay[] {
   const days: PlanDay[] = []
   for (let d = from; d <= to; d = addDays(d, 1)) {
-    const day = getPlanDay(d, target)
+    const day = getPlanDay(d, target, athlete)
     if (day) days.push(day)
   }
   return days
 }
 
-/** Where `date` sits in the rolling cycle; null while the printed plan is running */
-export function planPosition(date: string, target?: TargetRace | null): CyclePosition | null {
+/** Where `date` sits in the rolling cycle (or Lori's week); null while the printed plan is running */
+export function planPosition(date: string, target?: TargetRace | null, athlete: AthleteId = 'lori'): CyclePosition | null {
   if (date <= PLAN_END) return null
+  if (athlete === 'lori' && loriWeekOwns(date, target ?? null)) return loriWeekPosition(date)
   const anchors = target && target.date < date ? [...RACE_DATES, target.date] : RACE_DATES
   return cyclePosition(date, anchors)
 }
 
 /** First day of the block `date` falls in — the window block volume is counted over */
-export function blockStart(date: string, target?: TargetRace | null): string {
-  return planPosition(date, target)?.blockStart ?? PLAN[0].date
+export function blockStart(date: string, target?: TargetRace | null, athlete: AthleteId = 'lori'): string {
+  return planPosition(date, target, athlete)?.blockStart ?? PLAN[0].date
 }
 
 export function isRaceDay(day: PlanDay): boolean {

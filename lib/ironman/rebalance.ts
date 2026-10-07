@@ -166,8 +166,8 @@ function qualifying(activities: GarminActivity[], sport: Sport3, from: string, t
 }
 
 /** Planned minutes for a sport over a date range — a brick counts as its bike leg */
-function plannedMinutes(sport: Sport3, from: string, to: string): number {
-  return planRange(from, to)
+function plannedMinutes(sport: Sport3, from: string, to: string, person: AthleteId): number {
+  return planRange(from, to, null, person)
     .flatMap((d) => d.sessions)
     .filter((x) => x.sport === sport || (x.sport === 'brick' && sport === 'bike'))
     .reduce((sum, x) => sum + x.durationMin, 0)
@@ -196,7 +196,8 @@ function gapFor(
   targets: Record<Sport3, RaceTarget>,
   goals: RaceGoals,
   standing: Standing,
-  asOf: string
+  asOf: string,
+  person: AthleteId
 ): SportGap {
   const splits = goalSplits(goals)
   const goalSplitMin = sport === 'swim' ? splits.swim : sport === 'bike' ? splits.bike : splits.run
@@ -219,7 +220,7 @@ function gapFor(
   const recentMin = Math.round(
     qualifying(activities, sport, from, asOf).reduce((s, a) => s + a.min, 0)
   )
-  const plannedMin = Math.round(plannedMinutes(sport, from, asOf))
+  const plannedMin = Math.round(plannedMinutes(sport, from, asOf, person))
   const balanceMin = recentMin - plannedMin
 
   const need = needOf(enduranceCovered, minutesOverGoal)
@@ -276,14 +277,15 @@ const round5 = (n: number) => Math.round(n / 5) * 5
 function movesFor(
   activities: GarminActivity[],
   gaps: Record<Sport3, SportGap>,
-  asOf: string
+  asOf: string,
+  person: AthleteId
 ): PlanMove[] {
   const moves: PlanMove[] = []
   const horizon = shiftDate(asOf, 8)
 
   // Today counts. A recalibration that only ever edits tomorrow reverts to the
   // printed session the morning it was supposed to change anything.
-  for (const day of planRange(asOf, horizon)) {
+  for (const day of planRange(asOf, horizon, null, person)) {
     if (isRaceDay(day)) continue
     let changed = false
     const after = day.sessions.map((session) => {
@@ -381,9 +383,9 @@ function movesFor(
 }
 
 /** Planned sessions from the last few days that never happened, and what did */
-function displacedNotes(activities: GarminActivity[], asOf: string): string[] {
+function displacedNotes(activities: GarminActivity[], asOf: string, person: AthleteId): string[] {
   const notes: string[] = []
-  for (const day of planRange(shiftDate(asOf, -3), shiftDate(asOf, -1))) {
+  for (const day of planRange(shiftDate(asOf, -3), shiftDate(asOf, -1), null, person)) {
     const status = matchDay(day, activities, asOf)
     const missed = status.sessions.filter((s) => s.status === 'missed' && s.session.sport !== 'rest')
     if (missed.length === 0) continue
@@ -413,12 +415,12 @@ export function computeRebalance(
   const standings = STRENGTHS[person] ?? STRENGTHS.lori
 
   const sports = (['swim', 'bike', 'run'] as const)
-    .map((sport) => gapFor(sport, activities, forecast, targets, goals, standings[sport], asOf))
+    .map((sport) => gapFor(sport, activities, forecast, targets, goals, standings[sport], asOf, person))
     .sort((a, b) => b.priority - a.priority)
 
   const byS = Object.fromEntries(sports.map((s) => [s.sport, s])) as Record<Sport3, SportGap>
   const lead = sports[0]?.priority > 0 ? sports[0].sport : null
-  const moves = movesFor(activities, byS, asOf)
+  const moves = movesFor(activities, byS, asOf, person)
 
   const headline = lead
     ? `${lead[0].toUpperCase()}${lead.slice(1)} is where the race is — ${NEED_WORD[byS[lead].need]}` +
@@ -436,7 +438,7 @@ export function computeRebalance(
     sports,
     lead,
     headline,
-    displaced: displacedNotes(activities, asOf),
+    displaced: displacedNotes(activities, asOf, person),
     displacedNote:
       'Absorbed, not rescheduled — three weeks out, chasing a missed session costs more than the session was worth. It shows up in the ranking above as a week under plan, which is the honest place for it.',
     dataThrough,
@@ -449,8 +451,8 @@ export function computeRebalance(
 }
 
 /** The plan for a date with any rebalance edits already applied */
-export function planDayWith(date: string, moves: PlanMove[]): PlanDay | undefined {
-  const day = getPlanDay(date)
+export function planDayWith(date: string, moves: PlanMove[], person: AthleteId = 'lori'): PlanDay | undefined {
+  const day = getPlanDay(date, null, person)
   if (!day) return undefined
   const move = moves.find((m) => m.date === date)
   return move ? { ...day, sessions: move.after } : day
