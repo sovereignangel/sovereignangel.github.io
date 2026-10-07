@@ -51,7 +51,6 @@ const SPOT_PATHS: Record<string, React.ReactNode> = {
       <path d="M3 21 h5" />
     </>
   ),
-  // Plumb Beach — city skyline over the water it sits under
   // Tobay — a breaking wave
   tobay: (
     <>
@@ -59,6 +58,15 @@ const SPOT_PATHS: Record<string, React.ReactNode> = {
       <path d="M5 12 c0-4 3-6 6-6 2.5 0 4 1.5 4 3.5 0 1.5-1 2.5-2.5 2.5" />
     </>
   ),
+  // Oak Beach — an oak over the flats
+  'oak-beach': (
+    <>
+      <path d="M12 16 V11" />
+      <path d="M12 11 c-4 0 -6 -2 -5.5 -4.5 C7 4 9.5 3 12 4 c2.5 -1 5 0 5.5 2.5 C18 9 16 11 12 11 Z" />
+      <path d="M3 19 c3 0 4-1.5 6-1.5 s3 1.5 6 1.5 4-1.5 6-1.5" />
+    </>
+  ),
+  // Plumb Beach — city skyline over the water it sits under
   'plumb-beach': (
     <>
       <path d="M3 15 V9 h4 v6 M7 15 V5 h5 v10 M12 15 V8 h4.5 v7 M16.5 15 V11 H21 v4" />

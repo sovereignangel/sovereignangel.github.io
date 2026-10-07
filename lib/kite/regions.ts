@@ -3,7 +3,7 @@
  * own spot list, timezone and local rules.
  *
  *   Lithuania  summer        Baltic coast and the Curonian Lagoon
- *   NYC        fall & spring Sandy Hook and Plumb Beach
+ *   NYC        fall & spring Sandy Hook, Plumb Beach and Long Island
  *   Brazil     winter        the Ceara downwinder coast, Fortaleza to Atins
  *   Cape Town  winter        Table Bay under the Cape Doctor
  *
@@ -176,6 +176,26 @@ const NYC_SPOT_LIST: KiteSpot[] = [
     note: 'Bayside launch off Ocean Parkway between Gilgo and Oak Beach, about an hour from the city. Flat, shallow water with room to run downwind, and the classic SW day rides side-shore along the island. Park in the Sore Thumb lot; a beach permit is enforced in summer. Closer than Amityville and quieter, but less bay to play with.',
     priority: 1,
     favorWhen: { minKn: 14, bonus: 2 },
+  },
+  {
+    slug: 'oak-beach',
+    name: 'Oak Beach',
+    area: 'Long Island · Fire Island Inlet',
+    // Out on the water off the bayside beach, short of the inlet channel,
+    // so the forecast reads the bay rather than the barrier island.
+    lat: 40.64,
+    lon: -73.285,
+    water: 'bay',
+    // East end of Jones Beach island: the bay lies north and the inlet east.
+    // S/SW blows off the island toward the mainland, 5 km of bay downwind, so
+    // those days are short-fetch rather than dangerous — kept narrow like
+    // Sore Thumb next door.
+    offshoreSector: [170, 230],
+    onshoreSector: [330, 100],
+    idealWind: 'wind travels south or west (N/NE/E onshore)',
+    tagline: 'sandbar flats at the inlet',
+    note: 'Town of Babylon beach at the end of Ocean Parkway, just past Sore Thumb and about an hour from the city. Shallow flats on the bay side, and the NE and E days that switch Sore Thumb off ride cleanly here. Stay out of the inlet channel: the tide runs hard through Fire Island Inlet and will carry you toward open ocean. Ride the flats on the falling tide, with someone on the beach.',
+    favorWhen: { minKn: 14, bonus: 1 },
   },
   {
     slug: 'tobay',
