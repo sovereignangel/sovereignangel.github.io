@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useRef, useEffect } from 'react'
+import { useState, useCallback, useRef } from 'react'
 import dynamic from 'next/dynamic'
 import { useReadingSession } from '@/hooks/useReadingSession'
 import ReaderSidebar from './ReaderSidebar'
@@ -11,7 +11,13 @@ const PDFReaderView = dynamic(() => import('./PDFReaderView'), { ssr: false })
 export interface ReaderSource {
   title: string
   author: string
+  /** Identity of the document — the reading session is keyed on it. */
   sourceUrl: string
+  /**
+   * Where pdf.js actually fetches from, when that differs from sourceUrl — a
+   * signed bucket link that changes every few hours while the session key must not.
+   */
+  fileUrl?: string
   sourceType: DocumentSourceType
   linkedPaperId?: string
   linkedProfessorId?: string
@@ -30,13 +36,17 @@ type HighlightColor = 'burgundy' | 'green' | 'amber'
 
 export default function ReaderOverlay({ source, onClose, initialPage, bookSlug }: ReaderOverlayProps) {
   // Blob URLs (uploads), data URLs and same-origin paths (local books) don't need proxying
+  // A fileUrl is already loadable (signed bucket link with CORS), never proxied.
   const needsProxy =
+    !source.fileUrl &&
     !source.sourceUrl.startsWith('blob:') &&
     !source.sourceUrl.startsWith('data:') &&
     !source.sourceUrl.startsWith('/')
-  const proxyUrl = needsProxy
-    ? `/api/archive-proxy?url=${encodeURIComponent(source.sourceUrl)}`
-    : source.sourceUrl
+  const proxyUrl = source.fileUrl
+    ? source.fileUrl
+    : needsProxy
+      ? `/api/archive-proxy?url=${encodeURIComponent(source.sourceUrl)}`
+      : source.sourceUrl
 
   const {
     session,
@@ -49,6 +59,8 @@ export default function ReaderOverlay({ source, onClose, initialPage, bookSlug }
     updateHighlightNote,
     addNote,
     addQuestion,
+    toggleBookmark,
+    updateBookmarkLabel,
   } = useReadingSession(source.sourceUrl)
 
   const [pendingSelection, setPendingSelection] = useState<{
@@ -60,22 +72,26 @@ export default function ReaderOverlay({ source, onClose, initialPage, bookSlug }
   const [showSearch, setShowSearch] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [currentPageText, setCurrentPageText] = useState('')
-  const [sidebarOpen, setSidebarOpen] = useState(true)
+  // The panel would eat a phone screen; start it closed there.
+  const [sidebarOpen, setSidebarOpen] = useState(() => typeof window === 'undefined' || window.innerWidth >= 768)
+  const [jumpRequest, setJumpRequest] = useState<{ page: number; seq: number } | null>(null)
+  const [commenting, setCommenting] = useState(false)
+  const [commentText, setCommentText] = useState('')
+  const [commentColor, setCommentColor] = useState<HighlightColor>('burgundy')
   const popupRef = useRef<HTMLDivElement>(null)
+  const coarsePointer = typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches
 
   const currentPage = session?.currentPage || 1
-
-  // Honour initialPage exactly once, after the saved session resolves.
-  const jumpedRef = useRef(false)
-  useEffect(() => {
-    if (jumpedRef.current || loading || !initialPage) return
-    jumpedRef.current = true
-    if (initialPage !== currentPage) setPage(initialPage)
-  }, [loading, initialPage, currentPage, setPage])
 
   const highlights = session?.highlights || []
   const notes = session?.notes || []
   const questions = session?.questions || []
+  const bookmarks = session?.bookmarks || []
+  const bookmarkedPages = new Set(bookmarks.map(b => b.page))
+
+  const jumpTo = useCallback((page: number) => {
+    setJumpRequest({ page, seq: Date.now() })
+  }, [])
 
   const handleTotalPages = useCallback((total: number) => {
     setTotalPages(total)
@@ -97,7 +113,7 @@ export default function ReaderOverlay({ source, onClose, initialPage, bookSlug }
     setPendingSelection({ text, rects, pageNumber, screenPos })
   }, [])
 
-  const handleHighlight = useCallback((color: HighlightColor) => {
+  const handleHighlight = useCallback((color: HighlightColor, note?: string) => {
     if (!pendingSelection) return
     addHighlight({
       position: {
@@ -106,10 +122,19 @@ export default function ReaderOverlay({ source, onClose, initialPage, bookSlug }
       },
       selectedText: pendingSelection.text,
       color,
+      ...(note?.trim() ? { note: note.trim() } : {}),
     })
     setPendingSelection(null)
+    setCommenting(false)
+    setCommentText('')
     window.getSelection()?.removeAllRanges()
   }, [pendingSelection, addHighlight])
+
+  const dismissSelection = useCallback(() => {
+    setPendingSelection(null)
+    setCommenting(false)
+    setCommentText('')
+  }, [])
 
   const handlePageTextExtracted = useCallback((_pageNumber: number, text: string) => {
     setCurrentPageText(text)
@@ -118,9 +143,11 @@ export default function ReaderOverlay({ source, onClose, initialPage, bookSlug }
   // Close popup when clicking outside
   const handleOverlayClick = useCallback((e: React.MouseEvent) => {
     if (pendingSelection && popupRef.current && !popupRef.current.contains(e.target as Node)) {
-      setPendingSelection(null)
+      // A fresh selection's own mouseup lands here too; only an empty click dismisses.
+      const sel = window.getSelection()
+      if (!sel || sel.isCollapsed) dismissSelection()
     }
-  }, [pendingSelection])
+  }, [pendingSelection, dismissSelection])
 
   return (
     <div
@@ -182,7 +209,7 @@ export default function ReaderOverlay({ source, onClose, initialPage, bookSlug }
       )}
 
       {/* Main content */}
-      <div className="flex-1 flex min-h-0">
+      <div className="flex-1 flex min-h-0 relative">
         {loading ? (
           <div className="flex-1 flex items-center justify-center">
             <span className="text-[11px] text-ink-muted">Loading reader...</span>
@@ -198,6 +225,10 @@ export default function ReaderOverlay({ source, onClose, initialPage, bookSlug }
               onTextSelected={handleTextSelected}
               onPageTextExtracted={handlePageTextExtracted}
               searchQuery={searchQuery}
+              startPage={initialPage ?? session?.currentPage}
+              jumpRequest={jumpRequest}
+              bookmarkedPages={bookmarkedPages}
+              onToggleBookmark={toggleBookmark}
             />
 
             {sidebarOpen && (
@@ -205,11 +236,14 @@ export default function ReaderOverlay({ source, onClose, initialPage, bookSlug }
                 highlights={highlights}
                 notes={notes}
                 questions={questions}
+                bookmarks={bookmarks}
                 documentTitle={source.title}
                 currentPageText={currentPageText}
                 currentPage={currentPage}
                 bookSlug={bookSlug}
-                onJumpToPage={setPage}
+                onJumpToPage={jumpTo}
+                onToggleBookmark={toggleBookmark}
+                onUpdateBookmarkLabel={updateBookmarkLabel}
                 onRemoveHighlight={removeHighlight}
                 onUpdateHighlightNote={updateHighlightNote}
                 onAddNote={addNote}
@@ -220,41 +254,103 @@ export default function ReaderOverlay({ source, onClose, initialPage, bookSlug }
         )}
       </div>
 
-      {/* Floating highlight popup — anchored near selection */}
+      {/* Floating highlight popup — anchored near selection. On touch screens it
+          docks at the bottom, clear of the native copy/select callout. */}
       {pendingSelection && (
         <div
           ref={popupRef}
-          className="fixed z-[60] bg-white border border-rule rounded-sm shadow-sm p-1.5 flex gap-1"
-          style={{
-            left: `${Math.min(Math.max(pendingSelection.screenPos.x, 100), window.innerWidth - 100)}px`,
-            top: `${Math.max(pendingSelection.screenPos.y - 40, 8)}px`,
+          className="fixed z-[60] bg-white border border-rule rounded-sm shadow-sm p-1.5"
+          style={coarsePointer ? {
+            left: '50%',
+            bottom: '16px',
             transform: 'translateX(-50%)',
+            width: commenting ? 'min(92vw, 360px)' : undefined,
+          } : {
+            left: `${Math.min(Math.max(pendingSelection.screenPos.x, 180), window.innerWidth - 180)}px`,
+            top: `${Math.max(pendingSelection.screenPos.y - (commenting ? 120 : 40), 8)}px`,
+            transform: 'translateX(-50%)',
+            width: commenting ? '320px' : undefined,
           }}
         >
-          <span className="text-[9px] text-ink-muted self-center mr-1 max-w-[120px] truncate">
-            &ldquo;{pendingSelection.text.slice(0, 40)}...&rdquo;
-          </span>
-          <button
-            onClick={() => handleHighlight('burgundy')}
-            className="w-5 h-5 rounded-sm bg-burgundy/80 hover:bg-burgundy border border-burgundy/40"
-            title="Highlight (burgundy)"
-          />
-          <button
-            onClick={() => handleHighlight('green')}
-            className="w-5 h-5 rounded-sm bg-green-ink/60 hover:bg-green-ink/80 border border-green-ink/30"
-            title="Highlight (green — important)"
-          />
-          <button
-            onClick={() => handleHighlight('amber')}
-            className="w-5 h-5 rounded-sm bg-amber-ink/60 hover:bg-amber-ink/80 border border-amber-ink/30"
-            title="Highlight (amber — question)"
-          />
-          <button
-            onClick={() => setPendingSelection(null)}
-            className="text-[9px] text-ink-faint hover:text-ink px-1"
-          >
-            Cancel
-          </button>
+          {!commenting ? (
+            <div className="flex gap-1 items-center">
+              <span className="text-[10px] text-ink-muted mr-1 max-w-[120px] truncate">
+                &ldquo;{pendingSelection.text.slice(0, 40)}&hellip;&rdquo;
+              </span>
+              <button
+                onClick={() => handleHighlight('burgundy')}
+                className="w-5 h-5 rounded-sm bg-burgundy/80 hover:bg-burgundy border border-burgundy/40"
+                title="Highlight (burgundy)"
+              />
+              <button
+                onClick={() => handleHighlight('green')}
+                className="w-5 h-5 rounded-sm bg-green-ink/60 hover:bg-green-ink/80 border border-green-ink/30"
+                title="Highlight (green — important)"
+              />
+              <button
+                onClick={() => handleHighlight('amber')}
+                className="w-5 h-5 rounded-sm bg-amber-ink/60 hover:bg-amber-ink/80 border border-amber-ink/30"
+                title="Highlight (amber — question)"
+              />
+              <button
+                onClick={() => setCommenting(true)}
+                className="text-[10px] font-serif font-medium px-2 py-0.5 rounded-sm border border-rule text-ink hover:border-ink-faint ml-0.5"
+              >
+                Comment
+              </button>
+              <button
+                onClick={dismissSelection}
+                className="text-[10px] text-ink-faint hover:text-ink px-1"
+              >
+                Cancel
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-1.5">
+              <div className="text-[10px] text-ink-muted italic line-clamp-2 border-l-2 border-burgundy/30 pl-1.5">
+                &ldquo;{pendingSelection.text.slice(0, 160)}{pendingSelection.text.length > 160 ? '\u2026' : ''}&rdquo;
+              </div>
+              <textarea
+                value={commentText}
+                onChange={e => setCommentText(e.target.value)}
+                placeholder="Your comment..."
+                rows={3}
+                autoFocus
+                onKeyDown={e => {
+                  if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) handleHighlight(commentColor, commentText)
+                  if (e.key === 'Escape') dismissSelection()
+                }}
+                className="w-full text-[11px] border border-rule rounded-sm px-2 py-1 bg-paper text-ink resize-none focus:outline-none focus:border-ink-faint"
+              />
+              <div className="flex items-center gap-1">
+                {(['burgundy', 'green', 'amber'] as HighlightColor[]).map(c => (
+                  <button
+                    key={c}
+                    onClick={() => setCommentColor(c)}
+                    title={c}
+                    className={`w-4 h-4 rounded-sm border ${
+                      c === 'burgundy' ? 'bg-burgundy/80 border-burgundy/40' :
+                      c === 'green' ? 'bg-green-ink/60 border-green-ink/30' : 'bg-amber-ink/60 border-amber-ink/30'
+                    } ${commentColor === c ? 'ring-1 ring-offset-1 ring-ink' : ''}`}
+                  />
+                ))}
+                <div className="flex-1" />
+                <button
+                  onClick={dismissSelection}
+                  className="text-[10px] text-ink-faint hover:text-ink px-1"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => handleHighlight(commentColor, commentText)}
+                  disabled={!commentText.trim()}
+                  className="text-[10px] font-serif font-medium px-2 py-0.5 rounded-sm bg-burgundy text-paper border border-burgundy disabled:opacity-30"
+                >
+                  Save
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

@@ -27,6 +27,15 @@ export interface ReadingHighlight {
   createdAt: string // ISO
 }
 
+// ─── Bookmark ────────────────────────────────────────────────────────────────
+
+export interface ReadingBookmark {
+  id: string
+  page: number
+  label?: string
+  createdAt: string // ISO
+}
+
 // ─── Q&A ─────────────────────────────────────────────────────────────────────
 
 export interface ReadingQA {
@@ -57,6 +66,7 @@ export interface ReadingSession {
   highlights: ReadingHighlight[]
   notes: string[]
   questions: ReadingQA[]
+  bookmarks?: ReadingBookmark[]
 
   // Web article content (stored for offline reading)
   articleContent?: string

@@ -18,6 +18,9 @@ const PRIORITY_STYLE: Record<StintPriority, string> = {
 
 export default function StintCard({ stint, meta, onOpen }: StintCardProps) {
   const [open, setOpen] = useState(stint.order === 1)
+  // The argument for a stint is settled once; the route through it is consulted
+  // every sitting. So the prose starts closed and the chapters do not.
+  const [why, setWhy] = useState(false)
   const available = !!meta
 
   return (
@@ -37,34 +40,33 @@ export default function StintCard({ stint, meta, onOpen }: StintCardProps) {
         </div>
       </div>
 
-      {/* Why here */}
-      <div className="mb-2">
-        <div className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-burgundy mb-1">
-          Why here
-        </div>
-        <p className="text-[11px] text-ink leading-relaxed">{stint.why}</p>
-      </div>
-
-      {/* Scope + question + product */}
-      <div className="space-y-1.5 mb-2">
-        <div className="flex gap-2">
-          <span className="text-[10px] text-ink-muted w-20 shrink-0">Scope</span>
-          <span className="text-[10px] text-ink flex-1">{stint.scope}</span>
-        </div>
-        <div className="flex gap-2">
-          <span className="text-[10px] text-ink-muted w-20 shrink-0">Window</span>
-          <span className="text-[10px] text-ink flex-1">{stint.window}</span>
-        </div>
-        <div className="flex gap-2">
-          <span className="text-[10px] text-ink-muted w-20 shrink-0">Produces</span>
-          <span className="text-[10px] text-ink flex-1">{stint.produces}</span>
-        </div>
+      {/* One line of standing facts; the argument behind a toggle. */}
+      <div className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 mb-2">
+        <span className="text-[10px] text-ink-muted">
+          Scope <span className="text-ink">{stint.scope.split('.')[0]}</span>
+        </span>
+        <span className="text-[10px] text-ink-muted">
+          Produces <span className="text-ink">{stint.produces.split(':')[0]}</span>
+        </span>
       </div>
 
       <div className="border-l-2 border-burgundy/30 pl-2 py-0.5 mb-2">
-        <div className="text-[10px] text-ink-muted mb-0.5">The question to carry</div>
         <div className="text-[11px] text-ink italic leading-relaxed">{stint.questionToCarry}</div>
       </div>
+
+      {why && (
+        <div className="mb-2 space-y-1.5">
+          <p className="text-[11px] text-ink-muted leading-relaxed">{stint.why}</p>
+          <div className="flex gap-2">
+            <span className="text-[10px] text-ink-muted w-20 shrink-0">Scope</span>
+            <span className="text-[10px] text-ink flex-1">{stint.scope}</span>
+          </div>
+          <div className="flex gap-2">
+            <span className="text-[10px] text-ink-muted w-20 shrink-0">Produces</span>
+            <span className="text-[10px] text-ink flex-1">{stint.produces}</span>
+          </div>
+        </div>
+      )}
 
       {/* Actions */}
       <div className="flex gap-1 mb-2">
@@ -80,6 +82,12 @@ export default function StintCard({ stint, meta, onOpen }: StintCardProps) {
           className="font-serif text-[10px] font-medium px-3 py-1.5 rounded-sm border bg-transparent text-ink-muted border-rule hover:border-ink-faint"
         >
           {open ? 'Hide route' : `Route · ${stint.chapters.length} entries`}
+        </button>
+        <button
+          onClick={() => setWhy(!why)}
+          className="font-serif text-[10px] font-medium px-3 py-1.5 rounded-sm border bg-transparent text-ink-muted border-rule hover:border-ink-faint"
+        >
+          {why ? 'Hide why' : 'Why here'}
         </button>
         {meta && (
           <span className="font-mono text-[10px] text-ink-faint self-center ml-auto">

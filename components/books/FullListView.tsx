@@ -4,7 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { LIBRARY, SHELF_LANE_LABEL } from '@/lib/complexecon/pathway'
 import type { ShelfLane, LibraryItem } from '@/lib/complexecon/pathway'
-import { READING_ORDER } from '@/lib/books/reading-order'
+import { READING_ORDER, SHELF_EXTRAS } from '@/lib/books/reading-order'
 import { SHELF_GLOSSARY } from '@/lib/books/glossary'
 
 /**
@@ -15,7 +15,7 @@ import { SHELF_GLOSSARY } from '@/lib/books/glossary'
  * job — the same books, sorted by the work they do rather than by topic.
  */
 
-type Filter = 'all' | ShelfLane | 'extracted'
+type Filter = 'all' | ShelfLane | 'operator' | 'extracted'
 
 /** Slugs of the volumes that exist locally as extracted PDFs. */
 const EXTRACTED_TITLES = new Set(READING_ORDER.map(s => s.title))
@@ -23,18 +23,27 @@ const EXTRACTED_TITLES = new Set(READING_ORDER.map(s => s.title))
 interface ListRow {
   item: LibraryItem
   topic: string
-  lane: ShelfLane
+  /** 'operator' is off-lane: read for the three jobs, not for the paper. */
+  lane: ShelfLane | 'operator'
   extracted: boolean
 }
 
-const ROWS: ListRow[] = LIBRARY.flatMap(topic =>
-  topic.items.map(item => ({
-    item,
-    topic: topic.name,
-    lane: (topic.lane ?? 'sfi') as ShelfLane,
+const ROWS: ListRow[] = [
+  ...LIBRARY.flatMap(topic =>
+    topic.items.map(item => ({
+      item,
+      topic: topic.name,
+      lane: (topic.lane ?? 'sfi') as ShelfLane,
+      extracted: EXTRACTED_TITLES.has(item.title),
+    })),
+  ),
+  ...SHELF_EXTRAS.map(item => ({
+    item: item as unknown as LibraryItem,
+    topic: 'Operator',
+    lane: 'operator' as const,
     extracted: EXTRACTED_TITLES.has(item.title),
   })),
-)
+]
 
 const TIER_STYLE: Record<string, string> = {
   spine: 'bg-burgundy-bg text-burgundy border-burgundy/20',
@@ -55,6 +64,7 @@ export default function FullListView() {
     { id: 'all', label: 'All', count: ROWS.length },
     { id: 'sfi', label: SHELF_LANE_LABEL.sfi, count: ROWS.filter(r => r.lane === 'sfi').length },
     { id: 'shocks', label: SHELF_LANE_LABEL.shocks, count: ROWS.filter(r => r.lane === 'shocks').length },
+    { id: 'operator', label: 'Operator', count: ROWS.filter(r => r.lane === 'operator').length },
     { id: 'extracted', label: 'On this shelf', count: ROWS.filter(r => r.extracted).length },
   ]
 

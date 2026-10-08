@@ -8,15 +8,16 @@ export const dynamic = 'force-dynamic'
 /**
  * GET /api/books/[slug]/file — stream the local PDF to pdf.js.
  *
- * Deliberately unauthenticated: pdf.js loads the URL directly and cannot attach
- * a bearer token. Safe because the PDFs are gitignored and never deployed — on
- * any host without app/books/ this route is a permanent 404. Keep it that way.
+ * Local dev only. Deliberately unauthenticated: pdf.js loads the URL directly
+ * and cannot attach a bearer token. Safe because the PDFs are gitignored and
+ * never deployed — on any host without app/books/ this route is a permanent 404.
+ * Deployed reading goes through /api/books/[slug]/url and a signed bucket link.
  *
  * Range requests are honoured so pdf.js can stream the 900-page volume instead
  * of pulling 50MB before the first page paints.
  */
 export async function GET(_req: NextRequest, { params }: { params: { slug: string } }) {
-  const file = getBookPdfPath(params.slug)
+  const file = await getBookPdfPath(params.slug)
   if (!file) {
     return new Response('Not found — this book is not on this host', { status: 404 })
   }

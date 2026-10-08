@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { callLLM } from '@/lib/llm'
-import { verifyAuth } from '@/lib/api-auth'
+import { verifyBooksOwner } from '@/lib/books/auth'
 import { getBookMeta, getPages, search } from '@/lib/books/library'
 
 export const dynamic = 'force-dynamic'
@@ -17,7 +17,7 @@ const MAX_CHARS_PER_PASSAGE = 2400
  * Body: { question, slug?, page? }
  */
 export async function POST(req: NextRequest) {
-  const auth = await verifyAuth(req)
+  const auth = await verifyBooksOwner(req)
   if (auth instanceof NextResponse) return auth
 
   try {
@@ -26,13 +26,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing question' }, { status: 400 })
     }
 
-    const meta = slug ? getBookMeta(slug) : null
+    const meta = slug ? await getBookMeta(slug) : null
     if (slug && !meta) {
       return NextResponse.json({ error: 'Book not found on this host' }, { status: 404 })
     }
 
     // Retrieve: best-scoring pages for the question, one passage per page.
-    const results = search(question, { slug, limit: MAX_PASSAGES * 3 })
+    const results = await search(question, { slug, limit: MAX_PASSAGES * 3 })
     const chosen: { slug: string; title: string; page: number }[] = []
     for (const hit of results.hits) {
       if (chosen.length >= MAX_PASSAGES) break
@@ -56,11 +56,14 @@ export async function POST(req: NextRequest) {
       })
     }
 
-    const passages = chosen
-      .map(c => {
-        const text = getPages(c.slug, c.page, c.page)[0]?.text || ''
-        return `[${c.title} — p.${c.page}]\n${text.slice(0, MAX_CHARS_PER_PASSAGE)}`
-      })
+    const passages = (
+      await Promise.all(
+        chosen.map(async c => {
+          const text = (await getPages(c.slug, c.page, c.page))[0]?.text || ''
+          return `[${c.title} — p.${c.page}]\n${text.slice(0, MAX_CHARS_PER_PASSAGE)}`
+        })
+      )
+    )
       .filter(p => p.split('\n').slice(1).join('').trim().length > 40)
 
     const scope = meta ? `"${meta.title}" by ${meta.author}` : 'the reader’s local book shelf'

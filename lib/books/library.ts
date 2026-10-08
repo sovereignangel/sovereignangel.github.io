@@ -1,51 +1,134 @@
-// Server-only: reads the filesystem. Import from route handlers, never from a client component.
-import { readFileSync, existsSync } from 'node:fs'
+// Server-only: reads the filesystem and the books bucket. Import from route handlers, never from a client component.
+import { readFileSync, existsSync, readdirSync, statSync } from 'node:fs'
 import path from 'node:path'
 import type { BookManifest, BookMeta, BookRecord, BookSearchHit, BookSearchResponse } from './types'
+import { booksStorage, downloadJson, signedPdfUrl } from './storage'
 
 /**
- * Server-side access to the extracted book corpus.
+ * Server-side access to the book corpus, from one of two places:
  *
- * data/books/ is gitignored — the PDFs are copyrighted and the extracted text
- * is the same work. So this layer is local-first: on a deployment without the
- * corpus every call degrades to "no books" rather than throwing.
+ *   local   app/books/*.pdf + data/books/ on this machine (dev). Both are
+ *           gitignored — the PDFs are copyrighted and the text is the same work.
+ *   remote  the private Supabase bucket in lib/books/storage.ts (Vercel), filled
+ *           by scripts/books/upload.mjs.
  *
- * Regenerate with: node scripts/books/extract.mjs
+ * Local wins when the PDFs are present. With neither, every call degrades to
+ * "no books" rather than throwing.
+ *
+ * Rebuild the text: node scripts/books/extract.mjs
+ * Push to the bucket: node scripts/books/upload.mjs
  */
 
 const DATA_DIR = path.join(process.cwd(), 'data', 'books')
 const PDF_DIR = path.join(process.cwd(), 'app', 'books')
 
+function hasLocalCorpus(): boolean {
+  return existsSync(PDF_DIR) && readdirSync(PDF_DIR).some(f => f.toLowerCase().endsWith('.pdf'))
+}
+
 const bookCache = new Map<string, BookRecord>()
-let manifestCache: BookManifest | null = null
+let localManifest: BookManifest | null = null
+// The remote manifest changes when an upload runs; a warm function should notice.
+let remoteManifest: { at: number; manifest: BookManifest } | null = null
+const REMOTE_MANIFEST_TTL = 5 * 60 * 1000
 
-export function getManifest(): BookManifest {
-  if (manifestCache) return manifestCache
-  const file = path.join(DATA_DIR, 'manifest.json')
-  if (!existsSync(file)) return { generatedAt: '', books: [] }
-  manifestCache = JSON.parse(readFileSync(file, 'utf8')) as BookManifest
-  return manifestCache
+const EMPTY: BookManifest = { generatedAt: '', books: [] }
+
+export async function getManifest(): Promise<BookManifest> {
+  if (hasLocalCorpus()) {
+    if (localManifest) return localManifest
+    const file = path.join(DATA_DIR, 'manifest.json')
+    if (!existsSync(file)) return EMPTY
+    localManifest = JSON.parse(readFileSync(file, 'utf8')) as BookManifest
+    return localManifest
+  }
+  if (!booksStorage()) return EMPTY
+  if (remoteManifest && Date.now() - remoteManifest.at < REMOTE_MANIFEST_TTL) return remoteManifest.manifest
+  const manifest = (await downloadJson<BookManifest>('manifest.json')) || EMPTY
+  remoteManifest = { at: Date.now(), manifest }
+  return manifest
 }
 
-export function getBookMeta(slug: string): BookMeta | null {
-  return getManifest().books.find(b => b.slug === slug) || null
+/**
+ * Slug for a PDF the extract script has no override for. Derived from the
+ * filename, never from embedded PDF metadata, so a book keeps the same slug —
+ * and so the same reading session — before and after extraction. Keep in step
+ * with fallbackSlug() in scripts/books/extract.mjs.
+ */
+export function fallbackSlug(filename: string): string {
+  return filename
+    .replace(/(\.epub)?\.pdf$/i, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '')
+    .slice(0, 60)
+    .replace(/-$/, '')
 }
 
-export function getBook(slug: string): BookRecord | null {
+/** Best-effort title and author from shadow-library filenames ("Title -- Author -- (Site)"). */
+function parseFilename(filename: string): { title: string; author: string } {
+  const base = filename.replace(/(\.epub)?\.pdf$/i, '')
+  const parts = base.split(' -- ').map(p => p.trim()).filter(p => p && !/^\(.*\)$/.test(p))
+  if (parts.length >= 2) {
+    return { title: parts[0].replace(/\s+-\s+.*$/, ''), author: parts[1].replace(/\s*\[.*\]\s*/g, '') }
+  }
+  return { title: base.replace(/\s+-\s+[^-]*\.(li|org|com)$/i, ''), author: 'Unknown' }
+}
+
+/**
+ * Every readable book. Locally that is every PDF in app/books/, extracted or
+ * not — a book dropped into the folder is readable immediately, and search and
+ * Ask pick it up once the extract script runs. Remotely it is the uploaded
+ * manifest.
+ */
+export async function listShelf(): Promise<BookMeta[]> {
+  const extracted = (await getManifest()).books
+  if (!hasLocalCorpus()) return extracted
+  const known = new Set(extracted.map(b => b.filename))
+  const slugs = new Set(extracted.map(b => b.slug))
+  const fresh: BookMeta[] = []
+  for (const filename of readdirSync(PDF_DIR).filter(f => f.toLowerCase().endsWith('.pdf')).sort()) {
+    if (known.has(filename)) continue
+    const slug = fallbackSlug(filename)
+    if (!slug || slugs.has(slug)) continue
+    slugs.add(slug)
+    fresh.push({
+      slug,
+      ...parseFilename(filename),
+      filename,
+      sourceSize: statSync(path.join(PDF_DIR, filename)).size,
+      totalPages: 0,
+      charCount: 0,
+      extractedAt: '',
+    })
+  }
+  return [...extracted.filter(b => existsSync(path.join(PDF_DIR, b.filename))), ...fresh]
+}
+
+export async function getBookMeta(slug: string): Promise<BookMeta | null> {
+  return (await listShelf()).find(b => b.slug === slug) || null
+}
+
+export async function getBook(slug: string): Promise<BookRecord | null> {
   const cached = bookCache.get(slug)
   if (cached) return cached
   // Guard against path traversal via the [slug] route segment.
   if (!/^[a-z0-9-]+$/.test(slug)) return null
-  const file = path.join(DATA_DIR, `${slug}.json`)
-  if (!existsSync(file)) return null
-  const record = JSON.parse(readFileSync(file, 'utf8')) as BookRecord
-  bookCache.set(slug, record)
+  let record: BookRecord | null = null
+  if (hasLocalCorpus()) {
+    const file = path.join(DATA_DIR, `${slug}.json`)
+    if (existsSync(file)) record = JSON.parse(readFileSync(file, 'utf8')) as BookRecord
+  } else {
+    record = await downloadJson<BookRecord>(`text/${slug}.json`)
+  }
+  if (record) bookCache.set(slug, record)
   return record
 }
 
 /** Absolute path to the source PDF, or null if it is not on this machine. */
-export function getBookPdfPath(slug: string): string | null {
-  const meta = getBookMeta(slug)
+export async function getBookPdfPath(slug: string): Promise<string | null> {
+  if (!hasLocalCorpus()) return null
+  const meta = await getBookMeta(slug)
   if (!meta) return null
   const file = path.join(PDF_DIR, meta.filename)
   // Confine to the books directory regardless of what the manifest claims.
@@ -53,8 +136,19 @@ export function getBookPdfPath(slug: string): string | null {
   return existsSync(file) ? file : null
 }
 
-export function getPages(slug: string, from: number, to: number): { n: number; text: string }[] {
-  const book = getBook(slug)
+/**
+ * Where pdf.js should load the book from: the local streaming route in dev, a
+ * signed bucket URL when deployed. Callers must have checked ownership.
+ */
+export async function getPdfUrl(slug: string): Promise<string | null> {
+  if (!/^[a-z0-9-]+$/.test(slug)) return null
+  if (hasLocalCorpus()) return (await getBookPdfPath(slug)) ? `/api/books/${slug}/file` : null
+  if (!(await getBookMeta(slug))) return null
+  return signedPdfUrl(slug)
+}
+
+export async function getPages(slug: string, from: number, to: number): Promise<{ n: number; text: string }[]> {
+  const book = await getBook(slug)
   if (!book) return []
   const lo = Math.max(1, from)
   const hi = Math.min(book.totalPages, to)
@@ -100,10 +194,10 @@ function makeSnippet(text: string, at: number, len: number): string {
   return `${start > 0 ? '…' : ''}${snippet}${end < text.length ? '…' : ''}`
 }
 
-export function search(
+export async function search(
   query: string,
   opts: { slug?: string; limit?: number } = {}
-): BookSearchResponse {
+): Promise<BookSearchResponse> {
   const { slug, limit = 60 } = opts
   const { terms, phrases } = parseQuery(query)
   const needles = [...phrases, ...terms]
@@ -112,10 +206,11 @@ export function search(
     return { query, terms: needles, totalHits: 0, hits: [], byBook: [] }
   }
 
-  const books = getManifest()
-    .books.filter(b => !slug || b.slug === slug)
-    .map(b => getBook(b.slug))
-    .filter((b): b is BookRecord => !!b)
+  const books = (
+    await Promise.all(
+      (await getManifest()).books.filter(b => !slug || b.slug === slug).map(b => getBook(b.slug))
+    )
+  ).filter((b): b is BookRecord => !!b)
 
   // Bare terms allow up to three trailing characters so plurals and inflections
   // match ("gift" finds "gifts", "convention" finds "conventions") without a bare

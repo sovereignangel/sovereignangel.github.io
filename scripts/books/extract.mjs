@@ -19,7 +19,14 @@ const FORCE = process.argv.includes('--force')
 /** Stable slugs + clean metadata for the known shelf. Anything else is derived. */
 const OVERRIDES = [
   {
-    match: /grinold|active portfolio/i,
+    match: /^active portfolio management/i,
+    slug: 'grinold-kahn-apm',
+    title: 'Active Portfolio Management',
+    author: 'Richard C. Grinold & Ronald N. Kahn',
+    year: '1999',
+  },
+  {
+    match: /advances in active portfolio/i,
     slug: 'grinold-kahn-active-portfolio',
     title: 'Advances in Active Portfolio Management',
     author: 'Richard C. Grinold & Ronald N. Kahn',
@@ -39,10 +46,35 @@ const OVERRIDES = [
     author: 'Marcel Mauss',
     year: '1925',
   },
+  {
+    match: /origin of wealth|beinhocker/i,
+    slug: 'beinhocker-origin-of-wealth',
+    title: 'The Origin of Wealth',
+    author: 'Eric D. Beinhocker',
+    year: '2006',
+  },
+  {
+    match: /trades, quotes and prices|bouchaud/i,
+    slug: 'bouchaud-trades-quotes-prices',
+    title: 'Trades, Quotes and Prices',
+    author: 'Jean-Philippe Bouchaud, Julius Bonart, Jonathan Donier & Martin Gould',
+    year: '2018',
+  },
 ]
 
-function slugify(s) {
-  return s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60)
+/**
+ * Slug for a PDF without an override. From the filename, not PDF metadata, so
+ * the slug (and the reading session keyed on it) is the same before and after
+ * extraction. Keep in step with fallbackSlug() in lib/books/library.ts.
+ */
+function fallbackSlug(filename) {
+  return filename
+    .replace(/(\.epub)?\.pdf$/i, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '')
+    .slice(0, 60)
+    .replace(/-$/, '')
 }
 
 function pdfInfo(file) {
@@ -82,8 +114,8 @@ function main() {
   for (const filename of pdfs) {
     const abs = path.join(PDF_DIR, filename)
     const info = pdfInfo(abs)
-    const ov = OVERRIDES.find((o) => o.match.test(filename) || (info.title && o.match.test(info.title)))
-    const slug = ov?.slug || slugify(info.title || filename.replace(/\.pdf$/i, ''))
+    const ov = OVERRIDES.find((o) => o.match.test(filename)) || OVERRIDES.find((o) => info.title && o.match.test(info.title))
+    const slug = ov?.slug || fallbackSlug(filename)
     const outFile = path.join(OUT_DIR, `${slug}.json`)
 
     const stat = statSync(abs)

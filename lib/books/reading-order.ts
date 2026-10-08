@@ -467,3 +467,73 @@ export const LONG_FORM: LongFormItem[] = [
       'Not a document but a standing source, and the only one on this shelf rather than in the feed — working papers are checked when a question is live, not sampled daily. Going in with a specific reference to unpublished work is worth more than having read every book on the list.',
   },
 ]
+
+/**
+ * Books on the shelf that are not on the Abu Dhabi lane.
+ *
+ * The master library in lib/complexecon/pathway.ts is scoped to the Lane paper
+ * and the shock-to-share-price work, and it should stay that way — it is what
+ * /complexecon tracks and checks off. These are the operator's books: read for
+ * the three jobs (returns, capital, the shop) rather than for the paper. They
+ * appear in The List under their own filter so the lane shelves stay clean.
+ *
+ * Shape matches LibraryItem so FullListView can render them in the same table
+ * without a second layout.
+ */
+export interface ShelfExtra {
+  id: string
+  title: string
+  author: string
+  year: string
+  kind: 'book'
+  tier: 'spine' | 'foundation' | 'reference'
+  jobToBeDone: string
+  note: string
+}
+
+export const SHELF_EXTRAS: ShelfExtra[] = [
+  {
+    id: 'extra-beauvoir',
+    title: 'The Second Sex',
+    author: 'Simone de Beauvoir',
+    year: '1949',
+    kind: 'book',
+    tier: 'foundation',
+    jobToBeDone: 'Watch a category get made, then called natural',
+    note:
+      'Closer to the lane than it looks. The argument is that a social convention produces the thing it claims merely to describe, and is then treated as given — which is structurally the same move as a valuation convention producing the distribution it claims to measure. Read beside Mauss rather than as a detour.',
+  },
+  {
+    id: 'extra-antifragile',
+    title: 'Antifragile',
+    author: 'Nassim Nicholas Taleb',
+    year: '2012',
+    kind: 'book',
+    tier: 'foundation',
+    jobToBeDone: 'Size for the payoff you cannot forecast',
+    note:
+      'The convex-payoff argument, at book length and with the polemic attached. Useful against Grinold rather than alongside him: the fundamental law assumes you can estimate skill, and this is the case for structuring so you do not have to. Skim the repetition; the mechanism is in the barbell and the optionality chapters.',
+  },
+  {
+    id: 'extra-spy-the-lie',
+    title: 'Spy the Lie',
+    author: 'Philip Houston, Michael Floyd & Susan Carnicero',
+    year: '2012',
+    kind: 'book',
+    tier: 'reference',
+    jobToBeDone: 'Hear the evasion while the meeting is still running',
+    note:
+      'Ex-CIA interrogators on deceptive behaviour in live conversation. Short, operational, and pointed at the thinnest part of the stack — the capital and persuasion job, where the work is reading one person in real time rather than reading a source. The nearest thing on the shelf to a manual for a diligence call.',
+  },
+  {
+    id: 'extra-dobelli',
+    title: 'The Art of Thinking Clearly',
+    author: 'Rolf Dobelli',
+    year: '2013',
+    kind: 'book',
+    tier: 'reference',
+    jobToBeDone: 'Name the bias while it is happening',
+    note:
+      'Ninety-nine short chapters, one bias each. Not a book to read through — a reference to hit when a decision feels off, which is how the decision journal should be using it. Thin next to Kahneman on the science, better than Kahneman at the bedside.',
+  },
+]

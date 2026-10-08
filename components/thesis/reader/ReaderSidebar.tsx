@@ -1,15 +1,16 @@
 'use client'
 
 import { useState } from 'react'
-import type { ReadingHighlight, ReadingQA } from '@/lib/types/reading'
+import type { ReadingHighlight, ReadingQA, ReadingBookmark } from '@/lib/types/reading'
 import { authFetch } from '@/lib/auth-fetch'
 
-type SidebarTab = 'highlights' | 'notes' | 'ask'
+type SidebarTab = 'highlights' | 'bookmarks' | 'notes' | 'ask'
 
 interface ReaderSidebarProps {
   highlights: ReadingHighlight[]
   notes: string[]
   questions: ReadingQA[]
+  bookmarks?: ReadingBookmark[]
   documentTitle: string
   currentPageText: string
   /** Current PDF page — sent with book-wide questions so "here" resolves. */
@@ -21,12 +22,15 @@ interface ReaderSidebarProps {
   onUpdateHighlightNote: (id: string, note: string) => void
   onAddNote: (text: string) => void
   onAddQuestion: (qa: Omit<ReadingQA, 'id' | 'createdAt'>) => void
+  onToggleBookmark?: (page: number) => void
+  onUpdateBookmarkLabel?: (id: string, label: string) => void
 }
 
 export default function ReaderSidebar({
   highlights,
   notes,
   questions,
+  bookmarks = [],
   documentTitle,
   currentPageText,
   currentPage,
@@ -36,6 +40,8 @@ export default function ReaderSidebar({
   onUpdateHighlightNote,
   onAddNote,
   onAddQuestion,
+  onToggleBookmark,
+  onUpdateBookmarkLabel,
 }: ReaderSidebarProps) {
   const [activeTab, setActiveTab] = useState<SidebarTab>('highlights')
   const [noteInput, setNoteInput] = useState('')
@@ -43,9 +49,12 @@ export default function ReaderSidebar({
   const [askingAI, setAskingAI] = useState(false)
   const [editingHighlight, setEditingHighlight] = useState<string | null>(null)
   const [editNote, setEditNote] = useState('')
+  const [editingBookmark, setEditingBookmark] = useState<string | null>(null)
+  const [editLabel, setEditLabel] = useState('')
 
   const TABS: { key: SidebarTab; label: string; count?: number }[] = [
     { key: 'highlights', label: 'Highlights', count: highlights.length || undefined },
+    { key: 'bookmarks', label: 'Bookmarks', count: bookmarks.length || undefined },
     { key: 'notes', label: 'Notes', count: notes.length || undefined },
     { key: 'ask', label: 'Ask AI', count: questions.length || undefined },
   ]
@@ -103,7 +112,7 @@ export default function ReaderSidebar({
   }
 
   return (
-    <div className="w-[280px] bg-white border-l border-rule flex flex-col min-h-0">
+    <div className="absolute inset-y-0 right-0 z-10 w-full sm:static sm:w-[280px] bg-white border-l border-rule flex flex-col min-h-0">
       {/* Tab nav */}
       <div className="flex border-b border-rule shrink-0">
         {TABS.map(tab => (
@@ -200,6 +209,76 @@ export default function ReaderSidebar({
                         </div>
                       )}
                     </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        )}
+
+        {/* Bookmarks Tab */}
+        {activeTab === 'bookmarks' && (
+          <div className="space-y-1.5">
+            {onToggleBookmark && currentPage && !bookmarks.some(b => b.page === currentPage) && (
+              <button
+                onClick={() => onToggleBookmark(currentPage)}
+                className="w-full text-[10px] font-serif font-medium px-2 py-1 rounded-sm border border-rule text-ink-muted hover:text-ink hover:border-ink-faint"
+              >
+                Bookmark page {currentPage}
+              </button>
+            )}
+            {bookmarks.length === 0 ? (
+              <div className="text-[10px] text-ink-faint text-center py-4">
+                No bookmarks yet. Use Bookmark in the toolbar to mark a page.
+              </div>
+            ) : (
+              bookmarks.map(b => (
+                <div
+                  key={b.id}
+                  className={`border rounded-sm p-2 ${b.page === currentPage ? 'border-burgundy/40 bg-burgundy-bg' : 'border-rule-light'}`}
+                >
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      onClick={() => onJumpToPage(b.page)}
+                      className="font-mono text-[10px] text-burgundy hover:underline shrink-0"
+                    >
+                      p.{b.page}
+                    </button>
+                    {editingBookmark === b.id ? (
+                      <input
+                        value={editLabel}
+                        onChange={e => setEditLabel(e.target.value)}
+                        placeholder="Label..."
+                        autoFocus
+                        className="flex-1 min-w-0 text-[10px] border border-rule rounded-sm px-1.5 py-0.5 bg-paper text-ink"
+                        onBlur={() => {
+                          onUpdateBookmarkLabel?.(b.id, editLabel.trim())
+                          setEditingBookmark(null)
+                        }}
+                        onKeyDown={e => {
+                          if (e.key === 'Enter') (e.target as HTMLInputElement).blur()
+                          if (e.key === 'Escape') setEditingBookmark(null)
+                        }}
+                      />
+                    ) : (
+                      <button
+                        onClick={() => {
+                          setEditingBookmark(b.id)
+                          setEditLabel(b.label || '')
+                        }}
+                        className={`flex-1 min-w-0 text-left text-[10px] truncate ${b.label ? 'text-ink' : 'text-ink-faint hover:text-ink-muted'}`}
+                      >
+                        {b.label || '+ label'}
+                      </button>
+                    )}
+                    {onToggleBookmark && (
+                      <button
+                        onClick={() => onToggleBookmark(b.page)}
+                        className="text-[10px] text-ink-faint hover:text-red-ink shrink-0"
+                      >
+                        remove
+                      </button>
+                    )}
                   </div>
                 </div>
               ))

@@ -16,6 +16,10 @@ export interface BookMeta {
   totalPages: number
   charCount: number
   extractedAt: string
+  /** Size of the bucket copy (deployed shelf only; differs from sourceSize when recompressed). */
+  uploadedSize?: number
+  /** Set by /api/books: page text exists, so search and Ask work. */
+  extracted?: boolean
 }
 
 export interface BookRecord extends BookMeta {

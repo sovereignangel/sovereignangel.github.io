@@ -35,26 +35,60 @@ export function useReadingSession(sourceUrl: string | null) {
       .finally(() => setLoading(false))
   }, [user?.uid, sourceUrl])
 
-  // Debounced auto-save
+  // Writes are merged into one pending patch and run strictly one at a time.
+  // Two saves racing before the first returned its id used to create two
+  // documents, and a highlight saved inside the page debounce cancelled the
+  // page write. Now the patch accumulates and a single chain drains it.
+  const pendingRef = useRef<Partial<ReadingSession>>({})
+  const chainRef = useRef<Promise<void>>(Promise.resolve())
+
+  const flush = useCallback(() => {
+    if (saveTimerRef.current) {
+      clearTimeout(saveTimerRef.current)
+      saveTimerRef.current = null
+    }
+    const uid = user?.uid
+    if (!uid || !Object.keys(pendingRef.current).length) return chainRef.current
+    chainRef.current = chainRef.current.then(async () => {
+      const patch = pendingRef.current
+      if (!Object.keys(patch).length) return
+      pendingRef.current = {}
+      try {
+        const id = await saveReadingSession(uid, { ...patch, lastReadAt: new Date().toISOString() }, sessionIdRef.current || undefined)
+        if (!sessionIdRef.current) sessionIdRef.current = id
+      } catch (err) {
+        // Put the patch back under anything newer so the next flush retries it.
+        pendingRef.current = { ...patch, ...pendingRef.current }
+        console.error('Reading session save failed', err)
+      }
+    })
+    return chainRef.current
+  }, [user?.uid])
+
   const debouncedSave = useCallback((updates: Partial<ReadingSession>) => {
-    if (!user?.uid) return
+    pendingRef.current = { ...pendingRef.current, ...updates }
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
+    saveTimerRef.current = setTimeout(flush, 1500)
+  }, [flush])
 
-    saveTimerRef.current = setTimeout(async () => {
-      const data = { ...updates, lastReadAt: new Date().toISOString() }
-      const id = await saveReadingSession(user.uid, data, sessionIdRef.current || undefined)
-      if (!sessionIdRef.current) sessionIdRef.current = id
-    }, 2000)
-  }, [user?.uid])
+  const immediateSave = useCallback((updates: Partial<ReadingSession>) => {
+    pendingRef.current = { ...pendingRef.current, ...updates }
+    return flush()
+  }, [flush])
 
-  // Immediate save
-  const immediateSave = useCallback(async (updates: Partial<ReadingSession>) => {
-    if (!user?.uid) return
-    if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
-    const data = { ...updates, lastReadAt: new Date().toISOString() }
-    const id = await saveReadingSession(user.uid, data, sessionIdRef.current || undefined)
-    if (!sessionIdRef.current) sessionIdRef.current = id
-  }, [user?.uid])
+  // Closing the reader, the tab, or backgrounding the phone must not drop the
+  // last page turn sitting in the debounce.
+  useEffect(() => {
+    const onHide = () => { flush() }
+    const onVisibility = () => { if (document.visibilityState === 'hidden') flush() }
+    window.addEventListener('pagehide', onHide)
+    document.addEventListener('visibilitychange', onVisibility)
+    return () => {
+      window.removeEventListener('pagehide', onHide)
+      document.removeEventListener('visibilitychange', onVisibility)
+      flush()
+    }
+  }, [flush])
 
   // Initialize session with document metadata (called once when PDF loads)
   const initSession = useCallback((meta: Pick<ReadingSession, 'title' | 'author' | 'sourceType' | 'sourceUrl'> & { totalPages?: number; linkedPaperId?: string; linkedProfessorId?: string }) => {
@@ -70,6 +104,7 @@ export function useReadingSession(sourceUrl: string | null) {
       highlights: [],
       notes: [],
       questions: [],
+      bookmarks: [],
       linkedPaperId: meta.linkedPaperId,
       linkedProfessorId: meta.linkedProfessorId,
     }
@@ -81,7 +116,7 @@ export function useReadingSession(sourceUrl: string | null) {
     setSession(prev => {
       if (!prev) return prev
       const updated = { ...prev, currentPage: page }
-      debouncedSave({ currentPage: page, highlights: updated.highlights, notes: updated.notes, questions: updated.questions })
+      debouncedSave({ currentPage: page })
       return updated
     })
   }, [debouncedSave])
@@ -153,6 +188,27 @@ export function useReadingSession(sourceUrl: string | null) {
     })
   }, [immediateSave])
 
+  const toggleBookmark = useCallback((page: number) => {
+    setSession(prev => {
+      if (!prev) return prev
+      const existing = prev.bookmarks || []
+      const bookmarks = existing.some(b => b.page === page)
+        ? existing.filter(b => b.page !== page)
+        : [...existing, { id: generateId(), page, createdAt: new Date().toISOString() }].sort((a, b) => a.page - b.page)
+      immediateSave({ bookmarks })
+      return { ...prev, bookmarks }
+    })
+  }, [immediateSave])
+
+  const updateBookmarkLabel = useCallback((bookmarkId: string, label: string) => {
+    setSession(prev => {
+      if (!prev) return prev
+      const bookmarks = (prev.bookmarks || []).map(b => b.id === bookmarkId ? { ...b, label } : b)
+      immediateSave({ bookmarks })
+      return { ...prev, bookmarks }
+    })
+  }, [immediateSave])
+
   return {
     session,
     loading,
@@ -164,5 +220,7 @@ export function useReadingSession(sourceUrl: string | null) {
     updateHighlightNote,
     addNote,
     addQuestion,
+    toggleBookmark,
+    updateBookmarkLabel,
   }
 }

@@ -23,11 +23,29 @@ export async function getReadingSessionBySource(uid: string, sourceUrl: string):
   return { id: d.id, ...d.data() } as ReadingSession
 }
 
+/**
+ * Firestore rejects undefined anywhere in a document ("Unsupported field value"),
+ * and optional fields like linkedPaperId or a QA's pageNumber are routinely
+ * undefined — which made the very first save of a session throw. Strip them.
+ */
+function stripUndefined<T>(value: T): T {
+  if (Array.isArray(value)) return value.map(stripUndefined) as T
+  if (value && typeof value === 'object' && Object.getPrototypeOf(value) === Object.prototype) {
+    const out: Record<string, unknown> = {}
+    for (const [k, v] of Object.entries(value)) {
+      if (v !== undefined) out[k] = stripUndefined(v)
+    }
+    return out as T
+  }
+  return value
+}
+
 export async function saveReadingSession(
   uid: string,
   data: Partial<ReadingSession>,
   sessionId?: string
 ): Promise<string> {
+  data = stripUndefined(data)
   if (sessionId) {
     const ref = doc(sessionsRef(uid), sessionId)
     await updateDoc(ref, { ...data, updatedAt: serverTimestamp() })
