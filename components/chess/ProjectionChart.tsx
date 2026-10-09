@@ -37,7 +37,7 @@ type Range = 'sprint' | 'year' | 'full'
 const RANGES: { id: Range; label: string }[] = [
   { id: 'sprint', label: 'To Oct 24' },
   { id: 'year', label: 'First year' },
-  { id: 'full', label: 'To 2000' },
+  { id: 'full', label: `To ${TARGET_RATING}` },
 ]
 
 const H = 250
@@ -94,7 +94,7 @@ export function ProjectionChart({
     const steps = 120
     return SCENARIOS.map((hours) => ({
       hours,
-      // Each line stops where it reaches the bar — past 2000 it has nothing left to say.
+      // Each line stops where it reaches the bar — past the bar it has nothing left to say.
       pts: Array.from({ length: steps + 1 }, (_, i) => {
         const m = anchorM + ((spanMonths - anchorM) * i) / steps
         return { m, r: ratingAfter(anchor.rating, m - anchorM, hours) }
@@ -117,7 +117,7 @@ export function ProjectionChart({
 
   const yMax = useMemo(() => {
     const top = Math.max(...series.flatMap((s) => s.pts.map((p) => p.r)), ...actual.map((a) => a.r))
-    if (range === 'full') return 2100
+    if (range === 'full') return TARGET_RATING + 100
     return Math.ceil((top + 40) / 50) * 50
   }, [series, actual, range])
   const low = Math.min(anchor.rating, ...actual.map((a) => a.r))
@@ -234,7 +234,7 @@ export function ProjectionChart({
             <g>
               <line x1={PAD.left} x2={width - PAD.right} y1={y(TARGET_RATING)} y2={y(TARGET_RATING)} stroke={LANE_INK.ink} strokeWidth={1} strokeDasharray="4 4" />
               <text x={PAD.left + 8} y={y(TARGET_RATING) + 15} fontSize={11} fill={LANE_INK.ink}>
-                2000 rapid · A Team bar
+                {TARGET_RATING} rapid · A Team bar
               </text>
             </g>
           )}

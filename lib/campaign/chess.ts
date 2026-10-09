@@ -1,12 +1,12 @@
 /**
- * Chess campaign — 900 to 2000 Chess.com rapid, the bar set for the
+ * Chess campaign — 900 to 1700 Chess.com rapid, the bar set for the
  * Williamsburg A Team (picked on a rating floor).
  *
  * Two horizons in one ladder. Block I is a fifteen-day sprint to the October
  * 24 tournament, where the rating will barely move and the performance can:
  * at 900 the points are in not hanging pieces, and that is trainable in two
  * weeks. The 900 is self-estimated from Chess.com play, so unit 1.1 turns it
- * into a real rapid rating first. Blocks II–V are dated to the 10-hours-a-week line of the model in
+ * into a real rapid rating first. Blocks II–IV are dated to the 10-hours-a-week line of the model in
  * lib/chess/model.ts — the fast end of the 5–10 hour range, so a block that
  * runs behind is an honest read that the week is closer to five.
  *
@@ -22,11 +22,11 @@ import type { Campaign } from './types'
 export const CHESS_CAMPAIGN: Campaign = {
   id: 'chess',
   name: 'Chess',
-  lane: '900 to 2000 Chess.com rapid — the Williamsburg A Team bar, one blunder check at a time',
+  lane: '900 to 1700 Chess.com rapid — the Williamsburg A Team bar, one blunder check at a time',
   destination: {
-    label: '2000 rapid · A Team bar (10h/wk line)',
-    sub: 'Williamsburg A Team — rating floor, 2000 on Chess.com rapid',
-    date: '2030-07-20',
+    label: '1700 rapid · A Team bar (10h/wk line)',
+    sub: 'Williamsburg A Team — rating floor, 1700 on Chess.com rapid',
+    date: '2028-10-05',
   },
   href: '/chess',
   sessionsPerDay: 1,
@@ -238,9 +238,9 @@ export const CHESS_CAMPAIGN: Campaign = {
       numeral: 'IV',
       name: 'Plans and Structures',
       start: '2027-12-01',
-      end: '2029-03-10',
-      aim: '1500 to 1800 rapid. Quiet positions stop being a mystery: pawn structures carry plans, and calculation gets written down.',
-      gate: 'Losses come from calculation, not strategy — and Chess.com rapid at or above 1800.',
+      end: '2028-10-05',
+      aim: '1500 to 1700 rapid — the A Team bar. Quiet positions stop being a mystery: pawn structures carry plans, and calculation gets written down.',
+      gate: '1700 Chess.com rapid, held for a month — and losses that come from calculation, not strategy.',
       units: [
         {
           id: 'ch-4-01',
@@ -268,49 +268,15 @@ export const CHESS_CAMPAIGN: Campaign = {
         {
           id: 'ch-4-04',
           code: '4.4',
-          label: 'Coach every two weeks; one long tournament a month',
-          detail: 'Sixteen months of it. Check off when the habit has held for the whole block.',
-          sessions: 16,
-        },
-      ],
-    },
-    {
-      id: 'ch-expert',
-      numeral: 'V',
-      name: 'Class A to the A Team',
-      start: '2029-03-11',
-      end: '2030-07-20',
-      aim: '1800 to 2000 rapid. Precision at the critical moment, technical endgames converted, and a repertoire deep where opponents actually go.',
-      gate: '2000 Chess.com rapid, held for a month — not touched once.',
-      units: [
-        {
-          id: 'ch-5-01',
-          code: '5.1',
-          label: 'Build Up Your Chess 3 (Yusupov)',
-          detail: 'Same standard as books 1 and 2.',
-          sessions: 24,
-          key: true,
+          label: 'Coach every two weeks; one OTB tournament a month',
+          detail: 'Ten months of it. Check off when the habit has held for the whole block.',
+          sessions: 10,
         },
         {
-          id: 'ch-5-02',
-          code: '5.2',
-          label: "Dvoretsky's Endgame Manual — the highlighted material",
-          detail: 'The bold positions, known cold.',
-          sessions: 20,
-        },
-        {
-          id: 'ch-5-03',
-          code: '5.3',
-          label: 'Play up — 2000+ opponents, online and over the board',
-          detail: 'Seek out stronger players at long time controls. Every game against a 2000 is a lesson in what the number actually means.',
-          sessions: 12,
-          key: true,
-        },
-        {
-          id: 'ch-5-04',
-          code: '5.4',
+          id: 'ch-4-05',
+          code: '4.5',
           label: 'Try out for the A Team',
-          detail: 'The destination.',
+          detail: 'The destination. 1700 held, and a season of over-the-board games behind it so the board is as familiar as the screen.',
           key: true,
         },
       ],

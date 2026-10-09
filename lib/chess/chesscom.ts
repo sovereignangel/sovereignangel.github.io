@@ -5,7 +5,7 @@
  * User-Agent, and is cached here for fifteen minutes so a busy /chess render
  * never hammers it.
  *
- * The rapid pool is the one the 2000 bar is set in, so it is the only one
+ * The rapid pool is the one the A Team bar is set in, so it is the only one
  * plotted. Blitz, bullet and puzzles are context: they say something about
  * the player, not about the target.
  */

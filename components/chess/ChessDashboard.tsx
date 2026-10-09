@@ -172,7 +172,7 @@ export function ChessDashboard({
           color={toTournament >= 0 && toTournament <= 7 ? LANE_INK.warn : undefined}
         />
         <Metric
-          label="To 2000"
+          label={`To ${TARGET_RATING}`}
           value={String(Math.max(0, TARGET_RATING - baseline.rating))}
           sub={`stage ${stage.numeral} · ${stage.name}`}
         />

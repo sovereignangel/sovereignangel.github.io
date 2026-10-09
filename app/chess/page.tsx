@@ -5,6 +5,7 @@ import { todayLocal } from '@/lib/ironman/plan'
 import { LANE_BY_ID, LANE_INK } from '@/lib/exec/lanes'
 import {
   MILESTONES,
+  TARGET_RATING,
   SCENARIO_COLOR,
   STAGES,
   milestoneDates,
@@ -16,7 +17,7 @@ import { fetchChessCom, baselineFrom, dailyRapid, summaryOf, BASELINE_GAMES } fr
 
 export const metadata: Metadata = {
   title: 'Chess — Mastery',
-  description: '900 to 2000 Chess.com rapid: the Williamsburg A Team bar, the October 24 sprint, and the ladder in between',
+  description: '900 to 1700 Chess.com rapid: the Williamsburg A Team bar, the October 24 sprint, and the ladder in between',
 }
 
 export const revalidate = 60
@@ -74,7 +75,7 @@ export default async function ChessPage() {
               Chess <span style={{ color: lane.color }}>&mdash;</span> Mastery
             </h1>
             <span className="hidden md:inline text-[10px]" style={{ color: LANE_INK.muted }}>
-              900 &rarr; 2000 Chess.com rapid &middot; the Williamsburg A Team bar
+              900 &rarr; 1700 Chess.com rapid &middot; the Williamsburg A Team bar
             </span>
             <span className="ml-auto flex items-center gap-1">
               <Link
@@ -123,24 +124,24 @@ export default async function ChessPage() {
                   ))}{' '}
                   points on the model at 5 / 7.5 / 10 hours. But at 900 most games are lost to one-move blunders, and a
                   blunder check is trainable in two weeks. Playing at a 1000–1100 level on the day is a real target;
-                  2000 on the day is not. And the 900 is a self-estimate — ten rated rapid games turn it into a number
+                  1700 on the day is not. And the 900 is a self-estimate — ten rated rapid games turn it into a number
                   the plan can be measured against.
                 </p>
                 <p>
-                  <span className="font-semibold">2000 rapid is a multi-year project.</span> It sits in roughly the top
-                  one to two percent of Chess.com rapid players, and further than most adult improvers ever get. The
-                  model puts it at <span className="font-mono">4&ndash;6</span> years from 900 at 5&ndash;10 hours a
-                  week, because the points get expensive fast: 900&rarr;1200 is months, 1800&rarr;2000 alone is over a
-                  year. Online is the faster pool to climb — far more rated games per week — which is why this is
-                  shorter than an over-the-board line would be.
+                  <span className="font-semibold">1700 rapid is a two-to-three-year project.</span> It is a strong
+                  club-player number — reachable for an adult who trains consistently, and well past where most stall.
+                  The model puts it at <span className="font-mono">2&ndash;3</span> years from 900 at 5&ndash;10 hours
+                  a week: 900&rarr;1200 is months, 1200&rarr;1500 about a year, and 1500&rarr;1700 is the hard
+                  stretch, where the points stop coming from opponents&rsquo; mistakes and start coming from your own
+                  plans. Online is the faster pool to climb — far more rated games per week.
                 </p>
                 <p>
                   <span className="font-semibold">What moves the dates.</span> A coach who reviews your games (the single
-                  biggest lever below 1800), rated games at 15+10 or longer every week — not blitz — and honest review
+                  biggest lever at this level), rated games at 15+10 or longer every week — not blitz — and honest review
                   of every loss before the engine. Hours without those three buy far less than the lines show.
                 </p>
                 <p style={{ color: LANE_INK.muted }} className="text-[10px]">
-                  Assumptions: the A Team is picked on a rating floor, and the floor is 2000 Chess.com rapid. If the club
+                  Assumptions: the A Team is picked on a rating floor, and the floor is 1700 Chess.com rapid. If the club
                   turns out to select on a USCF rating or on results, the bar moves and so does this page.
                 </p>
               </div>
@@ -166,7 +167,7 @@ export default async function ChessPage() {
                         </span>
                       </td>
                       {row.dates.map((d) => (
-                        <td key={d.rating} className={`text-right font-mono py-1.5 ${d.rating === 2000 ? 'font-semibold' : ''}`}>
+                        <td key={d.rating} className={`text-right font-mono py-1.5 ${d.rating === TARGET_RATING ? 'font-semibold' : ''}`}>
                           {fmtDate(d.date)}
                         </td>
                       ))}
@@ -175,7 +176,7 @@ export default async function ChessPage() {
                 </tbody>
               </table>
               <p className="text-[10px] leading-relaxed mt-2" style={{ color: LANE_INK.muted }}>
-                Chess.com rapid points per month at 7.5h: 50 below 1200, 28 to 1500, 16 to 1800, 10 to 2000 — scaled by hours to the 0.7
+                Chess.com rapid points per month at 7.5h: 80 below 800, 50 to 1200, 28 to 1500, 16 to 1700 — scaled by hours to the 0.7
                 power, because the tenth hour of a week absorbs less than the fifth. A planning model, not a promise:
                 the logged dots on the chart above are what check it.
               </p>
@@ -186,8 +187,8 @@ export default async function ChessPage() {
             <ExecCampaign id="chess" laneId="chess" date={today} />
           </div>
 
-          <Card title="The mastery flow" right={<span className="text-[10px]" style={{ color: LANE_INK.muted }}>four stages · each named for the error that costs the most points</span>}>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <Card title="The mastery flow" right={<span className="text-[10px]" style={{ color: LANE_INK.muted }}>three stages · each named for the error that costs the most points</span>}>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               {STAGES.map((s) => (
                 <div key={s.id} className="border rounded-lg p-2.5" style={{ borderColor: LANE_INK.ruleLight }}>
                   <div className="flex items-baseline gap-2 mb-1">
