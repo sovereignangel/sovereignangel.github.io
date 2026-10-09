@@ -19,6 +19,7 @@ import { TARGET_RATING, TOURNAMENT_DATE, stageFor } from '@/lib/chess/model'
 import { BASELINE_GAMES, type Baseline, type ChessComSnapshot } from '@/lib/chess/chesscom'
 import { useExecDate } from '@/components/exec/useExecDate'
 import { ProjectionChart } from './ProjectionChart'
+import { ChessLedger } from './ChessLedger'
 
 const POOLS: { id: ChessPool; label: string }[] = [
   { id: 'chesscom_rapid', label: 'Chess.com rapid' },
@@ -66,7 +67,7 @@ function Metric({ label, value, sub, color }: { label: string; value: string; su
 const input = 'w-full font-mono text-[11px] px-2 py-1 rounded-md border bg-transparent outline-none focus:border-current'
 
 /** What the server hands over from Chess.com — the game list itself stays server-side. */
-export type ChessComSummary = Omit<ChessComSnapshot, 'rapidGames'>
+export type ChessComSummary = Omit<ChessComSnapshot, 'rapidGames' | 'liveGames'>
 
 export function ChessDashboard({
   date: serverDate,
@@ -290,6 +291,8 @@ export function ChessDashboard({
           </>
         )}
       </div>
+
+      <ChessLedger />
     </div>
   )
 }

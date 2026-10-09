@@ -1,5 +1,6 @@
 /**
- * Chess log — users/{uid}/chess_log/{date}.
+ * Chess log — users/{uid}/chess_log/{date}, and the cron-written ledger at
+ * users/{uid}/chess_ledger/{date}-{slot}.
  *
  * The ladder and the daily tactics floor live in the campaign collections
  * (chess_progress, chess_days); this is the part a campaign cannot hold: the
@@ -11,13 +12,14 @@ import {
   deleteDoc,
   doc,
   getDocs,
+  limit,
   orderBy,
   query,
   serverTimestamp,
   setDoc,
 } from 'firebase/firestore'
 import { db } from '../firebase'
-import type { ChessLogEntry } from '../types/chess'
+import type { ChessLedgerEntry, ChessLogEntry } from '../types/chess'
 
 const logCol = (uid: string) => collection(db, 'users', uid, 'chess_log')
 
@@ -37,4 +39,10 @@ export async function saveChessLog(uid: string, entry: ChessLogEntry): Promise<v
 
 export async function deleteChessLog(uid: string, date: string): Promise<void> {
   await deleteDoc(doc(logCol(uid), date))
+}
+
+/** The half-daily ledger the cron writes — newest first. Read-only from the client. */
+export async function getChessLedger(uid: string, n = 60): Promise<ChessLedgerEntry[]> {
+  const snap = await getDocs(query(collection(db, 'users', uid, 'chess_ledger'), orderBy('takenAt', 'desc'), limit(n)))
+  return snap.docs.map((d) => d.data() as ChessLedgerEntry)
 }
