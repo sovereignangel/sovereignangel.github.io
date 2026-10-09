@@ -29,7 +29,7 @@ function fmtDay(iso: string): string {
 }
 
 export function ChessLedger() {
-  const { user } = useAuth()
+  const { user, signIn, loading: authLoading } = useAuth()
   const [rows, setRows] = useState<ChessLedgerEntry[] | null>(null)
 
   useEffect(() => {
@@ -57,7 +57,14 @@ export function ChessLedger() {
       </div>
 
       {!user ? (
-        <p className="text-[10px]" style={{ color: LANE_INK.muted }}>Sign in to see the ledger.</p>
+        <button
+          onClick={signIn}
+          disabled={authLoading}
+          className="font-serif text-[10px] font-medium px-2 py-1 rounded-md border bg-transparent disabled:opacity-50"
+          style={{ color: LANE_INK.ink, borderColor: LANE_INK.faint }}
+        >
+          Sign in to see the ledger
+        </button>
       ) : rows === null ? (
         <div className="h-12 rounded-md animate-pulse" style={{ backgroundColor: LANE_INK.ruleLight }} />
       ) : rows.length === 0 ? (

@@ -14,7 +14,7 @@
  * Hours scale the rate sub-linearly: the tenth hour of a week is worth less
  * than the fifth, because absorption, not exposure, is the bottleneck.
  *
- * The logged ratings on /chess are plotted against these lines, so the model
+ * Chess.com rapid ratings on /chess are plotted against these lines, so the model
  * gets checked by reality rather than defended.
  */
 

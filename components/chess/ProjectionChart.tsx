@@ -24,13 +24,6 @@ import {
   ratingAfter,
   type ScenarioHours,
 } from '@/lib/chess/model'
-import type { ChessLogEntry } from '@/lib/types'
-
-const POOL_LABEL: Record<string, string> = {
-  uscf: 'USCF',
-  chesscom_rapid: 'Chess.com rapid',
-  lichess_rapid: 'Lichess rapid',
-}
 
 type Range = 'sprint' | 'year' | 'full'
 
@@ -58,15 +51,13 @@ export interface Anchor {
 
 /**
  * `synced` is the Chess.com rapid rating at the end of each day it was played —
- * filled dots. `log` is anything entered by hand — hollow rings. The lines start
+ * one dot per day. The lines start
  * at `anchor`: the self-estimate until the baseline games exist, then the real number.
  */
 export function ProjectionChart({
-  log,
   synced = [],
   anchor,
 }: {
-  log: ChessLogEntry[]
   synced?: { date: string; rating: number; games: number }[]
   anchor: Anchor
 }) {
@@ -106,13 +97,10 @@ export function ProjectionChart({
 
   const actual = useMemo(
     () =>
-      [
-        ...synced.map((s) => ({ m: monthsSince(START_DATE, s.date), r: s.rating, kind: 'sync' as const, label: `Chess.com rapid · ${s.games} game${s.games > 1 ? 's' : ''}`, key: 's' + s.date })),
-        ...log
-          .filter((e) => typeof e.rating === 'number')
-          .map((e) => ({ m: monthsSince(START_DATE, e.date), r: e.rating as number, kind: 'log' as const, label: POOL_LABEL[e.pool || ''] || 'Logged', key: 'l' + e.date })),
-      ].filter((p) => p.m >= -0.25 && p.m <= spanMonths),
-    [log, synced, spanMonths]
+      synced
+        .map((s) => ({ m: monthsSince(START_DATE, s.date), r: s.rating, label: `Chess.com rapid · ${s.games} game${s.games > 1 ? 's' : ''}`, key: s.date }))
+        .filter((p) => p.m >= -0.25 && p.m <= spanMonths),
+    [synced, spanMonths]
   )
 
   const yMax = useMemo(() => {
@@ -207,10 +195,6 @@ export function ProjectionChart({
             <span className="inline-block w-2 h-2 rounded-full" style={{ backgroundColor: LANE_INK.ink }} />
             Chess.com rapid
           </span>
-          <span className="flex items-center gap-1 text-[10px]" style={{ color: LANE_INK.muted }}>
-            <span className="inline-block w-2 h-2 rounded-full border" style={{ borderColor: LANE_INK.ink }} />
-            By hand
-          </span>
         </span>
       </div>
 
@@ -275,11 +259,7 @@ export function ProjectionChart({
           })()}
 
           {actual.map((a) => (
-            a.kind === 'sync' ? (
-              <circle key={a.key} cx={x(a.m)} cy={y(a.r)} r={4.5} fill={LANE_INK.ink} stroke={LANE_INK.card} strokeWidth={2} />
-            ) : (
-              <circle key={a.key} cx={x(a.m)} cy={y(a.r)} r={4} fill={LANE_INK.card} stroke={LANE_INK.ink} strokeWidth={1.75} />
-            )
+            <circle key={a.key} cx={x(a.m)} cy={y(a.r)} r={4.5} fill={LANE_INK.ink} stroke={LANE_INK.card} strokeWidth={2} />
           ))}
 
           {hover && (
@@ -318,10 +298,7 @@ export function ProjectionChart({
             ))}
             {hover.logged && (
               <div className="flex items-center gap-1.5 mt-0.5 pt-0.5 border-t" style={{ borderColor: LANE_INK.ruleLight }}>
-                <span
-                  className="inline-block w-2 h-2 rounded-full border"
-                  style={{ backgroundColor: hover.logged.kind === 'sync' ? LANE_INK.ink : 'transparent', borderColor: LANE_INK.ink }}
-                />
+                <span className="inline-block w-2 h-2 rounded-full" style={{ backgroundColor: LANE_INK.ink }} />
                 <span style={{ color: LANE_INK.muted }}>{hover.logged.label}</span>
                 <span className="ml-auto font-mono font-semibold">{hover.logged.r}</span>
               </div>

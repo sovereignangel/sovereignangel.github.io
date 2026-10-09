@@ -178,7 +178,7 @@ export default async function ChessPage() {
               <p className="text-[10px] leading-relaxed mt-2" style={{ color: LANE_INK.muted }}>
                 Chess.com rapid points per month at 7.5h: 80 below 800, 50 to 1200, 28 to 1500, 16 to 1700 — scaled by hours to the 0.7
                 power, because the tenth hour of a week absorbs less than the fifth. A planning model, not a promise:
-                the logged dots on the chart above are what check it.
+                your Chess.com rapid games, plotted on the chart above, are what check it.
               </p>
             </Card>
           </div>
