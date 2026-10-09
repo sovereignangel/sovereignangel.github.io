@@ -7,12 +7,12 @@ import {
   MILESTONES,
   SCENARIO_COLOR,
   STAGES,
-  START_RATING,
   milestoneDates,
   tournamentProjection,
 } from '@/lib/chess/model'
 import { ExecCampaign } from '@/components/exec/ExecCampaign'
 import { ChessDashboard } from '@/components/chess/ChessDashboard'
+import { fetchChessCom, baselineFrom, dailyRapid, summaryOf, BASELINE_GAMES } from '@/lib/chess/chesscom'
 
 export const metadata: Metadata = {
   title: 'Chess — Mastery',
@@ -51,10 +51,18 @@ function Rook({ className }: { className?: string }) {
   )
 }
 
-export default function ChessPage() {
+export default async function ChessPage() {
   const today = todayLocal()
-  const milestones = milestoneDates()
-  const sprint = tournamentProjection()
+  // Never allowed to take the page down: without Chess.com the plan still
+  // renders from the self-estimate.
+  const snapshot = await fetchChessCom().catch(() => null)
+  const baseline = baselineFrom(snapshot)
+  const synced = dailyRapid(snapshot)
+  const milestones = milestoneDates(baseline.rating, baseline.date)
+  const sprint = tournamentProjection(baseline.rating, baseline.date)
+  const START_RATING = baseline.rating
+  // Shown while the account and the estimate disagree by more than a class.
+  const gap = baseline.estimate && snapshot?.rapid != null && Math.abs(snapshot.rapid - baseline.rating) > 200
 
   return (
     <AuthProvider>
@@ -87,12 +95,24 @@ export default function ChessPage() {
           </header>
 
           <div className="mb-3">
-            <ChessDashboard date={today} />
+            <ChessDashboard date={today} chesscom={snapshot ? summaryOf(snapshot) : null} synced={synced} baseline={baseline} />
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 items-start mb-3">
             <Card title="The honest read">
               <div className="space-y-2 text-[11px] leading-relaxed" style={{ color: LANE_INK.ink }}>
+                {gap && snapshot && (
+                  <p className="border-l-2 pl-2" style={{ borderColor: LANE_INK.warn }}>
+                    <span className="font-semibold">The account says otherwise.</span> Chess.com has rapid at{' '}
+                    <span className="font-mono">{snapshot.rapid}</span>
+                    {snapshot.rapidBest ? <> (best <span className="font-mono">{snapshot.rapidBest}</span>)</> : null}
+                    {snapshot.rapidDate ? <>, last played {snapshot.rapidDate}</> : null}
+                    {snapshot.puzzleHigh ? <>, with puzzles peaking at <span className="font-mono">{snapshot.puzzleHigh}</span></> : null}.
+                    A rating untouched that long is stale, and a puzzle peak that high says the calculation is ahead of
+                    it — so the plan runs on the estimate until {BASELINE_GAMES} rated rapid games settle the
+                    question, then re-anchors on the real number by itself.
+                  </p>
+                )}
                 <p>
                   <span className="font-semibold">By October 24, the rating barely moves; the play can.</span> Fifteen days
                   is worth about{' '}
@@ -126,7 +146,7 @@ export default function ChessPage() {
               </div>
             </Card>
 
-            <Card title="When each rating lands" right={<span className="text-[10px]" style={{ color: LANE_INK.muted }}>model · from {START_RATING} today</span>}>
+            <Card title="When each rating lands" right={<span className="text-[10px]" style={{ color: LANE_INK.muted }}>model · from {START_RATING}{baseline.estimate ? ' (estimate)' : ''}</span>}>
               <table className="w-full text-[11px]" style={{ color: LANE_INK.ink }}>
                 <thead>
                   <tr style={{ color: LANE_INK.muted }}>

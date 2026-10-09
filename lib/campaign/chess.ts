@@ -55,7 +55,7 @@ export const CHESS_CAMPAIGN: Campaign = {
           id: 'ch-1-01',
           code: '1.1',
           label: 'Turn the self-estimated 900 into a real Chess.com rapid rating',
-          detail: 'Ten rated rapid games at 15+10 or longer, blunder check on every move, then log the number on /chess as Chess.com rapid. Everything on this ladder is measured from that number, not the estimate.',
+          detail: 'Ten rated rapid games at 15+10 or longer, blunder check on every move, and /chess picks the number up from Chess.com on its own and re-anchors the projection on it. Everything on this ladder is measured from that number, not the estimate.',
           sessions: 3,
           key: true,
         },

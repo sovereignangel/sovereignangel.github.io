@@ -16,7 +16,6 @@ import {
   SCENARIOS,
   SCENARIO_COLOR,
   START_DATE,
-  START_RATING,
   TARGET_RATING,
   TOURNAMENT_DATE,
   addMonthsISO,
@@ -52,7 +51,26 @@ function fmtMonth(iso: string, withDay = false): string {
   }) + (withDay ? '' : ` '${iso.slice(2, 4)}`)
 }
 
-export function ProjectionChart({ log }: { log: ChessLogEntry[] }) {
+export interface Anchor {
+  rating: number
+  date: string
+}
+
+/**
+ * `synced` is the Chess.com rapid rating at the end of each day it was played —
+ * filled dots. `log` is anything entered by hand — hollow rings. The lines start
+ * at `anchor`: the self-estimate until the baseline games exist, then the real number.
+ */
+export function ProjectionChart({
+  log,
+  synced = [],
+  anchor,
+}: {
+  log: ChessLogEntry[]
+  synced?: { date: string; rating: number; games: number }[]
+  anchor: Anchor
+}) {
+  const anchorM = monthsSince(START_DATE, anchor.date)
   const wrap = useRef<HTMLDivElement>(null)
   const [width, setWidth] = useState(720)
   const [range, setRange] = useState<Range>('full')
@@ -69,8 +87,8 @@ export function ProjectionChart({ log }: { log: ChessLogEntry[] }) {
   const spanMonths = useMemo(() => {
     if (range === 'sprint') return monthsSince(START_DATE, TOURNAMENT_DATE) + 0.15
     if (range === 'year') return 12
-    return Math.ceil(monthsBetween(START_RATING, TARGET_RATING, 5)) + 3
-  }, [range])
+    return Math.ceil(anchorM + monthsBetween(anchor.rating, TARGET_RATING, 5)) + 3
+  }, [range, anchorM, anchor.rating])
 
   const series = useMemo(() => {
     const steps = 120
@@ -78,21 +96,23 @@ export function ProjectionChart({ log }: { log: ChessLogEntry[] }) {
       hours,
       // Each line stops where it reaches the bar — past 2000 it has nothing left to say.
       pts: Array.from({ length: steps + 1 }, (_, i) => {
-        const m = (spanMonths * i) / steps
-        return { m, r: ratingAfter(START_RATING, m, hours) }
+        const m = anchorM + ((spanMonths - anchorM) * i) / steps
+        return { m, r: ratingAfter(anchor.rating, m - anchorM, hours) }
       })
         .filter((p, i, all) => i === 0 || all[i - 1].r < TARGET_RATING)
         .map((p) => ({ m: p.m, r: Math.min(p.r, TARGET_RATING) })),
     }))
-  }, [spanMonths])
+  }, [spanMonths, anchorM, anchor.rating])
 
   const actual = useMemo(
     () =>
-      log
-        .filter((e) => typeof e.rating === 'number')
-        .map((e) => ({ m: monthsSince(START_DATE, e.date), r: e.rating as number, entry: e }))
-        .filter((p) => p.m >= -0.5 && p.m <= spanMonths),
-    [log, spanMonths]
+      [
+        ...synced.map((s) => ({ m: monthsSince(START_DATE, s.date), r: s.rating, kind: 'sync' as const, label: `Chess.com rapid · ${s.games} game${s.games > 1 ? 's' : ''}`, key: 's' + s.date })),
+        ...log
+          .filter((e) => typeof e.rating === 'number')
+          .map((e) => ({ m: monthsSince(START_DATE, e.date), r: e.rating as number, kind: 'log' as const, label: POOL_LABEL[e.pool || ''] || 'Logged', key: 'l' + e.date })),
+      ].filter((p) => p.m >= -0.25 && p.m <= spanMonths),
+    [log, synced, spanMonths]
   )
 
   const yMax = useMemo(() => {
@@ -100,7 +120,8 @@ export function ProjectionChart({ log }: { log: ChessLogEntry[] }) {
     if (range === 'full') return 2100
     return Math.ceil((top + 40) / 50) * 50
   }, [series, actual, range])
-  const yMin = range === 'full' ? 800 : Math.floor((Math.min(START_RATING, ...actual.map((a) => a.r)) - 40) / 50) * 50
+  const low = Math.min(anchor.rating, ...actual.map((a) => a.r))
+  const yMin = range === 'full' ? Math.min(800, Math.floor((low - 50) / 100) * 100) : Math.max(0, Math.floor((low - 40) / 50) * 50)
 
   const innerW = width - PAD.left - PAD.right
   const innerH = H - PAD.top - PAD.bottom
@@ -150,7 +171,7 @@ export function ProjectionChart({ log }: { log: ChessLogEntry[] }) {
   const hover = hoverM !== null
     ? {
         date: addMonthsISO(START_DATE, hoverM),
-        values: SCENARIOS.map((h) => ({ h, r: Math.round(ratingAfter(START_RATING, hoverM, h)) })),
+        values: hoverM >= anchorM ? SCENARIOS.map((h) => ({ h, r: Math.round(ratingAfter(anchor.rating, hoverM - anchorM, h)) })) : [],
         logged: actual.reduce<(typeof actual)[number] | null>(
           (best, a) => (Math.abs(a.m - hoverM) < spanMonths * 0.03 && (!best || Math.abs(a.m - hoverM) < Math.abs(best.m - hoverM)) ? a : best),
           null
@@ -184,7 +205,11 @@ export function ProjectionChart({ log }: { log: ChessLogEntry[] }) {
           ))}
           <span className="flex items-center gap-1 text-[10px]" style={{ color: LANE_INK.muted }}>
             <span className="inline-block w-2 h-2 rounded-full" style={{ backgroundColor: LANE_INK.ink }} />
-            Logged
+            Chess.com rapid
+          </span>
+          <span className="flex items-center gap-1 text-[10px]" style={{ color: LANE_INK.muted }}>
+            <span className="inline-block w-2 h-2 rounded-full border" style={{ borderColor: LANE_INK.ink }} />
+            By hand
           </span>
         </span>
       </div>
@@ -250,7 +275,11 @@ export function ProjectionChart({ log }: { log: ChessLogEntry[] }) {
           })()}
 
           {actual.map((a) => (
-            <circle key={a.entry.date} cx={x(a.m)} cy={y(a.r)} r={4.5} fill={LANE_INK.ink} stroke={LANE_INK.card} strokeWidth={2} />
+            a.kind === 'sync' ? (
+              <circle key={a.key} cx={x(a.m)} cy={y(a.r)} r={4.5} fill={LANE_INK.ink} stroke={LANE_INK.card} strokeWidth={2} />
+            ) : (
+              <circle key={a.key} cx={x(a.m)} cy={y(a.r)} r={4} fill={LANE_INK.card} stroke={LANE_INK.ink} strokeWidth={1.75} />
+            )
           ))}
 
           {hover && (
@@ -289,8 +318,11 @@ export function ProjectionChart({ log }: { log: ChessLogEntry[] }) {
             ))}
             {hover.logged && (
               <div className="flex items-center gap-1.5 mt-0.5 pt-0.5 border-t" style={{ borderColor: LANE_INK.ruleLight }}>
-                <span className="inline-block w-2 h-2 rounded-full" style={{ backgroundColor: LANE_INK.ink }} />
-                <span style={{ color: LANE_INK.muted }}>{POOL_LABEL[hover.logged.entry.pool || ''] || 'Logged'}</span>
+                <span
+                  className="inline-block w-2 h-2 rounded-full border"
+                  style={{ backgroundColor: hover.logged.kind === 'sync' ? LANE_INK.ink : 'transparent', borderColor: LANE_INK.ink }}
+                />
+                <span style={{ color: LANE_INK.muted }}>{hover.logged.label}</span>
                 <span className="ml-auto font-mono font-semibold">{hover.logged.r}</span>
               </div>
             )}

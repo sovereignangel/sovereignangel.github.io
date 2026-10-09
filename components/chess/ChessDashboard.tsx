@@ -4,9 +4,9 @@
  * The live half of /chess: where the rating is, how many hours the week has
  * actually had, the projection against the log, and the form that feeds it.
  *
- * Nothing here is synced from Chess.com yet — the existing ETL writes to
- * Supabase and has no username configured — so the log is by hand. The pool
- * defaults to Chess.com rapid, the one the 2000 bar is set in. One entry a day,
+ * Games, ratings and play time arrive from Chess.com (lib/chess/chesscom.ts,
+ * fetched on the server). The log holds what the public API cannot see:
+ * study hours — puzzles, books, lessons, review — and any over-the-board result. One entry a day,
  * merged: an hours-only entry never wipes the rating logged earlier that day.
  */
 
@@ -15,7 +15,8 @@ import { useAuth } from '@/components/auth/AuthProvider'
 import { getChessLog, saveChessLog, deleteChessLog } from '@/lib/firestore/chess'
 import type { ChessLogEntry, ChessPool } from '@/lib/types'
 import { LANE_BY_ID, LANE_INK } from '@/lib/exec/lanes'
-import { START_RATING, TARGET_RATING, TOURNAMENT_DATE, stageFor } from '@/lib/chess/model'
+import { TARGET_RATING, TOURNAMENT_DATE, stageFor } from '@/lib/chess/model'
+import { BASELINE_GAMES, type Baseline, type ChessComSnapshot } from '@/lib/chess/chesscom'
 import { useExecDate } from '@/components/exec/useExecDate'
 import { ProjectionChart } from './ProjectionChart'
 
@@ -41,27 +42,43 @@ function lastNDates(today: string, n: number): Set<string> {
   return out
 }
 
-function Stat({ label, value, sub, color }: { label: string; value: string; sub?: string; color?: string }) {
+/** One cell of the strip — label over value, an optional qualifier beside it. */
+function Metric({ label, value, sub, color }: { label: string; value: string; sub?: string; color?: string }) {
   return (
-    <div className="border rounded-lg px-2.5 py-2" style={{ borderColor: LANE_INK.ruleLight, backgroundColor: LANE_INK.card }}>
-      <div className="font-mono text-[9px] uppercase tracking-[0.4px]" style={{ color: LANE_INK.muted }}>
+    <div className="px-3 first:pl-0 shrink-0 border-l first:border-l-0" style={{ borderColor: LANE_INK.ruleLight }}>
+      <div className="font-mono text-[9px] uppercase tracking-[0.4px] whitespace-nowrap" style={{ color: LANE_INK.muted }}>
         {label}
       </div>
-      <div className="font-mono text-[20px] font-semibold leading-tight tabular-nums" style={{ color: color || LANE_INK.ink }}>
-        {value}
+      <div className="flex items-baseline gap-1.5 whitespace-nowrap">
+        <span className="font-mono text-[15px] font-semibold tabular-nums" style={{ color: color || LANE_INK.ink }}>
+          {value}
+        </span>
+        {sub && (
+          <span className="text-[10px]" style={{ color: LANE_INK.muted }}>
+            {sub}
+          </span>
+        )}
       </div>
-      {sub && (
-        <div className="text-[10px] leading-snug" style={{ color: LANE_INK.muted }}>
-          {sub}
-        </div>
-      )}
     </div>
   )
 }
 
 const input = 'w-full font-mono text-[11px] px-2 py-1 rounded-md border bg-transparent outline-none focus:border-current'
 
-export function ChessDashboard({ date: serverDate }: { date: string }) {
+/** What the server hands over from Chess.com — the game list itself stays server-side. */
+export type ChessComSummary = Omit<ChessComSnapshot, 'rapidGames'>
+
+export function ChessDashboard({
+  date: serverDate,
+  chesscom,
+  synced,
+  baseline,
+}: {
+  date: string
+  chesscom: ChessComSummary | null
+  synced: { date: string; rating: number; games: number }[]
+  baseline: Baseline
+}) {
   const date = useExecDate(serverDate)
   const { user, signIn, loading: authLoading } = useAuth()
   const lane = LANE_BY_ID.chess
@@ -85,12 +102,15 @@ export function ChessDashboard({ date: serverDate }: { date: string }) {
     if (latest?.pool) setForm((f) => ({ ...f, pool: latest.pool as ChessPool }))
   }, [latest?.pool])
 
-  const rating = latest?.rating ?? START_RATING
-  const stage = stageFor(rating)
+  // The plan's number: the self-estimate until the baseline games exist, then the measured one.
+  const stage = stageFor(baseline.rating)
   const week = lastNDates(date, 7)
-  const weekHours = log.filter((e) => week.has(e.date)).reduce((s, e) => s + (e.hours || 0), 0)
+  const studyH = log.filter((e) => week.has(e.date)).reduce((s, e) => s + (e.hours || 0), 0)
+  const playH = Object.entries(chesscom?.playDays || {}).reduce((s, [d, v]) => s + (week.has(d) ? v.minutes / 60 : 0), 0)
+  const weekHours = studyH + playH
   const toTournament = daysBetween(date, TOURNAMENT_DATE)
   const hoursColor = weekHours >= 5 ? LANE_INK.good : weekHours >= 2.5 ? LANE_INK.warn : LANE_INK.alert
+  const live = chesscom?.rapid ?? null
 
   async function submit(e: React.FormEvent) {
     e.preventDefault()
@@ -122,41 +142,52 @@ export function ChessDashboard({ date: serverDate }: { date: string }) {
 
   return (
     <div className="space-y-3">
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-        <Stat
-          label={latest ? `Rating · ${POOL_SHORT[(latest.pool || 'chesscom_rapid') as ChessPool]}` : 'Rating · self-estimate'}
-          value={String(rating)}
-          sub={latest ? `logged ${latest.date}` : 'log your real rapid rating below'}
+      {/* One row. On a phone it scrolls sideways inside itself rather than stacking. */}
+      <div
+        className="flex items-stretch overflow-x-auto border rounded-xl px-3 py-2"
+        style={{ borderColor: LANE_INK.rule, backgroundColor: LANE_INK.card }}
+      >
+        <Metric
+          label="Chess.com rapid"
+          value={live !== null ? String(live) : '—'}
+          sub={chesscom?.rapidBest ? `best ${chesscom.rapidBest}${chesscom.rapidDate ? ` · last ${chesscom.rapidDate.slice(0, 7)}` : ''}` : undefined}
         />
-        <Stat
-          label="Williamsburg"
-          value={toTournament > 0 ? `${toTournament}d` : toTournament === 0 ? 'Today' : 'Played'}
-          sub="October 24 — tournament"
-          color={toTournament >= 0 && toTournament <= 7 ? LANE_INK.warn : undefined}
+        <Metric
+          label={baseline.estimate ? 'Baseline games' : 'Baseline'}
+          value={baseline.estimate ? `${baseline.gamesSinceStart}/${BASELINE_GAMES}` : String(baseline.rating)}
+          sub={baseline.estimate ? 'rapid 15+10 · 900 est. until then' : `set ${baseline.date}`}
+          color={baseline.estimate ? LANE_INK.warn : undefined}
         />
-        <Stat
-          label="Hours · last 7 days"
-          value={weekHours.toFixed(1)}
-          sub="target band 5–10h"
+        <Metric
+          label="This week"
+          value={`${weekHours.toFixed(1)}h`}
+          sub={`${studyH.toFixed(1)} study + ${playH.toFixed(1)} play · 5–10`}
           color={user ? hoursColor : undefined}
         />
-        <Stat
-          label="To 2000 rapid"
-          value={`${Math.max(0, TARGET_RATING - rating)}`}
-          sub={`points · stage ${stage.numeral}, ${stage.name}`}
+        <Metric label="Puzzles" value={chesscom?.puzzleHigh ? String(chesscom.puzzleHigh) : '—'} sub="peak" />
+        <Metric
+          label="Williamsburg"
+          value={toTournament > 0 ? `${toTournament}d` : toTournament === 0 ? 'Today' : 'Played'}
+          sub="Oct 24"
+          color={toTournament >= 0 && toTournament <= 7 ? LANE_INK.warn : undefined}
+        />
+        <Metric
+          label="To 2000"
+          value={String(Math.max(0, TARGET_RATING - baseline.rating))}
+          sub={`stage ${stage.numeral} · ${stage.name}`}
         />
       </div>
 
       <div className="border rounded-xl p-2.5 md:p-3" style={{ borderColor: LANE_INK.rule, backgroundColor: LANE_INK.card }}>
         <div className="flex items-baseline justify-between gap-2 mb-2 pb-1.5 border-b" style={{ borderColor: LANE_INK.ruleLight }}>
           <span className="font-serif text-[14px] md:text-[15px] font-semibold" style={{ color: lane.color }}>
-            Projection against the log
+            Projection against Chess.com
           </span>
           <span className="text-[10px]" style={{ color: LANE_INK.muted }}>
-            from {START_RATING} on Oct 9
+            from {baseline.rating}{baseline.estimate ? ' (estimate)' : ''} on {new Date(baseline.date + 'T12:00:00Z').toLocaleDateString('en-GB', { day: 'numeric', month: 'short', timeZone: 'UTC' })}
           </span>
         </div>
-        <ProjectionChart log={log} />
+        <ProjectionChart log={log} synced={synced} anchor={baseline} />
       </div>
 
       <div className="border rounded-xl p-2.5 md:p-3" style={{ borderColor: LANE_INK.rule, backgroundColor: LANE_INK.card }}>
@@ -165,7 +196,7 @@ export function ChessDashboard({ date: serverDate }: { date: string }) {
             Log
           </span>
           <span className="text-[10px]" style={{ color: LANE_INK.muted }}>
-            hours every day you train · rating when it moves
+            study hours by hand · Chess.com games sync on their own
           </span>
         </div>
 
@@ -186,7 +217,7 @@ export function ChessDashboard({ date: serverDate }: { date: string }) {
                 <input type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} className={input} style={{ borderColor: LANE_INK.rule, color: LANE_INK.ink }} required />
               </label>
               <label className="text-[10px]" style={{ color: LANE_INK.muted }}>
-                Hours
+                Study hours
                 <input type="number" step="0.25" min="0" max="16" value={form.hours} onChange={(e) => setForm({ ...form, hours: e.target.value })} className={input} style={{ borderColor: LANE_INK.rule, color: LANE_INK.ink }} placeholder="1.5" />
               </label>
               <label className="text-[10px]" style={{ color: LANE_INK.muted }}>
@@ -221,7 +252,7 @@ export function ChessDashboard({ date: serverDate }: { date: string }) {
 
             {log.length === 0 ? (
               <p className="text-[10px]" style={{ color: LANE_INK.muted }}>
-                Nothing logged yet. The 900 is a self-estimate — play ten rated rapid games at 15+10 or longer and log the Chess.com number. The projection stays anchored at 900 until then.
+                Nothing logged yet. Games, ratings and play time come in from Chess.com on their own — log the study hours they cannot see: puzzles, books, lessons, review. A rating here is only for a pool Chess.com does not cover, like an over-the-board USCF result.
               </p>
             ) : (
               <table className="w-full text-[10px]" style={{ color: LANE_INK.ink }}>

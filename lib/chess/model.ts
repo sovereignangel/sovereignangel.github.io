@@ -39,7 +39,10 @@ export interface Band {
 }
 
 export const BANDS: Band[] = [
-  { from: 0, to: 1200, rate: 50 },
+  // Below 800 a game is usually decided by the first piece left hanging; stop
+  // doing that and the rating climbs fast.
+  { from: 0, to: 800, rate: 80 },
+  { from: 800, to: 1200, rate: 50 },
   { from: 1200, to: 1500, rate: 28 },
   { from: 1500, to: 1800, rate: 16 },
   { from: 1800, to: 2000, rate: 10 },
@@ -149,7 +152,7 @@ export const STAGES: Stage[] = [
     id: 'blunder',
     numeral: 'I',
     name: 'Blunder-Proof',
-    band: [900, 1200],
+    band: [0, 1200],
     leak: 'Hanging pieces and missing one-move threats. At 900 most games are decided by a piece left en prise, not by a plan.',
     focus: [
       'A blunder check on every move: checks, captures, threats — mine and theirs',
