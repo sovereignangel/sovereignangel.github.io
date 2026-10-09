@@ -18,6 +18,21 @@ const C = {
   sans: "'Inter', system-ui, sans-serif",
 }
 
+const heroBtn: React.CSSProperties = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: 10,
+  border: `1px solid ${C.burgundy}`,
+  padding: '14px 22px',
+  minHeight: 44,
+  boxSizing: 'border-box',
+  fontFamily: C.mono,
+  fontSize: 11,
+  letterSpacing: '0.28em',
+  textTransform: 'uppercase',
+  textDecoration: 'none',
+}
+
 function spiralPath(cx: number, cy: number, a: number, b: number, thetaMin: number, thetaMax: number, steps: number) {
   let d = ''
   for (let i = 0; i <= steps; i++) {
@@ -132,9 +147,8 @@ export default function AretePage() {
         </div>
 
         {/* HERO — Armstrong (the fund) */}
-        <a
+        <div
           className="arete-hero"
-          href="https://armstrong.aretetec.com"
           style={{
             display: 'flex',
             flexDirection: 'column',
@@ -143,8 +157,6 @@ export default function AretePage() {
             padding: 'clamp(28px, 4vw, 44px)',
             textAlign: 'left',
             color: C.ink,
-            textDecoration: 'none',
-            cursor: 'pointer',
             position: 'relative',
           }}
         >
@@ -203,25 +215,16 @@ export default function AretePage() {
             A quantamental fund — value investing with time as leverage. Pre-launch details on the fund website.
           </p>
 
-          <div
-            style={{
-              marginTop: 28,
-              display: 'inline-flex',
-              alignSelf: 'flex-start',
-              alignItems: 'center',
-              gap: 10,
-              background: C.burgundy,
-              color: C.cream,
-              padding: '14px 22px',
-              fontFamily: C.mono,
-              fontSize: 11,
-              letterSpacing: '0.28em',
-              textTransform: 'uppercase',
-            }}
-          >
-            Enter the fund <span aria-hidden="true">→</span>
+          <div style={{ marginTop: 28, display: 'flex', flexWrap: 'wrap', gap: 12 }}>
+            {/* Sign in: management -> the platform; LPs / everyone else -> /invest */}
+            <a href="https://armstrong.aretetec.com/?signin=1" style={{ ...heroBtn, background: C.burgundy, color: C.cream }}>
+              Enter the fund <span aria-hidden="true">→</span>
+            </a>
+            <a href="https://armstrong.aretetec.com/invest" style={{ ...heroBtn, background: 'transparent', color: C.burgundy }}>
+              View performance <span aria-hidden="true">→</span>
+            </a>
           </div>
-        </a>
+        </div>
       </section>
 
       <footer
