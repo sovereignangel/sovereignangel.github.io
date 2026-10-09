@@ -14,7 +14,7 @@
  * Firestore, per domain, so the campaign's own site and /exec read one truth.
  */
 
-export type CampaignId = 'complexecon' | 'armstrong'
+export type CampaignId = 'complexecon' | 'armstrong' | 'chess'
 
 /** One session of work — roughly one sitting, never a whole project. */
 export interface CampaignUnit {

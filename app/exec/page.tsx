@@ -30,7 +30,7 @@ import { SportIcon, CourseDivider } from '@/components/ironman/IronmanIcons'
 
 export const metadata: Metadata = {
   title: 'Exec — Daily Orders',
-  description: 'The five lanes of the day — practice, kite, training, the paper, the fund',
+  description: 'The lanes of the day — practice, kite, training, the paper, the fund, the board',
 }
 
 // The rendered output depends on what day it is, so the page cannot sit in a
@@ -593,6 +593,7 @@ export default async function ExecPage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 items-start mb-3">
             <ExecCampaign id="complexecon" laneId="complexecon" date={today} />
             <ExecCampaign id="armstrong" laneId="armstrong" date={today} />
+            <ExecCampaign id="chess" laneId="chess" date={today} />
           </div>
 
           {/* The feed. Last on the page on purpose: it is the only card here

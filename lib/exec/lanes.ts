@@ -1,5 +1,5 @@
 /**
- * The six lanes of the day, and the one accent each of them wears.
+ * The seven lanes of the day, and the one accent each of them wears.
  *
  * Colours are explicit hex rather than Tailwind classes because the today
  * band renders every lane through the same component — the same reason
@@ -8,7 +8,7 @@
  * than another, and none of them is the alert colour.
  */
 
-export type LaneId = 'tantra' | 'kite' | 'ironman' | 'intake' | 'complexecon' | 'armstrong'
+export type LaneId = 'tantra' | 'kite' | 'ironman' | 'intake' | 'complexecon' | 'armstrong' | 'chess'
 
 export interface Lane {
   id: LaneId
@@ -32,6 +32,7 @@ export const LANES: Lane[] = [
   { id: 'intake',      label: 'Intake',    href: '/exec/news',            color: '#2d6b4a', bg: wash('#2d6b4a', '0d'), border: wash('#2d6b4a', '40') },
   { id: 'complexecon', label: 'CEcon',     href: '/complexecon/research', color: '#2d4a6f', bg: wash('#2d4a6f', '0d'), border: wash('#2d4a6f', '40') },
   { id: 'armstrong',   label: 'Armstrong', href: '/armstrong',            color: '#7a5a2e', bg: wash('#7a5a2e', '0d'), border: wash('#7a5a2e', '40') },
+  { id: 'chess',       label: 'Chess',     href: '/chess',                color: '#46465c', bg: wash('#46465c', '0d'), border: wash('#46465c', '40') },
 ]
 
 export const LANE_BY_ID: Record<LaneId, Lane> = LANES.reduce(
@@ -60,4 +61,5 @@ export const LANE_GOALS: Record<LaneId, string[]> = {
   intake: [],
   complexecon: ['cecon'],
   armstrong: ['armstrong'],
+  chess: [],
 }

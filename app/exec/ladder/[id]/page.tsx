@@ -10,6 +10,7 @@ import type { LaneId } from '@/lib/exec/lanes'
 const LANE_FOR: Record<CampaignId, LaneId> = {
   complexecon: 'complexecon',
   armstrong: 'armstrong',
+  chess: 'chess',
 }
 
 export function generateStaticParams() {

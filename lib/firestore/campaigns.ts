@@ -5,6 +5,8 @@
  *   users/{uid}/complexecon_progress/main   units + pathway milestones
  *   users/{uid}/armstrong_progress/main     units
  *   users/{uid}/armstrong_days/{date}       the daily desk ritual
+ *   users/{uid}/chess_progress/main         units
+ *   users/{uid}/chess_days/{date}           the daily tactics floor
  *
  * Unit ids are written as object keys under `units` rather than as dotted
  * field paths, so an id containing a dot can never be read as a nested path.
@@ -30,10 +32,12 @@ import type { CampaignProgressDoc, CampaignRitualDay } from '../types/campaign'
 const PROGRESS_COLLECTION: Record<CampaignId, string> = {
   complexecon: 'complexecon_progress',
   armstrong: 'armstrong_progress',
+  chess: 'chess_progress',
 }
 
 const DAYS_COLLECTION: Partial<Record<CampaignId, string>> = {
   armstrong: 'armstrong_days',
+  chess: 'chess_days',
 }
 
 const progressRef = (uid: string, id: CampaignId) =>

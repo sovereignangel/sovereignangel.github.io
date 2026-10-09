@@ -1,7 +1,7 @@
 'use client'
 
 /**
- * The today band — six lanes, one row of the tear sheet.
+ * The today band — seven lanes, one row of the tear sheet.
  *
  * This is the part of /exec that answers "am I done today" without scrolling.
  * Three lanes are answered by hand (tantra, cecon, armstrong) and two are
@@ -225,6 +225,7 @@ export function ExecToday({ date: serverDate, kite, ironman }: ExecTodayProps) {
   const [tantraToday, setTantraToday] = useState(false)
   const [progress, setProgress] = useState<Partial<Record<CampaignId, CampaignProgressDoc>>>({})
   const [deskDone, setDeskDone] = useState(false)
+  const [tacticsDone, setTacticsDone] = useState(false)
   const [intakeItems, setIntakeItems] = useState<IntakeItem[]>([])
   const [intakeDay, setIntakeDay] = useState<IntakeDayDoc | null>(null)
   const [loaded, setLoaded] = useState(false)
@@ -233,12 +234,14 @@ export function ExecToday({ date: serverDate, kite, ironman }: ExecTodayProps) {
 
   const load = useCallback(async () => {
     if (!user) return
-    const [config, checkins, cecon, arm, desk, intake, intakeDoc, goals] = await Promise.all([
+    const [config, checkins, cecon, arm, desk, chess, tactics, intake, intakeDoc, goals] = await Promise.all([
       getTantraConfig(user.uid).catch(() => null),
       getTantraCheckins(user.uid).catch(() => []),
       getCampaignProgress(user.uid, 'complexecon').catch(() => ({} as CampaignProgressDoc)),
       getCampaignProgress(user.uid, 'armstrong').catch(() => ({} as CampaignProgressDoc)),
       getRitualDay(user.uid, 'armstrong', date).catch(() => null),
+      getCampaignProgress(user.uid, 'chess').catch(() => ({} as CampaignProgressDoc)),
+      getRitualDay(user.uid, 'chess', date).catch(() => null),
       getIntakeItems(user.uid).catch(() => [] as IntakeItem[]),
       getIntakeDay(user.uid, date).catch(() => null),
       getExecGoals(user.uid).catch(() => [] as ExecGoalEntry[]),
@@ -247,8 +250,9 @@ export function ExecToday({ date: serverDate, kite, ironman }: ExecTodayProps) {
     const dates = new Set(checkins.map((c) => c.date))
     setCycle(activeCycle(config?.cycles, date, dates))
     setTantraToday(dates.has(date))
-    setProgress({ complexecon: cecon, armstrong: arm })
+    setProgress({ complexecon: cecon, armstrong: arm, chess })
     setDeskDone(Boolean(desk?.done))
+    setTacticsDone(Boolean(tactics?.done))
     setIntakeItems(intake)
     setIntakeDay(intakeDoc)
     setLoaded(true)
@@ -284,13 +288,14 @@ export function ExecToday({ date: serverDate, kite, ironman }: ExecTodayProps) {
 
   const doneIds = useMemo(() => {
     const of = (id: CampaignId) => new Set(Object.keys(progress[id]?.units || {}))
-    return { complexecon: of('complexecon'), armstrong: of('armstrong') }
+    return { complexecon: of('complexecon'), armstrong: of('armstrong'), chess: of('chess') }
   }, [progress])
 
   const orders = useMemo<Record<CampaignId, CampaignOrder>>(
     () => ({
       complexecon: campaignOrder(CAMPAIGNS.complexecon, doneIds.complexecon, date, 1),
       armstrong: campaignOrder(CAMPAIGNS.armstrong, doneIds.armstrong, date, 1),
+      chess: campaignOrder(CAMPAIGNS.chess, doneIds.chess, date, 1),
     }),
     [doneIds, date]
   )
@@ -340,6 +345,18 @@ export function ExecToday({ date: serverDate, kite, ironman }: ExecTodayProps) {
     }
   }, [user, date, deskDone, logToggle])
 
+  const toggleTactics = useCallback(async () => {
+    if (!user) return
+    setBusy('chess')
+    try {
+      await setRitualDay(user.uid, 'chess', date, !tacticsDone)
+      setTacticsDone(!tacticsDone)
+      logToggle('chess', !tacticsDone, { tactics: true })
+    } finally {
+      setBusy(null)
+    }
+  }, [user, date, tacticsDone, logToggle])
+
   // ── Lane states ─────────────────────────────────────────────────────────
 
   const intake = useMemo(
@@ -353,6 +370,8 @@ export function ExecToday({ date: serverDate, kite, ironman }: ExecTodayProps) {
     const ceUnit = ceOrder.units[0]
     const armUnit = armOrder.units[0]
     const deskDue = ritualDueOn(CAMPAIGNS.armstrong, date)
+    const chessOrder = orders.chess
+    const chessUnit = chessOrder.units[0]
 
     return {
       tantra: {
@@ -415,8 +434,19 @@ export function ExecToday({ date: serverDate, kite, ironman }: ExecTodayProps) {
         busy: busy === 'armstrong',
         href: '/armstrong',
       },
+      chess: {
+        // The tactics floor is the order every day; the ladder unit is the
+        // follow-on, the same shape as the Armstrong desk pass.
+        due: true,
+        done: tacticsDone,
+        headline: 'Tactics floor — 20 min, calculated',
+        sub: chessUnit ? `then ${chessUnit.code} · ${chessUnit.label}` : undefined,
+        onToggle: user ? toggleTactics : undefined,
+        busy: busy === 'chess',
+        href: '/chess',
+      },
     }
-  }, [orders, cycle, tantraToday, kite, ironman, activities, date, progress, deskDone, busy, user, intake, toggleTantra, toggleUnit, toggleDesk, blocksDone])
+  }, [orders, cycle, tantraToday, kite, ironman, activities, date, progress, deskDone, tacticsDone, busy, user, intake, toggleTantra, toggleUnit, toggleDesk, toggleTactics, blocksDone])
 
   // Block goals called done show on the lanes they serve. Kite and Ironman stay
   // settled by Garmin alone — a block can say it served them, not that it happened.
@@ -460,7 +490,7 @@ export function ExecToday({ date: serverDate, kite, ironman }: ExecTodayProps) {
         )
       }
     >
-      <div className="grid grid-cols-3 lg:grid-cols-6 gap-1.5">
+      <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-7 gap-1.5">
         {LANES.map((lane) => (
           <LaneCell key={lane.id} lane={lane} state={shown[lane.id]} />
         ))}
