@@ -31,6 +31,9 @@ import { paceBoth } from '@/lib/ironman/pace'
 import { RACE_NYC, priorRacesFor, raceDistanceLabel, sameDistance, priorRaceDisplay, priorRaceVsGoal,
   eliteFor, type PriorRace } from '@/lib/ironman/plan'
 import { eliteSheetRow } from '@/components/ironman/EliteBenchmark'
+import {
+  AGE_GROUP_2027, AGE_GRADE_703, upcomingQualifiers, requiredMin, slotChance, type QualifyingRace,
+} from '@/lib/ironman/qualify'
 import type {
   PairIronmanDetail, AthleteDetail, PlanAthleteDay, PlanSessionRow, LoggedSession, SwimTiming,
 } from '@/lib/lordas/ironman-detail'
@@ -749,6 +752,112 @@ function Tomorrow({ day }: { day: PairDay }) {
   )
 }
 
+// ── Championship odds ─────────────────────────────────────────────────────
+
+/**
+ * What a qualifier on the calendar is worth to the two of them.
+ *
+ * Each athlete is read at three fitness levels — today's forecast, the best
+ * half on record, and the goal — because four months out the honest answer
+ * is a curve, not a number. The pair line multiplies the two: the races are
+ * the same day but the slots come out of separate gender pools, so one
+ * qualifying does nothing for the other.
+ */
+function ChampionshipOdds({ data, race }: { data: PairIronmanDetail; race: QualifyingRace }) {
+  const days = Math.round((Date.parse(race.date) - Date.parse(data.date)) / 86_400_000)
+  const lines = data.athletes.map((a) => {
+    const id = a.person as 'lori' | 'aidas'
+    const races = priorRacesFor(id).filter((r) => sameDistance(r, RACE_NYC))
+    const best = races.length ? Math.min(...races.map((r) => r.totalSec)) / 60 : null
+    const goal = a.splits.total
+    const forecast = a.forecast.forecastTotalMin
+    const scen = [
+      { label: 'Forecast today', min: forecast },
+      { label: 'Best half raced', min: best },
+      { label: 'Goal', min: goal },
+    ].map((x) => ({ ...x, p: x.min != null ? slotChance(race, id, x.min) : null }))
+    return { a, id, need: requiredMin(race, id), best, scen, ag: AGE_GROUP_2027[id] }
+  })
+  const pair = [0, 1, 2].map((i) =>
+    lines.every((l) => l.scen[i].p != null) ? lines.reduce((x, l) => x * (l.scen[i].p as number), 1) : null
+  )
+  const head = pair[0] ?? pair[1]
+
+  return (
+    <FieldCard
+      span
+      label="Championship odds"
+      meta={`${race.location} · ${new Date(race.date + 'T12:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })} · T−${days}`}
+      tone="accent"
+      field="evidence"
+    >
+      <Lede>
+        Both of you to {race.championship.split(' · ')[1] ?? 'the championship'}:{' '}
+        <span style={{ color: probColor(head) }}>{pct(head)}</span> on today&apos;s fitness,{' '}
+        <span style={{ color: probColor(pair[2]) }}>{pct(pair[2])}</span> if both of you hit goal.
+      </Lede>
+      <Sub>
+        {race.slots} age-group slots, {race.slots / 2} per gender · each age-group winner takes one,
+        the rest go to an age-graded pool · {race.championship}
+      </Sub>
+      <Seam cols={2} className="lordas-mt">
+        {lines.map((l) => {
+          const gap = l.best != null ? l.best - l.need : null
+          return (
+            <div key={l.id}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
+                <PersonSigil person={l.a.person} size={12} />
+                <span style={{ fontSize: 11.5, fontWeight: 600 }}>{l.a.name}</span>
+                <span className="lordas-mono" style={{ fontSize: 9, letterSpacing: '.12em', color: C.muted, marginLeft: 'auto' }}>
+                  {l.ag.group}{l.ag.assumed ? ' (assumed)' : ''} · ×{AGE_GRADE_703[l.ag.group]}
+                </span>
+              </div>
+              <Rows>
+                <Row label="Finish needed" detail="age-graded pool, after rolldown" value={hm(l.need)} />
+                {l.scen.map((x) => (
+                  <Row
+                    key={x.label}
+                    label={x.label}
+                    detail={hm(x.min)}
+                    value={pct(x.p)}
+                    valueColor={probColor(x.p)}
+                  />
+                ))}
+              </Rows>
+              {gap != null && (
+                <Sub>
+                  {gap > 0
+                    ? `${hm(gap)} faster than the best half on record.`
+                    : `Best half on record is already ${hm(-gap)} inside the line.`}
+                </Sub>
+              )}
+            </div>
+          )
+        })}
+      </Seam>
+      <Disclosure summary="How the odds are built" meta="estimates">
+        <Sub>
+          Slot rule (2026 cycle on): equal slots for women and men; one per age-group winner, the
+          remainder by finish × age-grade factor, rolling down when declined. For one athlete both
+          routes reduce to a single finish time, shown as Finish needed.
+        </Sub>
+        <Sub>
+          Odds treat race day as ±5% around the projected finish and the cutoff itself as ±
+          {Math.round(race.cutoffSpread * 100)}%, combined. The pair figure assumes the two days are independent.
+        </Sub>
+        <Sub>{race.basis}</Sub>
+        {lines.some((l) => l.ag.assumed) && (
+          <Sub>Aidas&apos;s age group is assumed — his birth year sets it (age on 31 Dec 2027).</Sub>
+        )}
+      </Disclosure>
+      <Foot>
+        Women&apos;s slots are spread over a field about a fifth the size of the men&apos;s, which is why
+        the same pool rule is generous on one side and severe on the other.
+      </Foot>
+    </FieldCard>
+  )
+}
+
 // ── Page ──────────────────────────────────────────────────────────────────
 
 export default function PairIronmanView() {
@@ -843,6 +952,12 @@ export default function PairIronmanView() {
         </FieldCard>
         {data.athletes.map((a) => <RecoveryCard key={a.person} a={a} />)}
       </Seam>
+
+      {upcomingQualifiers(data.date).slice(0, 1).map((r) => (
+        <Seam key={r.date} cols={1} className="lordas-mt">
+          <ChampionshipOdds data={data} race={r} />
+        </Seam>
+      ))}
 
       <Seam cols={2} className="lordas-mt">
         {data.athletes.map((a) => <AthleteSheet key={a.person} a={a} />)}

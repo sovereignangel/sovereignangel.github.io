@@ -24,6 +24,7 @@ import {
   daysToRace, goalsFor, goalSplits, goalDisplay, todayLocal, planRange,
   type AthleteId, type PlanDay, type TargetRace, type PlannedSession, type RaceGoals, type Sport3, type Standing,
 } from '@/lib/ironman/plan'
+import { upcomingQualifiers } from '@/lib/ironman/qualify'
 import { getIronmanTargetAdmin } from '@/lib/ironman/target-admin'
 import { loadBothAthletes, type AthleteData } from './athletes'
 import { buildPairDay, paceProfile, type PairDay, type PaceProfile } from './pair-training'
@@ -429,7 +430,7 @@ export async function buildPairIronmanDetail(date: string = todayLocal()): Promi
     plan,
     // A pair page is only as current as its staler half.
     feedRefreshedAt: refreshes.length === athletes.length ? refreshes.sort()[0] : null,
-    races: [RACE, RACE_NYC]
+    races: [RACE, RACE_NYC, ...upcomingQualifiers(date)]
       .map((r) => ({ name: r.name, date: r.date, days: daysToRace(date, r.date), location: r.location }))
       .filter((r) => r.days >= 0),
     today,
