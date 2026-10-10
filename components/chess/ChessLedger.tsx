@@ -72,7 +72,34 @@ export function ChessLedger() {
           The first line is written at the next noon or midnight in New York.
         </p>
       ) : (
-        <div className="overflow-x-auto">
+        <>
+        {/* Phone: two lines a row — the day and its games, then the ratings. Ten
+            columns do not fit a phone, and a table that scrolls sideways inside
+            its card reads as one that stops. */}
+        <div className="lg:hidden">
+          {rows.map((r, i) => (
+            <div key={`${r.date}-${r.slot}`} className="py-1.5 border-t first:border-t-0 text-[10px]" style={{ borderColor: LANE_INK.ruleLight, color: LANE_INK.ink }}>
+              <div className="flex items-baseline gap-2">
+                <span className="font-semibold">{fmtDay(r.date)}</span>
+                <span style={{ color: LANE_INK.muted }}>{r.slot === 'noon' ? 'noon' : 'close'}</span>
+                <span className="ml-auto font-mono" style={{ color: LANE_INK.muted }}>
+                  {r.games ? `${r.games} game${r.games === 1 ? '' : 's'} · ${r.wins}–${r.losses}–${r.draws} · ${r.minutes}m${r.accuracy !== null ? ` · ${r.accuracy}%` : ''}` : 'no games'}
+                </span>
+              </div>
+              <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-0.5 font-mono">
+                {([['rapid', 'Rapid'], ['blitz', 'Blitz'], ['bullet', 'Bullet'], ['puzzleHigh', 'Puzzles']] as [Rated, string][]).map(([k, label]) => (
+                  <span key={k} className="whitespace-nowrap">
+                    <span className="font-sans" style={{ color: LANE_INK.muted }}>{label} </span>
+                    {r[k] ?? '—'}
+                    <Delta now={r[k]} before={rows[i + 1]?.[k]} />
+                  </span>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="hidden lg:block">
           <table className="w-full text-[10px]" style={{ color: LANE_INK.ink }}>
             <thead>
               <tr className="text-left" style={{ color: LANE_INK.muted }}>
@@ -108,6 +135,7 @@ export function ChessLedger() {
             </tbody>
           </table>
         </div>
+        </>
       )}
     </div>
   )
