@@ -17,7 +17,33 @@ import { LIBRARY } from '@/lib/complexecon/pathway'
 
 const PARAMS_KEY = 'complexecon-models-params'
 const SELECTED_KEY = 'complexecon-models-selected'
+const LIST_KEY = 'complexecon-models-list-open'
 const BLOCK_IDS = ['blk-premise']
+
+/** The list on the left folds to a rail, Armstrong-style, and stays folded until reopened. */
+function useListOpen() {
+  const [open, setOpen] = useState(true)
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(LIST_KEY)
+      if (raw !== null) setOpen(JSON.parse(raw) as boolean)
+    } catch {
+      // storage unavailable
+    }
+  }, [])
+  const toggle = useCallback(() => {
+    setOpen(prev => {
+      const next = !prev
+      try {
+        localStorage.setItem(LIST_KEY, JSON.stringify(next))
+      } catch {
+        // storage unavailable
+      }
+      return next
+    })
+  }, [])
+  return { open, toggle }
+}
 
 const FIDELITY_LABEL = { faithful: 'Faithful', simplified: 'Simplified' } as const
 const FIDELITY_CLASS = {
@@ -306,6 +332,7 @@ export default function ModelsSheet() {
   const { closedBlocks, toggleBlock } = useSheetState({ storageKey: 'complexecon-models', blockIds: BLOCK_IDS })
   const { state, set, loaded } = useParams()
   const { id: selectedId, select } = useSelected()
+  const { open: listOpen, toggle: toggleList } = useListOpen()
   const [seeds, setSeeds] = useState<Record<string, number>>({})
 
   const model = MODELS.find(m => m.id === selectedId) ?? MODELS[0]
@@ -391,11 +418,68 @@ export default function ModelsSheet() {
           })}
         </div>
 
-        <div className="grid min-h-0 flex-1 grid-cols-1 gap-3 lg:grid-cols-[300px_minmax(0,1fr)] xl:grid-cols-[340px_minmax(0,1fr)] 2xl:grid-cols-[380px_minmax(0,1fr)]">
-          <aside className="hidden min-h-0 border border-rule bg-white lg:flex lg:flex-col">
+        <div
+          className={`grid min-h-0 flex-1 grid-cols-1 gap-3 ${
+            listOpen
+              ? 'lg:grid-cols-[300px_minmax(0,1fr)] xl:grid-cols-[340px_minmax(0,1fr)] 2xl:grid-cols-[380px_minmax(0,1fr)]'
+              : 'lg:grid-cols-[30px_minmax(0,1fr)]'
+          }`}
+        >
+          {/* Folded: a rail — the label set vertically, the numerals beneath it so a model can still be picked. */}
+          {!listOpen && (
+            <aside className="hidden min-h-0 flex-col overflow-hidden bg-burgundy lg:flex" aria-label="Models, folded">
+              <button
+                onClick={toggleList}
+                aria-label="Show the list of models"
+                title="Show the list"
+                className="flex h-[30px] w-full items-center justify-center font-mono text-[13px] text-paper transition-colors hover:bg-burgundy/85"
+              >
+                ›
+              </button>
+              <button onClick={toggleList} className="flex shrink-0 justify-center py-2" aria-hidden="true" tabIndex={-1}>
+                <span
+                  className="font-mono text-[11px] font-semibold uppercase tracking-[1.5px] text-paper"
+                  style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}
+                >
+                  The Models
+                </span>
+              </button>
+              <div className="min-h-0 flex-1 overflow-y-auto border-t border-paper/30 pt-1" role="listbox" aria-label="Models">
+                {MODELS.map(m => {
+                  const active = m.id === model.id
+                  return (
+                    <button
+                      key={m.id}
+                      role="option"
+                      aria-selected={active}
+                      title={m.paper.cite}
+                      onClick={() => select(m.id)}
+                      className={`flex h-[30px] w-full items-center justify-center font-serif text-[12px] font-semibold transition-colors ${
+                        active ? 'bg-paper text-burgundy' : 'text-paper/85 hover:bg-burgundy/85 hover:text-paper'
+                      }`}
+                    >
+                      {m.numeral}
+                    </button>
+                  )
+                })}
+              </div>
+            </aside>
+          )}
+
+          <aside className={`${listOpen ? 'lg:flex' : 'lg:hidden'} hidden min-h-0 border border-rule bg-white lg:flex-col`}>
             <div className="flex items-baseline justify-between gap-2 border-b border-rule bg-cream px-3 py-1">
               <span className="whitespace-nowrap font-serif text-[16px] font-semibold uppercase tracking-[1.5px] text-burgundy">The Models</span>
-              <Meta>I–{MODELS[MODELS.length - 1].numeral}</Meta>
+              <span className="flex items-center gap-2">
+                <Meta>I–{MODELS[MODELS.length - 1].numeral}</Meta>
+                <button
+                  onClick={toggleList}
+                  aria-label="Fold the list of models away"
+                  title="Fold the list"
+                  className="rounded-sm border border-rule px-1.5 py-px font-mono text-[11px] leading-[16px] text-ink-muted transition-colors hover:border-ink-faint hover:text-ink"
+                >
+                  ‹
+                </button>
+              </span>
             </div>
             <div className="min-h-0 flex-1 overflow-y-auto" role="listbox" aria-label="Models">
               {MODELS.map(m => {
