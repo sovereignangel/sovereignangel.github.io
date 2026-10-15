@@ -1,0 +1,151 @@
+/*
+ * The Performance page on the iron sheet.
+ *
+ * Everything here is scoped to `.iron-perf`, which only the Performance page
+ * carries, so nothing leaks into Overview or Opportunities. Three faces and
+ * no others: the display serif for headings, the body sans for prose, the
+ * mono for figures. Prose never drops below 10px and is never set in mono.
+ */
+
+/* ── Section tabs: Training | Races, with the open half's controls ───── */
+.iron-perf .iron-perf-tabs {
+  display: flex; gap: 14px; align-items: center; flex-wrap: wrap;
+  background: var(--lordas-panel);
+  padding: 5px 10px 0;
+  border-bottom: 2px solid var(--lordas-accent);
+}
+.iron-perf .iron-perf-tab {
+  background: none; border: 0; cursor: pointer;
+  padding: 2px 0 4px; margin-bottom: -2px;
+  font-family: var(--lordas-display); font-size: 16px; line-height: 1.1;
+  color: var(--lordas-muted);
+  border-bottom: 2px solid transparent;
+}
+.iron-perf .iron-perf-tab:hover { color: var(--lordas-ink); }
+.iron-perf .iron-perf-tab.is-on {
+  color: var(--lordas-accent); font-weight: 600;
+  border-bottom-color: var(--lordas-accent);
+}
+.iron-perf .iron-perf-tabs-right {
+  display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+  margin-left: auto; padding-bottom: 4px;
+}
+.iron-perf .iron-perf-stats { font-size: 11px; color: var(--lordas-muted); }
+.iron-perf .iron-perf-stats b {
+  font-family: var(--lordas-mono); font-weight: 600; color: var(--lordas-ink);
+}
+
+/* Callouts and loading lines sit on the burgundy ground; give them a card. */
+.iron-perf .lordas-callout,
+.iron-perf > .lordas-fc-sub {
+  background: var(--lordas-panel); margin: 0; padding: 7px 10px; font-size: 11.5px;
+}
+
+/* ── Week-by-week trend ──────────────────────────────────────────────── */
+.iron-perf .iron-perf-trend {
+  position: relative; background: var(--lordas-panel);
+  padding: 8px 0 2px; width: 100%; min-width: 0;
+}
+.iron-perf .iron-perf-trend-head {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 0 12px 2px;
+}
+.iron-perf .iron-perf-h {
+  font-family: var(--lordas-display); font-size: 15px; font-weight: 600;
+  color: var(--lordas-accent);
+}
+.iron-perf .iron-perf-legend {
+  display: inline-flex; align-items: center; gap: 5px; font-size: 11px; color: var(--lordas-muted);
+}
+.iron-perf .iron-perf-hint { font-size: 11px; color: var(--lordas-muted); margin-left: auto; }
+.iron-perf .iron-perf-weekpanel {
+  max-height: 420px; overflow-y: auto; z-index: 5;
+  background: var(--lordas-panel);
+  border: 1px solid var(--lordas-accent);
+  padding: 8px 10px;
+  box-shadow: 0 8px 24px rgba(47, 11, 14, .35);
+}
+
+/* ── Ledger rows: one grid for header and rows so the columns line up ─ */
+.iron-perf .iron-ledger-row {
+  display: grid;
+  grid-template-columns: 74px minmax(150px, 1.1fr) minmax(150px, 1.1fr);
+  gap: 0 12px; align-items: start;
+  border-bottom: 1px solid var(--lordas-rule-soft);
+  padding: 6px 0;
+}
+.iron-perf .iron-ledger-row.has-notes {
+  grid-template-columns: 74px minmax(150px, 1.1fr) minmax(150px, 1.1fr) minmax(200px, 1.4fr);
+}
+.iron-perf .iron-ledger-row.is-head {
+  position: sticky; top: 0; z-index: 2;
+  background: var(--lordas-panel);
+  border-bottom: 1px solid var(--lordas-rule);
+  padding: 0 0 4px;
+}
+.iron-perf .iron-ledger-row.is-head span {
+  font-family: var(--lordas-mono); font-size: 9px; letter-spacing: .14em;
+  text-transform: uppercase; color: var(--lordas-muted);
+}
+.iron-perf .iron-verdict {
+  display: inline-block; margin-top: 2px; padding: 0 4px;
+  font-family: var(--lordas-mono); font-size: 8.5px; letter-spacing: .08em;
+  text-transform: uppercase; border: 1px solid;
+}
+.iron-perf .iron-ledger-reply {
+  font-size: 11.5px; color: var(--lordas-muted); margin: 4px 0 0; line-height: 1.4;
+  border-left: 2px solid var(--lordas-accent); padding-left: 7px;
+}
+.iron-perf .iron-ledger-input {
+  width: 100%; font-family: var(--lordas-body); font-size: 11.5px;
+  background: var(--lordas-panel-quiet); color: var(--lordas-ink);
+  border: 1px solid var(--lordas-rule); padding: 5px;
+}
+@media (max-width: 720px) {
+  .iron-perf .iron-ledger-row,
+  .iron-perf .iron-ledger-row.has-notes { grid-template-columns: 60px minmax(0, 1fr) minmax(0, 1fr); }
+  .iron-perf .iron-ledger-row.has-notes > :nth-child(4) { grid-column: 2 / -1; margin-top: 4px; }
+  .iron-perf .iron-ledger-row.is-head.has-notes > :nth-child(4) { display: none; }
+}
+
+/* ── The read: verdict rows rather than a fourth table ───────────────── */
+.iron-perf .iron-read { display: flex; flex-direction: column; }
+.iron-perf .iron-read-row {
+  display: grid; grid-template-columns: minmax(84px, auto) 1fr auto;
+  gap: 2px 10px; align-items: baseline;
+  padding: 5px 0; border-bottom: 1px solid var(--lordas-rule-soft);
+}
+.iron-perf .iron-read-row:last-child { border-bottom: 0; }
+.iron-perf .iron-read-leg { font-size: 11.5px; color: var(--lordas-ink); font-weight: 600; }
+.iron-perf .iron-read-verdict { font-size: 11.5px; line-height: 1.35; }
+.iron-perf .iron-read-actual { font-size: 11px; color: var(--lordas-ink); white-space: nowrap; }
+@media (max-width: 560px) {
+  .iron-perf .iron-read-row { grid-template-columns: 1fr auto; }
+  .iron-perf .iron-read-verdict { grid-column: 1 / -1; grid-row: 2; }
+}
+
+/* ── Sheet details the Lordas console has and the Website copy lacks ── */
+.iron-perf .lordas-heat th,
+.iron-perf .lordas-heat td { padding: 5px 7px; }
+.iron-perf .lordas-heat thead th { line-height: 1.3; text-align: right; }
+.iron-perf .lordas-heat tbody th { padding-left: 0; color: var(--lordas-muted); }
+.iron-perf .lordas-sheet .vs { display: block; line-height: 1.15; }
+.iron-perf .lordas-sheet .vs-t {
+  display: block; font-size: 9px; color: var(--lordas-muted);
+  line-height: 1.3; letter-spacing: .02em; font-weight: 400;
+}
+.iron-perf .lordas-sheet thead th { color: var(--lordas-muted); }
+
+/* ── Drawer: headings in the serif, prose in the sans ────────────────── */
+.iron-perf .lordas-drawer { border-left: 2px solid var(--lordas-accent); }
+.iron-perf .lordas-drawer-body .lordas-fc-sub { font-size: 12px; line-height: 1.5; color: var(--lordas-ink); }
+.iron-perf .lordas-drawer-body .lordas-disc > summary {
+  font-family: var(--lordas-display); font-size: 13.5px; letter-spacing: 0;
+  text-transform: none; color: var(--lordas-ink); font-weight: 600;
+}
+.iron-perf .lordas-drawer-body .lordas-disc-m {
+  font-family: var(--lordas-mono); font-size: 10px; font-weight: 400; color: var(--lordas-accent);
+}
+.iron-perf .lordas-drawer-rule {
+  margin: 14px 0 6px; padding-top: 10px; border-top: 1px solid var(--lordas-rule);
+}
+.iron-perf .lordas-hover-panel { font-size: 11px; }

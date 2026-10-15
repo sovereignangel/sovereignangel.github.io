@@ -1,0 +1,136 @@
+/*
+ * The Opportunities boards on the iron sheet.
+ *
+ * Everything the boards share with the rest of /ironman comes from
+ * console.css and ironsheet.css. This file holds only what the race boards
+ * add — the board switch in the timing band, the toolbar above each sheet,
+ * the ladder key, the legend, the drawer — scoped to `.iron-opps` so no
+ * other page inherits it. Colours are the sheet's variables; three faces
+ * only: display serif for headings, body sans for words, mono for figures.
+ */
+
+/* ── Board switch, riding the dark timing band ─────────────────────── */
+.iron-opps .lordas-ticker { justify-content: space-between; align-items: center; flex-wrap: wrap; }
+.iron-opps .lordas-ticker-lead { padding: 0 6px; }
+.iron-opps .opps-boards { display: inline-flex; gap: 0; }
+.iron-opps .opps-boards button {
+  font-family: var(--lordas-display);
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: .5px;
+  text-transform: uppercase;
+  color: #c9a3a0;
+  background: none;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  padding: 5px 8px 3px;
+  cursor: pointer;
+}
+.iron-opps .opps-boards button:hover { color: var(--iron-cream); }
+.iron-opps .opps-boards button[data-on] { color: var(--iron-cream); border-bottom-color: var(--lordas-sun); }
+.iron-opps .lordas-ticker > .lordas-colgroup-toggle,
+.iron-opps .lordas-ticker .opps-state { color: var(--iron-cream); }
+
+/* ── Card heads ────────────────────────────────────────────────────── */
+.iron-opps .lordas-fc-head > span:last-child { gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+.iron-opps .opps-head-meta { font-family: var(--lordas-body); font-size: 10.5px; color: var(--lordas-muted); }
+
+/* ── Toolbar: ladder key on the left, toggles on the right ─────────── */
+.iron-opps .opps-toolbar {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 6px 14px; flex-wrap: wrap;
+  padding-bottom: 5px; border-bottom: 1px solid var(--lordas-rule-soft);
+}
+.iron-opps .opps-toggles { display: inline-flex; gap: 4px; flex-wrap: wrap; justify-content: flex-end; }
+.iron-opps .lordas-colgroup-toggle { border-radius: 0; padding: 2px 6px; color: var(--lordas-muted); }
+.iron-opps .lordas-colgroup-toggle:hover { color: var(--lordas-ink); border-color: var(--lordas-muted); }
+.iron-opps .lordas-colgroup-toggle[data-on] { color: var(--lordas-accent); border-color: var(--lordas-accent); background: color-mix(in srgb, var(--lordas-accent) 6%, transparent); }
+
+.iron-opps .opps-ladder { display: inline-flex; align-items: baseline; gap: 4px 12px; flex-wrap: wrap; }
+.iron-opps .opps-ladder .lordas-hover { border-bottom: 0; }
+.iron-opps .opps-ladder-who {
+  font-family: var(--lordas-display); font-size: 11px; font-weight: 600;
+  letter-spacing: .5px; text-transform: uppercase; color: var(--lordas-accent);
+}
+.iron-opps .opps-rung { display: inline-flex; align-items: baseline; gap: 4px; }
+.iron-opps .opps-rung svg, .iron-opps .opps-rung .sq { align-self: center; }
+.iron-opps .opps-rung .nm { font-size: 10.5px; color: var(--lordas-muted); }
+.iron-opps .opps-rung .tm { font-family: var(--lordas-mono); font-size: 11.5px; color: var(--lordas-ink); font-variant-numeric: tabular-nums; }
+.iron-opps .opps-rung .sq, .iron-opps .opps-season .sq { width: 7px; height: 7px; display: inline-block; flex-shrink: 0; }
+
+/* ── Prose bits ────────────────────────────────────────────────────── */
+.iron-opps .opps-lede { font-size: 12px; line-height: 1.45; color: var(--lordas-muted); }
+.iron-opps .opps-lede b { color: var(--lordas-ink); font-weight: 600; }
+.iron-opps .opps-note { font-size: 11px; line-height: 1.4; color: var(--lordas-muted); }
+.iron-opps .opps-state { font-size: 12px; color: var(--lordas-muted); padding: 10px 2px; }
+
+/* ── Sheet cells ───────────────────────────────────────────────────── */
+.iron-opps .lordas-sheet-window { max-height: min(70vh, 820px); }
+.iron-opps .lordas-sheet td.note,
+.iron-opps .lordas-sheet td .wrap,
+.iron-opps .opps-prose-cell { font-family: var(--lordas-body); font-size: 10.5px; }
+.iron-opps .lordas-sheet td.note { min-width: 140px; }
+.iron-opps .lordas-sheet tbody th .lordas-hover { border-bottom-style: dotted; }
+.iron-opps .opps-tag { font-family: var(--lordas-mono); font-size: 9px; margin-left: 5px; letter-spacing: .3px; }
+.iron-opps .opps-chip {
+  font-family: var(--lordas-mono); font-size: 9px; text-transform: uppercase; letter-spacing: .3px;
+  border: 1px solid; padding: 0 4px; white-space: nowrap;
+}
+.iron-opps .opps-link { color: inherit; text-decoration: none; }
+.iron-opps .opps-link:hover { color: var(--lordas-accent); }
+.iron-opps .lordas-sheet thead th .strip-head { min-width: 130px; }
+
+/* ── Legend ────────────────────────────────────────────────────────── */
+.iron-opps .opps-legend {
+  display: flex; align-items: center; gap: 4px 12px; flex-wrap: wrap;
+  padding-top: 5px; border-top: 1px solid var(--lordas-rule-soft);
+  font-size: 10px; color: var(--lordas-muted);
+}
+.iron-opps .opps-legend-axis { font-family: var(--lordas-mono); color: var(--lordas-faint); }
+.iron-opps .opps-key { display: inline-flex; align-items: center; gap: 5px; }
+.iron-opps .opps-key .sw { width: 16px; display: block; }
+.iron-opps .opps-dot { width: 7px; height: 7px; border-radius: 50%; display: block; }
+
+/* ── Season list ───────────────────────────────────────────────────── */
+.iron-opps .opps-season { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 8px 22px; }
+.iron-opps .opps-season-month { display: grid; grid-template-columns: 52px 1fr; gap: 8px; align-items: baseline; }
+.iron-opps .opps-season-month .mo {
+  font-family: var(--lordas-display); font-size: 11px; font-weight: 600;
+  letter-spacing: .5px; text-transform: uppercase; color: var(--lordas-accent);
+}
+.iron-opps .opps-season-month .list { display: flex; flex-direction: column; gap: 2px; }
+.iron-opps .opps-season-month .it { display: flex; gap: 6px; align-items: baseline; font-size: 11px; color: var(--lordas-ink); }
+.iron-opps .opps-season-month .it .sq { align-self: flex-start; margin-top: 4px; }
+.iron-opps .opps-season-month .nm { flex: 1 1 auto; min-width: 0; }
+.iron-opps .opps-season-month .dt { font-family: var(--lordas-mono); font-size: 10.5px; color: var(--lordas-muted); min-width: 40px; flex-shrink: 0; white-space: nowrap; }
+.iron-opps .opps-season-month .as { font-size: 10px; color: var(--lordas-muted); flex-shrink: 0; white-space: nowrap; }
+
+/* ── Drawer: square, cream, serif title ────────────────────────────── */
+.iron-opps .lordas-drawer { border-left: 2px solid var(--lordas-accent); box-shadow: -18px 0 44px rgba(47, 11, 14, .4); }
+.iron-opps .lordas-scrim { background: rgba(47, 11, 14, .55); }
+.iron-opps .opps-drawer-title {
+  font-family: var(--lordas-display); font-size: 15px; font-weight: 600;
+  letter-spacing: .5px; text-transform: uppercase; color: var(--lordas-accent); line-height: 1.2;
+}
+.iron-opps .opps-drawer-meta { font-size: 10.5px; color: var(--lordas-muted); margin-top: 2px; }
+.iron-opps .opps-para { font-size: 12px; line-height: 1.55; color: var(--lordas-ink); margin: 0 0 9px; }
+.iron-opps .opps-para b { font-weight: 600; }
+.iron-opps .lordas-detail-trigger {
+  border-radius: 0; font-family: var(--lordas-display); font-size: 10.5px; font-weight: 600;
+  letter-spacing: .5px; color: var(--lordas-accent); border-color: var(--lordas-rule);
+}
+.iron-opps .lordas-detail-trigger:hover { border-color: var(--lordas-accent); }
+
+/* ── Narrow screens ────────────────────────────────────────────────────
+   The sheet scrolls inside its window; the page never scrolls sideways. */
+.iron-opps { min-width: 0; max-width: 100%; }
+.iron-opps .lordas-seam-1 { grid-template-columns: minmax(0, 1fr); }
+.iron-opps .lordas-fc { min-width: 0; }
+.iron-opps .opps-boards { flex-wrap: wrap; }
+@media (max-width: 700px) {
+  .iron-opps .opps-boards button { padding: 5px 6px 3px; font-size: 11.5px; }
+  .iron-opps .opps-season { grid-template-columns: minmax(0, 1fr); }
+  .iron-opps .opps-toolbar { align-items: flex-start; }
+  .iron-opps .opps-toggles { justify-content: flex-start; }
+  .iron-opps .lordas-ticker-band .lordas-ticker-item:first-child { padding-left: 12px; }
+}

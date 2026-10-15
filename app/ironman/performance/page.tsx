@@ -1,8 +1,8 @@
 import PerformanceAnalysis from '@/components/ironman/PerformanceAnalysis'
 
 export const metadata = {
-  title: 'Performance — Belgrade 70.3 debrief',
-  description: 'Leg-by-leg analysis of both finishes at MTS Ironman 70.3 Belgrade, read against the plan and against the winners',
+  title: 'Performance — training block and races',
+  description: 'The training block week by week and day by day, and each race read against her previous bests and the winner of her category',
 }
 
 export default function IronmanPerformancePage() {

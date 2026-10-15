@@ -275,13 +275,17 @@ export function Hover({
 export function Ticker({
   items,
   motto,
+  lead,
 }: {
   items: { label: string; value: React.ReactNode; color?: string }[]
   motto?: boolean
+  /** Controls that ride the left end of the row — a board switch, say — so they cost no row of their own */
+  lead?: React.ReactNode
 }) {
   return (
-    <div className={`lordas-ticker${motto ? ' has-motto' : ''}`}>
+    <div className={`lordas-ticker${motto || lead ? ' has-motto' : ''}`}>
       {motto && <span className="lordas-ticker-motto">{LORDAS_MOTTO}</span>}
+      {lead && <span className="lordas-ticker-lead">{lead}</span>}
       <span className="lordas-ticker-band">
       {items.map((it, i) => (
         <span key={i} className="lordas-ticker-item">
@@ -337,6 +341,8 @@ export interface SheetRow {
   /** Sets the row apart as a conclusion rather than an input */
   emphasis?: boolean
   colors?: (string | undefined)[]
+  /** Per-cell class names, for columns that need a width rule of their own */
+  classes?: (string | undefined)[]
 }
 
 /**
@@ -348,18 +354,51 @@ export function Tearsheet({
   columns,
   rows,
   className = '',
+  labelHeader,
+  labelKey,
+  sortKey,
+  sortDir,
+  onSort,
 }: {
-  columns: { key: string; label: React.ReactNode }[]
+  columns: { key: string; label: React.ReactNode; sortable?: boolean }[]
   rows: SheetRow[]
   /** `is-dense` for a sheet that has to share its card with other things */
   className?: string
+  /** Header for the row-label column, which is otherwise blank */
+  labelHeader?: React.ReactNode
+  /** Sort key for the row-label column — supplying it makes that column sortable */
+  labelKey?: string
+  /** The column currently sorted, and which way. Sorting itself is the caller's
+   *  job: the sheet renders nodes, and only the caller still has the numbers
+   *  behind them. */
+  sortKey?: string
+  sortDir?: 'asc' | 'desc'
+  onSort?: (key: string) => void
 }) {
+  const head = (key: string | undefined, label: React.ReactNode, sortable: boolean) => {
+    if (!sortable || !key || !onSort) return label
+    const on = sortKey === key
+    return (
+      <button
+        type="button"
+        onClick={() => onSort(key)}
+        className="lordas-sheet-sort"
+        aria-sort={on ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none'}
+      >
+        {label}
+        <span className="lordas-sheet-caret" data-on={on ? '' : undefined}>
+          {on ? (sortDir === 'asc' ? '\u2191' : '\u2193') : '\u2195'}
+        </span>
+      </button>
+    )
+  }
+
   return (
     <table className={`lordas-sheet ${className}`}>
       <thead>
         <tr>
-          <th />
-          {columns.map((c) => <th key={c.key}>{c.label}</th>)}
+          <th className="lordas-sheet-label-head">{head(labelKey, labelHeader ?? '', !!labelKey)}</th>
+          {columns.map((c) => <th key={c.key}>{head(c.key, c.label, !!c.sortable)}</th>)}
         </tr>
       </thead>
       <tbody>
@@ -367,7 +406,13 @@ export function Tearsheet({
           <tr key={i} className={r.emphasis ? 'em' : undefined}>
             <th scope="row">{r.label}</th>
             {r.cells.map((cell, j) => (
-              <td key={j} style={r.colors?.[j] ? { color: r.colors[j] } : undefined}>{cell}</td>
+              <td
+                key={j}
+                className={r.classes?.[j]}
+                style={r.colors?.[j] ? { color: r.colors[j] } : undefined}
+              >
+                {cell}
+              </td>
             ))}
           </tr>
         ))}

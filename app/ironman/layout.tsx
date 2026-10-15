@@ -20,8 +20,9 @@ import { useIronmanTarget } from '@/components/ironman/useIronmanTarget'
  * harder to read.
  */
 const TABS = [
-  { href: '/ironman', label: 'Training' },
+  { href: '/ironman', label: 'Overview' },
   { href: '/ironman/performance', label: 'Performance' },
+  { href: '/ironman/opportunities', label: 'Opportunities' },
 ] as const
 
 function IronmanTabs() {
