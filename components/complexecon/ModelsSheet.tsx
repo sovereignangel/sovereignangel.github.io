@@ -206,7 +206,7 @@ function ModelPane({
         <p className="mt-1.5 font-serif text-[17px] italic leading-snug text-ink">{model.answer}</p>
       </div>
 
-      <div className="grid grid-cols-1 gap-x-5 gap-y-3 lg:grid-cols-[264px_minmax(0,1fr)]">
+      <div className="grid grid-cols-1 gap-x-5 gap-y-3 lg:grid-cols-[264px_minmax(0,1fr)] 2xl:grid-cols-[300px_minmax(0,1fr)]">
         <aside>
           <div className="flex items-baseline justify-between gap-2 border-b border-rule pb-1">
             <SubHead>Parameters</SubHead>
@@ -331,7 +331,8 @@ export default function ModelsSheet() {
 
   return (
     <main className="text-ink lg:h-[100dvh] lg:overflow-hidden" style={{ background: '#f5f1ea' }}>
-      <div className="mx-auto flex h-full max-w-[1320px] flex-col px-3 py-3 md:px-5 md:py-4">
+      {/* A dashboard, not a reading page: it takes the whole window, not the 1320px column the other sheets use. */}
+      <div className="flex h-full w-full flex-col px-3 py-3 md:px-5 md:py-4">
         <Masthead
           kicker="Lori Corpuz · Paper Reproductions"
           title={MODELS_FRAMING.title}
@@ -390,7 +391,7 @@ export default function ModelsSheet() {
           })}
         </div>
 
-        <div className="grid min-h-0 flex-1 grid-cols-1 gap-3 lg:grid-cols-[300px_minmax(0,1fr)]">
+        <div className="grid min-h-0 flex-1 grid-cols-1 gap-3 lg:grid-cols-[300px_minmax(0,1fr)] xl:grid-cols-[340px_minmax(0,1fr)] 2xl:grid-cols-[380px_minmax(0,1fr)]">
           <aside className="hidden min-h-0 border border-rule bg-white lg:flex lg:flex-col">
             <div className="flex items-baseline justify-between gap-2 border-b border-rule bg-cream px-3 py-1">
               <span className="whitespace-nowrap font-serif text-[16px] font-semibold uppercase tracking-[1.5px] text-burgundy">The Models</span>

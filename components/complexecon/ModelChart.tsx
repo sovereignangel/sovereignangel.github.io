@@ -19,7 +19,9 @@ import { CHART, roleColor } from '@/lib/complexecon/models/palette'
 import type { ChartSpec, Point } from '@/lib/complexecon/models'
 
 const TICK = { fontSize: 11, fill: CHART.tick, fontFamily: 'ui-monospace, Menlo, monospace' }
-const PLOT_HEIGHT = 230
+
+/** Plot height follows the width — a chart that stretches across a wide window gets taller too, so it does not flatten. */
+const plotHeight = (width: number) => Math.round(Math.min(360, Math.max(220, width * 0.3)))
 
 /**
  * The chart is sized from its own box, measured with a ResizeObserver, rather
@@ -226,6 +228,7 @@ function DotField({ spec, data, markX }: { spec: ChartSpec; data: Point[]; markX
 export default function ModelChart({ spec, data, markX }: { spec: ChartSpec; data: Point[]; markX?: number }) {
   const yDomain = spec.yDomain ?? (['auto', 'auto'] as const)
   const [box, width] = useWidth()
+  const PLOT_HEIGHT = plotHeight(width || 640)
   return (
     <div className="min-w-0">
       <div className="flex flex-wrap items-baseline justify-between gap-x-3">
