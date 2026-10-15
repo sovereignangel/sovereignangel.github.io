@@ -79,9 +79,13 @@
   --lordas-sun: #d9a441;
   --lordas-lens: #8a7c7c;
 
-  --lordas-display: var(--font-iron-display, Georgia, 'Times New Roman', serif);
-  --lordas-body: inherit;
-  --lordas-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+  /* The site's three faces and no others: Crimson Pro for display, Inter for
+     prose, IBM Plex Mono for figures — the same ones the Tailwind font-serif,
+     font-sans and font-mono classes on this page resolve to. */
+  --lordas-display: var(--font-crimson), Georgia, serif;
+  --lordas-body: var(--font-inter), -apple-system, sans-serif;
+  --lordas-mono: var(--font-ibm-plex), Menlo, monospace;
+  font-family: var(--lordas-body);
 }
 
 /* ── Race-day tearsheet on a burgundy ground ──────────────────────────
@@ -174,3 +178,70 @@
   border: 1px solid var(--lordas-accent);
   box-shadow: 0 8px 24px rgba(47, 11, 14, .35);
 }
+
+/* ── Type: the Armstrong scale, not the console's ────────────────────
+   The console primitives label everything in 8–9px spaced-out monospace,
+   which is a second voice on a page whose headers are meant to be Crimson.
+   Here: serif uppercase for every heading, Inter for words, Plex Mono only
+   where a figure is being read. */
+.iron-sheet .lordas-fc-head > span:first-child {
+  font-family: var(--lordas-display);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: .5px;
+  text-transform: uppercase;
+  color: var(--lordas-accent);
+}
+.iron-sheet .lordas-fc-head {
+  font-family: var(--lordas-mono);
+  font-size: 10px;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--lordas-muted);
+  align-items: center;
+}
+.iron-sheet .lordas-disc > summary {
+  font-family: var(--lordas-display);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .5px;
+  color: var(--lordas-accent);
+}
+.iron-sheet .lordas-disc-m {
+  font-family: var(--lordas-mono);
+  font-size: 10px;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--lordas-muted);
+}
+.iron-sheet .lordas-sheet thead th {
+  font-family: var(--lordas-display);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .5px;
+  color: var(--lordas-muted);
+}
+.iron-sheet .lordas-sheet tbody th { font-family: var(--lordas-body); font-size: 11px; color: var(--lordas-ink); }
+.iron-sheet .lordas-sheet tbody td { font-family: var(--lordas-mono); }
+.iron-sheet .lordas-sheet.is-dense thead th { font-size: 10.5px; letter-spacing: .5px; }
+.iron-sheet .lordas-sheet.is-dense tbody th { font-size: 11px; }
+.iron-sheet .lordas-hover-panel .hd {
+  font-family: var(--lordas-display);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .5px;
+  color: var(--lordas-accent);
+}
+.iron-sheet .lordas-hover-panel .k span { font-family: var(--lordas-body); font-size: 10.5px; }
+.iron-sheet .lordas-ticker-item .l {
+  font-family: var(--lordas-display);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .5px;
+}
+.iron-sheet .lordas-ticker-item .v { font-family: var(--lordas-mono); font-size: 11px; }
+.iron-sheet .lordas-chip { font-family: var(--lordas-mono); font-size: 9px; letter-spacing: .3px; }
+.iron-sheet .lordas-fc-sub { font-family: var(--lordas-body); }
+.iron-sheet .lordas-plan thead th { font-family: var(--lordas-display); font-size: 11px; letter-spacing: .5px; }
