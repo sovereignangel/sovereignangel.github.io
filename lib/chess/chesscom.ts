@@ -39,6 +39,8 @@ export interface LiveGame {
   timeClass: 'rapid' | 'blitz' | 'bullet'
   rated: boolean
   result: 'win' | 'loss' | 'draw'
+  /** Your rating after the game. */
+  rating: number
   minutes: number
   /** Your accuracy, when Chess.com analysed the game. */
   accuracy: number | null
@@ -141,6 +143,7 @@ export async function fetchChessCom(username = CHESS_COM_USERNAME, fresh = false
           timeClass: g.time_class,
           rated: g.rated !== false,
           result,
+          rating: g[me]?.rating,
           minutes: mins,
           accuracy: typeof g.accuracies?.[me] === 'number' ? g.accuracies[me] : null,
         })
@@ -208,4 +211,31 @@ export function dailyRapid(snapshot: ChessComSnapshot | null): { date: string; r
     byDay.set(g.date, { rating: g.rating, games: (d?.games || 0) + 1 })
   }
   return Array.from(byDay, ([date, v]) => ({ date, ...v }))
+}
+
+export type TimeClass = LiveGame['timeClass']
+export type YearSeries = Record<TimeClass, { date: string; rating: number; games: number }[]>
+
+/**
+ * A year of rated live games, one point per day per speed — the rating after
+ * the day's last game. What the 2026 view of the chart draws.
+ */
+export function yearSeries(snapshot: ChessComSnapshot | null, year: number): YearSeries {
+  const out: YearSeries = { rapid: [], blitz: [], bullet: [] }
+  const days: Record<TimeClass, Map<string, { rating: number; games: number }>> = {
+    rapid: new Map(),
+    blitz: new Map(),
+    bullet: new Map(),
+  }
+  for (const g of snapshot?.liveGames || []) {
+    if (!g.rated || !days[g.timeClass] || typeof g.rating !== 'number') continue
+    const date = isoOf(g.endTime) as string
+    if (Number(date.slice(0, 4)) !== year) continue
+    const prev = days[g.timeClass].get(date)
+    days[g.timeClass].set(date, { rating: g.rating, games: (prev?.games || 0) + 1 })
+  }
+  for (const k of Object.keys(days) as TimeClass[]) {
+    out[k] = Array.from(days[k], ([date, v]) => ({ date, ...v }))
+  }
+  return out
 }

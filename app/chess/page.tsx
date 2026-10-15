@@ -13,11 +13,11 @@ import {
 } from '@/lib/chess/model'
 import { ExecCampaign } from '@/components/exec/ExecCampaign'
 import { ChessDashboard } from '@/components/chess/ChessDashboard'
-import { fetchChessCom, baselineFrom, dailyRapid, summaryOf, BASELINE_GAMES } from '@/lib/chess/chesscom'
+import { fetchChessCom, baselineFrom, dailyRapid, summaryOf, yearSeries, BASELINE_GAMES } from '@/lib/chess/chesscom'
 
 export const metadata: Metadata = {
   title: 'Chess — Mastery',
-  description: '900 to 1700 Chess.com rapid: the Williamsburg A Team bar, the October 24 sprint, and the ladder in between',
+  description: '900 to 1800 Chess.com rapid: the Williamsburg A Team bar, the October 24 sprint, and the ladder in between',
 }
 
 export const revalidate = 60
@@ -75,7 +75,7 @@ export default async function ChessPage() {
               Chess <span style={{ color: lane.color }}>&mdash;</span> Mastery
             </h1>
             <span className="hidden md:inline text-[10px]" style={{ color: LANE_INK.muted }}>
-              900 &rarr; 1700 Chess.com rapid &middot; the Williamsburg A Team bar
+              900 &rarr; 1800 Chess.com rapid &middot; the Williamsburg A Team bar
             </span>
             <span className="ml-auto flex items-center gap-1">
               <Link
@@ -96,7 +96,7 @@ export default async function ChessPage() {
           </header>
 
           <div className="mb-3">
-            <ChessDashboard date={today} chesscom={snapshot ? summaryOf(snapshot) : null} synced={synced} baseline={baseline} />
+            <ChessDashboard date={today} chesscom={snapshot ? summaryOf(snapshot) : null} synced={synced} baseline={baseline} year={{ year: Number(today.slice(0, 4)), series: yearSeries(snapshot, Number(today.slice(0, 4))) }} />
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 items-start mb-3">
@@ -124,16 +124,16 @@ export default async function ChessPage() {
                   ))}{' '}
                   points on the model at 5 / 7.5 / 10 hours. But at 900 most games are lost to one-move blunders, and a
                   blunder check is trainable in two weeks. Playing at a 1000–1100 level on the day is a real target;
-                  1700 on the day is not. And the 900 is a self-estimate — ten rated rapid games turn it into a number
+                  1800 on the day is not. And the 900 is a self-estimate — ten rated rapid games turn it into a number
                   the plan can be measured against.
                 </p>
                 <p>
-                  <span className="font-semibold">1700 rapid is a two-to-three-year project.</span> It is a strong
-                  club-player number — reachable for an adult who trains consistently, and well past where most stall.
-                  The model puts it at <span className="font-mono">2&ndash;3</span> years from 900 at 5&ndash;10 hours
-                  a week: 900&rarr;1200 is months, 1200&rarr;1500 about a year, and 1500&rarr;1700 is the hard
-                  stretch, where the points stop coming from opponents&rsquo; mistakes and start coming from your own
-                  plans. Online is the faster pool to climb — far more rated games per week.
+                  <span className="font-semibold">1800 rapid is a two-and-a-half-to-four-year project.</span> It is a
+                  strong club-player number — reachable for an adult who trains consistently, and well past where most
+                  stall. The model puts it at <span className="font-mono">2&frac12;&ndash;4</span> years from 900 at
+                  5&ndash;10 hours a week: 900&rarr;1200 is months, 1200&rarr;1500 about a year, and 1500&rarr;1800 is
+                  the hard stretch — well over a year on its own — where the points stop coming from opponents&rsquo;
+                  mistakes and start coming from your own plans. Online is the faster pool to climb — far more rated games per week.
                 </p>
                 <p>
                   <span className="font-semibold">What moves the dates.</span> A coach who reviews your games (the single
@@ -141,7 +141,7 @@ export default async function ChessPage() {
                   of every loss before the engine. Hours without those three buy far less than the lines show.
                 </p>
                 <p style={{ color: LANE_INK.muted }} className="text-[10px]">
-                  Assumptions: the A Team is picked on a rating floor, and the floor is 1700 Chess.com rapid. If the club
+                  Assumptions: the A Team is picked on a rating floor, and the floor is 1800 Chess.com rapid. If the club
                   turns out to select on a USCF rating or on results, the bar moves and so does this page.
                 </p>
               </div>
@@ -176,7 +176,7 @@ export default async function ChessPage() {
                 </tbody>
               </table>
               <p className="text-[10px] leading-relaxed mt-2" style={{ color: LANE_INK.muted }}>
-                Chess.com rapid points per month at 7.5h: 80 below 800, 50 to 1200, 28 to 1500, 16 to 1700 — scaled by hours to the 0.7
+                Chess.com rapid points per month at 7.5h: 80 below 800, 50 to 1200, 28 to 1500, 16 to 1800 — scaled by hours to the 0.7
                 power, because the tenth hour of a week absorbs less than the fifth. A planning model, not a promise:
                 your Chess.com rapid games, plotted on the chart above, are what check it.
               </p>

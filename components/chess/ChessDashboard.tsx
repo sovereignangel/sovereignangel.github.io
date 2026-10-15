@@ -11,7 +11,7 @@
 
 import { LANE_BY_ID, LANE_INK } from '@/lib/exec/lanes'
 import { TARGET_RATING, TOURNAMENT_DATE, stageFor } from '@/lib/chess/model'
-import { BASELINE_GAMES, type Baseline, type ChessComSnapshot } from '@/lib/chess/chesscom'
+import { BASELINE_GAMES, type Baseline, type ChessComSnapshot, type YearSeries } from '@/lib/chess/chesscom'
 import { useExecDate } from '@/components/exec/useExecDate'
 import { ProjectionChart } from './ProjectionChart'
 import { ChessLedger } from './ChessLedger'
@@ -59,11 +59,13 @@ export function ChessDashboard({
   chesscom,
   synced,
   baseline,
+  year,
 }: {
   date: string
   chesscom: ChessComSummary | null
   synced: { date: string; rating: number; games: number }[]
   baseline: Baseline
+  year: { year: number; series: YearSeries }
 }) {
   const date = useExecDate(serverDate)
   const lane = LANE_BY_ID.chess
@@ -117,13 +119,13 @@ export function ChessDashboard({
       <div className="border rounded-xl p-2.5 md:p-3" style={{ borderColor: LANE_INK.rule, backgroundColor: LANE_INK.card }}>
         <div className="flex items-baseline justify-between gap-2 mb-2 pb-1.5 border-b" style={{ borderColor: LANE_INK.ruleLight }}>
           <span className="font-serif text-[14px] md:text-[15px] font-semibold" style={{ color: lane.color }}>
-            Projection against Chess.com
+            Tracking against the plan
           </span>
           <span className="text-[10px]" style={{ color: LANE_INK.muted }}>
             from {baseline.rating}{baseline.estimate ? ' (estimate)' : ''} on {new Date(baseline.date + 'T12:00:00Z').toLocaleDateString('en-GB', { day: 'numeric', month: 'short', timeZone: 'UTC' })}
           </span>
         </div>
-        <ProjectionChart synced={synced} anchor={baseline} />
+        <ProjectionChart synced={synced} anchor={baseline} year={{ ...year, today: date }} />
       </div>
 
       <ChessLedger />

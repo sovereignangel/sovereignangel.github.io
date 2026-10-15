@@ -24,10 +24,13 @@ import {
   ratingAfter,
   type ScenarioHours,
 } from '@/lib/chess/model'
+import type { YearSeries } from '@/lib/chess/chesscom'
+import { YearChart } from './YearChart'
 
-type Range = 'sprint' | 'year' | 'full'
+type Range = 'calendar' | 'sprint' | 'year' | 'full'
 
 const RANGES: { id: Range; label: string }[] = [
+  { id: 'calendar', label: 'This year' },
   { id: 'sprint', label: 'To Oct 24' },
   { id: 'year', label: 'First year' },
   { id: 'full', label: `To ${TARGET_RATING}` },
@@ -57,14 +60,17 @@ export interface Anchor {
 export function ProjectionChart({
   synced = [],
   anchor,
+  year,
 }: {
   synced?: { date: string; rating: number; games: number }[]
   anchor: Anchor
+  /** The calendar-year view — actual ratings by speed. Omitted, the year button hides. */
+  year?: { year: number; series: YearSeries; today: string }
 }) {
   const anchorM = monthsSince(START_DATE, anchor.date)
   const wrap = useRef<HTMLDivElement>(null)
   const [width, setWidth] = useState(720)
-  const [range, setRange] = useState<Range>('full')
+  const [range, setRange] = useState<Range>(year ? 'calendar' : 'full')
   const [hoverM, setHoverM] = useState<number | null>(null)
 
   useEffect(() => {
@@ -76,7 +82,7 @@ export function ProjectionChart({
   }, [])
 
   const spanMonths = useMemo(() => {
-    if (range === 'sprint') return monthsSince(START_DATE, TOURNAMENT_DATE) + 0.15
+    if (range === 'sprint' || range === 'calendar') return monthsSince(START_DATE, TOURNAMENT_DATE) + 0.15
     if (range === 'year') return 12
     return Math.ceil(anchorM + monthsBetween(anchor.rating, TARGET_RATING, 5)) + 3
   }, [range, anchorM, anchor.rating])
@@ -170,7 +176,7 @@ export function ProjectionChart({
   return (
     <div>
       <div className="flex items-center gap-1 mb-2 flex-wrap">
-        {RANGES.map((r) => (
+        {RANGES.filter((r) => r.id !== 'calendar' || year).map((r) => (
           <button
             key={r.id}
             onClick={() => setRange(r.id)}
@@ -181,10 +187,10 @@ export function ProjectionChart({
                 : { color: LANE_INK.muted, borderColor: LANE_INK.rule }
             }
           >
-            {r.label}
+            {r.id === 'calendar' && year ? String(year.year) : r.label}
           </button>
         ))}
-        <span className="ml-auto flex items-center gap-3 flex-wrap">
+        {range !== 'calendar' && <span className="ml-auto flex items-center gap-3 flex-wrap">
           {SCENARIOS.map((h) => (
             <span key={h} className="flex items-center gap-1 text-[10px]" style={{ color: LANE_INK.muted }}>
               <span className="inline-block w-3 h-[2px]" style={{ backgroundColor: SCENARIO_COLOR[h] }} />
@@ -195,8 +201,12 @@ export function ProjectionChart({
             <span className="inline-block w-2 h-2 rounded-full" style={{ backgroundColor: LANE_INK.ink }} />
             Chess.com rapid
           </span>
-        </span>
+        </span>}
       </div>
+
+      {range === 'calendar' && year ? (
+        <YearChart year={year.year} series={year.series} anchor={anchor} today={year.today} />
+      ) : (
 
       <div ref={wrap} className="relative w-full">
         <svg width={width} height={H} role="img" aria-label="Projected rating by weekly training hours, with logged ratings">
@@ -306,6 +316,7 @@ export function ProjectionChart({
           </div>
         )}
       </div>
+      )}
     </div>
   )
 }

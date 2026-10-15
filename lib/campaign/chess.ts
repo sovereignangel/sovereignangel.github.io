@@ -1,5 +1,5 @@
 /**
- * Chess campaign — 900 to 1700 Chess.com rapid, the bar set for the
+ * Chess campaign — 900 to 1800 Chess.com rapid, the bar set for the
  * Williamsburg A Team (picked on a rating floor).
  *
  * Two horizons in one ladder. Block I is a fifteen-day sprint to the October
@@ -22,11 +22,11 @@ import type { Campaign } from './types'
 export const CHESS_CAMPAIGN: Campaign = {
   id: 'chess',
   name: 'Chess',
-  lane: '900 to 1700 Chess.com rapid — the Williamsburg A Team bar, one blunder check at a time',
+  lane: '900 to 1800 Chess.com rapid — the Williamsburg A Team bar, one blunder check at a time',
   destination: {
-    label: '1700 rapid · A Team bar (10h/wk line)',
-    sub: 'Williamsburg A Team — rating floor, 1700 on Chess.com rapid',
-    date: '2028-10-05',
+    label: '1800 rapid · A Team bar (10h/wk line)',
+    sub: 'Williamsburg A Team — rating floor, 1800 on Chess.com rapid',
+    date: '2029-03-10',
   },
   href: '/chess',
   sessionsPerDay: 1,
@@ -238,9 +238,9 @@ export const CHESS_CAMPAIGN: Campaign = {
       numeral: 'IV',
       name: 'Plans and Structures',
       start: '2027-12-01',
-      end: '2028-10-05',
-      aim: '1500 to 1700 rapid — the A Team bar. Quiet positions stop being a mystery: pawn structures carry plans, and calculation gets written down.',
-      gate: '1700 Chess.com rapid, held for a month — and losses that come from calculation, not strategy.',
+      end: '2029-03-10',
+      aim: '1500 to 1800 rapid — the A Team bar. Quiet positions stop being a mystery: pawn structures carry plans, and calculation gets written down.',
+      gate: '1800 Chess.com rapid, held for a month — and losses that come from calculation, not strategy.',
       units: [
         {
           id: 'ch-4-01',
@@ -269,14 +269,14 @@ export const CHESS_CAMPAIGN: Campaign = {
           id: 'ch-4-04',
           code: '4.4',
           label: 'Coach every two weeks; one OTB tournament a month',
-          detail: 'Ten months of it. Check off when the habit has held for the whole block.',
-          sessions: 10,
+          detail: 'Fifteen months of it. Check off when the habit has held for the whole block.',
+          sessions: 15,
         },
         {
           id: 'ch-4-05',
           code: '4.5',
           label: 'Try out for the A Team',
-          detail: 'The destination. 1700 held, and a season of over-the-board games behind it so the board is as familiar as the screen.',
+          detail: 'The destination. 1800 held, and a season of over-the-board games behind it so the board is as familiar as the screen.',
           key: true,
         },
       ],

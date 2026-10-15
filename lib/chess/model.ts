@@ -21,7 +21,7 @@
 export const START_RATING = 900
 export const START_DATE = '2026-10-09'
 /** Chess.com rapid — the A Team is picked on a rating floor, set here. */
-export const TARGET_RATING = 1700
+export const TARGET_RATING = 1800
 export const TOURNAMENT_DATE = '2026-10-24'
 export const TOURNAMENT_LABEL = 'Williamsburg — Oct 24'
 
@@ -59,7 +59,7 @@ export const SCENARIO_COLOR: Record<ScenarioHours, string> = {
   10: '#6b4420',
 }
 
-export const MILESTONES = [1200, 1400, 1600, 1700] as const
+export const MILESTONES = [1200, 1400, 1600, 1800] as const
 
 function hoursMultiplier(hours: number): number {
   return Math.pow(Math.max(hours, 0.5) / REFERENCE_HOURS, HOURS_EXPONENT)
@@ -205,7 +205,7 @@ export const STAGES: Stage[] = [
     id: 'plans',
     numeral: 'III',
     name: 'Plans and Structures — the A Team bar',
-    band: [1500, 1700],
+    band: [1500, 1800],
     leak: 'Positional drift: no plan in quiet positions, bad trades, pawn structures misread.',
     focus: [
       'Pawn structures and the plans that come with them',
@@ -219,7 +219,7 @@ export const STAGES: Stage[] = [
       'Calculation drills — Aagaard, Calculation (Grandmaster Preparation)',
       'Coach every two weeks; one OTB tournament a month',
     ],
-    exit: '1700 Chess.com rapid, held for a month — and your losses come from calculation errors rather than strategy.',
+    exit: '1800 Chess.com rapid, held for a month — and your losses come from calculation errors rather than strategy.',
     split: [
       { label: 'Calculation', hours: 2 },
       { label: 'Long games', hours: 2 },

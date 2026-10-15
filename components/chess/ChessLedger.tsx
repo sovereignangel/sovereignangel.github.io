@@ -6,13 +6,45 @@
  * moved since the line before carries its change beside it.
  */
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useAuth } from '@/components/auth/AuthProvider'
 import { getChessLedger } from '@/lib/firestore/chess'
 import type { ChessLedgerEntry } from '@/lib/types'
 import { LANE_BY_ID, LANE_INK } from '@/lib/exec/lanes'
 
 type Rated = 'rapid' | 'blitz' | 'bullet' | 'puzzleHigh'
+
+/** Lines visible before the ledger scrolls. */
+const VISIBLE = 5
+const OPEN_KEY = 'chess-ledger-open'
+
+/**
+ * Caps a scroll box at exactly VISIBLE lines — measured, not guessed, because a
+ * phone line is two rows of text and a desktop line is one. Lines carry
+ * data-line; whatever sits above the first one (a table header) is counted in.
+ */
+function useFiveLines(dep: unknown) {
+  const ref = useRef<HTMLDivElement>(null)
+  const [max, setMax] = useState<number | undefined>(undefined)
+  const measure = useCallback(() => {
+    const box = ref.current
+    if (!box) return
+    // The layout hidden at this width measures as zero; leave it uncapped so it
+    // is measured properly the moment it shows.
+    if (box.offsetParent === null) return setMax(undefined)
+    const lines = box.querySelectorAll<HTMLElement>('[data-line]')
+    if (lines.length <= VISIBLE) return setMax(undefined)
+    const top = box.getBoundingClientRect().top - box.scrollTop
+    setMax(Math.ceil(lines[VISIBLE].getBoundingClientRect().top - top))
+  }, [])
+  useLayoutEffect(() => {
+    measure()
+    const ro = new ResizeObserver(measure)
+    if (ref.current) ro.observe(ref.current)
+    return () => ro.disconnect()
+  }, [measure, dep])
+  return { ref, max }
+}
 
 function Delta({ now, before }: { now: number | null; before: number | null | undefined }) {
   if (now === null || before === null || before === undefined || now === before) return null
@@ -31,6 +63,23 @@ function fmtDay(iso: string): string {
 export function ChessLedger() {
   const { user, signIn, loading: authLoading } = useAuth()
   const [rows, setRows] = useState<ChessLedgerEntry[] | null>(null)
+  const [open, setOpen] = useState(true)
+  const phone = useFiveLines(`${rows?.length}-${open}`)
+  const desk = useFiveLines(`${rows?.length}-${open}`)
+
+  useEffect(() => {
+    try {
+      if (localStorage.getItem(OPEN_KEY) === '0') setOpen(false)
+    } catch {}
+  }, [])
+  const toggle = () => {
+    setOpen((o) => {
+      try {
+        localStorage.setItem(OPEN_KEY, o ? '0' : '1')
+      } catch {}
+      return !o
+    })
+  }
 
   useEffect(() => {
     if (!user) return
@@ -47,16 +96,39 @@ export function ChessLedger() {
 
   return (
     <div className="border rounded-xl p-2.5 md:p-3" style={{ borderColor: LANE_INK.rule, backgroundColor: LANE_INK.card }}>
-      <div className="flex items-baseline justify-between gap-2 mb-2 pb-1.5 border-b" style={{ borderColor: LANE_INK.ruleLight }}>
-        <span className="font-serif text-[14px] md:text-[15px] font-semibold" style={{ color: lane.color }}>
-          Ledger
+      <button
+        onClick={toggle}
+        aria-expanded={open}
+        className={`w-full flex items-baseline justify-between gap-2 text-left ${open ? 'mb-2 pb-1.5 border-b' : ''}`}
+        style={{ borderColor: LANE_INK.ruleLight }}
+      >
+        <span className="flex items-baseline gap-1.5">
+          <svg
+            width="9"
+            height="9"
+            viewBox="0 0 10 10"
+            fill="none"
+            stroke={LANE_INK.muted}
+            strokeWidth="1.4"
+            aria-hidden="true"
+            className="transition-transform"
+            style={{ transform: open ? 'rotate(90deg)' : undefined }}
+          >
+            <path d="M3.5 2L6.5 5 3.5 8" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          <span className="font-serif text-[14px] md:text-[15px] font-semibold" style={{ color: lane.color }}>
+            Ledger
+          </span>
+          {rows && rows.length > 0 && (
+            <span className="font-mono text-[10px]" style={{ color: LANE_INK.muted }}>{rows.length} lines</span>
+          )}
         </span>
         <span className="text-[10px]" style={{ color: LANE_INK.muted }}>
           Chess.com at noon and midnight, New York
         </span>
-      </div>
+      </button>
 
-      {!user ? (
+      {!open ? null : !user ? (
         <button
           onClick={signIn}
           disabled={authLoading}
@@ -76,9 +148,9 @@ export function ChessLedger() {
         {/* Phone: two lines a row — the day and its games, then the ratings. Ten
             columns do not fit a phone, and a table that scrolls sideways inside
             its card reads as one that stops. */}
-        <div className="lg:hidden">
+        <div ref={phone.ref} className="lg:hidden overflow-y-auto" style={{ maxHeight: phone.max }}>
           {rows.map((r, i) => (
-            <div key={`${r.date}-${r.slot}`} className="py-1.5 border-t first:border-t-0 text-[10px]" style={{ borderColor: LANE_INK.ruleLight, color: LANE_INK.ink }}>
+            <div data-line key={`${r.date}-${r.slot}`} className="py-1.5 border-t first:border-t-0 text-[10px]" style={{ borderColor: LANE_INK.ruleLight, color: LANE_INK.ink }}>
               <div className="flex items-baseline gap-2">
                 <span className="font-semibold">{fmtDay(r.date)}</span>
                 <span style={{ color: LANE_INK.muted }}>{r.slot === 'noon' ? 'noon' : 'close'}</span>
@@ -99,9 +171,9 @@ export function ChessLedger() {
           ))}
         </div>
 
-        <div className="hidden lg:block">
+        <div ref={desk.ref} className="hidden lg:block overflow-y-auto" style={{ maxHeight: desk.max }}>
           <table className="w-full text-[10px]" style={{ color: LANE_INK.ink }}>
-            <thead>
+            <thead className="sticky top-0" style={{ backgroundColor: LANE_INK.card }}>
               <tr className="text-left" style={{ color: LANE_INK.muted }}>
                 <th className="font-normal py-1">Day</th>
                 <th className="font-normal py-1 pl-2">At</th>
@@ -117,7 +189,7 @@ export function ChessLedger() {
             </thead>
             <tbody>
               {rows.map((r, i) => (
-                <tr key={`${r.date}-${r.slot}`} className="border-t" style={{ borderColor: LANE_INK.ruleLight }}>
+                <tr data-line key={`${r.date}-${r.slot}`} className="border-t" style={{ borderColor: LANE_INK.ruleLight }}>
                   <td className="py-1 whitespace-nowrap">{fmtDay(r.date)}</td>
                   <td className="py-1 pl-2" style={{ color: LANE_INK.muted }}>{r.slot === 'noon' ? 'noon' : 'close'}</td>
                   {cell(r, i, 'rapid')}
