@@ -1,18 +1,17 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useAuth } from '@/components/auth/AuthProvider'
 import { getGarminWindow, getGarminRollups } from '@/lib/firestore'
 import type { GarminMetrics, GarminActivity } from '@/lib/types'
-import { RACE, RACE_NYC, GOALS, BASELINE, goalSplits, goalDisplay, daysToRace, todayLocal,
-  priorRaceAtDistance, priorRaceDisplay, priorRaceVsGoal, KM_PER_MILE,
-  eliteFor, planRange, planPosition,
-  type PlanDay, type Sport, type TargetRace } from '@/lib/ironman/plan'
+import { RACE, RACE_NYC, GOALS, goalSplits, goalDisplay, daysToRace, todayLocal,
+  priorRaceDisplay, priorRaceVsGoal,
+  eliteFor, planRange, planPosition, getPlanDay, blockStart, priorRacesFor, sameDistance, raceDistanceLabel,
+  type PlanDay, type PlannedSession, type Sport, type TargetRace } from '@/lib/ironman/plan'
 import { addDays } from '@/lib/ironman/cycle'
 import { useIronmanTarget } from '@/components/ironman/useIronmanTarget'
-import { computeRebalance, type SportNeed } from '@/lib/ironman/rebalance'
-import { fmtPace as fmtRacePace } from '@/lib/ironman/pace'
-import { computeRaceForecast, type DisciplineForecast } from '@/lib/ironman/forecast'
+import { computeRebalance, type Rebalance, type SportNeed } from '@/lib/ironman/rebalance'
+import { computeRaceForecast, type RaceForecast } from '@/lib/ironman/forecast'
 import {
   computeReadiness,
   matchDay,
@@ -20,9 +19,11 @@ import {
   computeProgress,
   type Readiness,
   type DayStatus,
+  type SportProgress,
 } from '@/lib/ironman/adapt'
-import { SportIcon, FinishFlag } from '@/components/ironman/IronmanIcons'
+import { SportIcon } from '@/components/ironman/IronmanIcons'
 import { eliteSheetRow } from '@/components/ironman/EliteBenchmark'
+import { Track } from '@/components/lordas/design/charts'
 import {
   Seam, FieldCard, Sub, Row, Rows, Foot, Chip, Hover, Ticker, Disclosure, Tearsheet,
   type SheetRow,
@@ -41,42 +42,6 @@ import './ironsheet.css'
 
 // ── Shared UI ─────────────────────────────────────────────────────────────
 
-/**
- * Card, unless the caller is already inside one. These panels are reused both
- * standalone and nested inside a field card, and a card inside a card reads as
- * a mistake.
- */
-function Shell({ bare, title, right, children }: {
-  bare?: boolean; title: string; right?: React.ReactNode; children: React.ReactNode
-}) {
-  if (bare) return <>{children}</>
-  return <Card title={title} right={right}>{children}</Card>
-}
-
-const IRON_SHADOW = 'shadow-[0_2px_12px_rgba(94,31,36,0.06)]'
-
-function Card({
-  title,
-  right,
-  children,
-  className = '',
-}: {
-  title: string
-  right?: React.ReactNode
-  children: React.ReactNode
-  className?: string
-}) {
-  return (
-    <div className={`bg-iron-card border border-iron-rule rounded-xl p-2.5 md:p-3 ${IRON_SHADOW} ${className}`}>
-      <div className="flex items-center justify-between gap-2 mb-2 pb-1.5 border-b border-iron-rule-light">
-        <span className="font-serif text-[14px] md:text-[15px] font-semibold text-iron-deep">{title}</span>
-        {right}
-      </div>
-      {children}
-    </div>
-  )
-}
-
 const SPORT_LABEL: Record<Sport, string> = {
   swim: 'SWIM',
   bike: 'BIKE',
@@ -84,28 +49,6 @@ const SPORT_LABEL: Record<Sport, string> = {
   brick: 'BRICK',
   strength: 'CORE',
   rest: 'REST',
-}
-
-const SPORT_COLOR: Record<Sport, string> = {
-  swim: 'var(--iron-swim)',
-  bike: 'var(--iron-bike)',
-  run: 'var(--lordas-ok)',
-  brick: 'var(--iron-brick)',
-  strength: 'var(--lordas-warn)',
-  rest: 'var(--lordas-faint)',
-}
-
-function SportChip({ sport }: { sport: Sport }) {
-  const color = SPORT_COLOR[sport]
-  return (
-    <span
-      className="inline-flex items-center gap-1 font-mono text-[9px] uppercase tracking-[0.3px] px-1.5 py-0.5 rounded-md border shrink-0"
-      style={{ color, borderColor: color + '33', backgroundColor: color + '0d' }}
-    >
-      <SportIcon sport={sport} className="w-3 h-3 shrink-0" />
-      {SPORT_LABEL[sport]}
-    </span>
-  )
 }
 
 const STATUS_STYLE: Record<string, { label: string; color: string }> = {
@@ -120,102 +63,24 @@ function fmtDate(date: string): string {
   return d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })
 }
 
-function fmtClock(minutes: number): string {
-  const totalSec = Math.round(minutes * 60)
-  const h = Math.floor(totalSec / 3600)
-  const m = Math.floor((totalSec % 3600) / 60)
-  const s = totalSec % 60
-  return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
-}
-
-function fmtMinSec(minutes: number): string {
-  const totalSec = Math.round(minutes * 60)
-  return `${Math.floor(totalSec / 60)}:${String(totalSec % 60).padStart(2, '0')}`
-}
-
-// ── Race goals ────────────────────────────────────────────────────────────
-
-function fmtPace(sport: Sport, paceMinKm: number | null): string {
-  if (paceMinKm == null) return '—'
-  if (sport === 'swim') return `${fmtMinSec(paceMinKm / 10)}/100m`
-  if (sport === 'bike') return `${(60 / paceMinKm).toFixed(1)}km/h`
-  return `${fmtMinSec(paceMinKm)}/km`
-}
-
 function probColor(p: number | null): string {
   if (p == null) return 'var(--lordas-faint)'
   return p >= 0.5 ? 'var(--lordas-ok)' : p >= 0.25 ? 'var(--lordas-warn)' : 'var(--lordas-crit)'
 }
 
 
-// ── Where the race is ─────────────────────────────────────────────────────
-
-const NEED_TEXT: Record<SportNeed, string> = {
-  volume: 'needs distance',
-  intensity: 'needs speed',
-  both: 'needs distance and speed',
-  holding: 'holding — keep it awake',
-  unknown: 'needs evidence',
-}
+// ── Today ─────────────────────────────────────────────────────────────────
 
 /**
- * The plan says what today is. This says which discipline the weeks that are
- * left actually belong to, ranked by minutes over goal split rather than by
- * percentage off pace — forty minutes on the bike outranks ten in the water
- * however much worse the water looks in percentage terms.
+ * Today as rows rather than boxes. The session cards this replaced spent a
+ * bordered panel on every session, so a two-session day pushed the readiness
+ * card's neighbours below the fold. One rule between sessions says the same.
  */
-
-// ── Readiness gauge ───────────────────────────────────────────────────────
-
-function ReadinessBlock({ readiness }: { readiness: Readiness }) {
-  const color =
-    readiness.band === 'green' ? 'var(--lordas-ok)' : readiness.band === 'amber' ? 'var(--lordas-warn)' : readiness.band === 'red' ? 'var(--lordas-crit)' : 'var(--lordas-faint)'
-  return (
-    <div>
-      <div className="flex items-baseline gap-2 mb-2">
-        <span className="font-mono text-[32px] font-semibold leading-none" style={{ color }}>
-          {readiness.score ?? '—'}
-        </span>
-        <span className="text-[11px] text-iron-muted">readiness / 100</span>
-      </div>
-      <div className="space-y-1">
-        {readiness.factors.map((f) => (
-          <div key={f.label} className="flex items-center justify-between gap-2">
-            <span className="text-[10px] text-iron-muted">{f.label}</span>
-            <div className="flex items-center gap-2">
-              <span className="font-mono text-[10px] font-medium text-iron-ink">{f.value}</span>
-              <div className="w-14 h-1.5 bg-iron-rule-light rounded-full overflow-hidden">
-                {f.score !== null && (
-                  <div
-                    className="h-full rounded-full"
-                    style={{
-                      width: `${f.score}%`,
-                      backgroundColor: f.score >= 68 ? 'var(--lordas-ok)' : f.score >= 50 ? 'var(--lordas-warn)' : 'var(--lordas-crit)',
-                    }}
-                  />
-                )}
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-}
-
-// ── Today panel ───────────────────────────────────────────────────────────
-
-function TodayPanel({ today, readiness, dayStatus, bare }: { today: string; readiness: Readiness; dayStatus: DayStatus | null; bare?: boolean }) {
+function TodayBody({ readiness, dayStatus }: { readiness: Readiness; dayStatus: DayStatus | null }) {
   const day = dayStatus?.day
   const adaptation = useMemo(() => (day ? adaptDay(day, readiness) : null), [day, readiness])
 
-  if (!day || !adaptation) {
-    return (
-      <Shell bare={bare} title="Today">
-        <div className="text-[11px] text-iron-muted py-4">No session planned for today.</div>
-      </Shell>
-    )
-  }
+  if (!day || !adaptation || !dayStatus) return <Sub>No session planned for today.</Sub>
 
   const levelColor =
     adaptation.level === 'as-planned' ? 'var(--lordas-ok)'
@@ -224,171 +89,191 @@ function TodayPanel({ today, readiness, dayStatus, bare }: { today: string; read
     : 'var(--lordas-crit)'
 
   return (
-    <Shell bare={bare} title={`Today — ${fmtDate(day.date)} · ${day.phase}`}>
-      <div className="mb-2">
+    <>
+      <div className="flex items-baseline gap-2 flex-wrap mb-1">
         <span
-          className="font-mono text-[9px] uppercase px-1.5 py-0.5 rounded-md border"
+          className="font-mono text-[9px] uppercase px-1.5 py-0.5 rounded-md border shrink-0"
           style={{ color: levelColor, borderColor: levelColor + '33', backgroundColor: levelColor + '0d' }}
         >
           {adaptation.headline}
         </span>
+        {day.focus && <span className="text-[10px] text-iron-muted">{day.focus}</span>}
       </div>
-      <p className="text-[10px] text-iron-muted mb-2.5 leading-relaxed">{adaptation.note}</p>
-      <div className="space-y-2">
+      <Sub>{adaptation.note}</Sub>
+      <div className="mt-1.5">
         {adaptation.sessions.map((x, i) => {
           const match = dayStatus.sessions.find((m) => m.session.title === x.title.replace(/ \((eased to Z2|reduced 40%)\)$/, ''))
             ?? dayStatus.sessions[i]
+          const st = match && (match.status === 'done' || match.status === 'partial') ? STATUS_STYLE[match.status] : null
           return (
-            <div key={i} className="border border-iron-rule rounded-lg p-2.5 bg-iron-sand">
-              <div className="flex items-center gap-2 mb-1">
-                <SportChip sport={x.sport} />
+            <div key={i} className="py-1.5 border-t border-iron-rule-light first:border-t-0">
+              <div className="flex items-center gap-2">
+                <SportIcon sport={x.sport} className="w-3.5 h-3.5 shrink-0" />
                 <span className="text-[11px] font-semibold text-iron-ink">{x.title}</span>
+                {st && (
+                  <span className="font-mono text-[8px] uppercase" style={{ color: st.color }}>{st.label}</span>
+                )}
                 {x.durationMin > 0 && (
                   <span className="font-mono text-[10px] text-iron-muted ml-auto shrink-0">
-                    {x.durationMin}min{x.distanceKm ? ` · ${x.distanceKm}km` : ''}
-                  </span>
-                )}
-                {match && (match.status === 'done' || match.status === 'partial') && (
-                  <span className="font-mono text-[8px] uppercase px-1.5 py-0.5 rounded-md border"
-                    style={{ color: STATUS_STYLE[match.status].color, borderColor: STATUS_STYLE[match.status].color + '33' }}>
-                    {STATUS_STYLE[match.status].label}
+                    {sessionSize(x)}
                   </span>
                 )}
               </div>
-              <p className="text-[10px] text-iron-muted leading-relaxed">{x.detail}</p>
+              <p className="text-[10px] text-iron-muted leading-snug mt-0.5 pl-[22px]">{x.detail}</p>
             </div>
           )
         })}
       </div>
-    </Shell>
+    </>
   )
 }
 
-// ── Volume progress ───────────────────────────────────────────────────────
+function sessionSize(x: Pick<PlannedSession, 'durationMin' | 'distanceKm' | 'zone'>): string {
+  return `${x.durationMin}min${x.distanceKm ? ` · ${x.distanceKm}km` : ''}${x.zone && x.zone !== '-' ? ` · ${x.zone}` : ''}`
+}
 
+/**
+ * Tomorrow as printed. Readiness has not happened yet, so nothing here is
+ * eased or reduced — those words belong to a morning that has happened.
+ */
+function TomorrowBody({ day }: { day: PlanDay | undefined }) {
+  if (!day) return <Sub>Nothing printed.</Sub>
+  const active = day.sessions.filter((x) => x.sport !== 'rest')
+  return (
+    <>
+      <Sub>{day.phase}{day.focus ? ` · ${day.focus}` : ''}</Sub>
+      {active.length === 0 ? (
+        <Sub>Rest.</Sub>
+      ) : (
+        <Rows>
+          {active.map((x, i) => (
+            <Row
+              key={i}
+              label={
+                <span className="inline-flex items-center gap-1.5">
+                  <SportIcon sport={x.sport} className="w-3 h-3 shrink-0" />
+                  {x.title}
+                </span>
+              }
+              value={sessionSize(x)}
+            />
+          ))}
+        </Rows>
+      )}
+    </>
+  )
+}
 
-// ── Plan calendar ─────────────────────────────────────────────────────────
+// ── The plan, as a table opened at today ──────────────────────────────────
 
-function PlanCalendar({ days, today, bare }: { days: DayStatus[]; today: string; bare?: boolean }) {
-  const [expanded, setExpanded] = useState<string | null>(null)
-  // Consecutive runs, not a map by name: the rolling plan repeats Base, Build,
-  // Load and Absorb every block, and each repeat is its own stretch.
-  const phases = useMemo(() => {
-    const runs: { phase: string; days: DayStatus[] }[] = []
-    days.forEach((d) => {
-      const last = runs[runs.length - 1]
-      if (last && last.phase === d.day.phase) last.days.push(d)
-      else runs.push({ phase: d.day.phase, days: [d] })
-    })
-    return runs
-  }, [days])
+const DOT_COLOR: Record<string, string> = {
+  done: 'var(--lordas-ok)', partial: 'var(--lordas-warn)', missed: 'var(--lordas-crit)', upcoming: 'var(--lordas-faint)',
+}
+
+/** One status for a day: the worst thing that happened, or upcoming. */
+function dayVerdict(ds: DayStatus, today: string): string {
+  const active = ds.sessions.filter((m) => m.session.sport !== 'rest')
+  if (ds.day.date > today || active.length === 0) return ds.extras.length > 0 ? 'done' : 'upcoming'
+  if (active.every((m) => m.status === 'done')) return 'done'
+  if (active.some((m) => m.status === 'done' || m.status === 'partial')) return 'partial'
+  if (ds.day.date === today) return 'upcoming'
+  return 'missed'
+}
+
+/**
+ * The printed window in full, opened at today. A five-week table that opens
+ * at its first row answers a question nobody has; this one lands on today's
+ * row so the week ahead is what shows, and the week behind is one scroll up.
+ */
+function PlanTable({ days, today, tomorrow }: { days: DayStatus[]; today: string; tomorrow: string }) {
+  const wrapRef = useRef<HTMLDivElement>(null)
+  const todayRef = useRef<HTMLTableRowElement>(null)
+
+  const toToday = useCallback(() => {
+    const wrap = wrapRef.current
+    const row = todayRef.current
+    if (!wrap || !row) return
+    const head = wrap.querySelector('thead')?.getBoundingClientRect().height ?? 0
+    wrap.scrollTop += row.getBoundingClientRect().top - wrap.getBoundingClientRect().top - head
+  }, [])
+
+  useEffect(() => {
+    requestAnimationFrame(toToday)
+  }, [toToday, days.length])
 
   return (
-    <Shell bare={bare} title="The Plan">
-      <div className="space-y-4">
-        {phases.map(({ phase, days: phaseDays }) => (
-          <div key={phaseDays[0].day.date}>
-            <div className="font-serif text-[11px] font-semibold uppercase tracking-[0.5px] text-iron-burgundy mb-1.5">
-              {phase}
-              <span className="font-mono text-[9px] text-iron-muted normal-case tracking-normal ml-2">
-                {fmtDate(phaseDays[0].day.date)} – {fmtDate(phaseDays[phaseDays.length - 1].day.date)}
-              </span>
-            </div>
-            <div className="space-y-1">
-              {phaseDays.map((ds) => {
-                const isToday = ds.day.date === today
-                const isPast = ds.day.date < today
-                const isOpen = expanded === ds.day.date
-                return (
-                  <div
-                    key={ds.day.date}
-                    onClick={() => setExpanded(isOpen ? null : ds.day.date)}
-                    className={`border rounded-lg px-2.5 py-1.5 cursor-pointer transition-colors ${
-                      isToday ? 'border-iron-burgundy bg-iron-burgundy-bg' : isOpen ? 'border-iron-faint' : 'border-iron-rule-light hover:border-iron-faint'
-                    } ${isPast && !isOpen ? 'opacity-80' : ''}`}
-                  >
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className={`font-mono text-[10px] font-medium w-[86px] shrink-0 ${isToday ? 'text-iron-burgundy' : 'text-iron-ink'}`}>
-                        {fmtDate(ds.day.date)}
-                      </span>
-                      <span className="text-[10px] text-iron-muted w-[180px] shrink-0 hidden sm:inline">{ds.day.focus}</span>
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        {ds.sessions.map((m, i) => {
-                          const st = STATUS_STYLE[m.status]
-                          return (
-                            <span key={i} className="flex items-center gap-1">
-                              <SportChip sport={m.session.sport} />
-                              <span className="text-[10px] text-iron-ink">
-                                {m.session.distanceKm
-                                  ? `${m.session.distanceKm}km`
-                                  : m.session.durationMin > 0
-                                    ? `${m.session.durationMin}min`
-                                    : ''}
-                              </span>
-                              {m.status !== 'upcoming' && (
-                                <span className="font-mono text-[8px] uppercase" style={{ color: st.color }}>
-                                  {st.label}
-                                  {m.actual && m.status !== 'missed' && m.actual.distanceKm != null
-                                    ? ` ${m.actual.distanceKm}km`
-                                    : ''}
-                                </span>
-                              )}
-                            </span>
-                          )
-                        })}
-                        {ds.extras.map((x, i) => (
-                          <span key={`extra-${i}`} className="flex items-center gap-1">
-                            {x.sport ? (
-                              <SportChip sport={x.sport} />
-                            ) : (
-                              <span className="font-mono text-[8px] uppercase px-1.5 py-0.5 rounded-md border border-iron-rule text-iron-muted">
-                                {x.type.replace(/_/g, ' ').slice(0, 12)}
-                              </span>
-                            )}
-                            <span className="font-mono text-[8px] uppercase" style={{ color: 'var(--lordas-ok)' }}>
-                              +{x.distanceKm != null ? `${x.distanceKm}km` : `${x.durationMin}min`} logged
-                            </span>
+    <>
+      <div className="lordas-plan-nav">
+        <span>What was printed, what was done, and what is still to come</span>
+        <Chip onClick={toToday} title="Scroll back to today">Today</Chip>
+      </div>
+      <div className="lordas-plan-scroll" ref={wrapRef}>
+        <table className="lordas-plan">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Session</th>
+              <th style={{ textAlign: 'center' }}>&middot;</th>
+            </tr>
+          </thead>
+          <tbody>
+            {days.map((ds) => {
+              const d = ds.day
+              const active = d.sessions.filter((x) => x.sport !== 'rest')
+              const isToday = d.date === today
+              const isNext = d.date === tomorrow
+              const past = d.date <= today
+              const logged = ds.sessions.filter((m) => m.actual && (m.status === 'done' || m.status === 'partial'))
+              const missed = past && !isToday ? ds.sessions.filter((m) => m.status === 'missed' && m.session.sport !== 'rest') : []
+              const verdict = dayVerdict(ds, today)
+              return (
+                <tr key={d.date} ref={isToday ? todayRef : undefined} className={isToday ? 'now' : isNext ? 'next' : undefined}>
+                  <td className="dt">
+                    {fmtDate(d.date)}
+                    <span className="ph">{isToday ? 'Today' : isNext ? 'Tomorrow' : d.phase}</span>
+                  </td>
+                  <td className="ss">
+                    {active.length === 0 ? (
+                      <span style={{ color: 'var(--lordas-faint)' }}>Rest</span>
+                    ) : (
+                      active.map((x, i) => (
+                        <span key={i} className="one">
+                          <SportIcon sport={x.sport} className="w-[11px] h-[11px]" />
+                          {x.title}
+                          <em>{sessionSize(x)}</em>
+                        </span>
+                      ))
+                    )}
+                    {(logged.length > 0 || missed.length > 0 || ds.extras.length > 0) && (
+                      <span className="who">
+                        {logged.map((m, i) => (
+                          <span key={`l${i}`} className="bit" style={{ color: DOT_COLOR[m.status] }}>
+                            {SPORT_LABEL[m.session.sport].toLowerCase()}{' '}
+                            {m.actual?.distanceKm != null ? `${m.actual.distanceKm}km · ` : ''}{m.actual?.durationMin}min
                           </span>
                         ))}
-                      </div>
-                      <svg
-                        className={`ml-auto shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''}`}
-                        width="10"
-                        height="10"
-                        viewBox="0 0 10 10"
-                        aria-hidden="true"
-                      >
-                        <path d="M2 3.5L5 6.5L8 3.5" stroke="var(--lordas-faint)" strokeWidth="1.2" fill="none" strokeLinecap="round" />
-                      </svg>
-                    </div>
-                    {isOpen && (
-                      <div className="mt-2 pt-2 border-t border-iron-rule-light space-y-2">
-                        {ds.day.sessions.map((x, i) => (
-                          <div key={i}>
-                            <div className="flex items-center gap-2 mb-0.5 flex-wrap">
-                              <SportChip sport={x.sport} />
-                              <span className="text-[11px] font-semibold text-iron-ink">{x.title}</span>
-                              {x.durationMin > 0 && (
-                                <span className="font-mono text-[10px] text-iron-muted ml-auto shrink-0">
-                                  {x.durationMin}min
-                                  {x.distanceKm ? ` · ${x.distanceKm}km` : ''}
-                                  {x.zone !== '-' ? ` · ${x.zone}` : ''}
-                                </span>
-                              )}
-                            </div>
-                            <p className="text-[10px] text-iron-muted leading-relaxed">{x.detail}</p>
-                          </div>
+                        {ds.extras.map((x, i) => (
+                          <span key={`x${i}`} className="bit" style={{ color: 'var(--lordas-accent)' }}>
+                            + {x.sport ? SPORT_LABEL[x.sport].toLowerCase() : x.type.replace(/_/g, ' ')}{' '}
+                            {x.distanceKm != null ? `${x.distanceKm}km · ` : ''}{x.durationMin}min
+                          </span>
                         ))}
-                      </div>
+                        {missed.map((m, i) => (
+                          <span key={`m${i}`} className="bit" style={{ color: 'var(--lordas-crit)' }}>× {m.session.title}</span>
+                        ))}
+                      </span>
                     )}
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-        ))}
+                  </td>
+                  <td style={{ textAlign: 'center' }}>
+                    <span className="dot" style={{ background: DOT_COLOR[verdict] }} title={verdict} />
+                  </td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
       </div>
-    </Shell>
+    </>
   )
 }
 
@@ -440,47 +325,71 @@ function NextRaceCard({ today, target, onSave }: {
     }
   }
 
-  const input = 'font-mono text-[11px] text-iron-ink bg-iron-card border border-iron-rule rounded-md px-2 py-1 focus:outline-none focus:border-iron-burgundy'
+  const input = 'w-full font-mono text-[11px] text-iron-ink bg-iron-card border border-iron-rule rounded-md px-2 py-1 focus:outline-none focus:border-iron-burgundy'
 
   return (
     <FieldCard
       label="Next race"
-      meta={target && out != null && out >= 0 ? `T−${out} · ${fmtDate(target.date)}` : 'not picked'}
+      meta={target && out != null && out >= 0 ? `T−${out}` : 'not picked'}
     >
-      <div className="flex flex-wrap items-center gap-2 mb-2">
+      {target && out != null && out >= 0 && (
+        <div className="font-serif text-[15px] font-semibold text-iron-deep leading-tight mb-1">
+          {target.name || 'Race'}
+          <span className="block font-mono text-[10px] font-normal text-iron-muted">{fmtDate(target.date)}</span>
+        </div>
+      )}
+      {todayPhase && (
+        <Sub>
+          <Hover
+            align="left"
+            panel={
+              <>
+                <div className="hd">How the blocks cycle</div>
+                <div className="k"><span>{todayPhase}</span><b>{BLOCK_NOTE[todayPhase] ?? ''}</b></div>
+                <div className="k">
+                  <span>{target ? 'To the race' : 'No race'}</span>
+                  <b>
+                    {target
+                      ? 'Base → Build → Load → Absorb until three weeks out, then Peak → Taper → Race week, then two weeks of recovery'
+                      : 'Four-week blocks, each 5% bigger than the last, until a date is picked'}
+                  </b>
+                </div>
+              </>
+            }
+          >
+            {todayPhase}{pos?.block ? ` · block ${pos.block}` : ''}
+          </Hover>
+          {' — '}{BLOCK_NOTE[todayPhase] ?? ''}
+        </Sub>
+      )}
+      <div className="flex flex-col gap-1.5 mt-2">
         <input type="date" value={date} min={addDays(today, 1)} onChange={(e) => setDate(e.target.value)} className={input} aria-label="Race date" />
-        <input type="text" value={name} placeholder="Race name (optional)" onChange={(e) => setName(e.target.value)} className={`${input} flex-1 min-w-[160px]`} aria-label="Race name" />
-        <button
-          type="button"
-          disabled={!dirty || !date || saving}
-          onClick={() => submit({ date, name: name.trim() || undefined })}
-          className="font-mono text-[10px] uppercase px-2.5 py-1 rounded-md border bg-iron-burgundy text-iron-card border-iron-burgundy disabled:opacity-40"
-        >
-          {saving ? 'Saving' : 'Set race'}
-        </button>
-        {target && (
+        <input type="text" value={name} placeholder="Race name (optional)" onChange={(e) => setName(e.target.value)} className={input} aria-label="Race name" />
+        <div className="flex gap-1">
           <button
             type="button"
-            disabled={saving}
-            onClick={() => submit(null)}
-            className="font-mono text-[10px] uppercase px-2.5 py-1 rounded-md border bg-transparent text-iron-muted border-iron-rule hover:border-iron-faint"
+            disabled={!dirty || !date || saving}
+            onClick={() => submit({ date, name: name.trim() || undefined })}
+            className="font-mono text-[10px] uppercase px-2.5 py-1 rounded-md border bg-iron-burgundy text-iron-card border-iron-burgundy disabled:opacity-40"
           >
-            Clear
+            {saving ? 'Saving' : 'Set race'}
           </button>
-        )}
+          {target && (
+            <button
+              type="button"
+              disabled={saving}
+              onClick={() => submit(null)}
+              className="font-mono text-[10px] uppercase px-2.5 py-1 rounded-md border bg-transparent text-iron-muted border-iron-rule hover:border-iron-faint"
+            >
+              Clear
+            </button>
+          )}
+        </div>
       </div>
       {tooSoon && dirty && (
         <Sub>Less than three weeks out — the plan goes straight into taper and skips the peak week.</Sub>
       )}
       {err && <Sub>Could not save: {err}</Sub>}
-      <Sub>
-        {todayPhase ? `${todayPhase}${pos?.block ? ` · block ${pos.block}` : ''} — ${BLOCK_NOTE[todayPhase] ?? ''}` : ''}
-      </Sub>
-      <Sub>
-        {target
-          ? 'Blocks cycle Base → Build → Load → Absorb until three weeks out, then Peak → Taper → Race week. After the race: two weeks of recovery and the cycle starts again.'
-          : 'No race yet, so the plan cycles four-week blocks — Base → Build → Load → Absorb — each 5% bigger than the last. Pick a date and the three weeks before it become Peak → Taper → Race week.'}
-      </Sub>
     </FieldCard>
   )
 }
@@ -560,23 +469,92 @@ function gap(sec: number): { text: string; color: string } {
   }
 }
 
-function RaceSheet({ activities, metrics, today, target }: {
-  activities: GarminActivity[]; metrics: GarminMetrics[]; today: string; target: TargetRace | null
-}) {
-  const forecast = useMemo(
-    () => computeRaceForecast(activities, metrics, today, { raceDate: target?.date }),
-    [activities, metrics, today, target]
+/** 2026-09-18 -> 09, 18, 26 */
+function asOfStamp(iso: string | null | undefined): string {
+  if (!iso || iso.length < 10) return '—'
+  return `${iso.slice(5, 7)}, ${iso.slice(8, 10)}, ${iso.slice(2, 4)}`
+}
+
+/**
+ * Every race finished, newest first, behind one line under the card title.
+ * A record of finished races is context for the targets, not a subject beside
+ * them, so it lives in a hover rather than a table of its own.
+ */
+function RaceHistoryLink() {
+  const races = priorRacesFor('lori')
+  if (races.length === 0) return <Sub>No race on record.</Sub>
+  const best = races.reduce((x, y) => (y.totalSec < x.totalSec ? y : x))
+  return (
+    <div className="lordas-fc-sub">
+      <Hover
+        align="left"
+        panel={
+          <>
+            <div className="hd">Races finished</div>
+            {races.map((r) => {
+              const v = sameDistance(r, RACE_NYC) ? priorRaceVsGoal(r, GOALS) : null
+              const d = priorRaceDisplay(r)
+              return (
+                <div className="k" key={`${r.date}-${r.name}`}>
+                  <span>
+                    {r.name}
+                    <br />
+                    {r.location} · {r.date} · {raceDistanceLabel(r)}
+                    <br />
+                    {clock(r.swimSec)} / {clock(r.bikeSec)} / {clock(r.runSec)} · T {clock(d.transitionSec)}
+                  </span>
+                  <b>
+                    {clock(r.totalSec)}
+                    {v ? (
+                      <>
+                        <br />
+                        <span style={{ color: gap(v.total).color }}>{gap(v.total).text}</span>
+                      </>
+                    ) : null}
+                  </b>
+                </div>
+              )
+            })}
+          </>
+        }
+      >
+        {races.length} race{races.length === 1 ? '' : 's'} raced · best {clock(best.totalSec)}
+      </Hover>
+    </div>
   )
-  const rebalance = useMemo(() => computeRebalance(activities, metrics, today, 'lori'), [activities, metrics, today])
-  const progress = useMemo(() => computeProgress(activities, today, target), [activities, today, target])
+}
+
+interface Compliance {
+  planned: number; done: number; partial: number; missed: number; upcoming: number
+  weeks: { start: string; planned: number; done: number; partial: number; missed: number; upcoming: number }[]
+}
+
+/** The current block's sessions, by week: what came due and what happened to it. */
+function blockCompliance(activities: GarminActivity[], today: string, target: TargetRace | null): Compliance {
+  const start = blockStart(today, target)
+  const days = planRange(start, addDays(start, 27), target).map((d) => matchDay(d, activities, today))
+  const comp: Compliance = { planned: 0, done: 0, partial: 0, missed: 0, upcoming: 0, weeks: [] }
+  days.forEach((ds, i) => {
+    if (i % 7 === 0) comp.weeks.push({ start: ds.day.date, planned: 0, done: 0, partial: 0, missed: 0, upcoming: 0 })
+    const w = comp.weeks[comp.weeks.length - 1]
+    for (const m of ds.sessions) {
+      if (m.session.sport === 'rest') continue
+      w.planned++; comp.planned++
+      w[m.status]++; comp[m.status]++
+    }
+  })
+  return comp
+}
+
+function RaceSheet({ activities, today, target, forecast, rebalance, progress }: {
+  activities: GarminActivity[]; today: string; target: TargetRace | null
+  forecast: RaceForecast; rebalance: Rebalance; progress: SportProgress[]
+}) {
   const targets = useMemo(() => raceTargets(forecast, GOALS), [forecast])
   const profile = useMemo(() => paceProfile(activities, today), [activities, today])
+  const comp = useMemo(() => blockCompliance(activities, today, target), [activities, today, target])
   const splits = useMemo(() => goalSplits(), [])
   const show = useMemo(() => goalDisplay(), [])
-  // The one measurement training cannot produce: a distance already raced,
-  // transitions and pacing decisions included. It belongs among the targets
-  // rather than in a table of its own, so it reads as one more row.
-  const raced = useMemo(() => priorRaceAtDistance(RACE_NYC, 'lori'), [])
   // The front of the field on the same course, as the scale the goal and the
   // projection are read against. Women's winner — the category being raced.
   const elite = useMemo(() => eliteFor('lori', RACE_NYC), [])
@@ -600,34 +578,6 @@ function RaceSheet({ activities, metrics, today, target }: {
   const rows: SheetRow[] = [
     ...(elite ? [eliteSheetRow(elite, (s) => goalSplitMin(s) * 60)] : []),
     { label: 'Goal Total', cells: SPORTS3.map((s) => splitOf(goalSplitMin(s))) },
-    ...(raced
-      ? [
-          {
-            label: (
-              <Hover
-                align="left"
-                panel={
-                  <>
-                    <div className="hd">{raced.name}</div>
-                    <div className="k"><span>Where</span><b>{raced.location} · {raced.date.slice(0, 4)}</b></div>
-                    <div className="k"><span>Transitions</span><b>{clock(priorRaceDisplay(raced).transitionSec)}</b></div>
-                    <div className="k"><span>Finish</span><b>{clock(raced.totalSec)}</b></div>
-                    <div className="k">
-                      <span>vs goal</span>
-                      <b style={{ color: gap(priorRaceVsGoal(raced, GOALS).total).color }}>
-                        {gap(priorRaceVsGoal(raced, GOALS).total).text}
-                      </b>
-                    </div>
-                  </>
-                }
-              >
-                Raced {raced.date.slice(0, 4)}
-              </Hover>
-            ),
-            cells: [clock(raced.swimSec), clock(raced.bikeSec), clock(raced.runSec)],
-          } as SheetRow,
-        ]
-      : []),
     {
       label: 'Goal Pace',
       cells: SPORTS3.map((s) => <PaceCell key={s} sport={s} minKm={goalPaceMinKm(s)} title="goal pace" />),
@@ -662,7 +612,29 @@ function RaceSheet({ activities, metrics, today, target }: {
         return <PaceCell key={s} sport={s} minKm={minKm} title="six-week average" />
       }),
     },
-    { label: 'Projected Total', cells: cols.map((c) => splitOf(c.d?.projectedSplitMin)) },
+    {
+      // A projection is only true of the day it was computed, so the date is
+      // part of the number, not decoration.
+      label: (
+        <span>
+          Projected Total{' '}
+          <span className="font-mono" style={{ fontSize: 8.5, color: 'var(--lordas-faint)' }}>
+            (as of {asOfStamp(forecast.asOf)})
+          </span>
+        </span>
+      ),
+      cells: cols.map((c) => splitOf(c.d?.projectedSplitMin)),
+    },
+    {
+      label: 'Goal Spread',
+      cells: cols.map((c) => (c.g?.minutesOverGoal == null ? '—' : `+${Math.round(c.g.minutesOverGoal)}min`)),
+      colors: cols.map((c) =>
+        c.g?.minutesOverGoal == null ? 'var(--lordas-faint)'
+          : c.g.minutesOverGoal > 30 ? 'var(--lordas-crit)'
+          : c.g.minutesOverGoal > 5 ? 'var(--lordas-warn)'
+          : 'var(--lordas-ok)'
+      ),
+    },
     {
       label: 'Goal Probability',
       emphasis: true,
@@ -684,16 +656,6 @@ function RaceSheet({ activities, metrics, today, target }: {
       )),
       colors: cols.map((c) => probColor(c.d?.probability)),
     },
-    {
-      label: 'Goal Spread',
-      cells: cols.map((c) => (c.g?.minutesOverGoal == null ? '—' : `+${Math.round(c.g.minutesOverGoal)}min`)),
-      colors: cols.map((c) =>
-        c.g?.minutesOverGoal == null ? 'var(--lordas-faint)'
-          : c.g.minutesOverGoal > 30 ? 'var(--lordas-crit)'
-          : c.g.minutesOverGoal > 5 ? 'var(--lordas-warn)'
-          : 'var(--lordas-ok)'
-      ),
-    },
   ]
 
   const evidence: SheetRow[] = [
@@ -711,11 +673,15 @@ function RaceSheet({ activities, metrics, today, target }: {
     { label: 'Needs', cells: cols.map((c) => (c.g ? NEED_SHORT[c.g.need] : '—')) },
   ]
 
+  const due = comp.planned - comp.upcoming
+  const rate = due > 0 ? (comp.done + comp.partial * 0.5) / due : null
+
   return (
     <FieldCard
       label="Race sheet"
       meta={
         <Hover
+          align="right"
           panel={
             <>
               <div className="hd">Finish</div>
@@ -727,31 +693,59 @@ function RaceSheet({ activities, metrics, today, target }: {
             </>
           }
         >
-          {splitOf(splits.total)} → {splitOf(forecast.forecastTotalMin)}
+          <span style={{ color: 'var(--lordas-accent)' }}>{splitOf(splits.total)}</span>
+          <span style={{ color: 'var(--lordas-faint)' }}> → {splitOf(forecast.forecastTotalMin)}</span>
         </Hover>
       }
     >
+      <RaceHistoryLink />
       <Tearsheet
+        className="is-dense"
         columns={SPORTS3.map((s) => ({
           key: s,
           label: (
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, justifyContent: 'flex-end' }}>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, justifyContent: 'flex-end', color: S3_COLOR[s] }}>
               <SportIcon sport={s as Sport} className="w-3 h-3" />
-              {S3_LABEL[s]}
+              <span style={{ color: 'var(--lordas-muted)' }}>{S3_LABEL[s]}</span>
             </span>
           ),
         }))}
         rows={rows}
       />
       <Disclosure summary="Evidence" meta={rebalance.dataThrough ? `through ${rebalance.dataThrough.slice(5)}` : undefined}>
-        <Tearsheet columns={SPORTS3.map((s) => ({ key: s, label: S3_LABEL[s] }))} rows={evidence} />
+        <Tearsheet className="is-dense" columns={SPORTS3.map((s) => ({ key: s, label: S3_LABEL[s] }))} rows={evidence} />
         {rebalance.sports.map((g) => <Sub key={g.sport}>{S3_LABEL[g.sport]} — {g.why}</Sub>)}
         {rebalance.staleNote && <Sub>{rebalance.staleNote}</Sub>}
       </Disclosure>
-      <Disclosure summary="Where the race is" meta={rebalance.lead ? `${S3_LABEL[rebalance.lead]} first` : undefined}>
-        <Sub>{rebalance.headline}</Sub>
-        {rebalance.displaced.slice(0, 4).map((d, i) => <Sub key={i}>{d}</Sub>)}
-        {rebalance.displacedNote && <Sub>{rebalance.displacedNote}</Sub>}
+      <Disclosure summary="The block" meta={rate === null ? undefined : `${Math.round(rate * 100)}% of what came due`}>
+        <Foot>
+          <Chip tone="ok">{comp.done} done</Chip>
+          <Chip tone="warn">{comp.partial} partial</Chip>
+          <Chip tone="crit">{comp.missed} missed</Chip>
+          {comp.upcoming > 0 && <Chip>{comp.upcoming} to come</Chip>}
+        </Foot>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 3, marginTop: 7 }}>
+          {comp.weeks.map((w) => (
+            <div key={w.start} style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+              <span className="font-mono" style={{ fontSize: 9.5, color: 'var(--lordas-faint)', width: 34, flexShrink: 0 }}>
+                {w.start.slice(5)}
+              </span>
+              <span style={{ flex: 1, display: 'flex', gap: 2 }}>
+                {Array.from({ length: w.planned }).map((_, i) => {
+                  const c =
+                    i < w.done ? 'var(--lordas-ok)'
+                    : i < w.done + w.partial ? 'var(--lordas-warn)'
+                    : i < w.done + w.partial + w.missed ? 'var(--lordas-rule)'
+                    : 'var(--lordas-rule-soft)'
+                  return <span key={i} style={{ height: 6, flex: 1, background: c, borderRadius: 1 }} />
+                })}
+              </span>
+              <span className="font-mono" style={{ fontSize: 9.5, color: 'var(--lordas-muted)', flexShrink: 0 }}>
+                {w.done}/{w.planned - w.upcoming}
+              </span>
+            </div>
+          ))}
+        </div>
       </Disclosure>
     </FieldCard>
   )
@@ -763,7 +757,6 @@ export default function IronmanDashboard() {
   const [activities, setActivities] = useState<GarminActivity[]>([])
   const [lastSync, setLastSync] = useState<Date | null>(null)
   const [error, setError] = useState<string | null>(null)
-
   useEffect(() => {
     if (!user) return
     // The rollup is two document reads. The fallback is a windowed query, and
@@ -803,17 +796,23 @@ export default function IronmanDashboard() {
   }, [user])
 
   const today = todayLocal()
+  const tomorrow = addDays(today, 1)
   const { target, save: saveTarget } = useIronmanTarget()
-  const countdown1 = daysToRace(today, RACE.date)
-  const countdown2 = daysToRace(today, RACE_NYC.date)
   const countdownNext = target ? daysToRace(today, target.date) : null
 
   const readiness = useMemo(
     () => computeReadiness(metrics ?? [], activities, today),
     [metrics, activities, today]
   )
-  // The plan has no end date now, so the calendar is a window: the past week
-  // for what was done, four weeks ahead, stretched to the race if it is close.
+  const forecast = useMemo(
+    () => computeRaceForecast(activities, metrics ?? [], today, { raceDate: target?.date }),
+    [activities, metrics, today, target]
+  )
+  const rebalance = useMemo(() => computeRebalance(activities, metrics ?? [], today, 'lori'), [activities, metrics, today])
+  const progress = useMemo(() => computeProgress(activities, today, target), [activities, today, target])
+  const splits = useMemo(() => goalSplits(), [])
+  // The plan has no end date now, so the table is a window: the past week for
+  // what was done, four weeks ahead, stretched to the race if it is close.
   const planWindow = useMemo(() => {
     const from = addDays(today, -7)
     let to = addDays(today, 28)
@@ -825,6 +824,7 @@ export default function IronmanDashboard() {
     [activities, today, planWindow, target]
   )
   const todayStatus = dayStatuses.find((d) => d.day.date === today) ?? null
+  const tomorrowDay = useMemo(() => getPlanDay(tomorrow, target), [tomorrow, target])
 
   if (error) {
     return <div className="text-[11px] text-iron-coral py-12 text-center">Failed to load Garmin data: {error}</div>
@@ -838,19 +838,15 @@ export default function IronmanDashboard() {
         return h < 24 ? `${h}h ago` : `${Math.round(h / 24)}d ago`
       })()
     : 'not yet synced'
+  const feedAgeH = lastSync ? (Date.now() - lastSync.getTime()) / 3600000 : null
+
+  const bandColor =
+    readiness.band === 'green' ? 'var(--lordas-ok)' : readiness.band === 'amber' ? 'var(--lordas-warn)' : readiness.band === 'red' ? 'var(--lordas-crit)' : 'var(--lordas-faint)'
 
   return (
     <div className="iron-sheet" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
       <Ticker
         items={[
-          ...(countdown1 >= 0 ? [{ label: 'Belgrade', value: `T−${countdown1} · ${fmtDate(RACE.date)}` }] : []),
-          ...(countdown2 >= 0
-            ? [{
-                label: 'New York',
-                value: `T−${countdown2} · ${fmtDate(RACE_NYC.date)}`,
-                color: countdown2 <= 21 ? 'var(--lordas-warn)' : undefined,
-              }]
-            : []),
           {
             label: target?.name || 'Next race',
             value: target && countdownNext != null && countdownNext >= 0
@@ -858,19 +854,37 @@ export default function IronmanDashboard() {
               : 'not picked',
             color: countdownNext != null && countdownNext >= 0 && countdownNext <= 21 ? 'var(--lordas-warn)' : undefined,
           },
+          {
+            label: 'Finish',
+            value: metrics === null ? splitOf(splits.total) : `${splitOf(splits.total)} → ${splitOf(forecast.forecastTotalMin)}`,
+          },
+          { label: 'All three', value: metrics === null ? '—' : pctOf(forecast.allThree), color: probColor(forecast.allThree) },
+          { label: 'Readiness', value: readiness.score != null ? `${readiness.score} · ${readiness.band}` : '—', color: bandColor },
           { label: 'Distance', value: `${RACE.swimKm} / ${RACE.bikeKm} / ${RACE.runKm} km` },
-          { label: 'Garmin', value: feedLabel },
+          {
+            label: 'Garmin',
+            value: feedLabel,
+            color: feedAgeH == null || feedAgeH > 48 ? 'var(--lordas-crit)' : feedAgeH > 18 ? 'var(--lordas-warn)' : undefined,
+          },
         ]}
       />
 
-      {/* Today, and the body that has to do it. */}
-      <Seam cols={3}>
-        <FieldCard span={2} label={`Today · ${fmtDate(today)}`} meta={todayStatus?.day.phase} tone="accent">
-          <TodayPanel today={today} readiness={readiness} dayStatus={todayStatus} bare />
-          <Disclosure summary="Full plan" meta={`${fmtDate(planWindow.from)} – ${fmtDate(planWindow.to)}`}>
-            <div style={{ maxHeight: 300, overflowY: 'auto' }}>
-              <PlanCalendar days={dayStatuses} today={today} bare />
-            </div>
+      {/* Today, the body that has to do it, and the race it is for. */}
+      <Seam cols={4}>
+        <FieldCard
+          span={2}
+          label={`Today · ${fmtDate(today)}`}
+          meta={todayStatus?.day.phase}
+          tone="accent"
+        >
+          <TodayBody readiness={readiness} dayStatus={todayStatus} />
+          <Disclosure summary="Calibration" meta={rebalance.lead ? `${S3_LABEL[rebalance.lead]} first` : undefined}>
+            <Sub>{rebalance.headline}</Sub>
+            {rebalance.displaced.slice(0, 4).map((d, i) => <Sub key={i}>{d}</Sub>)}
+            {rebalance.displacedNote && <Sub>{rebalance.displacedNote}</Sub>}
+          </Disclosure>
+          <Disclosure summary="Tomorrow" meta={fmtDate(tomorrow)}>
+            <TomorrowBody day={tomorrowDay} />
           </Disclosure>
           <Disclosure summary="Adaptation rules">
             <div className="space-y-1.5 text-[10px] text-iron-muted leading-relaxed">
@@ -885,7 +899,7 @@ export default function IronmanDashboard() {
 
         <FieldCard
           label="Readiness"
-          meta={feedLabel}
+          meta={feedAgeH != null && feedAgeH <= 18 ? undefined : `Garmin ${feedLabel}`}
           tone={readiness.band === 'green' ? 'ok' : readiness.band === 'amber' ? 'warn' : readiness.band === 'red' ? 'crit' : 'none'}
         >
           {metrics === null ? (
@@ -893,19 +907,14 @@ export default function IronmanDashboard() {
           ) : (
             <>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 7 }}>
-                <span className="font-mono" style={{
-                  fontSize: 23, fontWeight: 500, lineHeight: 1,
-                  color: readiness.band === 'green' ? 'var(--lordas-ok)' : readiness.band === 'amber' ? 'var(--lordas-warn)' : readiness.band === 'red' ? 'var(--lordas-crit)' : 'var(--lordas-faint)',
-                }}>
+                <span className="font-mono" style={{ fontSize: 23, fontWeight: 500, lineHeight: 1, color: bandColor }}>
                   {readiness.score ?? '--'}
                 </span>
-                <span className="font-mono" style={{
-                  fontSize: 9, letterSpacing: '.14em', textTransform: 'uppercase',
-                  color: readiness.band === 'green' ? 'var(--lordas-ok)' : readiness.band === 'amber' ? 'var(--lordas-warn)' : readiness.band === 'red' ? 'var(--lordas-crit)' : 'var(--lordas-faint)',
-                }}>
+                <span className="font-mono" style={{ fontSize: 9, letterSpacing: '.14em', textTransform: 'uppercase', color: bandColor }}>
                   {readiness.band}
                 </span>
               </div>
+              {readiness.score !== null && <Track value={readiness.score} color={bandColor} />}
               <Rows>
                 {readiness.factors.map((f) => (
                   <Row key={f.label} label={f.label} value={f.value}
@@ -915,14 +924,23 @@ export default function IronmanDashboard() {
             </>
           )}
         </FieldCard>
-      </Seam>
 
-      <Seam cols={1}>
         <NextRaceCard today={today} target={target} onSave={saveTarget} />
       </Seam>
 
-      <Seam cols={1}>
-        <RaceSheet activities={activities} metrics={metrics ?? []} today={today} target={target} />
+      {/* The case for the finish, beside the days that have to make it. */}
+      <Seam cols={2}>
+        <RaceSheet
+          activities={activities}
+          today={today}
+          target={target}
+          forecast={forecast}
+          rebalance={rebalance}
+          progress={progress}
+        />
+        <FieldCard label="The plan" meta={`${fmtDate(planWindow.from)} – ${fmtDate(planWindow.to)}`}>
+          <PlanTable days={dayStatuses} today={today} tomorrow={tomorrow} />
+        </FieldCard>
       </Seam>
     </div>
   )

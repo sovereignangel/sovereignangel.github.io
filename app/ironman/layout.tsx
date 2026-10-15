@@ -27,16 +27,16 @@ const TABS = [
 function IronmanTabs() {
   const pathname = usePathname()
   return (
-    <nav className="flex items-center gap-4 border-b border-iron-rule mt-2">
+    <nav aria-label="Ironman" className="flex items-center justify-end gap-3.5">
       {TABS.map((t) => {
         const active = t.href === '/ironman' ? pathname === '/ironman' : pathname.startsWith(t.href)
         return (
           <Link
             key={t.href}
             href={t.href}
-            className={`font-serif text-[14px] md:text-[15px] pb-1.5 -mb-px border-b-2 transition-colors ${
+            className={`font-serif text-[12.5px] pb-[3px] border-b-2 transition-colors ${
               active
-                ? 'text-iron-burgundy font-semibold border-iron-burgundy'
+                ? 'text-iron-deep font-semibold border-iron-burgundy'
                 : 'text-iron-muted border-transparent hover:text-iron-deep'
             }`}
           >
@@ -91,8 +91,11 @@ function IronmanLayoutInner({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen" style={{ background: IRON_BACKDROP }}>
-      <header className="max-w-[1200px] mx-auto px-3 md:px-4 pt-3 md:pt-5 pb-2">
-        <div className="flex items-center gap-2 md:gap-3">
+      {/* One row: the title on the left, the tabs under the sport marks on the
+          right. A full row spent on two tab labels is a row the race does not
+          get — the same trade the Lordas console makes. */}
+      <header className="max-w-[1200px] mx-auto px-3 md:px-4 pt-2 md:pt-3 pb-2 flex items-start gap-2 md:gap-3">
+        <div className="flex items-center gap-2 md:gap-3 min-w-0">
           <h1 className="font-serif text-[17px] md:text-[20px] font-semibold text-iron-deep whitespace-nowrap">
             Ironman <span className="text-iron-burgundy">&mdash;</span> Build
           </h1>
@@ -108,16 +111,15 @@ function IronmanLayoutInner({ children }: { children: React.ReactNode }) {
           <span className="hidden md:block">
             <CourseDivider />
           </span>
-          <span className="hidden lg:inline text-[10px] text-iron-muted">
-            Belgrade Sep 13 &middot; New York Sep 26 &middot; rolling blocks to the next start &middot; the plan adapts to Garmin daily
-          </span>
-          <span className="ml-auto flex items-center gap-2 shrink-0">
+        </div>
+        <div className="ml-auto flex flex-col items-end gap-1 shrink-0">
+          <span className="flex items-center gap-2">
             {(['swim', 'bike', 'run'] as const).map(sport => (
-              <SportIcon key={sport} sport={sport} className="w-4 h-4 md:w-[18px] md:h-[18px] text-iron-burgundy" />
+              <SportIcon key={sport} sport={sport} className="w-4 h-4 text-iron-burgundy" />
             ))}
           </span>
+          <IronmanTabs />
         </div>
-        <IronmanTabs />
       </header>
       <main className="max-w-[1200px] mx-auto px-3 md:px-4 pb-6">{children}</main>
       <SiteFooter />

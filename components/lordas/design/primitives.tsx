@@ -347,12 +347,15 @@ export interface SheetRow {
 export function Tearsheet({
   columns,
   rows,
+  className = '',
 }: {
   columns: { key: string; label: React.ReactNode }[]
   rows: SheetRow[]
+  /** `is-dense` for a sheet that has to share its card with other things */
+  className?: string
 }) {
   return (
-    <table className="lordas-sheet">
+    <table className={`lordas-sheet ${className}`}>
       <thead>
         <tr>
           <th />

@@ -430,3 +430,9 @@ button.lordas-chip:focus-visible { outline: 2px solid var(--lordas-accent); outl
 .lordas-fc--evidence .lordas-fc-row .t .d { color: #9FA6B4; }
 .lordas-fc--action .lordas-fc-head { color: #8A7A64; }
 .lordas-fc--evidence .lordas-fc-head { color: #74809A; }
+
+/* Dense sheet: same figures, tighter leading, for a sheet sharing its card. */
+.lordas-sheet.is-dense th, .lordas-sheet.is-dense td { padding: 4px 0 4px 8px; }
+.lordas-sheet.is-dense tbody td { font-size: 10.5px; }
+.lordas-sheet.is-dense tbody th { font-size: 10.5px; }
+.lordas-sheet.is-dense thead th { font-size: 8px; letter-spacing: .1em; }
