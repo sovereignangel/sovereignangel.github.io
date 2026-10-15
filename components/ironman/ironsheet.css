@@ -170,7 +170,7 @@
 .iron-sheet .rounded-full { border-radius: 0; }
 .iron-sheet .lordas-chip { padding: 2px 7px; }
 
-.iron-sheet .lordas-plan-scroll { max-height: 420px; }
+.iron-sheet .lordas-plan-scroll { max-height: 300px; }
 
 .iron-sheet .lordas-hover-panel {
   background: var(--lordas-panel);

@@ -6,7 +6,7 @@ import { getGarminWindow, getGarminRollups } from '@/lib/firestore'
 import type { GarminMetrics, GarminActivity } from '@/lib/types'
 import { RACE, RACE_NYC, GOALS, goalSplits, goalDisplay, daysToRace, todayLocal,
   priorRaceDisplay, priorRaceVsGoal,
-  eliteFor, planRange, planPosition, getPlanDay, blockStart, priorRacesFor, sameDistance, raceDistanceLabel,
+  eliteFor, planRange, planPosition, blockStart, priorRacesFor, sameDistance, raceDistanceLabel,
   type PlanDay, type PlannedSession, type Sport, type TargetRace } from '@/lib/ironman/plan'
 import { addDays } from '@/lib/ironman/cycle'
 import { useIronmanTarget } from '@/components/ironman/useIronmanTarget'
@@ -130,38 +130,6 @@ function TodayBody({ readiness, dayStatus }: { readiness: Readiness; dayStatus: 
 
 function sessionSize(x: Pick<PlannedSession, 'durationMin' | 'distanceKm' | 'zone'>): string {
   return `${x.durationMin}min${x.distanceKm ? ` · ${x.distanceKm}km` : ''}${x.zone && x.zone !== '-' ? ` · ${x.zone}` : ''}`
-}
-
-/**
- * Tomorrow as printed. Readiness has not happened yet, so nothing here is
- * eased or reduced — those words belong to a morning that has happened.
- */
-function TomorrowBody({ day }: { day: PlanDay | undefined }) {
-  if (!day) return <Sub>Nothing printed.</Sub>
-  const active = day.sessions.filter((x) => x.sport !== 'rest')
-  return (
-    <>
-      <Sub>{day.phase}{day.focus ? ` · ${day.focus}` : ''}</Sub>
-      {active.length === 0 ? (
-        <Sub>Rest.</Sub>
-      ) : (
-        <Rows>
-          {active.map((x, i) => (
-            <Row
-              key={i}
-              label={
-                <span className="inline-flex items-center gap-1.5">
-                  <SportIcon sport={x.sport} className="w-3 h-3 shrink-0" />
-                  {x.title}
-                </span>
-              }
-              value={sessionSize(x)}
-            />
-          ))}
-        </Rows>
-      )}
-    </>
-  )
 }
 
 // ── The plan, as a table opened at today ──────────────────────────────────
@@ -824,7 +792,6 @@ export default function IronmanDashboard() {
     [activities, today, planWindow, target]
   )
   const todayStatus = dayStatuses.find((d) => d.day.date === today) ?? null
-  const tomorrowDay = useMemo(() => getPlanDay(tomorrow, target), [tomorrow, target])
 
   if (error) {
     return <div className="text-[11px] text-iron-coral py-12 text-center">Failed to load Garmin data: {error}</div>
@@ -878,23 +845,6 @@ export default function IronmanDashboard() {
           tone="accent"
         >
           <TodayBody readiness={readiness} dayStatus={todayStatus} />
-          <Disclosure summary="Calibration" meta={rebalance.lead ? `${S3_LABEL[rebalance.lead]} first` : undefined}>
-            <Sub>{rebalance.headline}</Sub>
-            {rebalance.displaced.slice(0, 4).map((d, i) => <Sub key={i}>{d}</Sub>)}
-            {rebalance.displacedNote && <Sub>{rebalance.displacedNote}</Sub>}
-          </Disclosure>
-          <Disclosure summary="Tomorrow" meta={fmtDate(tomorrow)}>
-            <TomorrowBody day={tomorrowDay} />
-          </Disclosure>
-          <Disclosure summary="Adaptation rules">
-            <div className="space-y-1.5 text-[10px] text-iron-muted leading-relaxed">
-              <div><span className="font-mono font-medium" style={{ color: 'var(--lordas-ok)' }}>68-100</span> — session exactly as planned.</div>
-              <div><span className="font-mono font-medium" style={{ color: 'var(--lordas-warn)' }}>50-67</span> — keep duration, convert intervals to steady Z2.</div>
-              <div><span className="font-mono font-medium" style={{ color: 'var(--lordas-crit)' }}>38-49</span> — key session only, volume cut 40%, all easy.</div>
-              <div><span className="font-mono font-medium" style={{ color: 'var(--lordas-crit)' }}>0-37</span> — full recovery day swapped in; missed work is absorbed, never crammed.</div>
-              <div className="pt-1 border-t border-iron-rule-light">Readiness = sleep (30%) + HRV vs weekly avg (25%) + body battery (20%) + resting HR vs 30d baseline (15%) + yesterday&apos;s load (10%). Race day is never adjusted.</div>
-            </div>
-          </Disclosure>
         </FieldCard>
 
         <FieldCard
