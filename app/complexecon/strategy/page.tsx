@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import StrategySheet from '@/components/complexecon/StrategySheet'
+import SiteFooter from '@/components/SiteFooter'
 
 export const metadata: Metadata = {
   title: 'Research Strategy · Complexity Economics',
@@ -7,5 +8,10 @@ export const metadata: Metadata = {
 }
 
 export default function ComplexEconStrategyPage() {
-  return <StrategySheet />
+  return (
+    <>
+      <StrategySheet />
+      <SiteFooter />
+    </>
+  )
 }

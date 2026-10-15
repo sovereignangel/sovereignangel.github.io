@@ -117,7 +117,7 @@ function TableView({ spec, data }: { spec: ChartSpec; data: Point[] }) {
         Table · {data.length} rows{rows.length < data.length ? ` (every ${Math.ceil(data.length / 80)}th shown)` : ''}
       </summary>
       <div className="mt-1 max-h-[220px] overflow-auto border border-rule-light">
-        <table className="w-full border-collapse font-mono text-[12px]">
+        <table className="w-full border-collapse font-mono text-[11px]">
           <thead className="sticky top-0 bg-cream">
             <tr>
               {names.map(n => (
@@ -232,10 +232,10 @@ export default function ModelChart({ spec, data, markX }: { spec: ChartSpec; dat
   return (
     <div className="min-w-0">
       <div className="flex flex-wrap items-baseline justify-between gap-x-3">
-        <span className="font-serif text-[15px] font-semibold text-ink">{spec.title}</span>
+        <span className="font-serif text-[14px] font-semibold text-ink">{spec.title}</span>
         <span className="font-mono text-[11px] uppercase tracking-[0.5px] text-ink-muted">{spec.yLabel}</span>
       </div>
-      <p className="mb-1 text-[13px] leading-snug text-ink-muted">{spec.read}</p>
+      <p className="mb-1 text-[12px] leading-snug text-ink-muted">{spec.read}</p>
       <Legend spec={spec} />
       {spec.kind === 'dots' ? (
         <DotField spec={spec} data={data} markX={markX} />

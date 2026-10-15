@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import ResearchSheet from '@/components/complexecon/ResearchSheet'
+import SiteFooter from '@/components/SiteFooter'
 
 export const metadata: Metadata = {
   title: 'Research Lanes · Complexity Economics',
@@ -7,5 +8,10 @@ export const metadata: Metadata = {
 }
 
 export default function ComplexEconResearchPage() {
-  return <ResearchSheet />
+  return (
+    <>
+      <ResearchSheet />
+      <SiteFooter />
+    </>
+  )
 }

@@ -109,8 +109,8 @@ function Slider({ param, value, onChange }: { param: ModelParam; value: number; 
   return (
     <label className="block border-b border-rule-light py-1.5 last:border-b-0">
       <span className="flex items-baseline justify-between gap-2">
-        <span className="text-[14px] font-semibold leading-snug text-ink">{param.label}</span>
-        <span className={`font-mono text-[13px] ${changed ? 'text-burgundy' : 'text-ink-light'}`}>{fmtValue(param, value)}</span>
+        <span className="text-[13px] font-semibold leading-snug text-ink">{param.label}</span>
+        <span className={`font-mono text-[12px] ${changed ? 'text-burgundy' : 'text-ink-light'}`}>{fmtValue(param, value)}</span>
       </span>
       <input
         type="range"
@@ -120,10 +120,10 @@ function Slider({ param, value, onChange }: { param: ModelParam; value: number; 
         value={value}
         onChange={e => onChange(Number(e.target.value))}
         aria-label={param.label}
-        className="mt-0.5 block h-[28px] w-full cursor-pointer"
+        className="mt-0.5 block h-[24px] w-full cursor-pointer"
         style={{ accentColor: '#7c2d2d' }}
       />
-      <span className="block text-[13px] leading-snug text-ink-muted">{param.meaning}</span>
+      <span className="block text-[12px] leading-snug text-ink-muted">{param.meaning}</span>
     </label>
   )
 }
@@ -134,8 +134,8 @@ function Readouts({ items }: { items: Readout[] }) {
       {items.map(r => (
         <div key={r.label} className="px-2.5 py-1.5">
           <div className="font-mono text-[11px] uppercase leading-tight tracking-[0.5px] text-ink-muted">{r.label}</div>
-          <div className="mt-0.5 break-words font-mono text-[16px] font-semibold leading-tight text-ink">{r.value}</div>
-          {r.note && <div className="mt-0.5 text-[12px] leading-snug text-ink-muted">{r.note}</div>}
+          <div className="mt-0.5 break-words font-mono text-[15px] font-semibold leading-tight text-ink">{r.value}</div>
+          {r.note && <div className="mt-0.5 text-[11px] leading-snug text-ink-muted">{r.note}</div>}
         </div>
       ))}
     </div>
@@ -144,7 +144,7 @@ function Readouts({ items }: { items: Readout[] }) {
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <p className="text-[15px] leading-relaxed text-ink-muted">
+    <p className="text-[13.5px] leading-relaxed text-ink-muted">
       <Meta tone="amber">{label} · </Meta>
       {children}
     </p>
@@ -153,7 +153,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 
 function SubHead({ children }: { children: React.ReactNode }) {
   return (
-    <div className="mb-1 mt-2.5 font-serif text-[15px] font-semibold uppercase tracking-[1px] text-burgundy first:mt-0">
+    <div className="mb-1 mt-2.5 font-serif text-[13px] font-semibold uppercase tracking-[1px] text-burgundy first:mt-0">
       {children}
     </div>
   )
@@ -193,8 +193,8 @@ function ModelPane({
     <div className="px-3 py-2.5 md:px-4">
       <div className="mb-2.5 border-b border-rule pb-2">
         <div className="flex flex-wrap items-baseline gap-x-2">
-          <span className="font-serif text-[17px] font-semibold text-ink-faint">{model.numeral}</span>
-          <h2 className="font-serif text-[21px] font-semibold leading-snug text-ink">{model.question}</h2>
+          <span className="font-serif text-[14px] font-semibold text-ink-faint">{model.numeral}</span>
+          <h2 className="font-serif text-[18px] font-semibold leading-snug text-ink">{model.question}</h2>
         </div>
         <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
           <Meta>{model.paper.cite}</Meta>
@@ -203,7 +203,7 @@ function ModelPane({
             {model.params.length} parameters · {model.charts.length} charts
           </Meta>
         </div>
-        <p className="mt-1.5 font-serif text-[17px] italic leading-snug text-ink">{model.answer}</p>
+        <p className="mt-1.5 font-serif text-[15px] italic leading-snug text-ink">{model.answer}</p>
       </div>
 
       <div className="grid grid-cols-1 gap-x-5 gap-y-3 lg:grid-cols-[264px_minmax(0,1fr)] 2xl:grid-cols-[300px_minmax(0,1fr)]">
@@ -234,7 +234,7 @@ function ModelPane({
         <div className="min-w-0 space-y-3">
           {result.verdict && (
             <div className="border border-rule bg-cream px-2.5 py-1.5">
-              <p className="text-[15px] leading-relaxed text-ink">
+              <p className="text-[14px] leading-relaxed text-ink">
                 <Meta tone="amber">Verdict · </Meta>
                 {result.verdict}
               </p>
@@ -255,7 +255,7 @@ function ModelPane({
       <SubHead>What to watch</SubHead>
       <ul className="space-y-0.5">
         {model.watch.map(w => (
-          <li key={w} className="flex gap-2 text-[14px] leading-relaxed text-ink-light">
+          <li key={w} className="flex gap-2 text-[13px] leading-relaxed text-ink-light">
             <span className="shrink-0 text-burgundy">→</span>
             <span>{w}</span>
           </li>
@@ -263,7 +263,7 @@ function ModelPane({
       </ul>
 
       <div className="mt-2.5 border-t border-rule-light pt-1.5">
-        <p className="text-[14px] leading-relaxed text-ink-light">
+        <p className="text-[13px] leading-relaxed text-ink-light">
           <Meta tone="burgundy">Paper · </Meta>
           <span className="font-semibold text-ink">{model.paper.cite}.</span> {model.paper.title}.{' '}
           <span className="text-ink-muted">{model.paper.venue}.</span>
@@ -290,7 +290,7 @@ function ModelPane({
             </Link>
           )}
         </div>
-        <p className="mt-1 flex items-start gap-1.5 text-[13px] leading-snug text-ink-muted">
+        <p className="mt-1 flex items-start gap-1.5 text-[12px] leading-snug text-ink-muted">
           <FidelityChip model={model} />
           <span>{model.fidelityNote}</span>
         </p>
@@ -350,8 +350,8 @@ export default function ModelsSheet() {
           >
             <div className="flex flex-col lg:flex-row">
               <div className="flex-1 border-b border-rule px-4 py-2.5 lg:border-b-0 lg:border-r">
-                <p className="font-serif text-[20px] italic leading-snug text-ink">&ldquo;{MODELS_FRAMING.question}&rdquo;</p>
-                <p className="mt-1.5 text-[15px] leading-relaxed text-ink-light">{MODELS_FRAMING.statement}</p>
+                <p className="font-serif text-[17px] italic leading-snug text-ink">&ldquo;{MODELS_FRAMING.question}&rdquo;</p>
+                <p className="mt-1 text-[13.5px] leading-relaxed text-ink-light">{MODELS_FRAMING.statement}</p>
               </div>
               <div className="grid grid-cols-3 gap-px bg-rule-light sm:grid-cols-6 lg:w-[360px] lg:shrink-0 lg:grid-cols-3">
                 {[
@@ -406,13 +406,13 @@ export default function ModelsSheet() {
                     role="option"
                     aria-selected={active}
                     onClick={() => select(m.id)}
-                    className={`block w-full border-b border-l-2 border-b-rule-light px-3 py-2 text-left transition-colors last:border-b-0 ${
+                    className={`block w-full border-b border-l-2 border-b-rule-light px-3 py-1.5 text-left transition-colors last:border-b-0 ${
                       active ? 'border-l-burgundy bg-burgundy-bg' : 'border-l-transparent hover:bg-paper'
                     }`}
                   >
                     <span className="flex items-baseline gap-x-2">
-                      <span className="w-[24px] shrink-0 font-serif text-[15px] font-semibold text-ink-faint">{m.numeral}</span>
-                      <span className={`min-w-0 flex-1 font-serif text-[16px] font-semibold leading-snug ${active ? 'text-burgundy' : 'text-ink'}`}>
+                      <span className="w-[22px] shrink-0 font-serif text-[13px] font-semibold text-ink-faint">{m.numeral}</span>
+                      <span className={`min-w-0 flex-1 font-serif text-[14px] font-semibold leading-snug ${active ? 'text-burgundy' : 'text-ink'}`}>
                         {m.paper.cite}
                       </span>
                       {loaded && touched(m) && (
@@ -422,7 +422,7 @@ export default function ModelsSheet() {
                       )}
                       <FidelityChip model={m} />
                     </span>
-                    <span className="mt-0.5 line-clamp-2 block pl-[32px] text-[13px] leading-snug text-ink-muted">{m.question}</span>
+                    <span className="mt-0.5 line-clamp-2 block pl-[30px] text-[12px] leading-snug text-ink-muted">{m.question}</span>
                   </button>
                 )
               })}
@@ -444,7 +444,7 @@ export default function ModelsSheet() {
         </div>
 
         <footer className="mt-2 flex flex-wrap items-baseline justify-between gap-2 border-t border-rule pt-1.5">
-          <p className="font-serif text-[14px] italic text-ink-muted">
+          <p className="font-serif text-[12px] italic text-ink-muted">
             A model you cannot move is a diagram; a parameter you cannot name is a guess.
           </p>
           <p className="font-mono text-[11px] uppercase tracking-[2px] text-ink-faint">

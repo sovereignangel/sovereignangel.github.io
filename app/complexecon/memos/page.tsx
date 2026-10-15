@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import MemosSheet from '@/components/complexecon/MemosSheet'
+import SiteFooter from '@/components/SiteFooter'
 
 export const metadata: Metadata = {
   title: 'Memos · Complexity Economics',
@@ -7,5 +8,10 @@ export const metadata: Metadata = {
 }
 
 export default function ComplexEconMemosPage() {
-  return <MemosSheet />
+  return (
+    <>
+      <MemosSheet />
+      <SiteFooter />
+    </>
+  )
 }

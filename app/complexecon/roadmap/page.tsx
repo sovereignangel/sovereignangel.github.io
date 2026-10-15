@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import RoadmapSheet from '@/components/complexecon/RoadmapSheet'
+import SiteFooter from '@/components/SiteFooter'
 
 export const metadata: Metadata = {
   title: 'Roadmap · Complexity Economics',
@@ -7,5 +8,10 @@ export const metadata: Metadata = {
 }
 
 export default function ComplexEconRoadmapPage() {
-  return <RoadmapSheet />
+  return (
+    <>
+      <RoadmapSheet />
+      <SiteFooter />
+    </>
+  )
 }

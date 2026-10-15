@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { Masthead } from '@/components/complexecon/tearsheet'
+import SiteFooter from '@/components/SiteFooter'
 import { MEMOS } from '@/lib/complexecon/memos'
 import { OFR_DOSSIER_HTML } from '@/lib/complexecon/memo-bodies'
 import { MORGAN_STANLEY_THREAD_HTML } from '@/lib/complexecon/memo-bodies-morgan-stanley'
@@ -47,6 +48,7 @@ export default function MemoPage({ params }: { params: { slug: string } }) {
         </div>
         <article dangerouslySetInnerHTML={{ __html: body }} />
       </div>
+      <SiteFooter />
     </main>
   )
 }

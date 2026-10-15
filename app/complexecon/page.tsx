@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import { AuthProvider, useAuth } from '@/components/auth/AuthProvider'
+import SiteFooter from '@/components/SiteFooter'
 import { getComplexEconNotes, saveComplexEconNote } from '@/lib/firestore/complexecon-notes'
 import {
   getCampaignProgress,
@@ -674,6 +675,7 @@ export default function ComplexEconPage() {
   return (
     <AuthProvider>
       <ComplexEconInner />
+      <SiteFooter />
     </AuthProvider>
   )
 }
