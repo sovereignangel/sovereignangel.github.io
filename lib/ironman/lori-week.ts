@@ -138,8 +138,6 @@ function weekDay(date: string, kind: WeekKind, growth: number): { focus: string;
   const deload = kind === 'Absorb'
   const scale = growth * (kind === 'Build' ? 1.05 : deload ? 0.7 : 1)
   const m = (base: number) => round5(base * scale)
-  const extraRep = kind === 'Build' ? ' Progression week: one more rep than last time.' : ''
-  const easedSets = deload ? ' Deload week: cut the main set by a third.' : ''
 
   switch (dow(date)) {
     case 1:
@@ -156,7 +154,8 @@ function weekDay(date: string, kind: WeekKind, growth: number): { focus: string;
         focus: 'HARD — track + Glutes A',
         sessions: [
           session('run', 'BKTC track 7AM',
-            `As coached. Warm-up jog + drills, the main set at the prescribed paces, cool-down. Even reps — do not race the group on rep 1.${extraRep}${easedSets}`,
+            // The coach sets the session on the day — no description to print.
+            '',
             m(75), 'Z3', true),
           lift('glutesA', 'PM, 6+ hours after track.', deload),
         ],
@@ -176,7 +175,7 @@ function weekDay(date: string, kind: WeekKind, growth: number): { focus: string;
         focus: 'HARD — threshold + Glutes B',
         sessions: [
           session('run', 'BKTC threshold',
-            `As coached — comfortably hard, controlled breathing, the last rep as strong as the first.${extraRep}${easedSets}`,
+            '',
             m(60), 'Z3', true),
           lift('glutesB', 'PM, 6+ hours after the run.', deload),
         ],

@@ -119,7 +119,7 @@ function TodayBody({ readiness, dayStatus }: { readiness: Readiness; dayStatus: 
                   </span>
                 )}
               </div>
-              <p className="text-[10px] text-iron-muted leading-snug mt-0.5 pl-[22px]">{x.detail}</p>
+              {x.detail && <p className="text-[10px] text-iron-muted leading-snug mt-0.5 pl-[22px]">{x.detail}</p>}
             </div>
           )
         })}
@@ -844,7 +844,7 @@ export default function IronmanDashboard() {
     readiness.band === 'green' ? 'var(--lordas-ok)' : readiness.band === 'amber' ? 'var(--lordas-warn)' : readiness.band === 'red' ? 'var(--lordas-crit)' : 'var(--lordas-faint)'
 
   return (
-    <div className="iron-sheet" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+    <div className="iron-sheet" style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
       <Ticker
         items={[
           {

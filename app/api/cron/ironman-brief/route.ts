@@ -84,7 +84,7 @@ export async function GET(request: NextRequest) {
           x.zone !== '-' ? x.zone : null,
         ].filter(Boolean).join(' · ')
         lines.push(`${x.title}${meta ? ` (${meta})` : ''}`)
-        lines.push(`  ${x.detail}`)
+        if (x.detail) lines.push(`  ${x.detail}`)
       }
 
       // Yesterday's compliance

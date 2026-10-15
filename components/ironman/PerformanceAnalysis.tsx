@@ -430,7 +430,7 @@ export default function PerformanceAnalysis() {
   const [lens, setLens] = useState<Lens>('lori')
 
   return (
-    <div className="iron-sheet" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+    <div className="iron-sheet" style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
       <Ticker
         items={[
           { label: 'Race', value: `${DEBRIEF_RACE.venue} · ${DEBRIEF_RACE.date}` },

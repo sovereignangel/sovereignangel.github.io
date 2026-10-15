@@ -36,8 +36,8 @@ function IronmanTabs() {
             href={t.href}
             className={`font-serif text-[12.5px] pb-[3px] border-b-2 transition-colors ${
               active
-                ? 'text-iron-deep font-semibold border-iron-burgundy'
-                : 'text-iron-muted border-transparent hover:text-iron-deep'
+                ? 'text-[#f6ecdc] font-semibold border-iron-gold'
+                : 'text-[#c9a3a0] border-transparent hover:text-[#f6ecdc]'
             }`}
           >
             {t.label}
@@ -61,7 +61,7 @@ function currentPhase(target: TargetRace | null): string | null {
 
 // Blush into the same warm sand the kite planner lands on, so the two
 // sections feel like one publication with different accents.
-const IRON_BACKDROP = 'linear-gradient(180deg, #f4e7e5 0%, #f2ecdf 320px)'
+const IRON_BACKDROP = 'linear-gradient(180deg, #5e1a1f 0%, #4a1418 280px, #3f1115 100%)'
 
 function IronmanLayoutInner({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth()
@@ -70,7 +70,7 @@ function IronmanLayoutInner({ children }: { children: React.ReactNode }) {
   if (loading) {
     return (
       <div className="min-h-screen" style={{ background: IRON_BACKDROP }}>
-        <div className="max-w-[1200px] mx-auto px-3 md:px-4 py-5">
+        <div className="max-w-[1440px] mx-auto px-2 md:px-3 py-5">
           <div className="h-7 w-64 bg-iron-rule-light rounded-lg animate-pulse mb-4" />
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {[1, 2, 3].map(i => (
@@ -94,35 +94,35 @@ function IronmanLayoutInner({ children }: { children: React.ReactNode }) {
       {/* One row: the title on the left, the tabs under the sport marks on the
           right. A full row spent on two tab labels is a row the race does not
           get — the same trade the Lordas console makes. */}
-      <header className="max-w-[1200px] mx-auto px-3 md:px-4 pt-2 md:pt-3 pb-2 flex items-start gap-2 md:gap-3">
+      <header className="max-w-[1440px] mx-auto px-2 md:px-3 pt-2 md:pt-3 pb-2 flex items-start gap-2 md:gap-3">
         <div className="flex items-center gap-2 md:gap-3 min-w-0">
-          <h1 className="font-serif text-[17px] md:text-[20px] font-semibold text-iron-deep whitespace-nowrap">
-            Ironman <span className="text-iron-burgundy">&mdash;</span> Build
+          <h1 className="font-serif text-[17px] md:text-[20px] font-semibold uppercase tracking-[2px] text-[#f6ecdc] whitespace-nowrap">
+            Ironman <span className="text-iron-gold">&mdash;</span> Build
           </h1>
           {phase && (
             <span
-              className="hidden sm:flex items-center gap-1 font-mono text-[9px] uppercase tracking-wide text-iron-burgundy bg-iron-burgundy-bg border border-iron-burgundy/25 rounded-full px-1.5 py-0.5 shrink-0"
+              className="hidden sm:flex items-center gap-1 font-mono text-[9px] uppercase tracking-wide text-iron-gold border border-iron-gold/50 px-1.5 py-0.5 shrink-0"
               title={toRace >= 0 ? `Current block of the plan · ${target?.name || 'next race'} is T−${toRace} days away` : 'Current block of the plan · no race picked yet'}
             >
               {phase}
-              {toRace >= 0 && <span className="text-iron-muted">&middot; T&minus;{toRace}</span>}
+              {toRace >= 0 && <span className="text-[#c9a3a0]">&middot; T&minus;{toRace}</span>}
             </span>
           )}
           <span className="hidden md:block">
-            <CourseDivider />
+            <CourseDivider className="w-16 h-2 text-iron-gold/70 shrink-0" />
           </span>
         </div>
         <div className="ml-auto flex flex-col items-end gap-1 shrink-0">
           <span className="flex items-center gap-2">
             {(['swim', 'bike', 'run'] as const).map(sport => (
-              <SportIcon key={sport} sport={sport} className="w-4 h-4 text-iron-burgundy" />
+              <SportIcon key={sport} sport={sport} className="w-4 h-4 text-iron-gold" />
             ))}
           </span>
           <IronmanTabs />
         </div>
       </header>
-      <main className="max-w-[1200px] mx-auto px-3 md:px-4 pb-6">{children}</main>
-      <SiteFooter />
+      <main className="max-w-[1440px] mx-auto px-2 md:px-3 pb-4">{children}</main>
+      <SiteFooter className="!text-[#a8807f]" />
     </div>
   )
 }

@@ -84,76 +84,93 @@
   --lordas-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
-/* ── Bubbles, not a tearsheet ─────────────────────────────────────────
-   The seam grid butts cards together and lets a 1px background show through
-   as a shared rule, which is what makes Lordas read as one printed sheet.
-   Here each card is its own object, so the seam gives up its rule and its
-   clipping and becomes a plain gap — otherwise `overflow: hidden` would
-   square off every corner rounded below. */
+/* ── Race-day tearsheet on a burgundy ground ──────────────────────────
+   The page itself is burgundy; the panels are cream and square, butted
+   together with a 2px seam the ground shows through. No radius, no shadow,
+   no float — a start list, not a set of bubbles. Burgundy stays out of the
+   panels, so status colours tuned for cream still read inside them. */
+.iron-sheet {
+  --iron-ground: #4a1418;
+  --iron-ground-deep: #2f0b0e;
+  --iron-cream: #f6ecdc;
+}
+
 .iron-sheet .lordas-seam {
-  gap: 10px;
+  gap: 2px;
   background: transparent;
   border: 0;
   border-radius: 0;
   overflow: visible;
-  /* Bubbles size to their contents. Stretching them to match the tallest in
-     the row is what a shared-seam sheet wants and the opposite of what a row
-     of separate objects wants. */
-  align-items: start;
+  align-items: stretch;
 }
 
-/* The ticker sits on the ground rather than inside a card, so it becomes a
-   card too — a single cream pill. It carries inline status colours (a race
-   inside three weeks turns amber), and those are tuned for cream; inverting
-   the band to solid burgundy would have swallowed them. Burgundy earns its
-   place here through the countdown type, not the fill. */
+/* Ticker: a dark band across the full width, like a timing board. Status
+   colours are redefined inside it so the warn/crit values the page passes
+   inline read on the dark rather than on cream. */
 .iron-sheet .lordas-ticker {
-  background: var(--lordas-panel);
-  border: 1px solid var(--lordas-rule);
-  border-radius: 999px;
-  padding: 1px 6px;
-  margin: 0 0 4px;
-  box-shadow: 0 2px 12px rgba(94, 31, 36, .06);
-  justify-content: center;
+  --lordas-ok: #8fd4a6;
+  --lordas-warn: #f0c060;
+  --lordas-crit: #ff9a85;
+  --lordas-faint: #a8807f;
+  background: var(--iron-ground-deep);
+  border: 0;
+  border-radius: 0;
+  margin: 0;
+  padding: 0;
+  justify-content: flex-start;
 }
-.iron-sheet .lordas-ticker-item { border-left-color: var(--lordas-rule-soft); }
-.iron-sheet .lordas-ticker-item .l { color: var(--lordas-muted); }
-/* The two countdowns are the fact the page exists to state. */
-.iron-sheet .lordas-ticker-item:first-child .v,
-.iron-sheet .lordas-ticker-item:nth-child(2) .v { color: var(--lordas-accent); font-weight: 500; }
+.iron-sheet .lordas-ticker-item {
+  border-left-color: rgba(246, 236, 220, .12);
+  padding: 6px 12px;
+  font-size: 10.5px;
+}
+.iron-sheet .lordas-ticker-item .l { color: #b88f8c; }
+.iron-sheet .lordas-ticker-item .v { color: var(--iron-cream); font-weight: 500; }
+.iron-sheet .lordas-ticker-item:first-child .v { color: var(--lordas-sun); font-weight: 600; }
 
-/* Cards: the wind board's card exactly — hairline sand border, soft warm
-   shadow, generous radius. */
+/* Panels: square, flat, tight. */
 .iron-sheet .lordas-fc {
   background: var(--lordas-panel);
-  border-radius: 16px;
-  border: 1px solid var(--lordas-rule);
-  padding: 12px 14px 14px;
-  box-shadow: 0 2px 12px rgba(94, 31, 36, .06);
-  overflow: hidden;
+  border-radius: 0;
+  border: 0;
+  padding: 8px 10px 9px;
+  gap: 5px;
+  box-shadow: none;
+  overflow: visible;
 }
-
-/* Card headings are the accent. This is the single biggest reason the page
-   reads as burgundy without being made of it — the same move the kite board
-   makes with teal, and the same move the Armstrong section headers make. */
+.iron-sheet .lordas-fc-head {
+  color: var(--lordas-accent);
+  font-weight: 600;
+  letter-spacing: .16em;
+  border-bottom: 2px solid var(--lordas-accent);
+  padding-bottom: 4px;
+  margin-bottom: 1px;
+}
 .iron-sheet .lordas-fc-lede { color: var(--lordas-accent); }
-.iron-sheet .lordas-fc-head { color: var(--lordas-muted); }
+.iron-sheet .lordas-fc-sub { font-size: 11px; line-height: 1.4; }
+.iron-sheet .lordas-disc { margin-top: 3px; }
 
-.iron-sheet .lordas-chip { border-radius: 999px; padding: 3px 9px; }
-.iron-sheet .lordas-empty { border-radius: 14px; }
-.iron-sheet .lordas-disc-body { border-radius: 12px; }
+/* Every corner on the page goes square. */
+.iron-sheet .lordas-chip,
+.iron-sheet .lordas-empty,
+.iron-sheet .lordas-disc-body,
 .iron-sheet input,
 .iron-sheet textarea,
-.iron-sheet select { border-radius: 999px; }
+.iron-sheet select,
+.iron-sheet button,
+.iron-sheet .rounded,
+.iron-sheet .rounded-sm,
+.iron-sheet .rounded-md,
 .iron-sheet .rounded-lg,
-.iron-sheet .rounded-md { border-radius: 12px; }
-.iron-sheet .rounded-xl { border-radius: 16px; }
-.iron-sheet .rounded-full { border-radius: 999px; }
+.iron-sheet .rounded-xl,
+.iron-sheet .rounded-full { border-radius: 0; }
+.iron-sheet .lordas-chip { padding: 2px 7px; }
 
-/* Hover panels float above a light sheet, so the lift is a soft warm shadow
-   rather than the heavy one a dark page needed. */
+.iron-sheet .lordas-plan-scroll { max-height: 420px; }
+
 .iron-sheet .lordas-hover-panel {
   background: var(--lordas-panel);
-  border-radius: 14px;
-  box-shadow: 0 8px 24px rgba(94, 31, 36, .16);
+  border-radius: 0;
+  border: 1px solid var(--lordas-accent);
+  box-shadow: 0 8px 24px rgba(47, 11, 14, .35);
 }
