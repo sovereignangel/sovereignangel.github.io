@@ -18,12 +18,12 @@ export default function AboutSection() {
         Built a portfolio management product from scratch that drove a $16.4B revenue line at JP Morgan Asset Management. Raised $220M+ across early-stage companies, venture funds, and investment banks.
       </p>
       <p className="text-[#333] mb-4">
-        <Link
-          href="/complexecon"
+        <a
+          href="https://www.complexity-economics.org/"
           className="underline decoration-[#33333340] underline-offset-4 hover:text-[#7c2d2d] hover:decoration-[#7c2d2d] transition-colors duration-200"
         >
           Complexity economics
-        </Link>{' '}
+        </a>{' '}
         is the framework I bring to markets.
       </p>
       <p className="text-[#333] mb-4">
