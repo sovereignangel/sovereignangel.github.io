@@ -4,9 +4,11 @@ import Link from 'next/link'
 import { Masthead } from '@/components/complexecon/tearsheet'
 import { MEMOS } from '@/lib/complexecon/memos'
 import { OFR_DOSSIER_HTML } from '@/lib/complexecon/memo-bodies'
+import { MORGAN_STANLEY_THREAD_HTML } from '@/lib/complexecon/memo-bodies-morgan-stanley'
 
 const BODIES: Record<string, string> = {
   'ofr-dossier': OFR_DOSSIER_HTML,
+  'morgan-stanley-thread': MORGAN_STANLEY_THREAD_HTML,
 }
 
 export function generateStaticParams() {

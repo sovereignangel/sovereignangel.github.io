@@ -684,6 +684,11 @@ export const PROPOSED_PATH: PathStep[] = [
 
 export const ITERATION_LOG: LogEntry[] = [
   {
+    date: '2026-10-15',
+    version: 'v12',
+    note: 'Models tab added at /complexecon/models: ten papers rebuilt as simulations with their parameters on sliders — Summers 1986, Bouchaud et al. 2017, Brock–Hommes 1998, Farmer–Joshi 2002, Hong–Stein 1999, Scholl–Calinescu–Farmer 2021, Gabaix–Koijen 2021, Kirman 1993, Berk–Green 2004, Johansen–Ledoit–Sornette 2000 — each carrying a fidelity chip (the paper’s equations vs a reduced rendering), a verdict line, readouts, the paper and any implementation already online. The Library gains a third lane, “Armstrong · the 1–2 year clock” (five shelves, 28 papers, off the Abu Dhabi meters). The Strategy map gains the neighbour school (behavioral and long-horizon asset pricing), a long-horizon price–value dot, Brock and Scholl in the people lists. Origin: the ask to pull the papers that bear on quantamental one-to-two-year investing and make them tinkerable; the viral “Reverse Engineer Anything” repository turned out to be a binary-analysis tool with no reading list, so the list was built from the literature and verified against Crossref and open-access copies.',
+  },
+  {
     date: '2026-09-04',
     version: 'v11',
     note: 'Lane VI deepened for the two-professor alignment (Farmer x Lopez de Prado): GEN-4 the alpha-decay duel (overfitting vs crowding, adjudicated in observable markets), GEN-5 endogenous structural breaks (a mechanism for ADIA’s own detection challenge), GEN-6 the causal ground-truth benchmark (electricity as the only market with a known DAG — an open validation scorecard for causal discovery), GEN-7 species diversification vs HRP. The design principle: find where the two professors give competing explanations of the same phenomenon, or where one’s program needs an instrument only the other’s can supply.',

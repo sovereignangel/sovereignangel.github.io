@@ -13,6 +13,14 @@ export interface MemoMeta {
 // Newest first — keep this ordering when adding memos.
 export const MEMOS: MemoMeta[] = [
   {
+    slug: 'morgan-stanley-thread',
+    title: 'The Morgan Stanley Thread',
+    date: '2026-10-15',
+    summary:
+      'What Vasant Dhar built in Morgan Stanley’s Data Mining Group (1994–97) and which of Doyne Farmer’s research it descends from: no direct link in the record, one documented bridge through Norman Packard — and the four papers to read in order.',
+    tags: ['Dhar', 'Farmer', 'Packard', 'Prediction Company', 'genetic algorithms', 'GLOWER', 'nonlinear forecasting', 'reading guide'],
+  },
+  {
     slug: 'ofr-dossier',
     title: 'The OFR Dossier',
     date: '2026-09-04',

@@ -171,16 +171,17 @@ export function Stat({ value, label, muted }: { value: ReactNode; label: string;
   )
 }
 
-/** The three tabs, shared by every sheet. */
+/** The tabs, shared by every sheet. */
 const TABS: { id: SheetTab; label: string; href: string }[] = [
   { id: 'roadmap', label: 'Roadmap', href: '/complexecon/roadmap' },
   { id: 'pathway', label: 'Pathway', href: '/complexecon' },
   { id: 'research', label: 'Research', href: '/complexecon/research' },
+  { id: 'models', label: 'Models', href: '/complexecon/models' },
   { id: 'strategy', label: 'Strategy', href: '/complexecon/strategy' },
   { id: 'memos', label: 'Memos', href: '/complexecon/memos' },
 ]
 
-export type SheetTab = 'roadmap' | 'pathway' | 'research' | 'strategy' | 'memos'
+export type SheetTab = 'roadmap' | 'pathway' | 'research' | 'models' | 'strategy' | 'memos'
 
 export function Masthead({
   kicker,
@@ -201,7 +202,7 @@ export function Masthead({
       </div>
       <div className="text-right">
         <div className="font-mono text-[12px] uppercase tracking-[1.5px] text-ink-muted">{meta}</div>
-        <nav className="mt-1 flex justify-end gap-3">
+        <nav className="mt-1 flex flex-wrap justify-end gap-x-3 gap-y-0">
           {TABS.map(t => {
             if (t.id === 'memos') {
               return (

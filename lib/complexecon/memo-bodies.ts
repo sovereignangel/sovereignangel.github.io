@@ -1,6 +1,7 @@
-// Auto-scoped HTML body of the OFR dossier memo. Rendered via dangerouslySetInnerHTML
-// on /complexecon/memos/ofr-dossier only — kept out of shared bundles on purpose.
-export const OFR_DOSSIER_HTML = `
+// Auto-scoped HTML bodies of the memos. Rendered via dangerouslySetInnerHTML on
+// each memo's own route only — kept out of shared bundles on purpose. The CSS
+// is shared: every memo body is MEMO_CSS followed by its own <div class="memo-doc">.
+export const MEMO_CSS = `
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=Public+Sans:wght@400;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
   .memo-doc {
@@ -105,7 +106,9 @@ export const OFR_DOSSIER_HTML = `
   .memo-doc footer p { font-size: 13.5px; color: var(--muted); }
   @media (max-width: 560px) { .memo-doc .kv { grid-template-columns: 1fr; gap: 0 0; } .memo-doc .kv dt { padding-top: 8px; } }
 </style>
+`
 
+export const OFR_DOSSIER_HTML = MEMO_CSS + `
 <div class="memo-doc"><div class="wrap">
   <header>
     <div class="eyebrow">A Primer · Prepared for the Complexity Economics Program · September 2026</div>
